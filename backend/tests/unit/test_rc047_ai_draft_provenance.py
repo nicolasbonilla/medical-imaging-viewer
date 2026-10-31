@@ -93,6 +93,21 @@ def _seed(svc, provenance, mask=None):
     return meta
 
 
+class _ImageStorage:
+    """Next safety round (PRB-030): the segmentation's own image — header (H, W, D), identity affine."""
+    async def download_file(self, bucket, file_id):
+        import nibabel as nib
+        return nib.Nifti1Image(np.zeros((H, W, D), dtype=np.uint8), np.eye(4)).to_bytes()
+
+
+def _on_screen():
+    """PRB-029 / PRB-030: the label table the viewer drew the draft with (the stored one, as drawn) and the image
+    under it (its own)."""
+    from app.services.dis_review_gate import drawn_labels_sha256, stored_labels
+    return {"drawn_labels_sha256": drawn_labels_sha256(stored_labels([LabelInfo(id=1, name="Lesion", color="#FF8C00")])),
+            "displayed_image_file_id": FILE}
+
+
 def _mask_body(mask):
     d, h, w = mask.shape
     return np.array([d, h, w], dtype="<u4").tobytes() + mask.astype(np.uint8).tobytes()
@@ -107,6 +122,7 @@ def client_for(monkeypatch):
         import app.api.routes.segmentation as seg_routes
         monkeypatch.setattr(seg_routes, "require_imaging_access", allow)
         app.dependency_overrides[container.get_segmentation_service] = lambda: service
+        app.dependency_overrides[container.get_storage_service] = lambda: _ImageStorage()   # PRB-030
         app.dependency_overrides[get_current_active_user] = lambda: _user(role, username)
         app.dependency_overrides[ra.require_segmentation_access] = lambda: None
         return TestClient(app, raise_server_exceptions=False)
@@ -195,7 +211,7 @@ def test_rc047_confirm_binds_the_review_to_the_exact_mask(client_for):
     mask[1, 2, 3] = 1
     _seed(svc, _prov(), mask)
     digest = SegmentationService.mask_sha256(mask)
-    r = client_for(svc).post("/api/v1/segmentation/seg-1/ai-review/confirm", json={"mask_sha256": digest})
+    r = client_for(svc).post("/api/v1/segmentation/seg-1/ai-review/confirm", json={"mask_sha256": digest, **_on_screen()})
     assert r.status_code == 200, r.text
     p = r.json()["ai_provenance"]
     assert p["review_status"] == "confirmed" and p["reviewed_by"] == "dr_rev" and p["reviewed_at"]
@@ -244,7 +260,7 @@ def test_rc047_replacing_the_mask_after_confirmation_resets_the_review(client_fo
     _seed(svc, _prov(), reviewed)
     rad = client_for(svc)
     assert rad.post("/api/v1/segmentation/seg-1/ai-review/confirm",
-                    json={"mask_sha256": SegmentationService.mask_sha256(reviewed)}).status_code == 200
+                    json={"mask_sha256": SegmentationService.mask_sha256(reviewed), **_on_screen()}).status_code == 200
 
     other = np.ones((D, H, W), dtype=np.uint8)
     tech = client_for(svc, role=UserRole.TECHNICIAN, username="tech_1")
@@ -267,7 +283,7 @@ def test_rc047_re_uploading_the_identical_mask_keeps_the_review(client_for):
     _seed(svc, _prov(), mask)
     c = client_for(svc)
     assert c.post("/api/v1/segmentation/seg-1/ai-review/confirm",
-                  json={"mask_sha256": SegmentationService.mask_sha256(mask)}).status_code == 200
+                  json={"mask_sha256": SegmentationService.mask_sha256(mask), **_on_screen()}).status_code == 200
     r = c.put("/api/v1/segmentation/seg-1/mask/binary", content=_mask_body(mask.copy()),
               headers={"Content-Type": "application/octet-stream"})
     assert r.status_code == 200, r.text

@@ -1063,6 +1063,22 @@ class SegmentationService:
         except Exception:
             return False
 
+    @staticmethod
+    def nifti_header_grid(raw: bytes):
+        """(shape (a0, a1, k), voxel-to-scanner affine, header) of a NIfTI image read from its HEADER only: only the
+        first bytes are decompressed, the voxels are never loaded (PRB-004 re-review R2). Raises on anything that is
+        not a readable NIfTI-1/-2 header. Shared by the 3D realignment below and, PRB-030 (RC-092), by the check that
+        the image under the mask on screen lies on the mask's grid before a confirmation."""
+        import io
+        import zlib
+
+        head = (zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)
+                if raw[:2] == b'\x1f\x8b' else raw[:1024])
+        size = int.from_bytes(head[:4], 'little') if len(head) >= 4 else 0
+        header_class = nib.Nifti2Header if size == 540 or int.from_bytes(head[:4], 'big') == 540 else nib.Nifti1Header
+        hdr = header_class.from_fileobj(io.BytesIO(head))
+        return tuple(int(d) for d in hdr.get_data_shape()[:3]), hdr.get_best_affine(), hdr
+
     @classmethod
     def align_stored_mask_to_reference(cls, seg_bytes: bytes, ref_bytes: bytes, tolerance: float = 1e-3) -> Optional[bytes]:
         """PRB-004 review (M1): the stored mask NIfTI realigned onto the reference image's voxel grid, or None.
@@ -1078,10 +1094,8 @@ class SegmentationService:
         file are decompressed, its voxels are never loaded. Raises on unreadable input; the route then serves
         the stored file unchanged.
         """
-        import io
         import tempfile
         import os
-        import zlib
 
         def _load_mask(raw: bytes):
             suffix = '.nii.gz' if raw[:2] == b'\x1f\x8b' else '.nii'
@@ -1096,16 +1110,8 @@ class SegmentationService:
                 os.unlink(path)
             return out
 
-        def _reference_header(raw: bytes):
-            head = (zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)
-                    if raw[:2] == b'\x1f\x8b' else raw[:1024])
-            size = int.from_bytes(head[:4], 'little') if len(head) >= 4 else 0
-            header_class = nib.Nifti2Header if size == 540 or int.from_bytes(head[:4], 'big') == 540 else nib.Nifti1Header
-            hdr = header_class.from_fileobj(io.BytesIO(head))
-            return tuple(int(d) for d in hdr.get_data_shape()[:3]), hdr.get_best_affine(), hdr
-
         seg_data, seg_affine, seg_header = _load_mask(seg_bytes)
-        ref_shape, ref_affine, ref_header = _reference_header(ref_bytes)
+        ref_shape, ref_affine, ref_header = cls.nifti_header_grid(ref_bytes)
         if seg_affine.shape != (4, 4) or not np.allclose(seg_affine, ref_affine, atol=tolerance, rtol=0):
             return None
         oriented = cls._seg_native_to_reference_order(seg_data, cls._header_has_v2_marker(seg_header))

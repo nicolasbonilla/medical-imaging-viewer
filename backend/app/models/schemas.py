@@ -255,6 +255,11 @@ class ClinicianReview(BaseModel):
     reviewed_region_corrections_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
     region_correction_count: int = Field(0, ge=0)
     region_corrections: List[Dict[str, Any]] = Field(default_factory=list, max_length=100)
+    # PRB-028 (RC-090): on a classification by the geometric fallback, the lesions whose region the radiologist checked
+    # one by one (bound by their digest; None: no such lesion, or a confirmation recorded before this rule).
+    reviewed_geometric_regions_sha256: Optional[str] = Field(None, pattern=r"^[0-9a-f]{64}$")
+    geometric_region_count: int = Field(0, ge=0)
+    geometric_regions: List[Dict[str, Any]] = Field(default_factory=list, max_length=100)
 
 
 class ClinicianReviewEvent(BaseModel):

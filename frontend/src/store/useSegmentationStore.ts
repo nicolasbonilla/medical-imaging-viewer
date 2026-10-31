@@ -26,7 +26,7 @@ import type {
   AIProvenance,
 } from '@/types';
 import { DEFAULT_LABEL_PRESETS } from '@/types';
-import { MIN_VISIBLE_LESION_OPACITY } from '@/utils/drawnLabels';
+import { MIN_VISIBLE_LESION_OPACITY, MAX_UNDERLAY_OPACITY, type GridDims } from '@/utils/drawnLabels';
 import { withRegionColors } from '@/utils/regionColors';
 
 // ============================================================================
@@ -173,6 +173,11 @@ interface SegmentationState {
    *  table — published by the standard 2D view (one panel, segmentation mode on); null in every other view
    *  (segmentation mode off, NiiVue, matplotlib, multi-panel, 3D). The DIS confirmation needs it. */
   overlayOnScreen: string | null;
+
+  /** PRB-030 (RC-092, L1): the image the same standard 2D view draws under that segmentation — its storage id and grid
+   *  (columns, rows, slices) — and the grid of the mask drawn over it (null while the mask is not loaded). Published and
+   *  withdrawn together with `overlayOnScreen`. Both confirmations are refused unless the two grids are the same. */
+  overlayImageOnScreen: OverlayImageOnScreen | null;
 
   /** RC-047: the open mask has unsaved changes (mirrors the local-first mask state). */
   hasUnsavedMaskChanges: boolean;
@@ -327,6 +332,7 @@ interface SegmentationState {
   setMaskValuesCallback: (fn: (() => number[] | null) | null) => void;
   setMaskLabelValues: (values: number[] | null) => void;
   setOverlayOnScreen: (segmentationId: string | null) => void;
+  setOverlayImageOnScreen: (image: OverlayImageOnScreen | null) => void;
   setHasUnsavedMaskChanges: (value: boolean) => void;
 
   // =========================================================================
@@ -412,6 +418,17 @@ interface SegmentationState {
   resetPaintTool: () => void;
 }
 
+/** PRB-030 (RC-092): what the standard 2D view draws under the open segmentation (see `overlayImageOnScreen`). */
+export interface OverlayImageOnScreen {
+  segmentationId: string;
+  /** storage id of the image (the server reads its header to check shape, affine and study); null when unknown */
+  imageFileId: string | null;
+  /** columns (width), rows (height) and slices (depth) of the image as drawn */
+  image: GridDims;
+  /** width, height and depth of the mask drawn over it; null while it is not loaded */
+  mask: GridDims | null;
+}
+
 // ============================================================================
 // Initial State
 // ============================================================================
@@ -452,6 +469,7 @@ const createInitialState = () => ({
   maskValuesCallback: null as (() => number[] | null) | null,
   maskLabelValues: null as number[] | null,
   overlayOnScreen: null as string | null,
+  overlayImageOnScreen: null as OverlayImageOnScreen | null,
   hasUnsavedMaskChanges: false,
   lastSavedAt: null as string | null,
 
@@ -579,6 +597,7 @@ export const useSegmentationStore = create<SegmentationState>()(
         setMaskValuesCallback: (fn) => set({ maskValuesCallback: fn }),
         setMaskLabelValues: (values) => set({ maskLabelValues: values }),
         setOverlayOnScreen: (segmentationId) => set({ overlayOnScreen: segmentationId }),
+        setOverlayImageOnScreen: (image) => set({ overlayImageOnScreen: image }),
 
         setHasUnsavedMaskChanges: (value) => set({ hasUnsavedMaskChanges: value }),
 
@@ -873,11 +892,19 @@ export const useSegmentationStore = create<SegmentationState>()(
         }),
         // Release 2026-10-25 (review of PR #69, M3): a stored lesion opacity below the visible minimum (e.g. 0) would
         // hide every lesion in the next session without a word; it is not restored — the default is used instead.
+        // PRB-031 (RC-093, L2): likewise a stored zone-map opacity above the safe limit (30 %), which would paint the
+        // MAGNIMS zones over lesions of the same colour in the next session; the default (30 %) is used instead.
         merge: (persisted, current) => {
           const stored = (persisted ?? {}) as Partial<SegmentationState>;
           const opacity = stored.lesionOpacity;
           const visible = typeof opacity === 'number' && opacity >= MIN_VISIBLE_LESION_OPACITY;
-          return { ...current, ...stored, lesionOpacity: visible ? opacity : current.lesionOpacity };
+          const zone = stored.zoneMapOpacity;
+          const safeZone = typeof zone === 'number' && zone >= 0 && Math.round(zone * 100) <= Math.round(MAX_UNDERLAY_OPACITY * 100);
+          return {
+            ...current, ...stored,
+            lesionOpacity: visible ? opacity : current.lesionOpacity,
+            zoneMapOpacity: safeZone ? zone : current.zoneMapOpacity,
+          };
         },
       }
     )

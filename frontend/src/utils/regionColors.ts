@@ -35,6 +35,19 @@ export const MAGNIMS_REGION_PALETTE: Readonly<Record<MagnimsRegion, { id: number
 // drawn is 9.1 (tritan), 14.3 for normal vision; opaque, every pair stays above 15 for deutan, protan and
 // tritan (SegmentationCanvasLocal.prb010.test.tsx).
 
+/**
+ * PRB-031 (RC-093): colours of the longitudinal overlay of the 2D view, from the same Okabe-Ito palette (the colours
+ * the regions do not use: blue, yellow; and vermillion, the palette's red). It drew "persistent" green against "new"
+ * red, which cannot be told apart with red-green colour blindness. As drawn (55 % over grey tissue) every pair stays
+ * at least dE76 19 apart for deutan, protan and tritan readers (SegmentationCanvasLocal.prb031.test.tsx). The 3D view
+ * draws each visit in one colour (blue / red), no green.
+ */
+export const LONGITUDINAL_OVERLAY_COLORS = Object.freeze({
+  persistent: '#F0E442',   // yellow — in both visits
+  resolved: '#0072B2',     // blue — first visit only
+  new: '#D55E00',          // vermillion — second visit only
+});
+
 /** Legend dot classes / text classes by region name (what the two legends render). */
 export const REGION_DOT_CLASSES: Readonly<Record<string, string>> = Object.freeze(
   Object.fromEntries(MAGNIMS_REGIONS.map((r) => [r, MAGNIMS_REGION_PALETTE[r].dot])));

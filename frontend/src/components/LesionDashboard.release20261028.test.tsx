@@ -122,6 +122,7 @@ function seed(analysisData: Record<string, unknown> | null = null, drawnLabels: 
     // Release 2026-10-25 (review of PR #69, B1/M3): the open mask that is confirmed is drawn (its value 1, Lesion, visible).
     // Release 2026-10-25 (final check of #69, R1): the standard 2D view on screen draws the open segmentation.
     overlayOnScreen: 'seg-1',
+    overlayImageOnScreen: { segmentationId: 'seg-1', imageFileId: 'f.nii.gz', image: { width: 20, height: 20, depth: 10 }, mask: { width: 20, height: 20, depth: 10 } },   // next safety round, PRB-030: over an image on the mask grid
     maskValuesCallback: vi.fn(() => [1]),
     isOverlayVisible: true,
     lesionOpacity: 0.6,

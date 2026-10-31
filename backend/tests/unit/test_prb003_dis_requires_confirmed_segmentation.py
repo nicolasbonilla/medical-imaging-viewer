@@ -106,9 +106,11 @@ def _lesion_regions(mask):
 
 def _classification(mask, voxel_volume_mm3=3.0):
     """The record classify-regions stores for the lesions of `mask` (review of PR #68, blocker 1; second review,
-    N1: with each lesion's region; third review, m-1: with the voxel volume, default that of `_Storage`)."""
+    N1: with each lesion's region; third review, m-1: with the voxel volume, default that of `_Storage`).
+    Next safety round (PRB-028): the method is the atlas ("msmask"), so these tests keep testing their own rule; a
+    geometric-fallback classification also needs the per-lesion review (test_prb028_geometric_fallback_review.py)."""
     from app.services import dis_review_gate as gate
-    return {"classification": {"method": "geometric", "classified_lesion_footprint_sha256": gate.footprint_sha256(mask),
+    return {"classification": {"method": "msmask", "classified_lesion_footprint_sha256": gate.footprint_sha256(mask),
                                "classified_mask_sha256": _sha(mask),
                                "classified_lesion_regions": _lesion_regions(mask), "lesion_connectivity": 18,
                                "voxel_volume_mm3": voxel_volume_mm3}}
@@ -417,8 +419,10 @@ def _drawn(client, sid="seg-1"):
 
 
 def _confirm(client, digest, sid="seg-1"):
+    # PRB-030: the image the standard 2D view drew under the mask (the segmentation's own image).
     return client.post(f"/api/v1/segmentation/{sid}/review/confirm",
-                       json={"mask_sha256": digest, "drawn_labels_sha256": _drawn(client, sid)})
+                       json={"mask_sha256": digest, "drawn_labels_sha256": _drawn(client, sid),
+                             "displayed_image_file_id": FILE})
 
 
 @pytest.mark.unit

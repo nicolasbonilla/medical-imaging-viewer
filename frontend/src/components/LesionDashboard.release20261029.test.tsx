@@ -72,6 +72,7 @@ function seedOpen(over: Record<string, unknown> = {}) {
     hasUnsavedMaskChanges: false,
     reloadMaskCallback: vi.fn(async () => true),
     overlayOnScreen: 'seg-1',
+    overlayImageOnScreen: { segmentationId: 'seg-1', imageFileId: 'f.nii.gz', image: { width: 20, height: 20, depth: 10 }, mask: { width: 20, height: 20, depth: 10 } },   // next safety round, PRB-030: over an image on the mask grid
     ...over,
   } as never);
 }
@@ -134,7 +135,8 @@ describe('R2: each value present is drawn with the label the server stored for i
   it('rc071 release final drawn with the stored labels in the standard view: confirmed, with the drawn table (positive control)', async () => {
     seedOpen();
     await pressConfirm();
-    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, null, MAGNIMS_LESION_LABELS));
+    await waitFor(() => expect(confirmSegmentationReview).toHaveBeenCalledWith('seg-1', DIGEST, null, MAGNIMS_LESION_LABELS,
+      { geometricRegionsReviewedSha256: null, displayedImageFileId: 'f.nii.gz' }));
     expect(screen.queryByTestId('dis-confirm-refused')).not.toBeInTheDocument();
   });
 });

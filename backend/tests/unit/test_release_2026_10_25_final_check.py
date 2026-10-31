@@ -17,7 +17,7 @@ import pytest
 from app.models.schemas import LabelInfo
 from app.services import dis_review_gate as gate
 from tests.unit.test_prb003_dis_requires_confirmed_segmentation import (  # noqa: F401  (fixture)
-    _dis, _mask, _seed, _service, _sha, client_for,
+    FILE, _dis, _mask, _seed, _service, _sha, client_for,
 )
 
 # The canonical text both sides digest (frontend/src/utils/drawnLabels.digest.test.ts uses the same vector).
@@ -39,7 +39,8 @@ def _labels(rows):
 
 
 def _post(client, body, sid="seg-1"):
-    return client.post(f"/api/v1/segmentation/{sid}/review/confirm", json=body)
+    # Next safety round (PRB-030): the image under the mask on screen, the segmentation's own image.
+    return client.post(f"/api/v1/segmentation/{sid}/review/confirm", json={**body, "displayed_image_file_id": FILE})
 
 
 @pytest.mark.unit
