@@ -151,3 +151,22 @@ def test_rc092_review_m9_the_gcs_storage_reads_a_byte_range():
         loop.close()
     assert len(data) == 1024
     assert calls == ["patients/x.nii.gz", (0, 1023)]
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("displayed", [None, "", "   "])
+def test_rc092_review_the_grid_check_itself_refuses_an_unstated_image(displayed):
+    """Since m7 the routes answer "out of date" before the grid check when no image is stated; the grid check keeps
+    its own refusal (defence in depth), tested here directly — no image is read."""
+    from app.services import displayed_image_check as check
+
+    class _NoReads:
+        async def download_file(self, bucket, file_id):
+            raise AssertionError("an image was read")
+
+    loop = asyncio.new_event_loop()        # never asyncio.run: it would leave no current loop for later tests
+    try:
+        problem = loop.run_until_complete(check.displayed_image_problem(displayed, FILE, (D, H, W), _NoReads(), "bucket"))
+    finally:
+        loop.close()
+    assert problem == check.NOT_STATED
