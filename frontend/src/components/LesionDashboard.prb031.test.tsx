@@ -127,16 +127,13 @@ describe('PRB-031: Confirm refused while an overlay drawn under the lesions can 
   });
 
   it('rc093 prb031 the refusal texts of PRB-028..031 exist in English, Spanish and German', () => {
+    // (the four layer names are flat keys: the PRB-003 translation test requires every disReview entry to be a text)
     const keys = ['undrawnUnderlayOpaque', 'undrawnGridUnknown', 'undrawnGridMismatch', 'geometricRegionsTitle',
       'geometricRegionItem', 'acknowledgeGeometricRegion', 'reasonGeometricNotReviewed', 'geometricTooMany',
-      'confirmGeometric'];
+      'confirmGeometric', 'underlayZoneMap', 'underlayLongitudinal', 'underlaySubtraction', 'underlayConformal'];
     for (const [lang, dict] of [['en', en], ['es', es], ['de', de]] as const) {
       const review = (dict as unknown as { disReview: Record<string, string> }).disReview;
       for (const key of keys) expect(typeof review[key], `${lang} disReview.${key}`).toBe('string');
-      const layers = (dict as unknown as { disReview: Record<string, unknown> }).disReview.underlay as Record<string, string>;
-      for (const layer of ['zone_map', 'longitudinal', 'subtraction', 'conformal']) {
-        expect(typeof layers?.[layer], `${lang} disReview.underlay.${layer}`).toBe('string');
-      }
     }
   });
 });

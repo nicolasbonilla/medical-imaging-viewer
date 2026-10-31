@@ -131,7 +131,7 @@ DEFAULT_PRESET = [LabelInfo(id=0, name="Background", color="#000000", opacity=0.
 # ─────────────────────────────────────────────── PRB-029: the AI-draft review states the drawn label table
 @pytest.mark.unit
 @pytest.mark.parametrize("drawn", [None, "", "e" * 64, "default-preset"])
-def test_prb029_ai_review_refused_unless_drawn_with_the_stored_labels(client_for, drawn):
+def test_rc091_prb029_ai_review_refused_unless_drawn_with_the_stored_labels(client_for, drawn):
     svc = _service()
     entry = _ai_draft(svc)
     client, _storage = _client(client_for, svc)
@@ -144,7 +144,7 @@ def test_prb029_ai_review_refused_unless_drawn_with_the_stored_labels(client_for
 
 
 @pytest.mark.unit
-def test_prb029_ai_review_drawn_with_the_stored_labels_over_its_own_image_is_confirmed(client_for):
+def test_rc091_prb029_ai_review_drawn_with_the_stored_labels_over_its_own_image_is_confirmed(client_for):
     """Positive control: the stored table as the viewer draws it, the segmentation's own image."""
     svc = _service()
     entry = _ai_draft(svc)
@@ -172,7 +172,7 @@ def _not_confirmed(route, entry):
 
 @pytest.mark.unit
 @pytest.mark.parametrize("route", ROUTES)
-def test_prb030_the_image_under_the_mask_must_be_stated(client_for, route):
+def test_rc092_prb030_the_image_under_the_mask_must_be_stated(client_for, route):
     entry, _client_, _storage, send = _setup(route, client_for)
     for displayed in (None, ""):
         r = send(displayed)
@@ -183,7 +183,7 @@ def test_prb030_the_image_under_the_mask_must_be_stated(client_for, route):
 @pytest.mark.unit
 @pytest.mark.parametrize("route", ROUTES)
 @pytest.mark.parametrize("displayed", [SHEARED, SHIFTED, RESAMPLED, CUT])
-def test_prb030_an_image_on_another_grid_is_refused(client_for, route, displayed):
+def test_rc092_prb030_an_image_on_another_grid_is_refused(client_for, route, displayed):
     entry, _client_, _storage, send = _setup(route, client_for)
     r = send(displayed)
     assert r.status_code == 409, r.text[:300]
@@ -193,7 +193,7 @@ def test_prb030_an_image_on_another_grid_is_refused(client_for, route, displayed
 
 @pytest.mark.unit
 @pytest.mark.parametrize("route", ROUTES)
-def test_prb030_an_image_of_another_visit_is_refused_even_on_the_same_grid(client_for, route):
+def test_rc092_prb030_an_image_of_another_visit_is_refused_even_on_the_same_grid(client_for, route):
     entry, _client_, _storage, send = _setup(route, client_for)
     r = send(OTHER_VISIT_SAME_GRID)
     assert r.status_code == 409, r.text[:300]
@@ -202,7 +202,7 @@ def test_prb030_an_image_of_another_visit_is_refused_even_on_the_same_grid(clien
 
 @pytest.mark.unit
 @pytest.mark.parametrize("route", ROUTES)
-def test_prb030_an_image_that_cannot_be_read_is_refused(client_for, route):
+def test_rc092_prb030_an_image_that_cannot_be_read_is_refused(client_for, route):
     entry, _client_, _storage, send = _setup(route, client_for)
     for displayed in (BROKEN, f"patients/{PID}/studies/{STUDY}/series/{OTHER_SERIES}/missing.nii.gz", "../etc/passwd"):
         r = send(displayed)
@@ -212,7 +212,7 @@ def test_prb030_an_image_that_cannot_be_read_is_refused(client_for, route):
 
 @pytest.mark.unit
 @pytest.mark.parametrize("route", ROUTES)
-def test_prb030_a_mask_whose_shape_is_not_the_image_grid_is_refused(client_for, route):
+def test_rc092_prb030_a_mask_whose_shape_is_not_the_image_grid_is_refused(client_for, route):
     """The segmentation's own image, but the mask does not have its shape (it would be drawn sheared)."""
     small = np.zeros((D, H, W - 1), dtype=np.uint8)
     small[2:4, 2:5, 2:5] = 1
@@ -225,7 +225,7 @@ def test_prb030_a_mask_whose_shape_is_not_the_image_grid_is_refused(client_for, 
 
 @pytest.mark.unit
 @pytest.mark.parametrize("route", ROUTES)
-def test_prb030_an_image_the_user_may_not_open_is_not_read(client_for, route, monkeypatch):
+def test_rc092_prb030_an_image_the_user_may_not_open_is_not_read(client_for, route, monkeypatch):
     import app.api.routes.segmentation as seg_routes
 
     async def deny(*, file_ids, user, patient_service, care_team_service):
@@ -243,7 +243,7 @@ def test_prb030_an_image_the_user_may_not_open_is_not_read(client_for, route, mo
 @pytest.mark.unit
 @pytest.mark.parametrize("route", ROUTES)
 @pytest.mark.parametrize("displayed", [FILE, T1_SAME_GRID])
-def test_prb030_the_own_image_or_another_series_of_the_study_on_the_same_grid_is_accepted(client_for, route, displayed):
+def test_rc092_prb030_the_own_image_or_another_series_of_the_study_on_the_same_grid_is_accepted(client_for, route, displayed):
     """Positive control: the segmentation's own image, or e.g. the T1 of the same study on the same grid."""
     entry, _client_, _storage, send = _setup(route, client_for)
     r = send(displayed)

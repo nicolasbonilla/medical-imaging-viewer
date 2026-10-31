@@ -75,7 +75,7 @@ def _first_voxels(mask):
 
 # ─────────────────────────────────────────────────────────────── the DIS state lists what must be checked
 @pytest.mark.unit
-def test_prb028_dis_state_lists_every_geometric_region_to_check_lesion_by_lesion(client_for):
+def test_rc090_prb028_dis_state_lists_every_geometric_region_to_check_lesion_by_lesion(client_for):
     svc, _entry = _classified("geometric")
     regions = _dis(client_for(svc))["regions"]
     assert regions["method"] == "geometric"
@@ -90,7 +90,7 @@ def test_prb028_dis_state_lists_every_geometric_region_to_check_lesion_by_lesion
 
 # ─────────────────────────────────────────────────────────────── the confirmation needs the per-lesion review
 @pytest.mark.unit
-def test_prb028_confirm_refused_while_geometric_regions_were_not_checked_one_by_one(client_for):
+def test_rc090_prb028_confirm_refused_while_geometric_regions_were_not_checked_one_by_one(client_for):
     svc, entry = _classified("geometric")
     client = client_for(svc)
     r = _confirm(client, entry["masks_3d"])
@@ -101,7 +101,7 @@ def test_prb028_confirm_refused_while_geometric_regions_were_not_checked_one_by_
 
 
 @pytest.mark.unit
-def test_prb028_a_partial_or_foreign_review_is_refused(client_for):
+def test_rc090_prb028_a_partial_or_foreign_review_is_refused(client_for):
     svc, entry = _classified("geometric")
     client = client_for(svc)
     only_first = _digest(_first_voxels(_two_lesions(1, 2))[:1])
@@ -112,7 +112,7 @@ def test_prb028_a_partial_or_foreign_review_is_refused(client_for):
 
 
 @pytest.mark.unit
-def test_prb028_every_region_checked_one_by_one_is_accepted_recorded_and_dis_evaluated(client_for):
+def test_rc090_prb028_every_region_checked_one_by_one_is_accepted_recorded_and_dis_evaluated(client_for):
     svc, entry = _classified("geometric")
     client = client_for(svc)
     digest = _dis(client)["regions"]["geometric_regions_sha256"]
@@ -127,7 +127,7 @@ def test_prb028_every_region_checked_one_by_one_is_accepted_recorded_and_dis_eva
 
 
 @pytest.mark.unit
-def test_prb028_a_corrected_lesion_is_a_correction_the_rest_still_checked_one_by_one(client_for):
+def test_rc090_prb028_a_corrected_lesion_is_a_correction_the_rest_still_checked_one_by_one(client_for):
     """The existing region-correction mechanism: a lesion relabelled by hand is listed as a correction and
     acknowledged; only the lesions left at their geometric region need the per-lesion tick."""
     svc, entry = _classified("geometric", current=_two_lesions(4, 2))     # lesion 1: PV -> deep white matter
@@ -147,7 +147,7 @@ def test_prb028_a_corrected_lesion_is_a_correction_the_rest_still_checked_one_by
 
 
 @pytest.mark.unit
-def test_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_evaluable(client_for):
+def test_rc090_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_evaluable(client_for):
     """A confirmation stored before this rule (or by another client) on a geometric classification."""
     from app.models.schemas import ClinicianReview
 
@@ -163,7 +163,7 @@ def test_prb028_a_confirmation_recorded_without_the_review_does_not_make_dis_eva
 
 
 @pytest.mark.unit
-def test_prb028_more_lesions_than_the_list_can_hold_cannot_be_checked_here(client_for, monkeypatch):
+def test_rc090_prb028_more_lesions_than_the_list_can_hold_cannot_be_checked_here(client_for, monkeypatch):
     monkeypatch.setattr(gate, "LESION_LIST_CAP", 1)
     svc, entry = _classified("geometric")
     client = client_for(svc)
@@ -176,7 +176,7 @@ def test_prb028_more_lesions_than_the_list_can_hold_cannot_be_checked_here(clien
 
 @pytest.mark.unit
 @pytest.mark.parametrize("method", ["msmask", "parcellation", "lst-ai"])
-def test_prb028_an_atlas_or_parcellation_classification_needs_no_per_lesion_tick(client_for, method):
+def test_rc090_prb028_an_atlas_or_parcellation_classification_needs_no_per_lesion_tick(client_for, method):
     """Positive control: only the geometric fallback needs the per-lesion review."""
     svc, entry = _classified(method)
     client = client_for(svc)
