@@ -1,0 +1,2436 @@
+{
+ "coded_by": "AI agent (Claude), 2026-10-31; single coder; to be second-coded by a human",
+ "scope": "PRs #64-#75 of nicolasbonilla/medical-imaging-viewer; sources: research/paper_h/data/github_prs_full_2026-10-31.json (PR bodies) and docs/iec62304/records at worktree HEAD (research/paper-h-manuscript, contains main @ 8805882)",
+ "severity_scheme": "Severity kept as labelled by the source; only obvious synonyms mapped: 'Blocker.' / '(blocker)' / B-prefix ID -> blocker; 'major' / 'Major.' / '(major)' / 'R1 (major)' / M-prefix ID / verdict counts of 'majors' -> major; 'minor' / 'minor items' / 'minor points' / 'Known minor items' / m-prefix ID (incl. 'm-1') / verdict counts of 'minor' -> minor; 'nit' / n-prefix ID -> nit; anything else -> unlabelled. Exception: CAPA-014 §8.2 calls its R1-R4, M1, M2 'minor items', so M1/M2 there are minor. ID prefixes N, R, F, L, numbers, 'Also', 'film (a)' carry no severity. '(clinical safety)', 'pre-existing', 'Cosmetic', 'small items', 'Note', 'accepted' are not severity labels (kept in severity_as_written). Problem-report severities (SPR-001 Critical/Major/Minor) are a different scheme and are not used for review findings.",
+ "field_conventions": "Each finding quote is an exact substring of the round 'source' unless the finding has its own 'source'. Optional round keys: reviewer_quote, label_quote (where the severity label is stated in another source), carried_over_not_counted. Top-level f08_provenance and excluded_items carry verified quotes too.",
+ "rounds": [
+  {
+   "pr": 64,
+   "round_id": "64-review-1",
+   "round_label": "independent review of the release branch (2026-10-23) (also called 'the independent review of #59 and #62')",
+   "reviewer": "independent agent session",
+   "date": "2026-10-23",
+   "source": {
+    "kind": "pr_body",
+    "pr": 64,
+    "path": null
+   },
+   "verdict_quote": "the review of this branch found the four problems fixed above",
+   "findings": [
+    {
+     "id": "1 (#59)",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Slice thickness reported from SpacingBetweenSlices when SliceThickness was missing (spacing is not thickness)",
+     "quote": "An ORIGINAL 2D DICOM **without SliceThickness but with SpacingBetweenSlices 2.5 mm** was reported as \"2.5 mm, from the header\"",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "2 (#59)",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Slice-thickness card used evidence rows added after paper A results were seen (post-hoc, not pre-registered)",
+     "quote": "Between 1.5 and 3.5 mm the card used rows added **after** paper A's results were seen",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "3 (#62)",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Proposed severities of CAPA-012, PRB-001, RMF-OBS-001 below what the project's procedures require",
+     "quote": "Severities below the project's procedures: QP-002 §5 classes regulatory non-compliance (and patient safety risk) as Critical",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "4 (#62)",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "PRB-001 overstated that every third-ventricle-only lesion is classified periventricular",
+     "quote": "PRB-001 said a lesion touching only the third ventricle \"is classified periventricular\"",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 65,
+   "round_id": "65-review-1",
+   "round_label": "Independent adversarial review of PR #65 (2026-10-24)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-015_Audit_Trail_And_Session_Continuation.md"
+   },
+   "verdict_quote": "The review concluded \"do not deploy as is\".",
+   "findings": [
+    {
+     "id": "M1",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "Refresh idle limit shorter than access token would end sessions at first renewal; templates still emitted 60 min",
+     "quote": "would end every session at the first renewal; the client renewed only before the access token's own expiry",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M2",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "Logout or token change in another tab could wipe this tab's unsaved work or reuse another user's token",
+     "quote": "Another tab could wipe this tab's unsaved work: a logout there cleared the shared token",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M3",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "Several /auth requests (passkey, user reads, 5xx, odd logouts) were not recorded in the audit trail",
+     "quote": "requests without their own event were not recorded: passkey registration and deletion, user list and detail reads, 5xx",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M4",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "During deployment a 404/405 from /refresh failed requests without the re-login dialog",
+     "quote": "(rewrite or backend not yet deployed) failed the request without the dialog",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m5",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Lost refresh response or two-tab race was treated as token theft and revoked the family",
+     "quote": "A lost refresh response or a two-tab race looked like token theft (family revoked)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m6",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Transient user-store error revoked the refresh-token family",
+     "quote": "returns None on ANY error, so a transient store error revoked the family",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m7",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Access tokens remain valid up to 15 minutes after password/role/status change (documented, not changed)",
+     "quote": "access tokens stay valid up to 15 minutes after a password, role or status change",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "m8",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Refresh/logout store calls ran on the event loop; revoke-all touched dead families",
+     "quote": "ran on the event loop; \"revoke every session\" touched revoked and expired families",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m9",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Client IP taken from client-controlled X-Forwarded-For hop; flood could fill durable audit queue",
+     "quote": "The client IP (audit, rate limit, block list, CAPTCHA) was the client-controlled first `X-Forwarded-For` hop",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m10",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Audit identifiers hashed with plain SHA-256 (reversible) and full user agent stored",
+     "quote": "Identifiers (typed login names, file names, MRN, accession) hashed with plain SHA-256 (reversible for small spaces)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m11",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "'Append-only' audit trail is only a convention; service-account holders can edit records (documented)",
+     "quote": "\"append-only\" is a code convention plus security rules",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "m12",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Filtered audit reads need indexes; deploying repository firestore.rules could change live rules (documented)",
+     "quote": "filtered `/audit-logs` reads need the composite indexes, and deploying `firestore.rules` from the repository could CHANGE the live rules",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "m13",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "A hanging refresh could hold the cross-tab lock forever",
+     "quote": "A hanging refresh held the cross-tab lock forever",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 65,
+   "round_id": "65-review-2",
+   "round_label": "Re-review of PR #65 at `09e11e8` (2026-10-24)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-015_Audit_Trail_And_Session_Continuation.md"
+   },
+   "verdict_quote": "The re-review found that two §10 corrections were incomplete (N1, N4) and three further defects (N2, N3, N5).",
+   "findings": [
+    {
+     "id": "N1",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "The m9 fix trusted X-Forwarded-Host, a client-sent header, to choose the client IP hop count",
+     "quote": "chose how many `X-Forwarded-For` entries to trust from `X-Forwarded-Host` — a header the client sends",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N4",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Per-source audit budget also dropped authenticated failures; Cloud Logging retention misstated",
+     "quote": "The per-source budget also covered authenticated failures and denials",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N3",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "3D viewer and profile page read the shared token directly; another user's token could be sent",
+     "quote": "The 3D viewer and the profile page read the shared token from storage themselves",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N5",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Patient data stayed readable behind the re-login dialog after logout in another tab",
+     "quote": "After a logout in another tab the patient data stayed readable behind the re-login dialog",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N2",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Old developer .env with 60-minute access token stopped the test suite",
+     "quote": "A developer `backend/.env` with the old `JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60` stopped the test suite",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "nit (1)",
+     "severity": "nit",
+     "severity_as_written": "nit",
+     "summary": "Passkey registration begin recorded as a completed registration",
+     "quote": "`webauthn/register/begin` was recorded as a completed registration",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "nit (2)",
+     "severity": "nit",
+     "severity_as_written": "nit",
+     "summary": "RMF wording implied global logout revocation; record sections out of order",
+     "quote": "RMF RC-068 implied that logout revokes access tokens everywhere; §10 placed before §8/§9",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 65,
+   "round_id": "65-coordinator-1",
+   "round_label": "coordinator check of the list, 2026-10-24 (listed as N1b in the re-review table)",
+   "reviewer": "other (coordinating agent session)",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-015_Audit_Trail_And_Session_Continuation.md"
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "N1b",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Embedded Fastly/Hosting egress list transcribed without the source; ranges missing or wrong",
+     "quote": "The embedded egress list had been transcribed by the author without access to the source",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 66,
+   "round_id": "66-review-1",
+   "round_label": "Independent review before merge (2026-10-24)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-002_Local_Test_Runs_Wrote_To_Production_User_Store.md"
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "1",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "CI emulator variable made the first guard hand anonymous credentials; fallback routes hung for minutes",
+     "quote": "**CI regression.** CI sets `FIRESTORE_EMULATOR_HOST=localhost:8081` without an emulator",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "2",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Tests did not check the start-up singleton that wrote to production; guard ordering untested",
+     "quote": "The tests did not check the object that wrote to production** (the start-up singleton)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "3",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "A cached Firestore client could keep guard state (moot after other changes)",
+     "quote": "A cached Firestore client could keep a guard state: moot now that no client can be built.",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "4",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Other inherited secrets and service endpoints were not removed",
+     "quote": "Other inherited secrets. **Changed:** layer 3 removes them; layer 5 added",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "5",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Emulator host parsing issue (moot after the branch was removed)",
+     "quote": "Emulator host parsing: moot (branch removed).",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "6",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Negative-control script safety (uncommitted file, restore on signal)",
+     "quote": "Negative-control script safety. **Changed:** refuses an uncommitted",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "7",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Record accuracy problems (emulator and CI claims, log rotation, severity mapping, marker docs)",
+     "quote": "Record accuracy (emulator and CI claims, log rotation, severity mapping, marker docs).",
+     "addressed_in_pr": true
+    }
+   ],
+   "reviewer_quote": {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/problem_reports/PRB-002_Local_Test_Runs_Wrote_To_Production_User_Store.md"
+    },
+    "quote": "An independent reviewer (AI agent, read-only, with a local proxy that logged and refused every"
+   }
+  },
+  {
+   "pr": 66,
+   "round_id": "66-review-2",
+   "round_label": "Re-review of `8bd7fe4` (same reviewer)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-002_Local_Test_Runs_Wrote_To_Production_User_Store.md"
+   },
+   "verdict_quote": "findings 1 to 8 closed or moot",
+   "findings": [
+    {
+     "id": "N1",
+     "severity": "minor",
+     "severity_as_written": "minor points (PR #66 body)",
+     "summary": "On Windows the asyncio proactor bypassed the socket guard",
+     "quote": "N1: on Windows, asyncio's default proactor connected through IOCP `ConnectEx`, bypassing the",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N2",
+     "severity": "minor",
+     "severity_as_written": "minor points (PR #66 body)",
+     "summary": "A loopback proxy could relay requests out of the test guard",
+     "quote": "N2: a proxy on loopback could relay requests out.",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N3",
+     "severity": "minor",
+     "severity_as_written": "minor points (PR #66 body)",
+     "summary": "connect_ex and host-name loopback cases not tested; UDP and DNS unguarded",
+     "quote": "N3: `connect_ex` unpatched and host names treated as loopback went undetected; UDP and DNS not",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N4",
+     "severity": "minor",
+     "severity_as_written": "minor points (PR #66 body)",
+     "summary": "Opt-in Firestore emulator tests cannot run under the guard (marker text)",
+     "quote": "N4: the opt-in Firestore emulator tests cannot run under the guard.",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N5",
+     "severity": "minor",
+     "severity_as_written": "minor points (PR #66 body); record calls the content 'record nits'",
+     "summary": "Record nits: section reference, layer-5 wording, ordering claim, Cloud Run check",
+     "quote": "N5: record nits (section reference, layer-5 wording, ordering claim, how the Cloud Run setting was",
+     "addressed_in_pr": true
+    }
+   ],
+   "label_quote": {
+    "source": {
+     "kind": "pr_body",
+     "pr": 66,
+     "path": null
+    },
+    "quote": "found five minor points (N1 to N5; main one: on Windows, asyncio's proactor bypassed the socket guard)"
+   }
+  },
+  {
+   "pr": 67,
+   "round_id": "67-review-1",
+   "round_label": "Independent review of PR #67 (2026-10-24) (first review, of `4bfdd7e`)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md"
+   },
+   "verdict_quote": "found it should not be merged",
+   "findings": [
+    {
+     "id": "1",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Patient identifiers still leaked through regex scrubbing; residual check shared the same rules",
+     "quote": "The patient's own identifiers still leaked and the residual check could not see them (same rules)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "2",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Ages 90 and over sent exactly; exact age in free text sent",
+     "quote": "Ages were not grouped: ≥ 90 kept the exact age; the exact age written in the text was sent",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "3",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Over-removal rewrote the device's own anatomical labels (e.g. patient named White)",
+     "quote": "Over-removal rewrote the device's own labels: \"Deep [name removed] Matter\" for a patient named White",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "4",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "False HIPAA / no-PHI claims remained in more places than the CAPA admitted",
+     "quote": "False \"HIPAA compliant / no PHI transmitted\" claims remained, in more places than this CAPA admitted",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "5",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Many pattern gaps (institutions, persons, addresses, local date forms)",
+     "quote": "Many pattern gaps (institutions, persons, addresses, dates in local forms …)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "6",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "E-mail rule ran in quadratic time (27 s on 80 KB) inside an async route",
+     "quote": "The e-mail rule took time growing with the square of the text length (27 s on 80 KB) in an async route",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "7",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Redaction labels did not match what was removed",
+     "quote": "Wrong labels (redaction categories that did not match what was removed)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "8",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "The tests missed all of the above defects",
+     "quote": "The tests missed all of the above | Tests now plant markers in every field",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 67,
+   "round_id": "67-review-2",
+   "round_label": "Second independent review (2026-10-24)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md"
+   },
+   "verdict_quote": "The re-review of the redesign closed the eight findings of the first review",
+   "findings": [
+    {
+     "id": "N1",
+     "severity": "major",
+     "severity_as_written": "major, HAZ-003",
+     "summary": "Clinician's typed Markdown became report structure; model text could appear under clinician heading",
+     "quote": "Text typed by the clinician could become report structure and the model's text could sit under the clinician's heading",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N2",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Application's own label names sent as unlisted; placeholder numbering inconsistent",
+     "quote": "were sent as \"[unlisted label]\"; the \"(n)\" suffix counted all labels; rows and groups did not match",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N3",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "A non-numeric value was printed as 0 in the prompt",
+     "quote": "A value that is not a number was printed as 0 (\"Total lesions: 0\" for \"2\")",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N4",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "No plausibility limits: dates or phone numbers in number fields sent as measurements",
+     "quote": "No plausibility limits: a date, record number or phone number in a number field was sent as a measurement",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N5",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Tripwire exempt words came from system templates that are never checked",
+     "quote": "421 exempt words came only from the system templates (\"filippi\", \"will\", \"pons\"), which are never checked",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N6",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Model told about clinician's entry even when nothing was typed",
+     "quote": "The model was told about the clinician's entry also when nothing was typed",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N7",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Typed image links rendered as external images on screen and in print",
+     "quote": "rendered as an external image on screen and in print",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N8",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "6-7 digit record-number rule refused legitimate drafts with volumes or voxel counts",
+     "quote": "All-digit record numbers of 6–7 digits refused legitimate drafts (\"12345.67 mm³\", \"123456 voxels\")",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N9",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Audit-record generator could rewrite withdrawn 'strips PHI' claim; stale model name in docs",
+     "quote": "could write the withdrawn RC-007 \"strips PHI\" statement again; the technical documentation named \"claude-3-5-sonnet\"",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N10",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Record lacked dispositions; REQ-SEC-022(d) misstated separator handling",
+     "quote": "§8 lacked the dispositions; REQ-SEC-022 (d) said \"any separators\" while the code allows up to 3",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "Also",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Patients named like device word pairs (Deep White) were refused on every draft",
+     "quote": "Patients named \"Deep White\", \"Left Cerebral\" or \"Juxta Cortical\" were refused on every draft",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 67,
+   "round_id": "67-review-3",
+   "round_label": "Third independent review (2026-10-24) — minor items",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md"
+   },
+   "verdict_quote": "The third review found the branch ready for the owner's Class C review",
+   "findings": [
+    {
+     "id": "R1",
+     "severity": "minor",
+     "severity_as_written": "minor items (section label)",
+     "summary": "Model text could imitate the clinician's box; bidirectional control characters could reorder text",
+     "quote": "The model's text could imitate the clinician's box",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R2",
+     "severity": "minor",
+     "severity_as_written": "minor items (section label)",
+     "summary": "Record claimed only the tripwire finds patient's number in range; tripwire skips numbers with units",
+     "quote": "§8 item 1 said that only the tripwire could find the patient's own number inside a field's range",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R3",
+     "severity": "minor",
+     "severity_as_written": "minor items (section label)",
+     "summary": "Plausibility caps refused real data (large burden change, fine voxels, percent confidence)",
+     "quote": "Caps that refused real data: a burden change of",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R4",
+     "severity": "minor",
+     "severity_as_written": "minor items (section label)",
+     "summary": "Typed text cut silently at 5000 characters and first-line indentation lost",
+     "quote": "Typed text was cut silently at 5000 characters and lost its first line's indentation",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M1",
+     "severity": "minor",
+     "severity_as_written": "minor items (section label; the M prefix here does NOT mean major)",
+     "summary": "Merge with PR #68 needs test-fixture updates (PRB-002 risk without the #66 guard)",
+     "quote": "Merging with PR #68 needs test-fixture updates: each PR's route tests stub only their own hooks",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "M2",
+     "severity": "minor",
+     "severity_as_written": "minor items (section label; the M prefix here does NOT mean major)",
+     "summary": "After #68, exempt-word synthetic reports would lose words; exempt-word count mismatch",
+     "quote": "Once only an evaluated DIS is printed (PR #68), the made-up reports for the exempt words would lose",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 67,
+   "round_id": "67-final-check",
+   "round_label": "Final check of the third review (2026-10-24)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md"
+   },
+   "verdict_quote": "The final check found the branch mergeable on the provider path",
+   "findings": [
+    {
+     "id": "Cosmetic",
+     "severity": "unlabelled",
+     "severity_as_written": "Cosmetic",
+     "summary": "Missing value printed with a stray percent sign ('not available%')",
+     "quote": "Cosmetic | \"not available%\" | **Fixed.** \"not available\" without a unit sign",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R2 (accepted)",
+     "severity": "unlabelled",
+     "severity_as_written": "R2 (accepted)",
+     "summary": "Residual false refusal and misses of the R2 number check that need crafted input; accepted",
+     "quote": "misses that need crafted input: the 7-digit local part of a US phone, a decimal containing the record number",
+     "addressed_in_pr": false
+    }
+   ],
+   "carried_over_not_counted": [
+    {
+     "id": "R1 (still forgeable)",
+     "from_round": "67-review-3",
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md"
+     },
+     "quote": "R1 (still forgeable) | A fence inside a list item"
+    }
+   ]
+  },
+  {
+   "pr": 67,
+   "round_id": "67-last-check",
+   "round_label": "Last check (2026-10-25)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-25",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md"
+   },
+   "verdict_quote": "The last check found the branch mergeable on its own",
+   "findings": [
+    {
+     "id": "1",
+     "severity": "unlabelled",
+     "severity_as_written": "small items",
+     "summary": "Copied/exported single text could still imitate clinician layout under the AI heading",
+     "quote": "The copied or exported single text was still slightly ambiguous",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "2",
+     "severity": "unlabelled",
+     "severity_as_written": "small items",
+     "summary": "Removing format characters joined words (zero-width space)",
+     "quote": "Removing every format character joined words",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 68,
+   "round_id": "68-review-1",
+   "round_label": "Independent review of PR #68 (2026-10-24, at `4c601f2`)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-003_DIS_Evaluated_On_Unreviewed_Segmentation.md"
+   },
+   "verdict_quote": "The review said: do not merge as-is; the core idea is sound.",
+   "findings": [
+    {
+     "id": "B1",
+     "severity": "blocker",
+     "severity_as_written": "Blocker.",
+     "summary": "DIS evaluated on any confirmed mask whatever its labels meant (false MET / NOT MET)",
+     "quote": "**Blocker.** DIS was evaluated on any confirmed mask whatever its labels meant",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M2",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "#67's payload guard drops evaluation_status after merge; DIS re-derived for any client id",
+     "quote": "#67's payload guard drops `evaluation_status`, so after a merge a confirmed DIS prints NOT EVALUATED",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M3",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "Per-region presence still shown and sent for unconfirmed segmentations",
+     "quote": "Per-region presence still shown and sent for unconfirmed segmentations",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M4",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "Templates and format rule still asked model for DIS; no output check; misleading notice",
+     "quote": "Templates and format rule 4 still asked the model for DIS; the not-evaluated rule was only in the user message",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M5",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "Confirmation not idempotent or auditable, rewrote the mask, ignored durability",
+     "quote": "Confirmation not idempotent, not auditable, rewrote the mask (next save 409), ignored durability",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m6",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Renaming labels after a confirmation kept the confirmation",
+     "quote": "Renaming labels after a confirmation kept it | The confirmation is bound",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m7",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Confirm button offered on any expanded segmentation, not only the open one",
+     "quote": "Confirm button offered on any expanded segmentation, though the digest is the open mask's",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m8",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Race between mask hash and spacing download; stale DIS replies",
+     "quote": "Race between the hash and the awaited spacing download; stale `refreshDis` replies",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m9",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Information-for-safety text missing on FLAMeS/tool cards, inaccurate elsewhere",
+     "quote": "Information-for-safety text missing on the FLAMeS result and the tool \"Segmentation ready\" card",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m10",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Old frontend crashes on a 'not evaluated' DIS block",
+     "quote": "An old frontend crashes on a \"not evaluated\" block",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m11",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Docstring did not match the re-raised HTTP errors",
+     "quote": "`server_dis_assessment` docstring vs re-raised HTTP errors",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 68,
+   "round_id": "68-review-2",
+   "round_label": "Second independent review of PR #68 (2026-10-24, at `29abe29`)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-003_DIS_Evaluated_On_Unreviewed_Segmentation.md"
+   },
+   "verdict_quote": "The second review closed M5 and m6-m11 and found B1, M3 and M4 only partly closed.",
+   "findings": [
+    {
+     "id": "N1",
+     "severity": "major",
+     "severity_as_written": "Major.",
+     "summary": "Label edits after classification trusted: split or relabelled lesions gave false MET/NOT MET after confirmation",
+     "quote": "**Major.** Label edits after the classification were trusted: `regions_state` checked only that the lesion voxels were unchanged",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N2",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Coordination with PR #67: its pushed head still drops the evaluated DIS state",
+     "quote": "Coordination with PR #67: its pushed head still drops the evaluated state",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N3",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Output check on model text overstated; missed many DIS wordings in en/es/de",
+     "quote": "The output check on the model's text was overstated: it missed \"spatial dissemination\"",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N4",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Not-evaluated templates still asked for per-region sections",
+     "quote": "The not-evaluated templates still asked for per-region sections",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N5",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Confirmation history with names went to every role, unbounded; assistant got usernames",
+     "quote": "The confirmation history (names, ids, times) went to every role with patient access, without a size limit",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N6",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "persist_metadata could overwrite newer metadata from another instance",
+     "quote": "`persist_metadata` could overwrite newer metadata written by another instance",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "N7",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Removing segmentation_id from the client lesion block bypassed the 409 binding",
+     "quote": "Removing `segmentation_id` from the client lesion block bypassed the 409 binding",
+     "addressed_in_pr": true
+    }
+   ],
+   "carried_over_not_counted": [
+    {
+     "id": "B1, M3, M4 (partly closed)",
+     "from_round": "68-review-1",
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-003_DIS_Evaluated_On_Unreviewed_Segmentation.md"
+     },
+     "quote": "found B1, M3 and M4 only partly closed"
+    }
+   ]
+  },
+  {
+   "pr": 68,
+   "round_id": "68-review-3",
+   "round_label": "Third independent review of PR #68 (2026-10-24, at `2e20b8a`)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-24",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-003_DIS_Evaluated_On_Unreviewed_Segmentation.md"
+   },
+   "verdict_quote": "The third review found no blocker or major finding in #68 alone",
+   "findings": [
+    {
+     "id": "m-1",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); 'Two minor findings'",
+     "summary": "Correction list numbered lesions differently from the lesion table (usability, IEC 62366)",
+     "quote": "Usability (IEC 62366): the gate numbered lesions in raster order and counted components below the lesion-size floor",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m-3",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); 'Two minor findings'",
+     "summary": "Negative-control mutation G14 only broke the import instead of the logic",
+     "quote": "Mutation G14 only broke the import (removing the only statement of an `if` block gave an IndentationError)",
+     "addressed_in_pr": true
+    }
+   ],
+   "label_quote": {
+    "source": {
+     "kind": "pr_body",
+     "pr": 68,
+     "path": null
+    },
+    "quote": "Two minor findings fixed with the same process"
+   }
+  },
+  {
+   "pr": 69,
+   "round_id": "69-review-1",
+   "round_label": "Independent integration review of PR #69 at `6d1fde2` (2026-10-28)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+   },
+   "verdict_quote": "The review found that nothing reviewed was lost in the integration and no blocker or major issue.",
+   "findings": [
+    {
+     "id": "1",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Unconfirmed regions became '[unlisted label 1] = not confirmed' plus an app note in every draft",
+     "quote": "#68's `without_region_breakdown` set every lesion's region to \"not confirmed\", which #67's label check treated as an unlisted label",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "2",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Zero-width characters hid a DIS statement from the PRB-003 output check",
+     "quote": "Zero-width characters (ZWJ, ZWSP) hid a DIS statement from PRB-003's output check",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "3",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Two different 'evaluated' rules in route versus template and prompt",
+     "quote": "Two \"evaluated\" rules: the template and the findings prompt needed \"evaluated + a yes/no conclusion\"",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "4",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Test gap: no test of the fully real report path",
+     "quote": "Test gap: the fully real path | `test_rc064_release_r4_*`: CAPA-014's markers in every field",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "5",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "PRB-002 negative-control script missed every anchor on a Windows CRLF checkout",
+     "quote": "`prb002_negative_controls.py` missed every anchor on a Windows CRLF checkout",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "6",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Geometry 422 from the server lesion table shown as 'no measurements' in report panel",
+     "quote": "A 422 from the server-side lesion table (image geometry unreadable) showed \"no measurements\" in the report panel",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 69,
+   "round_id": "69-capture-1",
+   "round_label": "Browser capture session of the release build (2026-10-28) — findings F01–F21 (F08, F09, F10, F04 addressed; F12 = review item 1)",
+   "reviewer": "browser walk-through / capture session (app capture for the film, mstool-film CAPTURES.md)",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+   },
+   "verdict_quote": "What a radiologist confirms must be drawn on screen, so they block the release",
+   "findings": [
+    {
+     "id": "F08",
+     "severity": "unlabelled",
+     "severity_as_written": "(clinical safety)",
+     "summary": "After Auto-Classify Regions, lesions labelled 2-4 not drawn; radiologist could confirm without seeing them",
+     "quote": "F08 (clinical safety) | After \"Auto-Classify Regions\", lesions labelled 2–4 (juxtacortical, infratentorial, deep white matter) were not drawn on the 2D image until the study was reopened",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "F09",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Classification silently removed lesion components under 3 mm3 before the confirmation",
+     "quote": "The classification removed lesion components smaller than 3 mm³ from the stored mask without telling the user",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "F10",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Card kept saying 'No radiologist has confirmed' for 6-12 s after confirming",
+     "quote": "After \"confirm\", the DIS card kept saying \"No radiologist has confirmed this segmentation\" for 6–12 s with no progress",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "F04",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Literal escape sequence shown instead of a dash in per-region rows",
+     "quote": "A literal \"—\" in the per-region rows | Escape sequence in JSX text",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "F12",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Application note '[unlisted label 1] = not confirmed' in a plain draft (same defect as review item 1)",
+     "quote": "F12 of the capture session (an application note \"[unlisted label 1] = not confirmed\" in a plain draft) is item 1 of the",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "F01",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "3D and W/L GPU views crash on host names without a dot",
+     "quote": "F01 3D/W-L GPU crash on host names without a dot",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F02",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Segmentation overlay inherits the MRI display range (red fog in 3D)",
+     "quote": "F02 segmentation overlay inherits the MRI display range (red fog in 3D)",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F03",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Spanish text appears in the English user interface",
+     "quote": "(red fog in 3D); F03 Spanish text in the English UI",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F05",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Multi-panel grid empty for a study with only preprocessed images",
+     "quote": "English UI; F05 grid with only preprocessed images",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F06",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Segmentation author shown as placeholder 'current_user'",
+     "quote": "preprocessed images; F06 \"current_user\" as author",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F07",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Deleted studies still listed and counted",
+     "quote": "F07 deleted studies still listed/counted; F11",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F11",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Class C DIS confirmation uses a native window.confirm dialog",
+     "quote": "F11 the Class C confirmation is a native `window.confirm`",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F13",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Viewer opens at slice 1 (outside the head)",
+     "quote": "F13 viewer opens at slice 1; F14 axial rotation",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F14",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Axial image rotated between Standard and W/L GPU viewer modes",
+     "quote": "F14 axial rotation between standard and W/L GPU modes",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F15",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Login footer claims MFA/AAL2 and HIPAA/ISO badges although sign-in used a password only",
+     "quote": "F15 login footer claims MFA/AAL2 and HIPAA/ISO badges while sign-in used a password only",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F16",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Patient initials inconsistent between views",
+     "quote": "password only**; F16 patient initials; F17",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F17",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Self-registered user invisible to administrators until restart",
+     "quote": "F17 self-registered user invisible to admins until restart",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F18",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "A radiologist cannot open a patient they created",
+     "quote": "F18 a radiologist cannot open a patient they created",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F19",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Missing brain_screening.onnx model requested by the viewer",
+     "quote": "F19 missing `brain_screening.onnx`; F20 no audit-trail page",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F20",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "No audit-trail page in the application",
+     "quote": "F20 no audit-trail page; **F21 open self-registration**",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    },
+    {
+     "id": "F21",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Open self-registration on the sign-in page",
+     "quote": "no audit-trail page; **F21 open self-registration**.",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    }
+   ],
+   "reviewer_quote": {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+    },
+    "quote": "A browser capture session of this release build (offline, local;"
+   }
+  },
+  {
+   "pr": 69,
+   "round_id": "69-review-2",
+   "round_label": "Second independent review of PR #69 (`6d1fde2..dd22708`) (2026-10-28)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+   },
+   "verdict_quote": "The review found round 1 (§9), F10 and F04 sound, and **1 blocker and 3 majors**.",
+   "findings": [
+    {
+     "id": "B1",
+     "severity": "blocker",
+     "severity_as_written": "(blocker)",
+     "summary": "F08 still reachable via stale sidebar list: only label 1 drawn and confirmation accepted",
+     "quote": "F08 still reachable: the sidebar list (`['segmentations','study',studyId]`) was never refreshed by the classification",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M3",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix), '(pre-existing)'; verdict '3 majors'",
+     "summary": "Eye toggle, overlay switch or zero opacity let a radiologist confirm hidden lesions",
+     "quote": "A label's eye toggle, the overlay switch or a lesion opacity of 0 (kept across sessions) let a radiologist confirm with lesions hidden",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M1",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix); verdict '3 majors'",
+     "summary": "F09 removal notice read from the open segmentation in every dashboard and written into it",
+     "quote": "The F09 notice was read from the OPEN segmentation's `analysis_data` in every dashboard",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M2",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix); verdict '3 majors'",
+     "summary": "Second classification recorded 0 removed components and erased the disclosure",
+     "quote": "A second classification started from the cleaned mask, recorded 0 and overwrote the stored figure",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m1",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Failed mask reload after classification was silent",
+     "quote": "A failed mask reload after classify was silent",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m2",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Classification reloaded the open mask and discarded unsaved edits",
+     "quote": "Classify reloaded the open mask and discarded its unsaved edits (also from another dashboard)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m3",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Comment and record wrongly said NiiVue draws from the label table",
+     "quote": "The comment and §10 said NiiVue draws from the label table",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m4",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Viewer and assistant still decided 'evaluated' by status alone",
+     "quote": "\"Evaluated\" was still decided by the status alone in the viewer (`isDisEvaluated`) and the assistant",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m5",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Failed read-back after recorded confirmation still said nobody confirmed",
+     "quote": "A failed read-back after a recorded confirmation left \"No radiologist has confirmed\" and the confirm button",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m6",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "CAPA-014 negative-control record hashes predated a later change",
+     "quote": "The CAPA-014 record's locale hashes predated `e9935eb`",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m7",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Test gaps (reopen, server failure, classify-not-open, reload failure, anisotropic F09)",
+     "quote": "Test gaps | Reopen and server failure (ViewerApp), classify-while-not-open",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "n1",
+     "severity": "nit",
+     "severity_as_written": "n (ID prefix)",
+     "summary": "Every lesion-table failure reported as an image-geometry problem",
+     "quote": "Every lesion-table failure was reported as \"image geometry\"",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 69,
+   "round_id": "69-capture-2",
+   "round_label": "Film capture of the release build (same day) (2026-10-28)",
+   "reviewer": "browser walk-through / capture session (film capture)",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "no-id: DWM plural",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Sidebar and report said 'DWM: 1 lesions' (plural for one, English only)",
+     "quote": "**Film capture of the release build (same day): \"DWM: 1 lesions\".** The region summary in the sidebar showed",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 69,
+   "round_id": "69-final-check",
+   "round_label": "Final check of PR #69 (`dd22708..39d9730`) (2026-10-29)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-29",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+   },
+   "verdict_quote": "It found **two major gaps in the confirmation guard** of §11.",
+   "findings": [
+    {
+     "id": "R1",
+     "severity": "major",
+     "severity_as_written": "(major)",
+     "summary": "Confirmation guard read 2D canvas settings, not the view on screen; Confirm accepted with nothing drawn",
+     "quote": "The guard read the 2D canvas settings, not the view on screen.",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R2",
+     "severity": "major",
+     "severity_as_written": "(major)",
+     "summary": "Switching label preset to Default redrew regions with other names/colours; Confirm accepted",
+     "quote": "Switching the label preset to \"Default\" redrew the MAGNIMS values with other names and colours",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 69,
+   "round_id": "69-last-check",
+   "round_label": "last check of #69 (`39d9730..0e1ee22`)",
+   "reviewer": "independent agent session (not named in the source)",
+   "date": null,
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+   },
+   "verdict_quote": "**Known minor items for the owner** (last check of #69, `39d9730..0e1ee22`; none hides a lesion silently",
+   "findings": [
+    {
+     "id": "L1",
+     "severity": "minor",
+     "severity_as_written": "Known minor items",
+     "summary": "Another image under the open segmentation draws it sheared and Confirm is accepted",
+     "quote": "**L1 — another image under the segmentation.** The R1 check requires an image in the standard view",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "L2",
+     "severity": "minor",
+     "severity_as_written": "Known minor items",
+     "summary": "High zone-map or longitudinal overlay opacity can camouflage lesions",
+     "quote": "**L2 — the zone map and the longitudinal overlay can camouflage lesions.**",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "L3",
+     "severity": "minor",
+     "severity_as_written": "Known minor items",
+     "summary": "Lesion-table chip colours differ from the image colours (pre-existing)",
+     "quote": "**L3 — lesion-table chips against image colours** (pre-existing).",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "L4",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Residual-risk wording corrected (replay named) — content given only in commit 33f9425",
+     "quote": "(resolved when #71 merges). L4 wording corrected in `33f9425`",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "pr_body",
+      "pr": 69,
+      "path": null
+     }
+    }
+   ]
+  },
+  {
+   "pr": 70,
+   "round_id": "70-review-1",
+   "round_label": "Independent review of PR #70 — all findings addressed (2026-10-28)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "pr_body",
+    "pr": 70,
+    "path": null
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "M1",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix, bold)",
+     "summary": "Series/image delete erased storage with only the care-team check",
+     "quote": "series/image delete erased storage with the care-team check only",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M2",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix, bold)",
+     "summary": "Any care-team member could cancel (hide) a study for everyone",
+     "quote": "any care-team member could cancel a study, now hidden for everyone",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M3",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix, bold)",
+     "summary": "After deploy, unassigned clinicians would see a false empty registry inviting re-registration",
+     "quote": "after deploy, clinicians without assignments read \"No patients registered — register your first patient\"",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m1",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Audit event of admin-created accounts named the wrong actor and route",
+     "quote": "| m1 audit actor of admin-created accounts | event names the administrator",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m2",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Profile saves could write an empty password hash and erase password history",
+     "quote": "m2 empty password hash / history erased on profile saves",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m3",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Account delete reported 204 when the store refused",
+     "quote": "m3 delete reported 204 when the store refused",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m4",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Production detection relied on exact 'production' string match",
+     "quote": "m4 exact \"production\" match | allow-list `development, local, test, testing`",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m5",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Unknown counts shown as 0 in tiles",
+     "quote": "m5 null counted as 0 in the tiles | \"—\" when any count is unknown",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m6",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Count queries ran sequentially (slow patient list)",
+     "quote": "m6 sequential count queries | the 5 count queries per patient run 8 patients at a time",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m7",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Regulatory badge and README compliance claim remained",
+     "quote": "m7 \"IEC 62304 · Class C\" badge; README \"satisfies IEC 81001-5-1\"",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m8",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Test gaps (segmentation creator route, admin password policy)",
+     "quote": "m8 test gaps | route test for the segmentation creator",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m9",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "PACS patient search open to any role; MRN 409 reveals record existence",
+     "quote": "m9 PACS search open; MRN 409 | **PRB-027**: PACS search and import need **IMAGE_UPLOAD**",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 70,
+   "round_id": "70-review-2",
+   "round_label": "Re-review of PR #70 — addressed (2026-10-28)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "pr_body",
+    "pr": 70,
+    "path": null
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "R1",
+     "severity": "major",
+     "severity_as_written": "R1 (major)",
+     "summary": "Owner backfill script accepted any project except one deny-listed project",
+     "quote": "backfill accepted any project but [unrelated-project]",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R2",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Account without is_active field counted as active",
+     "quote": "R2 account without `is_active` counted as active",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R3",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Backfill backup written only at the end and could be overwritten",
+     "quote": "R3 backup rewritten only at the end, name to the second",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R4",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Password leaks on over-long login and change-password (already closed; regression tests added)",
+     "quote": "R4 login (> 128) and change-password leaks | already closed by the first review's handler fix",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R5",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "500 handler returned the exception message; validators would log value samples",
+     "quote": "R5 500 handler returned the exception message; validators' `value_sample`",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R6",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Profile save fell back to a possibly stale in-memory password hash",
+     "quote": "R6 profile save fell back to the in-memory hash",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 70,
+   "round_id": "70-coordinator-1",
+   "round_label": "Coordinator finding (after the re-review of PR #70, 2026-10-28)",
+   "reviewer": "other (coordinating agent session)",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "pr_body",
+    "pr": 70,
+    "path": null
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "Coordinator finding",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Sign-in subtitle claimed 'IEC 62304 Class C Medical Device'",
+     "quote": "Coordinator finding: sign-in subtitle \"AI-Powered Brain MRI Analysis · IEC 62304 Class C Medical Device\"",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 71,
+   "round_id": "71-capture-coordinator",
+   "round_label": "coordinator of the release-candidate capture session (seventh display finding: region colours, PRB-010)",
+   "reviewer": "browser walk-through / capture session (coordinator)",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-010_Region_Overlay_Colours_Differ_From_Legend_And_Red_Green.md"
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "region colours",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Region overlay colours on the image differed from the Okabe-Ito legend (red/green)",
+     "quote": "**Reporter**: coordinator of the release-candidate capture session (region overlay colours of the viewer against the",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 71,
+   "round_id": "71-review-1",
+   "round_label": "Independent review of the draft PR #71 (2026-10-28, at `39f9d44`)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-004_GPU_View_Rotated_Against_Standard_View.md"
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "M1",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix) (HAZ-006)",
+     "summary": "3D drew masks by their own affine unchecked; aligned route raised NameError and stamped affine on any mask",
+     "quote": "The 3D view (volume and multiplanar) drew the lesion mask and both visit masks by their own affine with no check",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M2",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix)",
+     "summary": "Unsaved segmentation or edits silently missing from GPU and 3D views",
+     "quote": "and unsaved edits were silently absent from the GPU view",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "M3",
+     "severity": "major",
+     "severity_as_written": "M (ID prefix) (HAZ-006)",
+     "summary": "3D go-to-slice used index/(depth-1): wrong level, wrong axis for some storage",
+     "quote": "3D \"go to slice\" (comparison and longitudinal panels) set niivue's axial fraction",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m1",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Colour-blind claim measured on opaque colours; as drawn two regions too close for deutan readers",
+     "quote": "**m1 — the colour-blind claim was measured on the opaque colours, the image shows them translucent.**",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-010_Region_Overlay_Colours_Differ_From_Legend_And_Red_Green.md"
+     }
+    },
+    {
+     "id": "m2",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Later-visit 3D mask drawn white (hot colormap) instead of red",
+     "quote": "**m2**: the later-visit mask of the 3D longitudinal overlay was loaded with niivue's \"hot\" colormap",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-006_Lesion_Mask_Coloured_With_MRI_Display_Window.md"
+     }
+    },
+    {
+     "id": "m3",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "niivue keys, wheel and double-click changed slice or window behind the store",
+     "quote": "niivue's own keys (V view type, C clip plane, Ctrl+U/D slice, M drag mode), its wheel (slice) and double-click",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m4",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Slice kept on image switch whenever slice count matched, even on another grid",
+     "quote": "**m4 (review)**: the slice was kept on an image switch within one study whenever the slice COUNT matched.",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-008_Viewer_Opens_On_Empty_First_Slice.md"
+     }
+    },
+    {
+     "id": "m5",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "GPU notice placed where the identity block covers it in a narrow view",
+     "quote": "The GPU notice sat at the top (`top-12`), where the patient-identity block covers it in a narrow view.",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m6",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "GPU and 3D views drew region-classified masks all red",
+     "quote": "**m6 — the GPU and 3D views drew a region-classified mask all red.**",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-010_Region_Overlay_Colours_Differ_From_Legend_And_Red_Green.md"
+     }
+    },
+    {
+     "id": "m7",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Dead mask-overlay path in the multi-panel grid",
+     "quote": "The multi-panel grid kept a mask-overlay path no caller wired",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m8",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Safety scripts mutated the developer's checkout",
+     "quote": "Both safety scripts changed source files in the developer's checkout",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m9",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Grid-mismatch notice sent the reader to the Standard view, which draws it wrongly",
+     "quote": "The notice for a mask on another grid sent the reader to the Standard view",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m10",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix)",
+     "summary": "Segmentation derivative files could appear as grid images",
+     "quote": "**m10**: a segmentation derivative (BIDS `desc-segfrompreproc`",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-007_Grid_Empty_For_Study_Of_Preprocessed_Images.md"
+     }
+    }
+   ]
+  },
+  {
+   "pr": 71,
+   "round_id": "71-film-capture",
+   "round_label": "Film capture (coordinator, 2026-10-28)",
+   "reviewer": "browser walk-through / capture session (film capture, by the coordinator)",
+   "date": "2026-10-28",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-004_GPU_View_Rotated_Against_Standard_View.md"
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "film (a)",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "3D colour bar drawn under the laterality safety caveat",
+     "quote": "**3D colour bar under the laterality caveat** (RC-023, HAZ-006 context; CAPA-010)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "film (b)",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Sidebar slice number and slider ignored the side-by-side panels",
+     "quote": "**Sidebar slice in the side-by-side panels (film capture)**",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-008_Viewer_Opens_On_Empty_First_Slice.md"
+     }
+    }
+   ]
+  },
+  {
+   "pr": 71,
+   "round_id": "71-review-2",
+   "round_label": "Re-review of PR #71 (`39f9d44..4626d17`, 2026-10-29)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-29",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-004_GPU_View_Rotated_Against_Standard_View.md"
+   },
+   "verdict_quote": "The re-review verified every item of §9 as fixed and found one major and six minor items.",
+   "findings": [
+    {
+     "id": "R1",
+     "severity": "major",
+     "severity_as_written": "(major, HAZ-006)",
+     "summary": "Failed 3D mask download only logged; previous mask could stay drawn under new name",
+     "quote": "A 3D mask download that failed was only logged; the buffer of the previous request was kept",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R2",
+     "severity": "minor",
+     "severity_as_written": "verdict 'six minor items'",
+     "summary": "Aligned route loaded whole reference MRI; any error became HTTP 500",
+     "quote": "The aligned route loaded the whole reference MRI into memory to read its shape, and any exception became HTTP 500.",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R3",
+     "severity": "minor",
+     "severity_as_written": "verdict 'six minor items'",
+     "summary": "3D silent about unsaved edits of a saved segmentation",
+     "quote": "3D named an unsaved segmentation but not unsaved edits on a saved one (it draws the last saved mask).",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R4",
+     "severity": "minor",
+     "severity_as_written": "verdict 'six minor items'",
+     "summary": "Identity-transform masks refused even on identity-transform images",
+     "quote": "Any identity-transform mask was refused in 3D, also the valid mask of an image whose own transform is the identity.",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R5",
+     "severity": "minor",
+     "severity_as_written": "verdict 'six minor items' (with PR #69)",
+     "summary": "Unlabelled values cyan here but magenta (= Active Gd+ colour) in #69",
+     "quote": "Unlabelled mask values: cyan in the GPU/3D views here, magenta in #69's 2D canvas",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "R6",
+     "severity": "minor",
+     "severity_as_written": "verdict 'six minor items'",
+     "summary": "Periventricular vs deep white matter closest colour pair as drawn, the pair that matters for DIS",
+     "quote": "**R6 — periventricular against deep white matter is now the closest pair as drawn**",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-010_Region_Overlay_Colours_Differ_From_Legend_And_Red_Green.md"
+     }
+    },
+    {
+     "id": "R7",
+     "severity": "minor",
+     "severity_as_written": "verdict 'six minor items'",
+     "summary": "REQ-SAFE-041 overstated: niivue keys still acted in 3D",
+     "quote": "REQ-SAFE-041 said the views' own controls never act behind the application's state",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "small item (1)",
+     "severity": "unlabelled",
+     "severity_as_written": "Small items of the re-review not changed here",
+     "summary": "niivue file drag-and-drop still enabled on GPU canvas",
+     "quote": "Small items of the re-review not changed here: niivue's file drag-and-drop on the GPU canvas is still enabled",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "small item (2)",
+     "severity": "unlabelled",
+     "severity_as_written": "Small items of the re-review not changed here",
+     "summary": "Ctrl+wheel zoom no longer available in the GPU view",
+     "quote": "zoom is gone from the GPU view; wheel activity",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "small item (3)",
+     "severity": "unlabelled",
+     "severity_as_written": "Small items of the re-review not changed here",
+     "summary": "GPU canvas wheel activity no longer reaches the session-timeout tracker",
+     "quote": "wheel activity over the GPU canvas no longer reaches the session-timeout tracker",
+     "addressed_in_pr": false
+    },
+    {
+     "id": "Note (vermillion)",
+     "severity": "unlabelled",
+     "severity_as_written": "Note",
+     "summary": "Vermillion region colour close to plain red for deutan readers (recorded, no change)",
+     "quote": "vermillion is close to plain red for a deutan reader",
+     "addressed_in_pr": false,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-010_Region_Overlay_Colours_Differ_From_Legend_And_Red_Green.md"
+     }
+    }
+   ]
+  },
+  {
+   "pr": 71,
+   "round_id": "71-final-check",
+   "round_label": "Final check of PR #71 (2026-10-29) — F1",
+   "reviewer": "independent agent session",
+   "date": "2026-10-29",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-010_Region_Overlay_Colours_Differ_From_Legend_And_Red_Green.md"
+   },
+   "verdict_quote": null,
+   "findings": [
+    {
+     "id": "F1",
+     "severity": "unlabelled",
+     "severity_as_written": null,
+     "summary": "Cursor label readout ignored the overlay transpose rule; could name another voxel's label",
+     "quote": "**The cursor label ignored the overlay's transpose rule.**",
+     "addressed_in_pr": true
+    }
+   ]
+  },
+  {
+   "pr": 74,
+   "round_id": "74-review-1",
+   "round_label": "Independent review of PR #74 (`290e407`) (2026-10-31)",
+   "reviewer": "independent agent session",
+   "date": "2026-10-31",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-028_Geometric_Fallback_Regions_Confirmed_Without_Per_Lesion_Review.md"
+   },
+   "verdict_quote": "No blocker and no major issue; the claims hold.",
+   "findings": [
+    {
+     "id": "m1",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Colorize-by-zone drew values in region palette; shared check did not see it; Confirm accepted",
+     "quote": "\"Colorize by zone\" (switched on with the zone map) draws values 1-4 in the region palette whatever their label",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-029_AI_Draft_Review_Confirmed_Without_Drawn_Lesion_Check.md"
+     }
+    },
+    {
+     "id": "m2",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Ticks could be given on a card whose segmentation was not open and survived switching",
+     "quote": "Ticks could be given on an expanded card whose segmentation was not open (another one on screen)",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m3",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Honest limit of the tick stated only in the problem report, not in RMF",
+     "quote": "The honest limit of the tick was in this report only",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m4",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Atlas re-classification after a ticked confirmation gave geometric_regions_not_reviewed",
+     "quote": "After a confirmation with ticks, the same mask classified again with the atlas gave \"geometric_regions_not_reviewed\"",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m5",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Reset of ticks on a changed list had no test",
+     "quote": "The reset of the ticks on a changed list had no test",
+     "addressed_in_pr": true
+    },
+    {
+     "id": "m6",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Longitudinal 'new' colour equal to deep-white-matter vermillion; old legend colours",
+     "quote": "Longitudinal \"new\" = the deep-white-matter vermillion",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-031_Layers_Under_The_Lesions_Can_Camouflage_Them.md"
+     }
+    },
+    {
+     "id": "m7",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Out-of-date tab got a misleading label-table message",
+     "quote": "A tab opened before the update sends only the mask digest and got the label-table message",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-029_AI_Draft_Review_Confirmed_Without_Drawn_Lesion_Check.md"
+     }
+    },
+    {
+     "id": "m8",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Finding content not stated; disposition recorded in PRB-030 §4 (study = visit; path convention)",
+     "quote": "m8 | Recorded in PRB-030 §4 (study = visit; path convention)",
+     "addressed_in_pr": null,
+     "source": {
+      "kind": "pr_body",
+      "pr": 74,
+      "path": null
+     }
+    },
+    {
+     "id": "m9",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Two whole images downloaded per confirmation to read a header",
+     "quote": "Two whole images were downloaded on every confirmation to read a header of a few hundred bytes",
+     "addressed_in_pr": true,
+     "source": {
+      "kind": "file",
+      "pr": null,
+      "path": "docs/iec62304/records/problem_reports/PRB-030_Confirm_Accepted_Over_An_Image_Of_Another_Grid.md"
+     }
+    },
+    {
+     "id": "m10",
+     "severity": "minor",
+     "severity_as_written": "m (ID prefix); '10 minor findings' (PR #74 body)",
+     "summary": "Known limits (corrections above 100, atlas default DWM, history event) recorded, not changed",
+     "quote": "**Known limits recorded (review m10, not changed here):** region *corrections* above 100 can still be acknowledged while",
+     "addressed_in_pr": false
+    }
+   ],
+   "label_quote": {
+    "source": {
+     "kind": "pr_body",
+     "pr": 74,
+     "path": null
+    },
+    "quote": "No blocker, no major; the four claims hold. 10 minor findings"
+   }
+  }
+ ],
+ "per_pr_totals": {
+  "64": {
+   "blocker": 0,
+   "major": 0,
+   "minor": 0,
+   "nit": 0,
+   "unlabelled": 4,
+   "rounds": 1
+  },
+  "65": {
+   "blocker": 0,
+   "major": 4,
+   "minor": 9,
+   "nit": 2,
+   "unlabelled": 6,
+   "rounds": 3
+  },
+  "66": {
+   "blocker": 0,
+   "major": 0,
+   "minor": 5,
+   "nit": 0,
+   "unlabelled": 7,
+   "rounds": 2
+  },
+  "67": {
+   "blocker": 0,
+   "major": 1,
+   "minor": 6,
+   "nit": 0,
+   "unlabelled": 22,
+   "rounds": 5
+  },
+  "68": {
+   "blocker": 1,
+   "major": 5,
+   "minor": 8,
+   "nit": 0,
+   "unlabelled": 6,
+   "rounds": 3
+  },
+  "69": {
+   "blocker": 1,
+   "major": 5,
+   "minor": 10,
+   "nit": 1,
+   "unlabelled": 29,
+   "rounds": 6
+  },
+  "70": {
+   "blocker": 0,
+   "major": 4,
+   "minor": 9,
+   "nit": 0,
+   "unlabelled": 6,
+   "rounds": 3
+  },
+  "71": {
+   "blocker": 0,
+   "major": 4,
+   "minor": 16,
+   "nit": 0,
+   "unlabelled": 8,
+   "rounds": 5
+  },
+  "72": {
+   "blocker": 0,
+   "major": 0,
+   "minor": 0,
+   "nit": 0,
+   "unlabelled": 0,
+   "rounds": 0
+  },
+  "73": {
+   "blocker": 0,
+   "major": 0,
+   "minor": 0,
+   "nit": 0,
+   "unlabelled": 0,
+   "rounds": 0
+  },
+  "74": {
+   "blocker": 0,
+   "major": 0,
+   "minor": 10,
+   "nit": 0,
+   "unlabelled": 0,
+   "rounds": 1
+  },
+  "75": {
+   "blocker": 0,
+   "major": 0,
+   "minor": 0,
+   "nit": 0,
+   "unlabelled": 0,
+   "rounds": 0
+  }
+ },
+ "all_prs_total": {
+  "blocker": 2,
+  "major": 23,
+  "minor": 73,
+  "nit": 3,
+  "unlabelled": 88,
+  "rounds": 29,
+  "findings": 189
+ },
+ "f08_provenance": {
+  "answer": "F08 was found by the browser capture session of the release build (a walk-through recorded for the app film), not by an independent review. The first independent integration review of #69 (at 6d1fde2, the same commit the capture session used according to PRB-005..PRB-009 and PR #71) reported no blocker or major issue and did not report F08. After the capture-round fix, the second independent review found F08 'still reachable' through other paths (B1, blocker: only label 1 drawn while the confirmation was offered and accepted), and the final check found two more major gaps (R1, R2) in the confirmation guard built for it. So: the original defect = walk-through only; its incomplete fix = independent review.",
+  "first_found_round": "69-capture-1",
+  "later_rounds_on_same_defect": [
+   "69-review-2 (B1)",
+   "69-final-check (R1, R2)"
+  ],
+  "evidence": [
+   {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+    },
+    "quote": "F08 (clinical safety) | After \"Auto-Classify Regions\", lesions labelled 2–4 (juxtacortical, infratentorial, deep white matter) were not drawn on the 2D image until the study was reopened"
+   },
+   {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+    },
+    "quote": "were not drawn on the 2D image until the study was reopened; a radiologist could confirm without seeing them"
+   },
+   {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+    },
+    "quote": "A browser capture session of this release build (offline, local;"
+   },
+   {
+    "source": {
+     "kind": "pr_body",
+     "pr": 69,
+     "path": null
+    },
+    "quote": "**F08** (clinical safety) | After \"Auto-Classify Regions\", lesions labelled 2–4 were not drawn until the study was reopened"
+   },
+   {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+    },
+    "quote": "The review found that nothing reviewed was lost in the integration and no blocker or major issue."
+   },
+   {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/problem_reports/PRB-005_3D_And_GPU_Views_Fail_On_Host_Without_Dot.md"
+    },
+    "quote": "browser capture session of the release candidate (PR #69 @ `6d1fde2`, finding F01 in"
+   },
+   {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+    },
+    "quote": "F08 still reachable: the sidebar list (`['segmentations','study',studyId]`) was never refreshed by the classification"
+   },
+   {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+    },
+    "quote": "only label 1 was drawn while the mask held 1–4, and the confirmation was offered and accepted"
+   },
+   {
+    "source": {
+     "kind": "file",
+     "pr": null,
+     "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+    },
+    "quote": "It found **two major gaps in the confirmation guard** of §11."
+   }
+  ]
+ },
+ "excluded_items": [
+  {
+   "pr": 67,
+   "round_id": "67-review-2",
+   "item": "PR #68 row",
+   "reason": "the source states it is not a review finding",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/capa/CAPA-014_AI_Report_Deidentification.md"
+   },
+   "quote": "(Coordination, not a review finding.)"
+  },
+  {
+   "pr": 69,
+   "round_id": "69-final-check",
+   "item": "Server (partial safeguard)",
+   "reason": "row describes part of the R2 correction; the verdict counts two major gaps (R1, R2)",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_notes.md"
+   },
+   "quote": "| Server (partial safeguard) | The confirmation route could not know what was drawn |"
+  },
+  {
+   "pr": 68,
+   "round_id": "68-review-3",
+   "item": "merge note and N6 residual noted by the third review",
+   "reason": "coordination instruction and residual of N6 (already counted in 68-review-2); verdict counts two minor findings",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-003_DIS_Evaluated_On_Unreviewed_Segmentation.md"
+   },
+   "quote": "**Residual risk noted by the third review (N6):**"
+  },
+  {
+   "pr": 71,
+   "round_id": "71-review-1",
+   "item": "D-3",
+   "reason": "owner-decision item resolved by M1, not a finding",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-004_GPU_View_Rotated_Against_Standard_View.md"
+   },
+   "quote": "| **D-3** | — | Resolved by M1 (§7). | as M1 |"
+  },
+  {
+   "pr": 71,
+   "round_id": "71-review-1",
+   "item": "longitudinal red/green known issue",
+   "reason": "written in the review section but not attributed to the reviewer; later fixed in #74 (PRB-031)",
+   "source": {
+    "kind": "file",
+    "pr": null,
+    "path": "docs/iec62304/records/problem_reports/PRB-010_Region_Overlay_Colours_Differ_From_Legend_And_Red_Green.md"
+   },
+   "quote": "**Known issue, not fixed here: the longitudinal layer of the 2D view draws voxels present at both visits green and voxels"
+  }
+ ],
+ "notes": [
+  "SOURCE CHOICE: records preferred when they hold the round (PRB-002 §6; PRB-003 §9-§11 (duplicated in CAPA-016 §10-§12, not used); CAPA-014 §8.1-§8.4 and §11; CAPA-015 §10-§11; RELEASE-2026-10-25 notes §7 and §9-§12; PRB-004 §9-§10 with PRB-006/007/008/010 'R' sections; PRB-028..031 §6). PR bodies used where no single record holds the round: #64 (the four items are listed only in the PR #64 body; PRB-001/CAPA-012/CAPA-013 only mention 'after the independent review of PR #62'), #70 (findings split across PRB-020..027 'Review of PR #70' sections; the PR body table is the only complete list, same IDs and labels), the 16 unaddressed capture findings of #69 and L4 (only in the PR #69 body), #74 m8 (only in the PR #74 body). A finding-level 'source' key overrides the round source when the quote comes from another document.",
+  "SEVERITY LABELS come from different places: explicit words ('Blocker.', '(blocker)', '(major)', 'Major.', 'minor items', 'Known minor items', 'nit'), ID prefixes (B/M/m/n), or a section verdict that counts by severity ('1 blocker and 3 majors', 'one major and six minor items', 'Two minor findings', '10 minor findings', 'five minor points'). PRB-002 re-review N1-N5 are labelled 'minor points' only in the PR #66 body (label_quote); the record calls N5 'record nits'. CAPA-014 §8.2 M1/M2 are 'minor items' (the M prefix there is not 'major'). #71 re-review R2-R7 are minor only by the verdict 'one major and six minor items'. M-prefixed items without a severity word (#65 M1-M4, #68 M2-M5, #70 M1-M3, #71 M1-M3, #69 M1/M2) are mapped to major by the prefix rule.",
+  "NOT SEVERITY: '(clinical safety)' (F08), 'pre-existing' (#69 M3), 'Cosmetic', 'small items', 'Small items', 'Note', 'accepted', HAZ ids are kept in severity_as_written only. Problem-report severities (SPR-001 Critical/Major/Minor, proposed by the authoring agent in PRB/CAPA records and in the PR #71 table, e.g. PRB-004 Critical, PRB-010 Major) are a different scheme and were not used. Capture findings later received such PRB severities in #70/#71 (e.g. F21 -> PRB-020 Critical proposed; #71: PRB-004 Critical, PRB-005/006 Major, PRB-007/008/009 Minor).",
+  "BLOCKING STATUS vs LABEL: the four capture findings fixed in #69 (F08, F09, F10, F04) are unlabelled per finding, but the record says as a group 'so they block the release' (verdict_quote of 69-capture-1). A second coder may prefer to code F08-F10 as blocker; this coding keeps 'unlabelled' per the rule 'do not reinterpret severity'.",
+  "REVIEWER IDENTITY: only PRB-002 §6 states that the independent reviewer is an AI agent (reviewer_quote). Other rounds called 'independent review', 're-review', 'final check' or 'last check' are coded 'independent agent session' as the sources present them as rounds of the same independent-review process; the reviewer is not named. PRB-004 §9 says the #71 review report was 'kept by the coordinator'. 'Coordinator' = the coordinating agent session (other). Capture sessions are the app/film capture walk-throughs (mstool-film CAPTURES.md).",
+  "NOT DOUBLE-COUNTED (carried, still open): #67 final check 'R1 (still forgeable)' (from 67-review-3); #68 review 2 'B1, M3 and M4 only partly closed' (from 68-review-1). Listed under carried_over_not_counted. The new IDs raised for the incomplete fixes ARE counted: #68 N1 (re-expresses the B1 residual) and N3 (corrects the M4 claim); #65 N1 and N4 (incomplete m9 fix); #69 B1 (F08 still reachable) and R1/R2 (guard gaps); #67 'R2 (accepted)' (new residual cases of the closed R2).",
+  "SAME DEFECT FOUND BY TWO CHANNELS, counted once in each round: F12 (69-capture-1) = item 1 of 69-review-1 (so #69 has 46 coded findings but 45 distinct defects). The '#71 re-review: the fallback colour' section of RELEASE-2026-10-25 notes §11 is #71 re-review R5 (counted once, under #71; the fix landed in both #69 and #71). #69 L1/L2 were carried into #74 as PRB-030/PRB-031 and the RC-047 AI-draft gap as PRB-029; they are not counted as #74 findings. Capture findings fixed in #70 (F03, F06, F07, F15, F16, F17, F18, F21) and #71 (F01, F02, F05, F13, F14, F19) are not recounted there. F11 (native window.confirm) and F20 (no audit-trail page) are not shown as addressed in any PR body #69-#75.",
+  "ID INCONSISTENCIES: the capture IDs in the PR #71 body differ from the PR #69 body for three findings (#71 'F16' = #69 F14 rotation; #71 'F15' = #69 F13 slice 1; #71 'F18' = #69 F19 brain_screening.onnx); PRB-004/008/009 give both ('F16 / F14', 'F15 / F13', 'F18 / F19'). The #69 numbering (also used by #70 and PRB-020..026) is used here. IDs reused with different meanings across rounds: R1/R2 (#67 third review, #69 final check, #70 and #71 re-reviews), M1/M2 (#67 minor vs others major), F1 (#71 final check) vs capture F01. Gaps: #68 review 1 has no M1, #68 review 3 has no m-2; PRB-002 re-review says 'findings 1 to 8 closed or moot' but §6 lists 7 first-round findings (7 coded).",
+  "EXCLUDED items are listed under excluded_items with quotes. Also not coded as review findings: agent self-findings during fixes ('Found while testing m8' in #70, PRB-021 'found by the AI coding agent while reproducing PRB-020', #74 'Also found' legend under m6, #69 'Found while re-running the controls' M10/I2, #72 integration decisions (a)-(c) and the CAPA-009 O2 negative-control miss); #72 had no review round; #73 and #75 have no review.",
+  "OUT OF SCOPE: reviews of PRs before #64 cited in the PR #64 body (#52, #51, #53 'two adversarial reviews', #63 '2 blockers + 6 findings', CAPA-013 §10). The #64 round is coded under #64 because the PR body calls it 'an independent review of the release branch (2026-10-23)'; the records attribute the severity changes to 'the independent review of PR #62', so a second coder could move items 3-4 to #62 and items 1-2 to #59 (both outside the scope).",
+  "INCLUDED BORDERLINE ITEMS (second coder should check): #67 review 2 'Also' row (source says 'ten further findings' but tabulates an eleventh row 'Also'); #71 re-review 'Small items ... not changed here' (3) and 'Note — vermillion' (1), raised by the re-review but outside its count 'one major and six minor items'; #69 L4 (named only in the PR #69 body; commit 33f9425 describes it as residual-risk wording); #65 m7/m11/m12 mapped to the three clauses of 'Documented, not changed in code (m7, m11, m12)' in their order; #66 items 3 and 5 are 'moot' (coded addressed=true).",
+  "addressed_in_pr: true = fixed in that PR (code, test or a document correction that resolves the finding); false = left open, accepted as residual, or only recorded as a known limit (e.g. #65 m7/m11/m12, #67 R2 (accepted), #67 M1 recorded as merge note and applied later in #69, #69 L1-L3 and the 16 deferred capture findings, #71 small items/Note, #74 m10); null = finding content not stated (#74 m8).",
+  "DATES: taken from section headings or PR text. #69 last check has no date in the sources (commit 33f9425 that records it is dated 2026-10-30). #66 re-review uses the date of the §6 heading (2026-10-24).",
+  "EVIDENCE BASE: the GitHub snapshot has no formal reviews and no PR comments for #64-#75 (formal_reviews and comments are empty); every review round is known only from the agent-written PR bodies and records. The reviewers' own reports are not in the repository. Records at HEAD carry the owner's sign-off text in place of 'PENDING owner approval'; no quote uses those lines."
+ ]
+}
