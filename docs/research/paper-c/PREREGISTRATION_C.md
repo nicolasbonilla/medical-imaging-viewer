@@ -214,8 +214,9 @@ lesions, or about other scanners, registrations or segmenters.
 **6.2 Products.** No threshold, table or model computed on MSSEG-2 is used in any software (DUA
 clause 8). The paper's results inform a separately calibrated feature (`APP_FEATURE_SPEC.md`).
 
-**6.3 Code and records.** `research/paper_c/` (pilot pipeline reused unchanged; MSSEG-2 loader added
-before access). Records: group-level JSON in `docs/research/records/`. Per-patient caches git-ignored
+**6.3 Code and records.** `research/paper_c/` (pilot pipeline reused unchanged). The MSSEG-2
+loader does not exist yet: it is written, unit-tested on synthetic files and committed **before** the
+data are opened, and it only reads files and checks grids — any analysis choice stays as written here. Records: group-level JSON in `docs/research/records/`. Per-patient caches git-ignored
 and deleted with the data (DUA clause 7).
 
 ## 7. Deviations (after posting)

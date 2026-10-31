@@ -20,8 +20,8 @@ al. 2024).
 **Background.** Since 2021, one new or enlarging T2 lesion on follow-up MRI counts as disease
 activity in multiple sclerosis (MS). Automated tools now propose new lesions between two scans, but
 none states how often it calls activity in a patient who has none. In the MSSEG-2 challenge, expert
-raters produced a false new lesion in 0–11 % of stable patients and the best automated methods in
-11–36 %.
+raters produced at least one false new lesion in 0–11 % of 28 stable test patients and the leading
+automated systems in 11–36 %.
 
 **Methods.** We bound the per-patient probability of at least one false new-lesion call with a
 split-conformal threshold on a change score, calibrated on the largest score of patients without new
@@ -218,7 +218,8 @@ Full text: `../PREREGISTRATION_C.md` (to be time-stamped on OSF before data acce
 
 ### 3.9 Software, reproducibility, data use
 
-Code `research/paper_c/` (pilot, Stage 0, power, and the MSSEG-2 loader written before access);
+Code `research/paper_c/` (pilot, Stage 0 and power; the MSSEG-2 loader is to be written and
+committed before the data are opened);
 unit tests include validity simulations of the thresholds. Records with input SHA-256s in
 `docs/research/records/`. MSSEG-2 results are committed and published at group level only (OFSEP
 DUA clause 4); no threshold or model derived from MSSEG-2 is used in any product (clause 8).
