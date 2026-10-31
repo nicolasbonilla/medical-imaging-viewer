@@ -308,3 +308,20 @@ with the per-scan FDP as loss is the pre-registered B3 and is not recomputed. Sc
 `research/paper_a/v03m_manuscript_posthoc.py`, record
 `docs/research/records/2026-10-31_paper_a_manuscript_posthoc.json`. Same classification rule as §9.
 No pre-registered number changes; every use is labelled post hoc.
+
+**2026-10-31, entry 11 — revision-stage post-hoc analyses (after an independent review recommended
+major revision; written before they were run).** (a) *Full precision:* the committed analyses are
+re-run unchanged with every rounding helper replaced by float() (`v03r_fullprecision.py`); each value,
+rounded as before, must equal the committed record; the manuscript then rounds once, at printing (the
+review found eight off-by-0.001 double-rounding slips). (b) *Per-cell quantities* for every primary
+cell and every D3 procedure: share of scans selecting, FDR among selecting scans, micro-FDR, share of
+scans with FDP > 0.1 / 0.2 (also for P1), one-sided 95 % bounds (patient-cluster bootstrap;
+Hoeffding–Bentkus over patients, valid for few patients), a two-level bootstrap (1000 resamples) for
+every primary cell with Monte Carlo error, and α·mean per-scan π0. (c) The D3/D1 ratio with a
+patient-paired bootstrap interval and 20 further within-site fold seeds. (d) A simulation of conformal
+BH under a scan random effect and a false-score shift, with the cohorts' candidate counts. (e) Monte
+Carlo precision: D5 key cells and SUB with 2000 draws. (f) Candidate AUROC of the ensemble vs each fold
+on the same candidates. (g) A validity–power frontier under D3 (α 0.05–0.3). (h) Control-candidate
+volumes. Script `research/paper_a/v03r_revision.py`, record
+`docs/research/records/2026-10-31_paper_a_revision.json`. The pre-registered classification rule and
+verdicts are unchanged and are reported as such; every new quantity is labelled post hoc.
