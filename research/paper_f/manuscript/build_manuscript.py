@@ -20,7 +20,7 @@ def main():
     subprocess.run(common + ["-o", "manuscript.docx"], cwd=HERE, check=True)
     print("wrote manuscript.docx")
     if not a.skip_pdf:
-        subprocess.run(common + ["--pdf-engine=xelatex", "-H", "build/header.tex", "--lua-filter", "build/longcode.lua",
+        subprocess.run(common + ["--pdf-engine=xelatex", "-H", "latex/header.tex", "--lua-filter", "latex/longcode.lua",
                                  "-V", "mainfont=Cambria", "-V", "mainfontoptions=Ligatures=NoCommon", "-V", "monofont=Consolas", "-V", "geometry:margin=2.2cm",
                                  "-V", "fontsize=10pt", "-V", "linestretch=1.2", "-V", "colorlinks=true",
                                  "-V", "linkcolor=black", "-V", "urlcolor=blue", "-o", "manuscript.pdf"], cwd=HERE, check=True)

@@ -1,0 +1,13 @@
+\usepackage{etoolbox}
+\usepackage{seqsplit}
+\usepackage{float}
+\usepackage{lineno}
+\linenumbers
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2]{\origfigure[H]}{\endorigfigure}
+\setlength{\emergencystretch}{3em}
+\renewcommand{\arraystretch}{1.15}
+\AtBeginEnvironment{longtable}{\footnotesize}
+\usepackage{caption}
+\captionsetup[figure]{labelformat=empty}
