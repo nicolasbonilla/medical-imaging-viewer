@@ -27,3 +27,4 @@ manuscript.md (wording only; panel references now use lowercase letters a, b, c)
 Regenerate: python docs/research/negative-results/manuscript/scripts/make_figures.py
 Data unchanged - numbers check: python docs/research/negative-results/manuscript/scripts/check_numbers.py
   -> 120 automatic checks: 120 PASS, 0 FAIL
+v2: label-collision fix done
