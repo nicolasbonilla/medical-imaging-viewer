@@ -6,9 +6,11 @@ protocol was committed before any result (`../PROTOCOL.md`, commit `980cb56`). T
 specified in `../READER_STUDY_PROTOCOL.md`; every result that needs the three neuroradiologists is
 marked **TODO**. Supersedes `../MANUSCRIPT.md` (v0.1).*
 
-**Authors.** Nicolas G. Bonilla Vargas¹; [Reader A]², [Reader B]³, [Reader C]⁴ (neuroradiologists;
+**Authors.** Nicolás Bonilla Vargas¹ ² ³; [Reader A]⁴, [Reader B]⁵, [Reader C]⁶ (neuroradiologists;
 authorship per ICMJE, `../READER_STUDY_PROTOCOL.md` §11) [+ others TBD].
-¹ MSTool-AI. ²–⁴ TBD.
+¹ Universidad Nacional de Colombia, Bogotá, Colombia. ² SRH University München, Munich, Germany.
+³ Daita AI. ⁴–⁶ TBD.
+**Corresponding author.** Nicolás Bonilla Vargas, ngbonillav@unal.edu.co. ORCID: **TODO**.
 **Target.** NeuroImage: Clinical or AJNR (full paper); short version for a MICCAI workshop.
 Reporting: GRRAS (Kottner et al. 2011) for the reader study; STARD 2015 items where applicable
 (Bossuyt et al. 2015).
@@ -266,8 +268,12 @@ default: 3.2 % (0.8–6.8), reported without a claim. C5 ventricle definition ma
   data, Guarnera et al. 2025; Ljubljana 3D MS DB, Lesjak et al. 2018). Reader study: readers
   participate as investigators with written consent to the processing of their pseudonymised
   ratings; ethics-committee statement **TODO** (`../READER_STUDY_PROTOCOL.md` §10).
-- **Competing interests.** N.G.B.V. develops MSTool-AI, software intended to become a commercial
-  medical device whose DIS rule is evaluated here. Readers: **TODO**.
+- **Competing interests.** Nicolás Bonilla Vargas develops MSTool-AI, software intended to become a
+  commercial medical device whose DIS rule is evaluated here. He is also affiliated with Daita AI
+  [owner to confirm: his role there, and whether Daita AI has any financial interest in MSTool-AI or
+  in this work]. [Owner to confirm: ownership or equity in MSTool-AI or Daita AI, patents or patent
+  applications, paid roles, and any financial relationship with the data providers or with the
+  developers of the segmenters used.] Readers: **TODO**.
 - **Pre-registration.** Automated part: `PROTOCOL.md` v1.0 committed before any outcome (`980cb56`).
   Reader study: `READER_STUDY_PROTOCOL.md`, to be time-stamped (OSF) before the first read — **TODO**.
 - **Data and code.** Public data (MSLesSeg CC-BY-4.0; Ljubljana CC-BY). Code `research/paper_d/`
