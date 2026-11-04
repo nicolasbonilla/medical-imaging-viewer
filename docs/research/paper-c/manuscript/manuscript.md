@@ -7,8 +7,10 @@ device. Pilot numbers are copied from `../RESULTS.md` and the records in `docs/r
 will be filled only by the analysis pre-registered in `../PREREGISTRATION_C.md`. Supersedes
 `../manuscript-skeleton.md` (v0.1).*
 
-**Authors.** Nicolas G. Bonilla Vargas¹ [+ co-authors TBD]
-¹ MSTool-AI.
+**Authors.** Nicolás Bonilla Vargas¹ ² ³ [+ co-authors TBD]
+¹ Universidad Nacional de Colombia, Bogotá, Colombia. ² SRH University München, Munich, Germany.
+³ Daita AI.
+**Corresponding author.** Nicolás Bonilla Vargas, ngbonillav@unal.edu.co. ORCID: **TODO**.
 **Target.** Medical Image Analysis / MELBA (full paper; pre-registered confirmatory study); short
 version for a MICCAI 2027 workshop (UNSURE). Reporting follows TRIPOD+AI where applicable (Collins et
 al. 2024).
@@ -360,9 +362,13 @@ than S_sub (AUROC 0.68 vs 0.75). S_sub is kept as the primary score.
   by the "Agence Nationale de la Recherche," within the framework of the "Investments for the Future"
   program, under the reference ANR-10-COHO-002, by the Eugène Devic EDMUS Foundation against multiple
   sclerosis and by the ARSEP Foundation." We thank the providers of open_ms_data, MSLesSeg and FLAMeS.
-- **Competing interests.** N.G.B.V. develops MSTool-AI, software intended to become a commercial
-  medical device; the longitudinal rule evaluated here is that software's rule. No data or result
-  derived from MSSEG-2 is used in the software.
+- **Competing interests.** Nicolás Bonilla Vargas develops MSTool-AI, software intended to become a
+  commercial medical device; the longitudinal rule evaluated here is that software's rule. No data or
+  result derived from MSSEG-2 is used in the software. He is also affiliated with Daita AI [owner to
+  confirm: his role there, and whether Daita AI has any financial interest in MSTool-AI or in this
+  work]. [Owner to confirm: ownership or equity in MSTool-AI or Daita AI, patents or patent
+  applications, paid roles, and any financial relationship with the data providers or with the
+  developers of FLAMeS.] Co-authors' declarations: **TODO**.
 - **Pre-registration.** Pilot protocol: repository commit `6233b4b` (2026-10-21). Confirmatory study:
   OSF **TODO (DOI / time stamp)**, text identical to `PREREGISTRATION_C.md` at commit **TODO**.
 - **Data availability.** open_ms_data and MSLesSeg are public. MSSEG-2 is available from Shanoir under
