@@ -2,10 +2,14 @@
 title: "Where did the gain come from? Two pre-registered negative results in multiple sclerosis lesion segmentation: thick-slice augmentation and learned false-positive filtering"
 short_title: "Two pre-registered negative results in MS lesion segmentation"
 author:
-  - name: "N. G. Bonilla Vargas"
-    affiliation: "MSTool-AI [TODO: full affiliation and city]"
+  - name: "Nicolás Bonilla Vargas"
+    affiliation:
+      - "Universidad Nacional de Colombia, Bogotá, Colombia"
+      - "SRH University München, Munich, Germany"
+      - "Daita AI"
     corresponding: true
-    email: "[TODO: corresponding e-mail]"
+    email: "ngbonillav@unal.edu.co"
+    orcid: "[TODO: ORCID]"
   - name: "[TODO: co-authors, if any; see Author contributions]"
 date: "Draft v0.2, 2026-10-31"
 bibliography: references.bib
@@ -657,14 +661,20 @@ adversarial review of this text against the source documents, and a script that 
 number in this text against the committed records. These safeguards do not replace an independent
 human analyst. [TODO, author: confirm or correct this description of your own role and review.]
 
-**Competing interests.** N. G. Bonilla Vargas develops MSTool-AI, MS imaging software that could
-incorporate the methods studied here; neither method was incorporated, because of the results reported
-here. [TODO: complete with company role, ownership and any other interests; co-authors' declarations.]
+**Competing interests.** Nicolás Bonilla Vargas develops MSTool-AI, MS imaging software intended to
+become a commercial medical device, which could have incorporated the methods studied here; neither
+method was incorporated, because of the results reported here. He is also affiliated with Daita AI
+[owner to confirm: his role there, and whether Daita AI has any financial interest in MSTool-AI or in
+this work]. He has no financial relationship with the developers of FLAMeS, nnU-Net, HD-BET or LST-AI,
+or with the providers of the datasets [owner to confirm]. The AI coding agent used (see Use of AI
+assistance) is a commercial product of Anthropic; the author uses it as a customer and has no other
+relationship with Anthropic [owner to confirm]. [Owner to confirm: ownership or equity in MSTool-AI or
+Daita AI, patents or patent applications, and paid roles.] [TODO: co-authors' declarations.]
 
 **Funding.** No external funding [TODO: confirm]. Compute used Kaggle's free GPU quota and a cloud
 provider's free-trial credit (§2.8).
 
-**Author contributions (CRediT).** N. G. Bonilla Vargas: conceptualisation, funding of compute
+**Author contributions (CRediT).** Nicolás Bonilla Vargas: conceptualisation, funding of compute
 accounts, supervision, decisions on runs and on product use [TODO: confirm and add writing – review &
 editing once reviewed]. [TODO: co-authors and their roles.]
 
