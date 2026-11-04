@@ -29,3 +29,4 @@ manuscript.md (wording only; panel references now use lowercase letters a, b, c)
 Regenerate: python docs/research/paper-h/manuscript/figures/make_figures.py
 Data unchanged - numbers check: python research/paper_h/numbers_check.py
   -> 73 of 73 numeric claims OK; problems: 0
+v2: label-collision fix done

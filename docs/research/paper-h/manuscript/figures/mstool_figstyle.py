@@ -354,39 +354,87 @@ def _texts(fig):
     return out
 
 
-def check_layout(fig, name: str = "", tolerance_px: float = 0.5, report_overlaps: bool = True):
-    """Raise if any text leaves the canvas; print pairs of overlapping text boxes."""
+def _leader(t, r):
+    """Display-space end points of an annotation's leader line, or None."""
+    ap = getattr(t, "arrow_patch", None)
+    if ap is None or not ap.get_visible():
+        return None
+    try:
+        path = ap._get_path_in_displaycoord()
+        path = path[0] if isinstance(path, tuple) else path
+        if isinstance(path, list):
+            path = path[0]
+        v = path.vertices
+    except Exception:  # pragma: no cover - matplotlib internals
+        return None
+    return (float(v[0][0]), float(v[0][1])), (float(v[-1][0]), float(v[-1][1]))
+
+
+def _cross(p1, p2, q1, q2) -> bool:
+    def orient(a, b, c):
+        return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+    d1, d2 = orient(q1, q2, p1), orient(q1, q2, p2)
+    d3, d4 = orient(p1, p2, q1), orient(p1, p2, q2)
+    return (d1 * d2 < 0) and (d3 * d4 < 0)
+
+
+def _seg_hits_box(p, q, bb, shrink=1.0) -> bool:
+    x0, y0, x1, y1 = bb.x0 + shrink, bb.y0 + shrink, bb.x1 - shrink, bb.y1 - shrink
+    if x0 >= x1 or y0 >= y1:
+        return False
+    for t in [i / 40 for i in range(41)]:
+        x, y = p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t
+        if x0 < x < x1 and y0 < y < y1:
+            return True
+    return False
+
+
+def check_layout(fig, name: str = "", tolerance_px: float = 0.5, strict: bool = True):
+    """Collision check before saving. Raises if text leaves the canvas, if two text boxes overlap, if two
+    leader lines cross, or if a leader line runs through another label (text boxes only, arrows excluded)."""
     fig.canvas.draw()
     r = fig.canvas.get_renderer()
     W, H = fig.bbox.width, fig.bbox.height
-    boxes = []
+    boxes, leaders = [], []
     problems = []
     for t in _texts(fig):
-        bb = t.get_window_extent(r)
+        bb = Text.get_window_extent(t, r)          # the text itself, without any leader line
         if bb.width <= 0 or bb.height <= 0:
             continue
         if bb.x0 < -tolerance_px or bb.y0 < -tolerance_px or bb.x1 > W + tolerance_px or bb.y1 > H + tolerance_px:
             problems.append(f"outside canvas: {t.get_text()!r} {bb.bounds}")
         boxes.append((t, bb))
+        seg = _leader(t, r)
+        if seg:
+            leaders.append((t, seg))
     if problems:
         raise RuntimeError(f"[{name}] text clipped by the canvas:\n  " + "\n  ".join(problems))
-    overlaps = []
-    if report_overlaps:
-        for (t1, b1), (t2, b2) in itertools.combinations(boxes, 2):
-            ix = min(b1.x1, b2.x1) - max(b1.x0, b2.x0)
-            iy = min(b1.y1, b2.y1) - max(b1.y0, b2.y0)
-            if ix > 1.0 and iy > 1.0:
-                overlaps.append((t1.get_text(), t2.get_text(), round(ix * iy)))
-        for a, b, area in overlaps:
-            print(f"   [{name}] overlap {a!r} / {b!r} ({area} px^2 at {fig.dpi:.0f} dpi)")
-    return overlaps
+    issues = []
+    for (t1, b1), (t2, b2) in itertools.combinations(boxes, 2):
+        ix = min(b1.x1, b2.x1) - max(b1.x0, b2.x0)
+        iy = min(b1.y1, b2.y1) - max(b1.y0, b2.y0)
+        if ix > 1.0 and iy > 1.0:
+            issues.append(f"text overlap {t1.get_text()!r} / {t2.get_text()!r} ({round(ix * iy)} px^2)")
+    for (t1, s1), (t2, s2) in itertools.combinations(leaders, 2):
+        if _cross(*s1, *s2):
+            issues.append(f"leader lines cross: {t1.get_text()!r} / {t2.get_text()!r}")
+    for t1, s1 in leaders:
+        for t2, b2 in boxes:
+            if t2 is not t1 and _seg_hits_box(*s1, b2):
+                issues.append(f"leader of {t1.get_text()!r} runs through {t2.get_text()!r}")
+    for msg in issues:
+        print(f"   [{name}] {msg}")
+    if issues and strict:
+        raise RuntimeError(f"[{name}] {len(issues)} label collision(s); fix the layout before saving")
+    return issues
 
 
-def save(fig, stem: str, png_dpi: int = 600, check: bool = True) -> list[str]:
-    """Write ``stem.pdf`` (vector, TrueType embedded) and ``stem.png`` (600 dpi) at the exact figure size."""
+def save(fig, stem: str, png_dpi: int = 600, check: bool = True, strict: bool = True) -> list[str]:
+    """Write ``stem.pdf`` (vector, TrueType embedded) and ``stem.png`` (600 dpi) at the exact figure size,
+    after the collision check (``strict``: refuse to write a figure with overlapping or crossing labels)."""
     name = os.path.basename(stem)
-    if check:
-        check_layout(fig, name)
+    if check:  # MSTOOL_FIG_REPORT=1 lists every collision without stopping (for a survey of all figures)
+        check_layout(fig, name, strict=strict and os.environ.get("MSTOOL_FIG_REPORT") != "1")
     pdf, png = stem + ".pdf", stem + ".png"
     fig.savefig(pdf, metadata={"Creator": "mstool_figstyle (matplotlib)", "CreationDate": None})
     fig.savefig(png, dpi=png_dpi, metadata={"Software": "mstool_figstyle (matplotlib)"})
