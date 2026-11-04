@@ -1,0 +1,27 @@
+FIGURES READY - Paper F (NeuroImage: Clinical)
+Date: 2026-11-04
+
+All figures were redrawn in the MSTool-AI house style. File names are unchanged, so the LaTeX picks them up.
+
+Figures (vector PDF with Arial embedded as TrueType/Type 42, plus 600 dpi PNG, drawn at FINAL print size):
+  fig1_forest_vs_flames.pdf / .png   180 x 64 mm
+  fig2_false_lesions_vs_sensitivity.pdf / .png   180 x 101 mm
+  fig3_detection_by_lesion_size.pdf / .png   180 x 61 mm
+  fig4_degradation_1mm_to_thick.pdf / .png   180 x 65 mm
+
+Width: 180 mm wide; Elsevier double column is 190 mm, so include at natural size (no width=\textwidth scaling needed).
+Do not rescale: the type is set at final size (7 pt ticks, 8 pt axis labels, 9 pt bold lowercase panel letters).
+
+House style: figures/mstool_figstyle.py + figures/mstool.mplstyle (identical copy in every paper).
+  White ground, 0.5 pt axes, outward ticks, no top/right spines, no titles or footnotes inside the plots,
+  direct labels instead of legends where possible, decimal-aligned numbers with real minus signs.
+  Muted colour-blind-safe palette (deuteranopia, protanopia, tritanopia checked: python mstool_figstyle.py).
+  Fixed meanings in all papers: FLAMeS ensemble dark grey, FLAMeS fold 0 mid grey, MindGlide blue,
+  WMH-SynthSeg ochre, SAMSEG umber, LST-AI mauve; met/holds teal, inconclusive grey, not met/violated brick.
+
+Captions: the explanatory notes that were inside the old figures now live in the figure captions of
+manuscript.md (wording only; panel references now use lowercase letters a, b, c).
+
+Regenerate: python research/paper_f/manuscript/make_figures.py
+Data unchanged - numbers check: python research/paper_f/manuscript/numbers_check.py
+  -> 480/480 PASS, 0 FAIL, 0 unmapped tokens (manuscript at 41ad117, which carries the new captions)
