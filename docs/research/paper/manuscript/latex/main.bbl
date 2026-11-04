@@ -1,0 +1,406 @@
+\begin{thebibliography}{56}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[mus(2022)]{muslim2022data}
+{Brain {MRI} dataset of multiple sclerosis with consensus manual lesion
+  segmentation and patient meta information (data)}.
+\newblock Mendeley Data, V1, 2022.
+\newblock CC BY 4.0.
+
+\bibitem[msl(2025)]{mslesseg2025data}
+{MSLesSeg} dataset.
+\newblock Figshare, 2025.
+\newblock CC BY 4.0 (data).
+
+\bibitem[ped(2025)]{pedims2025data}
+{PediMS} dataset.
+\newblock Figshare, 2025.
+\newblock CC BY 4.0.
+
+\bibitem[ms3(2026)]{ms3seg2026data}
+{MS3SEG} dataset.
+\newblock Figshare, 2026.
+\newblock CC BY 4.0 (data); code MIT.
+
+\bibitem[Adhikary et~al.(2026)Adhikary, Chabi, and
+  Mastmeyer]{adhikary2026bound}
+Souraj Adhikary, Negar Chabi, and Andre Mastmeyer.
+\newblock {Bound-Aware Per-Organ Recall Risk Control for Multi-Organ {CT}
+  Segmentation under Clinical Domain Shift}.
+\newblock arXiv preprint, 2026.
+
+\bibitem[Angelopoulos et~al.(2024)Angelopoulos, Bates, Fisch, Lei, and
+  Schuster]{angelopoulos2024crc}
+Anastasios~N. Angelopoulos, Stephen Bates, Adam Fisch, Lihua Lei, and Tal
+  Schuster.
+\newblock {Conformal Risk Control}.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2024.
+
+\bibitem[Angelopoulos et~al.(2025)Angelopoulos, Bates, Cand{\`e}s, Jordan, and
+  Lei]{angelopoulos2025ltt}
+Anastasios~N. Angelopoulos, Stephen Bates, Emmanuel~J. Cand{\`e}s, Michael~I.
+  Jordan, and Lihua Lei.
+\newblock {Learn Then Test: Calibrating Predictive Algorithms to Achieve Risk
+  Control}.
+\newblock \emph{The Annals of Applied Statistics}, 19\penalty0 (2):\penalty0
+  1641--1662, 2025.
+\newblock \doi{10.1214/24-AOAS1998}.
+
+\bibitem[Barber et~al.(2023)Barber, Cand{\`e}s, Ramdas, and
+  Tibshirani]{barber2023beyond}
+Rina~Foygel Barber, Emmanuel~J. Cand{\`e}s, Aaditya Ramdas, and Ryan~J.
+  Tibshirani.
+\newblock {Conformal Prediction beyond Exchangeability}.
+\newblock \emph{The Annals of Statistics}, 51\penalty0 (2):\penalty0 816--845,
+  2023.
+\newblock \doi{10.1214/23-AOS2276}.
+
+\bibitem[Bates et~al.(2021)Bates, Angelopoulos, Lei, Malik, and
+  Jordan]{bates2021rcps}
+Stephen Bates, Anastasios Angelopoulos, Lihua Lei, Jitendra Malik, and Michael
+  Jordan.
+\newblock {Distribution-Free, Risk-Controlling Prediction Sets}.
+\newblock \emph{Journal of the ACM}, 68\penalty0 (6):\penalty0 43:1--43:34,
+  2021.
+
+\bibitem[Bates et~al.(2023)Bates, Cand{\`e}s, Lei, Romano, and
+  Sesia]{bates2023testing}
+Stephen Bates, Emmanuel Cand{\`e}s, Lihua Lei, Yaniv Romano, and Matteo Sesia.
+\newblock {Testing for Outliers with Conformal p-Values}.
+\newblock \emph{The Annals of Statistics}, 51\penalty0 (1):\penalty0 149--178,
+  2023.
+\newblock \doi{10.1214/22-AOS2244}.
+
+\bibitem[Bawil et~al.(2026)Bawil, Shamsi, Ghalehasadi, Jafargholkhanloo, and
+  Bavil]{bawil2026ms3seg}
+M.~B. Bawil, M.~Shamsi, A.~Ghalehasadi, A.~F. Jafargholkhanloo, and A.~S.
+  Bavil.
+\newblock {A Multiple Sclerosis {MRI} Dataset with Tri-Mask Annotations for
+  Lesion Segmentation}.
+\newblock \emph{Scientific Data}, 13:\penalty0 867, 2026.
+\newblock \doi{10.1038/s41597-026-07184-5}.
+
+\bibitem[Benjamini and Hochberg(1995)]{benjamini1995controlling}
+Yoav Benjamini and Yosef Hochberg.
+\newblock {Controlling the False Discovery Rate: A Practical and Powerful
+  Approach to Multiple Testing}.
+\newblock \emph{Journal of the Royal Statistical Society: Series B
+  (Methodological)}, 57\penalty0 (1):\penalty0 289--300, 1995.
+\newblock \doi{10.1111/j.2517-6161.1995.tb02031.x}.
+
+\bibitem[Blanchard et~al.(2020)Blanchard, Neuvial, and
+  Roquain]{blanchard2020posthoc}
+Gilles Blanchard, Pierre Neuvial, and Etienne Roquain.
+\newblock {Post Hoc Confidence Bounds on False Positives Using Reference
+  Families}.
+\newblock \emph{The Annals of Statistics}, 48\penalty0 (3):\penalty0
+  1281--1303, 2020.
+\newblock \doi{10.1214/19-AOS1847}.
+
+\bibitem[Carass et~al.(2017)]{carass2017longitudinal}
+A.~Carass et~al.
+\newblock {Longitudinal Multiple Sclerosis Lesion Segmentation: Resource and
+  Challenge}.
+\newblock \emph{NeuroImage}, 148:\penalty0 77--102, 2017.
+
+\bibitem[Clopper and Pearson(1934)]{clopper1934use}
+C.~J. Clopper and E.~S. Pearson.
+\newblock {The Use of Confidence or Fiducial Limits Illustrated in the Case of
+  the Binomial}.
+\newblock \emph{Biometrika}, 26\penalty0 (4):\penalty0 404--413, 1934.
+
+\bibitem[Commowick et~al.(2018)]{commowick2018objective}
+O.~Commowick et~al.
+\newblock {Objective Evaluation of Multiple Sclerosis Lesion Segmentation Using
+  a Data Management and Processing Infrastructure}.
+\newblock \emph{Scientific Reports}, 8\penalty0 (1):\penalty0 13650, 2018.
+\newblock \doi{10.1038/s41598-018-31911-7}.
+
+\bibitem[Davison and Hinkley(1997)]{davison1997bootstrap}
+A.~C. Davison and D.~V. Hinkley.
+\newblock \emph{{Bootstrap Methods and Their Application}}.
+\newblock Cambridge University Press, Cambridge, 1997.
+
+\bibitem[Dereskewicz et~al.(2025)Dereskewicz, La~Rosa,
+  et~al.]{dereskewicz2025flames}
+E.~Dereskewicz, F.~La~Rosa, et~al.
+\newblock {A Novel Convolutional Neural Network for Automated Multiple
+  Sclerosis Brain Lesion Segmentation}.
+\newblock \emph{Journal of Neuroimaging}, 35\penalty0 (5):\penalty0 e70085,
+  2025.
+\newblock \doi{10.1111/jon.70085}.
+
+\bibitem[Dunn et~al.(2023)Dunn, Wasserman, and Ramdas]{dunn2023distribution}
+Robin Dunn, Larry Wasserman, and Aaditya Ramdas.
+\newblock {Distribution-Free Prediction Sets for Two-Layer Hierarchical
+  Models}.
+\newblock \emph{Journal of the American Statistical Association}, 118\penalty0
+  (544):\penalty0 2491--2502, 2023.
+\newblock \doi{10.1080/01621459.2022.2060112}.
+
+\bibitem[Farinhas et~al.(2024)Farinhas, Zerva, Ulmer, and
+  Martins]{farinhas2024nonexchangeable}
+Farinhas, Zerva, Ulmer, and Martins.
+\newblock {Non-Exchangeable Conformal Risk Control}.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2024.
+
+\bibitem[Gazin et~al.(2024)Gazin, Blanchard, and
+  Roquain]{gazin2024transductive}
+Ulysse Gazin, Gilles Blanchard, and Etienne Roquain.
+\newblock {Transductive Conformal Inference with Adaptive Scores}.
+\newblock In \emph{Proceedings of the 27th International Conference on
+  Artificial Intelligence and Statistics (AISTATS)}, volume 238 of
+  \emph{Proceedings of Machine Learning Research}, pages 1504--1512, 2024.
+
+\bibitem[Genovese and Wasserman(2006)]{genovese2006exceedance}
+Christopher~R. Genovese and Larry Wasserman.
+\newblock {Exceedance Control of the False Discovery Proportion}.
+\newblock \emph{Journal of the American Statistical Association}, 101\penalty0
+  (476):\penalty0 1408--1417, 2006.
+
+\bibitem[Guarnera et~al.(2025)Guarnera, Rondinella, Crispino, Russo, {Di
+  Lorenzo}, Maimone, Pappalardo, and Battiato]{guarnera2025mslesseg}
+F.~Guarnera, A.~Rondinella, Crispino, Russo, {Di Lorenzo}, Maimone, Pappalardo,
+  and Battiato.
+\newblock {MSLesSeg}: Baseline and benchmarking of a new multiple sclerosis
+  lesion segmentation dataset.
+\newblock \emph{Scientific Data}, 12:\penalty0 920, 2025.
+\newblock \doi{10.1038/s41597-025-05250-y}.
+
+\bibitem[Hulsman et~al.(2025)Hulsman, Comte, Bertolini, Wiesenthal, {Puertas
+  Gallardo}, and Ceresa]{hulsman2025conformal}
+Hulsman, Comte, Bertolini, Wiesenthal, {Puertas Gallardo}, and Ceresa.
+\newblock {Conformal Risk Control for Pulmonary Nodule Detection}.
+\newblock In \emph{Proceedings of the Fourteenth Symposium on Conformal and
+  Probabilistic Prediction with Applications (COPA)}, volume 266 of
+  \emph{Proceedings of Machine Learning Research}, pages 445--463, 2025.
+
+\bibitem[{International Electrotechnical Commission}(2015)]{iec62304}
+{International Electrotechnical Commission}.
+\newblock {IEC} 62304:2006+{AMD1}:2015 medical device software -- software life
+  cycle processes (edition 1.1).
+\newblock International standard, 2015.
+
+\bibitem[Isensee et~al.(2019)]{isensee2019hdbet}
+F.~Isensee et~al.
+\newblock {Automated Brain Extraction of Multisequence {MRI} Using Artificial
+  Neural Networks}.
+\newblock \emph{Human Brain Mapping}, 40\penalty0 (17):\penalty0 4952--4964,
+  2019.
+\newblock \doi{10.1002/hbm.24750}.
+
+\bibitem[Isensee et~al.(2021)Isensee, Jaeger, Kohl, Petersen, and
+  Maier-Hein]{isensee2021nnunet}
+Fabian Isensee, Paul~F. Jaeger, Simon A.~A. Kohl, Jens Petersen, and Klaus~H.
+  Maier-Hein.
+\newblock {nnU-Net}: A self-configuring method for deep learning-based
+  biomedical image segmentation.
+\newblock \emph{Nature Methods}, 18\penalty0 (2):\penalty0 203--211, 2021.
+\newblock \doi{10.1038/s41592-020-01008-z}.
+
+\bibitem[Jin and Cand{\`e}s(2023)]{jin2023selection}
+Ying Jin and Emmanuel~J. Cand{\`e}s.
+\newblock {Selection by Prediction with Conformal p-Values}.
+\newblock \emph{Journal of Machine Learning Research}, 24\penalty0
+  (244):\penalty0 1--41, 2023.
+
+\bibitem[Jin and Cand{\`e}s(2026)]{jin2026weighted}
+Ying Jin and Emmanuel~J. Cand{\`e}s.
+\newblock {Model-Free Selective Inference under Covariate Shift via Weighted
+  Conformal p-Values}.
+\newblock \emph{Biometrika}, 113\penalty0 (1):\penalty0 asaf066, 2026.
+\newblock \doi{10.1093/biomet/asaf066}.
+
+\bibitem[Kapoor and Narayanan(2023)]{kapoor2023leakage}
+Sayash Kapoor and Arvind Narayanan.
+\newblock {Leakage and the Reproducibility Crisis in Machine-Learning-Based
+  Science}.
+\newblock \emph{Patterns}, 4\penalty0 (9):\penalty0 100804, 2023.
+
+\bibitem[Kuhn(1955)]{kuhn1955hungarian}
+Harold~W. Kuhn.
+\newblock {The {Hungarian} Method for the Assignment Problem}.
+\newblock \emph{Naval Research Logistics Quarterly}, 2\penalty0
+  (1--2):\penalty0 83--97, 1955.
+
+\bibitem[La~Rosa(2025)]{flames2025weights}
+F.~La~Rosa.
+\newblock {FLAMeS}: {FLAIR} lesion analysis in multiple sclerosis (model
+  weights, version 2.0).
+\newblock Zenodo, 2025.
+\newblock Concept DOI 10.5281/zenodo.7626120; CC BY 4.0 on Zenodo.
+
+\bibitem[Lakshminarayanan et~al.(2017)Lakshminarayanan, Pritzel, and
+  Blundell]{lakshminarayanan2017simple}
+Balaji Lakshminarayanan, Alexander Pritzel, and Charles Blundell.
+\newblock {Simple and Scalable Predictive Uncertainty Estimation Using Deep
+  Ensembles}.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~30, 2017.
+
+\bibitem[Lambert et~al.(2024)Lambert, Forbes, Doyle, and
+  Dojat]{lambert2024robust}
+Benjamin Lambert, Florence Forbes, Senan Doyle, and Michel Dojat.
+\newblock {Robust Conformal Volume Estimation in {3D} Medical Images}.
+\newblock In \emph{Medical Image Computing and Computer Assisted Intervention
+  -- MICCAI 2024}, volume 15010 of \emph{Lecture Notes in Computer Science},
+  pages 633--643, 2024.
+\newblock \doi{10.1007/978-3-031-72117-5_59}.
+
+\bibitem[Lee and Ren(2025)]{lee2025selection}
+Y.~Lee and Z.~Ren.
+\newblock {Selection from Hierarchical Data with Conformal e-Values}, 2025.
+
+\bibitem[Lesjak et~al.(2018)]{lesjak2018novel}
+{\v{Z}}.~Lesjak et~al.
+\newblock {A Novel Public {MR} Image Dataset of Multiple Sclerosis Patients
+  with Lesion Segmentations Based on Multi-Rater Consensus}.
+\newblock \emph{Neuroinformatics}, 16:\penalty0 51--63, 2018.
+
+\bibitem[Malinin et~al.(2022)]{malinin2022shifts}
+A.~Malinin et~al.
+\newblock {Shifts 2.0: Extending the Dataset of Real Distributional Shifts},
+  2022.
+
+\bibitem[Marandon et~al.(2024)Marandon, Lei, Mary, and
+  Roquain]{marandon2024adaptive}
+A.~Marandon, L.~Lei, D.~Mary, and E.~Roquain.
+\newblock {Adaptive Novelty Detection with False Discovery Rate Guarantee}.
+\newblock \emph{The Annals of Statistics}, 52\penalty0 (1):\penalty0 157--183,
+  2024.
+\newblock \doi{10.1214/23-AOS2338}.
+
+\bibitem[Molchanova et~al.(2025)]{molchanova2025structural}
+N.~Molchanova et~al.
+\newblock {Structural-Based Uncertainty in Deep Learning across Anatomical
+  Scales: Analysis in White Matter Lesion Segmentation}.
+\newblock \emph{Computers in Biology and Medicine}, 184:\penalty0 109336, 2025.
+\newblock \doi{10.1016/j.compbiomed.2024.109336}.
+
+\bibitem[Montalban et~al.(2025)Montalban, Lebrun-Fr{\'e}nay, Oh,
+  et~al.]{montalban2025diagnosis}
+X.~Montalban, C.~Lebrun-Fr{\'e}nay, J.~Oh, et~al.
+\newblock {Diagnosis of Multiple Sclerosis: 2024 Revisions of the {McDonald}
+  Criteria}.
+\newblock \emph{The Lancet Neurology}, 24\penalty0 (10):\penalty0 850--865,
+  2025.
+\newblock \doi{10.1016/S1474-4422(25)00270-4}.
+\newblock Correction: Lancet Neurol 24(11):e13.
+
+\bibitem[Mossina and Friedrich(2025)]{mossina2025controlling}
+Mossina and Friedrich.
+\newblock {Controlling False Positives in Image Segmentation via Conformal
+  Prediction}, 2025.
+
+\bibitem[Muslim et~al.(2022)Muslim, Mashohor, Gawwam, Mahmud, Hanafi, Alnuaimi,
+  Josephine, and Almutairi]{muslim2022brain}
+A.~M. Muslim, S.~Mashohor, G.~A. Gawwam, R.~Mahmud, M.~B. Hanafi, O.~Alnuaimi,
+  R.~Josephine, and A.~D. Almutairi.
+\newblock {Brain {MRI} Dataset of Multiple Sclerosis with Consensus Manual
+  Lesion Segmentation and Patient Meta Information}.
+\newblock \emph{Data in Brief}, 42:\penalty0 108139, 2022.
+\newblock \doi{10.1016/j.dib.2022.108139}.
+
+\bibitem[Nosek et~al.(2018)Nosek, Ebersole, DeHaven, and
+  Mellor]{nosek2018preregistration}
+Brian~A. Nosek, Charles~R. Ebersole, Alexander~C. DeHaven, and David~T. Mellor.
+\newblock {The Preregistration Revolution}.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 115\penalty0
+  (11):\penalty0 2600--2606, 2018.
+
+\bibitem[Popa et~al.(2025)Popa, Vi{\textcommabelow{s}}a, and
+  {\textcommabelow{S}}ofariu]{popa2025pedims}
+M.~Popa, G.~A. Vi{\textcommabelow{s}}a, and C.~R. {\textcommabelow{S}}ofariu.
+\newblock {PediMS}: A pediatric multiple sclerosis lesion segmentation dataset.
+\newblock \emph{Scientific Data}, 12:\penalty0 1184, 2025.
+\newblock \doi{10.1038/s41597-025-05346-5}.
+
+\bibitem[Song et~al.(2026)Song, Jin, and Cand{\`e}s]{song2026everywhere}
+Ziang Song, Ying Jin, and Emmanuel~J. Cand{\`e}s.
+\newblock {Everywhere Valid Bounds on False Discovery Proportions in Conformal
+  Inference}, 2026.
+
+\bibitem[Sreenivasan et~al.(2025)Sreenivasan, Vaivade, Noui, {Emami Khoonsari},
+  Burman, Spjuth, and Kultima]{sreenivasan2025conformal}
+A.~P. Sreenivasan, A.~Vaivade, Y.~Noui, P.~{Emami Khoonsari}, J.~Burman,
+  O.~Spjuth, and K.~Kultima.
+\newblock {Conformal Prediction Enables Disease Course Prediction and Allows
+  Individualized Diagnostic Uncertainty in Multiple Sclerosis}.
+\newblock \emph{npj Digital Medicine}, 8:\penalty0 224, 2025.
+\newblock \doi{10.1038/s41746-025-01616-z}.
+
+\bibitem[Tan et~al.(2025)Tan, Wang, Duan, Xu, Shen, Shi, and
+  Shen]{tan2025conformal}
+Binyu Tan, Zhiyuan Wang, Jinhao Duan, Kaidi Xu, Heng~Tao Shen, Xiaoshuang Shi,
+  and Fumin Shen.
+\newblock {Conformal Lesion Segmentation for {3D} Medical Images}, 2025.
+
+\bibitem[Thompson et~al.(2018)]{thompson2018diagnosis}
+A.~J. Thompson et~al.
+\newblock {Diagnosis of Multiple Sclerosis: 2017 Revisions of the {McDonald}
+  Criteria}.
+\newblock \emph{The Lancet Neurology}, 17\penalty0 (2):\penalty0 162--173,
+  2018.
+
+\bibitem[Tibshirani et~al.(2019)Tibshirani, Barber, Cand{\`e}s, and
+  Ramdas]{tibshirani2019conformal}
+Ryan~J. Tibshirani, Rina~Foygel Barber, Emmanuel~J. Cand{\`e}s, and Aaditya
+  Ramdas.
+\newblock {Conformal Prediction Under Covariate Shift}.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~32, 2019.
+
+\bibitem[Tuchinov et~al.(2025)Tuchinov, Prokaeva, Vasilkiv, Stankevich,
+  Korobko, Malkova, and Tulupov]{tuchinov2025sibbms}
+B.~N. Tuchinov, Prokaeva, Vasilkiv, Stankevich, Korobko, Malkova, and Tulupov.
+\newblock {SibBMS}: Siberian brain multiple sclerosis dataset with lesion
+  segmentation and patient meta information.
+\newblock \emph{Machine Learning for Biomedical Imaging (MELBA)}, page
+  2025:046, 2025.
+\newblock \doi{10.59275/j.melba.2025-f798}.
+\newblock Preprint: medRxiv 10.1101/2025.08.14.25333741.
+
+\bibitem[Varoquaux and Cheplygina(2022)]{varoquaux2022machine}
+Ga{\"e}l Varoquaux and Veronika Cheplygina.
+\newblock {Machine Learning for Medical Imaging: Methodological Failures and
+  Recommendations for the Future}.
+\newblock \emph{npj Digital Medicine}, 5:\penalty0 48, 2022.
+
+\bibitem[Vovk(2013)]{vovk2013conditional}
+Vladimir Vovk.
+\newblock {Conditional Validity of Inductive Conformal Predictors}.
+\newblock \emph{Machine Learning}, 92\penalty0 (2--3):\penalty0 349--376, 2013.
+\newblock \doi{10.1007/s10994-013-5355-6}.
+
+\bibitem[Vovk et~al.(2005)Vovk, Gammerman, and Shafer]{vovk2005algorithmic}
+Vladimir Vovk, Alex Gammerman, and Glenn Shafer.
+\newblock \emph{{Algorithmic Learning in a Random World}}.
+\newblock Springer, New York, 2005.
+
+\bibitem[Wang and Ramdas(2022)]{wang2022false}
+Ruodu Wang and Aaditya Ramdas.
+\newblock {False Discovery Rate Control with e-Values}.
+\newblock \emph{Journal of the Royal Statistical Society Series B: Statistical
+  Methodology}, 84\penalty0 (3):\penalty0 822--852, 2022.
+
+\bibitem[Wattjes et~al.(2021)Wattjes, Ciccarelli, Reich,
+  et~al.]{wattjes2021magnims}
+M.~P. Wattjes, O.~Ciccarelli, D.~S. Reich, et~al.
+\newblock {2021 {MAGNIMS--CMSC--NAIMS} Consensus Recommendations on the Use of
+  {MRI} in Patients with Multiple Sclerosis}.
+\newblock \emph{The Lancet Neurology}, 20\penalty0 (8):\penalty0 653--670,
+  2021.
+
+\bibitem[Wiltgen et~al.(2024)Wiltgen, McGinnis, et~al.]{wiltgen2024lstai}
+T.~Wiltgen, J.~McGinnis, et~al.
+\newblock {LST-AI}: A deep learning ensemble for accurate {MS} lesion
+  segmentation.
+\newblock \emph{NeuroImage: Clinical}, 42:\penalty0 103611, 2024.
+
+\end{thebibliography}

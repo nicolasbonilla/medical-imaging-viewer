@@ -1,0 +1,2059 @@
+% Generated from ../manuscript.md by build_latex.py (pandoc + md2tex.lua). Do not edit by hand:
+% change manuscript.md and run  python build_latex.py  again.
+% Template: MELBA official LaTeX class melba.cls v2.03 (github.com/melba-journal/submission, commit 44b4072),
+% submission mode: line numbers on, issue information off, as the journal asks (class options unchanged).
+\documentclass{melba}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage{newunicodechar}
+\usepackage{tabulary}
+\usepackage{seqsplit}
+\usepackage{xurl}
+\usepackage{fvextra}
+\usepackage{array}
+\usepackage{longtable}
+\newcommand{\mtcontinued}[1]{\multicolumn{#1}{@{}l@{}}{\emph{(continued)}}}
+\setlength{\emergencystretch}{3em}
+\setlength{\tymin}{48pt}
+\renewcommand{\arraystretch}{1.12}
+\providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\tracinglostchars=2
+\newunicodechar{§}{\S{}}
+\newunicodechar{±}{\ensuremath{\pm}}
+\newunicodechar{³}{\textsuperscript{3}}
+\newunicodechar{·}{\ensuremath{\cdot}}
+\newunicodechar{¹}{\textsuperscript{1}}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{Δ}{\ensuremath{\Delta}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{γ}{\ensuremath{\gamma}}
+\newunicodechar{δ}{\ensuremath{\delta}}
+\newunicodechar{λ}{\ensuremath{\lambda}}
+\newunicodechar{π}{\ensuremath{\pi}}
+\newunicodechar{ρ}{\ensuremath{\rho}}
+\newunicodechar{–}{--}
+\newunicodechar{†}{\textdagger{}}
+\newunicodechar{′}{\ensuremath{'}}
+\newunicodechar{⁰}{\textsuperscript{0}}
+\newunicodechar{⁵}{\textsuperscript{5}}
+\newunicodechar{⁻}{\textsuperscript{\ensuremath{-}}}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{∈}{\ensuremath{\in}}
+\newunicodechar{−}{\ensuremath{-}}
+\newunicodechar{∞}{\ensuremath{\infty}}
+\newunicodechar{∩}{\ensuremath{\cap}}
+\newunicodechar{≈}{\ensuremath{\approx}}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{≥}{\ensuremath{\geq}}
+\newunicodechar{⌈}{\ensuremath{\lceil}}
+\newunicodechar{⌉}{\ensuremath{\rceil}}
+\long\def\melbadeclaration#1#2{\vskip 0.3in\noindent{\color{melba}\large\bf #1}\vskip 0.2in\noindent #2}
+% melba.cls uses \doi for the article's own DOI; plainnat needs \doi to print each reference's DOI, so it is
+% redefined inside the reference list only (otherwise every reference DOI is silently dropped).
+\usepackage{etoolbox}
+\AtBeginEnvironment{thebibliography}{\renewcommand{\doi}[1]{doi:\,\href{https://doi.org/#1}{\nolinkurl{#1}}}}
+
+% Header and footer: the publishing editor provides these values at acceptance (template placeholders kept).
+\melbaid{YYYY:NNN}
+\doi{10.59275/j.melba.YYYY-AAAA}
+\melbaauthors{Nicolás Bonilla Vargas}
+\email{ngbonillav@unal.edu.co}
+\volume{V}
+\firstpageno{1}
+\melbayear{2026}
+\datesubmitted{YYYY-MM-DD}
+\datepublished{YYYY-MM-DD}
+
+\ShortHeadings{Conformal false-lesion control under acquisition shift}{Bonilla Vargas}
+
+\title{Thin-slice calibration does not transfer to thick-slice MS FLAIR: a protocol-first five-cohort audit of conformal lesion-wise false-discovery control}
+
+% ORCID: add \orcid{xxxx-xxxx-xxxx-xxxx} after the name when available (TODO owner).
+\author{\firstname Nicolás \surname Bonilla Vargas\aff{1,2,3}}
+
+\affiliations{%
+\num 1 \addr Universidad Nacional de Colombia, Bogotá, Colombia \\
+\num 2 \addr SRH University München, Munich, Germany \\
+\num 3 \addr Daita AI
+}
+
+\abstract{%
+\textbf{Background.} Conformal selection can wrap any lesion segmenter with a distribution-free
+``precision dial'': among the candidate lesions of a scan, report only those whose conformal
+p-values pass Benjamini--Hochberg, so that the expected share of false lesions per scan (the
+lesion-wise false-discovery rate, FDR) is at most α. The promise rests on exchangeability between
+the calibration data and the scan at hand. Routine multiple sclerosis (MS) imaging breaks that
+assumption: sites differ, much FLAIR is still acquired as 2D slices of 4--8 mm, and public cohorts
+often sit inside the segmenter's training data.
+\endgraf
+\textbf{Purpose.} To measure where lesion-wise conformal false-discovery control holds and where it
+fails for a state-of-the-art MS segmenter, when calibration and use differ in site and acquisition,
+and on healthy brains.
+\endgraf
+\textbf{Methods.} We used five public patient cohorts (304 scans, 245 patients) and 100 healthy
+controls, segmented with the five folds of FLAMeS, after excluding every scan in FLAMeS's training
+data. Two cohorts are delivered on a 1-mm grid; three are native 2D acquisitions with 3.9--8.3 mm
+slice spacing. We resampled and split by patient. The analysis followed a protocol with fixed
+decision rules, committed to the project's git repository 38 minutes before the first results, by
+AI-agent sessions; it was not publicly time-stamped before the results. We compared conformal
+Benjamini--Hochberg (P1; per-scan FDR ≤ α) with a scan-level exceedance threshold (P2, ``CALM-FDX'';
+P(FDP \textgreater{} γ) ≤ δ = 0.1), an application of conformal risk control and Learn-then-Test, and with
+pre-registered and post-hoc baselines.
+\endgraf
+\textbf{Results.} The pre-registered verdicts for transport from 1-mm-grid to thick-slice cohorts were
+\emph{inconclusive} for P1 and \emph{refuted} for P2. No P1 comparison showed a violation, but at α = 0.1 the
+data do not exclude a realised FDR of 1.4α (MS3SEG) and 1.8α (Muslim). Per-scan behaviour is a
+property of the estimand, not of P2 alone: under P1 at α = 0.1, 34 \% of MS3SEG scans had a
+false-discovery proportion above 0.1, and the Muslim scans with any reported lesion had a mean
+proportion of 0.188. Calibration from the 1-mm-grid cohorts did not transfer: on thick slices the
+realised FDR at α = 0.1 was 2.6 (95 \% CI 1.3--7.1) and 3.2 (1.2--25.6) times its within-cohort value.
+P2 let 21 \% {[}13, 30{]} and 29 \% {[}17, 44{]} of thick-slice scans exceed γ = 0.1, against 10 \%; it needs
+at least 9 calibration patients by construction, and with 10 local patients it was valid on average
+but found 4.0 \% and 0.7 \% of lesions. Averaging the five folds doubled sensitivity at α = 0.2
+(0.102 → 0.203) but raised the realised FDR on one cohort (0.051 → 0.122 at α = 0.1). On healthy
+brains, 1-mm-calibrated P1 reported a lesion in 14/100 (α = 0.1) and 24/100 (α = 0.2) controls,
+both undecided; without selection the segmentation marked a lesion in 85/100 and met a brain
+dissemination-in-space rule in 19/\allowbreak{}100.
+\endgraf
+\textbf{Conclusions.} Thin-slice calibration of lesion-wise conformal guarantees does not carry over to
+thick-slice MS FLAIR. Calibrate with the deployed segmenter on the target cohort and acquisition,
+expect little power, and do not extend patient calibrations to healthy or screening populations.
+Cohort and acquisition were confounded throughout. A default-off software card derived from this
+work shows no false-lesion rate; this is translation, not clinical validation.}
+
+\keywords{conformal selection; false discovery rate; false-discovery exceedance; Learn-then-Test; multiple sclerosis; lesion segmentation; distribution shift; slice spacing; protocol-first analysis; training-set contamination.}
+
+\begin{document}
+
+\enlargethispage{3\baselineskip}
+\maketitle
+\twocolumn
+
+\section{Introduction}
+
+Automated segmentation of MS white-matter lesions on FLAIR has reached voxel Dice of about 0.7 on
+external data with nnU-Net-class models \citep{isensee2021nnunet, dereskewicz2025flames, wiltgen2024lstai}. A reader of a single scan, however, needs a different number: how many of the
+lesions the software marks are false. Diagnostic rules make each lesion count. The McDonald
+criteria require lesions in several characteristic regions to establish dissemination in space
+\citep{thompson2018diagnosis, montalban2025diagnosis}, and a few false periventricular or juxtacortical
+marks can turn a negative scan positive.
+
+Conformal inference offers a principled answer. Conformal p-values computed against a calibration
+set of known false candidates are valid and positively dependent \citep{bates2023testing}.
+Benjamini--Hochberg (BH) selection on them bounds the false-discovery rate of the reported set
+\citep{benjamini1995controlling, jin2023selection}. The resulting ``precision dial'' needs no model
+assumptions; its one proviso is exchangeability between the calibration candidates and the false
+candidates of the new scan. Risk-control and Learn-then-Test (LTT) frameworks give analogous
+guarantees with the scan as the exchangeable unit
+\citep{angelopoulos2024crc, angelopoulos2025ltt, bates2021rcps}.
+
+MS imaging stresses this proviso in four ways. First, scanners and protocols differ between sites.
+Second, 2D FLAIR with 4--8 mm slices is still common in routine care, although consensus guidelines
+recommend 3D FLAIR \citep{wattjes2021magnims}; thick slices change both lesion appearance and the
+segmenter's errors. Third, false candidates within one scan share that scan's quality and anatomy,
+so they are not exchangeable as single units. Fourth, the public MS cohorts used for evaluation are
+often part of the segmenter's training data, which turns an external test into an in-distribution
+one \citep{kapoor2023leakage, varoquaux2022machine}.
+
+This paper does not propose a new conformal method. It is a protocol-first, reproducible audit of
+lesion-wise conformal false-discovery control on real MS data, with a forensic check of which scans
+the segmenter trained on, the patient as the unit of splitting and resampling, held-out sites,
+intervals that remain valid with few patients, healthy controls and plainly reported negative
+results. Our earlier internal drafts made claims that this audit retracts (Appendix B).
+
+\textbf{Contributions.}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  A five-cohort evaluation, under a protocol with fixed decision rules, of lesion-wise conformal
+  FDR (P1) and per-scan false-discovery exceedance (FDX, P2) control when calibration and use differ
+  in cohort and acquisition, with every scan of the segmenter's training data excluded (§6.2--6.3).
+\item
+  Evidence that the per-scan behaviour of P1 is as poor as that of P2 on thick slices: the
+  contrast is between estimands (an expectation and a tail probability), and the expectation is
+  kept low partly by scans on which nothing is reported (§6.2).
+\item
+  A comparison with pre-registered (conformal risk control, LTT, precision-matched) and post-hoc
+  scan-aware baselines, including at matched power (§6.4).
+\item
+  A cohort-and-acquisition table of validity, power and lesion-size-resolved detection (§6.6),
+  stated as a contrast between cohorts, not as a controlled thickness effect.
+\item
+  Evidence that fold ensembling doubles power at the guarantee without fixing validity, and why
+  (§6.7).
+\item
+  A recalibration-size analysis, and a healthy-control analysis that replaces an unfounded earlier
+  claim about dissemination in space on healthy brains (§6.8--6.9).
+\end{enumerate}
+
+\section{Related work}
+
+\textbf{Conformal selection and FDR.} Conformal p-values against a shared calibration set satisfy PRDS,
+so BH on them controls the FDR at α·E[m0/\allowbreak{}m] ≤ α, where m0/m is the share of nulls among the tested
+units \citep{bates2023testing}. \citet{jin2023selection} cast prediction-based selection in this framework, and
+\citet{marandon2024adaptive} extended it to adaptive scores. Under covariate shift, weighted conformal
+p-values restore validity when the likelihood ratio is known or can be estimated
+\citep{tibshirani2019conformal, jin2026weighted}. More general deviations from exchangeability cost a
+quantifiable coverage gap \citep{barber2023beyond}. Mondrian (group-conditional) calibration calibrates
+within strata such as sites or acquisition types \citep{vovk2005algorithmic}.
+
+\textbf{Grouped data and scan-level risk control.} When observations are clustered, exchangeability
+holds at the cluster level at best. \citet{dunn2023distribution} calibrate by subsampling one observation
+per group. \citet{lee2025selection} construct hierarchical and subsampling conformal e-values with e-BH
+\citep{wang2022false}; their guarantee assumes group sizes independent of the observations. Conformal
+risk control \citep{angelopoulos2024crc} and LTT \citep{angelopoulos2025ltt} control the expectation, or a
+high-probability bound, of any bounded loss over exchangeable units; with the scan as unit and the
+per-scan false-discovery proportion (FDP), or the indicator \{FDP \textgreater{} γ\}, as loss, they control
+scan-level FDR or FDX for a global threshold. Non-exchangeable risk control trades the guarantee for
+weights over the calibration data \citep{farinhas2024nonexchangeable}.
+
+\textbf{Simultaneous and exceedance bounds.} FDX control dates back to \citet{genovese2006exceedance}.
+Reference-family bounds \citep{blanchard2020posthoc}, the exact joint law of conformal p-values
+\citep{gazin2024transductive} and everywhere-valid FDP bounds for conformal selection
+\citep{song2026everywhere} give post hoc or simultaneous control. All of them assume exchangeability of
+the individual candidates.
+
+\textbf{Conformal methods in medical image segmentation.} Recent work controls voxel-level miss rates
+for 3D lesions \citep{tan2025conformal}, image-level false-positive proportions in segmentation masks
+\citep{mossina2025controlling} and per-scan nodule miss rates by risk control \citep{hulsman2025conformal}.
+\citet{lambert2024robust} estimate volumes under covariate shift. \citet{adhikary2026bound} report that per-organ
+recall risk control in CT fails to transfer under clinical domain shift. In MS, conformal prediction
+has been applied to disease course from registry data \citep{sreenivasan2025conformal}; MS lesion
+uncertainty has otherwise been evaluated without distribution-free guarantees
+\citep{molchanova2025structural, malinin2022shifts}.
+
+\textbf{Position of this work.} We found no study of lesion-wise conformal FDR or FDX control for MS
+segmentation that tests transport across cohorts and acquisitions while controlling for the
+segmenter's training-set overlap. We make no stronger novelty claim. The methods are standard; the
+per-scan procedure is an application of risk control and LTT (§3.2). The literature search must be
+refreshed before submission (Appendix D).
+
+\section{Problem setting and procedures}
+
+\subsection{Candidates, lesion-wise error and what the guarantees assume}
+
+For a scan, the segmenter outputs a voxelwise lesion probability map. A \emph{candidate} is an
+18-connected component of \{p ≥ 0.5\} whose physical volume is at least 3 mm³, computed with the
+scan's own voxel volume. Its \emph{score} s is the mean probability over the component; higher scores are
+more lesion-like. \emph{Expert lesions} are 18-connected components of the expert mask of at least
+3 mm³ (``detectable''). \emph{Clinical} lesions are those of at least 14.14 mm³ (a sphere of 3 mm
+diameter). Candidates are matched one-to-one to expert lesions by maximum-IoU Hungarian assignment
+\citep{kuhn1955hungarian}. The pre-registered primary matching is lenient (IoU \textgreater{} 0); a strict variant
+(IoU ≥ 0.10) is a sensitivity analysis. A candidate is \emph{true} if it is matched; unmatched fragments
+are \emph{false}.
+
+A selection rule reports a subset R of a scan's candidates, with false-discovery proportion
+FDP = \textbar R ∩ F\textbar{} / max(\textbar R\textbar, 1), where F is the set of false candidates. We report:
+
+\begin{itemize}
+\tightlist
+\item
+  the \textbf{realised FDR}: the mean per-scan FDP over test scans, counting a scan with no selection as
+  FDP = 0 (the pre-registered estimand);
+\item
+  the \textbf{FDR among selecting scans}: the mean FDP over the scans on which anything was reported ---
+  what a reader who sees a non-empty list experiences --- with the share of scans selecting;
+\item
+  the \textbf{realised FDX}: the share of test scans with FDP \textgreater{} γ, reported for P1 as well as for P2;
+\item
+  the \textbf{end-to-end sensitivity}: selected-and-matched expert lesions divided by all detectable
+  expert lesions.
+\end{itemize}
+
+On a lesion-free scan, FDP is the indicator of at least one reported lesion, so each promise becomes
+a bound on the healthy false-alarm rate.
+
+\textbf{What the guarantees assume, and why none of them strictly holds here.} Three features of the data
+violate the assumptions behind every procedure in §3.2, even within a site.
+
+\begin{itemize}
+\tightlist
+\item
+  \emph{Labels depend on the matching.} ``False'' is defined by one-to-one matching inside each scan, so the
+  null set mixes genuine false positives with surplus fragments of true lesions and --- under MS3SEG's
+  protocol --- periventricular hyperintensities that its raters excluded from the lesion class. The
+  null is not a draw from a fixed law.
+\item
+  \emph{Candidates are clustered within scans, and scans within patients} (MSLesSeg contributes up to four
+  timepoints per patient to the calibration pool). The intraclass correlation of false-candidate
+  scores is modest (0.10 on MSLesSeg, below 0.03 elsewhere), but with about 11 false candidates per
+  scan the design effect is not negligible; BH's validity depends on the joint law of a test scan's
+  null p-values given the scan.
+\item
+  \emph{Test sets contain repeated scans} of the same patients (MSLesSeg, PediMS), whereas the scan-level
+  procedures calibrate on first timepoints only.
+\end{itemize}
+
+We therefore treat P1 and the other procedures as calibrated procedures whose guarantees assume
+conditions that the data do not meet, and we measure how far the realised error departs from the
+nominal level. A small simulation (§6.2, Appendix Table A7) separates the effect of within-scan
+clustering from that of a shift in the false-candidate scores.
+
+\subsection{Procedures}
+
+\textbf{P1 --- conformal BH (primary FDR procedure).} The null set N contains the scores of all false
+candidates of all scans of the calibration patients, with size n.~For a test candidate with score s,
+p = (1 + \#\{u ∈ N : u ≥ s\}) / (n + 1). BH at level α is applied within each test scan. If the test
+scan's false-candidate scores were exchangeable with N, these p-values would be valid and PRDS, and
+the per-scan FDR would be bounded by α·E[m0/\allowbreak{}m] ≤ α \citep{bates2023testing, jin2023selection}, where m0/m
+is the scan's share of false candidates (0 for a scan without candidates). This is a bound: equality
+is not guaranteed for discrete, positively dependent conformal p-values.
+
+\textbf{P2 --- CALM-FDX, single-threshold form (primary FDX procedure).} For each calibration patient
+(first timepoint only) and each threshold λ on the grid \{0, 0.001, \ldots, 1, ∞\}, FDP\_\allowbreak{}i(λ) is the FDP of
+\{s ≥ λ\}. The scan's \emph{safe threshold} t\_i is the smallest grid value λ such that FDP\_\allowbreak{}i(λ′) ≤ γ for
+every grid λ′ ≥ λ. With K calibration patients, \ensuremath{\hat{\lambda}} is the ⌈(K + 1)(1 − δ)⌉-th smallest t\_i; if that
+index exceeds K, \ensuremath{\hat{\lambda}} = ∞ and the procedure abstains. With δ = 0.1 it therefore cannot select with fewer
+than 9 calibration patients. Because FDP\_\allowbreak{}test(\ensuremath{\hat{\lambda}}) \textgreater{} γ implies t\_test \textgreater{} \ensuremath{\hat{\lambda}}, and t\_test is exchangeable
+with t\_1, \ldots, t\_K when patients are exchangeable, P(FDP\_\allowbreak{}test \textgreater{} γ) ≤ δ. This is the split-conformal
+quantile argument \citep{vovk2005algorithmic}; equivalently, conformal risk control with the binary loss
+1\{t\_i \textgreater{} λ\} \citep{angelopoulos2024crc}, whose high-probability (PAC) analogue is LTT
+\citep{angelopoulos2025ltt}. We keep the name CALM-FDX for continuity with our earlier drafts, but
+\textbf{it is an application of these frameworks, not new theory}. The guarantee is marginal over the
+calibration draw; with K = 10 a sizeable share of individual calibrations fails
+\citep{vovk2013conditional}. The earlier two-layer variant with per-scan region certificates was not
+re-run (§9).
+
+\textbf{Baselines (pre-registered).} \emph{B1, precision-matched threshold}: the lowest threshold whose
+pooled calibration micro-FDR is at most α; no guarantee. \emph{B2, conformal risk control}: a global
+threshold with the monotonised per-scan FDP as loss, which gives E[FDP\_\allowbreak{}test] ≤ α under scan
+exchangeability \citep{angelopoulos2024crc}. \emph{B3, LTT}: Hoeffding--Bentkus p-values with fixed-sequence
+testing over thresholds and per-scan FDP as loss; with probability at least 0.9 over the
+calibration draw, E[FDP\_\allowbreak{}test] ≤ α \citep{angelopoulos2025ltt}. B2 and B3 use one scan per calibration
+patient.
+
+\textbf{Baselines added post hoc (§5.5).} \emph{SUB}: one false candidate drawn at random from the \textbf{first
+scan} of each calibration patient, conformal p-values against this subsampled null and BH within
+the test scan \citep{dunn2023distribution}. Each p-value is marginally valid under patient
+exchangeability, but BH's PRDS argument is not re-established, so its FDR control is empirical. It
+is randomised; a deployment uses one draw. \emph{LR-hier}: hierarchical conformal e-values with weights
+1/N\_k and e-BH over the whole batch of test scans of the held-out site \citep{lee2025selection, wang2022false}. Its guarantee is a batch FDR and assumes group sizes independent of the
+observations, which is doubtful here because candidate counts track lesion load.
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{3}%mtlabel
+\caption[]{\textbf{The procedures and what each one guarantees, if its assumptions hold.}}
+\begin{tabulary}{\textwidth}{@{}LLLLLL@{}}
+\toprule
+\hspace{0pt}procedure & \hspace{0pt}exchangeable unit assumed & \hspace{0pt}error controlled & \hspace{0pt}type of guarantee & \hspace{0pt}randomised & \hspace{0pt}status \\
+\midrule
+\hspace{0pt}P1 conformal BH & \hspace{0pt}false candidates (pooled) & \hspace{0pt}per-scan FDR ≤ α & \hspace{0pt}marginal (over calibration and test) & \hspace{0pt}no & \hspace{0pt}pre-registered, primary \\
+\hspace{0pt}P2 CALM-FDX threshold & \hspace{0pt}patients (first scans) & \hspace{0pt}P(FDP\_\allowbreak{}scan \textgreater{} γ) ≤ δ & \hspace{0pt}marginal & \hspace{0pt}no & \hspace{0pt}pre-registered, primary \\
+\hspace{0pt}B1 precision-matched & \hspace{0pt}--- & \hspace{0pt}none & \hspace{0pt}--- & \hspace{0pt}no & \hspace{0pt}pre-registered baseline \\
+\hspace{0pt}B2 conformal risk control & \hspace{0pt}patients (first scans) & \hspace{0pt}per-scan FDR ≤ α & \hspace{0pt}marginal & \hspace{0pt}no & \hspace{0pt}pre-registered baseline \\
+\hspace{0pt}B3 Learn-then-Test & \hspace{0pt}patients (first scans) & \hspace{0pt}per-scan FDR ≤ α & \hspace{0pt}PAC, δ = 0.1 & \hspace{0pt}no & \hspace{0pt}pre-registered baseline \\
+\hspace{0pt}SUB one candidate per patient + BH & \hspace{0pt}patients (first scans) & \hspace{0pt}none proven (each p-value valid) & \hspace{0pt}--- & \hspace{0pt}yes & \hspace{0pt}post hoc baseline \\
+\hspace{0pt}LR-hier hierarchical e-values + e-BH & \hspace{0pt}patients, sizes independent of data & \hspace{0pt}batch FDR ≤ α & \hspace{0pt}marginal & \hspace{0pt}no & \hspace{0pt}post hoc baseline \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\section{Data}
+
+\subsection{Cohorts}
+
+Table 1 lists the cohorts: MSLesSeg \citep{guarnera2025mslesseg, mslesseg2025data}, the Ljubljana 3D MR
+MS dataset \citep{lesjak2018novel}, MS3SEG \citep{bawil2026ms3seg, ms3seg2026data}, the cohort of
+\citeauthor{muslim2022brain} \citetext{\citeyear{muslim2022brain}; \citealp{muslim2022data}} and PediMS \citep{popa2025pedims, pedims2025data}. The healthy
+controls are the 100 controls of SibBMS \citep{tuchinov2025sibbms}.
+
+Two acquisition facts matter for everything that follows.
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{The ``1-mm'' cohorts are 1-mm grids, not 1-mm acquisitions.} MSLesSeg's release includes an
+  acquisition table that lists native FLAIR slice thicknesses of 2--5 mm: 43 scans at 2--2.3 mm, 52 at
+  3 mm, 15 at 4--5 mm and 5 unknown. The images are registered and resampled to MNI 1 mm. Only the
+  Ljubljana scans are natively thin (3D, 0.8 mm). Throughout, ``1-mm sites'' means cohorts \emph{delivered}
+  on a 1-mm grid.
+\item
+  \textbf{The thick-slice cohorts are native 2D acquisitions, and what varies is slice spacing.} MS3SEG
+  slices are 4.7--6.9 mm thick with a 0.7--2.1 mm gap (spacing 6.0--8.1 mm). Muslim slices are 3--6 mm
+  thick with a spacing of 4.86--8.3 mm. PediMS has a spacing of 3.9 mm; its dataset description gives
+  a 3 mm slice thickness. All were analysed on their native grids. We use ``slice spacing'' for this
+  axis.
+\end{itemize}
+
+The Muslim dataset has 60 patients from about 20 centres (most patients came from Baghdad). We used
+the 51 axial FLAIR scans; 6 coronal and 3 sagittal scans were not used. Its in-plane pixel size is
+not published. We estimated it per scan (0.41--0.97 mm) from the head's breadth and length scaled to
+adult reference sizes; the same recipe has a coefficient of variation of about 4.6 \% on 15 MS3SEG
+adults of known pixel size, hence an expected error of about ±5 \% per axis (±10 \% in volume).
+
+We skull-stripped MS3SEG and Muslim with HD-BET 2.0.1 \citep{isensee2019hdbet}. PediMS is distributed
+both raw (defaced) and skull-stripped; we used the stripped images. MSLesSeg and Ljubljana are used as
+distributed (MNI 1 mm).
+
+The expert masks follow different protocols. MS3SEG's MS-lesion class excludes periventricular
+hyperintensities that its raters judged non-MS, so FLAMeS marks there count as false. Muslim masks
+come from a sequential correction chain. PediMS has one rater validated by two specialists and
+includes one patient with Baló's concentric sclerosis.
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{1}%mtlabel
+\caption[]{\textbf{Cohorts (5-fold ensemble arm; candidates and labels as in §3.1).}}
+\begin{tabulary}{\textwidth}{@{}LLLLLRLLL@{}}
+\toprule
+\hspace{0pt}cohort & \hspace{0pt}origin, scanner & \hspace{0pt}scans / patients & \hspace{0pt}native FLAIR geometry & \hspace{0pt}grid analysed & \hspace{0pt}detectable expert lesions & \hspace{0pt}candidates (false) & \hspace{0pt}candidate AUROC, 5-fold mean {[}95 \% CI{]} & \hspace{0pt}AUROC, single folds on their own candidates (range) \\
+\midrule
+\hspace{0pt}MSLesSeg & \hspace{0pt}Italy (Catania); 8 scanner models, 1.5/3 T & \hspace{0pt}115 / 75 & \hspace{0pt}2D/3D; slice thickness 2--5 mm (43 at 2--2.3, 52 at 3, 15 at 4--5, 5 unknown) & \hspace{0pt}MNI 1 mm (delivered resampled) & \hspace{0pt}3344 & \hspace{0pt}3788 (1257) & \hspace{0pt}0.818 {[}0.798, 0.837{]} & \hspace{0pt}0.735--0.758 \\
+\hspace{0pt}Ljubljana-10 & \hspace{0pt}Slovenia (Ljubljana); Siemens 3 T & \hspace{0pt}10 / 10 & \hspace{0pt}3D; 0.47 × 0.47 × 0.8 mm & \hspace{0pt}MNI 1 mm (delivered) & \hspace{0pt}667 & \hspace{0pt}517 (82) & \hspace{0pt}0.802 {[}0.729, 0.883{]} & \hspace{0pt}0.673--0.701 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}Iran; one Toshiba 1.5 T scanner & \hspace{0pt}100 / 100 & \hspace{0pt}2D; thickness 4.7--6.9 mm + gap 0.7--2.1 mm (spacing 6.0--8.1, median 7.2) & \hspace{0pt}native & \hspace{0pt}3354 & \hspace{0pt}3402 (1162) & \hspace{0pt}0.801 {[}0.786, 0.816{]} & \hspace{0pt}0.699--0.720 \\
+\hspace{0pt}Muslim & \hspace{0pt}Iraq, \textasciitilde20 centres (most patients from Baghdad); 1.5 T & \hspace{0pt}51 / 51 & \hspace{0pt}2D; thickness 3--6 mm, spacing 4.86--8.3 mm (median 6.0); in-plane pixel size estimated & \hspace{0pt}native & \hspace{0pt}1819 & \hspace{0pt}1540 (568) & \hspace{0pt}0.784 {[}0.741, 0.822{]} & \hspace{0pt}0.731--0.746 \\
+\hspace{0pt}PediMS & \hspace{0pt}one centre; Siemens Skyra 3 T; 9 children & \hspace{0pt}28 / 9 & \hspace{0pt}2D; spacing 3.9 mm (0.75 × 0.75 mm in-plane) & \hspace{0pt}native & \hspace{0pt}1104 & \hspace{0pt}1110 (321) & \hspace{0pt}0.801 {[}0.774, 0.864{]} & \hspace{0pt}0.683--0.715 \\
+\hspace{0pt}SibBMS healthy controls & \hspace{0pt}Siberia (Russia), one site & \hspace{0pt}100 / 100 & \hspace{0pt}not verified; images registered to an MNI-type 1-mm template & \hspace{0pt}template 1 mm & \hspace{0pt}0 & \hspace{0pt}263 (263); fold 0: 306 & \hspace{0pt}--- & \hspace{0pt}--- \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\subsection{Training-set overlap (contamination)}
+
+FLAMeS was trained on 668 FLAIR scans of people with MS \citep{dereskewicz2025flames}. Its article
+describes eight datasets (three public, five private) from seven sites; listing the four MSSEG-2016
+centres separately gives the 11 sources of its Table 1. The article is internally inconsistent on the
+number of people (575 vs 408). The public data in training are 20 ISBI-2015 scans
+\citep{carass2017longitudinal}, 20 Ljubljana scans (listed as PubMRI) \citep{lesjak2018novel} and 53
+MSSEG-2016 cases from centres 01, 03, 07 and 08, which include cases of both the challenge's
+training and test sets \citep{commowick2018objective}. A segmenter evaluated on its own training scans is
+not being tested externally \citep{kapoor2023leakage}. We handled overlap as follows (Table 2).
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{ISBI-2015} is not used anywhere in this paper. An analysis in our earlier draft that used it is
+  withdrawn.
+\item
+  \textbf{Ljubljana.} The released weights contain nnU-Net's dataset fingerprint (per-case spacing and
+  brain bounding box of all 668 training cases). Twenty consecutive entries match Ljubljana patients
+  01--15 and 21--25 exactly, with zero voxels of disagreement on all three axes. The training logs show
+  that each fold trains on four fifths of the cases. These 20 scans are excluded from every analysis,
+  including calibration. The remaining 10 patients (16--20, 26--30; ``Ljubljana-10'') were never trained
+  on by any fold, but their \textbf{site} was. We never count Ljubljana-10 as an unseen-site test; its two
+  leave-one-site-out cells are reported but flagged (†), and a post-hoc analysis removes Ljubljana
+  from every calibration pool (§6.5).
+\item
+  \textbf{MSLesSeg, MS3SEG, Muslim, PediMS} are not among FLAMeS's training sources; MSLesSeg served as an
+  external test set in the FLAMeS publication. For the three thick-slice cohorts the fingerprint
+  supports this: none of the 668 training cases has a voxel spacing of 3 mm or more on any axis. A
+  thick-slice scan resampled to a fine grid before training would not be detected this way.
+\item
+  \textbf{SibBMS controls} are not among the training sources. The fingerprint has 668 entries, none
+  compatible with the SibBMS template grid or any control's brain box, and SibBMS was released after
+  FLAMeS was submitted.
+\end{itemize}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{2}%mtlabel
+\caption[]{\textbf{Segmenter training-set overlap and licences.}}
+\begin{tabulary}{\textwidth}{@{}LLLLL@{}}
+\toprule
+\hspace{0pt}item & \hspace{0pt}in FLAMeS training? & \hspace{0pt}used here as & \hspace{0pt}in LST-AI training? & \hspace{0pt}licence \\
+\midrule
+\hspace{0pt}MSLesSeg & \hspace{0pt}no (FLAMeS external test) & \hspace{0pt}calibration and test & \hspace{0pt}no & \hspace{0pt}data CC BY 4.0 (the article is non-commercial; we use the data only) \\
+\hspace{0pt}Ljubljana (open\_\allowbreak{}ms\_\allowbreak{}data / 3D MR MS) & \hspace{0pt}\textbf{20 of 30 scans} (patients 01--15, 21--25) & \hspace{0pt}only the 10 never-trained scans; site flagged as seen & \hspace{0pt}no (LST-AI test set) & \hspace{0pt}\textbf{the laboratory states both CC BY (database description PDF) and CC BY-NC-ND (web page)}; we apply the stricter: academic use only, no derivatives \\
+\hspace{0pt}ISBI-2015 & \hspace{0pt}\textbf{yes (20 scans)} & \hspace{0pt}\textbf{not used} & \hspace{0pt}--- & \hspace{0pt}challenge terms \\
+\hspace{0pt}MS3SEG & \hspace{0pt}no (dataset descriptions; no training case ≥ 3 mm) & \hspace{0pt}test, and calibration in pooled designs & \hspace{0pt}not used & \hspace{0pt}data CC BY 4.0; code MIT (the article is non-commercial) \\
+\hspace{0pt}Muslim 2022 & \hspace{0pt}no (as MS3SEG) & \hspace{0pt}as MS3SEG & \hspace{0pt}not used & \hspace{0pt}CC BY 4.0 \\
+\hspace{0pt}PediMS & \hspace{0pt}no (as MS3SEG) & \hspace{0pt}as MS3SEG & \hspace{0pt}not used & \hspace{0pt}CC BY 4.0 \\
+\hspace{0pt}SibBMS healthy controls & \hspace{0pt}no (fingerprint, release dates) & \hspace{0pt}test only (controls) & \hspace{0pt}not run (pending) & \hspace{0pt}stated as both CC BY 3.0 and CC BY-NC-SA 3.0; we apply the stricter: research use only \\
+\hspace{0pt}FLAMeS weights v2.0 & \hspace{0pt}--- & \hspace{0pt}segmenter & \hspace{0pt}--- & \hspace{0pt}\textbf{CC BY 4.0 on Zenodo; CC BY-NC 4.0 on the Hugging Face model card for the same weights (changed on 2026-08-13 from GPL-3.0)}; the FLAMeS article is non-commercial \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+LST-AI's code is MIT-licensed; the HD-BET weights are licensed for non-commercial use. The
+consequences for commercial use are stated under Declarations (Licences).
+
+\section{Study design and statistics}
+
+\subsection{A protocol-first analysis, and what its timestamps can support}
+
+The analysis protocol (\texttt{\seqsplit{docs/research/paper/PROTOCOL-v0.3.md}}) was committed on 2026-10-21 at
+04:21 CEST (commit 9951494), together with the input inventory (file hashes, grids and value
+ranges). The SHA-256 of the protocol file at that commit is
+\seqsplit{1b5b39a8e5cc3c3af6cfce22d64c16832e0ccc71dbaf5ba35b11db15b93c6016} (committed blob, LF line endings).
+The metric functions, their tests and the candidate-extraction code (commit c0c5fa1, 04:35) and the
+candidate cache with a gate deviation (commit 50c9b08, 04:41) followed before any outcome. The
+analysis script itself was committed only together with the first results, at 04:59 (8a420bc),
+38 minutes after the protocol; nothing in the history therefore shows that the analysis code
+postdates the protocol. The protocol, the extraction and the analysis were written by AI-agent
+sessions working in the project's local git repository. The pre-outcome sections of the protocol are
+unchanged since 9951494, apart from a note pointing to a later correction (entry 9).
+
+The healthy-control addendum (\texttt{\seqsplit{PROTOCOL-v0.3-addendum-controls.md}}) was committed on 2026-10-24 at
+15:52 CEST (commit caa47e7; SHA-256
+\seqsplit{bdae74ec6373daa0685c49cc4f57fed73445716b92d469d9658cede764f87213),} before any control outcome on the
+ensemble maps or on the 70 never-analysed fold-0 control maps.
+
+\textbf{External evidence is weak for the main protocol.} The protocol was not deposited in a public
+registry \citep{nosek2018preregistration}. The branch reached the public remote (GitHub) only at 05:09
+CEST on 2026-10-21, together with the first results, so the protocol's precedence rests on git
+author timestamps, which can be set freely. The addendum is stronger: it was pushed to the public
+remote at 13:52:31 UTC on 2026-10-24, 71 minutes before its results (15:03:30 UTC) --- which bounds the
+publication of those results, not their computation. In the sense of the cited reference this is a
+protocol-first analysis with an internal audit trail, not a registered report. We call the protocol's
+fixed rules and verdicts ``pre-registered'' below in that limited sense only.
+
+\textbf{A concurrent analysis of the same data.} The same night, a separate pre-registered study in the
+same repository (``lesion-detector v3.1'': protocol commit 129d2ff at 04:14, evaluation code 0d339b1 at
+04:24, results d451fbb at 05:13 CEST) labelled and scored candidates on the same three thick-slice
+cohorts from the same five-fold maps, and tested fold disagreement as a candidate score. It was also
+run by an AI agent. Its labelling started after this study's protocol commit, but its results ---
+mainly that averaging the folds ranks candidates far better than one fold --- were available before
+this study's first text revision (0731145, 05:30) and before every manuscript-stage analysis. It is
+disclosed here because it is a second analysis of the same data that shaped our interpretation.
+
+A three-scan processing pilot on one scan per thick-slice cohort (FLAMeS fold 0, 2026-10-18) also
+preceded the protocol; its outcomes were not inspected, and it is disclosed in protocol entry 7. The
+fold-0 arm on MSLesSeg and Ljubljana and on 30 of the controls had been analysed in our earlier
+drafts and is not blind.
+
+\subsection{Segmenter and arms}
+
+FLAMeS \citep{dereskewicz2025flames} is a 3D full-resolution nnU-Net \citep{isensee2021nnunet} trained on FLAIR
+only. We ran each of its five folds separately \seqsplit{(checkpoint\_final,} no test-time augmentation) and
+stored probability maps as uint8 with a scale factor; the maximum decoding error is about 0.002.
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Ensemble arm (primary).} The voxelwise mean of the five fold maps, which is nnU-Net's own
+  ensembling \citep{lakshminarayanan2017simple}. Candidates are extracted from that map.
+\item
+  \textbf{Fold-0 arm.} The pipeline of our earlier drafts. Folds 1--4 were run the same way to check
+  whether fold 0 is typical.
+\item
+  \textbf{Secondary score.} S\_cons is the minimum over folds of the per-fold mean probability on an
+  ensemble candidate; it is lesion-like only if all folds agree.
+\item
+  \textbf{LST-AI} v1.2.0 \citep{wiltgen2024lstai} was run on MSLesSeg and Ljubljana only, for an exploratory
+  paired segmenter swap.
+\end{itemize}
+
+A reproduction gate (G1) compared the new fold-0 candidates with those of our earlier analysis:
+125/\allowbreak{}125 scans had identical candidate counts and 4400/\allowbreak{}4400 candidates had identical one-to-one
+labels. One candidate's score differed by 0.0078, above the 0.003 tolerance; this is a documented
+boundary voxel, and the deviation was logged before any outcome (Table 11, entry 5).
+
+\subsection{Calibration designs}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{D1, within-site:} patient-grouped 5-fold cross-fitting within each cohort;
+  leave-one-patient-out for Ljubljana-10 and PediMS.
+\item
+  \textbf{D2, leave-one-site-out:} calibrate on all eligible patients of the other four cohorts, test on
+  the held-out cohort.
+\item
+  \textbf{D3, 1-mm grid → thick (primary transport design):} calibrate on MSLesSeg + Ljubljana-10, test on
+  MS3SEG, Muslim and PediMS separately. D3r is the reverse direction.
+\item
+  \textbf{D4, pooled:} patient-grouped 5-fold cross-fitting over all five cohorts.
+\item
+  \textbf{D5, recalibration curve:} draw k patients of the target cohort (k ∈ \{1, 2, 3, 5, 10, 20, 40\},
+  200 draws each), calibrate either on them alone (\emph{site-only}) or on the 1-mm pool plus them
+  (\emph{augmented}), and test on the rest of the cohort.
+\end{itemize}
+
+Repeated timepoints of one patient (MSLesSeg, PediMS) are never split between calibration and test.
+
+\subsection{Outcomes, intervals, classification and multiplicity}
+
+The \textbf{32 primary cells} cover the held-out cohorts in D3 (3 thick-slice cohorts) and D2 (5 cohorts),
+for P1 at α ∈ \{0.1, 0.2\} (realised FDR) and P2 at γ ∈ \{0.1, 0.2\} with δ = 0.1 (realised FDX). All are
+for the ensemble arm with the primary score and lenient matching.
+
+\textbf{Pre-registered intervals and rule.} Intervals are 95 \% patient-cluster percentile bootstraps with
+2000 resamples \citep{davison1997bootstrap}, holding the calibration fixed. For FDX, the interval is the
+union with the exact Clopper--Pearson interval over scans \citep{clopper1934use}. A cell is \emph{violated} if
+the lower bound exceeds the nominal level, \emph{holds} if the upper bound is at most nominal + 0.05, and
+\emph{inconclusive} otherwise. A non-violated cell with fewer than 10 selections or end-to-end sensitivity
+below 0.05 is flagged as \emph{abstention}. ``Holds'' therefore means \emph{no violation detected and the upper
+bound is within the margin}: it is not a proof of validity, and a ``holds'' cell can have a point
+estimate above α. The 0.05 absolute margin is 50 \% of α = 0.1 but only 25 \% of α = 0.2; it was fixed
+before outcomes and is not otherwise justified, so we also report one-sided upper bounds and the
+inflation factor they cannot exclude.
+
+\textbf{Additional intervals (post hoc, §5.5).} The percentile bootstrap under-covers with 9--10 clusters
+and degenerates to {[}0, 0{]} when no selection is false. For every primary cell we therefore also
+report a one-sided 95 \% Hoeffding--Bentkus upper bound over patients \citep{bates2021rcps}, valid for any
+number of independent patients and bounded per-patient values (for cohorts with several scans per
+patient it bounds the patient-weighted mean), and we classify a cell whose bootstrap interval is
+degenerate as \emph{not estimable}. The primary intervals hold the calibration fixed, so they test
+calibration-conditional validity, which the theory does not promise; a two-level bootstrap that
+resamples calibration and test patients (1000 resamples, with Monte Carlo error) gives the marginal
+view for every primary cell. A \emph{low-power} flag (fewer than half of the test scans select anything,
+or sensitivity below 0.10) complements the pre-registered abstention flag.
+
+\textbf{Multiplicity.} We report Bonferroni intervals over the 32 primary cells (level 1 − 0.05/\allowbreak{}32,
+20 000 resamples). The cells are strongly positively correlated: the α = 0.1 and 0.2 cells, and the
+γ = 0.1 and 0.2 cells, share their test patients and often their threshold. The expectation of about
+0.8 spurious one-sided ``violations'' among 32 cells under exact validity assumes independent cells and
+overstates the number of independent tests; Bonferroni remains valid under any dependence. Secondary
+and post-hoc results (including subgroup analyses) carry no multiplicity control and are labelled.
+
+\textbf{Pre-registered decision rules (protocol §10).}
+
+\begin{itemize}
+\tightlist
+\item
+  Q1 (thin-to-thick transport) is \emph{supported} if no D3 cell is violated and the MS3SEG and Muslim
+  cells hold, and \emph{refuted} if any D3 cell is violated; otherwise \emph{inconclusive}.
+\item
+  Q3 (ensemble) ``helps'' if the paired difference in sensitivity excludes 0 in its favour in D2 and
+  D3 without a new violated cell.
+\item
+  Q4 defines k* as the smallest k at which the mean realised error is at most nominal and the mean
+  power is at least 90 \% of within-site power.
+\end{itemize}
+
+For \textbf{healthy controls}, the primary cells are the ensemble arm with 1-mm-site calibration, P1 at
+α ∈ \{0.1, 0.2\} and P2. We report the share of the 100 controls with at least one reported lesion,
+with exact intervals and the same classification rule. A secondary outcome applies the software's
+own brain dissemination-in-space (DIS) rule to the raw and selected lesions.
+
+\subsection{Post hoc analyses}
+
+Analyses written after results had been seen are labelled \textbf{{[}post hoc{]}} wherever they are cited.
+Four groups exist:
+
+\begin{itemize}
+\tightlist
+\item
+  explanatory checks of v0.3 (\texttt{\seqsplit{v03\_posthoc.py}}), including the low-lesion-load analysis added after
+  an independent re-implementation;
+\item
+  a stratification of MSLesSeg by native slice thickness (\texttt{\seqsplit{v03\_mslesseg\_native.py}});
+\item
+  two manuscript-stage analyses (\texttt{\seqsplit{v03m\_manuscript\_posthoc.py}}): Ljubljana removed from every
+  calibration pool, and the SUB and LR-hier baselines;
+\item
+  the analyses requested by an independent review (\texttt{\seqsplit{v03r\_revision.py}}, \texttt{\seqsplit{v03r\_revision\_extra.py}}):
+  the abstention-aware quantities, the additional bounds and the two-level bootstrap for every
+  primary cell, an interval for the transfer ratio with its sensitivity to the within-site fold
+  assignment, a clustering-and-shift simulation, 2000-draw Monte Carlo re-estimates, candidate AUROC
+  on matched candidates, and validity--power frontiers.
+\end{itemize}
+
+The manuscript-stage and review-stage analyses were logged as protocol entries 10 and 11 and pushed
+to the public remote (commits 70b0831, 75093ec and 2333f05) immediately before they were run; the
+evidence for that order is the local git log of the pushes. All values are now stored at full
+precision and rounded once, at printing (\texttt{\seqsplit{v03r\_fullprecision.py}} re-runs the committed analyses with
+the rounding removed and checks that nothing else changes).
+
+\subsection{Deviations from the protocol}
+
+\onecolumn
+\begingroup\footnotesize
+\renewcommand{\thetable}{11}%mtlabel
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{13.8pt}>{\raggedright\arraybackslash}p{163.6pt}>{\raggedright\arraybackslash}p{163.6pt}>{\raggedright\arraybackslash}p{163.6pt}@{}}%mtcolspec
+\caption[]{\textbf{Deviations, clarifications and disclosures.} Entries 1--11 refer to PROTOCOL-v0.3 §13;
+entries A1--A2 to the addendum §11.}\\
+\toprule
+\hspace{0pt}\# & \hspace{0pt}when (relative to outcomes) & \hspace{0pt}what & \hspace{0pt}effect on reported numbers \\
+\midrule\endfirsthead
+%mtrepeat-begin
+\mtcontinued{4}\\
+\toprule
+\hspace{0pt}\# & \hspace{0pt}when (relative to outcomes) & \hspace{0pt}what & \hspace{0pt}effect on reported numbers \\
+\midrule\endhead
+%mtrepeat-end
+\bottomrule\endlastfoot
+\hspace{0pt}1 & \hspace{0pt}before & \hspace{0pt}FDX intervals: union of the patient-cluster bootstrap and the exact Clopper--Pearson interval (the percentile bootstrap degenerates at 0/n) & \hspace{0pt}wider FDX intervals \\
+\hspace{0pt}2 & \hspace{0pt}before & \hspace{0pt}Bonferroni intervals use 20 000 bootstrap resamples & \hspace{0pt}none \\
+\hspace{0pt}3 & \hspace{0pt}before & \hspace{0pt}Muslim ±10 \% volume sensitivity rescales expert-lesion volumes only & \hspace{0pt}none on primary \\
+\hspace{0pt}4 & \hspace{0pt}before & \hspace{0pt}Gate G1 tolerance restricted to the 5 scans where a voxel crosses 0.5 & \hspace{0pt}none \\
+\hspace{0pt}5 & \hspace{0pt}before & \hspace{0pt}G1 strict criterion failed on one candidate (score difference 0.0078 \textgreater{} 0.003; boundary voxel); analysis continued & \hspace{0pt}none \\
+\hspace{0pt}6 & \hspace{0pt}after & \hspace{0pt}fold-0 primary-cell classification and the Q3/Q4 verdict blocks were added to the script after its first run; the re-run reproduced every printed number; explanatory analyses labelled post hoc & \hspace{0pt}none \\
+\hspace{0pt}7 & \hspace{0pt}disclosure & \hspace{0pt}a three-scan thick-slice processing pilot (2026-10-18) preceded the protocol; outcomes not inspected & \hspace{0pt}none \\
+\hspace{0pt}8 & \hspace{0pt}after & \hspace{0pt}independent re-implementation of the patient analysis; wording corrected (``no violation detected'', per-scan failure intervals, site confounding, mixed ensemble effect, near-abstention); post-hoc low-lesion-load analysis added & \hspace{0pt}wording only \\
+\hspace{0pt}9 & \hspace{0pt}after & \hspace{0pt}MSLesSeg is natively 2--5 mm (dataset acquisition table); band B1 relabelled ``≤ 1.5 mm as delivered''; post-hoc native-thickness stratification & \hspace{0pt}labels only \\
+\hspace{0pt}10 & \hspace{0pt}before running, after all other results & \hspace{0pt}manuscript stage: Ljubljana removed from every calibration pool; SUB and LR-hier baselines {[}post hoc{]} & \hspace{0pt}new post-hoc numbers (§6.4, §6.5) \\
+\hspace{0pt}11 & \hspace{0pt}before running, after an independent review & \hspace{0pt}full-precision re-run (eight double-rounding slips corrected); abstention-aware quantities, small-sample bounds and two-level bootstrap for every primary cell; ratio interval; simulation; Monte Carlo re-estimates; matched-candidate AUROC; frontiers {[}post hoc{]} & \hspace{0pt}corrected printing; new post-hoc numbers \\
+\hspace{0pt}A1 & \hspace{0pt}after & \hspace{0pt}control analysis: interrupted runs and two coding errors (a rounding helper; a key name) fixed; the fourth run reproduced every printed number; a separate re-implementation matched all counts exactly & \hspace{0pt}none \\
+\hspace{0pt}A2 & \hspace{0pt}after & \hspace{0pt}controls {[}post hoc{]}: visual check of four top-scoring false candidates; their FLAIR intensity; Fisher test of the 30 previously analysed vs 70 new controls & \hspace{0pt}post-hoc numbers only \\
+\hspace{0pt}--- & \hspace{0pt}reporting & \hspace{0pt}the two leave-one-site-out Ljubljana cells are reported as ``site seen in segmenter training'' rather than counted as unseen-site evidence & \hspace{0pt}none \\
+\hspace{0pt}--- & \hspace{0pt}reporting & \hspace{0pt}the earlier text stated that conformal BH was ``the only procedure with no violated 1-mm → thick cell''; Learn-then-Test (B3) had none either & \hspace{0pt}correction \\
+\hspace{0pt}--- & \hspace{0pt}reporting & \hspace{0pt}the pre-registered ``thickness bands'' are reported as cohort--acquisition groups (§6.6) & \hspace{0pt}labels only \\
+\hspace{0pt}--- & \hspace{0pt}not done & \hspace{0pt}the LST-AI arm on the controls (addendum E1) is pending & \hspace{0pt}--- \\
+\end{longtable}
+\endgroup
+\twocolumn
+
+\subsection{Software, compute and reproducibility}
+
+Candidate extraction (18 min on 7 workers), the analysis (6 min) and every post-hoc analysis ran on
+a local CPU, with deterministic seeds (20261021, 20261024, 20261031 and 20261101). FLAMeS and LST-AI
+inference ran earlier on cloud CPU virtual machines (Declarations, Funding). Every input file is
+hashed in the inventory records. The cached candidate set is identified by its SHA-256
+(2096109e\ldots a6f4ec) and is not redistributed (Declarations, Data availability). The metric functions
+have 33 unit tests. Appendix C maps every result to its script and record, and \texttt{\seqsplit{NUMBERS\_CHECK.md}}
+maps every number in this paper to its full-precision stored value.
+
+Two independent re-implementations were made, both in separate AI-agent sessions, not by a second
+human analyst:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Patient analysis (2026-10-21).} It reproduced the candidates (for example, 3402 MS3SEG
+  candidates, 1162 false) and the primary rates to three decimals, and found no leakage between
+  calibration and test patients. Its code was not archived in the repository (Appendix D).
+\item
+  \textbf{Control counts (2026-10-24).} Written as \texttt{\seqsplit{v03c\_controls\_check.py}}, with its own labelling,
+  p-values and BH. All counts matched exactly.
+\end{itemize}
+
+The independent review re-derived the key numbers from the per-candidate cache with its own code and
+found them reproducible apart from the eight rounding slips corrected here.
+
+\section{Results}
+
+\subsection{Score quality}
+
+On their own candidates, single folds ranked candidates with AUROC 0.67--0.76 (Table 1), and the
+5-fold mean reached 0.78--0.82 at every cohort. These two figures compare different candidate sets
+(components of different maps); a paired comparison on the same candidates is in §6.7. Candidate
+precision without selection was 0.63--0.84, and the ensemble produced 8.2--11.6 false candidates per
+scan. Fold disagreement alone (the negative standard deviation of the five per-fold candidate means)
+ranked candidates almost as well as the mean (AUROC 0.77--0.81).
+
+\subsection{Transport of marginal FDR control (P1)}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{4}%mtlabel
+\caption[]{\textbf{The 32 pre-registered primary cells (ensemble arm).} Entries: realised value
+{[}95 \% CI{]} → class; end-to-end sensitivity; number of selections. ``*'' marks a cell that holds with a
+point estimate above nominal; ``(abst.)'' marks a pass by abstention; † marks a site seen in FLAMeS
+training.}
+\begin{tabulary}{\textwidth}{@{}LLLLL@{}}
+\toprule
+\hspace{0pt}design · test site & \hspace{0pt}P1, α = 0.1 (FDR) & \hspace{0pt}P1, α = 0.2 (FDR) & \hspace{0pt}P2, γ = 0.1 (FDX vs δ = 0.1) & \hspace{0pt}P2, γ = 0.2 (FDX vs δ = 0.1) \\
+\midrule
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}0.107 {[}0.075, 0.145{]} holds*; sens. 0.258; n = 957 & \hspace{0pt}0.123 {[}0.099, 0.151{]} holds; sens. 0.404; n = 1545 & \hspace{0pt}0.21 {[}0.13, 0.30{]} \textbf{violated}; sens. 0.121; n = 436 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.121; n = 436 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}0.122 {[}0.062, 0.197{]} inconclusive; sens. 0.095; n = 195 & \hspace{0pt}0.097 {[}0.058, 0.146{]} holds; sens. 0.235; n = 471 & \hspace{0pt}0.29 {[}0.17, 0.44{]} \textbf{violated}; sens. 0.036; n = 81 & \hspace{0pt}0.27 {[}0.16, 0.42{]} \textbf{violated}; sens. 0.036; n = 81 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}0.041 {[}0.009, 0.102{]} holds; sens. 0.120; n = 139 & \hspace{0pt}0.086 {[}0.055, 0.122{]} holds; sens. 0.326; n = 399 & \hspace{0pt}0.07 {[}0.00, 0.24{]} inconclusive; sens. 0.053; n = 60 & \hspace{0pt}0.07 {[}0.00, 0.24{]} inconclusive; sens. 0.053; n = 60 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}0.009 {[}0.000, 0.029{]} holds (abst.); sens. 0.010; n = 34 & \hspace{0pt}0.018 {[}0.004, 0.042{]} holds; sens. 0.089; n = 312 & \hspace{0pt}0.02 {[}0.00, 0.06{]} holds (abst.); sens. 0.001; n = 4 & \hspace{0pt}0.03 {[}0.00, 0.07{]} holds (abst.); sens. 0.004; n = 16 \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}0.000 {[}0.000, 0.000{]} holds (abst.); sens. 0.009; n = 6 & \hspace{0pt}0.011 {[}0.000, 0.033{]} holds; sens. 0.118; n = 80 & \hspace{0pt}0.00 {[}0.00, 0.31{]} inconclusive (abst.); sens. 0.010; n = 7 & \hspace{0pt}0.00 {[}0.00, 0.31{]} inconclusive (abst.); sens. 0.010; n = 7 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}0.087 {[}0.059, 0.121{]} holds; sens. 0.201; n = 744 & \hspace{0pt}0.115 {[}0.093, 0.142{]} holds; sens. 0.381; n = 1453 & \hspace{0pt}0.16 {[}0.09, 0.25{]} inconclusive; sens. 0.087; n = 316 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.087; n = 316 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}0.082 {[}0.033, 0.137{]} holds (abst.); sens. 0.030; n = 66 & \hspace{0pt}0.100 {[}0.047, 0.163{]} holds; sens. 0.139; n = 276 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive (abst.); sens. 0.015; n = 37 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive (abst.); sens. 0.015; n = 37 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}0.006 {[}0.000, 0.022{]} holds; sens. 0.064; n = 73 & \hspace{0pt}0.050 {[}0.015, 0.093{]} holds; sens. 0.164; n = 195 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds (abst.); sens. 0.025; n = 28 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds (abst.); sens. 0.025; n = 28 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics{fig1_primary_cells.pdf}
+\renewcommand{\thefigure}{1}%mtlabel
+\caption[]{The 32 pre-registered primary cells, by design (1-mm grid → thick slices, D3; leave one site out, D2), site and target level. (a) Realised FDR (mean per-scan FDP) of conformal BH (P1; target FDR ≤ α). (b) Realised FDX (share of scans with FDP \textgreater{} γ) of the CALM-FDX threshold (P2; target P(FDP \textgreater{} γ) ≤ 0.1). Shapes and colours encode the pre-registered class: holds (no violation detected; upper bound within the margin), inconclusive, violated (lower bound above nominal). Hollow markers pass only by abstention (fewer than 10 selections or sensitivity below 0.05); a dark edge marks a cell that holds with a point estimate above nominal. The vertical tick is the nominal level and the grey band the pre-registered margin (nominal to nominal + 0.05). Bars are 95 \% patient-cluster bootstrap intervals (P2: union with the exact Clopper--Pearson interval). † Ljubljana is a FLAMeS training site: its 10 patients were never trained on, but the site was.}
+\end{figure*}
+
+\onecolumn
+\begingroup\scriptsize
+\renewcommand{\thetable}{4b}%mtlabel
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{58.4pt}>{\raggedright\arraybackslash}p{39.0pt}>{\raggedright\arraybackslash}p{31.2pt}>{\raggedright\arraybackslash}p{35.1pt}>{\raggedright\arraybackslash}p{35.1pt}>{\raggedright\arraybackslash}p{19.5pt}>{\raggedright\arraybackslash}p{42.9pt}>{\raggedright\arraybackslash}p{58.4pt}>{\raggedright\arraybackslash}p{54.6pt}>{\raggedright\arraybackslash}p{58.4pt}@{}}%mtcolspec
+\caption[]{\textbf{What a reader sees, and bounds that survive few patients and a re-drawn calibration
+{[}post hoc{]}.} ``Estimate'' counts a scan without selection as FDP = 0 (P1) or as not exceeding (P2).
+``Revised class'' uses the Hoeffding--Bentkus bound instead of the percentile bootstrap for ``holds'',
+and ``not estimable'' for degenerate bootstrap intervals; ``low power'': fewer than half of the scans
+select anything, or sensitivity below 0.10.}\\
+\toprule
+\hspace{0pt}design · test site & \hspace{0pt}cell & \hspace{0pt}estimate (empty = 0) & \hspace{0pt}scans selecting & \hspace{0pt}FDR among selecting scans & \hspace{0pt}scans with FDP \textgreater{} 0.1 & \hspace{0pt}one-sided 95 \% bound: bootstrap, calibration fixed & \hspace{0pt}two-level bootstrap: mean {[}95 \% CI{]}; one-sided bound (MC SE) & \hspace{0pt}Hoeffding--Bentkus bound over patients & \hspace{0pt}revised class {[}post hoc{]} \\
+\midrule\endfirsthead
+%mtrepeat-begin
+\mtcontinued{10}\\
+\toprule
+\hspace{0pt}design · test site & \hspace{0pt}cell & \hspace{0pt}estimate (empty = 0) & \hspace{0pt}scans selecting & \hspace{0pt}FDR among selecting scans & \hspace{0pt}scans with FDP \textgreater{} 0.1 & \hspace{0pt}one-sided 95 \% bound: bootstrap, calibration fixed & \hspace{0pt}two-level bootstrap: mean {[}95 \% CI{]}; one-sided bound (MC SE) & \hspace{0pt}Hoeffding--Bentkus bound over patients & \hspace{0pt}revised class {[}post hoc{]} \\
+\midrule\endhead
+%mtrepeat-end
+\bottomrule\endlastfoot
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.107 & \hspace{0pt}92/100 & \hspace{0pt}0.116 & \hspace{0pt}34 \% & \hspace{0pt}0.138 & \hspace{0pt}0.100 {[}0.067, 0.135{]}; 0.129 (0.002) & \hspace{0pt}0.194 & \hspace{0pt}inconclusive \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.123 & \hspace{0pt}97/100 & \hspace{0pt}0.127 & \hspace{0pt}49 \% & \hspace{0pt}0.146 & \hspace{0pt}0.124 {[}0.097, 0.154{]}; 0.149 (0.001) & \hspace{0pt}0.218 & \hspace{0pt}holds \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.210 & \hspace{0pt}96/100 & \hspace{0pt}0.079 & \hspace{0pt}21 \% & \hspace{0pt}0.280 & \hspace{0pt}0.199 {[}0.120, 0.310{]}; 0.290 (0.006) & \hspace{0pt}0.309 & \hspace{0pt}\textbf{violated} \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.120 & \hspace{0pt}96/100 & \hspace{0pt}0.079 & \hspace{0pt}21 \% & \hspace{0pt}0.180 & \hspace{0pt}0.124 {[}0.060, 0.200{]}; 0.190 (0.005) & \hspace{0pt}0.206 & \hspace{0pt}inconclusive \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.122 & \hspace{0pt}33/51 & \hspace{0pt}0.188 & \hspace{0pt}27 \% & \hspace{0pt}0.184 & \hspace{0pt}0.105 {[}0.039, 0.182{]}; 0.170 (0.003) & \hspace{0pt}0.261 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.097 & \hspace{0pt}43/51 & \hspace{0pt}0.115 & \hspace{0pt}33 \% & \hspace{0pt}0.137 & \hspace{0pt}0.094 {[}0.055, 0.153{]}; 0.140 (0.002) & \hspace{0pt}0.222 & \hspace{0pt}holds \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.294 & \hspace{0pt}37/51 & \hspace{0pt}0.255 & \hspace{0pt}29 \% & \hspace{0pt}0.412 & \hspace{0pt}0.271 {[}0.118, 0.431{]}; 0.412 (0.002) & \hspace{0pt}0.447 & \hspace{0pt}\textbf{violated} · low power \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.275 & \hspace{0pt}37/51 & \hspace{0pt}0.255 & \hspace{0pt}29 \% & \hspace{0pt}0.373 & \hspace{0pt}0.245 {[}0.118, 0.392{]}; 0.373 (0.010) & \hspace{0pt}0.426 & \hspace{0pt}\textbf{violated} · low power \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.041 & \hspace{0pt}18/28 & \hspace{0pt}0.063 & \hspace{0pt}14 \% & \hspace{0pt}0.088 & \hspace{0pt}0.049 {[}0.007, 0.119{]}; 0.105 (0.003) & \hspace{0pt}0.441 & \hspace{0pt}inconclusive \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.086 & \hspace{0pt}28/28 & \hspace{0pt}0.086 & \hspace{0pt}43 \% & \hspace{0pt}0.116 & \hspace{0pt}0.089 {[}0.055, 0.125{]}; 0.120 (0.002) & \hspace{0pt}0.475 & \hspace{0pt}inconclusive \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.071 & \hspace{0pt}21/28 & \hspace{0pt}0.032 & \hspace{0pt}7 \% & \hspace{0pt}0.160 & \hspace{0pt}0.078 {[}0.000, 0.261{]}; 0.227 (0.007) & \hspace{0pt}0.517 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.071 & \hspace{0pt}21/28 & \hspace{0pt}0.032 & \hspace{0pt}7 \% & \hspace{0pt}0.160 & \hspace{0pt}0.068 {[}0.000, 0.227{]}; 0.200 (0.008) & \hspace{0pt}0.517 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.009 & \hspace{0pt}10/115 & \hspace{0pt}0.100 & \hspace{0pt}1 \% & \hspace{0pt}0.026 & \hspace{0pt}0.009 {[}0.000, 0.028{]}; 0.026 (0.001) & \hspace{0pt}0.074 & \hspace{0pt}holds · low power \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.018 & \hspace{0pt}34/115 & \hspace{0pt}0.062 & \hspace{0pt}5 \% & \hspace{0pt}0.037 & \hspace{0pt}0.015 {[}0.003, 0.036{]}; 0.031 (0.001) & \hspace{0pt}0.093 & \hspace{0pt}holds · low power \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.017 & \hspace{0pt}4/115 & \hspace{0pt}0.500 & \hspace{0pt}2 \% & \hspace{0pt}0.042 & \hspace{0pt}0.019 {[}0.000, 0.055{]}; 0.047 (0.002) & \hspace{0pt}0.098 & \hspace{0pt}holds · low power \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.026 & \hspace{0pt}15/115 & \hspace{0pt}0.167 & \hspace{0pt}3 \% & \hspace{0pt}0.055 & \hspace{0pt}0.021 {[}0.000, 0.057{]}; 0.052 (0.002) & \hspace{0pt}0.118 & \hspace{0pt}holds · low power \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.000 & \hspace{0pt}2/10 & \hspace{0pt}0.000 & \hspace{0pt}0 \% & \hspace{0pt}0.000 & \hspace{0pt}0.000 {[}0.000, 0.000{]}; 0.000 (0.000) & \hspace{0pt}0.259 & \hspace{0pt}not estimable · low power \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.011 & \hspace{0pt}5/10 & \hspace{0pt}0.022 & \hspace{0pt}10 \% & \hspace{0pt}0.033 & \hspace{0pt}0.013 {[}0.000, 0.044{]}; 0.040 (0.000) & \hspace{0pt}0.296 & \hspace{0pt}inconclusive \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.000 & \hspace{0pt}6/10 & \hspace{0pt}0.000 & \hspace{0pt}0 \% & \hspace{0pt}0.000 & \hspace{0pt}0.002 {[}0.000, 0.000{]}; 0.000 (0.000) & \hspace{0pt}0.259 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.000 & \hspace{0pt}6/10 & \hspace{0pt}0.000 & \hspace{0pt}0 \% & \hspace{0pt}0.000 & \hspace{0pt}0.003 {[}0.000, 0.000{]}; 0.000 (0.000) & \hspace{0pt}0.259 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.087 & \hspace{0pt}83/100 & \hspace{0pt}0.105 & \hspace{0pt}31 \% & \hspace{0pt}0.114 & \hspace{0pt}0.089 {[}0.054, 0.129{]}; 0.123 (0.002) & \hspace{0pt}0.169 & \hspace{0pt}inconclusive \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.115 & \hspace{0pt}96/100 & \hspace{0pt}0.120 & \hspace{0pt}49 \% & \hspace{0pt}0.137 & \hspace{0pt}0.116 {[}0.093, 0.144{]}; 0.138 (0.002) & \hspace{0pt}0.206 & \hspace{0pt}holds \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.160 & \hspace{0pt}90/100 & \hspace{0pt}0.083 & \hspace{0pt}16 \% & \hspace{0pt}0.220 & \hspace{0pt}0.150 {[}0.060, 0.240{]}; 0.230 (0.004) & \hspace{0pt}0.253 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.120 & \hspace{0pt}90/100 & \hspace{0pt}0.083 & \hspace{0pt}16 \% & \hspace{0pt}0.170 & \hspace{0pt}0.105 {[}0.040, 0.170{]}; 0.160 (0.003) & \hspace{0pt}0.206 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.082 & \hspace{0pt}18/51 & \hspace{0pt}0.233 & \hspace{0pt}18 \% & \hspace{0pt}0.130 & \hspace{0pt}0.074 {[}0.020, 0.136{]}; 0.126 (0.003) & \hspace{0pt}0.208 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.100 & \hspace{0pt}34/51 & \hspace{0pt}0.150 & \hspace{0pt}22 \% & \hspace{0pt}0.151 & \hspace{0pt}0.092 {[}0.042, 0.158{]}; 0.145 (0.002) & \hspace{0pt}0.232 & \hspace{0pt}holds \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.176 & \hspace{0pt}25/51 & \hspace{0pt}0.233 & \hspace{0pt}18 \% & \hspace{0pt}0.275 & \hspace{0pt}0.160 {[}0.039, 0.295{]}; 0.275 (0.006) & \hspace{0pt}0.317 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.176 & \hspace{0pt}25/51 & \hspace{0pt}0.233 & \hspace{0pt}18 \% & \hspace{0pt}0.275 & \hspace{0pt}0.179 {[}0.059, 0.314{]}; 0.294 (0.004) & \hspace{0pt}0.317 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.006 & \hspace{0pt}12/28 & \hspace{0pt}0.015 & \hspace{0pt}4 \% & \hspace{0pt}0.019 & \hspace{0pt}0.010 {[}0.000, 0.031{]}; 0.027 (0.001) & \hspace{0pt}0.308 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.050 & \hspace{0pt}18/28 & \hspace{0pt}0.077 & \hspace{0pt}14 \% & \hspace{0pt}0.086 & \hspace{0pt}0.054 {[}0.015, 0.105{]}; 0.097 (0.003) & \hspace{0pt}0.428 & \hspace{0pt}inconclusive \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.000 & \hspace{0pt}16/28 & \hspace{0pt}0.000 & \hspace{0pt}0 \% & \hspace{0pt}0.000 & \hspace{0pt}0.000 {[}0.000, 0.000{]}; 0.000 (0.000) & \hspace{0pt}0.283 & \hspace{0pt}inconclusive · low power \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.000 & \hspace{0pt}16/28 & \hspace{0pt}0.000 & \hspace{0pt}0 \% & \hspace{0pt}0.000 & \hspace{0pt}0.000 {[}0.000, 0.000{]}; 0.000 (0.000) & \hspace{0pt}0.283 & \hspace{0pt}inconclusive · low power \\
+\end{longtable}
+\endgroup
+\twocolumn
+
+\textbf{The pre-registered verdict for P1 under thin-to-thick transport is \emph{inconclusive}.} None of the
+16 held-out-site P1 cells had a lower bound above α (14 of them on cohorts FLAMeS never trained on),
+and none was violated with Bonferroni intervals. That is an absence of detected violation, not a
+demonstration of validity:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  On Muslim at α = 0.1 the result is undecided: 0.122 {[}0.062, 0.197{]}. Its one-sided 95 \% upper
+  bound is 0.184 with the calibration fixed, so a realised FDR of 1.8α is not excluded; the
+  Hoeffding--Bentkus bound over its 51 patients is 0.261.
+\item
+  On MS3SEG at α = 0.1, the estimate (0.107 {[}0.075, 0.145{]}) is above α and the cell passes only
+  through the pre-registered margin; its one-sided bound is 0.138 (1.4α).
+\item
+  Three of the 16 cells pass only by abstention, and under the revised flag 6 of the 16 have low
+  power.
+\item
+  Ljubljana-10 (10 patients) and PediMS (9) cannot be classified with intervals valid for so few
+  patients: their Hoeffding--Bentkus bounds are 0.259--0.475, and the Ljubljana-10 cell at α = 0.1 is
+  not estimable (no selection was false, so the bootstrap interval is {[}0, 0{]}).
+\end{enumerate}
+
+With the small-sample bound, 6 of the 16 P1 cells hold, 9 are inconclusive and 1 is not estimable.
+The two-level bootstrap (calibration re-drawn) gave 0.100 {[}0.067, 0.135{]} for MS3SEG and
+0.105 {[}0.039, 0.182{]} for Muslim at α = 0.1.
+
+\textbf{The per-scan behaviour of P1 is as poor as that of P2.} P1 controls an expectation over scans,
+and the expectation is low partly because scans without any report count as FDP = 0. At α = 0.1,
+P1 selected something on 33 of 51 Muslim scans; on those, the mean FDP was 0.188. With
+leave-one-site-out calibration it selected on 18 of 51 Muslim scans, with a mean FDP of 0.233 among
+them. Under P1 at α = 0.1, 34 \% of MS3SEG scans had FDP \textgreater{} 0.1 --- more than the 21 \% of P2 at γ = 0.1
+--- and at α = 0.2, 49 \% did. The contrast between P1 and P2 is therefore a contrast between estimands,
+an expectation and a tail probability, not between a procedure that works and one that fails.
+
+\textbf{The calibration does not transfer as such.} With within-site calibration, realised FDR at α = 0.1
+was 0.041 on MS3SEG and 0.038 on Muslim; with 1-mm calibration it was 0.107 and 0.122. The ratios
+are 2.6 (95 \% CI 1.3--7.1, patient-paired bootstrap) and 3.2 (1.2--25.6) (Appendix Table A14). They
+are imprecise because the within-site denominator is small and depends on the fold assignment:
+across 20 other within-site fold splits, the ratio ranged 2.09--2.82 on MS3SEG and 1.89--4.83 on
+Muslim. At α = 0.2 the ratios were 1.6 (1.3--2.2) and 1.4 (0.9--2.6). For reference, the BH bound
+α·mean per-scan π0 (π0 = the scan's share of false candidates) is 0.034 on MS3SEG and 0.037 on
+Muslim \textbf{{[}post hoc{]}}. The within-site values lie near this bound but not under it on MS3SEG (0.041),
+consistent with the matching and clustering issues of §3.1.
+
+\textbf{Clustering or shift? {[}post hoc simulation.{]}} We simulated conformal BH with the observed
+candidate counts (1-mm-grid calibration scans; MS3SEG test scans), a pooled AUROC of 0.80 and a
+scan-level random effect (Appendix Table A7). Without any shift, an intraclass correlation of up to
+0.2 left the realised FDR at α = 0.1 at 0.030--0.032, below α·π0 (0.034); clustering alone did not
+inflate the expectation, but even under exchangeability 11--12 \% of scans exceeded FDP 0.1. Shifting
+the test scans' false-candidate scores by 0.3 standard deviations roughly doubled the realised FDR
+(0.058--0.067). The observed tripling on thick slices is therefore a shift of the false-score law, not
+a clustering effect, and the per-scan exceedance is partly intrinsic to the estimand.
+
+\textbf{{[}post hoc{]}} On the third of MS3SEG + Muslim scans with at least 40 \% false candidates (51 of 151
+scans; mean π0 0.52), realised FDR at α = 0.1 was 0.196 {[}0.119, 0.282{]} with 1-mm calibration,
+against 0.050 {[}0.011, 0.102{]} with within-site calibration. This subgroup analysis is post hoc and
+not adjusted for multiplicity.
+
+In the opposite direction, foreign calibration made the 1-mm cohorts nearly silent. On MSLesSeg at
+α = 0.1, leave-one-site-out calibration selected 34 candidates on 10 of 115 scans (sensitivity
+0.010); within-site calibration selected 358 (sensitivity 0.102).
+
+\textbf{Pre-specified sensitivity analyses} (Appendix Table A10). Strict matching (IoU ≥ 0.10) and
+removing the PediMS patient with Baló's concentric sclerosis left every primary class unchanged.
+With the fold-consensus score S\_\allowbreak{}cons, every D3 P1 cell held (Muslim α = 0.1: 0.068 {[}0.026, 0.122{]})
+and no P2 cell was violated (MS3SEG γ = 0.1: 0.14 {[}0.08, 0.22{]}, inconclusive), at a modest power cost:
+at α = 0.2, sensitivity on the thick cohorts was 0.296 with S\_cons and 0.341 with the ensemble mean.
+
+\subsection{Per-scan control (P2) does not transport}
+
+With the threshold calibrated on the 1-mm cohorts (\ensuremath{\hat{\lambda}} = 0.965), \textbf{21 \% {[}13, 30{]} of MS3SEG scans
+(γ = 0.1) and 29 \% {[}17, 44{]} / 27 \% {[}16, 42{]} of Muslim scans (γ = 0.1 / 0.2) had FDP above γ},
+against a budget of 10 \%. The pre-registered verdict for P2 is \emph{refuted}. After Bonferroni correction
+only Muslim at γ = 0.1 stays violated ({[}0.12, 0.52{]}). In the two-level bootstrap with 1000 resamples,
+MS3SEG γ = 0.1 gave 0.20 {[}0.12, 0.31{]} and Muslim 0.27 {[}0.12, 0.43{]}; with 500 resamples in the first
+analysis the MS3SEG lower bound had been 0.10, so the MS3SEG marginal violation is borderline within
+Monte Carlo error. The Muslim violations remain in every view.
+
+\begin{figure*}[tp]
+\centering
+\includegraphics{fig2_threshold_mechanism.pdf}
+\renewcommand{\thefigure}{2}%mtlabel
+\caption[]{Why the per-scan threshold fails on thick slices. (a) Share of scans with a false candidate above the 1-mm-calibrated threshold 0.965 {[}post hoc{]}, next to the pre-registered realised FDX of 1-mm → thick transport at γ = 0.1; the dashed line is δ = 0.1. (b) Share of false candidates scoring at least 0.95, fold 0 versus 5-fold ensemble {[}post hoc{]}.}
+\end{figure*}
+
+\textbf{Mechanism {[}post hoc{]}.} P2 reduces to a single global threshold. The share of scans with a false
+candidate above 0.965 was 6.1 \% on MSLesSeg and 10 \% on Ljubljana-10, but 24 \% on MS3SEG and 29.4 \%
+on Muslim, close to the realised FDX (Figure 2a). The false-score law of thick-slice scans differs
+from the 1-mm law: the pre-registered scan-clustered permutation KS test gave D = 0.107 on MS3SEG
+(p = 0.0005, the smallest attainable with 2000 permutations), D = 0.094 on Muslim (p = 0.025) and
+D = 0.057 on PediMS (p = 0.51). A single threshold carries a heavier upper tail straight into
+exceedance. P2 also hardly depends on γ: the safe threshold lies above the scan's top false candidate
+for 58--78 \% of first scans at γ = 0.1 and 22--51 \% at γ = 0.2, so the procedure largely behaves like
+``no false lesion above the threshold in 90 \% of patients''.
+
+\subsection{Baselines}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{5}%mtlabel
+\caption[]{\textbf{All procedures under 1-mm → thick transport (D3), ensemble arm.} Entries: realised FDR
+{[}95 \% CI{]} → class; end-to-end sensitivity. SUB entries average over 200 subsampling draws.}
+\begin{tabulary}{\textwidth}{@{}LLLLL@{}}
+\toprule
+\hspace{0pt}procedure & \hspace{0pt}α & \hspace{0pt}MS3SEG & \hspace{0pt}Muslim & \hspace{0pt}PediMS \\
+\midrule
+\hspace{0pt}P1 conformal BH (pre-registered, primary) & \hspace{0pt}0.1 & \hspace{0pt}0.107 {[}0.075, 0.145{]} holds; sens. 0.258 & \hspace{0pt}0.122 {[}0.062, 0.197{]} inconclusive; sens. 0.095 & \hspace{0pt}0.041 {[}0.009, 0.102{]} holds; sens. 0.120 \\
+\hspace{0pt}P1 conformal BH (pre-registered, primary) & \hspace{0pt}0.2 & \hspace{0pt}0.123 {[}0.099, 0.151{]} holds; sens. 0.404 & \hspace{0pt}0.097 {[}0.058, 0.146{]} holds; sens. 0.235 & \hspace{0pt}0.086 {[}0.055, 0.122{]} holds; sens. 0.326 \\
+\hspace{0pt}one false candidate per calibration patient (first scan) + BH {[}post hoc{]} & \hspace{0pt}0.1 & \hspace{0pt}0.065 {[}0.048, 0.086{]} holds; sens. 0.193 & \hspace{0pt}0.028 {[}0.014, 0.045{]} holds; sens. 0.071 & \hspace{0pt}0.029 {[}0.014, 0.047{]} holds; sens. 0.116 \\
+\hspace{0pt}one false candidate per calibration patient (first scan) + BH {[}post hoc{]} & \hspace{0pt}0.2 & \hspace{0pt}0.116 {[}0.094, 0.142{]} holds; sens. 0.376 & \hspace{0pt}0.074 {[}0.052, 0.098{]} holds; sens. 0.210 & \hspace{0pt}0.075 {[}0.048, 0.107{]} holds; sens. 0.292 \\
+\hspace{0pt}hierarchical conformal e-values + e-BH {[}post hoc{]} & \hspace{0pt}0.1 & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}no selection (sens. 0) \\
+\hspace{0pt}hierarchical conformal e-values + e-BH {[}post hoc{]} & \hspace{0pt}0.2 & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}no selection (sens. 0) \\
+\hspace{0pt}B2 conformal risk control, per-scan FDP loss (pre-registered) & \hspace{0pt}0.1 & \hspace{0pt}0.072 {[}0.044, 0.107{]} holds; sens. 0.155 & \hspace{0pt}0.180 {[}0.103, 0.265{]} \textbf{violated}; sens. 0.050 & \hspace{0pt}0.069 {[}0.015, 0.200{]} inconclusive; sens. 0.080 \\
+\hspace{0pt}B2 conformal risk control, per-scan FDP loss (pre-registered) & \hspace{0pt}0.2 & \hspace{0pt}0.129 {[}0.106, 0.154{]} holds; sens. 0.414 & \hspace{0pt}0.120 {[}0.086, 0.158{]} holds; sens. 0.280 & \hspace{0pt}0.098 {[}0.062, 0.137{]} holds; sens. 0.386 \\
+\hspace{0pt}B3 Learn-then-Test, per-scan FDP loss, δ = 0.1 (pre-registered) & \hspace{0pt}0.1 & \hspace{0pt}0.083 {[}0.040, 0.128{]} holds; sens. 0.092 & \hspace{0pt}0.134 {[}0.062, 0.226{]} inconclusive; sens. 0.019 & \hspace{0pt}0.000 {[}0.000, 0.000{]} not estimable; sens. 0.039 \\
+\hspace{0pt}B3 Learn-then-Test, per-scan FDP loss, δ = 0.1 (pre-registered) & \hspace{0pt}0.2 & \hspace{0pt}0.181 {[}0.152, 0.213{]} holds; sens. 0.490 & \hspace{0pt}0.159 {[}0.119, 0.197{]} holds; sens. 0.361 & \hspace{0pt}0.114 {[}0.076, 0.152{]} holds; sens. 0.499 \\
+\hspace{0pt}B1 precision-matched threshold, no guarantee (pre-registered) & \hspace{0pt}0.1 & \hspace{0pt}0.164 {[}0.136, 0.196{]} \textbf{violated}; sens. 0.473 & \hspace{0pt}0.144 {[}0.107, 0.180{]} \textbf{violated}; sens. 0.346 & \hspace{0pt}0.106 {[}0.065, 0.146{]} holds; sens. 0.473 \\
+\hspace{0pt}B1 precision-matched threshold, no guarantee (pre-registered) & \hspace{0pt}0.2 & \hspace{0pt}0.230 {[}0.206, 0.255{]} \textbf{violated}; sens. 0.586 & \hspace{0pt}0.235 {[}0.185, 0.286{]} inconclusive; sens. 0.446 & \hspace{0pt}0.197 {[}0.152, 0.242{]} holds; sens. 0.639 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics{fig7_baselines_validity_power.pdf}
+\renewcommand{\thefigure}{7}%mtlabel
+\caption[]{Validity against power for every procedure under 1-mm → thick transport (calibration on the 1-mm-grid sites, test on each thick-slice site, D3), by site (columns) and α (rows). Horizontal bars are 95 \% CIs of the realised FDR. The dashed vertical line is α; the grey band reaches α + 0.05. Hierarchical e-values selected nothing in every D3 cell (sensitivity 0).}
+\end{figure*}
+
+\textbf{Pre-registered baselines.}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{B1 (precision-matched threshold)} was violated on MS3SEG at both levels (α = 0.1:
+  0.164 {[}0.136, 0.196{]}; α = 0.2: 0.230 {[}0.206, 0.255{]}) and on Muslim at α = 0.1
+  (0.144 {[}0.107, 0.180{]}).
+\item
+  \textbf{B2 (conformal risk control)} was violated on Muslim at α = 0.1 (0.180 {[}0.103, 0.265{]}).
+\item
+  \textbf{B3 (Learn-then-Test, per-scan FDP loss)} had no violated D3 or D2 cell, with Muslim at α = 0.1
+  inconclusive (0.134 {[}0.062, 0.226{]}). At α = 0.2 it found more lesions than P1 (0.490, 0.361 and
+  0.499 against 0.404, 0.235 and 0.326 on MS3SEG, Muslim and PediMS), with realised FDR closer to α
+  (0.181, 0.159, 0.114), and at α = 0.1 it found fewer (0.092, 0.019, 0.039). It also had a violated
+  healthy-control cell (§6.9).
+\end{itemize}
+
+\textbf{At matched power the procedures are close} (Appendix Tables A5--A6). Varying α from 0.05 to 0.3
+traces each procedure's validity--power frontier. At a sensitivity of 0.3 on MS3SEG, the realised FDR
+was 0.108 for P1, 0.109 for B2, 0.113 for B3, 0.118 for B1 and 0.096 for SUB; at a sensitivity of 0.2
+on Muslim it was 0.105, 0.118, 0.128, 0.129 and 0.070. The differences between P1, B2 and B3 at the
+nominal levels are thus mostly differences of operating point. Abstention-aware quantities for every
+D3 procedure are in Appendix Table A4.
+
+\textbf{Post-hoc scan-aware baselines.}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{SUB} (one false candidate per calibration patient) had no violated cell in D3 or D2. On thick
+  slices its averaged realised FDR was lower than P1's (MS3SEG α = 0.1: 0.065 {[}0.048, 0.086{]};
+  Muslim: 0.028 {[}0.014, 0.045{]}), at a cost in power at α = 0.1 (MS3SEG 0.193 against 0.258). A
+  deployment uses a single draw, and single draws varied widely: with 2000 draws, the central 95 \% of
+  realised FDRs on MS3SEG at α = 0.1 ranged from 0.003 to 0.120, and 15.6 \% of draws exceeded α.
+\item
+  \textbf{LR-hier} (hierarchical e-values) selected nothing in every D3 cell. With K = 85 calibration
+  patients its e-values are at most K + 1 = 86, while e-BH needs k e-values of at least n/\allowbreak{}(α·k) to
+  select k of n test candidates. With n in the thousands, it must select hundreds at once or none.
+  In D2, with 145--236 calibration patients, it selected in 3 of 10 cells and then selected heavily.
+  On MS3SEG at α = 0.2, the batch FDP was 0.202 and the mean per-scan FDP 0.212 {[}0.187, 0.239{]}, at
+  sensitivity 0.559. Its behaviour is all-or-nothing.
+\end{itemize}
+
+D2 results for all procedures are in Appendix Table A2.
+
+\subsection{Ljubljana removed from every calibration pool {[}post hoc{]}}
+
+Ljubljana-10 contributed 82 of the 1339 false candidates in the 1-mm null. Removing Ljubljana from
+every pool changed no class in D3 or D2 (Appendix Table A3). On MS3SEG at α = 0.1, the D3 estimate
+moved from 0.107 to 0.098 {[}0.071, 0.131{]}. Muslim at α = 0.1 stayed at 0.122 {[}0.062, 0.197{]}. Every
+D3 P2 cell was identical, because the MSLesSeg-only threshold is also 0.965.
+
+\subsection{Cohort and acquisition contrasts}
+
+The protocol fixed four ``thickness bands'' before outcomes. They are in fact cohort--acquisition
+groups (Table 6): the ≤ 1.5 mm group is MSLesSeg (mostly 2--5 mm acquisitions resampled to 1 mm) plus
+Ljubljana-10; the 3.9 mm group is nine children from one centre; the \textgreater{} 6.5 mm group is mostly MS3SEG,
+that is, one Toshiba 1.5 T scanner whose annotation protocol excludes periventricular
+hyperintensities --- which directly lowers ``sensitivity'' and raises ``false'' counts. What varies across
+the thick cohorts is slice spacing, which includes inter-slice gaps (§4.1).
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{6}%mtlabel
+\caption[]{\textbf{Validity and power by cohort--acquisition group (the pre-registered bands),
+leave-one-site-out calibration (D2), ensemble arm.}}
+\begin{tabulary}{\textwidth}{@{}LLLLRLLL@{}}
+\toprule
+\hspace{0pt}cohort--acquisition group (pre-registered band) & \hspace{0pt}scans / patients & \hspace{0pt}P1 α = 0.1: FDR · sens. & \hspace{0pt}P1 α = 0.2: FDR {[}95 \% CI{]} & \hspace{0pt}scans with FDP \textgreater{} 0.1 (α = 0.2) & \hspace{0pt}P1 α = 0.2: sens. {[}95 \% CI{]} & \hspace{0pt}false / true selected lesions per scan (α = 0.2) & \hspace{0pt}P2 γ = 0.1: FDX {[}95 \% CI{]} · sens. \\
+\midrule
+\hspace{0pt}G1 · 1-mm grid (MSLesSeg resampled from 2--5 mm; Ljubljana-10 3D 0.8 mm) & \hspace{0pt}125 / 85 & \hspace{0pt}0.008 · 0.010 & \hspace{0pt}0.018 {[}0.004, 0.040{]} & \hspace{0pt}6 \% & \hspace{0pt}0.094 {[}0.053, 0.141{]} & \hspace{0pt}0.13 / 3.0 & \hspace{0pt}0.016 {[}0.000, 0.057{]} · 0.002 \\
+\hspace{0pt}G2 · PediMS (children, 3 T, spacing 3.9 mm) & \hspace{0pt}28 / 9 & \hspace{0pt}0.006 · 0.064 & \hspace{0pt}0.050 {[}0.015, 0.093{]} & \hspace{0pt}14 \% & \hspace{0pt}0.164 {[}0.042, 0.440{]} & \hspace{0pt}0.50 / 6.5 & \hspace{0pt}0.000 {[}0.000, 0.123{]} · 0.025 \\
+\hspace{0pt}G3 · spacing 4.5--6.5 mm (Muslim 45, MS3SEG 31) & \hspace{0pt}76 / 76 & \hspace{0pt}0.084 · 0.112 & \hspace{0pt}0.101 {[}0.063, 0.145{]} & \hspace{0pt}30 \% & \hspace{0pt}0.236 {[}0.180, 0.298{]} & \hspace{0pt}0.88 / 7.9 & \hspace{0pt}0.158 {[}0.079, 0.260{]} · 0.047 \\
+\hspace{0pt}G4 · spacing \textgreater{} 6.5 mm (MS3SEG 69 --- one Toshiba scanner --- and Muslim 6) & \hspace{0pt}75 / 75 & \hspace{0pt}0.087 · 0.170 & \hspace{0pt}0.119 {[}0.093, 0.152{]} & \hspace{0pt}49 \% & \hspace{0pt}0.355 {[}0.310, 0.402{]} & \hspace{0pt}1.73 / 12.4 & \hspace{0pt}0.173 {[}0.093, 0.278{]} · 0.077 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+At α = 0.2, realised FDR rose from 0.018 (1-mm grid) to 0.050 (PediMS), 0.101 (spacing 4.5--6.5 mm)
+and 0.119 (\textgreater{} 6.5 mm), and the share of scans with FDP \textgreater{} 0.1 from 6 \% to 14 \%, 30 \% and 49 \%. Within a
+cohort the spacing gradient was small: on MS3SEG, realised FDR went from 0.103 (4.5--6.5 mm) to 0.121
+(\textgreater{} 6.5 mm); on Muslim from 0.099 to 0.102, with only 6 scans above 6.5 mm. \textbf{{[}post hoc{]}} Within
+MS3SEG (6.0--8.1 mm), per-scan FDP did not trend with spacing (Spearman ρ = 0.03, p = 0.75); on
+Muslim, ρ = 0.30 (p = 0.035). We therefore do not claim a thickness effect.
+
+Power at the guarantee is higher on the MS3SEG and Muslim cohorts, whose expert lesions are larger
+\textbf{{[}post hoc{]}}: median 108 and 117 mm³, against 79 mm³ on PediMS, 68 mm³ on MSLesSeg and 20 mm³ on
+Ljubljana. The 1-mm cohorts are also penalised by the foreign null.
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{7}%mtlabel
+\caption[]{\textbf{Expert-lesion detection by lesion volume, per cohort, labelled by acquisition} (raw =
+matched by any candidate, before selection; at the guarantee = selected by P1 at α = 0.2 in D2).
+Lesion counts are not comparable across grids: 3D components on 4--8 mm slices can merge or split
+lesions, so these figures mix geometry with detection.}
+\begin{tabulary}{\textwidth}{@{}LLLLLL@{}}
+\toprule
+\hspace{0pt}cohort · acquisition & \hspace{0pt}lesions per bin (3--14 / 14--50 / 50--150 / 150--500 / ≥ 500 mm³) & \hspace{0pt}raw sensitivity per bin & \hspace{0pt}sensitivity at P1 α = 0.2 (leave-one-site-out) & \hspace{0pt}raw ≥ 0.8 from & \hspace{0pt}raw ≥ 0.5 from \\
+\midrule
+\hspace{0pt}MSLesSeg · 1-mm grid, resampled from 2--5 mm & \hspace{0pt}262 / 990 / 1216 / 565 / 311 & \hspace{0pt}0.32 / 0.70 / 0.81 / 0.87 / 0.90 & \hspace{0pt}0.01 / 0.03 / 0.08 / 0.19 / 0.19 & \hspace{0pt}50 mm³ & \hspace{0pt}14.14 mm³ \\
+\hspace{0pt}Ljubljana-10 · 3D, 0.8 mm & \hspace{0pt}269 / 227 / 111 / 45 / 15 & \hspace{0pt}0.40 / 0.80 / 0.83 / 0.89 / 0.93 & \hspace{0pt}0.03 / 0.10 / 0.24 / 0.33 / 0.53 & \hspace{0pt}14.14 mm³ & \hspace{0pt}14.14 mm³ \\
+\hspace{0pt}PediMS · 2D, spacing 3.9 mm (children) & \hspace{0pt}75 / 324 / 378 / 234 / 93 & \hspace{0pt}0.37 / 0.67 / 0.76 / 0.77 / 0.80 & \hspace{0pt}0.03 / 0.08 / 0.19 / 0.22 / 0.33 & \hspace{0pt}not reached & \hspace{0pt}14.14 mm³ \\
+\hspace{0pt}Muslim · 2D, spacing 4.86--8.3 mm & \hspace{0pt}41 / 331 / 673 / 516 / 258 & \hspace{0pt}0.07 / 0.37 / 0.50 / 0.60 / 0.76 & \hspace{0pt}0.00 / 0.04 / 0.12 / 0.18 / 0.27 & \hspace{0pt}not reached & \hspace{0pt}50 mm³ \\
+\hspace{0pt}MS3SEG · 2D, spacing 6.0--8.1 mm (one scanner) & \hspace{0pt}41 / 638 / 1377 / 870 / 428 & \hspace{0pt}0.24 / 0.48 / 0.71 / 0.74 / 0.71 & \hspace{0pt}0.05 / 0.13 / 0.36 / 0.52 / 0.59 & \hspace{0pt}not reached & \hspace{0pt}50 mm³ \\
+\hspace{0pt}\emph{within MSLesSeg, native 2--2.3 mm {[}post hoc{]}} & \hspace{0pt}141 / 587 / 594 / 274 / 135 & \hspace{0pt}0.37 / 0.74 / 0.86 / 0.91 / 0.98 & \hspace{0pt}--- & \hspace{0pt}--- & \hspace{0pt}--- \\
+\hspace{0pt}\emph{within MSLesSeg, native 3 mm {[}post hoc{]}} & \hspace{0pt}94 / 305 / 435 / 210 / 132 & \hspace{0pt}0.29 / 0.65 / 0.77 / 0.83 / 0.86 & \hspace{0pt}--- & \hspace{0pt}--- & \hspace{0pt}--- \\
+\hspace{0pt}\emph{within MSLesSeg, native 4--5 mm {[}post hoc{]}} & \hspace{0pt}25 / 59 / 143 / 71 / 35 & \hspace{0pt}0.16 / 0.39 / 0.73 / 0.82 / 0.71 & \hspace{0pt}--- & \hspace{0pt}--- & \hspace{0pt}--- \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics{fig3_detection_by_size_and_band.pdf}
+\renewcommand{\thefigure}{3}%mtlabel
+\caption[]{Share of expert lesions found by lesion volume and pre-registered band (a cohort--acquisition group, labelled by slice spacing): (a) raw segmentation, (b) after P1 selection at α = 0.2, leave-one-site-out. Bands: ≤ 1.5 mm grid (125 scans; 110 natively 2--5 mm), 3.9 mm (PediMS, 28 scans / 9 children), 4.5--6.5 mm (Muslim 45, MS3SEG 31) and \textgreater{} 6.5 mm (MS3SEG 69, Muslim 6). Thin horizontal lines mark 0.5 and 0.8. Bands are confounded with site, scanner, population and annotation protocol; they describe these cohorts, not a controlled thickness effect.}
+\end{figure*}
+
+On the two native 2D cohorts with spacing above 4.5 mm (MS3SEG and Muslim), raw detection of lesions
+of at least 50 mm³ (about 4.6 mm across) was 0.50--0.76 depending on cohort and size bin, and of
+14--50 mm³ lesions 0.37--0.48; no size bin reached 0.8. On MSLesSeg, 0.8 was reached from 50 mm³. \textbf{{[}post hoc{]}} Within MSLesSeg, raw detection of 14--50 mm³ lesions fell with
+native slice thickness: 0.74 at 2--2.3 mm (43 scans), 0.65 at 3 mm (52) and 0.39 at 4--5 mm (15) --- a
+within-cohort gradient, confounded with scanner and patient. Muslim's estimated pixel size moves its
+own 50 \%-detection size between 50 and 150 mm³: at a volume scale of 1.1, its 50--150 mm³ bin falls to
+0.487.
+
+\subsection{The 5-fold ensemble against a single fold}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{8}%mtlabel
+\caption[]{\textbf{Ensemble against fold 0 on the same scans and expert lesions (P1; patient-paired
+bootstrap).}}
+\begin{tabulary}{\textwidth}{@{}LLLLLL@{}}
+\toprule
+\hspace{0pt}design · test set & \hspace{0pt}α & \hspace{0pt}realised FDR: ensemble / fold 0 & \hspace{0pt}Δ FDR {[}95 \% CI{]} & \hspace{0pt}sensitivity: ensemble / fold 0 & \hspace{0pt}Δ sensitivity {[}95 \% CI{]} \\
+\midrule
+\hspace{0pt}1-mm → thick, all thick sites & \hspace{0pt}0.2 & \hspace{0pt}0.110 / 0.178 & \hspace{0pt}-0.068 {[}-0.098, -0.037{]} & \hspace{0pt}0.341 / 0.194 & \hspace{0pt}+0.147 {[}0.117, 0.177{]} \\
+\hspace{0pt}1-mm → MS3SEG & \hspace{0pt}0.2 & \hspace{0pt}0.123 / 0.225 & \hspace{0pt}-0.101 {[}-0.131, -0.074{]} & \hspace{0pt}0.404 / 0.282 & \hspace{0pt}+0.121 {[}0.087, 0.153{]} \\
+\hspace{0pt}1-mm → Muslim & \hspace{0pt}0.2 & \hspace{0pt}0.097 / 0.122 & \hspace{0pt}-0.025 {[}-0.104, 0.053{]} & \hspace{0pt}0.235 / 0.080 & \hspace{0pt}+0.154 {[}0.096, 0.216{]} \\
+\hspace{0pt}1-mm → PediMS & \hspace{0pt}0.2 & \hspace{0pt}0.086 / 0.110 & \hspace{0pt}-0.024 {[}-0.094, 0.030{]} & \hspace{0pt}0.326 / 0.112 & \hspace{0pt}+0.214 {[}0.143, 0.240{]} \\
+\hspace{0pt}leave-one-site-out, all sites & \hspace{0pt}0.2 & \hspace{0pt}0.067 / 0.084 & \hspace{0pt}-0.018 {[}-0.034, -0.000{]} & \hspace{0pt}0.203 / 0.102 & \hspace{0pt}+0.101 {[}0.074, 0.129{]} \\
+\hspace{0pt}within-site, all sites & \hspace{0pt}0.2 & \hspace{0pt}0.061 / 0.085 & \hspace{0pt}-0.025 {[}-0.045, -0.004{]} & \hspace{0pt}0.219 / 0.078 & \hspace{0pt}+0.141 {[}0.108, 0.178{]} \\
+\hspace{0pt}pooled 5-fold, all sites & \hspace{0pt}0.2 & \hspace{0pt}0.063 / 0.070 & \hspace{0pt}-0.008 {[}-0.025, 0.011{]} & \hspace{0pt}0.195 / 0.069 & \hspace{0pt}+0.126 {[}0.096, 0.157{]} \\
+\hspace{0pt}1-mm → thick, all thick sites & \hspace{0pt}0.1 & \hspace{0pt}0.101 / 0.136 & \hspace{0pt}-0.035 {[}-0.066, -0.003{]} & \hspace{0pt}0.187 / 0.111 & \hspace{0pt}+0.076 {[}0.050, 0.106{]} \\
+\hspace{0pt}1-mm → MS3SEG & \hspace{0pt}0.1 & \hspace{0pt}0.107 / 0.201 & \hspace{0pt}-0.095 {[}-0.132, -0.058{]} & \hspace{0pt}0.258 / 0.174 & \hspace{0pt}+0.084 {[}0.048, 0.119{]} \\
+\hspace{0pt}1-mm → Muslim & \hspace{0pt}0.1 & \hspace{0pt}0.122 / 0.051 & \hspace{0pt}+0.070 {[}0.012, 0.143{]} & \hspace{0pt}0.095 / 0.035 & \hspace{0pt}+0.060 {[}0.028, 0.095{]} \\
+\hspace{0pt}1-mm → PediMS & \hspace{0pt}0.1 & \hspace{0pt}0.041 / 0.057 & \hspace{0pt}-0.016 {[}-0.061, 0.058{]} & \hspace{0pt}0.120 / 0.043 & \hspace{0pt}+0.076 {[}0.018, 0.219{]} \\
+\hspace{0pt}leave-one-site-out, all sites & \hspace{0pt}0.1 & \hspace{0pt}0.046 / 0.068 & \hspace{0pt}-0.021 {[}-0.040, -0.001{]} & \hspace{0pt}0.082 / 0.053 & \hspace{0pt}+0.028 {[}0.016, 0.042{]} \\
+\hspace{0pt}within-site, all sites & \hspace{0pt}0.1 & \hspace{0pt}0.028 / 0.037 & \hspace{0pt}-0.008 {[}-0.026, 0.010{]} & \hspace{0pt}0.064 / 0.027 & \hspace{0pt}+0.036 {[}0.022, 0.053{]} \\
+\hspace{0pt}pooled 5-fold, all sites & \hspace{0pt}0.1 & \hspace{0pt}0.038 / 0.040 & \hspace{0pt}-0.002 {[}-0.018, 0.016{]} & \hspace{0pt}0.063 / 0.019 & \hspace{0pt}+0.044 {[}0.030, 0.059{]} \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics{fig4_ensemble_vs_fold0.pdf}
+\renewcommand{\thefigure}{4}%mtlabel
+\caption[]{5-fold ensemble against fold 0 (the v0.2 pipeline), P1 at α = 0.2, on the same scans and expert lesions: (a) realised FDR (dashed line: α), (b) end-to-end sensitivity. The columns give the paired difference Δ = ensemble − fold 0 with its 95 \% CI.}
+\end{figure*}
+
+At α = 0.2, the ensemble roughly doubled end-to-end sensitivity at the guarantee:
+
+\begin{itemize}
+\tightlist
+\item
+  leave-one-site-out: 0.203 against 0.102 (Δ +0.101 {[}0.074, 0.129{]});
+\item
+  1-mm → thick: 0.341 against 0.194 (Δ +0.147 {[}0.117, 0.177{]}).
+\end{itemize}
+
+Pooled realised FDR was lower (1-mm → thick: 0.110 against 0.178). At α = 0.1 the gain was much
+smaller: leave-one-site-out sensitivity went from 0.053 to 0.082 (Δ +0.028 {[}0.016, 0.042{]}).
+
+\textbf{Validity was not uniformly better.} With fold 0 alone (our earlier pipeline), MS3SEG was violated
+in several cells:
+
+\begin{itemize}
+\tightlist
+\item
+  1-mm → thick, α = 0.1: 0.201 {[}0.166, 0.242{]};
+\item
+  1-mm → thick, α = 0.2: 0.225 {[}0.193, 0.260{]};
+\item
+  leave-one-site-out, α = 0.1: 0.175 {[}0.139, 0.216{]};
+\item
+  every MS3SEG P2 cell (FDX 0.39--0.62).
+\end{itemize}
+
+The ensemble removed these five violated cells. On Muslim, however, it \textbf{raised} realised FDR: with
+1-mm → thick calibration at α = 0.1 it reached 0.122 against 0.051 (Δ +0.070 {[}0.012, 0.143{]}), and
+with leave-one-site-out calibration 0.082 against 0.020 at α = 0.1 (Δ {[}0.017, 0.121{]}) and 0.100
+against 0.044 at α = 0.2 (Δ {[}0.006, 0.116{]}). It also created two new violated cells (Muslim, P2). In
+these Muslim comparisons fold 0 had selected almost nothing (sensitivity 0.002--0.035), so its low FDR
+partly reflects abstention. The pre-registered verdict is ``helps on power, but with new violated
+cells''. Folds 1--4 behaved like fold 0 (1-mm → thick, P1 α = 0.2: realised FDR 0.157--0.176).
+
+\textbf{Why averaging helps {[}post hoc{]}.} On the ensemble's own candidates, each single fold's mean
+probability ranks true against false candidates with AUROC 0.51--0.64, against 0.78--0.82 for their
+average (Appendix Table A9; ensemble minus best single fold +0.16 to +0.21). The folds tend to agree
+on true candidates and disagree on false ones --- fold disagreement alone ranks candidates almost as
+well as the mean (§6.1) --- so averaging removes over-confident false candidates:
+the share of false candidates scoring at least 0.95 fell from 16--32 \% (fold 0) to 3--6 \% (ensemble) at
+every cohort (Figure 2b). This paired comparison conditions on the ensemble's candidate set, so it
+favours the ensemble's own score and is a mechanism, not a fair contest.
+
+LST-AI replicated the direction through a different mechanism. Its three-model ensemble did not rank
+better than its first sub-model (MSLesSeg AUROC 0.737 against 0.758), but it produced far fewer false
+candidates (candidate precision 0.45 against 0.25), so its within-site sensitivity at α = 0.2 was
+higher (0.102 against 0.017).
+
+\subsection{Local recalibration}
+
+Within-site calibration kept P1 below α at every cohort (Appendix Table A1). At α = 0.2, realised FDR
+was 0.034--0.075 and sensitivity 0.14--0.31.
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{9}%mtlabel
+\caption[]{\textbf{Recalibration with k local patients (D5; mean over 200 draws, with 2000-draw
+re-estimates and Monte Carlo standard errors at k = 10).}}
+\begin{tabulary}{\textwidth}{@{}LLLLLL@{}}
+\toprule
+\hspace{0pt}site · procedure · mode & \hspace{0pt}k = 3 & \hspace{0pt}k = 10 & \hspace{0pt}k = 40 & \hspace{0pt}k* & \hspace{0pt}2000-draw re-estimate at k = 10 {[}post hoc{]}: mean (MC SE); sens. (MC SE) \\
+\midrule
+\hspace{0pt}MS3SEG · P1 α = 0.2 · site patients only & \hspace{0pt}FDR 0.056 (0 \% of draws \textgreater{} nominal); sens. 0.166 & \hspace{0pt}FDR 0.069 (0 \% of draws \textgreater{} nominal); sens. 0.183 & \hspace{0pt}FDR 0.078 (0 \% of draws \textgreater{} nominal); sens. 0.193 & \hspace{0pt}10 & \hspace{0pt}0.068 (0.0006); 0.184 (0.0019) \\
+\hspace{0pt}MS3SEG · P1 α = 0.1 · 1-mm pool + k site patients & \hspace{0pt}FDR 0.104 (72 \% of draws \textgreater{} nominal); sens. 0.251 & \hspace{0pt}FDR 0.101 (56 \% of draws \textgreater{} nominal); sens. 0.233 & \hspace{0pt}FDR 0.081 (14 \% of draws \textgreater{} nominal); sens. 0.185 & \hspace{0pt}20 & \hspace{0pt}0.101 (0.0002); 0.234 (0.0003) \\
+\hspace{0pt}MS3SEG · P2 γ = 0.1 · site patients only & \hspace{0pt}abstains (k \textless{} 9) & \hspace{0pt}FDX 0.075 (30 \% of draws \textgreater{} nominal); sens. 0.039 & \hspace{0pt}FDX 0.086 (33 \% of draws \textgreater{} nominal); sens. 0.038 & \hspace{0pt}10 & \hspace{0pt}0.079 (0.0016); 0.040 (0.0009) \\
+\hspace{0pt}MS3SEG · P2 γ = 0.1 · 1-mm pool + k site patients & \hspace{0pt}FDX 0.192 (100 \% of draws \textgreater{} nominal); sens. 0.110 & \hspace{0pt}FDX 0.187 (100 \% of draws \textgreater{} nominal); sens. 0.105 & \hspace{0pt}FDX 0.162 (86 \% of draws \textgreater{} nominal); sens. 0.088 & \hspace{0pt}none & \hspace{0pt}0.189 (0.0006); 0.106 (0.0003) \\
+\hspace{0pt}Muslim · P1 α = 0.2 · site patients only & \hspace{0pt}FDR 0.045 (0 \% of draws \textgreater{} nominal); sens. 0.131 & \hspace{0pt}FDR 0.053 (0 \% of draws \textgreater{} nominal); sens. 0.150 & \hspace{0pt}FDR 0.068 (3 \% of draws \textgreater{} nominal); sens. 0.159 & \hspace{0pt}10 & \hspace{0pt}0.051 (0.0006); 0.147 (0.0017) \\
+\hspace{0pt}Muslim · P1 α = 0.1 · 1-mm pool + k site patients & \hspace{0pt}FDR 0.103 (51 \% of draws \textgreater{} nominal); sens. 0.092 & \hspace{0pt}FDR 0.095 (39 \% of draws \textgreater{} nominal); sens. 0.086 & \hspace{0pt}FDR 0.076 (36 \% of draws \textgreater{} nominal); sens. 0.066 & \hspace{0pt}5 & \hspace{0pt}0.094 (0.0007); 0.086 (0.0003) \\
+\hspace{0pt}Muslim · P2 γ = 0.1 · site patients only & \hspace{0pt}abstains (k \textless{} 9) & \hspace{0pt}FDX 0.092 (36 \% of draws \textgreater{} nominal); sens. 0.006 & \hspace{0pt}FDX 0.095 (26 \% of draws \textgreater{} nominal); sens. 0.005 & \hspace{0pt}10 & \hspace{0pt}0.090 (0.0021); 0.007 (0.0003) \\
+\hspace{0pt}Muslim · P2 γ = 0.1 · 1-mm pool + k site patients & \hspace{0pt}FDX 0.250 (100 \% of draws \textgreater{} nominal); sens. 0.027 & \hspace{0pt}FDX 0.235 (100 \% of draws \textgreater{} nominal); sens. 0.023 & \hspace{0pt}FDX 0.196 (70 \% of draws \textgreater{} nominal); sens. 0.017 & \hspace{0pt}none & \hspace{0pt}0.233 (0.0014); 0.024 (0.0001) \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics{fig5_recalibration_curve.pdf}
+\renewcommand{\thefigure}{5}%mtlabel
+\caption[]{Recalibration with k local patients on MS3SEG and Muslim: realised FDR or FDX (a, b; mean of 200 draws; dashed lines at 0.1 and 0.2) and end-to-end sensitivity (c, d). P2 site-only abstains by construction for k \textless{} 9 (δ = 0.1) and is drawn from k = 10.}
+\end{figure*}
+
+\textbf{P1, site patients only.} P1 stayed below α at every k. With 10 local patients it reached about
+90 \% of the full within-site power (MS3SEG α = 0.2: realised FDR 0.069, sensitivity 0.183 against
+0.198 within site; Muslim: 0.053, 0.150 against 0.163).
+
+\textbf{P2 after recalibration --- needs at least 9 patients by construction, and then nearly silent.} With
+δ = 0.1, P2 cannot select with fewer than 9 calibration patients, and the next value on the k-grid is
+10; the pre-registered criterion then compares with a within-site power that is itself near zero
+(Muslim 0.004). The ``k* = 10'' of the protocol is therefore a consequence of the design, not a finding.
+With 10 local patients P2 was valid on average (2000-draw means: FDX 0.079 on MS3SEG and 0.090 on
+Muslim) and \textbf{found 4.0 \% and 0.7 \% of lesions}, as it does within site. Individual calibrations
+failed often: FDX exceeded 0.1 in 31 \% and 33 \% of draws, close to the 35 \% expected for a marginal
+guarantee with 10 calibration units (0.9¹⁰) \citep{vovk2013conditional}. The within-site P2 cells were
+themselves inconclusive (Appendix Table A1).
+
+\textbf{Augmented pools.} Adding local patients to the 85-patient 1-mm pool never restored P2 (FDX
+0.16--0.28 for k ≤ 40) and left P1 at α = 0.1 on the edge, because the foreign pool dominates the
+quantile. Monte Carlo errors for the 200-draw means are in Appendix Table A8 (for example, 0.003 for
+MS3SEG P2 sensitivity at k = 10, explaining the difference between the first 3.85 \% and the 2000-draw
+4.0 \%). D5 results for PediMS and Ljubljana-10 are in Appendix Table A13.
+
+\subsection{Healthy controls (separately pre-registered)}
+
+On a lesion-free scan every candidate is false, and the promise of P1 reads ``P(at least one reported
+lesion) ≤ α'' --- provided that healthy candidates are exchangeable with the patients' false
+candidates, which mix genuine false positives with matching fragments and, in MS3SEG, protocol-excluded
+hyperintensities. For P2 the premise is weaker still: a control's safe threshold always lies above its
+top candidate, whereas for patients this holds for only 58--78 \% of first scans at γ = 0.1. P2's
+promise reads ``≤ δ = 0.1''. Calibrations were frozen from patient data before any control outcome.
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{10}%mtlabel
+\caption[]{\textbf{Healthy controls (of 100) with at least one reported lesion {[}exact 95 \% CI, \%{]} →
+class.} Primary cells are in bold.}
+\begin{tabulary}{\textwidth}{@{}LLLLLL@{}}
+\toprule
+\hspace{0pt}arm · calibration pool & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}P2 γ = 0.1 (= 0.2) & \hspace{0pt}B2 CRC α = 0.1 / 0.2 & \hspace{0pt}B3 LTT α = 0.1 / 0.2 \\
+\midrule
+\hspace{0pt}ensemble · 1-mm-grid patient sites (primary) & \hspace{0pt}\textbf{14 {[}7.9, 22.4{]} inconclusive} & \hspace{0pt}\textbf{24 {[}16.0, 33.6{]} inconclusive} & \hspace{0pt}\textbf{6 {[}2.2, 12.6{]} holds} & \hspace{0pt}7 holds / 25 inconclusive & \hspace{0pt}2 holds / 32 \textbf{violated} \\
+\hspace{0pt}ensemble · MSLesSeg only & \hspace{0pt}15 {[}8.6, 23.5{]} inconclusive & \hspace{0pt}24 {[}16.0, 33.6{]} inconclusive & \hspace{0pt}6 {[}2.2, 12.6{]} holds & \hspace{0pt}7 holds / 25 inconclusive & \hspace{0pt}2 holds / 30 \textbf{violated} \\
+\hspace{0pt}ensemble · all five patient sites & \hspace{0pt}5 {[}1.6, 11.3{]} holds & \hspace{0pt}19 {[}11.8, 28.1{]} inconclusive & \hspace{0pt}2 {[}0.2, 7.0{]} holds & \hspace{0pt}2 holds / 11 holds & \hspace{0pt}2 holds / 32 \textbf{violated} \\
+\hspace{0pt}ensemble · thick-slice sites & \hspace{0pt}3 {[}0.6, 8.5{]} holds & \hspace{0pt}14 {[}7.9, 22.4{]} holds & \hspace{0pt}2 {[}0.2, 7.0{]} holds & \hspace{0pt}2 holds / 7 holds & \hspace{0pt}1 holds / 29 \textbf{violated} \\
+\hspace{0pt}ensemble · own null (leave-one-control-out; exchangeable by construction) & \hspace{0pt}4 {[}1.1, 9.9{]} & \hspace{0pt}13 {[}7.1, 21.2{]} & \hspace{0pt}--- & \hspace{0pt}--- & \hspace{0pt}--- \\
+\hspace{0pt}fold 0 · 1-mm-grid patient sites & \hspace{0pt}59 {[}48.7, 68.7{]} \textbf{violated} & \hspace{0pt}72 {[}62.1, 80.5{]} \textbf{violated} & \hspace{0pt}32 {[}23.0, 42.1{]} \textbf{violated} & \hspace{0pt}38 \textbf{violated} / 53 \textbf{violated} & \hspace{0pt}14 inconclusive / 50 \textbf{violated} \\
+\hspace{0pt}fold 0 · MSLesSeg only & \hspace{0pt}59 {[}48.7, 68.7{]} \textbf{violated} & \hspace{0pt}72 {[}62.1, 80.5{]} \textbf{violated} & \hspace{0pt}33 {[}23.9, 43.1{]} \textbf{violated} & \hspace{0pt}38 \textbf{violated} / 53 \textbf{violated} & \hspace{0pt}14 inconclusive / 48 \textbf{violated} \\
+\hspace{0pt}fold 0 · all five patient sites & \hspace{0pt}39 {[}29.4, 49.3{]} \textbf{violated} & \hspace{0pt}58 {[}47.7, 67.8{]} \textbf{violated} & \hspace{0pt}7 {[}2.9, 13.9{]} holds & \hspace{0pt}13 inconclusive / 32 \textbf{violated} & \hspace{0pt}8 inconclusive / 48 \textbf{violated} \\
+\hspace{0pt}fold 0 · thick-slice sites & \hspace{0pt}27 {[}18.6, 36.8{]} \textbf{violated} & \hspace{0pt}51 {[}40.8, 61.1{]} \textbf{violated} & \hspace{0pt}4 {[}1.1, 9.9{]} holds & \hspace{0pt}8 inconclusive / 20 inconclusive & \hspace{0pt}4 holds / 19 inconclusive \\
+\hspace{0pt}fold 0 · own null (leave-one-control-out; exchangeable by construction) & \hspace{0pt}9 {[}4.2, 16.4{]} & \hspace{0pt}21 {[}13.5, 30.3{]} & \hspace{0pt}--- & \hspace{0pt}--- & \hspace{0pt}--- \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{figure*}[tp]
+\centering
+\includegraphics{fig6_healthy_controls.pdf}
+\renewcommand{\thefigure}{6}%mtlabel
+\caption[]{Healthy controls with at least one reported lesion, by arm, calibration pool and procedure (exact 95 \% CIs). On a lesion-free scan the FDR promise reads P(≥ 1 reported lesion) ≤ α. Tick: nominal level; grey band: nominal to nominal + 0.05. Without selection, 85 of the 100 controls had at least one candidate.}
+\end{figure*}
+
+\textbf{Primary result.} With the calibration a deployer would use for 1-mm-grid studies, the healthy
+false-alarm rate was undecided and above nominal: \textbf{14/100 {[}7.9, 22.4 \%{]} controls had a reported
+lesion at α = 0.1 and 24/100 {[}16.0, 33.6 \%{]} at α = 0.2}; both cells are \emph{inconclusive}. P2 flagged
+6/100 {[}2.2, 12.6 \%{]} (holds), but it finds almost nothing in patients.
+
+\textbf{Subsets (secondary, not adjusted for multiplicity).} Of the 70 controls never analysed before,
+13/70 (18.6 \% {[}10.3, 29.7{]}) were flagged at α = 0.1, a violated cell in that subset; of the 30
+analysed earlier, 1/30 (\textbf{{[}post hoc{]}} Fisher exact test, p = 0.06). Those 30 are the first 40
+subject IDs minus 10 (sub-021 to sub-030) whose outputs were lost in the August processing run; the
+records give no sign of outcome-based selection, but the contrast may reflect chance or that history.
+Without the one control with a poor brain mask, the counts were 14/99 and 23/99.
+
+\textbf{The pool matters, in the expected direction.} Pools that include thick-slice patients produced
+fewer healthy false alarms (all five cohorts: 5/100 at α = 0.1), because their false-score tail is
+heavier. \textbf{{[}post hoc{]}} The controls' candidates resemble the thick-slice null more than the 1-mm
+null: 5.7 \% scored at least 0.95, against 2.7 \% of the 1-mm null and 5.6 \% of the thick-slice null.
+LTT (B3) at α = 0.2 was violated with every pool (29–32/\allowbreak{}100).
+
+\textbf{A single fold fails on healthy brains.} Fold 0 with 1-mm calibration flagged 59/100 controls at
+α = 0.1 (violated). The ensemble flagged 14/\allowbreak{}100; the paired difference was −45 points {[}−55, −35{]},
+with 1 against 46 discordant controls (exact McNemar p \textless{} 10⁻⁵).
+
+\textbf{Without selection, the segmentation marks most healthy brains.} The ensemble produced at least one
+candidate in 85/100 controls (2.63 per scan); fold 0 did so in 93/\allowbreak{}100.
+
+\textbf{Dissemination in space on healthy brains.} We ran the software's own brain-DIS code on these
+template-space images: MSMask atlas zones applied without registration (as the software does on
+MNI-grid images, and its most favourable case on template-normalised data), the MAGNIMS contact rule,
+and at least 2 of the periventricular, juxtacortical and infratentorial regions; spinal cord and
+optic nerve were not available.
+
+\begin{itemize}
+\tightlist
+\item
+  Applied to the \textbf{unselected} segmentation, the rule was met in \textbf{19/100 healthy controls
+  (11.8--28.1 \%)}; fold 0 met it in 22/\allowbreak{}100.
+\item
+  79/100 controls had at least one automatic lesion in a DIS region.
+\item
+  After selection, the rule was met in 2/100 (P1 α = 0.1), 3/100 (α = 0.2) and 0/100 (P2; one-sided
+  95 \% bound 3.0 \%).
+\end{itemize}
+
+This was handled in the software as problem report PRB-003 (corrective action CAPA-016): DIS is not
+computed from an automatic segmentation that a clinician has not reviewed. The false lesions were not
+skull-stripping artefacts: 2 of the 263 false candidates lay within 3 mm of the brain-mask edge. Of
+the 263, 165 (63 \%) were periventricular; the median volume was 27 mm³ over all 263 and 61 mm³ over
+the periventricular ones. \textbf{{[}post hoc{]}} On visual review, the top-scoring false candidates looked
+like normal periventricular caps and small focal white-matter hyperintensities. No expert read these
+scans, so some may be genuine incidental findings.
+
+Our earlier drafts claimed that no healthy control met DIS: first ``0/200 (95 \% CI ≤ 1.8 \%)'', which
+counted 20 resplits of the same 30 scans as independent, then ``0/30 (≤ 9.5 \%)''. Both statements are
+withdrawn and replaced by these numbers.
+
+\subsection{Paired segmenter swap (exploratory)}
+
+On the same MSLesSeg images, with 5-fold patient cross-fitting and calibration and test patients
+disjoint:
+
+\begin{itemize}
+\tightlist
+\item
+  FLAMeS-calibrated selection on LST-AI candidates selected nothing.
+\item
+  The reverse, LST-AI calibration applied to FLAMeS candidates, gave realised FDR \textbf{0.207
+  {[}0.175, 0.240{]}} at α = 0.1 and 0.236 {[}0.203, 0.268{]} at α = 0.2. At α = 0.1, 78 \% of scans had
+  FDP \textgreater{} 0.1.
+\item
+  Within-segmenter calibration stayed below α for both: FLAMeS 0.019 / 0.052 and LST-AI
+  0.053 / 0.095.
+\end{itemize}
+
+This failure was expected: the two segmenters' scores live on different scales (mean false-candidate
+score 0.65 for LST-AI against 0.76 for the FLAMeS ensemble), and the experiment covers one cohort. It
+illustrates a deployment rule: calibrate with the segmenter version that is deployed.
+
+\section{Translation into software}
+
+The author's MS imaging software (MSTool-AI, developed under IEC 62304 Class C \citep{iec62304}) contains a
+``slice-thickness reliability'' card derived from this work (change proposal \seqsplit{CP-SLICE-THICKNESS-001;}
+hazards HAZ-015 and HAZ-001). The card reports the slice thickness of the original acquisition (or
+``not determinable'', e.g.~for a 1-mm grid without acquisition metadata), the observed per-size
+detection of Table 7's pre-registered bands, that an empty list does not mean the absence of lesions,
+and a recommendation of 3D FLAIR for small lesions, in line with consensus guidance
+\citep{wattjes2021magnims}; it shows \textbf{no false-lesion rate at any thickness}. Its status, exactly: the
+software's requirement and risk documents record the change as approved by the owner on 2026-10-23,
+in document versions still marked draft; it was released behind a feature flag that is \textbf{off by
+default} and has not been enabled; its evidence file still carries the label ``draft --- pending owner
+approval'' (a record inconsistency to be reconciled); and its figures have not been re-derived for the
+deployed segmenter version, nor its wording reviewed with radiologists. This is translation, not
+clinical validation.
+
+\section{Discussion}
+
+\subsection{What the audit shows}
+
+\textbf{Under thin-to-thick transport, no violation of marginal lesion-wise FDR control (P1) was detected,
+but the data do not establish that it holds.} The pre-registered verdict is inconclusive; at
+α = 0.1 the data allow realised rates of 1.4α--1.8α on the two large thick-slice cohorts; the bound
+valid for few patients cannot classify the small cohorts; and several cells are dominated by scans on
+which nothing is reported. LTT with a per-scan loss (B3) showed the same pattern, and at matched power
+the calibrated procedures were close to each other.
+
+\textbf{Five findings are negative or unsettled.}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Per-scan control failed} for P2 when calibrated on thin and applied to thick slices, and the
+  per-scan exceedance of P1 was no better: one third of MS3SEG scans exceeded FDP 0.1 under P1 at
+  α = 0.1.
+\item
+  \textbf{Thin-slice calibration did not transfer as a calibration}: realised FDR on thick slices was
+  2.6 and 3.2 times its within-cohort value at α = 0.1, with wide intervals; a simulation attributes
+  this to a shift of the false-candidate scores rather than to clustering.
+\item
+  \textbf{Local recalibration of P2} needs at least 9 patients by construction and then finds 0.7--4.0 \%
+  of lesions.
+\item
+  \textbf{The healthy-brain promise was undecided}, with point estimates above nominal.
+\item
+  \textbf{Cohort and acquisition were confounded throughout}; the cohorts cannot separate a slice
+  thickness or spacing effect from scanner, population and annotation protocol.
+\end{enumerate}
+
+\subsection{Expectation and tail: why P1 and P2 behave differently}
+
+Under exchangeability conformal BH has slack --- the bound α·mean π0 is about α/3 here --- and that
+slack absorbs a moderate shift of the null. The realised FDR on thick slices (0.107 and 0.122 at
+α = 0.1) roughly consumed it. The expectation also stays near α because lesion-rich scans dilute
+their few false selections and silent scans count as FDP = 0; the scans a reader actually sees
+(non-empty lists) had higher FDP (0.188 on Muslim). The per-scan threshold has no slack to spend: its
+realised exceedance equals the share of scans whose highest false candidate lies above one number,
+and thick-slice scans carry a heavier upper tail of confident false candidates.
+
+Two consequences follow. \textbf{A marginal guarantee is a property of the population of scans, not of the
+scan on the screen}, and even under exact exchangeability about one scan in nine exceeds FDP 0.1 at
+α = 0.1 (simulation). \textbf{A marginal guarantee with few calibration units fails conditionally in a large
+share of calibration draws} (about a third with 10 patients), the known gap between marginal and
+calibration-conditional validity \citep{vovk2013conditional, angelopoulos2025ltt}. The scan-level random
+effect was modest, and the simulation shows that it does not inflate the expectation; scan-aware
+procedures (B2, B3, SUB, LR-hier) change which unit must be exchangeable and how power is spent, but
+they do not repair a shift.
+
+\subsection{Implications for deployment}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Calibrate with the deployed segmenter and with data from the target cohort or acquisition
+  type.} Calibration from another segmenter can double the false-discovery rate (§6.10); calibration
+  from thin slices does not carry over to thick ones (§6.2--6.3).
+\item
+  \textbf{Report what the reader sees}: the share of scans with a non-empty list and the FDR among them,
+  not only the expectation over all scans.
+\item
+  \textbf{Ensemble the folds} for power; do not expect the ensemble to fix validity (§6.7).
+\item
+  \textbf{Do not offer per-scan promises} on this evidence; where they are valid, they are nearly silent.
+\item
+  \textbf{Do not extend patient-calibrated promises to healthy or screening populations}, and do not
+  compute dissemination in space from unreviewed automatic lesions (§6.9).
+\item
+  \textbf{Expect low power at the guarantee}: end-to-end sensitivity was 0.01--0.40 for P1 depending on
+  cohort, design and α. The main lever is better candidate scores.
+\end{itemize}
+
+\subsection{Relation to prior work}
+
+Our transport failure for a per-scan quantity agrees with \citet{adhikary2026bound}, who report per-organ
+recall risk control in CT failing under clinical domain shift; our analysis is lesion-wise, uses MS
+and thick-slice acquisitions, and contrasts the expectation with the tail. Everywhere-valid and
+exact-law FDP bounds \citep{gazin2024transductive, song2026everywhere} assume candidate exchangeability,
+which our thick-slice data violate at the level of the score law. Weighted conformal selection
+\citep{jin2026weighted} would need a likelihood ratio between acquisition types that is not available from
+anisotropic shape features. Mondrian calibration by acquisition type \citep{vovk2005algorithmic} is the
+natural remedy that our recalibration results support; it should be tested prospectively, under a
+publicly registered protocol.
+
+\subsection{Corrections to our earlier drafts}
+
+Appendix B lists every claim of our earlier internal drafts that this audit retracts or changes. The
+two most consequential concern contamination and healthy controls: the first draft evaluated FLAMeS
+on 20 of its own training scans, and it reported ``0 of 200 healthy scans certified as DIS (95 \% CI
+≤ 1.8 \%)'', where the 200 were 20 resplits of 30 scans (honest ceiling about 10 \%); on 100 distinct
+controls the unselected segmentation met the DIS rule in 19 \%. This revision also withdraws the
+framing of version 1 of this manuscript (``marginal, not per-scan''; ``marginal control survived''),
+which overstated the P1 result relative to its pre-registered inconclusive verdict.
+
+\section{Limitations}
+
+\textbf{Segmenter.} One segmenter family (FLAMeS) carries all multi-cohort results. LST-AI appears only on
+the 1-mm-grid cohorts.
+
+\textbf{Validity conditions.} No procedure's assumptions hold strictly (matching-dependent labels,
+within-scan and within-patient clustering, repeated test scans; §3.1). The results measure departures
+from the nominal levels; they do not test the theory.
+
+\textbf{Contamination.} Twenty Ljubljana scans and the whole ISBI-2015 set are FLAMeS training data and
+were excluded. The remaining Ljubljana-10 come from a training site. For the thick-slice cohorts the
+absence of overlap rests on dataset descriptions and the fingerprint's lack of thick-slice spacings.
+
+\textbf{Confounding.} Cohort, slice spacing, scanner, field strength, population (PediMS: children) and
+annotation protocol are confounded. The groups of §6.6 describe these cohorts, not a controlled
+thickness effect. The ``1-mm'' group mixes 10 natively thin scans with 110 resampled 2--5 mm
+acquisitions.
+
+\textbf{Sample sizes and intervals.} PediMS has 28 scans of 9 children, and Ljubljana-10 has 10 patients;
+bounds valid for so few patients cannot classify them. The pre-registered margin (0.05 absolute) is
+lenient at α = 0.1.
+
+\textbf{Muslim.} Its in-plane pixel size is estimated (±10 \% in volume), which moves its size thresholds
+by one bin; it spans about 20 uncontrolled centres with sequential annotation.
+
+\textbf{Geometry.} 3D connected components on 4--8 mm slices can merge or split lesions; candidate and
+expert-lesion rules are identical, but lesion counts are not comparable across grids.
+
+\textbf{Healthy controls.} They come from one site and one dataset, registered to a template (brains about
+2.0 L); their native acquisition and the controls' ages could not be verified. ``Lesion-free'' is an
+assumption about volunteers, not an expert read. The licence is non-commercial. Thirty of the 100 had
+been analysed with fold 0 before the addendum. The LST-AI arm on controls is pending. The DIS code used
+inherits a known nonconformity: it counts third-ventricle contact as periventricular. In patients this
+changed 0.08 \% of lesion regions and no DIS decision; it was not measured on controls.
+
+\textbf{Repeated scans.} P2, B2 and B3 calibrate on the first timepoint of each calibration patient, but the
+test sets include every timepoint of the test patients (MSLesSeg, PediMS); for follow-up scans the
+exchangeability premise of these scan-level procedures is approximate.
+
+\textbf{Protocol and independence.} The main protocol was not publicly time-stamped before its results,
+the analysis code was committed with the results, the protocol and analysis were written by AI-agent
+sessions within 38 minutes, a concurrent study analysed the same data (§5.1), and a processing pilot
+preceded the protocol. The ``independent'' re-implementations were separate AI-agent sessions; no second
+human analyst has re-derived the numbers yet.
+
+\textbf{Post-hoc analyses.} Several explanatory analyses, two baselines, the training-site sensitivity
+analysis and every analysis of §5.5's last group are post hoc.
+
+\textbf{Not re-run.} The per-scan region certificates of our earlier two-layer procedure were not re-run on
+the new cohorts, and Mondrian calibration by acquisition type was not tested.
+
+\section{Conclusions}
+
+On five public MS cohorts and 100 healthy controls, conformal lesion-wise false-discovery control
+around a state-of-the-art segmenter, calibrated on 1-mm-grid FLAIR, did not transfer to thick-slice
+2D FLAIR. No violation of the marginal FDR was detected, but the pre-registered verdict was
+inconclusive, the calibration's realised error was two to three times its within-cohort value, one
+third of the thick-slice scans exceeded FDP 0.1, and the per-scan exceedance threshold failed. The
+expectation that survives is a property of the population of scans, kept low partly by silent scans;
+it leaves little power and does not cover healthy brains. Fold ensembling buys power, not validity.
+Calibration must come from the deployed segmenter and the target cohort and acquisition.
+
+\acks{\textbf{Funding.} No external funding. FLAMeS and LST-AI inference ran on cloud CPU virtual machines paid
+from promotional research credit in a dedicated research project. All analyses in this paper ran on a
+local computer. TODO (owner): confirm.
+
+We thank the creators of MSLesSeg, the Ljubljana 3D MR MS dataset, MS3SEG, the
+Muslim et al.~dataset, PediMS and SibBMS for releasing their data, the FLAMeS and LST-AI authors for
+releasing their models, and the independent reviewer whose report led to this revision. TODO (owner):
+further acknowledgements.}
+
+\ethics{This is a secondary analysis of publicly released, de-identified datasets used under their
+licences. No new data were acquired and no participant was contacted. The original studies report their
+own ethics approvals. TODO (owner): confirm with the author's institution whether a formal waiver is
+required.
+
+\textbf{Licences.} See Table 2. The Ljubljana laboratory states both CC BY (database description PDF) and
+CC BY-NC-ND (web page); we applied the stricter licence, which permits academic use. MSLesSeg, MS3SEG,
+Muslim and PediMS data are CC BY 4.0; SibBMS states both CC BY 3.0 and CC BY-NC-SA 3.0, and we applied
+the stricter. The FLAMeS v2.0 weights \citep{flames2025weights} are CC BY 4.0 on Zenodo, but the Hugging Face model card for the
+same weights states CC BY-NC 4.0 since 2026-08-13. Two consequences for commercial use: the software
+card of §7 shows detection figures whose 1-mm group includes the 10 Ljubljana scans, so using them in a
+commercial product requires clarifying the Ljubljana licence or re-deriving the group without
+Ljubljana; and any commercial use of the FLAMeS weights requires clarifying their licence with the
+authors. The card is off by default.}
+
+\coi{Nicolás Bonilla Vargas develops MSTool-AI, the MS imaging software in which the
+card of §7 was implemented, and is affiliated with Daita AI. TODO (owner): state any further commercial
+role, funding or patents.}
+
+\data{All data are public:
+
+\begin{itemize}
+\tightlist
+\item
+  MSLesSeg: Figshare, doi \seqsplit{10.6084/m9.figshare.27919209.}
+\item
+  Ljubljana 3D MR MS dataset: the laboratory's page and the open\_\allowbreak{}ms\_\allowbreak{}data mirror.
+\item
+  MS3SEG: Figshare, doi \seqsplit{10.6084/m9.figshare.30393475.}
+\item
+  Muslim et al.: Mendeley Data, doi \seqsplit{10.17632/8bctsm8jz7.1.}
+\item
+  PediMS: Figshare, doi \seqsplit{10.6084/m9.figshare.28701065.}
+\item
+  SibBMS: \seqsplit{https://ai.nsu.ru/files/sibbms/sibbms.zip} (openly downloadable).
+\end{itemize}
+
+We do not redistribute images, masks or probability maps. Aggregate result records (JSON, at full
+precision) are in the code repository. The per-candidate data could be released for the four CC BY
+4.0 cohorts and, under CC BY-NC-SA, for SibBMS, but not for Ljubljana (no derivatives); this is
+planned for the public archive (Appendix D).
+
+\textbf{Code availability.} Analysis code, tests, the protocol and its deviation log, result records, the
+figure and table generators, and \texttt{\seqsplit{NUMBERS\_CHECK.md}} are in the project repository under
+\texttt{\seqsplit{research/paper\_a/}} and \texttt{\seqsplit{docs/research/}} (branch \texttt{\seqsplit{research/paper-a-manuscript}}). TODO (owner): confirm
+public visibility and the code licence, and deposit the protocol, addendum, code and records in a
+time-stamped public archive (OSF or Zenodo) with a DOI before submission.}
+
+\melbadeclaration{Author contributions (CRediT)}{Nicolás Bonilla Vargas: conceptualisation, methodology, software
+(with AI assistance, see below), formal analysis, writing (original draft and editing), project
+administration. TODO: co-authors. A statistician to review §3, §5 and §8.2, and a neuroradiologist to
+review §4, §6.9 and §7, are recommended before submission.}
+
+\melbadeclaration{Use of AI assistance}{The analysis code, the protocol and its addendum, the result documents, the
+figures and this manuscript were produced with substantial assistance from an AI coding agent (Claude
+Opus 5.5, Anthropic, used through Claude Code), working in the project's repository under the author's
+direction. AI-agent sessions wrote the protocol and ran the analysis within 38 minutes (§5.1); the
+concurrent lesion-detector v3.1 study on the same data was also agent-run; and the two ``independent
+re-implementations'' (§5.7) were separate agent sessions. No AI system is an author. The author is
+responsible for the content. Every number is traced to a committed script and a full-precision record
+(\texttt{\seqsplit{NUMBERS\_CHECK.md}}).}
+
+\bibliography{references}
+
+\appendix
+
+\section{Additional tables}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A1}%mtlabel
+\caption[]{\textbf{Within-site calibration (D1), ensemble arm.}}
+\begin{tabulary}{\textwidth}{@{}LLLL@{}}
+\toprule
+\hspace{0pt}site & \hspace{0pt}P1 α = 0.1: FDR · sens. & \hspace{0pt}P1 α = 0.2: FDR · sens. & \hspace{0pt}P2 γ = 0.1: FDX · sens. \\
+\midrule
+\hspace{0pt}MSLesSeg & \hspace{0pt}0.016 · 0.102 & \hspace{0pt}0.046 · 0.309 & \hspace{0pt}0.087 · 0.042 \\
+\hspace{0pt}Ljubljana-10 & \hspace{0pt}0.000 · 0.006 & \hspace{0pt}0.034 · 0.136 & \hspace{0pt}0.100 · 0.021 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}0.041 · 0.062 & \hspace{0pt}0.075 · 0.198 & \hspace{0pt}0.100 · 0.040 \\
+\hspace{0pt}Muslim & \hspace{0pt}0.038 · 0.013 & \hspace{0pt}0.068 · 0.163 & \hspace{0pt}0.078 · 0.004 \\
+\hspace{0pt}PediMS & \hspace{0pt}0.024 · 0.070 & \hspace{0pt}0.066 · 0.154 & \hspace{0pt}abstains (8 calibration patients \textless{} 9) \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A2}%mtlabel
+\caption[]{\textbf{All procedures under leave-one-site-out calibration (D2), ensemble arm.} Format as
+Table 5; ``not estimable'': degenerate bootstrap interval. The Ljubljana-10 column is a site seen in
+FLAMeS training.}
+\begin{tabulary}{\textwidth}{@{}LLLLLLL@{}}
+\toprule
+\hspace{0pt}procedure & \hspace{0pt}α & \hspace{0pt}MSLesSeg & \hspace{0pt}Ljubljana-10 & \hspace{0pt}MS3SEG & \hspace{0pt}Muslim & \hspace{0pt}PediMS \\
+\midrule
+\hspace{0pt}P1 conformal BH (pre-registered, primary) & \hspace{0pt}0.1 & \hspace{0pt}0.009 {[}0.000, 0.029{]} holds; sens. 0.010 & \hspace{0pt}0.000 {[}0.000, 0.000{]} not estimable; sens. 0.009 & \hspace{0pt}0.087 {[}0.059, 0.121{]} holds; sens. 0.201 & \hspace{0pt}0.082 {[}0.033, 0.137{]} holds; sens. 0.030 & \hspace{0pt}0.006 {[}0.000, 0.022{]} holds; sens. 0.064 \\
+\hspace{0pt}P1 conformal BH (pre-registered, primary) & \hspace{0pt}0.2 & \hspace{0pt}0.018 {[}0.004, 0.042{]} holds; sens. 0.089 & \hspace{0pt}0.011 {[}0.000, 0.033{]} holds; sens. 0.118 & \hspace{0pt}0.115 {[}0.093, 0.142{]} holds; sens. 0.381 & \hspace{0pt}0.100 {[}0.047, 0.163{]} holds; sens. 0.139 & \hspace{0pt}0.050 {[}0.015, 0.093{]} holds; sens. 0.164 \\
+\hspace{0pt}one false candidate per calibration patient (first scan) + BH {[}post hoc{]} & \hspace{0pt}0.1 & \hspace{0pt}0.001 {[}0.000, 0.002{]} holds; sens. 0.007 & \hspace{0pt}0.000 {[}0.000, 0.000{]} holds; sens. 0.006 & \hspace{0pt}0.050 {[}0.033, 0.071{]} holds; sens. 0.117 & \hspace{0pt}0.025 {[}0.008, 0.046{]} holds; sens. 0.014 & \hspace{0pt}0.007 {[}0.001, 0.020{]} holds; sens. 0.036 \\
+\hspace{0pt}one false candidate per calibration patient (first scan) + BH {[}post hoc{]} & \hspace{0pt}0.2 & \hspace{0pt}0.010 {[}0.004, 0.018{]} holds; sens. 0.072 & \hspace{0pt}0.011 {[}0.000, 0.033{]} holds; sens. 0.066 & \hspace{0pt}0.107 {[}0.084, 0.133{]} holds; sens. 0.335 & \hspace{0pt}0.071 {[}0.036, 0.113{]} holds; sens. 0.095 & \hspace{0pt}0.036 {[}0.017, 0.060{]} holds; sens. 0.130 \\
+\hspace{0pt}hierarchical conformal e-values + e-BH {[}post hoc{]} & \hspace{0pt}0.1 & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}no selection (sens. 0) \\
+\hspace{0pt}hierarchical conformal e-values + e-BH {[}post hoc{]} & \hspace{0pt}0.2 & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}0.119 {[}0.074, 0.169{]} holds; sens. 0.594 & \hspace{0pt}0.212 {[}0.187, 0.239{]} holds; sens. 0.559 & \hspace{0pt}no selection (sens. 0) & \hspace{0pt}0.156 {[}0.115, 0.198{]} holds; sens. 0.589 \\
+\hspace{0pt}B2 conformal risk control, per-scan FDP loss (pre-registered) & \hspace{0pt}0.1 & \hspace{0pt}0.022 {[}0.000, 0.052{]} holds; sens. 0.004 & \hspace{0pt}0.000 {[}0.000, 0.000{]} not estimable; sens. 0.016 & \hspace{0pt}0.083 {[}0.040, 0.128{]} holds; sens. 0.092 & \hspace{0pt}0.157 {[}0.075, 0.245{]} inconclusive; sens. 0.027 & \hspace{0pt}0.000 {[}0.000, 0.000{]} not estimable; sens. 0.032 \\
+\hspace{0pt}B2 conformal risk control, per-scan FDP loss (pre-registered) & \hspace{0pt}0.2 & \hspace{0pt}0.042 {[}0.017, 0.073{]} holds; sens. 0.075 & \hspace{0pt}0.038 {[}0.000, 0.095{]} holds; sens. 0.100 & \hspace{0pt}0.094 {[}0.069, 0.125{]} holds; sens. 0.219 & \hspace{0pt}0.108 {[}0.070, 0.150{]} holds; sens. 0.201 & \hspace{0pt}0.061 {[}0.026, 0.120{]} holds; sens. 0.141 \\
+\hspace{0pt}B3 Learn-then-Test, per-scan FDP loss, δ = 0.1 (pre-registered) & \hspace{0pt}0.1 & \hspace{0pt}0.009 {[}0.000, 0.029{]} holds; sens. 0.000 & \hspace{0pt}0.000 {[}0.000, 0.000{]} not estimable; sens. 0.016 & \hspace{0pt}0.046 {[}0.018, 0.080{]} holds; sens. 0.066 & \hspace{0pt}0.134 {[}0.062, 0.226{]} inconclusive; sens. 0.018 & \hspace{0pt}0.000 {[}0.000, 0.000{]} not estimable; sens. 0.032 \\
+\hspace{0pt}B3 Learn-then-Test, per-scan FDP loss, δ = 0.1 (pre-registered) & \hspace{0pt}0.2 & \hspace{0pt}0.094 {[}0.073, 0.115{]} holds; sens. 0.460 & \hspace{0pt}0.072 {[}0.031, 0.116{]} holds; sens. 0.417 & \hspace{0pt}0.190 {[}0.161, 0.222{]} holds; sens. 0.507 & \hspace{0pt}0.151 {[}0.111, 0.188{]} holds; sens. 0.352 & \hspace{0pt}0.109 {[}0.065, 0.148{]} holds; sens. 0.487 \\
+\hspace{0pt}B1 precision-matched threshold, no guarantee (pre-registered) & \hspace{0pt}0.1 & \hspace{0pt}0.058 {[}0.043, 0.077{]} holds; sens. 0.336 & \hspace{0pt}0.046 {[}0.013, 0.082{]} holds; sens. 0.283 & \hspace{0pt}0.141 {[}0.117, 0.167{]} \textbf{violated}; sens. 0.440 & \hspace{0pt}0.120 {[}0.086, 0.158{]} inconclusive; sens. 0.285 & \hspace{0pt}0.097 {[}0.061, 0.137{]} holds; sens. 0.381 \\
+\hspace{0pt}B1 precision-matched threshold, no guarantee (pre-registered) & \hspace{0pt}0.2 & \hspace{0pt}0.210 {[}0.178, 0.241{]} holds; sens. 0.670 & \hspace{0pt}0.112 {[}0.066, 0.163{]} holds; sens. 0.579 & \hspace{0pt}0.222 {[}0.198, 0.247{]} holds; sens. 0.579 & \hspace{0pt}0.231 {[}0.183, 0.281{]} inconclusive; sens. 0.439 & \hspace{0pt}0.172 {[}0.125, 0.218{]} holds; sens. 0.620 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A3}%mtlabel
+\caption[]{\textbf{Primary cells with Ljubljana removed from every calibration pool {[}post hoc{]}.}}
+\begin{tabulary}{\textwidth}{@{}LLLL@{}}
+\toprule
+\hspace{0pt}design · test site & \hspace{0pt}cell & \hspace{0pt}pre-registered pools (with Ljubljana-10) & \hspace{0pt}Ljubljana removed from every pool {[}post hoc{]} \\
+\midrule
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.107 {[}0.075, 0.145{]} holds; sens. 0.258 & \hspace{0pt}0.098 {[}0.071, 0.131{]} holds; sens. 0.267 \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.123 {[}0.099, 0.151{]} holds; sens. 0.404 & \hspace{0pt}0.124 {[}0.100, 0.151{]} holds; sens. 0.405 \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.21 {[}0.13, 0.30{]} \textbf{violated}; sens. 0.121 & \hspace{0pt}0.21 {[}0.13, 0.30{]} \textbf{violated}; sens. 0.121 \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.121 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.121 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.122 {[}0.062, 0.197{]} inconclusive; sens. 0.095 & \hspace{0pt}0.122 {[}0.062, 0.197{]} inconclusive; sens. 0.094 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.097 {[}0.058, 0.146{]} holds; sens. 0.235 & \hspace{0pt}0.097 {[}0.059, 0.147{]} holds; sens. 0.240 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.29 {[}0.17, 0.44{]} \textbf{violated}; sens. 0.036 & \hspace{0pt}0.29 {[}0.17, 0.44{]} \textbf{violated}; sens. 0.036 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.27 {[}0.16, 0.42{]} \textbf{violated}; sens. 0.036 & \hspace{0pt}0.27 {[}0.16, 0.42{]} \textbf{violated}; sens. 0.036 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.041 {[}0.009, 0.102{]} holds; sens. 0.120 & \hspace{0pt}0.044 {[}0.015, 0.089{]} holds; sens. 0.130 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.086 {[}0.055, 0.122{]} holds; sens. 0.326 & \hspace{0pt}0.088 {[}0.060, 0.122{]} holds; sens. 0.348 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.07 {[}0.00, 0.24{]} inconclusive; sens. 0.053 & \hspace{0pt}0.07 {[}0.00, 0.24{]} inconclusive; sens. 0.053 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.07 {[}0.00, 0.24{]} inconclusive; sens. 0.053 & \hspace{0pt}0.07 {[}0.00, 0.24{]} inconclusive; sens. 0.053 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.009 {[}0.000, 0.029{]} holds; sens. 0.010 & \hspace{0pt}0.009 {[}0.000, 0.029{]} holds; sens. 0.010 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.018 {[}0.004, 0.042{]} holds; sens. 0.089 & \hspace{0pt}0.018 {[}0.004, 0.042{]} holds; sens. 0.085 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.02 {[}0.00, 0.06{]} holds; sens. 0.001 & \hspace{0pt}0.02 {[}0.00, 0.06{]} holds; sens. 0.000 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.03 {[}0.00, 0.07{]} holds; sens. 0.004 & \hspace{0pt}0.02 {[}0.00, 0.06{]} holds; sens. 0.001 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.087 {[}0.059, 0.121{]} holds; sens. 0.201 & \hspace{0pt}0.087 {[}0.059, 0.121{]} holds; sens. 0.202 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.115 {[}0.093, 0.142{]} holds; sens. 0.381 & \hspace{0pt}0.115 {[}0.093, 0.141{]} holds; sens. 0.382 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.16 {[}0.09, 0.25{]} inconclusive; sens. 0.087 & \hspace{0pt}0.14 {[}0.08, 0.22{]} inconclusive; sens. 0.082 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.087 & \hspace{0pt}0.10 {[}0.05, 0.18{]} inconclusive; sens. 0.082 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.082 {[}0.033, 0.137{]} holds; sens. 0.030 & \hspace{0pt}0.082 {[}0.033, 0.137{]} holds; sens. 0.030 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.100 {[}0.047, 0.163{]} holds; sens. 0.139 & \hspace{0pt}0.101 {[}0.049, 0.164{]} holds; sens. 0.137 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive; sens. 0.015 & \hspace{0pt}0.16 {[}0.06, 0.29{]} inconclusive; sens. 0.012 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive; sens. 0.015 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive; sens. 0.015 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.006 {[}0.000, 0.022{]} holds; sens. 0.064 & \hspace{0pt}0.006 {[}0.000, 0.022{]} holds; sens. 0.063 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.050 {[}0.015, 0.093{]} holds; sens. 0.164 & \hspace{0pt}0.050 {[}0.016, 0.093{]} holds; sens. 0.163 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds; sens. 0.025 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds; sens. 0.025 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds; sens. 0.025 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds; sens. 0.025 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A4}%mtlabel
+\caption[]{\textbf{Abstention-aware quantities for every procedure under 1-mm → thick transport (D3)
+{[}post hoc{]}.}}
+\begin{tabulary}{\textwidth}{@{}LLLLLLLLLL@{}}
+\toprule
+\hspace{0pt}site & \hspace{0pt}procedure & \hspace{0pt}α & \hspace{0pt}realised FDR (empty = 0) & \hspace{0pt}scans selecting & \hspace{0pt}FDR among selecting scans & \hspace{0pt}micro-FDR & \hspace{0pt}scans with FDP \textgreater{} 0.1 & \hspace{0pt}sens. & \hspace{0pt}Hoeffding--Bentkus bound \\
+\midrule
+\hspace{0pt}MS3SEG & \hspace{0pt}P1 & \hspace{0pt}0.1 & \hspace{0pt}0.107 & \hspace{0pt}92/100 & \hspace{0pt}0.116 & \hspace{0pt}0.095 & \hspace{0pt}34 \% & \hspace{0pt}0.258 & \hspace{0pt}0.194 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}P1 & \hspace{0pt}0.2 & \hspace{0pt}0.123 & \hspace{0pt}97/100 & \hspace{0pt}0.127 & \hspace{0pt}0.124 & \hspace{0pt}49 \% & \hspace{0pt}0.404 & \hspace{0pt}0.218 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}B2 & \hspace{0pt}0.1 & \hspace{0pt}0.072 & \hspace{0pt}97/100 & \hspace{0pt}0.074 & \hspace{0pt}0.065 & \hspace{0pt}21 \% & \hspace{0pt}0.155 & \hspace{0pt}0.152 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}B2 & \hspace{0pt}0.2 & \hspace{0pt}0.129 & \hspace{0pt}99/100 & \hspace{0pt}0.130 & \hspace{0pt}0.123 & \hspace{0pt}55 \% & \hspace{0pt}0.414 & \hspace{0pt}0.218 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}B3 & \hspace{0pt}0.1 & \hspace{0pt}0.083 & \hspace{0pt}91/100 & \hspace{0pt}0.091 & \hspace{0pt}0.077 & \hspace{0pt}18 \% & \hspace{0pt}0.092 & \hspace{0pt}0.166 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}B3 & \hspace{0pt}0.2 & \hspace{0pt}0.181 & \hspace{0pt}100/\allowbreak{}100 & \hspace{0pt}0.181 & \hspace{0pt}0.163 & \hspace{0pt}71 \% & \hspace{0pt}0.490 & \hspace{0pt}0.287 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}B1 & \hspace{0pt}0.1 & \hspace{0pt}0.164 & \hspace{0pt}100/\allowbreak{}100 & \hspace{0pt}0.164 & \hspace{0pt}0.149 & \hspace{0pt}62 \% & \hspace{0pt}0.473 & \hspace{0pt}0.264 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}B1 & \hspace{0pt}0.2 & \hspace{0pt}0.230 & \hspace{0pt}100/\allowbreak{}100 & \hspace{0pt}0.230 & \hspace{0pt}0.221 & \hspace{0pt}88 \% & \hspace{0pt}0.586 & \hspace{0pt}0.331 \\
+\hspace{0pt}Muslim & \hspace{0pt}P1 & \hspace{0pt}0.1 & \hspace{0pt}0.122 & \hspace{0pt}33/51 & \hspace{0pt}0.188 & \hspace{0pt}0.113 & \hspace{0pt}27 \% & \hspace{0pt}0.095 & \hspace{0pt}0.261 \\
+\hspace{0pt}Muslim & \hspace{0pt}P1 & \hspace{0pt}0.2 & \hspace{0pt}0.097 & \hspace{0pt}43/51 & \hspace{0pt}0.115 & \hspace{0pt}0.093 & \hspace{0pt}33 \% & \hspace{0pt}0.235 & \hspace{0pt}0.222 \\
+\hspace{0pt}Muslim & \hspace{0pt}B2 & \hspace{0pt}0.1 & \hspace{0pt}0.180 & \hspace{0pt}40/51 & \hspace{0pt}0.229 & \hspace{0pt}0.157 & \hspace{0pt}33 \% & \hspace{0pt}0.050 & \hspace{0pt}0.333 \\
+\hspace{0pt}Muslim & \hspace{0pt}B2 & \hspace{0pt}0.2 & \hspace{0pt}0.120 & \hspace{0pt}51/51 & \hspace{0pt}0.120 & \hspace{0pt}0.112 & \hspace{0pt}43 \% & \hspace{0pt}0.280 & \hspace{0pt}0.259 \\
+\hspace{0pt}Muslim & \hspace{0pt}B3 & \hspace{0pt}0.1 & \hspace{0pt}0.134 & \hspace{0pt}26/51 & \hspace{0pt}0.263 & \hspace{0pt}0.227 & \hspace{0pt}20 \% & \hspace{0pt}0.019 & \hspace{0pt}0.271 \\
+\hspace{0pt}Muslim & \hspace{0pt}B3 & \hspace{0pt}0.2 & \hspace{0pt}0.159 & \hspace{0pt}51/51 & \hspace{0pt}0.159 & \hspace{0pt}0.160 & \hspace{0pt}61 \% & \hspace{0pt}0.361 & \hspace{0pt}0.308 \\
+\hspace{0pt}Muslim & \hspace{0pt}B1 & \hspace{0pt}0.1 & \hspace{0pt}0.144 & \hspace{0pt}51/51 & \hspace{0pt}0.144 & \hspace{0pt}0.145 & \hspace{0pt}61 \% & \hspace{0pt}0.346 & \hspace{0pt}0.290 \\
+\hspace{0pt}Muslim & \hspace{0pt}B1 & \hspace{0pt}0.2 & \hspace{0pt}0.235 & \hspace{0pt}51/51 & \hspace{0pt}0.235 & \hspace{0pt}0.241 & \hspace{0pt}76 \% & \hspace{0pt}0.446 & \hspace{0pt}0.384 \\
+\hspace{0pt}PediMS & \hspace{0pt}P1 & \hspace{0pt}0.1 & \hspace{0pt}0.041 & \hspace{0pt}18/28 & \hspace{0pt}0.063 & \hspace{0pt}0.050 & \hspace{0pt}14 \% & \hspace{0pt}0.120 & \hspace{0pt}0.441 \\
+\hspace{0pt}PediMS & \hspace{0pt}P1 & \hspace{0pt}0.2 & \hspace{0pt}0.086 & \hspace{0pt}28/28 & \hspace{0pt}0.086 & \hspace{0pt}0.098 & \hspace{0pt}43 \% & \hspace{0pt}0.326 & \hspace{0pt}0.475 \\
+\hspace{0pt}PediMS & \hspace{0pt}B2 & \hspace{0pt}0.1 & \hspace{0pt}0.069 & \hspace{0pt}26/28 & \hspace{0pt}0.074 & \hspace{0pt}0.064 & \hspace{0pt}18 \% & \hspace{0pt}0.080 & \hspace{0pt}0.564 \\
+\hspace{0pt}PediMS & \hspace{0pt}B2 & \hspace{0pt}0.2 & \hspace{0pt}0.098 & \hspace{0pt}28/28 & \hspace{0pt}0.098 & \hspace{0pt}0.097 & \hspace{0pt}46 \% & \hspace{0pt}0.386 & \hspace{0pt}0.479 \\
+\hspace{0pt}PediMS & \hspace{0pt}B3 & \hspace{0pt}0.1 & \hspace{0pt}0.000 & \hspace{0pt}19/28 & \hspace{0pt}0.000 & \hspace{0pt}0.000 & \hspace{0pt}0 \% & \hspace{0pt}0.039 & \hspace{0pt}0.283 \\
+\hspace{0pt}PediMS & \hspace{0pt}B3 & \hspace{0pt}0.2 & \hspace{0pt}0.114 & \hspace{0pt}28/28 & \hspace{0pt}0.114 & \hspace{0pt}0.116 & \hspace{0pt}54 \% & \hspace{0pt}0.499 & \hspace{0pt}0.495 \\
+\hspace{0pt}PediMS & \hspace{0pt}B1 & \hspace{0pt}0.1 & \hspace{0pt}0.106 & \hspace{0pt}28/28 & \hspace{0pt}0.106 & \hspace{0pt}0.111 & \hspace{0pt}46 \% & \hspace{0pt}0.473 & \hspace{0pt}0.489 \\
+\hspace{0pt}PediMS & \hspace{0pt}B1 & \hspace{0pt}0.2 & \hspace{0pt}0.197 & \hspace{0pt}28/28 & \hspace{0pt}0.197 & \hspace{0pt}0.187 & \hspace{0pt}89 \% & \hspace{0pt}0.639 & \hspace{0pt}0.586 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A5}%mtlabel
+\caption[]{\textbf{Realised FDR at matched sensitivity, D3, interpolated along each procedure's
+validity--power frontier (α = 0.05--0.3) {[}post hoc{]}.}}
+\begin{tabulary}{\textwidth}{@{}LLLLLLL@{}}
+\toprule
+\hspace{0pt}site & \hspace{0pt}realised FDR at matched sensitivity & \hspace{0pt}P1 & \hspace{0pt}SUB & \hspace{0pt}B2 & \hspace{0pt}B3 & \hspace{0pt}B1 \\
+\midrule
+\hspace{0pt}MS3SEG & \hspace{0pt}sensitivity 0.2 & \hspace{0pt}0.094 & \hspace{0pt}0.066 & \hspace{0pt}0.088 & \hspace{0pt}0.098 & \hspace{0pt}not reached \\
+\hspace{0pt}MS3SEG & \hspace{0pt}sensitivity 0.3 & \hspace{0pt}0.108 & \hspace{0pt}0.096 & \hspace{0pt}0.109 & \hspace{0pt}0.113 & \hspace{0pt}0.118 \\
+\hspace{0pt}Muslim & \hspace{0pt}sensitivity 0.2 & \hspace{0pt}0.105 & \hspace{0pt}0.070 & \hspace{0pt}0.118 & \hspace{0pt}0.128 & \hspace{0pt}0.129 \\
+\hspace{0pt}Muslim & \hspace{0pt}sensitivity 0.3 & \hspace{0pt}0.111 & \hspace{0pt}not reached & \hspace{0pt}0.130 & \hspace{0pt}0.130 & \hspace{0pt}0.139 \\
+\hspace{0pt}PediMS & \hspace{0pt}sensitivity 0.2 & \hspace{0pt}0.070 & \hspace{0pt}0.052 & \hspace{0pt}0.069 & \hspace{0pt}0.045 & \hspace{0pt}0.077 \\
+\hspace{0pt}PediMS & \hspace{0pt}sensitivity 0.3 & \hspace{0pt}0.084 & \hspace{0pt}0.077 & \hspace{0pt}0.085 & \hspace{0pt}0.073 & \hspace{0pt}0.088 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A6}%mtlabel
+\caption[]{\textbf{Validity--power frontier, D3: realised FDR {[}95 \% CI{]} / end-to-end sensitivity
+{[}post hoc{]}.} SUB averages 200 draws.}
+\begin{tabulary}{\textwidth}{@{}LLLLLLL@{}}
+\toprule
+\hspace{0pt}site · procedure & \hspace{0pt}α = 0.05 & \hspace{0pt}α = 0.1 & \hspace{0pt}α = 0.15 & \hspace{0pt}α = 0.2 & \hspace{0pt}α = 0.25 & \hspace{0pt}α = 0.3 \\
+\midrule
+\hspace{0pt}MS3SEG · P1 & \hspace{0pt}0.079 {[}0.046, 0.118{]} / 0.136 & \hspace{0pt}0.107 {[}0.075, 0.145{]} / 0.258 & \hspace{0pt}0.111 {[}0.089, 0.136{]} / 0.355 & \hspace{0pt}0.123 {[}0.099, 0.151{]} / 0.404 & \hspace{0pt}0.137 {[}0.114, 0.165{]} / 0.442 & \hspace{0pt}0.155 {[}0.130, 0.181{]} / 0.469 \\
+\hspace{0pt}MS3SEG · SUB & \hspace{0pt}0.017 {[}0.011, 0.025{]} / 0.052 & \hspace{0pt}0.066 {[}0.049, 0.087{]} / 0.198 & \hspace{0pt}0.095 {[}0.074, 0.120{]} / 0.297 & \hspace{0pt}0.118 {[}0.095, 0.144{]} / 0.381 & \hspace{0pt}0.133 {[}0.110, 0.159{]} / 0.421 & \hspace{0pt}0.149 {[}0.126, 0.175{]} / 0.460 \\
+\hspace{0pt}MS3SEG · B2 & \hspace{0pt}0.075 {[}0.036, 0.118{]} / 0.087 & \hspace{0pt}0.072 {[}0.044, 0.107{]} / 0.155 & \hspace{0pt}0.094 {[}0.069, 0.125{]} / 0.219 & \hspace{0pt}0.129 {[}0.106, 0.154{]} / 0.414 & \hspace{0pt}0.184 {[}0.156, 0.216{]} / 0.499 & \hspace{0pt}0.213 {[}0.188, 0.240{]} / 0.561 \\
+\hspace{0pt}MS3SEG · B3 & \hspace{0pt}0.000 {[}0.000, 0.000{]} / 0.010 & \hspace{0pt}0.083 {[}0.040, 0.128{]} / 0.092 & \hspace{0pt}0.131 {[}0.107, 0.157{]} / 0.420 & \hspace{0pt}0.181 {[}0.152, 0.213{]} / 0.490 & \hspace{0pt}0.205 {[}0.180, 0.231{]} / 0.543 & \hspace{0pt}0.229 {[}0.205, 0.254{]} / 0.585 \\
+\hspace{0pt}MS3SEG · B1 & \hspace{0pt}0.095 {[}0.069, 0.126{]} / 0.216 & \hspace{0pt}0.164 {[}0.136, 0.196{]} / 0.473 & \hspace{0pt}0.202 {[}0.176, 0.228{]} / 0.538 & \hspace{0pt}0.230 {[}0.206, 0.255{]} / 0.586 & \hspace{0pt}0.265 {[}0.240, 0.290{]} / 0.620 & \hspace{0pt}0.320 {[}0.294, 0.347{]} / 0.661 \\
+\hspace{0pt}Muslim · P1 & \hspace{0pt}0.062 {[}0.024, 0.107{]} / 0.030 & \hspace{0pt}0.122 {[}0.062, 0.197{]} / 0.095 & \hspace{0pt}0.110 {[}0.056, 0.178{]} / 0.179 & \hspace{0pt}0.097 {[}0.058, 0.146{]} / 0.235 & \hspace{0pt}0.097 {[}0.065, 0.132{]} / 0.264 & \hspace{0pt}0.114 {[}0.079, 0.153{]} / 0.308 \\
+\hspace{0pt}Muslim · SUB & \hspace{0pt}0.007 {[}0.001, 0.014{]} / 0.013 & \hspace{0pt}0.028 {[}0.014, 0.046{]} / 0.067 & \hspace{0pt}0.045 {[}0.028, 0.066{]} / 0.144 & \hspace{0pt}0.077 {[}0.054, 0.102{]} / 0.216 & \hspace{0pt}0.091 {[}0.065, 0.117{]} / 0.255 & \hspace{0pt}0.109 {[}0.082, 0.137{]} / 0.293 \\
+\hspace{0pt}Muslim · B2 & \hspace{0pt}0.134 {[}0.062, 0.226{]} / 0.018 & \hspace{0pt}0.180 {[}0.103, 0.265{]} / 0.050 & \hspace{0pt}0.116 {[}0.068, 0.166{]} / 0.097 & \hspace{0pt}0.120 {[}0.086, 0.158{]} / 0.280 & \hspace{0pt}0.164 {[}0.127, 0.201{]} / 0.371 & \hspace{0pt}0.213 {[}0.167, 0.260{]} / 0.424 \\
+\hspace{0pt}Muslim · B3 & \hspace{0pt}0.020 {[}0.000, 0.059{]} / 0.000 & \hspace{0pt}0.134 {[}0.062, 0.226{]} / 0.019 & \hspace{0pt}0.125 {[}0.089, 0.164{]} / 0.288 & \hspace{0pt}0.159 {[}0.119, 0.197{]} / 0.361 & \hspace{0pt}0.201 {[}0.157, 0.242{]} / 0.410 & \hspace{0pt}0.235 {[}0.185, 0.285{]} / 0.445 \\
+\hspace{0pt}Muslim · B1 & \hspace{0pt}0.118 {[}0.070, 0.170{]} / 0.093 & \hspace{0pt}0.144 {[}0.107, 0.180{]} / 0.346 & \hspace{0pt}0.190 {[}0.149, 0.231{]} / 0.402 & \hspace{0pt}0.235 {[}0.185, 0.286{]} / 0.446 & \hspace{0pt}0.286 {[}0.235, 0.337{]} / 0.480 & \hspace{0pt}0.354 {[}0.300, 0.404{]} / 0.525 \\
+\hspace{0pt}PediMS · P1 & \hspace{0pt}0.008 {[}0.000, 0.027{]} / 0.053 & \hspace{0pt}0.041 {[}0.009, 0.102{]} / 0.120 & \hspace{0pt}0.077 {[}0.040, 0.138{]} / 0.218 & \hspace{0pt}0.086 {[}0.055, 0.122{]} / 0.326 & \hspace{0pt}0.097 {[}0.066, 0.132{]} / 0.408 & \hspace{0pt}0.113 {[}0.073, 0.155{]} / 0.464 \\
+\hspace{0pt}PediMS · SUB & \hspace{0pt}0.006 {[}0.001, 0.014{]} / 0.023 & \hspace{0pt}0.033 {[}0.017, 0.050{]} / 0.132 & \hspace{0pt}0.052 {[}0.031, 0.078{]} / 0.200 & \hspace{0pt}0.076 {[}0.050, 0.109{]} / 0.299 & \hspace{0pt}0.095 {[}0.064, 0.131{]} / 0.383 & \hspace{0pt}0.114 {[}0.077, 0.154{]} / 0.445 \\
+\hspace{0pt}PediMS · B2 & \hspace{0pt}0.000 {[}0.000, 0.000{]} / 0.034 & \hspace{0pt}0.069 {[}0.015, 0.200{]} / 0.080 & \hspace{0pt}0.061 {[}0.026, 0.120{]} / 0.141 & \hspace{0pt}0.098 {[}0.062, 0.137{]} / 0.386 & \hspace{0pt}0.126 {[}0.089, 0.163{]} / 0.515 & \hspace{0pt}0.166 {[}0.120, 0.212{]} / 0.607 \\
+\hspace{0pt}PediMS · B3 & \hspace{0pt}0.000 {[}0.000, 0.000{]} / 0.001 & \hspace{0pt}0.000 {[}0.000, 0.000{]} / 0.039 & \hspace{0pt}0.099 {[}0.063, 0.140{]} / 0.396 & \hspace{0pt}0.114 {[}0.076, 0.152{]} / 0.499 & \hspace{0pt}0.148 {[}0.106, 0.189{]} / 0.583 & \hspace{0pt}0.193 {[}0.146, 0.240{]} / 0.637 \\
+\hspace{0pt}PediMS · B1 & \hspace{0pt}0.070 {[}0.028, 0.142{]} / 0.131 & \hspace{0pt}0.106 {[}0.065, 0.146{]} / 0.473 & \hspace{0pt}0.147 {[}0.104, 0.188{]} / 0.575 & \hspace{0pt}0.197 {[}0.152, 0.242{]} / 0.639 & \hspace{0pt}0.243 {[}0.191, 0.294{]} / 0.673 & \hspace{0pt}0.291 {[}0.234, 0.348{]} / 0.713 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A7}%mtlabel
+\caption[]{\textbf{Simulation of conformal BH with a scan-level random effect and a shift of the test
+false-candidate scores (400 replicates each; candidate counts of the 1-mm-grid calibration scans and
+of the MS3SEG test scans; pooled AUROC ≈ 0.80) {[}post hoc{]}.}}
+\begin{tabulary}{\textwidth}{@{}LLLLLLL@{}}
+\toprule
+\hspace{0pt}scan-level ICC ρ & \hspace{0pt}shift of test false scores (SD) & \hspace{0pt}α & \hspace{0pt}realised FDR (MC SE) & \hspace{0pt}α · mean per-scan π0 & \hspace{0pt}scans with FDP \textgreater{} 0.1 & \hspace{0pt}FDR among selecting scans \\
+\midrule
+\hspace{0pt}0.0 & \hspace{0pt}0.0 & \hspace{0pt}0.1 & \hspace{0pt}0.032 (0.0006) & \hspace{0pt}0.034 & \hspace{0pt}11 \% & \hspace{0pt}0.041 \\
+\hspace{0pt}0.0 & \hspace{0pt}0.0 & \hspace{0pt}0.2 & \hspace{0pt}0.068 (0.0007) & \hspace{0pt}0.069 & \hspace{0pt}27 \% & \hspace{0pt}0.074 \\
+\hspace{0pt}0.0 & \hspace{0pt}0.15 & \hspace{0pt}0.1 & \hspace{0pt}0.048 (0.0008) & \hspace{0pt}0.034 & \hspace{0pt}17 \% & \hspace{0pt}0.062 \\
+\hspace{0pt}0.0 & \hspace{0pt}0.15 & \hspace{0pt}0.2 & \hspace{0pt}0.092 (0.0008) & \hspace{0pt}0.069 & \hspace{0pt}36 \% & \hspace{0pt}0.100 \\
+\hspace{0pt}0.0 & \hspace{0pt}0.3 & \hspace{0pt}0.1 & \hspace{0pt}0.067 (0.0010) & \hspace{0pt}0.034 & \hspace{0pt}22 \% & \hspace{0pt}0.086 \\
+\hspace{0pt}0.0 & \hspace{0pt}0.3 & \hspace{0pt}0.2 & \hspace{0pt}0.120 (0.0008) & \hspace{0pt}0.069 & \hspace{0pt}46 \% & \hspace{0pt}0.128 \\
+\hspace{0pt}0.03 & \hspace{0pt}0.0 & \hspace{0pt}0.1 & \hspace{0pt}0.032 (0.0006) & \hspace{0pt}0.034 & \hspace{0pt}12 \% & \hspace{0pt}0.044 \\
+\hspace{0pt}0.03 & \hspace{0pt}0.0 & \hspace{0pt}0.2 & \hspace{0pt}0.067 (0.0007) & \hspace{0pt}0.069 & \hspace{0pt}26 \% & \hspace{0pt}0.075 \\
+\hspace{0pt}0.03 & \hspace{0pt}0.15 & \hspace{0pt}0.1 & \hspace{0pt}0.046 (0.0007) & \hspace{0pt}0.034 & \hspace{0pt}16 \% & \hspace{0pt}0.062 \\
+\hspace{0pt}0.03 & \hspace{0pt}0.15 & \hspace{0pt}0.2 & \hspace{0pt}0.090 (0.0008) & \hspace{0pt}0.069 & \hspace{0pt}35 \% & \hspace{0pt}0.100 \\
+\hspace{0pt}0.03 & \hspace{0pt}0.3 & \hspace{0pt}0.1 & \hspace{0pt}0.067 (0.0010) & \hspace{0pt}0.034 & \hspace{0pt}23 \% & \hspace{0pt}0.089 \\
+\hspace{0pt}0.03 & \hspace{0pt}0.3 & \hspace{0pt}0.2 & \hspace{0pt}0.117 (0.0009) & \hspace{0pt}0.069 & \hspace{0pt}45 \% & \hspace{0pt}0.129 \\
+\hspace{0pt}0.1 & \hspace{0pt}0.0 & \hspace{0pt}0.1 & \hspace{0pt}0.032 (0.0006) & \hspace{0pt}0.034 & \hspace{0pt}12 \% & \hspace{0pt}0.047 \\
+\hspace{0pt}0.1 & \hspace{0pt}0.0 & \hspace{0pt}0.2 & \hspace{0pt}0.064 (0.0007) & \hspace{0pt}0.069 & \hspace{0pt}26 \% & \hspace{0pt}0.076 \\
+\hspace{0pt}0.1 & \hspace{0pt}0.15 & \hspace{0pt}0.1 & \hspace{0pt}0.045 (0.0007) & \hspace{0pt}0.034 & \hspace{0pt}16 \% & \hspace{0pt}0.066 \\
+\hspace{0pt}0.1 & \hspace{0pt}0.15 & \hspace{0pt}0.2 & \hspace{0pt}0.084 (0.0008) & \hspace{0pt}0.069 & \hspace{0pt}33 \% & \hspace{0pt}0.099 \\
+\hspace{0pt}0.1 & \hspace{0pt}0.3 & \hspace{0pt}0.1 & \hspace{0pt}0.063 (0.0009) & \hspace{0pt}0.034 & \hspace{0pt}22 \% & \hspace{0pt}0.092 \\
+\hspace{0pt}0.1 & \hspace{0pt}0.3 & \hspace{0pt}0.2 & \hspace{0pt}0.110 (0.0009) & \hspace{0pt}0.069 & \hspace{0pt}42 \% & \hspace{0pt}0.129 \\
+\hspace{0pt}0.2 & \hspace{0pt}0.0 & \hspace{0pt}0.1 & \hspace{0pt}0.030 (0.0005) & \hspace{0pt}0.034 & \hspace{0pt}12 \% & \hspace{0pt}0.050 \\
+\hspace{0pt}0.2 & \hspace{0pt}0.0 & \hspace{0pt}0.2 & \hspace{0pt}0.061 (0.0007) & \hspace{0pt}0.069 & \hspace{0pt}24 \% & \hspace{0pt}0.079 \\
+\hspace{0pt}0.2 & \hspace{0pt}0.15 & \hspace{0pt}0.1 & \hspace{0pt}0.042 (0.0007) & \hspace{0pt}0.034 & \hspace{0pt}16 \% & \hspace{0pt}0.069 \\
+\hspace{0pt}0.2 & \hspace{0pt}0.15 & \hspace{0pt}0.2 & \hspace{0pt}0.079 (0.0008) & \hspace{0pt}0.069 & \hspace{0pt}31 \% & \hspace{0pt}0.102 \\
+\hspace{0pt}0.2 & \hspace{0pt}0.3 & \hspace{0pt}0.1 & \hspace{0pt}0.058 (0.0008) & \hspace{0pt}0.034 & \hspace{0pt}21 \% & \hspace{0pt}0.095 \\
+\hspace{0pt}0.2 & \hspace{0pt}0.3 & \hspace{0pt}0.2 & \hspace{0pt}0.102 (0.0008) & \hspace{0pt}0.069 & \hspace{0pt}39 \% & \hspace{0pt}0.132 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A8}%mtlabel
+\caption[]{\textbf{Monte Carlo precision of the randomised quantities {[}post hoc{]}.}}
+\begin{tabulary}{\textwidth}{@{}LLLLL@{}}
+\toprule
+\hspace{0pt}quantity & \hspace{0pt}200 draws (pre-registered / manuscript v1) & \hspace{0pt}2000 draws {[}post hoc{]}: mean & \hspace{0pt}MC SE (2000) & \hspace{0pt}MC SE a 200-draw mean would have \\
+\midrule
+\hspace{0pt}MS3SEG · P2 γ = 0.1, site only, k = 10 · realised & \hspace{0pt}0.075 & \hspace{0pt}0.079 & \hspace{0pt}0.0016 & \hspace{0pt}0.0051 \\
+\hspace{0pt}MS3SEG · P2 γ = 0.1, site only, k = 10 · sensitivity & \hspace{0pt}0.039 & \hspace{0pt}0.040 & \hspace{0pt}0.0009 & \hspace{0pt}0.0030 \\
+\hspace{0pt}MS3SEG · P1 α = 0.2, site only, k = 10 · realised & \hspace{0pt}0.069 & \hspace{0pt}0.068 & \hspace{0pt}0.0006 & \hspace{0pt}0.0019 \\
+\hspace{0pt}MS3SEG · P1 α = 0.2, site only, k = 10 · sensitivity & \hspace{0pt}0.183 & \hspace{0pt}0.184 & \hspace{0pt}0.0019 & \hspace{0pt}0.0060 \\
+\hspace{0pt}MS3SEG · P1 α = 0.1, 1-mm pool + 10 · realised & \hspace{0pt}0.101 & \hspace{0pt}0.101 & \hspace{0pt}0.0002 & \hspace{0pt}0.0006 \\
+\hspace{0pt}MS3SEG · P1 α = 0.1, 1-mm pool + 10 · sensitivity & \hspace{0pt}0.233 & \hspace{0pt}0.234 & \hspace{0pt}0.0003 & \hspace{0pt}0.0010 \\
+\hspace{0pt}MS3SEG · P2 γ = 0.1, 1-mm pool + 10 · realised & \hspace{0pt}0.187 & \hspace{0pt}0.189 & \hspace{0pt}0.0006 & \hspace{0pt}0.0020 \\
+\hspace{0pt}MS3SEG · P2 γ = 0.1, 1-mm pool + 10 · sensitivity & \hspace{0pt}0.105 & \hspace{0pt}0.106 & \hspace{0pt}0.0003 & \hspace{0pt}0.0008 \\
+\hspace{0pt}Muslim · P2 γ = 0.1, site only, k = 10 · realised & \hspace{0pt}0.092 & \hspace{0pt}0.090 & \hspace{0pt}0.0021 & \hspace{0pt}0.0065 \\
+\hspace{0pt}Muslim · P2 γ = 0.1, site only, k = 10 · sensitivity & \hspace{0pt}0.006 & \hspace{0pt}0.007 & \hspace{0pt}0.0003 & \hspace{0pt}0.0010 \\
+\hspace{0pt}Muslim · P1 α = 0.2, site only, k = 10 · realised & \hspace{0pt}0.053 & \hspace{0pt}0.051 & \hspace{0pt}0.0006 & \hspace{0pt}0.0020 \\
+\hspace{0pt}Muslim · P1 α = 0.2, site only, k = 10 · sensitivity & \hspace{0pt}0.150 & \hspace{0pt}0.147 & \hspace{0pt}0.0017 & \hspace{0pt}0.0054 \\
+\hspace{0pt}Muslim · P1 α = 0.1, 1-mm pool + 10 · realised & \hspace{0pt}0.095 & \hspace{0pt}0.094 & \hspace{0pt}0.0007 & \hspace{0pt}0.0021 \\
+\hspace{0pt}Muslim · P1 α = 0.1, 1-mm pool + 10 · sensitivity & \hspace{0pt}0.086 & \hspace{0pt}0.086 & \hspace{0pt}0.0003 & \hspace{0pt}0.0009 \\
+\hspace{0pt}Muslim · P2 γ = 0.1, 1-mm pool + 10 · realised & \hspace{0pt}0.235 & \hspace{0pt}0.233 & \hspace{0pt}0.0014 & \hspace{0pt}0.0044 \\
+\hspace{0pt}Muslim · P2 γ = 0.1, 1-mm pool + 10 · sensitivity & \hspace{0pt}0.023 & \hspace{0pt}0.024 & \hspace{0pt}0.0001 & \hspace{0pt}0.0005 \\
+\hspace{0pt}SUB · MS3SEG · α = 0.1 · realised FDR & \hspace{0pt}0.065 & \hspace{0pt}0.064 & \hspace{0pt}0.0007 & \hspace{0pt}0.0023 \\
+\hspace{0pt}SUB · MS3SEG · α = 0.2 · realised FDR & \hspace{0pt}0.116 & \hspace{0pt}0.117 & \hspace{0pt}0.0005 & \hspace{0pt}0.0015 \\
+\hspace{0pt}SUB · Muslim · α = 0.1 · realised FDR & \hspace{0pt}0.028 & \hspace{0pt}0.029 & \hspace{0pt}0.0005 & \hspace{0pt}0.0016 \\
+\hspace{0pt}SUB · Muslim · α = 0.2 · realised FDR & \hspace{0pt}0.074 & \hspace{0pt}0.074 & \hspace{0pt}0.0007 & \hspace{0pt}0.0021 \\
+\hspace{0pt}SUB · PediMS · α = 0.1 · realised FDR & \hspace{0pt}0.029 & \hspace{0pt}0.028 & \hspace{0pt}0.0006 & \hspace{0pt}0.0018 \\
+\hspace{0pt}SUB · PediMS · α = 0.2 · realised FDR & \hspace{0pt}0.075 & \hspace{0pt}0.077 & \hspace{0pt}0.0006 & \hspace{0pt}0.0019 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A9}%mtlabel
+\caption[]{\textbf{Candidate AUROC on the same candidates: the 5-fold mean against each fold's mean over the
+ensemble candidate (patient-cluster bootstrap) {[}post hoc{]}.}}
+\begin{tabulary}{\textwidth}{@{}LLLLL@{}}
+\toprule
+\hspace{0pt}site & \hspace{0pt}AUROC, 5-fold mean & \hspace{0pt}AUROC of each fold's mean on the same (ensemble) candidates & \hspace{0pt}ensemble − fold 0 {[}95 \% CI{]} & \hspace{0pt}ensemble − best single fold \\
+\midrule
+\hspace{0pt}MSLesSeg & \hspace{0pt}0.818 & \hspace{0pt}0.593 / 0.586 / 0.603 / 0.611 / 0.609 & \hspace{0pt}+0.225 {[}0.196, 0.257{]} & \hspace{0pt}+0.207 \\
+\hspace{0pt}Ljubljana-10 & \hspace{0pt}0.802 & \hspace{0pt}0.581 / 0.627 / 0.634 / 0.609 / 0.585 & \hspace{0pt}+0.222 {[}0.113, 0.315{]} & \hspace{0pt}+0.169 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}0.801 & \hspace{0pt}0.572 / 0.588 / 0.575 / 0.607 / 0.618 & \hspace{0pt}+0.230 {[}0.204, 0.256{]} & \hspace{0pt}+0.183 \\
+\hspace{0pt}Muslim & \hspace{0pt}0.784 & \hspace{0pt}0.586 / 0.569 / 0.598 / 0.613 / 0.598 & \hspace{0pt}+0.198 {[}0.145, 0.250{]} & \hspace{0pt}+0.171 \\
+\hspace{0pt}PediMS & \hspace{0pt}0.801 & \hspace{0pt}0.513 / 0.588 / 0.585 / 0.643 / 0.601 & \hspace{0pt}+0.288 {[}0.257, 0.366{]} & \hspace{0pt}+0.158 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\onecolumn
+\begingroup\footnotesize
+\renewcommand{\thetable}{A10}%mtlabel
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{86.9pt}>{\raggedright\arraybackslash}p{46.0pt}>{\raggedright\arraybackslash}p{86.9pt}>{\raggedright\arraybackslash}p{86.9pt}>{\raggedright\arraybackslash}p{86.9pt}>{\raggedright\arraybackslash}p{86.9pt}@{}}%mtcolspec
+\caption[]{\textbf{Pre-specified sensitivity analyses for the 32 primary cells.}}\\
+\toprule
+\hspace{0pt}design · test site & \hspace{0pt}cell & \hspace{0pt}primary (lenient IoU \textgreater{} 0) & \hspace{0pt}strict matching (IoU ≥ 0.10) & \hspace{0pt}consensus score S\_cons & \hspace{0pt}PediMS without patient P9 \\
+\midrule\endfirsthead
+%mtrepeat-begin
+\mtcontinued{6}\\
+\toprule
+\hspace{0pt}design · test site & \hspace{0pt}cell & \hspace{0pt}primary (lenient IoU \textgreater{} 0) & \hspace{0pt}strict matching (IoU ≥ 0.10) & \hspace{0pt}consensus score S\_cons & \hspace{0pt}PediMS without patient P9 \\
+\midrule\endhead
+%mtrepeat-end
+\bottomrule\endlastfoot
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.107 holds; sens. 0.258 & \hspace{0pt}0.104 {[}0.076, 0.140{]} holds; sens. 0.265 & \hspace{0pt}0.076 {[}0.043, 0.117{]} holds; sens. 0.186 & \hspace{0pt}0.107 {[}0.075, 0.145{]} holds; sens. 0.258 \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.123 holds; sens. 0.404 & \hspace{0pt}0.131 {[}0.106, 0.159{]} holds; sens. 0.397 & \hspace{0pt}0.102 {[}0.078, 0.132{]} holds; sens. 0.346 & \hspace{0pt}0.123 {[}0.099, 0.151{]} holds; sens. 0.404 \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.21 \textbf{violated}; sens. 0.121 & \hspace{0pt}0.21 {[}0.13, 0.30{]} \textbf{violated}; sens. 0.120 & \hspace{0pt}0.14 {[}0.08, 0.22{]} inconclusive; sens. 0.097 & \hspace{0pt}0.21 {[}0.13, 0.30{]} \textbf{violated}; sens. 0.121 \\
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.12 inconclusive; sens. 0.121 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.120 & \hspace{0pt}0.08 {[}0.03, 0.15{]} inconclusive; sens. 0.106 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.121 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.122 inconclusive; sens. 0.095 & \hspace{0pt}0.123 {[}0.062, 0.198{]} inconclusive; sens. 0.101 & \hspace{0pt}0.068 {[}0.026, 0.122{]} holds; sens. 0.060 & \hspace{0pt}0.122 {[}0.062, 0.197{]} inconclusive; sens. 0.095 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.097 holds; sens. 0.235 & \hspace{0pt}0.105 {[}0.066, 0.153{]} holds; sens. 0.231 & \hspace{0pt}0.073 {[}0.044, 0.106{]} holds; sens. 0.179 & \hspace{0pt}0.097 {[}0.058, 0.146{]} holds; sens. 0.235 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.29 \textbf{violated}; sens. 0.036 & \hspace{0pt}0.29 {[}0.17, 0.44{]} \textbf{violated}; sens. 0.036 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive; sens. 0.032 & \hspace{0pt}0.29 {[}0.17, 0.44{]} \textbf{violated}; sens. 0.036 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.27 \textbf{violated}; sens. 0.036 & \hspace{0pt}0.27 {[}0.16, 0.42{]} \textbf{violated}; sens. 0.036 & \hspace{0pt}0.22 {[}0.10, 0.35{]} inconclusive; sens. 0.036 & \hspace{0pt}0.27 {[}0.16, 0.42{]} \textbf{violated}; sens. 0.036 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.041 holds; sens. 0.120 & \hspace{0pt}0.044 {[}0.015, 0.089{]} holds; sens. 0.129 & \hspace{0pt}0.023 {[}0.006, 0.041{]} holds; sens. 0.111 & \hspace{0pt}0.042 {[}0.009, 0.101{]} holds; sens. 0.125 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.086 holds; sens. 0.326 & \hspace{0pt}0.090 {[}0.058, 0.126{]} holds; sens. 0.322 & \hspace{0pt}0.078 {[}0.047, 0.112{]} holds; sens. 0.339 & \hspace{0pt}0.083 {[}0.051, 0.118{]} holds; sens. 0.330 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.07 inconclusive; sens. 0.053 & \hspace{0pt}0.07 {[}0.00, 0.24{]} inconclusive; sens. 0.053 & \hspace{0pt}0.04 {[}0.00, 0.18{]} inconclusive; sens. 0.053 & \hspace{0pt}0.04 {[}0.00, 0.19{]} inconclusive; sens. 0.054 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.07 inconclusive; sens. 0.053 & \hspace{0pt}0.07 {[}0.00, 0.24{]} inconclusive; sens. 0.053 & \hspace{0pt}0.04 {[}0.00, 0.18{]} inconclusive; sens. 0.063 & \hspace{0pt}0.04 {[}0.00, 0.19{]} inconclusive; sens. 0.054 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.009 holds; sens. 0.010 & \hspace{0pt}0.009 {[}0.000, 0.029{]} holds; sens. 0.011 & \hspace{0pt}0.014 {[}0.000, 0.038{]} holds; sens. 0.016 & \hspace{0pt}0.009 {[}0.000, 0.029{]} holds; sens. 0.010 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.018 holds; sens. 0.089 & \hspace{0pt}0.014 {[}0.005, 0.026{]} holds; sens. 0.089 & \hspace{0pt}0.019 {[}0.008, 0.033{]} holds; sens. 0.126 & \hspace{0pt}0.012 {[}0.004, 0.022{]} holds; sens. 0.090 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.02 holds; sens. 0.001 & \hspace{0pt}0.02 {[}0.00, 0.06{]} holds; sens. 0.001 & \hspace{0pt}0.03 {[}0.01, 0.09{]} holds; sens. 0.007 & \hspace{0pt}0.02 {[}0.00, 0.06{]} holds; sens. 0.001 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.03 holds; sens. 0.004 & \hspace{0pt}0.03 {[}0.00, 0.07{]} holds; sens. 0.004 & \hspace{0pt}0.03 {[}0.01, 0.09{]} holds; sens. 0.007 & \hspace{0pt}0.03 {[}0.00, 0.07{]} holds; sens. 0.004 \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.000 holds; sens. 0.009 & \hspace{0pt}0.000 {[}0.000, 0.000{]} holds; sens. 0.010 & \hspace{0pt}0.000 {[}0.000, 0.000{]} holds; sens. 0.010 & \hspace{0pt}0.000 {[}0.000, 0.000{]} holds; sens. 0.010 \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.011 holds; sens. 0.118 & \hspace{0pt}0.011 {[}0.000, 0.033{]} holds; sens. 0.115 & \hspace{0pt}0.025 {[}0.000, 0.062{]} holds; sens. 0.148 & \hspace{0pt}0.011 {[}0.000, 0.033{]} holds; sens. 0.118 \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.00 inconclusive; sens. 0.010 & \hspace{0pt}0.00 {[}0.00, 0.31{]} inconclusive; sens. 0.010 & \hspace{0pt}0.00 {[}0.00, 0.31{]} inconclusive; sens. 0.012 & \hspace{0pt}0.00 {[}0.00, 0.31{]} inconclusive; sens. 0.010 \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.00 inconclusive; sens. 0.010 & \hspace{0pt}0.00 {[}0.00, 0.31{]} inconclusive; sens. 0.010 & \hspace{0pt}0.00 {[}0.00, 0.31{]} inconclusive; sens. 0.016 & \hspace{0pt}0.00 {[}0.00, 0.31{]} inconclusive; sens. 0.010 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.087 holds; sens. 0.201 & \hspace{0pt}0.092 {[}0.063, 0.127{]} holds; sens. 0.214 & \hspace{0pt}0.057 {[}0.030, 0.091{]} holds; sens. 0.155 & \hspace{0pt}0.085 {[}0.058, 0.118{]} holds; sens. 0.209 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.115 holds; sens. 0.381 & \hspace{0pt}0.123 {[}0.100, 0.149{]} holds; sens. 0.377 & \hspace{0pt}0.102 {[}0.074, 0.137{]} holds; sens. 0.322 & \hspace{0pt}0.115 {[}0.093, 0.141{]} holds; sens. 0.382 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.16 inconclusive; sens. 0.087 & \hspace{0pt}0.16 {[}0.09, 0.25{]} inconclusive; sens. 0.087 & \hspace{0pt}0.13 {[}0.07, 0.21{]} inconclusive; sens. 0.065 & \hspace{0pt}0.16 {[}0.09, 0.25{]} inconclusive; sens. 0.087 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.12 inconclusive; sens. 0.087 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.087 & \hspace{0pt}0.09 {[}0.04, 0.16{]} inconclusive; sens. 0.065 & \hspace{0pt}0.12 {[}0.06, 0.20{]} inconclusive; sens. 0.087 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.082 holds; sens. 0.030 & \hspace{0pt}0.082 {[}0.033, 0.137{]} holds; sens. 0.030 & \hspace{0pt}0.067 {[}0.020, 0.124{]} holds; sens. 0.032 & \hspace{0pt}0.082 {[}0.033, 0.137{]} holds; sens. 0.030 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.100 holds; sens. 0.139 & \hspace{0pt}0.103 {[}0.053, 0.164{]} holds; sens. 0.134 & \hspace{0pt}0.073 {[}0.034, 0.125{]} holds; sens. 0.139 & \hspace{0pt}0.096 {[}0.045, 0.158{]} holds; sens. 0.140 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.18 inconclusive; sens. 0.015 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive; sens. 0.015 & \hspace{0pt}0.14 {[}0.06, 0.26{]} inconclusive; sens. 0.017 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive; sens. 0.015 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.18 inconclusive; sens. 0.015 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive; sens. 0.015 & \hspace{0pt}0.16 {[}0.06, 0.29{]} inconclusive; sens. 0.019 & \hspace{0pt}0.18 {[}0.08, 0.31{]} inconclusive; sens. 0.015 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P1 α = 0.1 & \hspace{0pt}0.006 holds; sens. 0.064 & \hspace{0pt}0.006 {[}0.000, 0.022{]} holds; sens. 0.065 & \hspace{0pt}0.012 {[}0.000, 0.031{]} holds; sens. 0.053 & \hspace{0pt}0.007 {[}0.000, 0.024{]} holds; sens. 0.068 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P1 α = 0.2 & \hspace{0pt}0.050 holds; sens. 0.164 & \hspace{0pt}0.051 {[}0.016, 0.095{]} holds; sens. 0.159 & \hspace{0pt}0.061 {[}0.030, 0.095{]} holds; sens. 0.248 & \hspace{0pt}0.051 {[}0.018, 0.096{]} holds; sens. 0.174 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P2 γ = 0.1 & \hspace{0pt}0.00 holds; sens. 0.025 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds; sens. 0.025 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds; sens. 0.022 & \hspace{0pt}0.00 {[}0.00, 0.13{]} holds; sens. 0.027 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}P2 γ = 0.2 & \hspace{0pt}0.00 holds; sens. 0.025 & \hspace{0pt}0.00 {[}0.00, 0.12{]} holds; sens. 0.025 & \hspace{0pt}0.04 {[}0.00, 0.18{]} inconclusive; sens. 0.028 & \hspace{0pt}0.00 {[}0.00, 0.13{]} holds; sens. 0.027 \\
+\end{longtable}
+\endgroup
+\twocolumn
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A11}%mtlabel
+\caption[]{\textbf{P1 at α = 0.3 (secondary target, pre-registered).}}
+\begin{tabulary}{\textwidth}{@{}LL@{}}
+\toprule
+\hspace{0pt}design · test site & \hspace{0pt}P1 α = 0.3: realised FDR {[}95 \% CI{]} → class; sens. \\
+\midrule
+\hspace{0pt}1-mm grid → MS3SEG & \hspace{0pt}0.155 {[}0.130, 0.181{]} holds; sens. 0.469 \\
+\hspace{0pt}1-mm grid → Muslim & \hspace{0pt}0.114 {[}0.079, 0.153{]} holds; sens. 0.308 \\
+\hspace{0pt}1-mm grid → PediMS & \hspace{0pt}0.113 {[}0.073, 0.155{]} holds; sens. 0.464 \\
+\hspace{0pt}leave-one-site-out · MSLesSeg & \hspace{0pt}0.035 {[}0.021, 0.050{]} holds; sens. 0.254 \\
+\hspace{0pt}leave-one-site-out · Ljubljana-10 † & \hspace{0pt}0.058 {[}0.018, 0.102{]} holds; sens. 0.309 \\
+\hspace{0pt}leave-one-site-out · MS3SEG & \hspace{0pt}0.143 {[}0.120, 0.170{]} holds; sens. 0.455 \\
+\hspace{0pt}leave-one-site-out · Muslim & \hspace{0pt}0.098 {[}0.060, 0.148{]} holds; sens. 0.247 \\
+\hspace{0pt}leave-one-site-out · PediMS & \hspace{0pt}0.089 {[}0.056, 0.130{]} holds; sens. 0.341 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A12}%mtlabel
+\caption[]{\textbf{Expert-lesion sensitivity at P2 γ = 0.2 by lesion bin (pre-registered secondary
+outcome).}}
+\begin{tabulary}{\textwidth}{@{}LL@{}}
+\toprule
+\hspace{0pt}group & \hspace{0pt}sensitivity at P2 γ = 0.2 by lesion bin (3--14 / 14--50 / 50--150 / 150--500 / ≥ 500 mm³), leave-one-site-out \\
+\midrule
+\hspace{0pt}G1 · 1-mm grid & \hspace{0pt}0.01 / 0.00 / 0.00 / 0.01 / 0.02 \\
+\hspace{0pt}G2 · PediMS & \hspace{0pt}0.03 / 0.03 / 0.02 / 0.03 / 0.00 \\
+\hspace{0pt}G3 · spacing 4.5--6.5 mm & \hspace{0pt}0.00 / 0.03 / 0.05 / 0.05 / 0.06 \\
+\hspace{0pt}G4 · spacing \textgreater{} 6.5 mm & \hspace{0pt}0.00 / 0.03 / 0.09 / 0.09 / 0.08 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A13}%mtlabel
+\caption[]{\textbf{Recalibration curve (D5) for PediMS and Ljubljana-10 (k ≤ 5; pre-registered).}}
+\begin{tabulary}{\textwidth}{@{}LLLLL@{}}
+\toprule
+\hspace{0pt}site · procedure · mode & \hspace{0pt}k = 1 & \hspace{0pt}k = 2 & \hspace{0pt}k = 3 & \hspace{0pt}k = 5 \\
+\midrule
+\hspace{0pt}PediMS · P1 α = 0.1 · site only & \hspace{0pt}FDR 0.008; sens. 0.041 & \hspace{0pt}FDR 0.012; sens. 0.051 & \hspace{0pt}FDR 0.017; sens. 0.070 & \hspace{0pt}FDR 0.023; sens. 0.087 \\
+\hspace{0pt}PediMS · P1 α = 0.2 · site only & \hspace{0pt}FDR 0.035; sens. 0.126 & \hspace{0pt}FDR 0.044; sens. 0.146 & \hspace{0pt}FDR 0.057; sens. 0.184 & \hspace{0pt}FDR 0.064; sens. 0.194 \\
+\hspace{0pt}PediMS · P1 α = 0.1 · 1-mm pool + k & \hspace{0pt}FDR 0.039; sens. 0.122 & \hspace{0pt}FDR 0.041; sens. 0.129 & \hspace{0pt}FDR 0.040; sens. 0.133 & \hspace{0pt}FDR 0.051; sens. 0.154 \\
+\hspace{0pt}PediMS · P2 γ = 0.1 · 1-mm pool + k & \hspace{0pt}FDX 0.068; sens. 0.053 & \hspace{0pt}FDX 0.064; sens. 0.055 & \hspace{0pt}FDX 0.063; sens. 0.056 & \hspace{0pt}FDX 0.079; sens. 0.066 \\
+\hspace{0pt}Ljubljana-10 · P1 α = 0.1 · site only & \hspace{0pt}FDR 0.000; sens. 0.002 & \hspace{0pt}FDR 0.004; sens. 0.027 & \hspace{0pt}FDR 0.003; sens. 0.026 & \hspace{0pt}FDR 0.006; sens. 0.043 \\
+\hspace{0pt}Ljubljana-10 · P1 α = 0.2 · site only & \hspace{0pt}FDR 0.014; sens. 0.088 & \hspace{0pt}FDR 0.025; sens. 0.142 & \hspace{0pt}FDR 0.025; sens. 0.124 & \hspace{0pt}FDR 0.036; sens. 0.147 \\
+\hspace{0pt}Ljubljana-10 · P1 α = 0.1 · 1-mm pool + k & \hspace{0pt}FDR 0.000; sens. 0.060 & \hspace{0pt}FDR 0.000; sens. 0.060 & \hspace{0pt}FDR 0.000; sens. 0.061 & \hspace{0pt}FDR 0.000; sens. 0.069 \\
+\hspace{0pt}Ljubljana-10 · P2 γ = 0.1 · 1-mm pool + k & \hspace{0pt}FDX 0.101; sens. 0.032 & \hspace{0pt}FDX 0.101; sens. 0.032 & \hspace{0pt}FDX 0.111; sens. 0.032 & \hspace{0pt}FDX 0.087; sens. 0.034 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\renewcommand{\thetable}{A14}%mtlabel
+\caption[]{\textbf{Ratio of realised FDR under 1-mm calibration to within-site calibration, with its
+sensitivity to the within-site fold assignment {[}post hoc{]}.}}
+\begin{tabulary}{\textwidth}{@{}LLLLLLL@{}}
+\toprule
+\hspace{0pt}site & \hspace{0pt}α & \hspace{0pt}realised FDR, 1-mm calibration (D3) & \hspace{0pt}realised FDR, within site (D1, pre-registered split) & \hspace{0pt}ratio {[}95 \% CI, patient-paired bootstrap{]} & \hspace{0pt}D1 over 20 other fold splits: min--max & \hspace{0pt}ratio over those splits: min--max \\
+\midrule
+\hspace{0pt}MS3SEG & \hspace{0pt}0.1 & \hspace{0pt}0.107 & \hspace{0pt}0.041 & \hspace{0pt}2.58 {[}1.32, 7.10{]} & \hspace{0pt}0.038--0.051 & \hspace{0pt}2.09--2.82 \\
+\hspace{0pt}MS3SEG & \hspace{0pt}0.2 & \hspace{0pt}0.123 & \hspace{0pt}0.075 & \hspace{0pt}1.65 {[}1.33, 2.16{]} & \hspace{0pt}0.073--0.090 & \hspace{0pt}1.37--1.69 \\
+\hspace{0pt}Muslim & \hspace{0pt}0.1 & \hspace{0pt}0.122 & \hspace{0pt}0.038 & \hspace{0pt}3.18 {[}1.24, 25.57{]} & \hspace{0pt}0.025--0.064 & \hspace{0pt}1.89--4.83 \\
+\hspace{0pt}Muslim & \hspace{0pt}0.2 & \hspace{0pt}0.097 & \hspace{0pt}0.068 & \hspace{0pt}1.41 {[}0.88, 2.64{]} & \hspace{0pt}0.052--0.091 & \hspace{0pt}1.06--1.85 \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\section{Claims of our earlier drafts that this audit retracts or changes}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\begin{tabulary}{\textwidth}{@{}LLL@{}}
+\toprule
+\hspace{0pt}earlier claim (draft) & \hspace{0pt}status now & \hspace{0pt}where \\
+\midrule
+\hspace{0pt}Evaluation on all 30 Ljubljana scans as external (v0.1) & \hspace{0pt}\textbf{retracted}: 20 are FLAMeS training data; only 10 are used, and their site is flagged as seen & \hspace{0pt}§4.2 \\
+\hspace{0pt}``0 of 200 healthy scans certified as DIS, 95 \% CI ≤ 1.8 \%'' (v0.1) & \hspace{0pt}\textbf{retracted}: 20 resplits of 30 scans; honest ceiling about 10 \% (0/30, one-sided bound 9.5 \%); replaced by 100 distinct controls: 19/100 meet the DIS rule without selection, 0–3/\allowbreak{}100 after selection & \hspace{0pt}§6.9 \\
+\hspace{0pt}``0/30 healthy controls certified as DIS'' (v0.2, two-layer certificates, fold 0) & \hspace{0pt}\textbf{superseded}, not re-run & \hspace{0pt}§6.9, §9 \\
+\hspace{0pt}ISBI-2015 segmenter-shift result (v0.2) & \hspace{0pt}\textbf{withdrawn}: ISBI-2015 is FLAMeS training data & \hspace{0pt}§4.2 \\
+\hspace{0pt}``Lesion-level AUROC 0.70--0.75; the score is the bottleneck'' (v0.2) & \hspace{0pt}\textbf{changed}: true for a single fold; the 5-fold ensemble scores 0.78--0.82 & \hspace{0pt}§6.1, §6.7 \\
+\hspace{0pt}``A segmenter change collapses power --- the safe direction'' (v0.2) & \hspace{0pt}\textbf{changed}: the reverse direction violates the guarantee on the same images (expected from score scales) & \hspace{0pt}§6.10 \\
+\hspace{0pt}``The guarantee held in every held-out cell'' (first v0.3 text) & \hspace{0pt}\textbf{changed}: no violation detected; pre-registered verdict inconclusive & \hspace{0pt}§6.2 \\
+\hspace{0pt}``Validity and power change with slice thickness'' (first v0.3 text) & \hspace{0pt}\textbf{changed}: a cohort--acquisition contrast; small within cohorts & \hspace{0pt}§6.6 \\
+\hspace{0pt}``The ensemble restores validity'' (first v0.3 text) & \hspace{0pt}\textbf{changed}: power gain; raises FDR on one cohort; two new violated cells & \hspace{0pt}§6.7 \\
+\hspace{0pt}``Ten local patients restore the per-scan guarantee'' (first v0.3 text) & \hspace{0pt}\textbf{qualified}: at least 9 are needed by construction; with 10, valid on average by near-abstention (0.7--4.0 \% of lesions) & \hspace{0pt}§6.8 \\
+\hspace{0pt}``Conformal BH is the only procedure without a violated 1-mm → thick cell'' (v0.3 results) & \hspace{0pt}\textbf{corrected}: Learn-then-Test had none either & \hspace{0pt}§6.4 \\
+\hspace{0pt}``MSLesSeg native geometry unpublished'' (first v0.3 text) & \hspace{0pt}\textbf{corrected}: native 2--5 mm per the dataset's acquisition table & \hspace{0pt}§4.1 \\
+\hspace{0pt}``Marginal, not per-scan''; ``marginal lesion-wise FDR control survived site and thickness shift'' (manuscript version 1) & \hspace{0pt}\textbf{withdrawn}: the pre-registered P1 verdict was inconclusive; P1's per-scan exceedance was as poor as P2's & \hspace{0pt}Abstract, §6.2, §8 \\
+\hspace{0pt}``Conformal BH attains exactly α·π0 under exchangeability'' (manuscript version 1) & \hspace{0pt}\textbf{corrected}: BH gives a bound, α·mean per-scan π0 & \hspace{0pt}§3.2, §6.2 \\
+\hspace{0pt}``Only ≥ 10 local calibration patients restored the per-scan guarantee'' (manuscript version 1) & \hspace{0pt}\textbf{corrected}: a consequence of δ = 0.1 and the k-grid & \hspace{0pt}§6.8 \\
+\hspace{0pt}Eight values off by 0.001 (double rounding; manuscript version 1) & \hspace{0pt}\textbf{corrected} by rendering from full-precision records & \hspace{0pt}§5.5 \\
+\hspace{0pt}Earlier claims of v0.1 corrected in v0.2 (``7--13× the floor'', ``conformal breaks across MS site shift'', a transport p-value, candidate AUROC without a source) & \hspace{0pt}remain withdrawn & \hspace{0pt}--- \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\section{Reproducibility map}
+
+\begin{table*}[tp]
+\centering\footnotesize
+\begin{tabulary}{\textwidth}{@{}LLL@{}}
+\toprule
+\hspace{0pt}result & \hspace{0pt}script & \hspace{0pt}record \\
+\midrule
+\hspace{0pt}protocol and deviations & \hspace{0pt}--- & \hspace{0pt}\texttt{\seqsplit{docs/research/paper/PROTOCOL-v0.3.md}} (commit 9951494 and later entries) \\
+\hspace{0pt}input hashes, grids, fold-0 reproduction & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03\_inventory.py}} & \hspace{0pt}\texttt{\seqsplit{docs/research/records/2026-10-21\_paper\_a\_v03\_inventory.json}} \\
+\hspace{0pt}candidates, labels, gate G1 & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03\_candidates.py}} & \hspace{0pt}\texttt{\seqsplit{docs/research/records/2026-10-21\_paper\_a\_v03\_candidates.json}} \\
+\hspace{0pt}Tables 1, 4--9, A1, A2, A10--A13 (pre-registered parts) & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03\_analysis.py}} (+ \texttt{\seqsplit{v03\_metrics.py}}, \texttt{\seqsplit{v03\_data.py}}, \texttt{\seqsplit{baselines.py}}) & \hspace{0pt}\texttt{\seqsplit{2026-10-21\_paper\_a\_v03\_results.json}}; full precision: \texttt{\seqsplit{2026-10-31\_paper\_a\_v03\_results\_fullprec.json}} \\
+\hspace{0pt}full-precision re-run and its equality check & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03r\_fullprecision.py}} & \hspace{0pt}\texttt{\seqsplit{2026-10-31\_paper\_a\_fullprec\_check.json}} and the \texttt{\seqsplit{*\_fullprec.json}} records \\
+\hspace{0pt}post-hoc explanations (§6.2, §6.3, §6.6, §6.7) & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03\_posthoc.py}} & \hspace{0pt}\texttt{\seqsplit{2026-10-31\_paper\_a\_v03\_posthoc\_fullprec.json}} \\
+\hspace{0pt}MSLesSeg native thickness {[}post hoc{]} & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03\_mslesseg\_native.py}} & \hspace{0pt}\texttt{\seqsplit{2026-10-31\_paper\_a\_v03\_mslesseg\_native\_fullprec.json}} \\
+\hspace{0pt}SUB, LR-hier, Ljubljana-out {[}post hoc{]} (Tables 5, A2, A3) & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03m\_manuscript\_posthoc.py}} & \hspace{0pt}\texttt{\seqsplit{2026-10-31\_paper\_a\_manuscript\_posthoc\_fullprec.json}} \\
+\hspace{0pt}review-stage analyses (Tables 4b, 9, A4--A9, A14; §6.2--6.9) & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03r\_revision.py}}, \texttt{\seqsplit{v03r\_revision\_extra.py}} & \hspace{0pt}\texttt{\seqsplit{2026-10-31\_paper\_a\_revision.json}}, \texttt{\seqsplit{2026-10-31\_paper\_a\_revision\_extra.json}} \\
+\hspace{0pt}controls: protocol & \hspace{0pt}--- & \hspace{0pt}\texttt{\seqsplit{docs/research/paper/PROTOCOL-v0.3-addendum-controls.md}} (commit caa47e7) \\
+\hspace{0pt}controls: inventory, contamination check, frozen calibration & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03c\_inventory.py}}, \texttt{\seqsplit{v03c\_calibration.py}} & \hspace{0pt}\texttt{\seqsplit{2026-10-24\_paper\_a\_v03c\_\{inventory,calibration\}.json}} \\
+\hspace{0pt}Table 10, §6.9 & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03c\_controls.py}} & \hspace{0pt}\texttt{\seqsplit{2026-10-24\_paper\_a\_v03c\_controls.json}} \\
+\hspace{0pt}independent control counts & \hspace{0pt}\texttt{\seqsplit{research/paper\_a/v03c\_controls\_check.py}} & \hspace{0pt}\texttt{\seqsplit{2026-10-24\_paper\_a\_v03c\_controls\_check.json}} \\
+\hspace{0pt}public-remote timestamps & \hspace{0pt}--- & \hspace{0pt}\texttt{\seqsplit{2026-10-31\_paper\_a\_github\_push\_events.json}} \\
+\hspace{0pt}figures & \hspace{0pt}\texttt{\seqsplit{docs/research/paper/manuscript/figures/make\_figures.py}} & \hspace{0pt}\texttt{\seqsplit{figures/figures\_manifest.json}} \\
+\hspace{0pt}tables in this manuscript & \hspace{0pt}\texttt{\seqsplit{docs/research/paper/manuscript/tools/make\_tables.py}} & \hspace{0pt}(generated from the records above) \\
+\hspace{0pt}number-by-number trace & \hspace{0pt}\texttt{\seqsplit{docs/research/paper/manuscript/tools/check\_numbers.py}} & \hspace{0pt}\texttt{\seqsplit{docs/research/paper/manuscript/NUMBERS\_CHECK.md}} \\
+\bottomrule
+\end{tabulary}
+\end{table*}
+
+\section{Open items before submission (owner checklist)}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Co-authors: a mathematical statistician and a neuroradiologist (contributions; review of §3, §5,
+  §8.2, §4, §6.9 and §7).
+\item
+  A human re-derivation of the primary numbers, and archiving of the patient-analysis
+  re-implementation code, which is not in the repository.
+\item
+  Deposit the protocol, addendum, code and full-precision records in a time-stamped public archive
+  (OSF or Zenodo) now, with the per-candidate data of the CC BY cohorts; register future studies there
+  before analysis.
+\item
+  Refresh the novelty search (the 2026-10-17 search ran partly without web-search quota).
+\item
+  Bibliography items that need a web check: given names for Farinhas et al., Mossina \& Friedrich and
+  Hulsman et al.; full author lists for Lesjak et al., Molchanova et al., Malinin et al., Guarnera et
+  al.~and the dataset records; DOIs for 11 entries listed in \seqsplit{RESPONSE\_TO\_REVIEW.md;} the PediMS slice
+  thickness of 3 mm.
+\item
+  Licences: the Ljubljana licence (both CC BY and CC BY-NC-ND stated) and the FLAMeS weights licence
+  (CC BY 4.0 on Zenodo, CC BY-NC 4.0 on Hugging Face) before any commercial use; SibBMS (two licences
+  stated).
+\item
+  Reconcile the software card's records (evidence file ``pending approval'' vs requirements ``approved'').
+\item
+  Affiliation details, ORCID, funding, competing interests, ethics waiver, code visibility, licence
+  and DOI.
+\item
+  Optional before submission: the LST-AI control arm; a second-site, natively acquired, expert-read
+  control set; a prospective, publicly registered test of Mondrian calibration by acquisition type.
+\end{enumerate}
+
+\end{document}
