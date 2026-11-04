@@ -281,8 +281,9 @@ Four phases are visible in the records (Figure 1).
    base"), every backend run was isolated from cloud services (§5.6), and approvals were recorded by
    the owner (§5.5).
 
-![Commits on `main` per week, with and without the agent's `Co-Authored-By` trailer, and the
-events that changed the regime.](figures/fig1_timeline.png)
+![Commits on `main` per week, with (blue) and without (grey) the agent's `Co-Authored-By` trailer
+(525 of 595 commits carry it), and the five numbered events that changed the regime, listed in the
+figure.](figures/fig1_timeline.png)
 
 ### 3.4 The approval regime as it evolved
 
@@ -457,8 +458,9 @@ their fix as being on a branch, "not merged" or in a draft pull request, althoug
 `main` (`records.rows[*].status_still_says_not_merged`). Whether the fixes are deployed cannot be
 determined from the repository (OWNER_REVIEW C5).
 
-![Cumulative CAPA and problem records opened, risk controls bound in the manifest, and pull requests
-merged, July–October 2026.](figures/fig2_process.png)
+![Cumulative CAPA and problem records opened (a), risk controls bound in the manifest and those marked
+'implemented' (b), and pull requests merged (c), July–October 2026. The values at the line ends are the
+totals on 31 October.](figures/fig2_process.png)
 
 The CI workflow (seven jobs: type check, build, frontend tests, backend tests, risk-control
 verification, dependency vulnerability scan, static analysis) ran 291 times; the last head of each of
@@ -468,9 +470,9 @@ fivefold (frontend) in two weeks (Figure 8); the release records report 2,309 ba
 621 frontend tests passing on the final integrated tree, offline. These counts are agent-reported
 (the record) or proxies (declarations in the tree), not independent measurements of adequacy.
 
-![Tests declared in the tree, weekly (the July drop in frontend test cases is the removal of test
-files of deleted modules in a clean-up merge, PR #1, `0c7b08b`), and CI workflow runs per month by
-conclusion.](figures/fig8_tests_ci.png)
+![(a) Tests declared in the tree, weekly (the July drop in frontend test cases is the removal of test
+files of deleted modules in a clean-up merge, PR #1, `0c7b08b`). (b) CI workflow runs per month by
+conclusion, labelled successful/all (291 runs of the seven-job workflow).](figures/fig8_tests_ci.png)
 
 ### 5.1 RQ1 — The agent as primary developer
 
@@ -501,13 +503,14 @@ instructions, decisions and approvals given in chat.
 A verification summary created by the agent on 12 April 2026 (`b6be6e7`) recorded "Verified 21 (95.5
 %) … Failed 0", signed "Development Team (code inspection)". An adversarial re-verification on
 18 July 2026 by a separate agent session, briefed to falsify, found 4 verified, 6 partial and 12
-overstated or not implemented (Figure 6, left). The summary was withdrawn in place (`213efdf`) and
+overstated or not implemented (Figure 6a). The summary was withdrawn in place (`213efdf`) and
 CAPA-001 opened. The re-verification was itself later found incomplete for one control (RC-010,
 examined on one of three paths).
 
-![Left: the risk-control verification record of April 2026 against the adversarial re-verification
-of July 2026. Right: days from the introducing to the detecting commit for the 28 dated failure
-episodes, by stage.](figures/fig6_verification.png)
+![(a) The risk-control verification record of April 2026 against the adversarial re-verification
+of July 2026 (22 risk controls). (b) Days from the introducing to the detecting commit for the 28 dated
+failure episodes of the October analysis, by stage; each dot is one episode and the vertical bar the
+median.](figures/fig6_verification.png)
 
 #### 5.2.2 Thirty-three episodes (October analysis)
 
@@ -542,7 +545,7 @@ The 19 escaped episodes persisted a median of 91 days (range 27–223) and were 
 dates — audit bursts on 18 July, 14 August, 28 September and 17 October 2026. Every escaped episode
 was of class P, N, S, C, R or I; none of class M. The nine contained episodes that reached a commit
 were introduced on 17–18 October and caught within 0–3 days; five more never reached a commit
-(Figure 6, right). The contrast is right-censored (October failures had little time to escape) and
+(Figure 6b). The contrast is right-censored (October failures had little time to escape) and
 confounded with the change of model and the start of routine pre-merge review.
 
 #### 5.2.4 After the October analysis (22–31 October; qualitative)
@@ -580,14 +583,16 @@ At release 2026-10-25, 11 records ran 602 mutations (597 detected, 5 declared eq
 2026-10-30, the first run on the merged tree executed 14 scripts and 772 mutations (767 detected, 5
 declared equivalent); after `main` was merged into the release branch, ten scripts were re-run and
 one added, for a final total of **873 mutations across 15 scripts: 868 detected, 5 declared
-equivalent, 0 unexpected survivors** (Figure 3, left). The record files under
+equivalent, 0 unexpected survivors** (Figure 3a). The record files under
 `records/releases/` reproduce these totals exactly, and the totals stated in the integration notes
 match them (`negative_controls.release_2026_10_30_*`). Counting every distinct committed version of
 every record file reachable from `main`, the history holds 100 recorded runs and 5,925 mutation
-executions between 28 September and 31 October 2026 (Figure 3, right).
+executions between 28 September and 31 October 2026 (Figure 3b).
 
-![Left: mutations per negative-control script in release 2026-10-30, detected and declared
-equivalent. Right: cumulative mutation executions in committed record versions.](figures/fig3_negative_controls.png)
+![(a) Mutations per negative-control script in release 2026-10-30, detected and declared
+equivalent (873 mutations: 868 detected, 5 declared equivalent; the first run had 772). (b) Cumulative
+mutation executions in committed record versions (100 recorded runs, 5,925 executions, no unexpected
+survivor).](figures/fig3_negative_controls.png)
 
 #### 5.3.2 What negative controls achieved
 
@@ -641,8 +646,9 @@ carries only the owner's sign-off commit). The most recent round, on PR #74, fou
 and "No blocker and no major issue". By channel, independent agent sessions reported 162 findings,
 browser capture sessions 25, and a coordinating session 2.
 
-![Findings of the independent review rounds per pull request, by severity as labelled in the record,
-and by channel.](figures/fig4_reviews.png)
+![Findings of the independent review rounds of PRs #64–#74 (189 findings in 29 rounds), by severity as
+labelled in the record: (a) per pull request, with the number of rounds; (b) by
+channel.](figures/fig4_reviews.png)
 
 Each finding that led to a change was handled in the same way: a test written first and shown to fail
 on the reviewed head, the correction, then new or re-anchored negative controls. The records list,
@@ -719,8 +725,10 @@ three verified owner commits, 179 by the unsigned local commit and 31 by the fiv
 agent-trailered commits, which CAPA-012 keeps unchanged as "approval given by the owner in chat,
 transcribed by the AI coding agent". No placeholder remains.
 
-![Left: who wrote the lines recording the owner's approval, October and end of October. Right: what
-each sign-off commit replaced.](figures/fig5_approvals.png)
+![(a) Who wrote the lines recording the owner's approval (git blame), on 17 and 31 October. (b) What
+each sign-off commit replaced: occurrences of 'PENDING owner approval', split into approval placeholders
+and other text (procedure text, a quotation, '... and code review', a pre-sign-off
+statement).](figures/fig5_approvals.png)
 
 #### 5.5.4 What the mechanism did not achieve
 
@@ -771,7 +779,7 @@ while implementing opened 4; behaviour probes 2; code reading in an orchestratin
 external literature research 1.
 
 ![How the 38 CAPA and problem records were opened (coded from each record's Source or Reporter
-field).](figures/fig7_channels.png)
+field): CAPAs blue, problem reports ochre.](figures/fig7_channels.png)
 
 Four incidents illustrate failures that the verification regime could not see.
 
