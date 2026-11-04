@@ -41,6 +41,20 @@
   howpublished = {medRxiv preprint}, year = {2025}, doi = {10.1101/2025.05.19.25327707}
 }
 
+@article{jon2025flamescorrection,
+  author = {{Journal of Neuroimaging}},
+  title = {Correction to ``{A} Novel Convolutional Neural Network for Automated Multiple Sclerosis Brain Lesion Segmentation''},
+  journal = {Journal of Neuroimaging}, volume = {35}, number = {5}, pages = {e70093}, year = {2025},
+  doi = {10.1111/jon.70093}
+}
+
+@misc{hdbet2024params,
+  author = {Isensee, Fabian and Schell, Marianne and Tursunova, Irada and Brugnara, Gianluca and Bonekamp, David and Neuberger, Ulf and Wick, Antje and Schlemmer, Heinz-Peter and Heiland, Sabine and Wick, Wolfgang and Bendszus, Martin and Maier-Hein, Klaus and Kickingereder, Philipp},
+  title = {{HD-BET} v1.5 parameters},
+  publisher = {Zenodo}, year = {2024}, doi = {10.5281/zenodo.14445620},
+  note = {Model parameters downloaded by HD-BET 2.x (HD\_BET/paths.py, ZENODO\_DOWNLOAD\_URL); licence CC BY-NC 4.0}
+}
+
 @misc{larosa2025flameszenodo,
   author = {La Rosa, Francesco},
   title = {{FLAMeS}: {FLAIR} Lesion Analysis in Multiple Sclerosis},
@@ -281,3 +295,15 @@
 %   3D FLAIR is the core sequence; high-quality 2D sequences (<= 3 mm slice thickness, no gap) an acceptable alternative.
 % - goebl2025mindglide: full text (PMC11976987) reports WMH-SynthSeg failing on 65 of 433 visually assessed
 %   contrasts (15%), "particularly in scans exceeding a thickness of 5 mm", vs 6 (1%) for MindGlide.
+% REVISION CHECKS (2026-10-31)
+% - guarnera2025mslesseg: full text (Europe PMC PMC12126551), text and Table 2: FLAIR "a mean of 2,61 (±0, 62)
+%   Slice Thickness" and pixel spacing 0.75 x 0.75 (±0.32); every modality co-registered with FLIRT to the MNI152
+%   1 mm isotropic template.
+% - commowick2018msseg: full text (PMC6135867), "Defining lesion detection": 18-connected components >= 3 mm3; a
+%   reference lesion is detected if overlapped at least alpha% and the contributing predicted lesions do not go
+%   outside it by more than beta%.
+% - jon2025flamescorrection: Crossref, J Neuroimaging 35(5):e70093 (online 2025-10-03), a correction to 10.1111/jon.70085.
+% - hdbet2024params: Zenodo API record 14445620, "HD-BET v1.5 parameters", 2024-12-13, licence cc-by-nc-4.0, file
+%   release_v1.5.0.zip; HD-BET's HD_BET/paths.py sets ZENODO_DOWNLOAD_URL to this record.
+% - MS3SEG data (bawil2026ms3segdata): DataCite created/registered 2025-10-19 (Issued 2025-10-19), publicationYear 2026.
+% - rondinella2025icpr: Crossref gives no LNCS volume number for this chapter, so none is added.

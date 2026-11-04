@@ -15,6 +15,7 @@ import csv
 import gzip
 import io
 import json
+import math
 import os
 import sys
 from collections import defaultdict
@@ -116,6 +117,144 @@ def e1_posthoc(rows, tool, band, n_boot=M.BOOT_N, seed=M.BOOT_SEED):
             "poor_by_cohort": dict(poor_by_cohort), "scans_by_cohort": dict(n_by_cohort)}
 
 
+def auroc_block(t, key, n_boot=M.BOOT_N, seed=M.BOOT_SEED):
+    """Pooled AUROC, cohort-stratified AUROC and patient-cluster bootstrap CI of a score `key` in table `t`
+    (rows with cohort, patient, poor, and the score) for identifying poor FLAMeS scans."""
+    a = M.auroc([x[key] for x in t], [x["poor"] for x in t])
+    num_, den_ = 0.0, 0
+    for c in sorted({x["cohort"] for x in t}):
+        sub = [x for x in t if x["cohort"] == c]
+        g, d = auroc_parts([x[key] for x in sub], [x["poor"] for x in sub])
+        num_, den_ = num_ + g, den_ + d
+    by = defaultdict(lambda: defaultdict(list))
+    for x in t:
+        by[x["cohort"]][x["patient"]].append(x)
+    clusters = {c: list(p.values()) for c, p in by.items()}
+    rng = np.random.default_rng(seed)
+    reps = []
+    for _ in range(n_boot):
+        s, y = [], []
+        for c, cl in clusters.items():
+            for i in rng.integers(0, len(cl), len(cl)):
+                for x in cl[i]:
+                    s.append(x[key])
+                    y.append(x["poor"])
+        v = M.auroc(s, y)
+        if v is not None:
+            reps.append(v)
+    return {"auroc": a, "auroc_ci95": np.percentile(reps, [2.5, 97.5]).tolist(),
+            "auroc_cohort_stratified": num_ / den_ if den_ else None, "n_scans": len(t), "n_poor": int(sum(x["poor"] for x in t))}
+
+
+def micro_f1(rs):
+    tp_p = sum(num(r["tp_pred"]) for r in rs)
+    n_p = sum(num(r["n_pred"]) for r in rs)
+    tp_r = sum(num(r["tp_ref"]) for r in rs)
+    n_r = sum(num(r["n_ref"]) for r in rs)
+    p, r = tp_p / n_p, tp_r / n_r
+    return 2 * p * r / (p + r)
+
+
+def micro_paired(rows, tool, band, n_boot=M.BOOT_N, seed=M.BOOT_SEED):
+    """Scan-pooled (micro) lesion-wise F1 of tool and FLAMeS on their paired scans; bootstrap of the difference."""
+    t = {r["case"]: r for r in usable(rows, tool, band=band)}
+    f = {r["case"]: r for r in usable(rows, "flames", band=band)}
+    cases = sorted(set(t) & set(f))
+    pairs = [(t[c], f[c]) for c in cases]
+    by = defaultdict(lambda: defaultdict(list))
+    for a, b in pairs:
+        by[a["cohort"]][a["patient"]].append((a, b))
+    clusters = {c: list(p.values()) for c, p in by.items()}
+    point = (micro_f1([a for a, _ in pairs]), micro_f1([b for _, b in pairs]))
+    rng = np.random.default_rng(seed)
+    reps = []
+    for _ in range(n_boot):
+        sel = []
+        for c, cl in clusters.items():
+            for i in rng.integers(0, len(cl), len(cl)):
+                sel.extend(cl[i])
+        reps.append(micro_f1([a for a, _ in sel]) - micro_f1([b for _, b in sel]))
+    lo, hi = np.percentile(reps, [2.5, 97.5])
+    return {"n_scans": len(pairs), "tool_micro_f1": point[0], "flames_micro_f1": point[1],
+            "difference": point[0] - point[1], "ci95": [float(lo), float(hi)]}
+
+
+def revision_numbers(rows, comp, tier_c):
+    rev = {}
+    # (a) M2: absolute cohort-weighted F1 on the PAIRED sets used by the degradation contrast
+    deg = {}
+    for tool in ("mindglide", "wmhsynthseg", "lstai", "samseg", "mindglide-raw"):
+        for band in ("iso", "thick"):
+            t = {r["case"]: r for r in usable(rows, tool, band=band)}
+            f = {r["case"]: r for r in usable(rows, "flames", band=band)}
+            cases = set(t) & set(f)
+            if not cases:
+                continue
+            deg[f"{tool}|{band}"] = {"n_scans": len(cases),
+                                     "tool_f1": boot([t[c] for c in sorted(cases)], "f1"),
+                                     "flames_f1": boot([f[c] for c in sorted(cases)], "f1")}
+    rev["paired_set_absolute_f1"] = deg
+    # (b) M2 / m10: per-cohort paired differences (tool - FLAMeS), single-cohort patient bootstrap
+    pc = {}
+    for tool in ("mindglide", "wmhsynthseg", "samseg", "lstai", "mindglide-raw"):
+        for cohort in COHORTS:
+            t = {r["case"]: r for r in usable(rows, tool, cohort=cohort)}
+            f = {r["case"]: r for r in usable(rows, "flames", cohort=cohort)}
+            cases = sorted(set(t) & set(f))
+            if not cases:
+                continue
+            res = {"n_scans": len(cases)}
+            for k in ("f1", "false_lesions"):
+                d = [num(t[c][k]) - num(f[c][k]) for c in cases]
+                res[k] = M.stratified_cluster_bootstrap(d, [cohort] * len(cases), [t[c]["patient"] for c in cases])
+            pc[f"{tool}|{cohort}"] = res
+    rev["per_cohort_paired_differences"] = pc
+    rev["iso_band_cohorts"] = sorted({r["cohort"] for r in usable(rows, "flames", band="iso")})
+    rev["iso_flames_scans_by_cohort"] = {c: len(usable(rows, "flames", band="iso", cohort=c)) for c in rev["iso_band_cohorts"]}
+    # (c) M3: FLAMeS-only baselines for flagging poor FLAMeS scans (same 179 thick scans as the MindGlide E1)
+    t = e1_table(rows, "mindglide", "thick")
+    fl = {r["case"]: r for r in usable(rows, "flames", band="thick")}
+    for x in t:
+        x["fewer_flames_lesions"] = -num(fl[x["case"]]["n_pred"])
+        x["smaller_flames_volume"] = -num(fl[x["case"]]["vol_pred_ml"])
+        x["cohort_is_muslim"] = 1.0 if x["cohort"] == "muslim" else 0.0
+    r1 = np.argsort(np.argsort([x["fewer_flames_lesions"] for x in t]))
+    r2 = np.argsort(np.argsort([x["score"] for x in t]))
+    for i, x in enumerate(t):
+        x["rank_sum"] = float(r1[i] + r2[i])
+    rev["e1_baselines_posthoc"] = {
+        "mindglide_disagreement": auroc_block(t, "score"),
+        "fewer_flames_lesions": auroc_block(t, "fewer_flames_lesions"),
+        "smaller_flames_volume": auroc_block(t, "smaller_flames_volume"),
+        "cohort_is_muslim": {"auroc": M.auroc([x["cohort_is_muslim"] for x in t], [x["poor"] for x in t])},
+        "rank_sum_fewer_lesions_and_disagreement": {"auroc": M.auroc([x["rank_sum"] for x in t], [x["poor"] for x in t])},
+    }
+    poor = [x for x in t if x["poor"]]
+    rev["poor_scans"] = [{"case": x["case"], "cohort": x["cohort"], "n_ref": int(num(fl[x["case"]]["n_ref"])),
+                          "flames_f1": num(fl[x["case"]]["f1"])} for x in poor]
+    thick_fl = usable(rows, "flames", band="thick")
+    rev["thick_scans_with_fewer_than_5_ref_lesions"] = sum(int(num(r["n_ref"])) < 5 for r in thick_fl)
+    rev["thick_scans_with_at_most_2_ref_lesions"] = sum(int(num(r["n_ref"])) <= 2 for r in thick_fl)
+    rev["ms3seg_poor_scans_with_at_most_4_ref_lesions"] = sum(1 for p in rev["poor_scans"] if p["cohort"] == "ms3seg" and p["n_ref"] <= 4)
+    # (d) m7: scan-pooled (micro) lesion-wise F1, tool - FLAMeS, on paired scans
+    rev["micro_f1_posthoc"] = {f"{tool}|{band}": micro_paired(rows, tool, band)
+                               for tool, band in (("mindglide", "thick"), ("wmhsynthseg", "thick"), ("samseg", "thick"),
+                                                  ("mindglide-raw", "thick"), ("mindglide", "iso"), ("wmhsynthseg", "iso"),
+                                                  ("lstai", "iso"))}
+    # (e) m5: precision on the paired tier-C set (FLAMeS vs SAMSEG)
+    fl_c = usable(rows, "flames", band="thick", cases=tier_c)
+    sm_c = usable(rows, "samseg", band="thick", cases=tier_c)
+    defined = {r["case"] for r in sm_c if r["precision"] not in ("", None)}
+    rev["tier_c_precision"] = {"flames_all_129": boot(fl_c, "precision"),
+                               "flames_on_samseg_defined": boot([r for r in fl_c if r["case"] in defined], "precision"),
+                               "samseg": boot(sm_c, "precision"), "n_samseg_defined": len(defined)}
+    # (f) m1: Monte Carlo SE of a two-sided bootstrap p near 0.45 with 10,000 replicates
+    p = [r for r in comp["primary"] if r["tool"] == "mindglide" and r["outcome"] == "false_lesions"][0]["p_two_sided"]
+    q = p / 2
+    rev["mc_se_of_p_at_mindglide_fp"] = {"p": p, "se": 2 * math.sqrt(q * (1 - q) / M.BOOT_N)}
+    return rev
+
+
 def main():
     rows = load_rows()
     out = {"_provenance": {"per_scan_rows": len(rows), "inputs": ["results/per_scan.csv.gz", "results/comparisons.json",
@@ -215,6 +354,12 @@ def main():
         cost["upstream_not_paper_f"][g] = {"runs": len(rs), "vm_hours": sum(float(r["vm_hours"]) for r in rs),
                                            "usd_list": sum(float(r["cost_usd_list"]) for r in rs)}
     out["compute"] = cost
+    up = sum(g["usd_list"] for g in cost["upstream_not_paper_f"].values())
+    cost["usd_list_including_reused_runs"] = cost["usd_list"] + up
+    cost["vm_hours_including_reused_runs"] = cost["vm_hours"] + sum(g["vm_hours"] for g in cost["upstream_not_paper_f"].values())
+
+    # 8. REVISION (2026-10-31, after the internal review; all POST HOC and labelled as such in the manuscript)
+    out["revision"] = revision_numbers(rows, comp, tier_c)
 
     path = os.path.join(HERE, "data", "extra_numbers.json")
     json.dump(out, open(path, "w", encoding="utf-8"), indent=1, default=float)

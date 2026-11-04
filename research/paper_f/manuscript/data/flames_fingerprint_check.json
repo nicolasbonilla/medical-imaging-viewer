@@ -1,0 +1,18 @@
+{
+ "source": "Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/dataset_fingerprint.json in Zenodo 10.5281/zenodo.17955359 (FLAMeS v2.0)",
+ "fingerprint_bytes": 109486,
+ "fingerprint_sha256": "3206a641b729bc62c3edc600614224bf6f45e9aac9ca336f4576bcedd94406f8",
+ "n_training_entries": 668,
+ "largest_voxel_dimension_histogram_mm": {
+  "0.55": 200,
+  "0.74": 15,
+  "0.8": 78,
+  "0.9": 26,
+  "1.0": 319,
+  "1.1": 15,
+  "1.25": 15
+ },
+ "max_largest_voxel_dimension_mm": 1.25,
+ "n_entries_with_slice_spacing_above_3mm": 0,
+ "conclusion": "no training case has a voxel dimension above 3 mm, so no thick-slice scan of MS3SEG, Muslim or PediMS was a FLAMeS training case at its own geometry (a resampled copy cannot be excluded by this check)"
+}

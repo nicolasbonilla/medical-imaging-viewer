@@ -122,7 +122,7 @@ def pc(v):
 def pholm(p, m):
     if p == 0.0:
         return "< 0.002" if m <= 6 else "< 0.003"
-    return f"{p:.3f}" if p < 0.995 else "1.00"
+    return f"{p:.2g}" if p < 0.995 else "1.0"      # two significant figures (Monte Carlo SE ~0.008)
 
 
 def i(v):
@@ -159,11 +159,11 @@ E("3.9", "179 with 3.9–8.3 mm FLAIR slices", X, "cohorts.pedims.slice_mm_min",
 E("8.3", "179 with 3.9–8.3 mm FLAIR slices", X, "cohorts.muslim.slice_mm_max", EXTRA["cohorts"]["muslim"]["slice_mm_max"], lambda v: f"{v:.1f}")
 E("179", "179 thick-slice scans (3.9–8.3 mm; 160 patients)", X, "bands.thick.scans", EXTRA["bands"]["thick"]["scans"], i)
 E("160", "179 thick-slice scans (3.9–8.3 mm; 160 patients)", X, "bands.thick.patients", EXTRA["bands"]["thick"]["patients"], i)
-E("145", "145 1 mm scans (105 patients)", X, "bands.iso.scans", EXTRA["bands"]["iso"]["scans"], i)
-E("105", "145 1 mm scans (105 patients)", X, "bands.iso.patients", EXTRA["bands"]["iso"]["patients"], i)
-E("12.55", "Compute cost: 12.55 USD", X, "compute.usd_list", EXTRA["compute"]["usd_list"], lambda v: f"{v:.2f}")
-E("0.724", "(FLAMeS F1 0.724)", S, "per_band[thick, flames].f1.estimate", pband("thick", "flames")["f1"]["estimate"], d)
-for tool, ctx in (("mindglide", "ΔF1 was −0.170 (95% CI −0.206 to −0.136) for MindGlide"),
+E("145", "145 scans on a 1 mm grid (105 patients)", X, "bands.iso.scans", EXTRA["bands"]["iso"]["scans"], i)
+E("105", "145 scans on a 1 mm grid (105 patients)", X, "bands.iso.patients", EXTRA["bands"]["iso"]["patients"], i)
+E("12.55", "Incremental compute cost: 12.55 USD", X, "compute.usd_list", EXTRA["compute"]["usd_list"], lambda v: f"{v:.2f}")
+E("0.724", "FLAMeS had a higher lesion-wise F1 (0.724) than every tool", S, "per_band[thick, flames].f1.estimate", pband("thick", "flames")["f1"]["estimate"], d)
+for tool, ctx in (("mindglide", "ΔF1 −0.170 (95% CI −0.206 to −0.136) for MindGlide"),
                   ("samseg", "−0.237 (−0.304 to −0.173) for SAMSEG (129 scans)"),
                   ("wmhsynthseg", "−0.384 (−0.424 to −0.344) for WMH-SynthSeg (all p~Holm~ < 0.002)")):
     r = comp("primary", tool, "f1", "thick")
@@ -179,13 +179,13 @@ E("5%", "detected only 6% and 5% of expert lesions of 14–50 mm³ (FLAMeS 49%)"
 E("49%", "detected only 6% and 5% of expert lesions of 14–50 mm³ (FLAMeS 49%)", S, "size_bins[thick, flames, 14-50].estimate", sbin("thick", "flames", "14-50")["estimate"], pc)
 r = comp("primary", "mindglide", "false_lesions", "thick")
 for w, v, f in (("+0.57", r["estimate"], "estimate"), ("−0.89", r["ci95"][0], "ci95[0]"), ("+2.21", r["ci95"][1], "ci95[1]")):
-    E(w, "MindGlide's false-lesion difference was inconclusive (+0.57, −0.89 to +2.21)", C, f"primary[mindglide, false_lesions].{f}", v, lambda x: sd(x, 2))
+    E(w, "MindGlide's false-lesion difference was not significant (+0.57, −0.89 to +2.21)", C, f"primary[mindglide, false_lesions].{f}", v, lambda x: sd(x, 2))
 r = comp("secondary", "lstai", "f1", "iso")
 for w, v, f in (("−0.180", r["estimate"], "estimate"), ("−0.212", r["ci95"][0], "ci95[0]"), ("−0.150", r["ci95"][1], "ci95[1]")):
     E(w, "also led (LST-AI −0.180, −0.212 to −0.150)", C, f"secondary[lstai, f1, iso].{f}", v, d)
-E("0.102", "MindGlide lost 0.102 less F1 than FLAMeS on thick slices", C, "secondary[mindglide, degradation].estimate", comp("secondary", "mindglide", "f1", contrast=True)["estimate"], d)
-E("0.78", "(AUROC 0.78; 14 such scans)", C, "exploratory[mindglide, thick].auroc", expl_auc("mindglide", "thick")["auroc"], lambda v: f"{v:.2f}")
-E("14", "(AUROC 0.78; 14 such scans)", C, "exploratory[mindglide, thick].n_poor", expl_auc("mindglide", "thick")["n_poor"], i)
+E("0.102", "MindGlide's deficit relative to FLAMeS was 0.102 smaller in the thick cohorts", C, "secondary[mindglide, degradation].estimate", comp("secondary", "mindglide", "f1", contrast=True)["estimate"], d)
+E("0.78", "with an AUROC of 0.78 (exploratory; post hoc 95% interval about 0.60 to 0.93)", C, "exploratory[mindglide, thick].auroc", expl_auc("mindglide", "thick")["auroc"], lambda v: f"{v:.2f}")
+E("14", "Both analyses rest on 14 poor scans, 10 of them from one cohort", C, "exploratory[mindglide, thick].n_poor", expl_auc("mindglide", "thick")["n_poor"], i)
 E("1–9 mm", "synthetic scans with resolutions of 1–9 mm", "docs/research/paper-f/PROTOCOL.md", "section 3, MindGlide training data", "1–9 mm", str)
 E("179", "against the FLAMeS 5-fold ensemble on 179 real thick-slice FLAIR scans from three public cohorts, with LST-AI", X, "bands.thick.scans", EXTRA["bands"]["thick"]["scans"], i)
 
@@ -198,10 +198,10 @@ bc = [a for a in ACT if a["activity_type"] == "branch_creation"][0]
 E("20:58", "pushed to the public GitHub repository `nicolasbonilla/medical-imaging-viewer` at 2026-10-21 20:58 UTC",
   "manuscript/data/github_push_activity_paper_f_branch.json", "branch_creation.timestamp", bc["timestamp"], lambda v: v[11:16])
 first = min(r["started_utc"] for r in VER["runs"])
-E("21:39", "40 minutes before the first tool run started (21:39 UTC)", V, "min(runs[].started_utc)", first, lambda v: v[11:16])
+E("21:39", "40 minutes before the first tool container started (21:39 UTC", V, "min(runs[].started_utc)", first, lambda v: v[11:16])
 import datetime as _dt  # noqa: E402
 gap = (_dt.datetime.fromisoformat(first.replace("Z", "+00:00")) - _dt.datetime.fromisoformat(bc["timestamp"].replace("Z", "+00:00"))).total_seconds() / 60
-E("40", "40 minutes before the first tool run started", "derived", "21:39:06Z - 20:58:43Z (minutes, floor)", gap, lambda v: str(int(v)))
+E("40", "40 minutes before the first tool container started", "derived", "21:39:06Z - 20:58:43Z (minutes, floor)", gap, lambda v: str(int(v)))
 proto_sha = hashlib.sha256(git("show", "65a95e3:docs/research/paper-f/PROTOCOL.md")).hexdigest()
 lit(proto_sha, "`587ba9ffc1f07d559a0008728e97ec9e1e9455eaf0037e37bbcc52b8f5f284e2`", "git show 65a95e3:docs/research/paper-f/PROTOCOL.md | sha256", "SHA-256")
 lit(RUNI["code_commit"], "commit `7a9a24e8fa92c83ded210854fd8614f7be4dcd50`", "results/run_info.json", "code_commit")
@@ -249,7 +249,7 @@ E("No scan", "No scan had an empty reference", X, "bands.*.scans_with_empty_refe
 lit("17955359", "(Zenodo 17955359, version 2.0, CC BY 4.0)", "references.bib (larosa2025flameszenodo, verified on Zenodo)", "doi 10.5281/zenodo.17955359")
 torch_v = json.loads(git("show", "origin/research/cloud-compute-ledger:docs/research/compute-ledger/records/flames-full-a.json"))["manifest_summary"]
 E("2.14.1", "PyTorch 2.14.1 CPU build", "branch research/cloud-compute-ledger: records/flames-full-a.json", "manifest_summary.versions.torch", torch_v["versions"]["torch"], lambda v: v.split("+")[0])
-E("no test-time mirroring", "(4 vCPU, no test-time mirroring, tile step 0.5", "records/flames-full-a.json", "manifest_summary.tta", torch_v["tta"], lambda v: "no test-time mirroring" if v is False else "?")
+E("switched off", "Test-time mirroring, nnU-Net's default, was switched off to save CPU time", "records/flames-full-a.json", "manifest_summary.tta", torch_v["tta"], lambda v: "switched off" if v is False else "?")
 lit("0.5", "tile step 0.5 with Gaussian weighting", "research/cloud/flames_ensemble_driver.py", "nnUNetPredictor(tile_step_size=0.5, use_gaussian=True)")
 E("144", "had been run on the 1 mm cohorts only (144 scans", S, "status_counts.lstai.ok", SUMM["status_counts"]["lstai"]["ok"], i)
 for w in ("18", "77", "99"):
@@ -293,8 +293,8 @@ tierc = open(os.path.join(RES, "samseg_tier_c_ids.txt")).read().split()
 E("129", "tier C a fixed thick subsample of 129 scans", "results/samseg_tier_c_ids.txt", "number of ids", len(tierc), i)
 E("50", "the 50 odd-numbered MS3SEG scans", "results/samseg_tier_c_ids.txt", "ms3seg ids", sum(t.startswith("ms3seg") for t in tierc), i)
 E("110", "paired on 129 thick scans of 110 patients", C, "primary[samseg].n_clusters", comp("primary", "samseg", "f1", "thick")["n_clusters"], i)
-E("14", "The study used 14 virtual-machine runs, 61.90 machine-hours and 12.55 USD", X, "compute.runs", EXTRA["compute"]["runs"], i)
-E("61.90", "14 virtual-machine runs, 61.90 machine-hours", X, "compute.vm_hours", EXTRA["compute"]["vm_hours"], lambda v: f"{v:.2f}")
+E("14", "The study's own runs used 14 virtual machines, 61.90 machine-hours and 12.55 USD", X, "compute.runs", EXTRA["compute"]["runs"], i)
+E("61.90", "14 virtual machines, 61.90 machine-hours", X, "compute.vm_hours", EXTRA["compute"]["vm_hours"], lambda v: f"{v:.2f}")
 E("12.55", "61.90 machine-hours and 12.55 USD", X, "compute.usd_list", EXTRA["compute"]["usd_list"], lambda v: f"{v:.2f}")
 lit("32", "n2d-highmem-4 with 32 GB for WMH-SynthSeg", L, "memory_gb of toolbench-wmh = 32.0")
 assert led("toolbench-wmh")["memory_gb"] == "32.0"
@@ -362,7 +362,7 @@ for fl, lab, band, fam, tool, vs, m in T3:
     # the text writes negative F1 differences without a plus on the CI bounds that are negative; positives keep +
     E(norm(rowtxt), rowtxt, C, f"{fam}[{tool} vs {vs}, {band}]: n_scans, n_clusters, f1/false_lesions estimate, ci95, p_holm_registered_family",
       norm(rowtxt), lambda v: v)
-for tool, lab in (("mindglide", "Degradation, MindGlide"), ("wmhsynthseg", "Degradation, WMH-SynthSeg")):
+for tool, lab in (("mindglide", "Between-band contrast^c^, MindGlide"), ("wmhsynthseg", "Between-band contrast^c^, WMH-SynthSeg")):
     r = comp("secondary", tool, "f1", contrast=True)
     rowtxt = (f"| Secondary (11) | {lab} | thick − iso | {r['n_scans']} / {r['n_clusters']} | {ci_txt(r, 3)} | "
               f"{pholm(r['p_holm_registered_family'], 11)} | — | — |")
@@ -379,8 +379,9 @@ for band, tool, label in (("iso", "flames", "FLAMeS"), ("iso", "lstai", "LST-AI"
     f1 = f"{d(pb['f1']['estimate'])} ({d(pb['f1']['ci95'][0])}–{d(pb['f1']['ci95'][1])})"
     fp = f"{pb['false_lesions']['estimate']:.1f} ({pb['false_lesions']['ci95'][0]:.1f}–{pb['false_lesions']['ci95'][1]:.1f})"
     pr = d(P[f"{tool}|{band}"]["estimate"]) + ("^a^" if tool == "samseg" else "")
-    rowtxt = f"| {band} | {label} | {pb['n']} | {f1} | {fp} | {pr} | {d(R[f'{tool}|{band}']['estimate'])} |"
-    E(norm(rowtxt), rowtxt, f"{S} + {X}", f"per_band[{band},{tool}].n, f1, false_lesions; precision/recall_by_band_descriptive['{tool}|{band}']", norm(rowtxt), lambda v: v)
+    rowtxt = (f"| {band} | {label} | {pb['n']} | {f1} | {fp} | {pr} | {d(R[f'{tool}|{band}']['estimate'])} | "
+              f"{d(pb['dice']['estimate'])} |")
+    E(norm(rowtxt), rowtxt, f"{S} + {X}", f"per_band[{band},{tool}].n, f1, false_lesions, dice; precision/recall_by_band_descriptive['{tool}|{band}']", norm(rowtxt), lambda v: v)
 E("126", "^a^ 126 scans; precision is undefined", X, "precision_by_band_descriptive['samseg|thick'].n_scans", P["samseg|thick"]["n_scans"], i)
 
 # ============================================================================= 3.3
@@ -392,7 +393,7 @@ E("12.6–19.8", "expert volumes of 12.6–19.8 mL", S, "per_cohort[thick cohort
   [r["vol_ref_ml"]["estimate"] for r in SUMM["per_cohort"] if r["cohort"] in th], rng)
 E("13.1–18.4", "FLAMeS volumes of 13.1–18.4 mL", S, "per_cohort[thick cohorts, flames].vol_pred_ml.estimate (min–max)", [pcoh(c, "flames")["vol_pred_ml"]["estimate"] for c in th], rng)
 for w, key in (("0.837", "samseg|thick"), ("0.707", "wmhsynthseg|thick"), ("0.738", "flames|thick")):
-    E(w, "(SAMSEG 0.837, WMH-SynthSeg 0.707, FLAMeS 0.738)", X, f"precision_by_band_descriptive['{key}'].estimate", P[key]["estimate"], d)
+        E(w, "(SAMSEG 0.837 against 0.743 for FLAMeS on the same 129 scans; WMH-SynthSeg 0.707 against 0.738)", X, f"precision_by_band_descriptive['{key}'].estimate", P[key]["estimate"], d)
 for w, key in (("0.397", "samseg|thick"), ("0.248", "wmhsynthseg|thick"), ("0.758", "flames|thick")):
     E(w, "(0.397 and 0.248 vs 0.758)", X, f"recall_by_band_descriptive['{key}'].estimate", R[key]["estimate"], d)
 E("1,248", "of the 1,248 expert lesions of 14–50 mm³ on thick scans", S, "size_bins[thick, flames, 14-50].n_ref", sbin("thick", "flames", "14-50")["n_ref"], i)
@@ -426,9 +427,9 @@ for a, ctx in (("S1_no_size_filter", "(S1, +2.42, 95% CI +0.10 to +5.06)"), ("S3
 
 # ============================================================================= 3.5 secondary
 fi = pband("iso", "flames")
-E("0.765", "On 1 mm scans FLAMeS had F1 0.765 (0.727–0.798)", S, "per_band[iso, flames].f1.estimate", fi["f1"]["estimate"], d)
-E("0.727", "On 1 mm scans FLAMeS had F1 0.765 (0.727–0.798)", S, "per_band[iso, flames].f1.ci95[0]", fi["f1"]["ci95"][0], d)
-E("0.798", "On 1 mm scans FLAMeS had F1 0.765 (0.727–0.798)", S, "per_band[iso, flames].f1.ci95[1]", fi["f1"]["ci95"][1], d)
+E("0.765", "On the 1 mm-grid scans FLAMeS had F1 0.765 (0.727–0.798)", S, "per_band[iso, flames].f1.estimate", fi["f1"]["estimate"], d)
+E("0.727", "On the 1 mm-grid scans FLAMeS had F1 0.765 (0.727–0.798)", S, "per_band[iso, flames].f1.ci95[0]", fi["f1"]["ci95"][0], d)
+E("0.798", "On the 1 mm-grid scans FLAMeS had F1 0.765 (0.727–0.798)", S, "per_band[iso, flames].f1.ci95[1]", fi["f1"]["ci95"][1], d)
 for tool, w in (("mindglide", "−0.272"), ("wmhsynthseg", "−0.363"), ("lstai", "−0.180")):
     E(w, "MindGlide (ΔF1 −0.272), WMH-SynthSeg (−0.363) and LST-AI (−0.180), all p~Holm~ < 0.003", C, f"secondary[{tool}, f1, iso].estimate", comp("secondary", tool, "f1", "iso")["estimate"], d)
 for tool, w in (("mindglide", "+3.07"), ("lstai", "+3.79")):
@@ -443,14 +444,14 @@ for tool, w in (("mindglide", "−0.258"), ("wmhsynthseg", "−0.389"), ("lstai"
     E(w, "(ΔF1 −0.258, −0.389 and −0.156 for MindGlide, WMH-SynthSeg and LST-AI)", C, f"sensitivity[S5, {tool}, f1].estimate", sens("S5_iso_with_flames_training_cases", tool, "f1")["estimate"], d)
 E("0.765", "FLAMeS F1 was 0.765 in the iso band and 0.724 in the thick band", S, "per_band[iso, flames].f1.estimate", fi["f1"]["estimate"], d)
 E("0.724", "FLAMeS F1 was 0.765 in the iso band and 0.724 in the thick band", S, "per_band[thick, flames].f1.estimate", fb["f1"]["estimate"], d)
-E("0.518", "MindGlide's was 0.518 and 0.554", S, "per_band[iso, mindglide].f1.estimate", pband("iso", "mindglide")["f1"]["estimate"], d)
-E("0.554", "MindGlide's was 0.518 and 0.554", S, "per_band[thick, mindglide].f1.estimate", pband("thick", "mindglide")["f1"]["estimate"], d)
+E("0.518", "0.554, against 0.518 on all 145 iso scans and 0.492 on the 125 iso scans paired", S, "per_band[iso, mindglide].f1.estimate", pband("iso", "mindglide")["f1"]["estimate"], d)
+E("0.554", "0.554, against 0.518 on all 145 iso scans and 0.492 on the 125 iso scans paired", S, "per_band[thick, mindglide].f1.estimate", pband("thick", "mindglide")["f1"]["estimate"], d)
 r = comp("secondary", "mindglide", "f1", contrast=True)
 for w, v, f in (("0.102", r["estimate"], "estimate"), ("0.047", r["ci95"][0], "ci95[0]"), ("0.160", r["ci95"][1], "ci95[1]")):
-    E(w, "0.102 smaller on thick than on 1 mm scans (95% CI 0.047–0.160; p~Holm~ < 0.003)", C, f"secondary[mindglide, degradation].{f}", v, d)
+    E(w, "0.102 smaller in the thick cohorts than in the iso cohorts (95% CI 0.047–0.160; p~Holm~ < 0.003)", C, f"secondary[mindglide, degradation].{f}", v, d)
 r = comp("secondary", "wmhsynthseg", "f1", contrast=True)
 for w, v, f in (("−0.021", r["estimate"], "estimate"), ("−0.098", r["ci95"][0], "ci95[0]"), ("+0.056", r["ci95"][1], "ci95[1]")):
-    E(w, "(−0.021, −0.098 to +0.056; p~Holm~ = 1.00)", C, f"secondary[wmhsynthseg, degradation].{f}", v, (lambda x: sd(x)) if w.startswith("+") else d)
+    E(w, "(−0.021, −0.098 to +0.056; p~Holm~ = 1.0)", C, f"secondary[wmhsynthseg, degradation].{f}", v, (lambda x: sd(x)) if w.startswith("+") else d)
 
 # ============================================================================= 3.6 raw arm (prose)
 r = comp("secondary_raw_arm", "mindglide-raw", "f1", "thick")
@@ -458,8 +459,8 @@ for w, v, f in (("−0.186", r["estimate"], "estimate"), ("−0.222", r["ci95"][
     E(w, "raw-input MindGlide had ΔF1 −0.186 (−0.222 to −0.150; p~Holm~ < 0.002)", C, f"secondary_raw_arm[mindglide-raw vs flames, f1].{f}", v, d)
 r = comp("secondary_raw_arm", "mindglide-raw", "false_lesions", "thick")
 for w, v, f in (("+0.38", r["estimate"], "estimate"), ("−0.94", r["ci95"][0], "ci95[0]"), ("+1.88", r["ci95"][1], "ci95[1]")):
-    E(w, "+0.38 false lesions per scan (−0.94 to +1.88; p~Holm~ = 0.986)", C, f"secondary_raw_arm[mindglide-raw vs flames, false_lesions].{f}", v, lambda x: sd(x, 2))
-E("0.986", "(−0.94 to +1.88; p~Holm~ = 0.986)", C, "secondary_raw_arm[… false_lesions].p_holm_registered_family", r["p_holm_registered_family"], lambda v: f"{v:.3f}")
+    E(w, "+0.38 false lesions per scan (−0.94 to +1.88; p~Holm~ = 0.99)", C, f"secondary_raw_arm[mindglide-raw vs flames, false_lesions].{f}", v, lambda x: sd(x, 2))
+E("0.99", "(−0.94 to +1.88; p~Holm~ = 0.99)", C, "secondary_raw_arm[… false_lesions].p_holm_registered_family (2 s.f.)", r["p_holm_registered_family"], lambda v: f"{v:.2g}")
 r = comp("secondary_raw_arm", "mindglide-raw", "f1", "thick", vs="mindglide")
 for w, v, f in (("−0.016", r["estimate"], "estimate"), ("−0.028", r["ci95"][0], "ci95[0]"), ("−0.004", r["ci95"][1], "ci95[1]")):
     E(w, "ΔF1 −0.016 (−0.028 to −0.004; p~Holm~ = 0.037)", C, f"secondary_raw_arm[mindglide-raw vs mindglide, f1].{f}", v, d)
@@ -485,7 +486,7 @@ E("0.385", "(0.593; post hoc CI 0.385–0.787)", X, "e1_posthoc[wmhsynthseg].aur
 E("0.787", "(0.593; post hoc CI 0.385–0.787)", X, "e1_posthoc[wmhsynthseg].auroc_ci95_posthoc[1]", w["auroc_ci95_posthoc"][1], d)
 E("0.488", "or SAMSEG (0.488; 11 poor scans of 129)", C, "exploratory[samseg, thick].auroc", expl_auc("samseg", "thick")["auroc"], d)
 E("11", "or SAMSEG (0.488; 11 poor scans of 129)", C, "exploratory[samseg, thick].n_poor", expl_auc("samseg", "thick")["n_poor"], i)
-E("2", "On 1 mm scans only 2 scans were poor", C, "exploratory[mindglide, iso].n_poor", expl_auc("mindglide", "iso")["n_poor"], i)
+E("2", "On the 1 mm grid only 2 scans were poor", C, "exploratory[mindglide, iso].n_poor", expl_auc("mindglide", "iso")["n_poor"], i)
 for tool, wv in (("mindglide", "0.813"), ("lstai", "0.803"), ("wmhsynthseg", "0.520")):
     E(wv, "(MindGlide 0.813, LST-AI 0.803, WMH-SynthSeg 0.520)", C, f"exploratory[{tool}, iso].auroc", expl_auc(tool, "iso")["auroc"], d)
 cf = expl_conf("mindglide", "thick")
@@ -498,13 +499,13 @@ for wv, v, f in (("−0.074", cf["f1"]["estimate"], "f1.estimate"), ("−0.111",
 # ============================================================================= 3.8 runtime, Table 5
 mgr = [run("toolbench-mindglide-a")["seconds_per_case"]["median"], run("toolbench-mindglide-b")["seconds_per_case"]["median"]]
 E("77–84", "were 77–84 s for MindGlide", V, "runs[toolbench-mindglide-a/b].seconds_per_case.median", mgr, lambda v: f"{min(v):.0f}–{max(v):.0f}")
-E("5.91", "(peak memory ≤ 5.91 GB)", V, "max runs[toolbench-mindglide-*].peak_mem_gb_max", max(run(x)["peak_mem_gb_max"] for x in ("toolbench-mindglide-a", "toolbench-mindglide-b", "toolbench-pilot-mindglide-3")), lambda v: f"{v:.2f}")
-E("216", "216 s for WMH-SynthSeg (peak 31.3 GB plus up to 14.4 GB of swap)", V, "runs[toolbench-wmh].seconds_per_case.median", run("toolbench-wmh")["seconds_per_case"]["median"], lambda v: f"{v:.0f}")
-E("31.3", "(peak 31.3 GB plus up to 14.4 GB of swap)", V, "runs[toolbench-wmh].peak_mem_gb_max", run("toolbench-wmh")["peak_mem_gb_max"], lambda v: f"{v:.1f}")
-E("14.4", "(peak 31.3 GB plus up to 14.4 GB of swap)", V, "runs[toolbench-wmh].peak_swap_gb_max", run("toolbench-wmh")["peak_swap_gb_max"], lambda v: f"{v:.1f}")
+E("5.91", "peak memory ≤ 5.91 GB", V, "max runs[toolbench-mindglide-*].peak_mem_gb_max", max(run(x)["peak_mem_gb_max"] for x in ("toolbench-mindglide-a", "toolbench-mindglide-b", "toolbench-pilot-mindglide-3")), lambda v: f"{v:.2f}")
+E("216", "216 s for WMH-SynthSeg (n2d-highmem-4; peak 31.3 GB plus up to 14.4 GB of swap)", V, "runs[toolbench-wmh].seconds_per_case.median", run("toolbench-wmh")["seconds_per_case"]["median"], lambda v: f"{v:.0f}")
+E("31.3", "peak 31.3 GB plus up to 14.4 GB of swap", V, "runs[toolbench-wmh].peak_mem_gb_max", run("toolbench-wmh")["peak_mem_gb_max"], lambda v: f"{v:.1f}")
+E("14.4", "peak 31.3 GB plus up to 14.4 GB of swap", V, "runs[toolbench-wmh].peak_swap_gb_max", run("toolbench-wmh")["peak_swap_gb_max"], lambda v: f"{v:.1f}")
 sm = [run(x)["seconds_per_case"]["median"] for x in ("toolbench-samseg-a", "toolbench-samseg-b", "toolbench-samseg-c")]
 E("470–524", "470–524 s per run for SAMSEG on thick scans", V, "runs[toolbench-samseg-a/b/c].seconds_per_case.median", sm, lambda v: f"{min(v):.0f}–{max(v):.0f}")
-E("7.1", "(peak ≤ 7.1 GB, pilot included)", V, "max runs[toolbench-pilot-fs-2, samseg-*].peak_mem_gb_max",
+E("7.1", "peak ≤ 7.1 GB, pilot included", V, "max runs[toolbench-pilot-fs-2, samseg-*].peak_mem_gb_max",
   max(run(x)["peak_mem_gb_max"] for x in ("toolbench-pilot-fs-2", "toolbench-samseg-a", "toolbench-samseg-b", "toolbench-samseg-c")), lambda v: f"{v:.1f}")
 lit("15", "the pre-stated CPU rule of ≤ 15 minutes per scan", "docs/research/paper-f/PROTOCOL.md", "section 3, CPU feasibility rule")
 fl = [float(led(x)["median_seconds_per_item"]) for x in ("flames-full-a", "flames-full-b", "flames-full-c", "flames-extra-a", "flames-extra-b")]
@@ -533,19 +534,19 @@ for w in ("13.9", "17.8"):
 
 # ============================================================================= discussion, limitations, conclusion
 pr = [abs(comp("primary", t, "f1", "thick")["estimate"]) for t in ("mindglide", "wmhsynthseg", "samseg")]
-E("0.17–0.38", "and the deficits (0.17–0.38 F1)", C, "primary[*, f1].estimate magnitudes (min–max)", pr, lambda v: f"{min(v):.2f}–{max(v):.2f}")
+E("0.17–0.38", "The F1 deficits (0.17–0.38 F1)", C, "primary[*, f1].estimate magnitudes (min–max)", pr, lambda v: f"{min(v):.2f}–{max(v):.2f}")
 E("5–6%", "detect only 5–6% of small expert lesions", S, "size_bins[thick, wmhsynthseg/samseg, 14-50].estimate", [sbin("thick", "wmhsynthseg", "14-50")["estimate"], sbin("thick", "samseg", "14-50")["estimate"]],
   lambda v: f"{round(100 * min(v))}–{round(100 * max(v))}%")
 E("200", "miss most lesions below 200 mm³", S, "size_bins[thick, wmhsynthseg/samseg, 50-200].estimate < 0.5", max(sbin("thick", t, "50-200")["estimate"] for t in ("wmhsynthseg", "samseg")), lambda v: "200" if v < 0.5 else "?")
 lit("15%", "failed on 15% of visually assessed contrasts, particularly with slices thicker than 5 mm", "Goebl et al. 2025 (PMC11976987), quoted in references.bib notes", "65 of 433 contrasts")
 E("28.4", "(28.4 mL predicted vs 11.8 mL expert", S, "per_cohort[mslesseg, mindglide].vol_pred_ml.estimate", pcoh("mslesseg", "mindglide")["vol_pred_ml"]["estimate"], lambda v: f"{v:.1f}")
 E("11.8", "(28.4 mL predicted vs 11.8 mL expert", S, "per_cohort[mslesseg, mindglide].vol_ref_ml.estimate", pcoh("mslesseg", "mindglide")["vol_ref_ml"]["estimate"], lambda v: f"{v:.1f}")
-E("0.78", "with an AUROC of 0.78. This is exploratory and fragile", C, "exploratory[mindglide, thick].auroc", expl_auc("mindglide", "thick")["auroc"], lambda v: f"{v:.2f}")
-E("0.60", "runs from about 0.60 to 0.93", X, "e1_posthoc[mindglide].auroc_ci95_posthoc[0]", mg["auroc_ci95_posthoc"][0], lambda v: f"{v:.2f}")
-E("0.93", "runs from about 0.60 to 0.93", X, "e1_posthoc[mindglide].auroc_ci95_posthoc[1]", mg["auroc_ci95_posthoc"][1], lambda v: f"{v:.2f}")
-E("0.82", "cohort-stratified AUROC (0.82)", X, "e1_posthoc[mindglide].auroc_cohort_stratified_posthoc", mg["auroc_cohort_stratified_posthoc"], lambda v: f"{v:.2f}")
-E("129", "SAMSEG was run on 129 of the 179 thick scans", C, "primary[samseg].n_scans", comp("primary", "samseg", "f1", "thick")["n_scans"], i)
-lit("±10%", "changes physical size thresholds by about ±10% in volume", "docs/research/cohorts-extra.md", "3.2: ≈ ±10 % on lesion volumes")
+E("0.78", "with an AUROC of 0.78 (exploratory; post hoc 95% interval about 0.60 to 0.93). A score", C, "exploratory[mindglide, thick].auroc", expl_auc("mindglide", "thick")["auroc"], lambda v: f"{v:.2f}")
+E("0.60", "post hoc 95% interval about 0.60 to 0.93", X, "e1_posthoc[mindglide].auroc_ci95_posthoc[0]", mg["auroc_ci95_posthoc"][0], lambda v: f"{v:.2f}")
+E("0.93", "post hoc 95% interval about 0.60 to 0.93", X, "e1_posthoc[mindglide].auroc_ci95_posthoc[1]", mg["auroc_ci95_posthoc"][1], lambda v: f"{v:.2f}")
+
+E("129", "SAMSEG covers 129 of the 179 thick scans", C, "primary[samseg].n_scans", comp("primary", "samseg", "f1", "thick")["n_scans"], i)
+
 lit("31.32", "the pilot peak (31.32 GB) exceeded the pre-stated 30 GB trigger", "results/verify_runs.json + PROTOCOL.md 4.2", "runs[toolbench-pilot-fs].peak_mem_gb_max = 31.32; trigger 30 GB")
 assert run("toolbench-pilot-fs")["peak_mem_gb_max"] == 31.32
 lit("80", "boot disk 80 GB instead of 150 GB", "docs/research/paper-f/PROTOCOL.md", "section 12, row 2026-10-28")
@@ -594,9 +595,9 @@ for w, ctx, src, fld in (
     ("1000", "50–200, 200–1000 and ≥ 1000 mm³)", "research/paper_f/metrics.py", "SIZE_BINS_MM3"),
     ("0.0001", "rather than the \"< 0.0001\" printed by the analysis tables", "research/paper_f/summarize.py", "pfmt(): '< 0.0001' if p < 1e-4"),
     ("90", "Equivalence was declared when the 90% interval lay inside", "research/paper_f/metrics.py", "summarize(): ci90 = percentiles 5, 95"),
-    ("0.1", "(a Dice < 0.1 would have signalled a label or orientation error)", "docs/research/paper-f/RUNBOOK.md", "section 3, PASS step 5"),
+        ("0.1", "flags a Dice below 0.1 as a probable label or orientation error", "research/paper_f/evaluate.py", "check_case(): WARN if Dice < 0.1"),
     ("4", "on 4 vCPUs", "manuscript/data/compute_ledger_c8b4239.csv", "vcpus"),
-    ("7.6", "Secondary arm 7.6 added: MindGlide on the raw FLAIR", "docs/research/paper-f/PROTOCOL.md", "section 7.6 (protocol section number)"),
+        ("7.6", "Secondary arm 7.6 registered: MindGlide on the raw FLAIR", "docs/research/paper-f/PROTOCOL.md", "section 7.6 (protocol section number)"),
     ("10.5281", "Zenodo 10.5281/zenodo.17955359, version 2.0", "references.bib", "larosa2025flameszenodo.doi"),
 ):
     lit(w, ctx, src, fld)
@@ -612,6 +613,173 @@ ratios = [pcoh(c, "wmhsynthseg")["vol_pred_ml"]["estimate"] / pcoh(c, "wmhsynths
 E("about a quarter to a third", "marked only about a quarter to a third of the expert lesion volume in every cohort", S,
   "per_cohort[thick cohorts, wmhsynthseg].vol_pred_ml / vol_ref_ml (0.265–0.335)", ratios,
   lambda v: "about a quarter to a third" if 0.24 <= min(v) and max(v) <= 0.34 else str(v))
+
+
+# ============================================================================= REVISION (2026-10-31) - new numbers
+RV = EXTRA["revision"]
+FP_CHECK = J(DATA, "flames_fingerprint_check.json")
+MSL_CHECK = J(DATA, "mslesseg_flames_overlap_check_87e998d.json")
+WMH = J(DATA, "wmh_resampling_posthoc.json")
+FPX = "manuscript/data/flames_fingerprint_check.json"
+WX = "manuscript/data/wmh_resampling_posthoc.json"
+for ctx in ("- FLAMeS, trained only on voxels of 1.25 mm or less, led on 3.9–8.3 mm FLAIR.",
+            "every voxel dimension in the released fingerprint ≤ 1.25 mm",
+            "None of the 668 training entries has a voxel dimension above 1.25 mm",
+            "The fingerprint also shows that FLAMeS never saw a voxel dimension larger than 1.25 mm in training.",
+            "contained no voxel dimension larger than 1.25 mm",
+                        "yet no FLAMeS training case has a voxel dimension above 1.25 mm (Section 2.3)",
+            "and no FLAMeS training case has a voxel dimension above 1.25 mm, so no thick-slice scan was a training case"):
+    E("1.25", ctx, FPX, "max_largest_voxel_dimension_mm (n entries > 3 mm = 0)", FP_CHECK["max_largest_voxel_dimension_mm"], lambda v: f"{v:.2f}")
+assert FP_CHECK["n_entries_with_slice_spacing_above_3mm"] == 0
+E("668", "None of the 668 training entries has a voxel dimension above 1.25 mm", FPX, "n_training_entries", FP_CHECK["n_training_entries"], i)
+E("319", "bounding box of any of the 319 training entries with 1 mm spacing", "manuscript/data/mslesseg_flames_overlap_check_87e998d.json", "n_1mm_training_entries", MSL_CHECK["n_1mm_training_entries"], i)
+E("115", "None of the 115 MSLesSeg scans matches the", "manuscript/data/mslesseg_flames_overlap_check_87e998d.json", "n_checked (n_exact_hits = 0)", MSL_CHECK["n_checked"], i)
+assert MSL_CHECK["n_exact_hits"] == 0
+first_vm = min(r["start_utc"] for r in LEDGER if r["run_id"].startswith("toolbench"))
+E("21:31", "first virtual machine had been created at 21:31 UTC", L, "min(start_utc) of toolbench runs", first_vm, lambda v: v[11:16])
+for w, ctx in (("2.61", "the data paper reports a mean slice thickness of 2.61 mm (SD 0.62)"),
+               ("0.62", "the data paper reports a mean slice thickness of 2.61 mm (SD 0.62)"),
+               ("2.6", "acquired with slices of about 2.6 mm")):
+    lit(w, ctx, "Guarnera et al. 2025, Sci Data 12:920, Table 2 (PMC12126551; references.bib revision notes)", "FLAIR slice thickness mean (SD)")
+pix = sorted({tuple(v["flair_pixdim_nifti"]) for v in SPLIT["patients"].values()})
+E("0.47", "near-isotropic 3D FLAIR at 3 T (0.47 × 0.47 × 0.8–0.9 mm voxels)", "manuscript/data/flames_ljubljana_split_87e998d.json", "patients[*].flair_pixdim_nifti (in-plane)", pix[0][1], lambda v: f"{v:.2f}")
+E("0.8–0.9", "near-isotropic 3D FLAIR at 3 T (0.47 × 0.47 × 0.8–0.9 mm voxels)", "manuscript/data/flames_ljubljana_split_87e998d.json", "patients[*].flair_pixdim_nifti (slice)", [p[0] for p in pix], lambda v: f"{min(v):.1f}–{max(v):.1f}")
+iso_by = RV["iso_flames_scans_by_cohort"]
+for ctx in ("115 of its 125 FLAMeS comparison scans were acquired with slices of about 2.6 mm",
+            "115 of its 125 FLAMeS comparison scans come from MSLesSeg",
+            "115 of its 125 FLAMeS comparison scans were acquired with slices of"):
+    if norm(ctx) in MSN:
+        E("115 of its 125", ctx, X, "revision.iso_flames_scans_by_cohort (mslesseg, total)", (iso_by["mslesseg"], sum(iso_by.values())), lambda v: f"{v[0]} of its {v[1]}")
+n151 = EXTRA["cohorts"]["ms3seg"]["scans"] + EXTRA["cohorts"]["muslim"]["scans"]
+for ctx in ("MS3SEG and Muslim (151 of the 179 thick scans) were stripped with",
+            "used to skull-strip 151 of the 179 thick scans (MS3SEG, Muslim et al.)"):
+    E("151", ctx, X, "cohorts.ms3seg.scans + cohorts.muslim.scans", n151, i)
+lit("14445620", "Zenodo record 14445620, downloaded by HD-BET 2.x", "Zenodo API (records/14445620; references.bib hdbet2024params)", "record id; licence cc-by-nc-4.0")
+p_mg = comp("primary", "mindglide", "false_lesions", "thick")["p_two_sided"]
+E("0.45", "standard error of a bootstrap p near 0.45 is about 0.008", C, "primary[mindglide, false_lesions].p_two_sided", p_mg, lambda v: f"{v:.2f}")
+E("0.008", "standard error of a bootstrap p near 0.45 is about 0.008", X, "revision.mc_se_of_p_at_mindglide_fp.se", RV["mc_se_of_p_at_mindglide_fp"]["se"], lambda v: f"{v:.3f}")
+E("6.9%", "for scale, 0.05 is 6.9% of FLAMeS's thick-band F1", S, "0.05 / per_band[thick, flames].f1.estimate", 0.05 / fb["f1"]["estimate"], lambda v: f"{100 * v:.1f}%")
+E("14%", "one false lesion is 14% of its 6.9 false lesions per scan", S, "1 / per_band[thick, flames].false_lesions.estimate", 1 / fb["false_lesions"]["estimate"], lambda v: f"{100 * v:.0f}%")
+E("6.9", "one false lesion is 14% of its 6.9 false lesions per scan", S, "per_band[thick, flames].false_lesions.estimate", fb["false_lesions"]["estimate"], lambda v: f"{v:.1f}")
+cst = EXTRA["compute"]
+for ctx in ("the total is 101.97 machine-hours and 19.84 USD at list price",):
+    E("101.97", ctx, X, "compute.vm_hours_including_reused_runs", cst["vm_hours_including_reused_runs"], lambda v: f"{v:.2f}")
+    E("19.84", ctx, X, "compute.usd_list_including_reused_runs", cst["usd_list_including_reused_runs"], lambda v: f"{v:.2f}")
+rowtxt = f"| **Total including reused runs** | **{cst['runs'] + sum(g['runs'] for g in cst['upstream_not_paper_f'].values())}** | **{cst['vm_hours_including_reused_runs']:.2f}** | **{cst['usd_list_including_reused_runs']:.2f}** |"
+E(norm(rowtxt), rowtxt, X, "compute: runs + upstream runs, vm_hours_including_reused_runs, usd_list_including_reused_runs", norm(rowtxt), lambda v: v)
+lit("00:01:59", "it was run on 2026-10-29 at 00:01:59 UTC, 21 s after the decisions of that date",
+    "agent session log (outside the repository; owner TODO to archive)", "timestamp of the `evaluate.py check` command")
+E("21", "00:01:59 UTC, 21 s after the decisions of that date were pushed (00:01:38 UTC)", "derived", "00:01:59 − push of 7a9a24e", p7["timestamp"],
+  lambda v: str(int((_dt.datetime.fromisoformat("2026-10-29T00:01:59+00:00") - _dt.datetime.fromisoformat(v.replace("Z", "+00:00"))).total_seconds())))
+E("00:01:38", "were pushed (00:01:38 UTC)", "manuscript/data/github_push_activity_paper_f_branch.json", "push after=7a9a24e .timestamp", p7["timestamp"], lambda v: v[11:19])
+E("nine", "and nine minutes before the final analysis (00:11 UTC)", "results/run_info.json", "created_utc − 00:01:59 (minutes, floor)", RUNI["created_utc"],
+  lambda v: {9: "nine"}.get(int((_dt.datetime.fromisoformat(v.replace("Z", "+00:00")) - _dt.datetime.fromisoformat("2026-10-29T00:01:59+00:00")).total_seconds() // 60), "?"))
+mgstart = sorted(led(x)["start_utc"] for x in ("toolbench-mindglide-a", "toolbench-mindglide-b"))
+E("about ten minutes earlier", "the MindGlide full-run machines had started about ten minutes earlier", L, "start_utc of toolbench-mindglide-a/b vs push 22:43:47", mgstart,
+  lambda v: "about ten minutes earlier" if 8 <= (_dt.datetime.fromisoformat("2026-10-21T22:43:47+00:00") - _dt.datetime.fromisoformat(v[-1].replace("Z", "+00:00"))).total_seconds() / 60 <= 12 else "?")
+E("22:32–22:34", "The MindGlide full-run machines had started at 22:32–22:34 and were computing", L, "start_utc of toolbench-mindglide-a/b", mgstart, lambda v: f"{v[0][11:16]}–{v[1][11:16]}")
+# per-cohort ranges (thick) and iso per-cohort values
+PCD = RV["per_cohort_paired_differences"]
+for tool, ctx in (("mindglide", "per-cohort ΔF1 ranged from −0.123 to −0.226 for MindGlide"), ("samseg", "from −0.226 to −0.255 for SAMSEG"),
+                  ("wmhsynthseg", "from −0.279 to −0.467 for WMH-SynthSeg, every 95% interval excluding zero")):
+    vals = [PCD[f"{tool}|{c}"]["f1"]["estimate"] for c in th]
+    assert all(PCD[f"{tool}|{c}"]["f1"]["ci95"][1] < 0 for c in th)
+    E(d(max(vals)), ctx, X, f"revision.per_cohort_paired_differences[{tool}|thick cohorts].f1.estimate (max)", max(vals), d)
+    E(d(min(vals)), ctx, X, f"revision.per_cohort_paired_differences[{tool}|thick cohorts].f1.estimate (min)", min(vals), d)
+for tool, c, w in (("wmhsynthseg", "mslesseg", "−0.286"), ("wmhsynthseg", "openms", "−0.440"), ("mindglide", "mslesseg", "−0.227"), ("mindglide", "openms", "−0.318")):
+    E(w, "WMH-SynthSeg's ΔF1 was −0.286 on MSLesSeg (115 scans) and −0.440 on Ljubljana (10 scans), and MindGlide's −0.227 and −0.318",
+      X, f"revision.per_cohort_paired_differences[{tool}|{c}].f1.estimate", PCD[f"{tool}|{c}"]["f1"]["estimate"], d)
+# Table A3 rows
+CN = {"ms3seg": "MS3SEG", "muslim": "Muslim et al.", "pedims": "PediMS", "mslesseg": "MSLesSeg", "openms": "Ljubljana"}
+TN = {"mindglide": "MindGlide", "wmhsynthseg": "WMH-SynthSeg", "samseg": "SAMSEG", "lstai": "LST-AI"}
+for tool, cohorts in (("mindglide", ("ms3seg", "muslim", "pedims", "mslesseg", "openms")), ("wmhsynthseg", ("ms3seg", "muslim", "pedims", "mslesseg", "openms")),
+                      ("samseg", ("ms3seg", "muslim", "pedims")), ("lstai", ("mslesseg", "openms"))):
+    for c in cohorts:
+        r = PCD[f"{tool}|{c}"]
+        cname = "MS3SEG (odd ids)" if (tool == "samseg" and c == "ms3seg") else CN[c]
+        rowtxt = (f"| {TN[tool]} | {cname} | {r['n_scans']} | {d(r['f1']['estimate'])} ({d(r['f1']['ci95'][0])} to {d(r['f1']['ci95'][1])}) | "
+                  f"{sd(r['false_lesions']['estimate'], 2)} |")
+        E(norm(rowtxt), rowtxt, X, f"revision.per_cohort_paired_differences[{tool}|{c}]: n_scans, f1 estimate/ci95, false_lesions estimate", norm(rowtxt), lambda v: v)
+# paired-set absolute F1 (between-band contrast)
+PS = RV["paired_set_absolute_f1"]
+E("0.492", "and 0.492 on the 125 iso scans paired with FLAMeS", X, "revision.paired_set_absolute_f1['mindglide|iso'].tool_f1.estimate (n 125)", PS["mindglide|iso"]["tool_f1"]["estimate"], d)
+assert PS["mindglide|iso"]["n_scans"] == 125
+E("0.743", "against 0.743 for FLAMeS on the same 129 scans", X, "revision.tier_c_precision.flames_all_129.estimate", RV["tier_c_precision"]["flames_all_129"]["estimate"], d)
+E("0.743", "On the same tier-C scans FLAMeS's precision was 0.743", X, "revision.tier_c_precision.flames_all_129.estimate", RV["tier_c_precision"]["flames_all_129"]["estimate"], d)
+E("2.4-fold", "its 2.4-fold over-segmentation of lesion volume on MSLesSeg", S, "per_cohort[mslesseg, mindglide].vol_pred_ml / vol_ref_ml",
+  pcoh("mslesseg", "mindglide")["vol_pred_ml"]["estimate"] / pcoh("mslesseg", "mindglide")["vol_ref_ml"]["estimate"], lambda v: f"{v:.1f}-fold")
+# micro F1
+MF = RV["micro_f1_posthoc"]
+for key, ctx in (("mindglide|thick", "tool minus FLAMeS −0.173 (95% CI −0.202 to −0.148) for MindGlide"), ("samseg|thick", "−0.285 (−0.352 to −0.216) for SAMSEG"),
+                 ("wmhsynthseg|thick", "−0.429 (−0.465 to −0.391) for WMH-SynthSeg on the thick band")):
+    r = MF[key]
+    for f, v in (("difference", r["difference"]), ("ci95[0]", r["ci95"][0]), ("ci95[1]", r["ci95"][1])):
+        E(d(v), ctx, X, f"revision.micro_f1_posthoc['{key}'].{f}", v, d)
+E("4", "(4 thick scans have fewer than 5 reference lesions, 3 of them 2 or fewer)", X, "revision.thick_scans_with_fewer_than_5_ref_lesions", RV["thick_scans_with_fewer_than_5_ref_lesions"], i)
+E("3", "(4 thick scans have fewer than 5 reference lesions, 3 of them 2 or fewer)", X, "revision.thick_scans_with_at_most_2_ref_lesions", RV["thick_scans_with_at_most_2_ref_lesions"], i)
+lit("5", "(4 thick scans have fewer than 5 reference lesions, 3 of them 2 or fewer)", "compute_extra_numbers.py", "threshold of the count (n_ref < 5)")
+# WMH resampling (text + Table A4)
+WV = WMH["variants"]
+for key, w in (("hard_majority", "0.341"), ("prob_mean_ge_0.50", "0.315"), ("prob_mean_ge_0.25", "0.413"), ("prob_mean_ge_0.10", "0.469")):
+    E(w, "changed its F1 on the thick band from 0.341 (pre-registered mask) to 0.315, 0.413 and 0.469", WX, f"variants.{key}.absolute.f1.estimate", WV[key]["absolute"]["f1"]["estimate"], d)
+for w in ("0.50", "0.25", "0.10"):
+    lit(w, "at probability thresholds of 0.50, 0.25 and 0.10", "manuscript/wmh_resampling_posthoc.py", "THRESH (fixed before computing)")
+E("4.55", "Its predicted volume rose from 4.55 to 13.48 mL", WX, "variants.hard_majority.absolute.vol_pred_ml.estimate", WV["hard_majority"]["absolute"]["vol_pred_ml"]["estimate"], lambda v: f"{v:.2f}")
+E("13.48", "Its predicted volume rose from 4.55 to 13.48 mL", WX, "variants.prob_mean_ge_0.10.absolute.vol_pred_ml.estimate", WV["prob_mean_ge_0.10"]["absolute"]["vol_pred_ml"]["estimate"], lambda v: f"{v:.2f}")
+E("0.050", "its detection of 14–50 mm³ lesions from 0.050 to 0.104", WX, "variants.hard_majority.small_14_50_detected_pooled.proportion", WV["hard_majority"]["small_14_50_detected_pooled"]["proportion"], d)
+E("0.104", "its detection of 14–50 mm³ lesions from 0.050 to 0.104", WX, "variants.prob_mean_ge_0.10.small_14_50_detected_pooled.proportion", WV["prob_mean_ge_0.10"]["small_14_50_detected_pooled"]["proportion"], d)
+v10 = WV["prob_mean_ge_0.10"]["vs_flames"]
+for w, v, f in (("−0.256", v10["f1"]["estimate"], "estimate"), ("−0.309", v10["f1"]["ci95"][0], "ci95[0]"), ("−0.208", v10["f1"]["ci95"][1], "ci95[1]")):
+    E(w, "(ΔF1 −0.256, 95% CI −0.309 to −0.208)", WX, f"variants.prob_mean_ge_0.10.vs_flames.f1.{f}", v, d)
+E("−5.69", "still had fewer false lesions (−5.69 per scan)", WX, "variants.prob_mean_ge_0.10.vs_flames.false_lesions.estimate", v10["false_lesions"]["estimate"], lambda v: d(v, 2))
+assert WMH["_provenance"]["hard_majority_reproduces_per_scan_csv"]
+for key, label in (("hard_majority", "Pre-registered: footprint majority of the hard label"), ("prob_mean_ge_0.50", "Probability ≥ 0.50"),
+                   ("prob_mean_ge_0.25", "Probability ≥ 0.25"), ("prob_mean_ge_0.10", "Probability ≥ 0.10")):
+    a, vf = WV[key]["absolute"], WV[key]["vs_flames"]
+    rowtxt = (f"| {label} | {d(a['f1']['estimate'])} | {d(vf['f1']['estimate'])} ({d(vf['f1']['ci95'][0])} to {d(vf['f1']['ci95'][1])}) | "
+              f"{d(vf['false_lesions']['estimate'], 2)} | {d(a['recall']['estimate'])} | {a['vol_pred_ml']['estimate']:.2f} | "
+              f"{WV[key]['small_14_50_detected_pooled']['proportion']:.3f} |")
+    E(norm(rowtxt), rowtxt, WX, f"variants.{key}: absolute f1/recall/vol, vs_flames f1/false_lesions, small_14_50", norm(rowtxt), lambda v: v)
+# E1 baselines
+EB = RV["e1_baselines_posthoc"]
+fl_ = EB["fewer_flames_lesions"]
+E("0.932", "identified the poor scans with an AUROC of 0.932", X, "revision.e1_baselines_posthoc.fewer_flames_lesions.auroc", fl_["auroc"], d)
+E("0.861", "(95% CI 0.861–0.987; cohort-stratified 0.956)", X, "… .fewer_flames_lesions.auroc_ci95[0]", fl_["auroc_ci95"][0], d)
+E("0.987", "(95% CI 0.861–0.987; cohort-stratified 0.956)", X, "… .fewer_flames_lesions.auroc_ci95[1]", fl_["auroc_ci95"][1], d)
+E("0.956", "(95% CI 0.861–0.987; cohort-stratified 0.956)", X, "… .fewer_flames_lesions.auroc_cohort_stratified", fl_["auroc_cohort_stratified"], d)
+E("0.840", "ranking by smaller FLAMeS lesion volume gave 0.840", X, "… .smaller_flames_volume.auroc", EB["smaller_flames_volume"]["auroc"], d)
+E("0.884", "(sum of ranks) gave 0.884, lower than the count alone", X, "… .rank_sum_fewer_lesions_and_disagreement.auroc", EB["rank_sum_fewer_lesions_and_disagreement"]["auroc"], d)
+E("0.733", "(Muslim et al. or not) gave 0.733", X, "… .cohort_is_muslim.auroc", EB["cohort_is_muslim"]["auroc"], d)
+E("0.93", "gave an AUROC of 0.93 (post hoc)", X, "… .fewer_flames_lesions.auroc", fl_["auroc"], lambda v: f"{v:.2f}")
+assert abs(EB["mindglide_disagreement"]["auroc"] - expl_auc("mindglide", "thick")["auroc"]) < 1e-12
+ms3_poor = [p for p in RV["poor_scans"] if p["cohort"] == "ms3seg"]
+E("three of the four", "three of the four poor MS3SEG scans had only 1–4 reference lesions", X, "revision.ms3seg_poor_scans_with_at_most_4_ref_lesions / ms3seg poor scans",
+  (RV["ms3seg_poor_scans_with_at_most_4_ref_lesions"], len(ms3_poor)), lambda v: "three of the four" if v == (3, 4) else str(v))
+E("1–4", "three of the four poor MS3SEG scans had only 1–4 reference lesions", X, "revision.poor_scans[ms3seg, n_ref ≤ 4].n_ref (min–max)",
+  [p["n_ref"] for p in ms3_poor if p["n_ref"] <= 4], lambda v: f"{min(v)}–{max(v)}")
+E("10", "Both analyses rest on 14 poor scans, 10 of them from one cohort", X, "e1_posthoc[mindglide].poor_by_cohort.muslim", mg["poor_by_cohort"]["muslim"], i)
+# runtime of the raw arm
+rr = [run("toolbench-mgraw")["seconds_per_case"]["median"], run("toolbench-mgraw-2")["seconds_per_case"]["median"]]
+E("253–286", "253–286 s for MindGlide on raw input (e2-standard-4", V, "runs[toolbench-mgraw, -2].seconds_per_case.median", rr, lambda v: f"{min(v):.0f}–{max(v):.0f}")
+E("13.3", "peak 13.3 GB), 216 s for WMH-SynthSeg", V, "max runs[toolbench-mgraw, -2].peak_mem_gb_max", max(run(x)["peak_mem_gb_max"] for x in ("toolbench-mgraw", "toolbench-mgraw-2")), lambda v: f"{v:.1f}")
+assert led("toolbench-mgraw")["machine_type"] == "e2-standard-4"
+# Table 6 times (UTC)
+def ctime(c):
+    return _dt.datetime.fromisoformat(git("show", "-s", "--format=%cI", c).decode().strip()).astimezone(_dt.timezone.utc).strftime("%H:%M")
+E("20:55", "| 2026-10-21 20:55 (commit; first push 20:58) |", "git", "committer date of 595a94f in UTC", ctime("595a94f"), str)
+E("22:43", "| 2026-10-21 22:43 (commit and push) |", "git + github activity", "committer date of 8315278 in UTC (push 22:43:47)", ctime("8315278"), str)
+pushes = {a["after"][:7]: a["timestamp"] for a in ACT}
+E("20:08", "| 2026-10-22 20:08 (push of 6d507c4) |", "manuscript/data/github_push_activity_paper_f_branch.json", "push after=6d507c4", pushes["6d507c4"], lambda v: v[11:16])
+E("19:37", "| 2026-10-24 19:37 (push) |", "manuscript/data/github_push_activity_paper_f_branch.json", "push after=759084c", pushes["759084c"], lambda v: v[11:16])
+E("14:54", "| 2026-10-24 19:37 and 2026-10-28 14:54 (pushes) |", "manuscript/data/github_push_activity_paper_f_branch.json", "push after=3cffc01", pushes["3cffc01"], lambda v: v[11:16])
+E("00:01", "| 2026-10-29 00:01 (push of 7a9a24e) |", "manuscript/data/github_push_activity_paper_f_branch.json", "push after=7a9a24e", pushes["7a9a24e"], lambda v: v[11:16])
+E("9", "(run 21 s after the push above and 9 min before the final analysis at 00:11)", "results/run_info.json", "created_utc − 00:01:59 (minutes, floor)", RUNI["created_utc"],
+  lambda v: str(int((_dt.datetime.fromisoformat(v.replace("Z", "+00:00")) - _dt.datetime.fromisoformat("2026-10-29T00:01:59+00:00")).total_seconds() // 60)))
+E("00:11", "(run 21 s after the push above and 9 min before the final analysis at 00:11)", "results/run_info.json", "created_utc", RUNI["created_utc"], lambda v: v[11:16])
+lit("30", "exceeded the pre-stated 30 GB trigger", "docs/research/paper-f/PROTOCOL.md", "section 4.2: --crop if > 30 GB peak")
+lit("150", "boot disk 80 GB instead of 150 GB", "docs/research/paper-f/RUNBOOK.md", "section 2: 150 GB disk for highmem/SAMSEG machines")
+lit("0.78", "including the exploratory E1 AUROC of 0.78, which the product-planning note then read", "results/comparisons.json", "exploratory[mindglide, thick].auroc = 0.779")
+lit("0.78", "The interim included the exploratory E1 AUROC of 0.78", "results/comparisons.json", "exploratory[mindglide, thick].auroc = 0.779")
 
 # ============================================================================= coverage scan of the main text
 main = MS.split("# 1. Introduction")[1].split("# Pre-registration deviations")[0]

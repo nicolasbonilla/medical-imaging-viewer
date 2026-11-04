@@ -73,6 +73,44 @@ WMH-SynthSeg and SAMSEG are still pending (FreeSurfer licence), so no row is fin
 Product consequence today: keep FLAMeS as the only segmenter; prepare (not ship) the thick-slice
 notice and a second-opinion design, both to be confirmed when the FreeSurfer tools are in.
 
+*Superseded by section 5b (2026-10-31): the "criterion met" reading of the disagreement row above does
+not stand.*
+
+## 5b. Final reading (2026-10-31; all tools; after the internal review of the manuscript)
+
+Sources: `research/paper_f/results/` (final pre-registered results, commit 1d3be48) and the post hoc
+numbers of `research/paper_f/manuscript/data/extra_numbers.json` (labelled post hoc).
+
+> **Resumen en español sencillo.** FLAMeS sigue siendo el mejor modelo probado, también en cortes
+> gruesos: nada que cambiar en el segmentador. La idea de la "segunda opinión" **queda descartada**:
+> contar cuántas lesiones marca FLAMeS señala mejor los estudios dudosos que comparar con otro modelo.
+> El aviso de fiabilidad para cortes gruesos no se puede publicar con estas cifras tal cual sin una
+> revisión de licencias (ver abajo).
+
+| Row of section 2 | Final evidence | Final reading |
+|---|---|---|
+| A CPU tool outperforms FLAMeS on thick slices | lesion F1 vs FLAMeS: MindGlide −0.170, SAMSEG −0.237 (129 scans), WMH-SynthSeg −0.384, all Holm p < 0.002; no tool meets the reading rule | **Not met**: no thickness-aware routing |
+| Equivalent | no tool equivalent | not met |
+| FLAMeS best, but worse on thick than on 1 mm | FLAMeS F1 0.724 on thick vs 0.765 on the 1 mm grid; 6.9 vs 3.8 false lesions per scan; 14–50 mm³ lesions found 49% vs 56%. The two bands are different cohorts (and the "1 mm" band is mostly MSLesSeg, acquired with ~2.6 mm slices), so this is a description, not a measured effect of slice thickness | Notice still possible, but **blocked by licences** (below) and to be worded as research evidence from different cohorts |
+| Disagreement predicts poor FLAMeS scans | MindGlide–FLAMeS disagreement AUROC 0.779 (14 poor scans). Post hoc, a FLAMeS-only score — how few lesions FLAMeS predicted — gives 0.932 (95% CI 0.861–0.987); adding disagreement gives 0.884, no gain. Disagreement mostly tracks "FLAMeS marked few lesions" | **Not supported. No second-opinion flag is proposed.** A FLAMeS-only "few lesions found" rule is a better candidate, but it is post hoc on 14 poor scans and would need its own pre-specified threshold and validation on data not used here |
+| Confirmed-lesions review aid | F1 always drops (MindGlide: −0.074) | **Not met**: not proposed |
+
+**Licence consequences for any product use of paper F numbers (new):**
+- 151 of the 179 thick scans (MS3SEG, Muslim) were skull-stripped with HD-BET, whose model parameters
+  are **CC BY-NC 4.0** (Zenodo record 14445620). Quoting the thick-band F1 / false-lesion figures in the
+  product, its labelling or its marketing is commercial use of results that depend on non-commercial
+  parameters: legal review first, or recompute the figures with a skull stripper whose licence allows
+  it.
+- Ljubljana is **CC BY-NC-ND** according to its laboratory's page (registry commit 71a52ad): its numbers
+  must not feed product calibration, thresholds or marketing, and no derived masks may be published.
+- The conflict of interest (the product already uses FLAMeS, the winner of this benchmark) is declared
+  in the manuscript; any product statement citing paper F must cite it as research evidence produced by
+  the manufacturer.
+
+Product consequence: keep FLAMeS as the only segmenter; do **not** build the second-opinion flag; the
+thick-slice notice stays a draft until the licence question above is settled and the wording is
+reviewed as non-diagnostic.
+
 ## 6. Traceability to open
 
 When a result triggers a row of section 2: create the requirement in SRS-001 (new REQ id, "to be
