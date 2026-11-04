@@ -1,0 +1,87 @@
+# MSTool-AI house style for journal figures (matplotlib >= 3.7).
+# Sizes are FINAL print sizes: figures are drawn at their journal width in millimetres and never rescaled.
+# Loaded by mstool_figstyle.use(); see that module for the palette, layout helpers and output rules.
+
+# ---- type: Arial (Helvetica metrics), 7 pt ticks, 8 pt axis labels ----
+font.family: sans-serif
+font.sans-serif: Arial, Helvetica, Liberation Sans, DejaVu Sans
+font.size: 7
+axes.labelsize: 8
+axes.titlesize: 7
+xtick.labelsize: 7
+ytick.labelsize: 7
+legend.fontsize: 7
+legend.title_fontsize: 7
+text.color: 1A1A1A
+mathtext.fontset: custom
+mathtext.rm: Arial
+mathtext.it: Arial:italic
+mathtext.bf: Arial:bold
+mathtext.sf: Arial
+mathtext.default: regular
+axes.unicode_minus: True
+
+# ---- minimal ink: white ground, thin axes, outward ticks, no top/right spines, no grid ----
+figure.facecolor: white
+axes.facecolor: white
+savefig.facecolor: white
+axes.linewidth: 0.5
+axes.edgecolor: 262626
+axes.labelcolor: 1A1A1A
+axes.labelpad: 2.5
+axes.spines.top: False
+axes.spines.right: False
+axes.grid: False
+axes.axisbelow: True
+axes.titlelocation: left
+axes.titleweight: normal
+axes.titlepad: 3
+axes.xmargin: 0.03
+axes.ymargin: 0.03
+axes.prop_cycle: cycler('color', ['2F5D8A', 'D8A84E', '3B3B3B', 'A3A3A3'])
+grid.color: ECECEC
+grid.linewidth: 0.4
+xtick.direction: out
+ytick.direction: out
+xtick.major.size: 2.5
+ytick.major.size: 2.5
+xtick.minor.size: 1.5
+ytick.minor.size: 1.5
+xtick.major.width: 0.5
+ytick.major.width: 0.5
+xtick.minor.width: 0.4
+ytick.minor.width: 0.4
+xtick.major.pad: 2
+ytick.major.pad: 2
+xtick.color: 262626
+ytick.color: 262626
+xtick.labelcolor: 1A1A1A
+ytick.labelcolor: 1A1A1A
+
+# ---- marks ----
+lines.linewidth: 1.0
+lines.markersize: 4
+lines.markeredgewidth: 0.5
+lines.solid_capstyle: butt
+patch.linewidth: 0.5
+errorbar.capsize: 0
+scatter.edgecolors: none
+
+# ---- legends (used only when direct labelling is impossible) ----
+legend.frameon: False
+legend.handlelength: 1.4
+legend.handleheight: 0.7
+legend.handletextpad: 0.4
+legend.borderaxespad: 0.2
+legend.borderpad: 0.2
+legend.labelspacing: 0.3
+legend.columnspacing: 1.2
+
+# ---- output: exact size (no tight bbox), embedded TrueType (Type 42), 600 dpi raster ----
+figure.dpi: 150
+savefig.dpi: 600
+savefig.bbox: standard
+savefig.pad_inches: 0
+pdf.fonttype: 42
+ps.fonttype: 42
+svg.fonttype: none

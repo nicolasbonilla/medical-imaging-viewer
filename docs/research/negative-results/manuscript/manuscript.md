@@ -673,39 +673,51 @@ the Muslim et al. dataset, PediMS, SibBMS, nnU-Net, HD-BET and LST-AI for making
 
 ## Figure legends
 
-All figures use a colour-blind-safe palette [@wong2011color] and give every series its own marker.
+All figures use a muted colour-blind-safe palette, checked for deuteranopia, protanopia and tritanopia
+[@wong2011color], and give every series its own marker.
 
 **Figure 1. Study 1 primary and key secondary results.** (a) Difference in mean per-scan lesion-wise F1
-on the thick-slice sites, with the pre-registered smallest effect of interest (+0.03) dashed. (b) Ratio
+on the thick-slice sites, with the pre-registered smallest effect of interest (SESOI, +0.03) dashed. (b) Ratio
 of mean false lesions per scan, with the 1.10 margin dashed. (c) H2 non-inferiority at about 1 mm:
 pooled estimates with CIs and the Ljubljana-10 guard-rail point estimates, with margins −0.02 (Dice,
-dashed) and −0.03 (F1, dotted). Paired patient-bootstrap 95 % CIs (B = 10,000). File
-`figures/fig1_flames_thick_primary.(png|pdf)`.
+dashed) and −0.03 (F1, dotted). Points are estimates and bars paired patient-bootstrap 95 % CIs
+(B = 10,000), printed at right. Comparisons of arm A with R are blue, B with R ochre, and contrasts between
+arms grey. File `figures/fig1_flames_thick_primary.(png|pdf)`.
 
 **Figure 2. Study 1 per-site means for all four arms** (point estimates; the pre-registered code does
-not bootstrap S2). Below the line: the 1-mm sites, one of which (MSLesSeg test) is in-domain for the
+not bootstrap S2). Each small dot is one scan; the larger marker is the per-site mean of those scans. The
+two lower groups, set apart, are the 1-mm sites, one of which (MSLesSeg test) is in-domain for the
 fine-tuned arms.
 
 **Figure 3. Study 1 detection by expert lesion volume and slice-spacing band**, with patient-bootstrap
-95 % CIs (2,000 draws). Dashed lines mark 50 % and 80 % detection. The CIs are marginal per arm; no
-paired comparison between arms was pre-registered for this table.
+95 % CIs (2,000 draws, as coded before any map existed). Bands: B1, Ljubljana-10 and MSLesSeg test
+(32 scans); B2, PediMS (28 scans); B3, Muslim 45 and MS3SEG 31 scans; B4, MS3SEG 69 and Muslim 6 scans.
+Thin grey lines mark 50 % and 80 % detection. The CIs are marginal per arm; no paired comparison between
+arms was pre-registered for this table.
 
-**Figure 4. Study 2 lesion-level AUROC by stage.** (a) v3, pooled leave-one-cohort-out. (b) v3.1, three
-unseen thick-slice sites; hollow markers are the post-hoc analysis with ensemble candidates. (c) v3.2,
-real 1-mm MS lesions vs healthy-control candidates, including the two confound probes.
-Patient-clustered bootstrap 95 % CIs (B = 2,000).
+**Figure 4. Study 2 lesion-level AUROC by stage.** (a) v3, pooled leave-one-cohort-out, MSLesSeg ↔
+Ljubljana-10 (4,400 candidates). (b) v3.1, three unseen thick-slice sites (6,493 fold-0 and 6,052 ensemble
+candidates); hollow markers are the post-hoc analysis with ensemble candidates. (c) v3.2, real 1-mm MS
+lesions vs healthy-control candidates (2,966 vs 263), including the two confound probes. In the K3
+transfer test, the controls-only model ranked held-out MS true vs MS false candidates at 0.65 (ensemble
+mean 0.82). Grey: no training (fold-0 probability light, ensemble dark); blue: learned detectors; ochre:
+confound probe and controls-only model. Patient-clustered bootstrap 95 % CIs (B = 2,000), printed at right.
 
 **Figure 5. Cohort-identity probes.** (a) v3 and (b) v3.1: separability of MSLesSeg from Ljubljana-10
-by feature family (pooled out-of-fold AUROC, biased downward for weak signals). (c) v3.2: separability,
-on false candidates only, of healthy-control candidates from MS patients' candidates (filled), and of
-the two MS cohorts (hollow, reference). Fold-wise AUROC with 95 % CIs. Solid line at 0.5; dashed line
-at 0.70, the v3.2 pre-registered reading threshold (shown for reference in a and b).
+by feature family (pooled out-of-fold AUROC, biased downward for weak signals, so values near or below
+0.5 understate separability). (c) v3.2: separability, on false candidates only, of healthy-control
+candidates from MS patients' candidates (filled), and of the two MS cohorts (hollow, reference). Fold-wise
+AUROC with 95 % CIs. Solid line at 0.5 (cohort not recognisable); dashed line at 0.70, the v3.2
+pre-registered reading threshold (shown for reference in a and b). Colours mark the feature family:
+combined sets dark blue, FLAIR image features ochre, probability map and size blue, fold disagreement grey,
+LST-AI agreement mauve.
 
-**Figure 6. Pre-registration timeline.** (a) Study 1: protocol and amendment commits, their first
-public appearance on GitHub, Kaggle sessions and evaluation VMs. The results push is shown hollow
-because it comes from the author's local log only. (b) Study 2: protocol commit, results commit and
-first public appearance for each stage. Commit times are author-controlled; GitHub times are
-third-party.
+**Figure 6. Pre-registration timeline.** (a) Study 1 (UTC): protocol and amendment commits, their first
+public appearance on GitHub, Kaggle sessions (2 × T4) and cloud CPU evaluation VMs. The results push is
+shown in grey because it comes from the author's local log only. (b) Study 2: protocol commit, results
+commit and first public appearance for each stage, with the times listed at right (UTC). Commit times are
+author-controlled; GitHub push and pull-request times are third-party timestamps (queried 2026-10-31).
+Sources: git history; compute ledger `c8b4239`.
 
 ## References
 
