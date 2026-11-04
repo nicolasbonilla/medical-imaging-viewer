@@ -1,0 +1,867 @@
+{
+ "script": "research/paper_c/power_msseg2.py",
+ "H3_power_analytic_holm_worst_case": {
+  "n_stable=11, true rate=0.4": 0.2465018675200002,
+  "n_stable=11, true rate=0.5": 0.5,
+  "n_stable=11, true rate=0.6": 0.7534981324799999,
+  "n_stable=11, true rate=0.75": 0.965672492980957,
+  "n_stable=11, true rate=0.9": 0.99970429392,
+  "n_stable=36, true rate=0.4": 0.616022217492578,
+  "n_stable=36, true rate=0.5": 0.9337509180186316,
+  "n_stable=36, true rate=0.6": 0.9967731411484435,
+  "n_stable=36, true rate=0.75": 0.9999990528372711,
+  "n_stable=36, true rate=0.9": 0.9999999999999938
+ },
+ "date": "2026-10-31",
+ "seed": 20261031,
+ "sims": 2000,
+ "candidate_cache_sha256": "811e16d75e1a4fbbcfc193c589c3fc70f96cea90248883f51b468029127bc0e9",
+ "development_inputs": {
+  "A4": {
+   "n_patients": 20,
+   "q_any_false": 0.9761904761904762,
+   "p_det_new": 0.3542600896860987,
+   "max_false_quantiles_0_25_50_75_90_100": [
+    -0.15144245326519012,
+    0.49496890604496,
+    0.7732717394828796,
+    0.9755905121564865,
+    1.0795154213905336,
+    1.136121153831482
+   ],
+   "n_true_scores": 176,
+   "true_score_quartiles": [
+    0.8035468012094498,
+    1.261581540107727,
+    1.6565380990505219
+   ]
+  },
+  "A2": {
+   "n_patients": 25,
+   "q_any_false": 0.9807692307692307,
+   "p_det_new": 0.3333333333333333,
+   "max_false_quantiles_0_25_50_75_90_100": [
+    0.16540946066379547,
+    0.47239214181900024,
+    0.7539714574813843,
+    1.1719661951065063,
+    2.1851164340972913,
+    5.3418121337890625
+   ],
+   "n_true_scores": 88,
+   "true_score_quartiles": [
+    0.3958997577428818,
+    0.7355377972126007,
+    1.2866566181182861
+   ]
+  }
+ },
+ "msseg2_assumptions": {
+  "P(K=1 | active)": 0.265625,
+  "E[K | K>=2]": 10.042553191489361,
+  "sample_sizes": {
+   "S1_training_only": {
+    "stable": 11,
+    "active": 29
+   },
+   "S2_training_plus_test": {
+    "stable": 36,
+    "active": 64
+   }
+  }
+ },
+ "results": {
+  "S1_training_only | consistent (A4 tail)": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.07854545454545453,
+     "true_flag_active_mean": 0.6254137931034484,
+     "true_flag_active_p10_p90": [
+      0.5172413793103449,
+      0.7241379310344828
+     ],
+     "lesion_sensitivity_mean": 0.21392295842018708,
+     "P(H1 violation flagged)": 0.0015,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.993,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.06854545454545456,
+     "true_flag_active_mean": 0.6230517241379311,
+     "true_flag_active_p10_p90": [
+      0.5172413793103449,
+      0.7241379310344828
+     ],
+     "lesion_sensitivity_mean": 0.21207010497583373,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.9935,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.17340909090909087,
+     "true_flag_active_mean": 0.6431034482758621,
+     "true_flag_active_p10_p90": [
+      0.5172413793103449,
+      0.7586206896551724
+     ],
+     "lesion_sensitivity_mean": 0.22857190717138917,
+     "P(H1 violation flagged)": 0.002,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.997,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 0.9995
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.15718181818181814,
+     "true_flag_active_mean": 0.6367068965517242,
+     "true_flag_active_p10_p90": [
+      0.5172413793103449,
+      0.7586206896551724
+     ],
+     "lesion_sensitivity_mean": 0.2232520386449765,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.9945,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S1_training_only | consistent, pessimistic detection": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.07731818181818181,
+     "true_flag_active_mean": 0.4139827586206897,
+     "true_flag_active_p10_p90": [
+      0.3103448275862069,
+      0.5172413793103449
+     ],
+     "lesion_sensitivity_mean": 0.09398877248431521,
+     "P(H1 violation flagged)": 0.002,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.561,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 0.9995
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.06881818181818183,
+     "true_flag_active_mean": 0.41262068965517246,
+     "true_flag_active_p10_p90": [
+      0.3103448275862069,
+      0.5172413793103449
+     ],
+     "lesion_sensitivity_mean": 0.09375328660961284,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.556,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.17881818181818177,
+     "true_flag_active_mean": 0.43824137931034485,
+     "true_flag_active_p10_p90": [
+      0.3103448275862069,
+      0.5517241379310345
+     ],
+     "lesion_sensitivity_mean": 0.10333369012461197,
+     "P(H1 violation flagged)": 0.0005,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.652,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 0.9985
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.15654545454545457,
+     "true_flag_active_mean": 0.4312413793103449,
+     "true_flag_active_p10_p90": [
+      0.3103448275862069,
+      0.5517241379310345
+     ],
+     "lesion_sensitivity_mean": 0.10059162715776257,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.6235,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S1_training_only | heterogeneous (A2 tail)": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.08118181818181819,
+     "true_flag_active_mean": 0.1409310344827586,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.4827586206896552
+     ],
+     "lesion_sensitivity_mean": 0.03296902098282723,
+     "P(H1 violation flagged)": 0.0015,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.183,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.0716818181818182,
+     "true_flag_active_mean": 0.11820689655172413,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.5172413793103449
+     ],
+     "lesion_sensitivity_mean": 0.031258574829838716,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.172,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.18368181818181817,
+     "true_flag_active_mean": 0.4669310344827586,
+     "true_flag_active_p10_p90": [
+      0.20689655172413793,
+      0.6551724137931034
+     ],
+     "lesion_sensitivity_mean": 0.1301524562942367,
+     "P(H1 violation flagged)": 0.002,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.744,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 0.998
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.16136363636363638,
+     "true_flag_active_mean": 0.3157931034482759,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.6551724137931034
+     ],
+     "lesion_sensitivity_mean": 0.09039750070593391,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.4855,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S1_training_only | mixed tail": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.08777272727272727,
+     "true_flag_active_mean": 0.4150344827586207,
+     "true_flag_active_p10_p90": [
+      0.034482758620689655,
+      0.6551724137931034
+     ],
+     "lesion_sensitivity_mean": 0.12006360486504276,
+     "P(H1 violation flagged)": 0.0015,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.6545,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.08131818181818182,
+     "true_flag_active_mean": 0.2846896551724138,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.6551724137931034
+     ],
+     "lesion_sensitivity_mean": 0.085832657041758,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.4435,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.19104545454545455,
+     "true_flag_active_mean": 0.613,
+     "true_flag_active_p10_p90": [
+      0.4827586206896552,
+      0.7241379310344828
+     ],
+     "lesion_sensitivity_mean": 0.20686767769842535,
+     "P(H1 violation flagged)": 0.0025,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.981,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.17131818181818181,
+     "true_flag_active_mean": 0.504551724137931,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.7241379310344828
+     ],
+     "lesion_sensitivity_mean": 0.1630928710964016,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.7975,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S1_training_only | mixed tail, pessimistic detection": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.09027272727272727,
+     "true_flag_active_mean": 0.2343965517241379,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.4482758620689655
+     ],
+     "lesion_sensitivity_mean": 0.046383599660963434,
+     "P(H1 violation flagged)": 0.001,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.166,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.08054545454545455,
+     "true_flag_active_mean": 0.1630689655172414,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.4482758620689655
+     ],
+     "lesion_sensitivity_mean": 0.033830886066430095,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.1365,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.18886363636363632,
+     "true_flag_active_mean": 0.4025344827586207,
+     "true_flag_active_p10_p90": [
+      0.27586206896551724,
+      0.5172413793103449
+     ],
+     "lesion_sensitivity_mean": 0.09044226357170179,
+     "P(H1 violation flagged)": 0.003,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.531,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 0.9955
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.17122727272727273,
+     "true_flag_active_mean": 0.31841379310344825,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.5172413793103449
+     ],
+     "lesion_sensitivity_mean": 0.07020659723527527,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.386,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S1_training_only | A-dom violated (stable from A2 tail, active from A4)": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.2565454545454545,
+     "true_flag_active_mean": 0.572396551724138,
+     "true_flag_active_p10_p90": [
+      0.41379310344827586,
+      0.7241379310344828
+     ],
+     "lesion_sensitivity_mean": 0.181951890497045,
+     "P(H1 violation flagged)": 0.316,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.915,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 0.9985
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.07200000000000001,
+     "true_flag_active_mean": 0.12939655172413794,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.5172413793103449
+     ],
+     "lesion_sensitivity_mean": 0.03384513519004399,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.1915,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.32954545454545453,
+     "true_flag_active_mean": 0.6326034482758621,
+     "true_flag_active_p10_p90": [
+      0.5172413793103449,
+      0.7586206896551724
+     ],
+     "lesion_sensitivity_mean": 0.22143401497505283,
+     "P(H1 violation flagged)": 0.091,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.9915,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 0.9605
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.16259090909090906,
+     "true_flag_active_mean": 0.3233620689655172,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.6551724137931034
+     ],
+     "lesion_sensitivity_mean": 0.09287454828076482,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.51,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S2_training_plus_test | consistent (A4 tail)": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.07556944444444445,
+     "true_flag_active_mean": 0.6219375,
+     "true_flag_active_p10_p90": [
+      0.546875,
+      0.703125
+     ],
+     "lesion_sensitivity_mean": 0.21295470930118968,
+     "P(H1 violation flagged)": 0.0005,
+     "power_holm": {
+      "H2_detection_gt_0.25": 1.0,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.05922222222222223,
+     "true_flag_active_mean": 0.618171875,
+     "true_flag_active_p10_p90": [
+      0.546875,
+      0.6875
+     ],
+     "lesion_sensitivity_mean": 0.20981938157808872,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 1.0,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.17481944444444444,
+     "true_flag_active_mean": 0.64625,
+     "true_flag_active_p10_p90": [
+      0.5625,
+      0.71875
+     ],
+     "lesion_sensitivity_mean": 0.23113765594526875,
+     "P(H1 violation flagged)": 0.0025,
+     "power_holm": {
+      "H2_detection_gt_0.25": 1.0,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.17069444444444445,
+     "true_flag_active_mean": 0.644390625,
+     "true_flag_active_p10_p90": [
+      0.5625,
+      0.71875
+     ],
+     "lesion_sensitivity_mean": 0.22940375018324066,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 1.0,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S2_training_plus_test | consistent, pessimistic detection": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.07647222222222223,
+     "true_flag_active_mean": 0.4157421875,
+     "true_flag_active_p10_p90": [
+      0.34375,
+      0.5
+     ],
+     "lesion_sensitivity_mean": 0.09349838896697321,
+     "P(H1 violation flagged)": 0.0005,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.853,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.05808333333333334,
+     "true_flag_active_mean": 0.4135,
+     "true_flag_active_p10_p90": [
+      0.328125,
+      0.484375
+     ],
+     "lesion_sensitivity_mean": 0.09261330780797533,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.839,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.17304166666666668,
+     "true_flag_active_mean": 0.44040625,
+     "true_flag_active_p10_p90": [
+      0.359375,
+      0.53125
+     ],
+     "lesion_sensitivity_mean": 0.10392759196570604,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.9125,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.16994444444444445,
+     "true_flag_active_mean": 0.43725,
+     "true_flag_active_p10_p90": [
+      0.34375,
+      0.515625
+     ],
+     "lesion_sensitivity_mean": 0.10274698099971016,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.899,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S2_training_plus_test | heterogeneous (A2 tail)": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.08161111111111112,
+     "true_flag_active_mean": 0.1151953125,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.421875
+     ],
+     "lesion_sensitivity_mean": 0.025248521835588386,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.2045,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.06333333333333334,
+     "true_flag_active_mean": 0.0773515625,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.40625
+     ],
+     "lesion_sensitivity_mean": 0.017942538028689663,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.137,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.181125,
+     "true_flag_active_mean": 0.5005390625,
+     "true_flag_active_p10_p90": [
+      0.390625,
+      0.625
+     ],
+     "lesion_sensitivity_mean": 0.13635691709499495,
+     "P(H1 violation flagged)": 0.0015,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.956,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.17431944444444444,
+     "true_flag_active_mean": 0.4360546875,
+     "true_flag_active_p10_p90": [
+      0.015625,
+      0.625
+     ],
+     "lesion_sensitivity_mean": 0.11987170278125035,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.806,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S2_training_plus_test | mixed tail": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.0905138888888889,
+     "true_flag_active_mean": 0.4721171875,
+     "true_flag_active_p10_p90": [
+      0.328125,
+      0.625
+     ],
+     "lesion_sensitivity_mean": 0.13011126790122096,
+     "P(H1 violation flagged)": 0.002,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.875,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.07308333333333335,
+     "true_flag_active_mean": 0.32403125,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.609375
+     ],
+     "lesion_sensitivity_mean": 0.08840418445401557,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.595,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.19065277777777778,
+     "true_flag_active_mean": 0.6213359375,
+     "true_flag_active_p10_p90": [
+      0.546875,
+      0.703125
+     ],
+     "lesion_sensitivity_mean": 0.21144142417433948,
+     "P(H1 violation flagged)": 0.001,
+     "power_holm": {
+      "H2_detection_gt_0.25": 1.0,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.18333333333333338,
+     "true_flag_active_mean": 0.60190625,
+     "true_flag_active_p10_p90": [
+      0.5,
+      0.703125
+     ],
+     "lesion_sensitivity_mean": 0.20042820535894057,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.99,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S2_training_plus_test | mixed tail, pessimistic detection": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.08958333333333335,
+     "true_flag_active_mean": 0.25875,
+     "true_flag_active_p10_p90": [
+      0.109375,
+      0.40625
+     ],
+     "lesion_sensitivity_mean": 0.049473450019977265,
+     "P(H1 violation flagged)": 0.002,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.2105,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.07251388888888889,
+     "true_flag_active_mean": 0.1782109375,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.390625
+     ],
+     "lesion_sensitivity_mean": 0.034226620767784474,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.155,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.18981944444444446,
+     "true_flag_active_mean": 0.4111328125,
+     "true_flag_active_p10_p90": [
+      0.328125,
+      0.484375
+     ],
+     "lesion_sensitivity_mean": 0.09261600594985243,
+     "P(H1 violation flagged)": 0.002,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.827,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.1828055555555556,
+     "true_flag_active_mean": 0.391625,
+     "true_flag_active_p10_p90": [
+      0.28125,
+      0.484375
+     ],
+     "lesion_sensitivity_mean": 0.08706983183418752,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.729,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  },
+  "S2_training_plus_test | A-dom violated (stable from A2 tail, active from A4)": {
+   "a0.1": {
+    "pooled": {
+     "false_activity_stable_mean": 0.23873611111111112,
+     "true_flag_active_mean": 0.565703125,
+     "true_flag_active_p10_p90": [
+      0.453125,
+      0.671875
+     ],
+     "lesion_sensitivity_mean": 0.17529374862971606,
+     "P(H1 violation flagged)": 0.795,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.979,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.06425,
+     "true_flag_active_mean": 0.08184375,
+     "true_flag_active_p10_p90": [
+      0.0,
+      0.40625
+     ],
+     "lesion_sensitivity_mean": 0.01886355285938599,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.1455,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   },
+   "a0.2": {
+    "pooled": {
+     "false_activity_stable_mean": 0.317625,
+     "true_flag_active_mean": 0.629328125,
+     "true_flag_active_p10_p90": [
+      0.546875,
+      0.703125
+     ],
+     "lesion_sensitivity_mean": 0.21875039758661913,
+     "P(H1 violation flagged)": 0.337,
+     "power_holm": {
+      "H2_detection_gt_0.25": 1.0,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    },
+    "stable_conditional": {
+     "false_activity_stable_mean": 0.1741527777777778,
+     "true_flag_active_mean": 0.4377578125,
+     "true_flag_active_p10_p90": [
+      0.015625,
+      0.625
+     ],
+     "lesion_sensitivity_mean": 0.12108267904169084,
+     "P(H1 violation flagged)": 0.0,
+     "power_holm": {
+      "H2_detection_gt_0.25": 0.8125,
+      "H3_app_rule_overcalls": 1.0,
+      "H4_cfm_below_app_rule": 1.0
+     }
+    }
+   }
+  }
+ }
+}

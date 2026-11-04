@@ -1,0 +1,19 @@
+Paper C stage 0 (development, pilot data only) — 2026-10-31
+cache sha256 811e16d75e1a4fbbcfc193c589c3fc70f96cea90248883f51b468029127bc0e9
+{"A4_patients": 20, "A4_new_candidates": 282, "A4_true": 176, "A2_patients": 25, "A2_new_candidates": 247, "A2_true": 88}
+A4_auroc: {"S_sub": [0.845, 0.733, 0.917], "S_dp": [0.777, 0.672, 0.841], "S_v2_crossfitted": [0.846, 0.743, 0.907]}
+A4_cfm_loo S_sub a0.1: FWER 2/20 [0.01,0.32] true-flag 18/20 lesion-sens 0.231 false/pt 0.10
+A4_cfm_loo S_sub a0.2: FWER 4/20 [0.06,0.44] true-flag 18/20 lesion-sens 0.251 false/pt 0.20
+A4_cfm_loo S_dp a0.1: FWER 2/20 [0.01,0.32] true-flag 14/20 lesion-sens 0.126 false/pt 0.10
+A4_cfm_loo S_dp a0.2: FWER 4/20 [0.06,0.44] true-flag 15/20 lesion-sens 0.146 false/pt 0.20
+A4_cfm_loo S_v2_nested a0.1: FWER 2/20 [0.01,0.32] true-flag 15/20 lesion-sens 0.132 false/pt 0.15
+A4_cfm_loo S_v2_nested a0.2: FWER 3/20 [0.03,0.38] true-flag 18/20 lesion-sens 0.173 false/pt 0.20
+A2_transport S_sub a0.1: FWER 2/25 [0.01,0.26] true-flag 1/25 lesion-sens 0.004 false/pt 0.16
+A2_transport S_sub a0.2: FWER 5/25 [0.07,0.41] true-flag 5/25 lesion-sens 0.070 false/pt 0.36
+A2_transport S_dp a0.1: FWER 2/25 [0.01,0.26] true-flag 7/25 lesion-sens 0.031 false/pt 0.08
+A2_transport S_dp a0.2: FWER 5/25 [0.07,0.41] true-flag 9/25 lesion-sens 0.116 false/pt 0.24
+A2_transport S_v2_fit_on_A4 a0.1: FWER 2/25 [0.01,0.26] true-flag 0/25 lesion-sens 0.000 false/pt 0.16
+A2_transport S_v2_fit_on_A4 a0.2: FWER 5/25 [0.07,0.41] true-flag 6/25 lesion-sens 0.062 false/pt 0.40
+A2_transport auroc: {"S_sub": [0.746, 0.664, 0.814], "S_v2_fit_on_A4": [0.676, 0.585, 0.748]}
+frozen S_v2: {"feature_order": ["S_sub", "S_dp", "log10_volume_mm3"], "standardisation_mean": [0.8189522769691832, 0.6497422134213097, 1.8452519935743497], "standardisation_sd": [0.8297443236716481, 0.35694593227929217, 0.5655829473878449], "coef": [1.217613156225198, -0.03689708705807627, 1.1685647933949448], "intercept": 0.8799149690317088, "penalty": "l2", "C": 1.0, "output": "logit (decision_function)"}
+frozen S_v2 sha256: 92faf4425b28411f1989aea20d93b668e9ade49cdb35543aa3bdf043364f013e
