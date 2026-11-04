@@ -1,0 +1,31 @@
+{
+ "status": "POST HOC (revision, PROTOCOL-v0.3 \u00a713 entry 11 (i))",
+ "cache_sha256": "2096109e4da247aeaf03db43f4f5be02a14f95a450f711bb349e4942b9a6f4ec",
+ "sites": {
+  "mslesseg": {
+   "first_scans": 75,
+   "safe_above_top_false_gamma_0.1": 0.64,
+   "safe_above_top_false_gamma_0.2": 0.3466666666666667
+  },
+  "openms": {
+   "first_scans": 10,
+   "safe_above_top_false_gamma_0.1": 0.6,
+   "safe_above_top_false_gamma_0.2": 0.3
+  },
+  "ms3seg": {
+   "first_scans": 100,
+   "safe_above_top_false_gamma_0.1": 0.58,
+   "safe_above_top_false_gamma_0.2": 0.28
+  },
+  "muslim": {
+   "first_scans": 51,
+   "safe_above_top_false_gamma_0.1": 0.7843137254901961,
+   "safe_above_top_false_gamma_0.2": 0.5098039215686274
+  },
+  "pedims": {
+   "first_scans": 9,
+   "safe_above_top_false_gamma_0.1": 0.6666666666666666,
+   "safe_above_top_false_gamma_0.2": 0.2222222222222222
+  }
+ }
+}

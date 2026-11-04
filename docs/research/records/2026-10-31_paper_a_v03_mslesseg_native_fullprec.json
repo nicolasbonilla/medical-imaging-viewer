@@ -1,0 +1,263 @@
+{
+ "status": "POST HOC (added after the v0.3 results)",
+ "source_csv": "MSLesSeg Dataset/info_dataset/patient_scanners_info/patient_scanners_info_FLAIR.csv",
+ "source_csv_sha256": "958ca1e9a5858fc36ed9795b3ef7f91123824012f485738dd484b38221e93ede",
+ "csv_rows": 115,
+ "cache_sha256": "2096109e4da247aeaf03db43f4f5be02a14f95a450f711bb349e4942b9a6f4ec",
+ "matched_scans": 115,
+ "native_thickness_counts": {
+  "3.0": 52,
+  "None": 5,
+  "5.0": 8,
+  "2.3": 25,
+  "4.0": 7,
+  "2.0": 18
+ },
+ "native_group_counts": {
+  "3 mm": 52,
+  "unknown": 5,
+  "4-5 mm": 15,
+  "2-2.3 mm": 43
+ },
+ "scanner_counts": {
+  "Philips Medical Systems Achieva dStream": 24,
+  "Philips Healthcare Ingenia": 25,
+  "Philips Medical Systems Ingenia": 33,
+  "NONE NONE": 5,
+  "GE MEDICAL SYSTEMS Signa HDxt": 4,
+  "GE MEDICAL SYSTEMS SIGNA Explorer": 2,
+  "Philips Ingenia": 16,
+  "GE MEDICAL SYSTEMS Optima MR450w": 2,
+  "Philips Achieva dStream": 1,
+  "GE MEDICAL SYSTEMS SIGNA HDe": 1,
+  "Philips Medical Systems Achieva": 1,
+  "SIEMENS Aera": 1
+ },
+ "tr_counts": {
+  "4800": 40,
+  "9000": 18,
+  "NONE": 5,
+  "11000": 10,
+  "6800": 19,
+  "8002": 4,
+  "8000": 16,
+  "5202": 2,
+  "9002": 1
+ },
+ "group|2-2.3 mm": {
+  "scans": 43,
+  "patients": 39,
+  "raw_sensitivity_by_size_bin": [
+   0.36879432624113473,
+   0.7444633730834753,
+   0.8552188552188552,
+   0.9051094890510949,
+   0.9777777777777777
+  ],
+  "lesions_by_size_bin": [
+   141,
+   587,
+   594,
+   274,
+   135
+  ],
+  "D2|P1|0.1": {
+   "realised_fdr": 0.023255813953488372,
+   "ci95": [
+    0.0,
+    0.07317073170731707
+   ],
+   "sens_e2e": 0.008665511265164644,
+   "n_sel": 16
+  },
+  "D2|P1|0.2": {
+   "realised_fdr": 0.04080933506378103,
+   "ci95": [
+    0.002562576312576315,
+    0.09922794308088427
+   ],
+   "sens_e2e": 0.11900635470826113,
+   "n_sel": 218
+  },
+  "D1|P1|0.1": {
+   "realised_fdr": 0.029645024378266514,
+   "ci95": [
+    0.00753147417503587,
+    0.05502205249024674
+   ],
+   "sens_e2e": 0.12478336221837089,
+   "n_sel": 230
+  },
+  "D1|P1|0.2": {
+   "realised_fdr": 0.07756838587965566,
+   "ci95": [
+    0.048655501821934385,
+    0.10742728047144542
+   ],
+   "sens_e2e": 0.3876372039283651,
+   "n_sel": 730
+  }
+ },
+ "group|3 mm": {
+  "scans": 52,
+  "patients": 28,
+  "raw_sensitivity_by_size_bin": [
+   0.2872340425531915,
+   0.6524590163934426,
+   0.774712643678161,
+   0.8285714285714286,
+   0.8560606060606061
+  ],
+  "lesions_by_size_bin": [
+   94,
+   305,
+   435,
+   210,
+   132
+  ],
+  "D2|P1|0.1": {
+   "realised_fdr": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "sens_e2e": 0.012755102040816327,
+   "n_sel": 15
+  },
+  "D2|P1|0.2": {
+   "realised_fdr": 0.005151098901098901,
+   "ci95": [
+    0.0,
+    0.013571428571428573
+   ],
+   "sens_e2e": 0.06037414965986394,
+   "n_sel": 73
+  },
+  "D1|P1|0.1": {
+   "realised_fdr": 0.005151098901098901,
+   "ci95": [
+    0.0,
+    0.013571428571428573
+   ],
+   "sens_e2e": 0.08163265306122448,
+   "n_sel": 98
+  },
+  "D1|P1|0.2": {
+   "realised_fdr": 0.02447278137944179,
+   "ci95": [
+    0.009051525522872328,
+    0.043759530512884164
+   ],
+   "sens_e2e": 0.22193877551020408,
+   "n_sel": 285
+  }
+ },
+ "group|4-5 mm": {
+  "scans": 15,
+  "patients": 15,
+  "raw_sensitivity_by_size_bin": [
+   0.16,
+   0.3898305084745763,
+   0.7342657342657343,
+   0.8169014084507042,
+   0.7142857142857143
+  ],
+  "lesions_by_size_bin": [
+   25,
+   59,
+   143,
+   71,
+   35
+  ],
+  "D2|P1|0.1": {
+   "realised_fdr": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "sens_e2e": 0.0,
+   "n_sel": 0
+  },
+  "D2|P1|0.2": {
+   "realised_fdr": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "sens_e2e": 0.02702702702702703,
+   "n_sel": 9
+  },
+  "D1|P1|0.1": {
+   "realised_fdr": 0.02222222222222222,
+   "ci95": [
+    0.0,
+    0.06666666666666667
+   ],
+   "sens_e2e": 0.05105105105105105,
+   "n_sel": 18
+  },
+  "D1|P1|0.2": {
+   "realised_fdr": 0.022727272727272728,
+   "ci95": [
+    0.0,
+    0.05757575757575758
+   ],
+   "sens_e2e": 0.1921921921921922,
+   "n_sel": 66
+  }
+ },
+ "group|unknown": {
+  "scans": 5,
+  "patients": 4,
+  "raw_sensitivity_by_size_bin": [
+   1.0,
+   0.7948717948717948,
+   0.8636363636363636,
+   0.9,
+   1.0
+  ],
+  "lesions_by_size_bin": [
+   2,
+   39,
+   44,
+   10,
+   9
+  ],
+  "D2|P1|0.1": {
+   "realised_fdr": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "sens_e2e": 0.028846153846153848,
+   "n_sel": 3
+  },
+  "D2|P1|0.2": {
+   "realised_fdr": 0.016666666666666666,
+   "ci95": [
+    0.0,
+    0.0625
+   ],
+   "sens_e2e": 0.10576923076923077,
+   "n_sel": 12
+  },
+  "D1|P1|0.1": {
+   "realised_fdr": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "sens_e2e": 0.11538461538461539,
+   "n_sel": 12
+  },
+  "D1|P1|0.2": {
+   "realised_fdr": 0.07472527472527472,
+   "ci95": [
+    0.02040816326530612,
+    0.14835164835164835
+   ],
+   "sens_e2e": 0.36538461538461536,
+   "n_sel": 42
+  }
+ }
+}

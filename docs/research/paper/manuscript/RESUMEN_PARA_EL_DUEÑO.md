@@ -1,4 +1,4 @@
-# Artículo A — resumen para el dueño (31-10-2026)
+# Artículo A — resumen para el dueño (versión 2, 04-11-2026)
 
 ## Qué es
 
@@ -12,103 +12,82 @@ hospitales.
 La revista prevista es MELBA (artículo completo). La alternativa es una versión corta para el taller
 UNSURE 2027 o para MICCAI.
 
-## Qué dice, en cuatro frases
+## Qué cambió en esta versión
 
-1. **Lo que aguanta:** de media, el dial cumple lo que promete también en hospitales que el programa
-   no vio y con cortes gruesos. Mejor dicho, no encontramos ningún fallo. Eso no demuestra que
-   funcione: en un hospital el resultado quedó sin decidir.
-2. **Lo que falla:** la promesa "en cada resonancia" no aguanta. Calibrada con cortes finos y usada
-   con cortes gruesos, falla en el 21–29 % de las resonancias, cuando el límite era el 10 %. Solo se
-   arregla con al menos 10 pacientes del propio hospital, y entonces el programa casi no marca nada
-   (encuentra menos del 4 % de las lesiones).
-3. **Promediar las cinco versiones del programa** duplica las lesiones que se encuentran, pero no
-   arregla la fiabilidad: mejoró un hospital y empeoró otro.
-4. **En cerebros sanos**, el programa sin filtro marca alguna "lesión" en 85 de 100 personas. La
-   regla de diseminación en el espacio de nuestra aplicación saldría positiva en 19 de 100 sanos.
-   Por eso nunca debe calcularse sin que un médico revise antes las lesiones.
+Un revisor independiente leyó la versión 1 y pidió una **revisión mayor**. Comprobó que las cifras
+salían bien, salvo 8 redondeos con una milésima de error, pero dijo que el artículo se vendía mejor
+de lo que mostraban los datos. Lo hemos corregido todo:
 
-El efecto del grosor de corte está mezclado con el del hospital: cada grosor viene casi siempre de
-un hospital distinto. El artículo lo dice claramente.
-
-## Qué corregimos respecto a los borradores anteriores
-
-- Ya no usamos como prueba "externa" resonancias con las que FLAMeS se entrenó. Ljubljana tiene 20
-  de sus 30 casos dentro del entrenamiento, e ISBI-2015 está entero dentro. ISBI-2015 se ha quitado
-  por completo. De Ljubljana solo usamos los 10 casos limpios, y avisamos de que el hospital sí
-  estaba en el entrenamiento. Además lo comprobamos quitando Ljubljana del todo: los resultados no
-  cambian.
-- Quitamos la frase antigua "0 de 200 sanos con diseminación (como mucho 1,8 %)". Eran 20 repartos
-  de las mismas 30 personas; con 30 personas el techo honrado es de un 10 %. Ahora damos las cifras
-  de 100 sanos distintos.
-- Encontramos un error en los documentos anteriores: decían que el método principal era el único
-  sin ningún fallo detectado. Otro método (Learn-then-Test) tampoco tenía fallos. Está corregido.
-- Añadimos dos métodos de comparación que pedía la revisión: "un candidato por paciente" y los
-  "valores e jerárquicos". Se calcularon después de ver los resultados, y así se dice. El segundo
-  no marca nada con cortes gruesos.
-- El método "por resonancia" (CALM-FDX) se presenta como una aplicación de técnicas conocidas, no
-  como teoría nueva.
+- **Título nuevo:** "La calibración con cortes finos no sirve para cortes gruesos". Ya no dice
+  "pre-registrado" ni "el control medio aguanta".
+- **El resumen dice ahora los veredictos fijados de antemano:**
+  - el control medio, de cortes finos a gruesos, quedó **sin decidir**: no se vio ningún fallo, pero
+    los datos no descartan hasta 1,8 veces lo prometido;
+  - el control "en cada resonancia" **falló**.
+- **El control medio parece mejor de lo que es.** Se mantiene bajo en parte porque cuenta como
+  "sin error" las resonancias en las que el programa no marca nada. Cuando sí marca algo, el error
+  sube: en el grupo de Irak, de media el 18,8 % de lo marcado era falso, frente al 10 % prometido.
+  Y una de cada tres resonancias del grupo iraní superó el 10 % de lesiones falsas.
+- **Somos honestos sobre el registro previo.** El protocolo se escribió 38 minutos antes de los
+  resultados, en el ordenador, por la IA, y no se publicó antes que ellos. El artículo lo dice, y
+  también que esa misma noche otro estudio analizó los mismos datos.
+- **Intervalos más prudentes.** Con tan pocos pacientes (9–10 en dos grupos), esos grupos no se
+  pueden clasificar.
+- **El grosor de corte se presenta como lo que es:** una diferencia entre grupos de hospitales y
+  aparatos, no un efecto demostrado del grosor.
+- **"Hacen falta 10 pacientes del propio hospital"** se reescribió: eso sale del propio diseño del
+  método, no es un hallazgo.
+- **Redondeos:** se corrigieron los 8 que encontró el revisor y otros 4 que encontró nuestra propia
+  comprobación, ahora más estricta. Todas las cifras salen de resultados sin redondear y se
+  redondean una sola vez.
+- **Análisis nuevos** (todos en el ordenador local, sin nube, anotados en el protocolo antes de
+  ejecutarlos):
+  - una simulación: muestra que el error extra con cortes gruesos viene del cambio de aparato, no
+    de que las lesiones de una misma resonancia se parezcan entre sí;
+  - comparación de métodos a igual capacidad de encontrar lesiones: quedan muy parecidos;
+  - más repeticiones para medir el ruido de los sorteos;
+  - la comparación de las cinco versiones del programa con los mismos candidatos.
+- **Licencias:** ahora se dice que el laboratorio de Ljubljana da dos licencias distintas, y que los
+  pesos de FLAMeS figuran como uso libre en un sitio (Zenodo) y como "no comercial" en otro
+  (Hugging Face).
+- **Bibliografía:** corregido el primer autor de MSLesSeg (Guarnera) y la cita de SibBMS (MELBA).
+- **Autor:** Nicolás Bonilla Vargas (Universidad Nacional de Colombia; SRH University München;
+  Daita AI). Conflicto de interés declarado: desarrollas MSTool-AI y estás vinculado a Daita AI.
 
 ## Qué hay en la carpeta
 
 En `docs/research/paper/manuscript/`:
 
-- `manuscript.md`: el artículo, con resumen estructurado, métodos, resultados, limitaciones, tabla
-  de desviaciones del protocolo, ética, licencias y declaraciones.
-- `figures/`: 7 figuras hechas por un programa a partir de los resultados guardados, con colores
-  aptos para daltónicos.
-- `references.bib`: 56 referencias, todas comprobadas contra fuentes. Cuatro tienen un dato que
-  revisar (ver más abajo).
-- `NUMBERS_CHECK.md`: cada número del texto, con el archivo exacto del que sale. Las 186
-  comprobaciones pasan, y las tablas se generan solas desde los resultados.
-- `export/manuscript.docx` y `export/manuscript.pdf`: versiones en Word y PDF, hechas sin internet.
-- `RESUMEN_PARA_EL_DUEÑO.md`: este documento.
+- `manuscript.md`: el artículo, versión 2.
+- `RESPONSE_TO_REVIEW.md`: la respuesta al revisor, punto por punto (en inglés).
+- `NUMBERS_CHECK.md`: cada número del texto con su origen. Las 219 comprobaciones pasan, contra
+  resultados sin redondear.
+- `figures/`: las 7 figuras con el estilo nuevo de la casa. En la figura 1 se distinguen ahora los
+  casos que "cumplen" con el valor estimado por encima de lo prometido.
+- `references.bib`, y `export/manuscript.docx` y `export/manuscript.pdf`.
 
 Todo está guardado y subido a GitHub en la copia de trabajo `research/paper-a-manuscript`, sin unir
-a la copia principal. No se tocó la aplicación ni se usó la nube: todo se calculó en el ordenador
-local.
-
-## Lo que la aplicación ya hace con esto
-
-La tarjeta "fiabilidad por grosor de corte" ya existe en la aplicación, **apagada por defecto**:
-
-- dice el grosor real de la resonancia;
-- dice qué tamaño de lesión se suele encontrar con ese grosor;
-- avisa de que una lista vacía no significa que no haya lesiones;
-- **no muestra ningún porcentaje de lesiones falsas**.
-
-El artículo la presenta como traslado a la práctica, no como validación clínica.
+a la copia principal. No se tocó la aplicación.
 
 ## Lo que tienes que hacer tú (lista corta)
 
-1. **Coautores:** buscar un estadístico y un neurorradiólogo. El artículo lo recomienda antes de
-   enviarlo.
-2. **Una revisión humana de las cifras principales.** Las dos comprobaciones independientes las hizo
-   otra sesión de la IA, no una persona. Además, el código de la comprobación de pacientes no quedó
-   guardado en el repositorio.
-3. **Rellenar los datos que faltan:**
-   - afiliación, ORCID y correo de contacto;
-   - financiación y posibles conflictos de interés (eres el creador de MSTool-AI);
-   - si tu institución exige un permiso ético (normalmente no, con datos públicos anónimos);
-   - si el repositorio será público, con qué licencia, y una copia con DOI.
+1. **Coautores:** un estadístico y un neurorradiólogo.
+2. **Que una persona revise las cifras principales.** Hasta ahora solo las revisaron sesiones de la
+   IA y el revisor independiente.
+3. **Publicar el protocolo y el código en un archivo público con fecha** (OSF o Zenodo, con DOI),
+   ahora mismo. En los próximos estudios, hacerlo *antes* de analizar.
 4. **Licencias antes de vender:**
-   - La página del laboratorio de Ljubljana dice "no comercial y sin obras derivadas". La tarjeta de
-     la aplicación usa cifras de la franja de cortes finos que incluyen 10 casos de Ljubljana. Antes
-     de encender la tarjeta en el producto que se vende, hay que aclarar esa licencia o rehacer la
-     franja sin Ljubljana.
-   - Los sanos (SibBMS) tienen dos licencias distintas escritas. Tampoco pueden usarse en el
-     producto hasta aclararlo.
-5. **Revisar cuatro referencias marcadas** (OWNER-CHECK en `references.bib`):
-   - el volumen de Jin y Candès;
-   - las páginas de Barber et al.;
-   - los datos de la revista de HD-BET;
-   - el título exacto del artículo de MSLesSeg.
-6. **Actualizar la búsqueda de artículos parecidos** justo antes de enviar. La de octubre se hizo en
-   parte sin acceso completo a internet.
-7. **Para el próximo estudio:** registrar el protocolo en un registro público (por ejemplo OSF)
-   *antes* de analizar. Esta vez el protocolo principal solo llegó a GitHub junto con los primeros
-   resultados, y el artículo lo dice. El anexo de los sanos sí llegó 71 minutos antes de sus
-   resultados.
-8. **Opcional, y mejoraría el artículo:**
-   - el brazo de LST-AI en los sanos;
-   - sanos de otro hospital, leídos por un experto;
-   - probar una calibración separada por tipo de adquisición, registrada de antemano.
+   - aclarar la de Ljubljana: la tarjeta de la aplicación usa cifras que incluyen 10 casos suyos;
+   - aclarar la de los pesos de FLAMeS (uso libre en Zenodo, "no comercial" en Hugging Face): afecta
+     a cualquier uso comercial del programa en el navegador;
+   - aclarar la de SibBMS.
+5. **Arreglar una incoherencia en los registros de la tarjeta:** el archivo de datos dice "pendiente
+   de aprobación" y los documentos de requisitos dicen "aprobado".
+6. **Completar la bibliografía en internet** (yo no puedo, trabajo sin conexión): nombres de pila de
+   tres grupos de autores, listas completas de autores de cuatro obras, 11 identificadores DOI y el
+   grosor de 3 mm de PediMS. La lista exacta está en `RESPONSE_TO_REVIEW.md`, apartado E.
+7. **Rellenar** ORCID, financiación, permiso ético (normalmente no hace falta con datos públicos
+   anónimos), y si el código será público y con qué licencia.
+8. **Actualizar la búsqueda de artículos parecidos** justo antes de enviar.
+9. **Opcional:** el brazo de LST-AI en los sanos; sanos de otro hospital leídos por un experto; y
+   probar, con registro previo público, una calibración separada por tipo de aparato.

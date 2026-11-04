@@ -9,7 +9,10 @@
 %   [V-data]   dataset papers/records checked when the data were downloaded (docs/research/
 %              cohorts-extra.md on branch research/cohorts-extra; data/registry.yaml; protocol addendum)
 %   [V-classic] standard reference whose details are unambiguous (textbook / landmark paper)
-%   [OWNER-CHECK] real work, but one field (marked) could not be re-checked offline on 2026-10-31;
+%   [V-review] corrected or completed on 2026-10-31 from the independent review of the manuscript,
+%              whose referee checked all entries on the web (Crossref, arXiv, PMLR, PubMed / Europe PMC,
+%              DataCite, publisher pages); see RESPONSE_TO_REVIEW.md, point B.
+%   [OWNER-CHECK] real work, but one field (marked) could not be re-checked offline;
 %              listed in RESUMEN_PARA_EL_DUEÑO.md as a pre-submission check.
 % No entry was generated from memory alone without one of these tags.
 
@@ -49,8 +52,7 @@
   doi     = {10.1214/22-AOS2244}
 }
 
-% [V-notes] arXiv 2210.01408, journal comment "Journal of Machine Learning Research";
-% [OWNER-CHECK] volume/number 24(244) not re-checked
+% [V-notes] arXiv 2210.01408; volume/number/pages confirmed [V-review]
 @article{jin2023selection,
   author  = {Jin, Ying and Cand{\`e}s, Emmanuel J.},
   title   = {Selection by Prediction with Conformal p-Values},
@@ -84,14 +86,16 @@
   year      = {2019}
 }
 
-% [V-notes] arXiv 2202.13415; journal AoS 51(2) 2023 [OWNER-CHECK pages]
+% [V-notes] arXiv 2202.13415; pages and DOI [V-review]
 @article{barber2023beyond,
   author  = {Barber, Rina Foygel and Cand{\`e}s, Emmanuel J. and Ramdas, Aaditya and Tibshirani, Ryan J.},
   title   = {Conformal Prediction beyond Exchangeability},
   journal = {The Annals of Statistics},
   volume  = {51},
   number  = {2},
+  pages   = {816--845},
   year    = {2023},
+  doi     = {10.1214/23-AOS2276},
   eprint  = {2202.13415},
   archivePrefix = {arXiv}
 }
@@ -191,13 +195,14 @@
   year    = {2022}
 }
 
-% [V-notes] arXiv + PMLR
+% [V-notes] arXiv + PMLR; pages [V-review]
 @inproceedings{gazin2024transductive,
   author    = {Gazin, Ulysse and Blanchard, Gilles and Roquain, Etienne},
   title     = {Transductive Conformal Inference with Adaptive Scores},
   booktitle = {Proceedings of the 27th International Conference on Artificial Intelligence and Statistics (AISTATS)},
   series    = {Proceedings of Machine Learning Research},
   volume    = {238},
+  pages     = {1504--1512},
   year      = {2024},
   eprint    = {2310.18108},
   archivePrefix = {arXiv}
@@ -267,15 +272,14 @@
   year      = {2025}
 }
 
-% [V-notes] arXiv abs (MICCAI UNSURE 2026)
+% [V-notes] arXiv abs; given names and preprint status [V-review] (workshop acceptance self-declared only)
 @misc{adhikary2026bound,
-  author        = {Adhikary and Chabi and Mastmeyer},
+  author        = {Adhikary, Souraj and Chabi, Negar and Mastmeyer, Andre},
   title         = {Bound-Aware Per-Organ Recall Risk Control for Multi-Organ {CT} Segmentation under Clinical Domain Shift},
-  howpublished  = {MICCAI UNSURE workshop 2026},
+  howpublished  = {arXiv preprint},
   year          = {2026},
   eprint        = {2608.18193},
-  archivePrefix = {arXiv},
-  note          = {Given names not recorded in our verification notes}
+  archivePrefix = {arXiv}
 }
 
 % [V-notes] PMC12022056
@@ -289,12 +293,16 @@
   doi     = {10.1038/s41746-025-01616-z}
 }
 
-% [V-notes] arXiv API (MICCAI 2024)
+% [V-notes] arXiv API (MICCAI 2024); LNCS volume, pages, DOI and full names [V-review]
 @inproceedings{lambert2024robust,
-  author    = {Lambert and Forbes and Doyle and Dojat},
+  author    = {Lambert, Benjamin and Forbes, Florence and Doyle, Senan and Dojat, Michel},
   title     = {Robust Conformal Volume Estimation in {3D} Medical Images},
-  booktitle = {Medical Image Computing and Computer Assisted Intervention (MICCAI)},
+  booktitle = {Medical Image Computing and Computer Assisted Intervention -- MICCAI 2024},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {15010},
+  pages     = {633--643},
   year      = {2024},
+  doi       = {10.1007/978-3-031-72117-5_59},
   eprint    = {2407.19938},
   archivePrefix = {arXiv}
 }
@@ -353,13 +361,14 @@
   doi     = {10.1111/jon.70085}
 }
 
-% [V-data] Zenodo record (weights v2.0, CC BY 4.0), pinned in the software's SOUP list
+% [V-data] Zenodo record (weights v2.0), pinned in the software's SOUP list; creator, title, concept DOI [V-review]
 @misc{flames2025weights,
-  author       = {Dereskewicz, E. and La Rosa, F. and others},
-  title        = {{FLAMeS} model weights, version 2.0 (nnU-Net Dataset004\_WML)},
+  author       = {La Rosa, F.},
+  title        = {{FLAMeS}: {FLAIR} Lesion Analysis in Multiple Sclerosis (model weights, version 2.0)},
   howpublished = {Zenodo},
   year         = {2025},
-  doi          = {10.5281/zenodo.17955359}
+  doi          = {10.5281/zenodo.17955359},
+  note         = {Concept DOI 10.5281/zenodo.7626120; CC BY 4.0 on Zenodo}
 }
 
 % [V-notes] publisher PDF read (NeuroImage: Clinical 42, 103611)
@@ -372,7 +381,7 @@
   year    = {2024}
 }
 
-% [OWNER-CHECK] HD-BET journal details not re-checked offline (tool and version are pinned in the manifests)
+% [V-review] volume, pages confirmed; DOI added
 @article{isensee2019hdbet,
   author  = {Isensee, F. and others},
   title   = {Automated Brain Extraction of Multisequence {MRI} Using Artificial Neural Networks},
@@ -380,7 +389,8 @@
   volume  = {40},
   number  = {17},
   pages   = {4952--4964},
-  year    = {2019}
+  year    = {2019},
+  doi     = {10.1002/hbm.24750}
 }
 
 % ---------------------------------------------------------------- datasets
@@ -394,15 +404,15 @@
   year    = {2018}
 }
 
-% [V-notes] "MSLesSeg (ICPR 2024; Sci Data 12:920, 2025)"; data Figshare 10.6084/m9.figshare.27919209 [V-data]
-% [OWNER-CHECK] exact article title and author list
-@article{rondinella2025mslesseg,
-  author  = {Rondinella, A. and Guarnera, F. and others},
+% [V-review] first author Guarnera (equal contribution with Rondinella), author order, DOI; earlier key rondinella2025mslesseg was wrong
+@article{guarnera2025mslesseg,
+  author  = {Guarnera, F. and Rondinella, A. and Crispino and Russo and {Di Lorenzo} and Maimone and Pappalardo and Battiato},
   title   = {{MSLesSeg}: Baseline and Benchmarking of a New Multiple Sclerosis Lesion Segmentation Dataset},
   journal = {Scientific Data},
   volume  = {12},
   pages   = {920},
-  year    = {2025}
+  year    = {2025},
+  doi     = {10.1038/s41597-025-05250-y}
 }
 
 % [V-data]
@@ -456,7 +466,7 @@
 
 % [V-data]
 @article{popa2025pedims,
-  author  = {Popa, M. and Vi{\c{s}}a, G. A. and {\c{S}}ofariu, C. R.},
+  author  = {Popa, M. and Vișa, G. A. and Șofariu, C. R.},
   title   = {{PediMS}: A Pediatric Multiple Sclerosis Lesion Segmentation Dataset},
   journal = {Scientific Data},
   volume  = {12},
@@ -474,13 +484,15 @@
   note         = {CC BY 4.0}
 }
 
-% [V-data] protocol addendum §1; medRxiv preprint (licence stated twice: CC BY 3.0 and CC BY-NC-SA 3.0)
-@misc{tuchinov2025sibbms,
-  author       = {Tuchinov, B. N. and others},
-  title        = {{SibBMS}: Siberian Brain Multiple Sclerosis Dataset with Lesion Segmentation and Patient Meta Information},
-  howpublished = {medRxiv},
-  year         = {2025},
-  doi          = {10.1101/2025.08.14.25333741}
+% [V-data] protocol addendum §1; published MELBA version, DOI and 7 authors [V-review]
+@article{tuchinov2025sibbms,
+  author  = {Tuchinov, B. N. and Prokaeva and Vasilkiv and Stankevich and Korobko and Malkova and Tulupov},
+  title   = {{SibBMS}: Siberian Brain Multiple Sclerosis Dataset with Lesion Segmentation and Patient Meta Information},
+  journal = {Machine Learning for Biomedical Imaging (MELBA)},
+  pages   = {2025:046},
+  year    = {2025},
+  doi     = {10.59275/j.melba.2025-f798},
+  note    = {Preprint: medRxiv 10.1101/2025.08.14.25333741}
 }
 
 % [V-notes] NeuroImage 148:77-102
@@ -493,14 +505,16 @@
   year    = {2017}
 }
 
-% [V-notes] PMC6135867
+% [V-notes] PMC6135867; article number, issue, DOI [V-review]
 @article{commowick2018objective,
   author  = {Commowick, O. and others},
   title   = {Objective Evaluation of Multiple Sclerosis Lesion Segmentation Using a Data Management and Processing Infrastructure},
   journal = {Scientific Reports},
   volume  = {8},
+  number  = {1},
+  pages   = {13650},
   year    = {2018},
-  note    = {PMCID: PMC6135867}
+  doi     = {10.1038/s41598-018-31911-7}
 }
 
 % ---------------------------------------------------------------- clinical context
@@ -515,7 +529,7 @@
   year    = {2018}
 }
 
-% [V-notes] Lancet Neurol 2025;24(10):850-865 (PubMed 40975101)
+% [V-notes] Lancet Neurol 2025;24(10):850-865 (PubMed 40975101); DOI and published correction [V-review]
 @article{montalban2025diagnosis,
   author  = {Montalban, X. and Lebrun-Fr{\'e}nay, C. and Oh, J. and others},
   title   = {Diagnosis of Multiple Sclerosis: 2024 Revisions of the {McDonald} Criteria},
@@ -523,7 +537,9 @@
   volume  = {24},
   number  = {10},
   pages   = {850--865},
-  year    = {2025}
+  year    = {2025},
+  doi     = {10.1016/S1474-4422(25)00270-4},
+  note    = {Correction: Lancet Neurol 24(11):e13}
 }
 
 % [V-notes] Lancet Neurol 2021;20(8):653-670
@@ -601,10 +617,10 @@
   year    = {1955}
 }
 
-% [V-classic]
+% [V-classic]; official designation [V-review]
 @misc{iec62304,
   author       = {{International Electrotechnical Commission}},
-  title        = {{IEC} 62304:2006+{A1}:2015 Medical Device Software -- Software Life Cycle Processes},
+  title        = {{IEC} 62304:2006+{AMD1}:2015 Medical Device Software -- Software Life Cycle Processes (Edition 1.1)},
   howpublished = {International standard},
   year         = {2015}
 }

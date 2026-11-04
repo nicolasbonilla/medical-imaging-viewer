@@ -1,18 +1,18 @@
 {
  "inputs": {
-  "docs/research/records/2026-10-21_paper_a_v03_results.json": "972bb3ef62d8b497809863a777aa65769f9bf83f9b483ba6619fafbdefcbdc43",
-  "docs/research/records/2026-10-21_paper_a_v03_posthoc.json": "9209ffd3b26471ec6194f57129a434a6d708574f7b61f872f587ae2b5aed4ee8",
+  "docs/research/records/2026-10-31_paper_a_v03_results_fullprec.json": "9c9ae9f5a17d5364ad83d5e3ea7f2924ae5a1b1825a9b68c2d290dfd88ee0b22",
+  "docs/research/records/2026-10-31_paper_a_v03_posthoc_fullprec.json": "1884a6ca3a8c016b908a98455c1d2a6b6f2814f3f8d2ff3a670acaf4875b1a1c",
   "docs/research/records/2026-10-24_paper_a_v03c_controls.json": "1200fea597384ad2204af1f683f9062a93bb76d2b2023d62ba4dee693826f09e",
-  "docs/research/records/2026-10-31_paper_a_manuscript_posthoc.json": "21a7540a3af770e8f08a13303d74879ac2a81c545d0f5315da05aa2c01a6b417"
+  "docs/research/records/2026-10-31_paper_a_manuscript_posthoc_fullprec.json": "6a692ea141ccd7de026d66196486c6225736f61e9ebcff2ba307179398769efe"
  },
  "outputs": {
-  "fig1_primary_cells.png": "20835129a3195a658122d8af567edd816bacb3b06aabb89d80172729d77e839b",
-  "fig2_threshold_mechanism.png": "f81bfdc14254baa9301c0f38ee702af53805bda5beda38ae3e0979ee5832ef20",
-  "fig3_detection_by_size_and_band.png": "d1b8350c5ac1e22c637f4d4a990e6b4ffe9320104d453f567201410ca80a25bd",
-  "fig4_ensemble_vs_fold0.png": "22217b2429cc43342c09791f78bb7f75a64c045466fafa3405cb955a67f5fe32",
-  "fig5_recalibration_curve.png": "ea4dab0a7d949510d66a744442569bac82b9e5cfc404bcec73498acda8732fe3",
+  "fig1_primary_cells.png": "898a7a311ded1b234be8b1aa6f425b253fee914cf1cd5ef599b4d057dfe00fa2",
+  "fig2_threshold_mechanism.png": "1c2f15b6fff4d9c183912b9282737a565e29e512832e4afe99c49336203409ea",
+  "fig3_detection_by_size_and_band.png": "7095366a8e7ef1fb530112bcb61bd4431fb6e164ac379aae253e32bc838ee165",
+  "fig4_ensemble_vs_fold0.png": "6ec46c95782c575524eb3ffa5f410aac34206bc9ee8e32dd76a94cc2d55bed26",
+  "fig5_recalibration_curve.png": "ea8a08685f736acb1693ac7858affeea58eae185d39a9614fdfeb1f2fdc1a847",
   "fig6_healthy_controls.png": "a5c4ba04bebc554a2cc28ad65ada1196985f0e0e1e63d4ac07bd024e21f46bb2",
-  "fig7_baselines_validity_power.png": "59639ec085a63ea2c0c2763c57b1ff2cfa40dc5b02ee80ce10e897bfe28c2d82"
+  "fig7_baselines_validity_power.png": "1a79aa2e974aae660b91c50acfc37c5f5303759a1fe7fb9ec1c8518ff64ee413"
  },
  "style": "MSTool-AI house style (mstool_figstyle.py + mstool.mplstyle): Arial, 180 mm, PDF TrueType + 600 dpi PNG",
  "palette": {

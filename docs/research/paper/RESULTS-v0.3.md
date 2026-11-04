@@ -2,6 +2,14 @@
 
 *Research code and research findings, not the medical device. Date: 2026-10-21.*
 
+> **Revision note 2026-11-04.** The journal manuscript (`manuscript/manuscript.md`, version 2.0, after an
+> independent review) supersedes the wording of this file. Values printed here were rounded from records
+> already rounded to 4 decimals; twelve of them are off by 0.001 (e.g. D2 MS3SEG P1 α = 0.2 is 0.115, the
+> > 6.5 mm group 0.119, fold-0 Muslim D3 α = 0.1 0.051). The full-precision records
+> (`records/2026-10-31_paper_a_*_fullprec.json`) and `manuscript/NUMBERS_CHECK.md` are authoritative. The
+> pre-registered P1 verdict is *inconclusive* and is stated as such in the manuscript; "held" wording below
+> is superseded.
+
 - Protocol: `docs/research/paper/PROTOCOL-v0.3.md` — committed before any outcome (9951494);
   implementation clarifications 1–4 (c0c5fa1) and the gate-G1 deviation 5 (50c9b08) were logged
   before any outcome was computed; entry 6 (transparency, after results) and entry 7 (a 3-case

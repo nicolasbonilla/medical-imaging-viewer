@@ -33,10 +33,10 @@ from matplotlib.patches import Rectangle  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", "..", ".."))
 REC = os.path.join(ROOT, "docs", "research", "records")
-F_RES = os.path.join(REC, "2026-10-21_paper_a_v03_results.json")
-F_PH = os.path.join(REC, "2026-10-21_paper_a_v03_posthoc.json")
+F_RES = os.path.join(REC, "2026-10-31_paper_a_v03_results_fullprec.json")
+F_PH = os.path.join(REC, "2026-10-31_paper_a_v03_posthoc_fullprec.json")
 F_CTL = os.path.join(REC, "2026-10-24_paper_a_v03c_controls.json")
-F_MPH = os.path.join(REC, "2026-10-31_paper_a_manuscript_posthoc.json")
+F_MPH = os.path.join(REC, "2026-10-31_paper_a_manuscript_posthoc_fullprec.json")
 
 CLASS_STYLE = {"holds": dict(marker="o", color=fs.TEAL, label="Holds"),
                "inconclusive": dict(marker="D", color=fs.GREY_MID, label="Inconclusive"),
@@ -65,16 +65,19 @@ def sha(p):
     return h.hexdigest()
 
 
-def status_key(fig, x_mm, y_mm, hollow_label=None, gap=4.0):
-    """One-line key for the cell status (and, optionally, the hollow marker)."""
+def status_key(fig, x_mm, y_mm, hollow_label=None, gap=4.0, above_label=None):
+    """One-line key for the cell status (and, optionally, the hollow marker and the 'holds, estimate above
+    nominal' marker: the holds marker with a dark edge)."""
     x = x_mm
-    items = [(v["marker"], v["color"], v["label"], True) for v in CLASS_STYLE.values()]
+    items = [(v["marker"], v["color"], v["label"], True, False) for v in CLASS_STYLE.values()]
+    if above_label:
+        items.append((CLASS_STYLE["holds"]["marker"], CLASS_STYLE["holds"]["color"], above_label, True, True))
     if hollow_label:
-        items.append(("o", fs.INK2, hollow_label, False))
-    for mk, col, lab, filled in items:
+        items.append(("o", fs.INK2, hollow_label, False, False))
+    for mk, col, lab, filled, dark in items:
         fig.lines.append(Line2D([fs.fx(fig, x + 1.4)], [fs.fy(fig, y_mm)], transform=fig.transFigure, marker=mk,
-                                ms=4.4, mew=0.6 if filled else 0.8, ls="none", mfc=col if filled else "white",
-                                mec="white" if filled else col))
+                                ms=4.4, mew=(1.0 if dark else 0.6) if filled else 0.8, ls="none", mfc=col if filled else "white",
+                                mec=(fs.INK if dark else "white") if filled else col))
         t = fs.text_mm(fig, x + 3.4, y_mm, lab, va="center", fontsize=7)
         x += 3.4 + fs.text_width_mm(fig, lab) + gap
     return x
@@ -86,10 +89,12 @@ def nominal_marks(ax, y, nominal, h=0.36):
     ax.plot([nominal, nominal], [y - h, y + h], color=fs.REFLINE, lw=0.6, zorder=1)
 
 
-def cell_marker(ax, x, y, cls, filled=True, ms=4.6):
+def cell_marker(ax, x, y, cls, filled=True, ms=4.6, above=False):
+    """above: a 'holds' cell whose point estimate exceeds the nominal level (dark edge; revision 2)."""
     st = CLASS_STYLE[cls]
-    ax.plot(x, y, marker=st["marker"], ls="none", ms=ms, zorder=4, mew=0.6 if filled else 0.9,
-            mfc=st["color"] if filled else "white", mec="white" if filled else st["color"])
+    dark = above and filled
+    ax.plot(x, y, marker=st["marker"], ls="none", ms=ms, zorder=4, mew=(1.0 if dark else 0.6) if filled else 0.9,
+            mfc=st["color"] if filled else "white", mec=(fs.INK if dark else "white") if filled else st["color"])
 
 
 # --------------------------------------------------------------------------- Figure 1
@@ -145,14 +150,15 @@ def fig1_primary(res):
             nominal_marks(ax, yy, c["nominal"])
             lo, hi = c["ci95"]
             ax.plot([lo, hi], [yy, yy], color=fs.INK, lw=fs.LW_CI, zorder=3)
-            cell_marker(ax, c["estimate"], yy, c["class"], filled=not c["uninformative_abstention"])
+            cell_marker(ax, c["estimate"], yy, c["class"], filled=not c["uninformative_abstention"],
+                        above=c["class"] == "holds" and c["estimate"] > c["nominal"])
         ax.set_xlim(*xlim)
         ax.set_xticks(ticks)
         ax.set_xticklabels(["0" if v == 0 else f"{v:g}" for v in ticks])
         ax.set_yticks([])
         fs.despine(ax, left=False)
         ax.set_xlabel(xlabel)
-    status_key(fig, 0.0, top + plot_h + 10.6, hollow_label="Passes only by abstention")
+    status_key(fig, 0.0, top + plot_h + 10.6, hollow_label="Passes only by abstention", above_label="Holds, estimate > nominal")
     save(fig, "fig1_primary_cells")
 
 

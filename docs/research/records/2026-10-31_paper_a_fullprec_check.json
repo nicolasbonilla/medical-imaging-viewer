@@ -1,0 +1,56 @@
+{
+ "description": "Full-precision re-run of the committed v0.3 / manuscript analyses (rounding helpers replaced by float()); each full value rounded to the committed precision must equal the committed record.",
+ "jobs": {
+  "v03_analysis": {
+   "record": "2026-10-31_paper_a_v03_results_fullprec.json",
+   "compared_to": "2026-10-21_paper_a_v03_results.json",
+   "numbers_compared": 49918,
+   "mismatches": [
+    "/site_info/mslesseg/label: 'MSLesSeg (Catania; 8 scanner models in its acquisition table)' vs 'MSLesSeg (Catania, 1.5 T, ~3 scanners)'"
+   ],
+   "n_mismatches": 1,
+   "runtime_s": 556.1
+  },
+  "v03_posthoc": {
+   "record": "2026-10-31_paper_a_v03_posthoc_fullprec.json",
+   "compared_to": "2026-10-21_paper_a_v03_posthoc.json",
+   "numbers_compared": 173,
+   "mismatches": [],
+   "n_mismatches": 0,
+   "runtime_s": 23.8
+  },
+  "v03_mslesseg_native": {
+   "record": "2026-10-31_paper_a_v03_mslesseg_native_fullprec.json",
+   "compared_to": "2026-10-21_paper_a_v03_mslesseg_native.json",
+   "numbers_compared": 161,
+   "mismatches": [],
+   "n_mismatches": 0,
+   "runtime_s": 0.5
+  },
+  "v03m_manuscript_posthoc": {
+   "record": "2026-10-31_paper_a_manuscript_posthoc_fullprec.json",
+   "compared_to": "2026-10-31_paper_a_manuscript_posthoc.json",
+   "numbers_compared": 1107,
+   "mismatches": [
+    "/reproduction_check/D3|ms3seg|P1|0.1/equal: False vs True",
+    "/reproduction_check/D3|ms3seg|P1|0.2/equal: False vs True",
+    "/reproduction_check/D3|muslim|P1|0.1/equal: False vs True",
+    "/reproduction_check/D3|muslim|P1|0.2/equal: False vs True",
+    "/reproduction_check/D3|pedims|P1|0.1/equal: False vs True",
+    "/reproduction_check/D3|pedims|P1|0.2/equal: False vs True",
+    "/reproduction_check/D2|mslesseg|P1|0.1/equal: False vs True",
+    "/reproduction_check/D2|mslesseg|P1|0.2/equal: False vs True",
+    "/reproduction_check/D2|openms|P1|0.2/equal: False vs True",
+    "/reproduction_check/D2|ms3seg|P1|0.1/equal: False vs True",
+    "/reproduction_check/D2|ms3seg|P1|0.2/equal: False vs True",
+    "/reproduction_check/D2|muslim|P1|0.1/equal: False vs True",
+    "/reproduction_check/D2|muslim|P1|0.2/equal: False vs True",
+    "/reproduction_check/D2|pedims|P1|0.1/equal: False vs True",
+    "/reproduction_check/D2|pedims|P1|0.2/equal: False vs True",
+    "/reproduction_all_equal: False vs True"
+   ],
+   "n_mismatches": 16,
+   "runtime_s": 46.2
+  }
+ }
+}
