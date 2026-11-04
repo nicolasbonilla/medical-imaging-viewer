@@ -1,0 +1,485 @@
+\begin{thebibliography}{69}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{\url{https://doi.org/#1}}
+\providecommand{\eprint}[2][]{\url{#2}}
+ \bibcommenthead
+
+\bibitem[{Alemzadeh et~al.(2013)Alemzadeh, Iyer, Kalbarczyk, and
+  Raman}]{alemzadeh2013analysis}
+Alemzadeh H, Iyer RK, Kalbarczyk Z, et~al (2013) {Analysis of Safety-Critical
+  Computer Failures in Medical Devices}. IEEE Security \& Privacy 11(4):14--26.
+  \doi{10.1109/MSP.2013.49}
+
+\bibitem[{{Anthropic}(2026{\natexlab{a}})}]{anthropic2026permissionmodes}
+{Anthropic} (2026{\natexlab{a}}) {Choose a permission mode -- {Claude} {Code}
+  Docs}. Official product documentation,
+  \urlprefix\url{https://code.claude.com/docs/en/permission-modes}, accessed 31
+  October 2026; documents modes default (Manual), acceptEdits, plan, auto,
+  dontAsk, bypassPermissions
+
+\bibitem[{{Anthropic}(2026{\natexlab{b}})}]{anthropic2026permissions}
+{Anthropic} (2026{\natexlab{b}}) {Configure permissions -- {Claude} {Code}
+  Docs}. Official product documentation,
+  \urlprefix\url{https://code.claude.com/docs/en/permissions}, accessed 31
+  October 2026
+
+\bibitem[{Barr et~al.(2015)Barr, Harman, McMinn, Shahbaz, and
+  Yoo}]{barr2015oracle}
+Barr ET, Harman M, McMinn P, et~al (2015) {The Oracle Problem in Software
+  Testing: A Survey}. IEEE Transactions on Software Engineering 41(5):507--525.
+  \doi{10.1109/TSE.2014.2372785}
+
+\bibitem[{Becker et~al.(2025)Becker, Rush, Barnes, and Rein}]{becker2025metr}
+Becker J, Rush N, Barnes E, et~al (2025) {Measuring the Impact of Early-2025
+  {AI} on Experienced Open-Source Developer Productivity}. arXiv preprint
+  arXiv:2507.09089, \urlprefix\url{https://arxiv.org/abs/2507.09089},
+  {\href{https://arxiv.org/abs/2507.09089}{{arXiv:2507.09089}}}
+
+\bibitem[{Chen et~al.(2021)Chen, Tworek, Jun, Yuan, {Ponde de Oliveira Pinto},
+  Kaplan, Edwards, Burda, Joseph, Brockman et~al.}]{chen2021codex}
+Chen M, Tworek J, Jun H, et~al (2021) {Evaluating Large Language Models Trained
+  on Code}. arXiv preprint arXiv:2107.03374,
+  \urlprefix\url{https://arxiv.org/abs/2107.03374},
+  {\href{https://arxiv.org/abs/2107.03374}{{arXiv:2107.03374}}}
+
+\bibitem[{Cohen(1960)}]{cohen1960coefficient}
+Cohen J (1960) {A Coefficient of Agreement for Nominal Scales}. Educational and
+  Psychological Measurement 20(1):37--46. \doi{10.1177/001316446002000104}
+
+\bibitem[{Davis et~al.(2026)Davis, Amusuo, Singla, {\c{C}}akar, and
+  Davis}]{davis2026cheap}
+Davis JC, Amusuo PC, Singla T, et~al (2026) {Cheap Code, Costly Judgment: A
+  Case Study on Governable Agentic Software Engineering}. arXiv preprint
+  arXiv:2607.01087, \urlprefix\url{https://arxiv.org/abs/2607.01087},
+  {\href{https://arxiv.org/abs/2607.01087}{{arXiv:2607.01087}}}
+
+\bibitem[{DeMillo et~al.(1978)DeMillo, Lipton, and Sayward}]{demillo1978hints}
+DeMillo RA, Lipton RJ, Sayward FG (1978) {Hints on Test Data Selection: Help
+  for the Practicing Programmer}. Computer 11(4):34--41.
+  \doi{10.1109/C-M.1978.218136}
+
+\bibitem[{Easterbrook et~al.(2008)Easterbrook, Singer, Storey, and
+  Damian}]{easterbrook2008selecting}
+Easterbrook S, Singer J, Storey MA, et~al (2008) {Selecting Empirical Methods
+  for Software Engineering Research}. In: Guide to Advanced Empirical Software
+  Engineering. Springer, London, p 285--311, \doi{10.1007/978-1-84800-044-5_11}
+
+\bibitem[{Ehsani et~al.(2026)Ehsani, Pathak, Rawal, Mujahid, Imran, and
+  Chatterjee}]{ehsani2026agentsfail}
+Ehsani R, Pathak S, Rawal S, et~al (2026) {Where Do {AI} Coding Agents Fail? An
+  Empirical Study of Failed Agentic Pull Requests in {GitHub}}. In: Proceedings
+  of the 23rd International Conference on Mining Software Repositories (MSR
+  2026). ACM, pp 807--811, \doi{10.1145/3793302.3793579},
+  {\href{https://arxiv.org/abs/2601.15195}{{arXiv:2601.15195}}}
+
+\bibitem[{{European Parliament and Council of the European
+  Union}(2017)}]{eu2017mdr}
+{European Parliament and Council of the European Union} (2017) {Regulation
+  ({EU}) 2017/745 of the {European} {Parliament} and of the {Council} of 5
+  {April} 2017 on medical devices, amending {Directive} 2001/83/{EC},
+  {Regulation} ({EC}) {No} 178/2002 and {Regulation} ({EC}) {No} 1223/2009 and
+  repealing {Council} {Directives} 90/385/{EEC} and 93/42/{EEC}}. Official
+  Journal of the European Union, L 117, 5 May 2017,
+  \urlprefix\url{https://eur-lex.europa.eu/eli/reg/2017/745/oj/eng}, medical
+  Device Regulation (MDR); CELEX 32017R0745. Consolidated versions exist up to
+  2026; state which one is cited
+
+\bibitem[{{European Parliament and Council of the European
+  Union}(2024)}]{eu2024aiact}
+{European Parliament and Council of the European Union} (2024) {Regulation
+  ({EU}) 2024/1689 of the {European} {Parliament} and of the {Council} of 13
+  {June} 2024 laying down harmonised rules on artificial intelligence
+  ({Artificial} {Intelligence} {Act})}. Official Journal of the European Union,
+  OJ L, 2024/1689, 12 July 2024,
+  \urlprefix\url{https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng}, cELEX
+  32024R1689; a consolidated version dated 2026-07-27 exists on EUR-Lex
+
+\bibitem[{Fan et~al.(2023)Fan, Gokkaya, Harman, Lyubarskiy, Sengupta, Yoo, and
+  Zhang}]{fan2023llm4se}
+Fan A, Gokkaya B, Harman M, et~al (2023) {Large Language Models for Software
+  Engineering: Survey and Open Problems}. In: 2023 IEEE/ACM International
+  Conference on Software Engineering: Future of Software Engineering
+  (ICSE-FoSE). IEEE, pp 31--53, \doi{10.1109/ICSE-FoSE59343.2023.00008}
+
+\bibitem[{Ferris and Bonilla(2026)}]{ferris2026assuring}
+Ferris L, Bonilla S (2026) {A Case Study in Assuring {AI}-Written Software}.
+  arXiv preprint arXiv:2610.08651,
+  \urlprefix\url{https://arxiv.org/abs/2610.08651}, accepted to the NeurIPS
+  2026 Meta-Agents Workshop (arXiv comment),
+  {\href{https://arxiv.org/abs/2610.08651}{{arXiv:2610.08651}}}
+
+\bibitem[{Flyvbjerg(2006)}]{flyvbjerg2006five}
+Flyvbjerg B (2006) {Five Misunderstandings About Case-Study Research}.
+  Qualitative Inquiry 12(2):219--245. \doi{10.1177/1077800405284363}
+
+\bibitem[{Fu(2011)}]{fu2011trustworthy}
+Fu K (2011) {Trustworthy Medical Device Software}. In: Public Health
+  Effectiveness of the {FDA} 510(k) Clearance Process: Measuring Postmarket
+  Performance and Other Select Topics: Workshop Report. The National Academies
+  Press, Washington, DC, p 97--118, \doi{10.17226/13020}, appendix D
+
+\bibitem[{Gangopadhyay et~al.(2026)Gangopadhyay, Adler, Liggesmeyer, and
+  Reich}]{gangopadhyay2026safety}
+Gangopadhyay T, Adler R, Liggesmeyer P, et~al (2026) {From Safety Documentation
+  to Safety Knowledge Support: An Evidence-Grounded {LLM} Framework for Medical
+  Devices}. arXiv preprint arXiv:2608.12025,
+  \urlprefix\url{https://arxiv.org/abs/2608.12025}, iSSRE 2026 workshop AISQ
+  (arXiv comment); no proceedings DOI found on 2026-10-31,
+  {\href{https://arxiv.org/abs/2608.12025}{{arXiv:2608.12025}}}
+
+\bibitem[{{GitHub}(2026)}]{github2026signature}
+{GitHub} (2026) {About commit signature verification -- {GitHub} Docs}.
+  Official product documentation,
+  \urlprefix\url{https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification},
+  accessed 31 October 2026; describes automatic GPG signing of web-interface
+  commits with GitHub's web-flow key and the Verified status
+
+\bibitem[{Granlund et~al.(2021)Granlund, Stirbu, and
+  Mikkonen}]{granlund2021mlops}
+Granlund T, Stirbu V, Mikkonen T (2021) {Towards Regulatory-Compliant {MLOps}:
+  {Oravizio}'s Journey from a Machine Learning Experiment to a Deployed
+  Certified Medical Product}. SN Computer Science 2(5):342.
+  \doi{10.1007/s42979-021-00726-1}
+
+\bibitem[{Heeager and Nielsen(2018)}]{heeager2018conceptual}
+Heeager LT, Nielsen PA (2018) {A conceptual model of agile software development
+  in a safety-critical context: A systematic literature review}. Information
+  and Software Technology 103:22--39. \doi{10.1016/j.infsof.2018.06.004}
+
+\bibitem[{Hou et~al.(2024)Hou, Zhao, Liu, Yang, Wang, Li, Luo, Lo, Grundy, and
+  Wang}]{hou2024llm4se}
+Hou X, Zhao Y, Liu Y, et~al (2024) {Large Language Models for Software
+  Engineering: A Systematic Literature Review}. ACM Transactions on Software
+  Engineering and Methodology 33(8):1--79. \doi{10.1145/3695988}
+
+\bibitem[{{IMDRF Software as a Medical Device Working
+  Group}(2014)}]{imdrf2014samd}
+{IMDRF Software as a Medical Device Working Group} (2014) {``{Software} as a
+  {Medical} {Device}'': Possible Framework for Risk Categorization and
+  Corresponding Considerations}. IMDRF/SaMD WG/N12FINAL:2014, International
+  Medical Device Regulators Forum,
+  \urlprefix\url{https://www.imdrf.org/documents/software-medical-device-possible-framework-risk-categorization-and-corresponding-considerations},
+  final document, 18 September 2014
+
+\bibitem[{{International Electrotechnical Commission}(2015)}]{iec62304}
+{International Electrotechnical Commission} (2015) {IEC} 62304:2006+{AMD1}:2015
+  {CSV}: Medical device software -- software life cycle processes.
+  International standard, consolidated version (edition 1.1),
+  \urlprefix\url{https://webstore.iec.ch/en/publication/22794}, first edition
+  (2006) consolidated with Amendment 1 (2015); publication date 2015-06-26
+
+\bibitem[{{International Electrotechnical Commission}(2016)}]{iec82304}
+{International Electrotechnical Commission} (2016) {IEC} 82304-1:2016: Health
+  software -- part 1: General requirements for product safety. International
+  standard, edition 1.0,
+  \urlprefix\url{https://webstore.iec.ch/en/publication/26120}, publication
+  date 2016-10-27
+
+\bibitem[{{International Organization for Standardization}(2016)}]{iso13485}
+{International Organization for Standardization} (2016) {ISO} 13485:2016:
+  Medical devices -- quality management systems -- requirements for regulatory
+  purposes. International standard, 3rd edition,
+  \urlprefix\url{https://www.iso.org/standard/59752.html}
+
+\bibitem[{{International Organization for Standardization}(2019)}]{iso14971}
+{International Organization for Standardization} (2019) {ISO} 14971:2019:
+  Medical devices -- application of risk management to medical devices.
+  International standard, 3rd edition,
+  \urlprefix\url{https://www.iso.org/standard/72704.html}
+
+\bibitem[{Jia and Harman(2011)}]{jia2011analysis}
+Jia Y, Harman M (2011) {An Analysis and Survey of the Development of Mutation
+  Testing}. IEEE Transactions on Software Engineering 37(5):649--678.
+  \doi{10.1109/TSE.2010.62}
+
+\bibitem[{Jimenez et~al.(2024)Jimenez, Yang, Wettig, Yao, Pei, Press, and
+  Narasimhan}]{jimenez2024swebench}
+Jimenez CE, Yang J, Wettig A, et~al (2024) {SWE-bench}: Can language models
+  resolve real-world {GitHub} issues? In: The Twelfth International Conference
+  on Learning Representations (ICLR 2024),
+  \urlprefix\url{https://openreview.net/forum?id=VTF8yNQM66},
+  {\href{https://arxiv.org/abs/2310.06770}{{arXiv:2310.06770}}}
+
+\bibitem[{Just et~al.(2014)Just, Jalali, Inozemtseva, Ernst, Holmes, and
+  Fraser}]{just2014mutants}
+Just R, Jalali D, Inozemtseva L, et~al (2014) {Are Mutants a Valid Substitute
+  for Real Faults in Software Testing?} In: Proceedings of the 22nd ACM SIGSOFT
+  International Symposium on Foundations of Software Engineering (FSE 2014).
+  ACM, pp 654--665, \doi{10.1145/2635868.2635929}
+
+\bibitem[{Kirchner and Knoll(2025)}]{kirchner2025automotive}
+Kirchner S, Knoll AC (2025) {Generating Automotive Code: Large Language Models
+  for Software Development and Verification in Safety-Critical Systems}. In:
+  2025 IEEE Intelligent Vehicles Symposium (IV). IEEE, pp 813--820,
+  \doi{10.1109/IV64158.2025.11097503},
+  {\href{https://arxiv.org/abs/2506.04038}{{arXiv:2506.04038}}}
+
+\bibitem[{Laukkarinen et~al.(2017)Laukkarinen, Kuusinen, and
+  Mikkonen}]{laukkarinen2017devops}
+Laukkarinen T, Kuusinen K, Mikkonen T (2017) {DevOps} in regulated software
+  development: Case medical devices. In: 2017 IEEE/ACM 39th International
+  Conference on Software Engineering: New Ideas and Emerging Technologies
+  Results Track (ICSE-NIER). IEEE, pp 15--18, \doi{10.1109/ICSE-NIER.2017.20}
+
+\bibitem[{Laukkarinen et~al.(2018)Laukkarinen, Kuusinen, and
+  Mikkonen}]{laukkarinen2018regulated}
+Laukkarinen T, Kuusinen K, Mikkonen T (2018) {Regulated software meets
+  {DevOps}}. Information and Software Technology 97:176--178.
+  \doi{10.1016/j.infsof.2018.01.011}
+
+\bibitem[{Leveson and Turner(1993)}]{leveson1993therac}
+Leveson NG, Turner CS (1993) {An Investigation of the {Therac-25} Accidents}.
+  Computer 26(7):18--41. \doi{10.1109/MC.1993.274940}
+
+\bibitem[{Li et~al.(2025)Li, Zhang, and Hassan}]{li2025aidev}
+Li H, Zhang H, Hassan AE (2025) {The Rise of {AI} Teammates in Software
+  Engineering ({SE}) 3.0: How Autonomous Coding Agents Are Reshaping Software
+  Engineering}. arXiv preprint arXiv:2507.15003,
+  \urlprefix\url{https://arxiv.org/abs/2507.15003}, introduces the AIDev
+  dataset, {\href{https://arxiv.org/abs/2507.15003}{{arXiv:2507.15003}}}
+
+\bibitem[{Liu et~al.(2026{\natexlab{a}})Liu, Liu, Shi, Yang, Zhang, Lian, Li,
+  and Ma}]{liu2026hallucinations}
+Liu F, Liu Y, Shi L, et~al (2026{\natexlab{a}}) {Beyond Functional Correctness:
+  Exploring Hallucinations in {LLM}-Generated Code}. IEEE Transactions on
+  Software Engineering 52(3):1037--1055. \doi{10.1109/TSE.2026.3657432},
+  earlier arXiv versions titled ``Exploring and Evaluating Hallucinations in
+  LLM-Powered Code Generation'',
+  {\href{https://arxiv.org/abs/2404.00971}{{arXiv:2404.00971}}}
+
+\bibitem[{Liu et~al.(2026{\natexlab{b}})Liu, Wang, Chen, Peng, Chen, Zhang, and
+  Lou}]{liu2026agentsurvey}
+Liu J, Wang K, Chen Y, et~al (2026{\natexlab{b}}) {Large Language Model-Based
+  Agents for Software Engineering: A Survey}. ACM Transactions on Software
+  Engineering and Methodology \doi{10.1145/3796507}, published online 5 March
+  2026; volume/issue not yet assigned in Crossref on 2026-10-31,
+  {\href{https://arxiv.org/abs/2409.02977}{{arXiv:2409.02977}}}
+
+\bibitem[{Liu et~al.(2024)Liu, Wang, Lin, Ma, Fang, and
+  Wu}]{liu2024safetycritical}
+Liu M, Wang J, Lin T, et~al (2024) {An Empirical Study of the Code Generation
+  of Safety-Critical Software Using {LLMs}}. Applied Sciences 14(3):1046.
+  \doi{10.3390/app14031046}
+
+\bibitem[{Madeyski et~al.(2014)Madeyski, Orzeszyna, Torkar, and
+  Jozala}]{madeyski2014overcoming}
+Madeyski L, Orzeszyna W, Torkar R, et~al (2014) {Overcoming the Equivalent
+  Mutant Problem: A Systematic Literature Review and a Comparative Experiment
+  of Second Order Mutation}. IEEE Transactions on Software Engineering
+  40(1):23--42. \doi{10.1109/TSE.2013.44}
+
+\bibitem[{Maharjan(2026)}]{maharjan2026trust}
+Maharjan S (2026) {Trust but Trace: {AI} Coding Assistants in Software
+  Developed under Regulatory Design Controls}. SSRN preprint,
+  \doi{10.2139/ssrn.7349799}
+
+\bibitem[{McHugh et~al.(2012)McHugh, McCaffery, and Casey}]{mchugh2012barriers}
+McHugh M, McCaffery F, Casey V (2012) {Barriers to Adopting Agile Practices
+  When Developing Medical Device Software}. In: Software Process Improvement
+  and Capability Determination (SPICE 2012). Springer, Berlin, Heidelberg,
+  Communications in Computer and Information Science, pp 141--147,
+  \doi{10.1007/978-3-642-30439-2_13}
+
+\bibitem[{{Medical Device Coordination Group}(2025)}]{mdcg2019_11}
+{Medical Device Coordination Group} (2025) {MDCG} 2019-11 rev.1: Guidance on
+  qualification and classification of software in {Regulation} ({EU}) 2017/745
+  -- {MDR} and {Regulation} ({EU}) 2017/746 -- {IVDR}. MDCG endorsed guidance
+  document, European Commission,
+  \urlprefix\url{https://health.ec.europa.eu/document/download/b45335c5-1679-4c71-a91c-fc7a4d37f12b_en?filename=mdcg_2019_11_en.pdf},
+  original version October 2019; revision 1 June 2025
+
+\bibitem[{Nouri et~al.(2025)Nouri, Andersson, {De Jesus Hornig}, Fei, Knabe,
+  Sivencrona, Cabrero-Daniel, and Berger}]{nouri2025simulation}
+Nouri A, Andersson J, {De Jesus Hornig} K, et~al (2025) {On Simulation-Guided
+  {LLM}-based Code Generation for Safe Autonomous Driving Software}. In:
+  Proceedings of the 29th International Conference on Evaluation and Assessment
+  in Software Engineering (EASE 2025). ACM, pp 1097--1106,
+  \doi{10.1145/3756681.3756987},
+  {\href{https://arxiv.org/abs/2504.02141}{{arXiv:2504.02141}}}
+
+\bibitem[{Papadakis et~al.(2018)Papadakis, Shin, Yoo, and
+  Bae}]{papadakis2018mutation}
+Papadakis M, Shin D, Yoo S, et~al (2018) {Are Mutation Scores Correlated with
+  Real Fault Detection?} In: Proceedings of the 40th International Conference
+  on Software Engineering (ICSE 2018). ACM, pp 537--548,
+  \doi{10.1145/3180155.3180183}
+
+\bibitem[{Papadakis et~al.(2019)Papadakis, Kintis, Zhang, Jia, {Le Traon}, and
+  Harman}]{papadakis2019mutation}
+Papadakis M, Kintis M, Zhang JM, et~al (2019) {Mutation Testing Advances: An
+  Analysis and Survey}. In: Advances in Computers, vol 112. Elsevier, p
+  275--378, \doi{10.1016/bs.adcom.2018.03.015}
+
+\bibitem[{Pearce et~al.(2022)Pearce, Ahmad, Tan, Dolan-Gavitt, and
+  Karri}]{pearce2022asleep}
+Pearce H, Ahmad B, Tan B, et~al (2022) {Asleep at the Keyboard? Assessing the
+  Security of {GitHub} {Copilot}'s Code Contributions}. In: 2022 IEEE Symposium
+  on Security and Privacy (SP). IEEE, pp 754--768,
+  \doi{10.1109/SP46214.2022.9833571}
+
+\bibitem[{Perry et~al.(2023)Perry, Srivastava, Kumar, and
+  Boneh}]{perry2023insecure}
+Perry N, Srivastava M, Kumar D, et~al (2023) {Do Users Write More Insecure Code
+  with {AI} Assistants?} In: Proceedings of the 2023 ACM SIGSAC Conference on
+  Computer and Communications Security (CCS '23). ACM, pp 2785--2799,
+  \doi{10.1145/3576915.3623157}
+
+\bibitem[{Petrovi{\'c} and Ivankovi{\'c}(2018)}]{petrovic2018state}
+Petrovi{\'c} G, Ivankovi{\'c} M (2018) {State of Mutation Testing at {Google}}.
+  In: Proceedings of the 40th International Conference on Software Engineering:
+  Software Engineering in Practice (ICSE-SEIP 2018). ACM, pp 163--171,
+  \doi{10.1145/3183519.3183521}
+
+\bibitem[{Petrovi{\'c} et~al.(2022)Petrovi{\'c}, Ivankovi{\'c}, Fraser, and
+  Just}]{petrovic2022practical}
+Petrovi{\'c} G, Ivankovi{\'c} M, Fraser G, et~al (2022) {Practical Mutation
+  Testing at Scale: A View from {Google}}. IEEE Transactions on Software
+  Engineering 48(10):3900--3912. \doi{10.1109/TSE.2021.3107634}
+
+\bibitem[{Ralph et~al.(2021)Ralph, {bin Ali}, Baltes, Bianculli, Diaz,
+  Dittrich, Ernst, Felderer, Feldt, Filieri, {de Fran{\c{c}}a}, Furia, Gay,
+  Gold, Graziotin, He, Hoda, Juristo, Kitchenham, Lenarduzzi, Mart{\'\i}nez,
+  Melegati, Mendez, Menzies, Molleri, Pfahl, Robbes, Russo, Saarim{\"a}ki,
+  Sarro, Taibi, Siegmund, Spinellis, Staron, Stol, Storey, Tamburri, Torchiano,
+  Treude, Turhan, Wang, and Vegas}]{ralph2021empirical}
+Ralph P, {bin Ali} N, Baltes S, et~al (2021) {Empirical Standards for Software
+  Engineering Research}. arXiv preprint arXiv:2010.03525 (v2),
+  \urlprefix\url{https://arxiv.org/abs/2010.03525}, aCM SIGSOFT Empirical
+  Standards; v1 7 Oct 2020, v2 4 Mar 2021; living version at
+  https://github.com/acmsigsoft/EmpiricalStandards,
+  {\href{https://arxiv.org/abs/2010.03525}{{arXiv:2010.03525}}}
+
+\bibitem[{Runeson and H{\"o}st(2009)}]{runeson2009guidelines}
+Runeson P, H{\"o}st M (2009) {Guidelines for conducting and reporting case
+  study research in software engineering}. Empirical Software Engineering
+  14(2):131--164. \doi{10.1007/s10664-008-9102-8}
+
+\bibitem[{Runeson et~al.(2012)Runeson, H{\"o}st, Rainer, and
+  Regnell}]{runeson2012case}
+Runeson P, H{\"o}st M, Rainer A, et~al (2012) {Case Study Research in Software
+  Engineering: Guidelines and Examples}. Wiley, Hoboken, NJ,
+  \doi{10.1002/9781118181034}
+
+\bibitem[{Spracklen et~al.(2025)Spracklen, Wijewickrama, Sakib, Maiti,
+  Viswanath, and Jadliwala}]{spracklen2025package}
+Spracklen J, Wijewickrama R, Sakib AHMN, et~al (2025) {We Have a Package for
+  You! {A} Comprehensive Analysis of Package Hallucinations by Code Generating
+  {LLMs}}. In: 34th USENIX Security Symposium (USENIX Security 25). USENIX
+  Association, Seattle, WA, pp 3687--3706,
+  \urlprefix\url{https://www.usenix.org/conference/usenixsecurity25/presentation/spracklen},
+  {\href{https://arxiv.org/abs/2406.10279}{{arXiv:2406.10279}}}
+
+\bibitem[{Stirbu et~al.(2023)Stirbu, Granlund, and
+  Mikkonen}]{stirbu2023continuous}
+Stirbu V, Granlund T, Mikkonen T (2023) {Continuous design control for machine
+  learning in certified medical systems}. Software Quality Journal
+  31(2):307--333. \doi{10.1007/s11219-022-09601-5}, published online 17 October
+  2022
+
+\bibitem[{Sun and Staron(2026)}]{sun2026agentic}
+Sun S, Staron M (2026) {Agentic Pipelines in Embedded Software Engineering:
+  Emerging Practices and Challenges}. In: 2026 IEEE International Conference on
+  Software Analysis, Evolution and Reengineering (SANER). IEEE, pp 136--146,
+  \doi{10.1109/SANER67736.2026.00024},
+  {\href{https://arxiv.org/abs/2601.10220}{{arXiv:2601.10220}}}
+
+\bibitem[{Tang et~al.(2026)Tang, Chen, Xu, Shi, Huang, McMillan, Dong, and
+  Li}]{tang2026misalignment}
+Tang N, Chen C, Xu G, et~al (2026) {How Coding Agents Fail Their Users: A
+  Large-Scale Analysis of Developer-Agent Misalignment in 20,574 Real-World
+  Sessions}. In: Proceedings of the 2026 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP 2026). Association for Computational
+  Linguistics, pp 23264--23282, \doi{10.18653/2026.emnlp-main.1011},
+  {\href{https://arxiv.org/abs/2605.29442}{{arXiv:2605.29442}}}
+
+\bibitem[{{U.S. Food and Drug Administration}(2002)}]{fda2002gpsv}
+{U.S. Food and Drug Administration} (2002) {General Principles of Software
+  Validation; Final Guidance for Industry and {FDA} Staff}. Final guidance,
+  CDRH and CBER, docket FDA-1997-D-0029,
+  \urlprefix\url{https://www.fda.gov/regulatory-information/search-fda-guidance-documents/general-principles-software-validation}
+
+\bibitem[{{U.S. Food and Drug Administration}(2023)}]{fda2023premarket}
+{U.S. Food and Drug Administration} (2023) {Content of Premarket Submissions
+  for Device Software Functions: Guidance for Industry and {Food} and {Drug}
+  {Administration} Staff}. Final guidance, docket FDA-2021-D-0775,
+  \urlprefix\url{https://www.fda.gov/regulatory-information/search-fda-guidance-documents/content-premarket-submissions-device-software-functions},
+  issued June 2023 (page current as of 2023-06-14)
+
+\bibitem[{{U.S. Food and Drug Administration}(2024)}]{fda2024pccp}
+{U.S. Food and Drug Administration} (2024) {Marketing Submission
+  Recommendations for a Predetermined Change Control Plan for Artificial
+  Intelligence-Enabled Device Software Functions}. Final guidance, docket
+  FDA-2022-D-2628,
+  \urlprefix\url{https://www.fda.gov/regulatory-information/search-fda-guidance-documents/marketing-submission-recommendations-predetermined-change-control-plan-artificial-intelligence},
+  final guidance issued 4 December 2024; the version now posted is dated August
+  2025 (page current as of 2025-08-18)
+
+\bibitem[{{U.S. Food and Drug Administration}(2025)}]{fda2025aidsf}
+{U.S. Food and Drug Administration} (2025) {Artificial Intelligence-Enabled
+  Device Software Functions: Lifecycle Management and Marketing Submission
+  Recommendations}. Draft guidance, docket FDA-2024-D-4488,
+  \urlprefix\url{https://www.fda.gov/regulatory-information/search-fda-guidance-documents/artificial-intelligence-enabled-device-software-functions-lifecycle-management-and-marketing},
+  draft (not for implementation); issued January 2025 (page current as of
+  2025-01-07); still draft on 2026-10-31
+
+\bibitem[{{U.S. Food and Drug Administration}(2026)}]{fda2026csa}
+{U.S. Food and Drug Administration} (2026) {Computer Software Assurance for
+  Production and Quality Management System Software: Guidance for Industry and
+  {Food} and {Drug} {Administration} Staff}. Final guidance, CDRH and CBER,
+  docket FDA-2022-D-0795,
+  \urlprefix\url{https://www.fda.gov/regulatory-information/search-fda-guidance-documents/computer-software-assurance-production-and-quality-management-system-software},
+  supersedes the final guidance ``Computer Software Assurance for Production
+  and Quality System Software'' issued 24 September 2025 (draft September 2022)
+
+\bibitem[{Wallace and Kuhn(2001)}]{wallace2001failure}
+Wallace DR, Kuhn DR (2001) {Failure Modes in Medical Device Software: An
+  Analysis of 15 Years of Recall Data}. International Journal of Reliability,
+  Quality and Safety Engineering 8(4):351--371. \doi{10.1142/S021853930100058X}
+
+\bibitem[{Wang et~al.(2026)Wang, Beaudry, Damato, Kollmeier, and {Aramburu
+  N{\'u}{\~n}ez}}]{wang2026brachy}
+Wang T, Beaudry J, Damato AL, et~al (2026) {AI}-assisted software development
+  for brachytherapy seed inventory management. Journal of Applied Clinical
+  Medical Physics 27(9):e70795. \doi{10.1002/acm2.70795}
+
+\bibitem[{Wang et~al.(2025)Wang, Li, Song, Xu, Tang, Zhuge, Pan, Song, Li,
+  Singh, Tran, Li, Ma, Zheng, Qian, Shao, Muennighoff, Zhang, Hui, Lin,
+  Brennan, Peng, Ji, and Neubig}]{wang2025openhands}
+Wang X, Li B, Song Y, et~al (2025) {OpenHands}: An open platform for {AI}
+  software developers as generalist agents. In: The Thirteenth International
+  Conference on Learning Representations (ICLR 2025),
+  \urlprefix\url{https://proceedings.iclr.cc/paper_files/paper/2025/hash/a4b6ad6b48850c0c331d1259fc66a69c-Abstract-Conference.html},
+  {\href{https://arxiv.org/abs/2407.16741}{{arXiv:2407.16741}}}
+
+\bibitem[{Watanabe et~al.(2026)Watanabe, Li, Kashiwa, Reid, Iida, and
+  Hassan}]{watanabe2026agentic}
+Watanabe M, Li H, Kashiwa Y, et~al (2026) {On the Use of Agentic Coding: An
+  Empirical Study of Pull Requests on {GitHub}}. ACM Transactions on Software
+  Engineering and Methodology 35(10):1--24. \doi{10.1145/3798166},
+  {\href{https://arxiv.org/abs/2509.14745}{{arXiv:2509.14745}}}
+
+\bibitem[{Witztum et~al.(2026)Witztum, Wang, and Wang}]{witztum2026aicoded}
+Witztum A, Wang Y, Wang D (2026) {AI}-coded radiation therapy software requires
+  unique quality assurance. Journal of Applied Clinical Medical Physics
+  27(10):e70848. \doi{10.1002/acm2.70848}
+
+\bibitem[{Wohlin et~al.(2012)Wohlin, Runeson, H{\"o}st, Ohlsson, Regnell, and
+  Wessl{\'e}n}]{wohlin2012experimentation}
+Wohlin C, Runeson P, H{\"o}st M, et~al (2012) {Experimentation in Software
+  Engineering}. Springer, Berlin, Heidelberg, \doi{10.1007/978-3-642-29044-2}
+
+\bibitem[{Yang et~al.(2024)Yang, Jimenez, Wettig, Lieret, Yao, Narasimhan, and
+  Press}]{yang2024sweagent}
+Yang J, Jimenez CE, Wettig A, et~al (2024) {SWE-agent}: Agent-computer
+  interfaces enable automated software engineering. In: Advances in Neural
+  Information Processing Systems 37 (NeurIPS 2024), pp 50528--50652,
+  \doi{10.52202/079017-1601},
+  {\href{https://arxiv.org/abs/2405.15793}{{arXiv:2405.15793}}}
+
+\bibitem[{Yin(2018)}]{yin2018case}
+Yin RK (2018) {Case Study Research and Applications: Design and Methods}, 6th
+  edn. SAGE, Los Angeles, CA
+
+\end{thebibliography}
