@@ -1,0 +1,1312 @@
+{
+ "tool": "picsl_greedy 1.4.0.3",
+ "deformable": "-d 3 -m WNCC 2x2x2 -sv -n 100x50x10 -i t1.nii.gz {atlas_t1} -o warp.nii.gz -threads {threads}",
+ "reslice": "-d 3 -rf t1.nii.gz -ri LABEL 0.2vox -rm {mask} {out} -r warp.nii.gz -threads {threads}",
+ "atlas_t1_sha256": "d4104bbda56ad46c898135c805b394856993aea239b942f3a705136cd2b4476b",
+ "msmask_sha256": "2ad50b1433a040a4d5b58ac064f984211b466f83081fc5d344ff13eff56cdd0f",
+ "third_ventricle_split": {
+  "label4_voxels": 28365,
+  "third_ventricle_voxels": 3238,
+  "lateral_ventricle_voxels": 25127,
+  "third_ventricle_bbox_mm": {
+   "x": [
+    -11.0,
+    11.0
+   ],
+   "y": [
+    -38.0,
+    3.0
+   ],
+   "z": [
+    -20.0,
+    19.0
+   ]
+  },
+  "eroded_components": 63
+ },
+ "workers": 1,
+ "threads": 10,
+ "timing": {
+  "mslesseg_P16_T1": 155.9,
+  "mslesseg_P18_T1": 156.2,
+  "mslesseg_P19_T3": 132.3,
+  "mslesseg_P19_T4": 135.0,
+  "mslesseg_P1_T1": 127.3,
+  "mslesseg_P1_T2": 127.4,
+  "mslesseg_P20_T1": 135.8,
+  "mslesseg_P1_T3": 138.7,
+  "mslesseg_P20_T3": 128.8,
+  "mslesseg_P20_T2": 129.6,
+  "mslesseg_P21_T1": 132.0,
+  "mslesseg_P22_T1": 134.2,
+  "mslesseg_P22_T2": 134.0,
+  "mslesseg_P23_T1": 131.2,
+  "mslesseg_P24_T1": 136.2,
+  "mslesseg_P26_T1": 165.6,
+  "mslesseg_P27_T1": 163.8,
+  "mslesseg_P25_T1": 107.8,
+  "mslesseg_P28_T1": 99.0,
+  "mslesseg_P28_T2": 95.5,
+  "mslesseg_P29_T1": 97.9,
+  "mslesseg_P2_T1": 94.9,
+  "mslesseg_P2_T2": 105.7,
+  "mslesseg_P2_T3": 102.6,
+  "mslesseg_P2_T4": 95.1,
+  "mslesseg_P30_T1": 98.7,
+  "mslesseg_P31_T1": 109.5,
+  "mslesseg_P31_T2": 105.6,
+  "mslesseg_P32_T1": 104.8,
+  "mslesseg_P33_T1": 99.2,
+  "mslesseg_P33_T2": 95.1,
+  "mslesseg_P34_T1": 102.3,
+  "mslesseg_P35_T1": 97.4,
+  "mslesseg_P36_T1": 102.2,
+  "mslesseg_P37_T1": 95.2,
+  "mslesseg_P38_T1": 85.7,
+  "mslesseg_P39_T1": 86.9,
+  "mslesseg_P3_T1": 93.8,
+  "mslesseg_P3_T2": 85.9,
+  "mslesseg_P3_T3": 91.0,
+  "mslesseg_P3_T4": 86.0,
+  "mslesseg_P40_T1": 89.6,
+  "mslesseg_P41_T1": 87.6,
+  "mslesseg_P42_T1": 89.1,
+  "mslesseg_P43_T1": 88.1,
+  "mslesseg_P44_T1": 91.1,
+  "mslesseg_P45_T1": 91.6,
+  "mslesseg_P46_T1": 85.7,
+  "mslesseg_P47_T1": 81.5,
+  "mslesseg_P48_T1": 79.5,
+  "mslesseg_P49_T1": 78.4,
+  "mslesseg_P4_T1": 81.1,
+  "mslesseg_P4_T2": 84.9,
+  "mslesseg_P4_T3": 81.5,
+  "mslesseg_P50_T1": 82.2,
+  "mslesseg_P50_T2": 82.3,
+  "mslesseg_P51_T1": 90.6,
+  "mslesseg_P51_T2": 80.8,
+  "mslesseg_P52_T1": 79.0,
+  "mslesseg_P52_T2": 74.7,
+  "mslesseg_P53_T1": 73.9,
+  "mslesseg_P53_T2": 74.7,
+  "mslesseg_P54": 74.5,
+  "mslesseg_P55": 76.9,
+  "mslesseg_P56": 76.3,
+  "mslesseg_P57": 78.1,
+  "mslesseg_P58": 74.1,
+  "mslesseg_P59": 72.5,
+  "mslesseg_P5_T1": 74.0,
+  "mslesseg_P5_T2": 80.7,
+  "mslesseg_P60": 80.8,
+  "mslesseg_P61": 87.5,
+  "mslesseg_P62": 88.8,
+  "mslesseg_P63": 77.3,
+  "mslesseg_P64": 92.8,
+  "mslesseg_P65": 82.4,
+  "mslesseg_P66": 70.9,
+  "mslesseg_P67": 72.7,
+  "mslesseg_P68": 74.0,
+  "mslesseg_P69": 74.0,
+  "mslesseg_P6_T1": 76.3,
+  "mslesseg_P6_T2": 71.4,
+  "mslesseg_P6_T3": 66.1,
+  "mslesseg_P70": 61.6,
+  "mslesseg_P71": 64.4,
+  "mslesseg_P72": 66.0,
+  "mslesseg_P73": 73.2,
+  "mslesseg_P74": 69.8,
+  "mslesseg_P75": 65.8,
+  "mslesseg_P7_T1": 68.5,
+  "mslesseg_P7_T2": 68.5,
+  "mslesseg_P8_T1": 69.0,
+  "mslesseg_P8_T2": 65.2,
+  "mslesseg_P9_T1": 69.0,
+  "mslesseg_P9_T2": 65.4,
+  "mslesseg_P9_T3": 72.9,
+  "openms_patient01": 66.0,
+  "openms_patient02": 63.6,
+  "openms_patient03": 62.8,
+  "openms_patient04": 64.1,
+  "openms_patient05": 66.0,
+  "openms_patient06": 65.4,
+  "openms_patient07": 64.4,
+  "openms_patient08": 66.2,
+  "openms_patient09": 70.2,
+  "openms_patient10": 82.4,
+  "openms_patient11": 79.9,
+  "openms_patient12": 68.2,
+  "openms_patient13": 67.8,
+  "openms_patient14": 68.6,
+  "openms_patient15": 67.0,
+  "openms_patient16": 64.8,
+  "openms_patient17": 60.7,
+  "openms_patient18": 62.3,
+  "openms_patient19": 65.6,
+  "openms_patient20": 63.2,
+  "openms_patient21": 64.4,
+  "openms_patient22": 66.4,
+  "openms_patient23": 66.7,
+  "openms_patient24": 66.2,
+  "openms_patient25": 64.4,
+  "openms_patient26": 67.0,
+  "openms_patient27": 63.9,
+  "openms_patient28": 69.3,
+  "openms_patient29": 83.4,
+  "openms_patient30": 78.6
+ },
+ "qc": {
+  "mslesseg_P10_T1": {
+   "dice_brain_warped_vs_t1": 0.8524686782203267,
+   "dice_brain_g0_vs_t1": 0.8584048891649806,
+   "dice_ventricles_warped_vs_g0": 0.7100577722220345,
+   "ventricle_ml_warped": 30.833,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P10_T2": {
+   "dice_brain_warped_vs_t1": 0.930740794540609,
+   "dice_brain_g0_vs_t1": 0.8935497287918459,
+   "dice_ventricles_warped_vs_g0": 0.7082219373741073,
+   "ventricle_ml_warped": 26.245,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999972303127863
+  },
+  "mslesseg_P11_T1": {
+   "dice_brain_warped_vs_t1": 0.8671964457766286,
+   "dice_brain_g0_vs_t1": 0.8612507308552919,
+   "dice_ventricles_warped_vs_g0": 0.5832667199573675,
+   "ventricle_ml_warped": 31.683,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P11_T2": {
+   "dice_brain_warped_vs_t1": 0.8438526672956611,
+   "dice_brain_g0_vs_t1": 0.8171815088939882,
+   "dice_ventricles_warped_vs_g0": 0.5170695450936671,
+   "ventricle_ml_warped": 30.834,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997784250229
+  },
+  "mslesseg_P12_T1": {
+   "dice_brain_warped_vs_t1": 0.9273742010678129,
+   "dice_brain_g0_vs_t1": 0.8986760131351649,
+   "dice_ventricles_warped_vs_g0": 0.2747107761095569,
+   "ventricle_ml_warped": 135.349,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999954300160975
+  },
+  "mslesseg_P12_T2": {
+   "dice_brain_warped_vs_t1": 0.8619957734695232,
+   "dice_brain_g0_vs_t1": 0.8525459423899662,
+   "dice_ventricles_warped_vs_g0": 0.27772449895851786,
+   "ventricle_ml_warped": 135.344,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999965378909829
+  },
+  "mslesseg_P12_T3": {
+   "dice_brain_warped_vs_t1": 0.851783212422659,
+   "dice_brain_g0_vs_t1": 0.8334946598377849,
+   "dice_ventricles_warped_vs_g0": 0.33117913832199547,
+   "ventricle_ml_warped": 95.115,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999968148597043
+  },
+  "mslesseg_P12_T4": {
+   "dice_brain_warped_vs_t1": 0.8479758477934035,
+   "dice_brain_g0_vs_t1": 0.8327709433227162,
+   "dice_ventricles_warped_vs_g0": 0.32185248303285796,
+   "ventricle_ml_warped": 105.423,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999962609222616
+  },
+  "mslesseg_P13_T1": {
+   "dice_brain_warped_vs_t1": 0.8577461954206478,
+   "dice_brain_g0_vs_t1": 0.847812921209699,
+   "dice_ventricles_warped_vs_g0": 0.5643115836545516,
+   "ventricle_ml_warped": 57.506,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P13_T2": {
+   "dice_brain_warped_vs_t1": 0.9201393881978653,
+   "dice_brain_g0_vs_t1": 0.8997716117944462,
+   "dice_ventricles_warped_vs_g0": 0.5455454454554545,
+   "ventricle_ml_warped": 61.644,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P14_T1": {
+   "dice_brain_warped_vs_t1": 0.9678358178774336,
+   "dice_brain_g0_vs_t1": 0.943832193817264,
+   "dice_ventricles_warped_vs_g0": 0.7066324955227568,
+   "ventricle_ml_warped": 36.407,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P14_T2": {
+   "dice_brain_warped_vs_t1": 0.8481566434736534,
+   "dice_brain_g0_vs_t1": 0.8309397368429241,
+   "dice_ventricles_warped_vs_g0": 0.5950378797740231,
+   "ventricle_ml_warped": 48.457,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "mslesseg_P14_T3": {
+   "dice_brain_warped_vs_t1": 0.9067201743398531,
+   "dice_brain_g0_vs_t1": 0.8896533079950424,
+   "dice_ventricles_warped_vs_g0": 0.5859467455621302,
+   "ventricle_ml_warped": 52.755,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999975072815077
+  },
+  "mslesseg_P14_T4": {
+   "dice_brain_warped_vs_t1": 0.9001008306251854,
+   "dice_brain_g0_vs_t1": 0.8832984599520438,
+   "dice_ventricles_warped_vs_g0": 0.5763522263173623,
+   "ventricle_ml_warped": 51.947,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999990306094753
+  },
+  "mslesseg_P15_T1": {
+   "dice_brain_warped_vs_t1": 0.917156126795806,
+   "dice_brain_g0_vs_t1": 0.8703676612447656,
+   "dice_ventricles_warped_vs_g0": 0.36732122230389586,
+   "ventricle_ml_warped": 19.25,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999991690938359
+  },
+  "mslesseg_P16_T1": {
+   "dice_brain_warped_vs_t1": 0.7817704323771729,
+   "dice_brain_g0_vs_t1": 0.8040921209569916,
+   "dice_ventricles_warped_vs_g0": 0.6121335311029318,
+   "ventricle_ml_warped": 26.244,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P17_T1": {
+   "dice_brain_warped_vs_t1": 0.7837851642425134,
+   "dice_brain_g0_vs_t1": 0.8013217491146617,
+   "dice_ventricles_warped_vs_g0": 0.18868222564467085,
+   "ventricle_ml_warped": 22.281,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997368797147
+  },
+  "mslesseg_P18_T1": {
+   "dice_brain_warped_vs_t1": 0.9668872088339934,
+   "dice_brain_g0_vs_t1": 0.9405263555512652,
+   "dice_ventricles_warped_vs_g0": 0.5360673463083102,
+   "ventricle_ml_warped": 49.323,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P19_T1": {
+   "dice_brain_warped_vs_t1": 0.8795082365968527,
+   "dice_brain_g0_vs_t1": 0.8663998203014822,
+   "dice_ventricles_warped_vs_g0": 0.565009374797957,
+   "ventricle_ml_warped": 33.503,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P19_T2": {
+   "dice_brain_warped_vs_t1": 0.8777165024737585,
+   "dice_brain_g0_vs_t1": 0.8619642727781007,
+   "dice_ventricles_warped_vs_g0": 0.5680074836295603,
+   "ventricle_ml_warped": 35.775,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "mslesseg_P19_T3": {
+   "dice_brain_warped_vs_t1": 0.9632347177062461,
+   "dice_brain_g0_vs_t1": 0.9306680679792958,
+   "dice_ventricles_warped_vs_g0": 0.548721935159358,
+   "ventricle_ml_warped": 37.242,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P19_T4": {
+   "dice_brain_warped_vs_t1": 0.862432151612397,
+   "dice_brain_g0_vs_t1": 0.853478404099728,
+   "dice_ventricles_warped_vs_g0": 0.591721765944199,
+   "ventricle_ml_warped": 39.089,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P1_T1": {
+   "dice_brain_warped_vs_t1": 0.9383191841244456,
+   "dice_brain_g0_vs_t1": 0.9129055766912644,
+   "dice_ventricles_warped_vs_g0": 0.5160702535810092,
+   "ventricle_ml_warped": 30.906,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999970918284257
+  },
+  "mslesseg_P1_T2": {
+   "dice_brain_warped_vs_t1": 0.9186031541203786,
+   "dice_brain_g0_vs_t1": 0.8852433865696492,
+   "dice_ventricles_warped_vs_g0": 0.5029861822808072,
+   "ventricle_ml_warped": 28.229,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P1_T3": {
+   "dice_brain_warped_vs_t1": 0.9101786525540677,
+   "dice_brain_g0_vs_t1": 0.883533244610425,
+   "dice_ventricles_warped_vs_g0": 0.48079718393723403,
+   "ventricle_ml_warped": 28.736,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "mslesseg_P20_T1": {
+   "dice_brain_warped_vs_t1": 0.8467134386928794,
+   "dice_brain_g0_vs_t1": 0.8733815920459154,
+   "dice_ventricles_warped_vs_g0": 0.12616715138527476,
+   "ventricle_ml_warped": 23.899,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999990306094753
+  },
+  "mslesseg_P20_T2": {
+   "dice_brain_warped_vs_t1": 0.9611101958595488,
+   "dice_brain_g0_vs_t1": 0.9286528036722274,
+   "dice_ventricles_warped_vs_g0": 0.6502828313713499,
+   "ventricle_ml_warped": 23.963,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999993075781966
+  },
+  "mslesseg_P20_T3": {
+   "dice_brain_warped_vs_t1": 0.8650716242220226,
+   "dice_brain_g0_vs_t1": 0.8542305858128727,
+   "dice_ventricles_warped_vs_g0": 0.5258102347400361,
+   "ventricle_ml_warped": 25.354,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "mslesseg_P21_T1": {
+   "dice_brain_warped_vs_t1": 0.9704722181145705,
+   "dice_brain_g0_vs_t1": 0.941149806009944,
+   "dice_ventricles_warped_vs_g0": 0.5563937785228649,
+   "ventricle_ml_warped": 25.32,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P22_T1": {
+   "dice_brain_warped_vs_t1": 0.9217332088857103,
+   "dice_brain_g0_vs_t1": 0.9012424602735242,
+   "dice_ventricles_warped_vs_g0": 0.5907361596860872,
+   "ventricle_ml_warped": 30.25,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997784250229
+  },
+  "mslesseg_P22_T2": {
+   "dice_brain_warped_vs_t1": 0.8605562948471722,
+   "dice_brain_g0_vs_t1": 0.8481974724088076,
+   "dice_ventricles_warped_vs_g0": 0.6138744592505082,
+   "ventricle_ml_warped": 29.194,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P23_T1": {
+   "dice_brain_warped_vs_t1": 0.8985010139873744,
+   "dice_brain_g0_vs_t1": 0.8646283486920667,
+   "dice_ventricles_warped_vs_g0": 0.5889671576251029,
+   "ventricle_ml_warped": 37.221,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P24_T1": {
+   "dice_brain_warped_vs_t1": 0.842580508125847,
+   "dice_brain_g0_vs_t1": 0.8502398222232497,
+   "dice_ventricles_warped_vs_g0": 0.40934931000232466,
+   "ventricle_ml_warped": 18.954,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P25_T1": {
+   "dice_brain_warped_vs_t1": 0.9703868545506157,
+   "dice_brain_g0_vs_t1": 0.9589469758880329,
+   "dice_ventricles_warped_vs_g0": 0.6803355079217148,
+   "ventricle_ml_warped": 24.212,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999952915317367
+  },
+  "mslesseg_P26_T1": {
+   "dice_brain_warped_vs_t1": 0.9374649072110668,
+   "dice_brain_g0_vs_t1": 0.9212236586408808,
+   "dice_ventricles_warped_vs_g0": 0.7353886116617677,
+   "ventricle_ml_warped": 30.151,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997368797147
+  },
+  "mslesseg_P27_T1": {
+   "dice_brain_warped_vs_t1": 0.9671427232759466,
+   "dice_brain_g0_vs_t1": 0.9396533176125325,
+   "dice_ventricles_warped_vs_g0": 0.6312385033656082,
+   "ventricle_ml_warped": 21.106,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P28_T1": {
+   "dice_brain_warped_vs_t1": 0.9596657764420902,
+   "dice_brain_g0_vs_t1": 0.9371608032702164,
+   "dice_ventricles_warped_vs_g0": 0.6294081093677178,
+   "ventricle_ml_warped": 23.131,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P28_T2": {
+   "dice_brain_warped_vs_t1": 0.9706156918162719,
+   "dice_brain_g0_vs_t1": 0.9460096243245829,
+   "dice_ventricles_warped_vs_g0": 0.6125887401372382,
+   "ventricle_ml_warped": 22.204,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "mslesseg_P29_T1": {
+   "dice_brain_warped_vs_t1": 0.9188480138037355,
+   "dice_brain_g0_vs_t1": 0.9113085894545062,
+   "dice_ventricles_warped_vs_g0": 0.67144586517364,
+   "ventricle_ml_warped": 24.503,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P2_T1": {
+   "dice_brain_warped_vs_t1": 0.9069385549569089,
+   "dice_brain_g0_vs_t1": 0.8888528670937048,
+   "dice_ventricles_warped_vs_g0": 0.5492935386569296,
+   "ventricle_ml_warped": 22.027,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P2_T2": {
+   "dice_brain_warped_vs_t1": 0.8524602600239491,
+   "dice_brain_g0_vs_t1": 0.8580550550036843,
+   "dice_ventricles_warped_vs_g0": 0.5171143514965464,
+   "ventricle_ml_warped": 23.755,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P2_T3": {
+   "dice_brain_warped_vs_t1": 0.8993790245061523,
+   "dice_brain_g0_vs_t1": 0.8853189312132285,
+   "dice_ventricles_warped_vs_g0": 0.5420623087185121,
+   "ventricle_ml_warped": 22.607,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999975072815077
+  },
+  "mslesseg_P2_T4": {
+   "dice_brain_warped_vs_t1": 0.9501753068403094,
+   "dice_brain_g0_vs_t1": 0.9228378511831453,
+   "dice_ventricles_warped_vs_g0": 0.5760329093196478,
+   "ventricle_ml_warped": 21.712,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999972303127863
+  },
+  "mslesseg_P30_T1": {
+   "dice_brain_warped_vs_t1": 0.8995843331412161,
+   "dice_brain_g0_vs_t1": 0.866922947782075,
+   "dice_ventricles_warped_vs_g0": 0.6474503610108303,
+   "ventricle_ml_warped": 24.819,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999990306094753
+  },
+  "mslesseg_P31_T1": {
+   "dice_brain_warped_vs_t1": 0.9089588155240844,
+   "dice_brain_g0_vs_t1": 0.8937918057525344,
+   "dice_ventricles_warped_vs_g0": 0.6746716946181073,
+   "ventricle_ml_warped": 32.097,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P31_T2": {
+   "dice_brain_warped_vs_t1": 0.9121053523916315,
+   "dice_brain_g0_vs_t1": 0.8992289275703125,
+   "dice_ventricles_warped_vs_g0": 0.7041691919997448,
+   "ventricle_ml_warped": 34.333,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997784250229
+  },
+  "mslesseg_P32_T1": {
+   "dice_brain_warped_vs_t1": 0.9407453624986657,
+   "dice_brain_g0_vs_t1": 0.9258530349852977,
+   "dice_ventricles_warped_vs_g0": 0.6797911095956787,
+   "ventricle_ml_warped": 27.358,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999970918284257
+  },
+  "mslesseg_P33_T1": {
+   "dice_brain_warped_vs_t1": 0.888953371806025,
+   "dice_brain_g0_vs_t1": 0.8510923609905259,
+   "dice_ventricles_warped_vs_g0": 0.6359259378938185,
+   "ventricle_ml_warped": 33.529,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "mslesseg_P33_T2": {
+   "dice_brain_warped_vs_t1": 0.8886490428904078,
+   "dice_brain_g0_vs_t1": 0.847218175785716,
+   "dice_ventricles_warped_vs_g0": 0.609066857115032,
+   "ventricle_ml_warped": 33.244,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999970918284257
+  },
+  "mslesseg_P34_T1": {
+   "dice_brain_warped_vs_t1": 0.9407511077556565,
+   "dice_brain_g0_vs_t1": 0.917851603832384,
+   "dice_ventricles_warped_vs_g0": 0.7262401811619843,
+   "ventricle_ml_warped": 28.159,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P35_T1": {
+   "dice_brain_warped_vs_t1": 0.9044715530413197,
+   "dice_brain_g0_vs_t1": 0.8808478229083837,
+   "dice_ventricles_warped_vs_g0": 0.6771940479805648,
+   "ventricle_ml_warped": 27.616,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "mslesseg_P36_T1": {
+   "dice_brain_warped_vs_t1": 0.9033932923712097,
+   "dice_brain_g0_vs_t1": 0.8790123456790123,
+   "dice_ventricles_warped_vs_g0": 0.6239501779359431,
+   "ventricle_ml_warped": 27.835,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P37_T1": {
+   "dice_brain_warped_vs_t1": 0.922781381412153,
+   "dice_brain_g0_vs_t1": 0.8855886563555692,
+   "dice_ventricles_warped_vs_g0": 0.612468207352107,
+   "ventricle_ml_warped": 26.286,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P38_T1": {
+   "dice_brain_warped_vs_t1": 0.9096947906003221,
+   "dice_brain_g0_vs_t1": 0.8971651308970612,
+   "dice_ventricles_warped_vs_g0": 0.45317030336166475,
+   "ventricle_ml_warped": 31.992,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999993075781966
+  },
+  "mslesseg_P39_T1": {
+   "dice_brain_warped_vs_t1": 0.9701477593636313,
+   "dice_brain_g0_vs_t1": 0.9428805871981044,
+   "dice_ventricles_warped_vs_g0": 0.5028818588744153,
+   "ventricle_ml_warped": 71.05,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997368797147
+  },
+  "mslesseg_P3_T1": {
+   "dice_brain_warped_vs_t1": 0.9033206877142947,
+   "dice_brain_g0_vs_t1": 0.8825609154235353,
+   "dice_ventricles_warped_vs_g0": 0.6306825712392313,
+   "ventricle_ml_warped": 31.995,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P3_T2": {
+   "dice_brain_warped_vs_t1": 0.927634149955203,
+   "dice_brain_g0_vs_t1": 0.9129939637867092,
+   "dice_ventricles_warped_vs_g0": 0.5949506392620165,
+   "ventricle_ml_warped": 33.425,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999969533440649
+  },
+  "mslesseg_P3_T3": {
+   "dice_brain_warped_vs_t1": 0.9481082573021361,
+   "dice_brain_g0_vs_t1": 0.9269026555960217,
+   "dice_ventricles_warped_vs_g0": 0.6030042216186144,
+   "ventricle_ml_warped": 32.749,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P3_T4": {
+   "dice_brain_warped_vs_t1": 0.8934558722746586,
+   "dice_brain_g0_vs_t1": 0.8823855361518547,
+   "dice_ventricles_warped_vs_g0": 0.625507990344364,
+   "ventricle_ml_warped": 37.089,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997368797147
+  },
+  "mslesseg_P40_T1": {
+   "dice_brain_warped_vs_t1": 0.9008058083533086,
+   "dice_brain_g0_vs_t1": 0.8820554165977871,
+   "dice_ventricles_warped_vs_g0": 0.5122459189965909,
+   "ventricle_ml_warped": 57.582,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999991690938359
+  },
+  "mslesseg_P41_T1": {
+   "dice_brain_warped_vs_t1": 0.9172073342378104,
+   "dice_brain_g0_vs_t1": 0.8952598194626422,
+   "dice_ventricles_warped_vs_g0": 0.6249957163908022,
+   "ventricle_ml_warped": 29.997,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P42_T1": {
+   "dice_brain_warped_vs_t1": 0.909454868797522,
+   "dice_brain_g0_vs_t1": 0.8818021507025905,
+   "dice_ventricles_warped_vs_g0": 0.6351910983448834,
+   "ventricle_ml_warped": 43.352,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P43_T1": {
+   "dice_brain_warped_vs_t1": 0.9434305570290388,
+   "dice_brain_g0_vs_t1": 0.9278916527610696,
+   "dice_ventricles_warped_vs_g0": 0.7035117028055733,
+   "ventricle_ml_warped": 29.698,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P44_T1": {
+   "dice_brain_warped_vs_t1": 0.902385081303878,
+   "dice_brain_g0_vs_t1": 0.8865592261318033,
+   "dice_ventricles_warped_vs_g0": 0.4918918918918919,
+   "ventricle_ml_warped": 25.655,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P45_T1": {
+   "dice_brain_warped_vs_t1": 0.9040811857845109,
+   "dice_brain_g0_vs_t1": 0.8914779421390234,
+   "dice_ventricles_warped_vs_g0": 0.4013194898378,
+   "ventricle_ml_warped": 37.418,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999970918284257
+  },
+  "mslesseg_P46_T1": {
+   "dice_brain_warped_vs_t1": 0.9444546915025636,
+   "dice_brain_g0_vs_t1": 0.917531921466328,
+   "dice_ventricles_warped_vs_g0": 0.5920646437056322,
+   "ventricle_ml_warped": 41.928,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P47_T1": {
+   "dice_brain_warped_vs_t1": 0.8884177981604102,
+   "dice_brain_g0_vs_t1": 0.8571196401028148,
+   "dice_ventricles_warped_vs_g0": 0.526453352408727,
+   "ventricle_ml_warped": 44.329,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P48_T1": {
+   "dice_brain_warped_vs_t1": 0.8813447945248716,
+   "dice_brain_g0_vs_t1": 0.8701400196842857,
+   "dice_ventricles_warped_vs_g0": 0.5234532995621527,
+   "ventricle_ml_warped": 22.566,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999988921251145
+  },
+  "mslesseg_P49_T1": {
+   "dice_brain_warped_vs_t1": 0.9396866279086442,
+   "dice_brain_g0_vs_t1": 0.901852425862865,
+   "dice_ventricles_warped_vs_g0": 0.5322057506715749,
+   "ventricle_ml_warped": 21.89,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P4_T1": {
+   "dice_brain_warped_vs_t1": 0.9080393790885605,
+   "dice_brain_g0_vs_t1": 0.8948933141799851,
+   "dice_ventricles_warped_vs_g0": 0.6256395759717315,
+   "ventricle_ml_warped": 42.385,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P4_T2": {
+   "dice_brain_warped_vs_t1": 0.9136270468514555,
+   "dice_brain_g0_vs_t1": 0.9077366249005697,
+   "dice_ventricles_warped_vs_g0": 0.6363367216026843,
+   "ventricle_ml_warped": 42.566,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P4_T3": {
+   "dice_brain_warped_vs_t1": 0.9010222302971514,
+   "dice_brain_g0_vs_t1": 0.8911208085693152,
+   "dice_ventricles_warped_vs_g0": 0.607401928711632,
+   "ventricle_ml_warped": 41.941,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P50_T1": {
+   "dice_brain_warped_vs_t1": 0.7921306489451647,
+   "dice_brain_g0_vs_t1": 0.7932213182942178,
+   "dice_ventricles_warped_vs_g0": 0.6019056693663649,
+   "ventricle_ml_warped": 34.605,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "mslesseg_P50_T2": {
+   "dice_brain_warped_vs_t1": 0.7997167287039406,
+   "dice_brain_g0_vs_t1": 0.8003213320875198,
+   "dice_ventricles_warped_vs_g0": 0.6085181435150406,
+   "ventricle_ml_warped": 32.869,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P51_T1": {
+   "dice_brain_warped_vs_t1": 0.8884396130842325,
+   "dice_brain_g0_vs_t1": 0.8690428031506164,
+   "dice_ventricles_warped_vs_g0": 0.534657987895398,
+   "ventricle_ml_warped": 50.448,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999975072815077
+  },
+  "mslesseg_P51_T2": {
+   "dice_brain_warped_vs_t1": 0.9073164431480524,
+   "dice_brain_g0_vs_t1": 0.8903507069868692,
+   "dice_ventricles_warped_vs_g0": 0.4435168671498501,
+   "ventricle_ml_warped": 50.694,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999993075781966
+  },
+  "mslesseg_P52_T1": {
+   "dice_brain_warped_vs_t1": 0.9052026099814539,
+   "dice_brain_g0_vs_t1": 0.8793918043982789,
+   "dice_ventricles_warped_vs_g0": 0.6264619883040936,
+   "ventricle_ml_warped": 37.299,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P52_T2": {
+   "dice_brain_warped_vs_t1": 0.8697427983349857,
+   "dice_brain_g0_vs_t1": 0.8675361000294618,
+   "dice_ventricles_warped_vs_g0": 0.6617871391692091,
+   "ventricle_ml_warped": 39.811,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997784250229
+  },
+  "mslesseg_P53_T1": {
+   "dice_brain_warped_vs_t1": 0.9168527826923086,
+   "dice_brain_g0_vs_t1": 0.891876196785948,
+   "dice_ventricles_warped_vs_g0": 0.5805028023360156,
+   "ventricle_ml_warped": 39.614,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P53_T2": {
+   "dice_brain_warped_vs_t1": 0.9124236032874309,
+   "dice_brain_g0_vs_t1": 0.8908230704422425,
+   "dice_ventricles_warped_vs_g0": 0.5767324089751217,
+   "ventricle_ml_warped": 37.194,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "mslesseg_P54": {
+   "dice_brain_warped_vs_t1": 0.9683001876852183,
+   "dice_brain_g0_vs_t1": 0.9493131510787102,
+   "dice_ventricles_warped_vs_g0": 0.5724335481696786,
+   "ventricle_ml_warped": 19.113,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P55": {
+   "dice_brain_warped_vs_t1": 0.9351337990792563,
+   "dice_brain_g0_vs_t1": 0.9090868366707255,
+   "dice_ventricles_warped_vs_g0": 0.6168579404466501,
+   "ventricle_ml_warped": 23.219,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P56": {
+   "dice_brain_warped_vs_t1": 0.90511220280412,
+   "dice_brain_g0_vs_t1": 0.8944470558764408,
+   "dice_ventricles_warped_vs_g0": 0.5031884679277638,
+   "ventricle_ml_warped": 27.618,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P57": {
+   "dice_brain_warped_vs_t1": 0.8176297228117057,
+   "dice_brain_g0_vs_t1": 0.8043689193150413,
+   "dice_ventricles_warped_vs_g0": 0.5878080415045396,
+   "ventricle_ml_warped": 52.59,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P58": {
+   "dice_brain_warped_vs_t1": 0.8700996413019667,
+   "dice_brain_g0_vs_t1": 0.8483102387174669,
+   "dice_ventricles_warped_vs_g0": 0.6263968259745932,
+   "ventricle_ml_warped": 26.581,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997368797147
+  },
+  "mslesseg_P59": {
+   "dice_brain_warped_vs_t1": 0.9741601560484245,
+   "dice_brain_g0_vs_t1": 0.9551157424396927,
+   "dice_ventricles_warped_vs_g0": 0.666120106579217,
+   "ventricle_ml_warped": 25.304,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999975072815077
+  },
+  "mslesseg_P5_T1": {
+   "dice_brain_warped_vs_t1": 0.8997709895381193,
+   "dice_brain_g0_vs_t1": 0.8827943092438788,
+   "dice_ventricles_warped_vs_g0": 0.6082069316855927,
+   "ventricle_ml_warped": 32.486,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P5_T2": {
+   "dice_brain_warped_vs_t1": 0.8986090413598903,
+   "dice_brain_g0_vs_t1": 0.8850937474574458,
+   "dice_ventricles_warped_vs_g0": 0.629294638209266,
+   "ventricle_ml_warped": 33.107,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P60": {
+   "dice_brain_warped_vs_t1": 0.9416477755326442,
+   "dice_brain_g0_vs_t1": 0.9159820335179307,
+   "dice_ventricles_warped_vs_g0": 0.4894797282830839,
+   "ventricle_ml_warped": 23.012,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P61": {
+   "dice_brain_warped_vs_t1": 0.9539029126551717,
+   "dice_brain_g0_vs_t1": 0.9217255134798209,
+   "dice_ventricles_warped_vs_g0": 0.44409231269299526,
+   "ventricle_ml_warped": 20.859,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "mslesseg_P62": {
+   "dice_brain_warped_vs_t1": 0.8903605158021626,
+   "dice_brain_g0_vs_t1": 0.8590766217480281,
+   "dice_ventricles_warped_vs_g0": 0.5859200420633579,
+   "ventricle_ml_warped": 24.888,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P63": {
+   "dice_brain_warped_vs_t1": 0.8937703059516887,
+   "dice_brain_g0_vs_t1": 0.885463576476745,
+   "dice_ventricles_warped_vs_g0": 0.6702231739058202,
+   "ventricle_ml_warped": 25.808,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999991690938359
+  },
+  "mslesseg_P64": {
+   "dice_brain_warped_vs_t1": 0.8791542598594934,
+   "dice_brain_g0_vs_t1": 0.8778802639306319,
+   "dice_ventricles_warped_vs_g0": 0.5017678201769652,
+   "ventricle_ml_warped": 26.222,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  },
+  "mslesseg_P65": {
+   "dice_brain_warped_vs_t1": 0.9077679982619993,
+   "dice_brain_g0_vs_t1": 0.8631434263627314,
+   "dice_ventricles_warped_vs_g0": 0.6234539884261886,
+   "ventricle_ml_warped": 42.139,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999975072815077
+  },
+  "mslesseg_P66": {
+   "dice_brain_warped_vs_t1": 0.9189046586070346,
+   "dice_brain_g0_vs_t1": 0.8674145573284292,
+   "dice_ventricles_warped_vs_g0": 0.5546190547437369,
+   "ventricle_ml_warped": 31.788,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P67": {
+   "dice_brain_warped_vs_t1": 0.8917682518034394,
+   "dice_brain_g0_vs_t1": 0.8925828099476498,
+   "dice_ventricles_warped_vs_g0": 0.7151430130153534,
+   "ventricle_ml_warped": 35.79,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999972303127863
+  },
+  "mslesseg_P68": {
+   "dice_brain_warped_vs_t1": 0.9729513345038221,
+   "dice_brain_g0_vs_t1": 0.9515212405228712,
+   "dice_ventricles_warped_vs_g0": 0.6477170366515204,
+   "ventricle_ml_warped": 21.592,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P69": {
+   "dice_brain_warped_vs_t1": 0.907962293773204,
+   "dice_brain_g0_vs_t1": 0.8852634589407145,
+   "dice_ventricles_warped_vs_g0": 0.6678770673092794,
+   "ventricle_ml_warped": 32.221,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "mslesseg_P6_T1": {
+   "dice_brain_warped_vs_t1": 0.8648691109085459,
+   "dice_brain_g0_vs_t1": 0.8696652220464067,
+   "dice_ventricles_warped_vs_g0": 0.6798238340059336,
+   "ventricle_ml_warped": 25.902,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "mslesseg_P6_T2": {
+   "dice_brain_warped_vs_t1": 0.8741500280306926,
+   "dice_brain_g0_vs_t1": 0.8751108995199445,
+   "dice_ventricles_warped_vs_g0": 0.6889615197096373,
+   "ventricle_ml_warped": 27.014,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999991690938359
+  },
+  "mslesseg_P6_T3": {
+   "dice_brain_warped_vs_t1": 0.9035670351155353,
+   "dice_brain_g0_vs_t1": 0.8951932782737008,
+   "dice_ventricles_warped_vs_g0": 0.6711582107689833,
+   "ventricle_ml_warped": 27.592,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "mslesseg_P70": {
+   "dice_brain_warped_vs_t1": 0.9165312798870735,
+   "dice_brain_g0_vs_t1": 0.9030269818462987,
+   "dice_ventricles_warped_vs_g0": 0.6215720934758283,
+   "ventricle_ml_warped": 33.298,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P71": {
+   "dice_brain_warped_vs_t1": 0.9721095796833453,
+   "dice_brain_g0_vs_t1": 0.9497748358454954,
+   "dice_ventricles_warped_vs_g0": 0.6377565535460272,
+   "ventricle_ml_warped": 20.845,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P72": {
+   "dice_brain_warped_vs_t1": 0.8864551614356835,
+   "dice_brain_g0_vs_t1": 0.8546027136629185,
+   "dice_ventricles_warped_vs_g0": 0.5788289033795637,
+   "ventricle_ml_warped": 32.057,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P73": {
+   "dice_brain_warped_vs_t1": 0.8788015331324286,
+   "dice_brain_g0_vs_t1": 0.8675081363991174,
+   "dice_ventricles_warped_vs_g0": 0.6105573668684987,
+   "ventricle_ml_warped": 36.045,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "mslesseg_P74": {
+   "dice_brain_warped_vs_t1": 0.9415238798143221,
+   "dice_brain_g0_vs_t1": 0.9250633088499677,
+   "dice_ventricles_warped_vs_g0": 0.6249302844394868,
+   "ventricle_ml_warped": 29.011,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999970918284257
+  },
+  "mslesseg_P75": {
+   "dice_brain_warped_vs_t1": 0.9024590700204346,
+   "dice_brain_g0_vs_t1": 0.8819943659380156,
+   "dice_ventricles_warped_vs_g0": 0.6306095371887926,
+   "ventricle_ml_warped": 48.513,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "mslesseg_P7_T1": {
+   "dice_brain_warped_vs_t1": 0.8436693950640998,
+   "dice_brain_g0_vs_t1": 0.8430895580926336,
+   "dice_ventricles_warped_vs_g0": 0.40541174630484084,
+   "ventricle_ml_warped": 35.57,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999997784250229
+  },
+  "mslesseg_P7_T2": {
+   "dice_brain_warped_vs_t1": 0.8423136367570508,
+   "dice_brain_g0_vs_t1": 0.8391401217269245,
+   "dice_ventricles_warped_vs_g0": 0.4477439430984663,
+   "ventricle_ml_warped": 39.12,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999969533440649
+  },
+  "mslesseg_P8_T1": {
+   "dice_brain_warped_vs_t1": 0.8940008405798212,
+   "dice_brain_g0_vs_t1": 0.8863356606366245,
+   "dice_ventricles_warped_vs_g0": 0.6188694773858068,
+   "ventricle_ml_warped": 25.097,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "mslesseg_P8_T2": {
+   "dice_brain_warped_vs_t1": 0.8858885356002565,
+   "dice_brain_g0_vs_t1": 0.8823034209732074,
+   "dice_ventricles_warped_vs_g0": 0.5885940489042938,
+   "ventricle_ml_warped": 24.432,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "mslesseg_P9_T1": {
+   "dice_brain_warped_vs_t1": 0.8510402979139062,
+   "dice_brain_g0_vs_t1": 0.850861674205108,
+   "dice_ventricles_warped_vs_g0": 0.6596800882515168,
+   "ventricle_ml_warped": 26.025,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "mslesseg_P9_T2": {
+   "dice_brain_warped_vs_t1": 0.9299522873283322,
+   "dice_brain_g0_vs_t1": 0.912960207882835,
+   "dice_ventricles_warped_vs_g0": 0.6131559220389805,
+   "ventricle_ml_warped": 24.995,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "mslesseg_P9_T3": {
+   "dice_brain_warped_vs_t1": 0.8865016007328789,
+   "dice_brain_g0_vs_t1": 0.8814313817383588,
+   "dice_ventricles_warped_vs_g0": 0.6326799780179521,
+   "ventricle_ml_warped": 26.225,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "openms_patient01": {
+   "dice_brain_warped_vs_t1": 0.9601691385154837,
+   "dice_brain_g0_vs_t1": 0.8189195867397,
+   "dice_ventricles_warped_vs_g0": 0.5432289687168264,
+   "ventricle_ml_warped": 47.938,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "openms_patient02": {
+   "dice_brain_warped_vs_t1": 0.9648962137102941,
+   "dice_brain_g0_vs_t1": 0.8455979828803497,
+   "dice_ventricles_warped_vs_g0": 0.6350492206726825,
+   "ventricle_ml_warped": 30.147,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.999998199703311
+  },
+  "openms_patient03": {
+   "dice_brain_warped_vs_t1": 0.9518090340978785,
+   "dice_brain_g0_vs_t1": 0.7675632532941246,
+   "dice_ventricles_warped_vs_g0": 0.5048501645591547,
+   "ventricle_ml_warped": 17.819,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "openms_patient04": {
+   "dice_brain_warped_vs_t1": 0.9593623491390294,
+   "dice_brain_g0_vs_t1": 0.8599491598456674,
+   "dice_ventricles_warped_vs_g0": 0.4197016256458477,
+   "ventricle_ml_warped": 74.794,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "openms_patient05": {
+   "dice_brain_warped_vs_t1": 0.9605517617481183,
+   "dice_brain_g0_vs_t1": 0.8008678590630397,
+   "dice_ventricles_warped_vs_g0": 0.6167702921386594,
+   "ventricle_ml_warped": 18.599,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "openms_patient06": {
+   "dice_brain_warped_vs_t1": 0.9649927216951752,
+   "dice_brain_g0_vs_t1": 0.8451892835986785,
+   "dice_ventricles_warped_vs_g0": 0.6292173258776654,
+   "ventricle_ml_warped": 30.114,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "openms_patient07": {
+   "dice_brain_warped_vs_t1": 0.9575994753347393,
+   "dice_brain_g0_vs_t1": 0.7493582204226096,
+   "dice_ventricles_warped_vs_g0": 0.5700551580532973,
+   "ventricle_ml_warped": 16.778,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999993075781966
+  },
+  "openms_patient08": {
+   "dice_brain_warped_vs_t1": 0.956026922892923,
+   "dice_brain_g0_vs_t1": 0.8205111890639761,
+   "dice_ventricles_warped_vs_g0": 0.6116459941596554,
+   "ventricle_ml_warped": 40.809,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "openms_patient09": {
+   "dice_brain_warped_vs_t1": 0.954409883225115,
+   "dice_brain_g0_vs_t1": 0.7759958087570555,
+   "dice_ventricles_warped_vs_g0": 0.5783403549573937,
+   "ventricle_ml_warped": 24.092,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999994460625573
+  },
+  "openms_patient10": {
+   "dice_brain_warped_vs_t1": 0.9552678206759561,
+   "dice_brain_g0_vs_t1": 0.8119132832806741,
+   "dice_ventricles_warped_vs_g0": 0.6015785633746766,
+   "ventricle_ml_warped": 47.02,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "openms_patient11": {
+   "dice_brain_warped_vs_t1": 0.9673063556318896,
+   "dice_brain_g0_vs_t1": 0.8669142109376637,
+   "dice_ventricles_warped_vs_g0": 0.634151018777467,
+   "ventricle_ml_warped": 34.21,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999976457658684
+  },
+  "openms_patient12": {
+   "dice_brain_warped_vs_t1": 0.9646430864770745,
+   "dice_brain_g0_vs_t1": 0.874424198382495,
+   "dice_ventricles_warped_vs_g0": 0.43864853645448376,
+   "ventricle_ml_warped": 70.402,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "openms_patient13": {
+   "dice_brain_warped_vs_t1": 0.9513836630969077,
+   "dice_brain_g0_vs_t1": 0.7860037705276524,
+   "dice_ventricles_warped_vs_g0": 0.6019196254389387,
+   "ventricle_ml_warped": 35.71,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "openms_patient14": {
+   "dice_brain_warped_vs_t1": 0.9634324466064021,
+   "dice_brain_g0_vs_t1": 0.8351344333673071,
+   "dice_ventricles_warped_vs_g0": 0.6911558109833972,
+   "ventricle_ml_warped": 34.275,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "openms_patient15": {
+   "dice_brain_warped_vs_t1": 0.9484870027257919,
+   "dice_brain_g0_vs_t1": 0.7700862171395833,
+   "dice_ventricles_warped_vs_g0": 0.7007367167733294,
+   "ventricle_ml_warped": 25.387,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999988921251145
+  },
+  "openms_patient16": {
+   "dice_brain_warped_vs_t1": 0.9502056702646282,
+   "dice_brain_g0_vs_t1": 0.7653922628977564,
+   "dice_ventricles_warped_vs_g0": 0.5931901635696005,
+   "ventricle_ml_warped": 43.531,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999970918284257
+  },
+  "openms_patient17": {
+   "dice_brain_warped_vs_t1": 0.9590092394388517,
+   "dice_brain_g0_vs_t1": 0.7973257892852214,
+   "dice_ventricles_warped_vs_g0": 0.5911010190102651,
+   "ventricle_ml_warped": 24.922,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "openms_patient18": {
+   "dice_brain_warped_vs_t1": 0.9560816038676369,
+   "dice_brain_g0_vs_t1": 0.8082779235289498,
+   "dice_ventricles_warped_vs_g0": 0.5715816589386914,
+   "ventricle_ml_warped": 20.16,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "openms_patient19": {
+   "dice_brain_warped_vs_t1": 0.9158709057694452,
+   "dice_brain_g0_vs_t1": 0.7315333437107492,
+   "dice_ventricles_warped_vs_g0": 0.44757873404481346,
+   "ventricle_ml_warped": 32.822,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999988921251145
+  },
+  "openms_patient20": {
+   "dice_brain_warped_vs_t1": 0.9584210923663065,
+   "dice_brain_g0_vs_t1": 0.7846410920791959,
+   "dice_ventricles_warped_vs_g0": 0.6220934664938629,
+   "ventricle_ml_warped": 24.103,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999991690938359
+  },
+  "openms_patient21": {
+   "dice_brain_warped_vs_t1": 0.9616641219937205,
+   "dice_brain_g0_vs_t1": 0.8304575982032953,
+   "dice_ventricles_warped_vs_g0": 0.5723096554657593,
+   "ventricle_ml_warped": 37.463,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999986151563932
+  },
+  "openms_patient22": {
+   "dice_brain_warped_vs_t1": 0.9650253685681552,
+   "dice_brain_g0_vs_t1": 0.8252527100651932,
+   "dice_ventricles_warped_vs_g0": 0.6426768256299629,
+   "ventricle_ml_warped": 36.996,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999979227345898
+  },
+  "openms_patient23": {
+   "dice_brain_warped_vs_t1": 0.9555697146053816,
+   "dice_brain_g0_vs_t1": 0.8032102215354995,
+   "dice_ventricles_warped_vs_g0": 0.593074850773863,
+   "ventricle_ml_warped": 47.359,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999983381876718
+  },
+  "openms_patient24": {
+   "dice_brain_warped_vs_t1": 0.969583551001619,
+   "dice_brain_g0_vs_t1": 0.8885773061423632,
+   "dice_ventricles_warped_vs_g0": 0.6052649572649572,
+   "ventricle_ml_warped": 30.135,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999980612189504
+  },
+  "openms_patient25": {
+   "dice_brain_warped_vs_t1": 0.9589445203991669,
+   "dice_brain_g0_vs_t1": 0.7876901631935469,
+   "dice_ventricles_warped_vs_g0": 0.5573383882860427,
+   "ventricle_ml_warped": 38.632,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999987536407539
+  },
+  "openms_patient26": {
+   "dice_brain_warped_vs_t1": 0.9520887173735868,
+   "dice_brain_g0_vs_t1": 0.7439093469351935,
+   "dice_ventricles_warped_vs_g0": 0.5133196721311475,
+   "ventricle_ml_warped": 16.531,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999993075781966
+  },
+  "openms_patient27": {
+   "dice_brain_warped_vs_t1": 0.9580957431748297,
+   "dice_brain_g0_vs_t1": 0.8353389093226982,
+   "dice_ventricles_warped_vs_g0": 0.5123828055899522,
+   "ventricle_ml_warped": 16.859,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999990306094753
+  },
+  "openms_patient28": {
+   "dice_brain_warped_vs_t1": 0.9653596224034335,
+   "dice_brain_g0_vs_t1": 0.8497826971833685,
+   "dice_ventricles_warped_vs_g0": 0.6012955993051534,
+   "ventricle_ml_warped": 26.899,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999988921251145
+  },
+  "openms_patient29": {
+   "dice_brain_warped_vs_t1": 0.9645120825926352,
+   "dice_brain_g0_vs_t1": 0.8267439430389004,
+   "dice_ventricles_warped_vs_g0": 0.5485517470329488,
+   "ventricle_ml_warped": 19.831,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999990306094753
+  },
+  "openms_patient30": {
+   "dice_brain_warped_vs_t1": 0.9487627191544892,
+   "dice_brain_g0_vs_t1": 0.7698135496035938,
+   "dice_ventricles_warped_vs_g0": 0.5430154688803782,
+   "ventricle_ml_warped": 18.374,
+   "ventricle_ml_g0": 28.365,
+   "split_union_equals_original": 0.9999984766720325
+  }
+ },
+ "missing": []
+}

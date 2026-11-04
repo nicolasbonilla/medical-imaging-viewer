@@ -1,0 +1,2695 @@
+{
+ "protocol": "docs/research/paper-d/PROTOCOL.md v1.0",
+ "device_agreement": {
+  "masks_checked": 288,
+  "all_equal": true,
+  "zone_map_equal_on_every_scan": true
+ },
+ "scans_available": 144,
+ "clean_set": 124,
+ "primary": {
+  "n_scans": 124,
+  "n_patients": 85,
+  "reference_dis_met": {
+   "est": 0.9516,
+   "lo": 0.907,
+   "hi": 0.9841
+  },
+  "P1": {
+   "device_default_flip": {
+    "est": 0.0323,
+    "lo": 0.0076,
+    "hi": 0.0684
+   },
+   "device_default_direction": {
+    "ref_met_pipeline_not": 1,
+    "ref_not_pipeline_met": 3
+   },
+   "lstai_as_shipped_flip": {
+    "est": 0.0806,
+    "lo": 0.0333,
+    "hi": 0.1377
+   },
+   "grid_mean_flip": {
+    "est": 0.0534,
+    "lo": 0.0287,
+    "hi": 0.0847
+   },
+   "per_pipeline_flip": {
+    "min": 0.0081,
+    "median": 0.0484,
+    "max": 0.2823,
+    "share_pipelines_le_5pct": 0.5911,
+    "best": [
+     [
+      "FENS",
+      "0.4",
+      "v14",
+      "APP-LV",
+      "G0",
+      0.0081
+     ],
+     [
+      "FENS",
+      "0.4",
+      "v14",
+      "APP",
+      "G0",
+      0.0081
+     ],
+     [
+      "FENS",
+      "0.4",
+      "v14",
+      "LSTAI-LV",
+      "G0",
+      0.0161
+     ],
+     [
+      "FENS",
+      "0.4",
+      "v14",
+      "LSTAI",
+      "G0",
+      0.0161
+     ],
+     [
+      "FENS",
+      "0.5",
+      "v14",
+      "APP",
+      "G0",
+      0.0161
+     ]
+    ],
+    "worst": [
+     [
+      "LENS",
+      "0.7",
+      "v14",
+      "LSTAI",
+      "G1",
+      0.25
+     ],
+     [
+      "LENS",
+      "0.7",
+      "v14",
+      "APP",
+      "G0",
+      0.2581
+     ],
+     [
+      "LENS",
+      "0.7",
+      "v14",
+      "APP-LV",
+      "G0",
+      0.2581
+     ],
+     [
+      "LENS",
+      "0.7",
+      "v14",
+      "APP-LV",
+      "G1",
+      0.2823
+     ],
+     [
+      "LENS",
+      "0.7",
+      "v14",
+      "APP",
+      "G1",
+      0.2823
+     ]
+    ]
+   },
+   "any_flip": {
+    "est": 0.3871,
+    "lo": 0.2906,
+    "hi": 0.4918
+   },
+   "flip_direction_grid": {
+    "ref_met_mean_share_not": 0.0254,
+    "ref_not_mean_share_met": 0.6036
+   }
+  },
+  "P2_automated": {
+   "not_unanimous": {
+    "est": 0.3871,
+    "lo": 0.2906,
+    "hi": 0.4918
+   },
+   "contested": {
+    "est": 0.0968,
+    "lo": 0.0496,
+    "hi": 0.1545
+   },
+   "pairwise": {
+    "est": 0.0537,
+    "lo": 0.0348,
+    "hi": 0.0774
+   }
+  },
+  "P2_expert": {
+   "not_unanimous": {
+    "est": 0.0484,
+    "lo": 0.0148,
+    "hi": 0.0925
+   },
+   "contested": {
+    "est": 0.0403,
+    "lo": 0.0081,
+    "hi": 0.0797
+   },
+   "pairwise": {
+    "est": 0.0213,
+    "lo": 0.0048,
+    "hi": 0.0417
+   }
+  },
+  "expert_grid_flip_vs_ref_mean": {
+   "est": 0.0204,
+   "lo": 0.0044,
+   "hi": 0.0401
+  },
+  "n_pipelines": {
+   "automated": 1120,
+   "expert": 32
+  }
+ },
+ "S1_drivers": {
+  "segmenter_family": {
+   "disagreement": {
+    "est": 0.0729,
+    "lo": 0.0493,
+    "hi": 0.1009
+   },
+   "n_groups": 160
+  },
+  "flames_fold": {
+   "disagreement": {
+    "est": 0.0291,
+    "lo": 0.0132,
+    "hi": 0.0493
+   },
+   "n_groups": 160
+  },
+  "threshold": {
+   "disagreement": {
+    "est": 0.0189,
+    "lo": 0.0133,
+    "hi": 0.0256
+   },
+   "n_groups": 224
+  },
+  "min_size": {
+   "disagreement": {
+    "est": 0.0108,
+    "lo": 0.0059,
+    "hi": 0.0176
+   },
+   "n_groups": 280
+  },
+  "region_rule": {
+   "disagreement": {
+    "est": 0.0094,
+    "lo": 0.0047,
+    "hi": 0.0147
+   },
+   "n_groups": 280
+  },
+  "registration": {
+   "disagreement": {
+    "est": 0.0396,
+    "lo": 0.0212,
+    "hi": 0.0623
+   },
+   "n_groups": 560
+  },
+  "_ranking": [
+   "segmenter_family",
+   "registration",
+   "flames_fold",
+   "threshold",
+   "min_size",
+   "region_rule"
+  ],
+  "_top_minus_second": {
+   "top": "segmenter_family",
+   "second": "registration",
+   "est": 0.0333,
+   "lo": 0.0121,
+   "hi": 0.0563
+  },
+  "_expert_grid": {
+   "min_size": {
+    "disagreement": {
+     "est": 0.0005,
+     "lo": 0.0,
+     "hi": 0.0016
+    },
+    "n_groups": 8
+   },
+   "region_rule": {
+    "disagreement": {
+     "est": 0.0005,
+     "lo": 0.0,
+     "hi": 0.0016
+    },
+    "n_groups": 8
+   },
+   "registration": {
+    "disagreement": {
+     "est": 0.0408,
+     "lo": 0.0087,
+     "hi": 0.0802
+    },
+    "n_groups": 16
+   }
+  },
+  "_ofat_from_default": {
+   "source=F1": {
+    "flip_vs_default": {
+     "est": 0.0081,
+     "lo": 0.0,
+     "hi": 0.0268
+    },
+    "flip_vs_reference": {
+     "est": 0.0242,
+     "lo": 0.0,
+     "hi": 0.0547
+    }
+   },
+   "source=F2": {
+    "flip_vs_default": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.041
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0696
+    }
+   },
+   "source=F3": {
+    "flip_vs_default": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.0424
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0077,
+     "hi": 0.0667
+    }
+   },
+   "source=F4": {
+    "flip_vs_default": {
+     "est": 0.0242,
+     "lo": 0.0,
+     "hi": 0.0556
+    },
+    "flip_vs_reference": {
+     "est": 0.0403,
+     "lo": 0.0079,
+     "hi": 0.0791
+    }
+   },
+   "source=FENS": {
+    "flip_vs_default": {
+     "est": 0.0081,
+     "lo": 0.0,
+     "hi": 0.0268
+    },
+    "flip_vs_reference": {
+     "est": 0.0242,
+     "lo": 0.0,
+     "hi": 0.0547
+    }
+   },
+   "source=LENS": {
+    "flip_vs_default": {
+     "est": 0.1129,
+     "lo": 0.0615,
+     "hi": 0.1732
+    },
+    "flip_vs_reference": {
+     "est": 0.0968,
+     "lo": 0.0492,
+     "hi": 0.1495
+    }
+   },
+   "source=L1": {
+    "flip_vs_default": {
+     "est": 0.0726,
+     "lo": 0.032,
+     "hi": 0.122
+    },
+    "flip_vs_reference": {
+     "est": 0.0887,
+     "lo": 0.0417,
+     "hi": 0.1429
+    }
+   },
+   "source=L2": {
+    "flip_vs_default": {
+     "est": 0.0645,
+     "lo": 0.0259,
+     "hi": 0.1102
+    },
+    "flip_vs_reference": {
+     "est": 0.0645,
+     "lo": 0.0244,
+     "hi": 0.1081
+    }
+   },
+   "source=L3": {
+    "flip_vs_default": {
+     "est": 0.0726,
+     "lo": 0.0288,
+     "hi": 0.127
+    },
+    "flip_vs_reference": {
+     "est": 0.0887,
+     "lo": 0.0397,
+     "hi": 0.1478
+    }
+   },
+   "t=0.3": {
+    "flip_vs_default": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0684
+    }
+   },
+   "t=0.4": {
+    "flip_vs_default": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0684
+    }
+   },
+   "t=0.6": {
+    "flip_vs_default": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0684
+    }
+   },
+   "t=0.7": {
+    "flip_vs_default": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0684
+    }
+   },
+   "M=none": {
+    "flip_vs_default": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0684
+    }
+   },
+   "M=v14": {
+    "flip_vs_default": {
+     "est": 0.0081,
+     "lo": 0.0,
+     "hi": 0.0261
+    },
+    "flip_vs_reference": {
+     "est": 0.0242,
+     "lo": 0.0,
+     "hi": 0.0569
+    }
+   },
+   "M=la3": {
+    "flip_vs_default": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0684
+    }
+   },
+   "R=APP-LV": {
+    "flip_vs_default": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0684
+    }
+   },
+   "R=LSTAI": {
+    "flip_vs_default": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.0424
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0075,
+     "hi": 0.0702
+    }
+   },
+   "R=LSTAI-LV": {
+    "flip_vs_default": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.0424
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0075,
+     "hi": 0.0702
+    }
+   },
+   "R=APP-3MM": {
+    "flip_vs_default": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.0431
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0702
+    }
+   },
+   "R=APP-MAJ": {
+    "flip_vs_default": {
+     "est": 0.0726,
+     "lo": 0.0323,
+     "hi": 0.1191
+    },
+    "flip_vs_reference": {
+     "est": 0.1048,
+     "lo": 0.0564,
+     "hi": 0.1565
+    }
+   },
+   "R=LSTAI-ORD2": {
+    "flip_vs_default": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.0424
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0075,
+     "hi": 0.0702
+    }
+   },
+   "G=G1": {
+    "flip_vs_default": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.0417
+    },
+    "flip_vs_reference": {
+     "est": 0.0323,
+     "lo": 0.0076,
+     "hi": 0.0667
+    }
+   },
+   "G=G2": {
+    "flip_vs_default": {
+     "est": 0.0081,
+     "lo": 0.0,
+     "hi": 0.0259
+    },
+    "flip_vs_reference": {
+     "est": 0.0403,
+     "lo": 0.0083,
+     "hi": 0.08
+    }
+   }
+  },
+  "_ofat_from_reference": {
+   "M=none": {
+    "est": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "M=v14": {
+    "est": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "M=la3": {
+    "est": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "R=APP-LV": {
+    "est": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "R=LSTAI": {
+    "est": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "R=LSTAI-LV": {
+    "est": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "R=APP-3MM": {
+    "est": 0.0242,
+    "lo": 0.0,
+    "hi": 0.0566
+   },
+   "R=APP-MAJ": {
+    "est": 0.1613,
+    "lo": 0.093,
+    "hi": 0.2331
+   },
+   "R=LSTAI-ORD2": {
+    "est": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "G=G1": {
+    "est": 0.0403,
+    "lo": 0.0081,
+    "hi": 0.0797
+   },
+   "G=G2": {
+    "est": 0.0161,
+    "lo": 0.0,
+    "hi": 0.0427
+   }
+  }
+ },
+ "S2_regions": {
+  "n_pv": {
+   "presence_flip_grid_mean": {
+    "est": 0.035,
+    "lo": 0.0148,
+    "hi": 0.0593
+   },
+   "presence_flip_default": {
+    "est": 0.0161,
+    "lo": 0.0,
+    "hi": 0.0417
+   },
+   "presence_flip_default_direction": {
+    "ref_present_default_absent": 1,
+    "ref_absent_default_present": 1
+   },
+   "icc_a1_default_vs_ref": {
+    "est": 0.7894,
+    "lo": 0.7064,
+    "hi": 0.8418
+   },
+   "bland_altman_default_minus_ref": {
+    "bias": {
+     "est": 0.6613,
+     "lo": 0.0167,
+     "hi": 1.2143
+    },
+    "sd": 3.123,
+    "loa": [
+     -5.46,
+     6.78
+    ]
+   },
+   "ref_median_iqr": [
+    6.0,
+    4.0,
+    10.0
+   ],
+   "within_scan_iqr_median": 2.0,
+   "within_scan_range_median": 10.0
+  },
+  "n_jc": {
+   "presence_flip_grid_mean": {
+    "est": 0.0355,
+    "lo": 0.016,
+    "hi": 0.0609
+   },
+   "presence_flip_default": {
+    "est": 0.0242,
+    "lo": 0.0,
+    "hi": 0.0588
+   },
+   "presence_flip_default_direction": {
+    "ref_present_default_absent": 0,
+    "ref_absent_default_present": 3
+   },
+   "icc_a1_default_vs_ref": {
+    "est": 0.9455,
+    "lo": 0.8868,
+    "hi": 0.9722
+   },
+   "bland_altman_default_minus_ref": {
+    "bias": {
+     "est": -0.3226,
+     "lo": -1.3071,
+     "hi": 0.5374
+    },
+    "sd": 4.588,
+    "loa": [
+     -9.32,
+     8.67
+    ]
+   },
+   "ref_median_iqr": [
+    7.0,
+    4.0,
+    13.25
+   ],
+   "within_scan_iqr_median": 3.0,
+   "within_scan_range_median": 38.5
+  },
+  "n_it": {
+   "presence_flip_grid_mean": {
+    "est": 0.3332,
+    "lo": 0.273,
+    "hi": 0.3908
+   },
+   "presence_flip_default": {
+    "est": 0.2742,
+    "lo": 0.1983,
+    "hi": 0.3548
+   },
+   "presence_flip_default_direction": {
+    "ref_present_default_absent": 19,
+    "ref_absent_default_present": 15
+   },
+   "icc_a1_default_vs_ref": {
+    "est": 0.733,
+    "lo": 0.6142,
+    "hi": 0.8021
+   },
+   "bland_altman_default_minus_ref": {
+    "bias": {
+     "est": -0.5806,
+     "lo": -0.984,
+     "hi": -0.1718
+    },
+    "sd": 2.115,
+    "loa": [
+     -4.73,
+     3.56
+    ]
+   },
+   "ref_median_iqr": [
+    1.0,
+    0.0,
+    3.25
+   ],
+   "within_scan_iqr_median": 1.0,
+   "within_scan_range_median": 5.0
+  },
+  "n_dwm": {
+   "presence_flip_grid_mean": {
+    "est": 0.0283,
+    "lo": 0.0098,
+    "hi": 0.051
+   },
+   "presence_flip_default": {
+    "est": 0.0161,
+    "lo": 0.0,
+    "hi": 0.0424
+   },
+   "presence_flip_default_direction": {
+    "ref_present_default_absent": 0,
+    "ref_absent_default_present": 2
+   },
+   "icc_a1_default_vs_ref": {
+    "est": 0.8801,
+    "lo": 0.75,
+    "hi": 0.9347
+   },
+   "bland_altman_default_minus_ref": {
+    "bias": {
+     "est": 3.2903,
+     "lo": 2.2,
+     "hi": 4.3645
+    },
+    "sd": 5.225,
+    "loa": [
+     -6.95,
+     13.53
+    ]
+   },
+   "ref_median_iqr": [
+    7.0,
+    4.0,
+    13.0
+   ],
+   "within_scan_iqr_median": 5.0,
+   "within_scan_range_median": 49.5
+  }
+ },
+ "S3_strata": {
+  "lesion_count_tertile_cuts": [
+   18.0,
+   30.000000000000014
+  ],
+  "reference_regions": {
+   "2": {
+    "n_scans": 37,
+    "n_patients": 26,
+    "reference_dis_met": 1.0,
+    "device_default_flip": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "grid_mean_flip": {
+     "est": 0.0213,
+     "lo": 0.0095,
+     "hi": 0.0385
+    },
+    "not_unanimous": {
+     "est": 0.4595,
+     "lo": 0.2778,
+     "hi": 0.6487
+    },
+    "contested": {
+     "est": 0.0811,
+     "lo": 0.0,
+     "hi": 0.1875
+    },
+    "expert_grid_not_unanimous": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "ref_lesions_median": 19.0
+   },
+   "3": {
+    "n_scans": 81,
+    "n_patients": 62,
+    "reference_dis_met": 1.0,
+    "device_default_flip": {
+     "est": 0.0123,
+     "lo": 0.0,
+     "hi": 0.0395
+    },
+    "grid_mean_flip": {
+     "est": 0.0273,
+     "lo": 0.0111,
+     "hi": 0.0456
+    },
+    "not_unanimous": {
+     "est": 0.3086,
+     "lo": 0.2055,
+     "hi": 0.4133
+    },
+    "contested": {
+     "est": 0.0617,
+     "lo": 0.0125,
+     "hi": 0.1163
+    },
+    "expert_grid_not_unanimous": {
+     "est": 0.0123,
+     "lo": 0.0,
+     "hi": 0.0417
+    },
+    "ref_lesions_median": 30.0
+   },
+   "<=1": {
+    "n_scans": 6,
+    "n_patients": 6,
+    "reference_dis_met": 0.0,
+    "device_default_flip": {
+     "est": 0.5,
+     "lo": 0.1667,
+     "hi": 0.8333
+    },
+    "grid_mean_flip": {
+     "est": 0.6036,
+     "lo": 0.3815,
+     "hi": 0.8193
+    },
+    "not_unanimous": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "contested": {
+     "est": 0.6667,
+     "lo": 0.3333,
+     "hi": 1.0
+    },
+    "expert_grid_not_unanimous": {
+     "est": 0.8333,
+     "lo": 0.5,
+     "hi": 1.0
+    },
+    "ref_lesions_median": 5.5
+   }
+  },
+  "lesion_tertile": {
+   "T1": {
+    "n_scans": 43,
+    "n_patients": 35,
+    "reference_dis_met": 0.8605,
+    "device_default_flip": {
+     "est": 0.093,
+     "lo": 0.0213,
+     "hi": 0.2045
+    },
+    "grid_mean_flip": {
+     "est": 0.1293,
+     "lo": 0.0677,
+     "hi": 0.2104
+    },
+    "not_unanimous": {
+     "est": 0.6512,
+     "lo": 0.4894,
+     "hi": 0.8049
+    },
+    "contested": {
+     "est": 0.2326,
+     "lo": 0.1163,
+     "hi": 0.3784
+    },
+    "expert_grid_not_unanimous": {
+     "est": 0.1395,
+     "lo": 0.0465,
+     "hi": 0.2558
+    },
+    "ref_lesions_median": 13.0
+   },
+   "T2": {
+    "n_scans": 40,
+    "n_patients": 33,
+    "reference_dis_met": 1.0,
+    "device_default_flip": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "grid_mean_flip": {
+     "est": 0.0252,
+     "lo": 0.0072,
+     "hi": 0.0532
+    },
+    "not_unanimous": {
+     "est": 0.4,
+     "lo": 0.25,
+     "hi": 0.5556
+    },
+    "contested": {
+     "est": 0.05,
+     "lo": 0.0,
+     "hi": 0.1316
+    },
+    "expert_grid_not_unanimous": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "ref_lesions_median": 24.5
+   },
+   "T3": {
+    "n_scans": 41,
+    "n_patients": 32,
+    "reference_dis_met": 1.0,
+    "device_default_flip": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "grid_mean_flip": {
+     "est": 0.0014,
+     "lo": 0.0003,
+     "hi": 0.0027
+    },
+    "not_unanimous": {
+     "est": 0.0976,
+     "lo": 0.0227,
+     "hi": 0.1951
+    },
+    "contested": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "expert_grid_not_unanimous": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "ref_lesions_median": 46.0
+   }
+  }
+ },
+ "S4_ventricles": {
+  "G0": {
+   "expert_lesions": 3992,
+   "expert_lesions_26conn": 3958,
+   "app_to_app_lv_changed": 3,
+   "app_to_app_lv_changed_pct": 0.08,
+   "app_to_app_lv_transitions": {
+    "1->4": 3
+   },
+   "lstai_to_lstai_lv_changed": 6,
+   "lstai_to_lstai_lv_changed_pct": 0.15,
+   "touch_only_third_ventricle": 6,
+   "touch_only_third_ventricle_app_regions": {
+    "1": 3,
+    "3": 2,
+    "4": 1
+   },
+   "touch_only_third_ventricle_app_lv_regions": {
+    "4": 4,
+    "3": 2
+   },
+   "touch_ventricle_and_infratentorial_26conn": 6,
+   "of_which_only_third_ventricle": 2,
+   "touch_cortex_and_infratentorial_not_ventricle_26conn": 34,
+   "outside_every_zone_dwm_by_default": 250,
+   "outside_every_zone_pct": 6.26,
+   "outside_every_zone_volume_median": 20.0,
+   "scans_with_a_changed_lesion": {
+    "est": 0.0161,
+    "lo": 0.0,
+    "hi": 0.0394
+   },
+   "dis_changes": {
+    "APP_vs_APP-LV": {
+     "n_scans": 0,
+     "scans": []
+    },
+    "LSTAI_vs_LSTAI-LV": {
+     "n_scans": 0,
+     "scans": []
+    },
+    "LSTAI_vs_LSTAI-ORD2": {
+     "n_scans": 0,
+     "scans": []
+    },
+    "APP_vs_LSTAI": {
+     "n_scans": 0,
+     "scans": []
+    }
+   },
+   "pv_lesions_total": {
+    "APP": 905,
+    "APP-LV": 902,
+    "LSTAI": 941,
+    "LSTAI-LV": 935
+   }
+  },
+  "G1": {
+   "expert_lesions": 3992,
+   "expert_lesions_26conn": 3958,
+   "app_to_app_lv_changed": 4,
+   "app_to_app_lv_changed_pct": 0.1,
+   "app_to_app_lv_transitions": {
+    "1->4": 4
+   },
+   "lstai_to_lstai_lv_changed": 4,
+   "lstai_to_lstai_lv_changed_pct": 0.1,
+   "touch_only_third_ventricle": 4,
+   "touch_only_third_ventricle_app_regions": {
+    "1": 3,
+    "3": 1
+   },
+   "touch_only_third_ventricle_app_lv_regions": {
+    "4": 3,
+    "3": 1
+   },
+   "touch_ventricle_and_infratentorial_26conn": 4,
+   "of_which_only_third_ventricle": 1,
+   "touch_cortex_and_infratentorial_not_ventricle_26conn": 37,
+   "outside_every_zone_dwm_by_default": 142,
+   "outside_every_zone_pct": 3.56,
+   "outside_every_zone_volume_median": 19.0,
+   "scans_with_a_changed_lesion": {
+    "est": 0.0242,
+    "lo": 0.0,
+    "hi": 0.0543
+   },
+   "dis_changes": {
+    "APP_vs_APP-LV": {
+     "n_scans": 0,
+     "scans": []
+    },
+    "LSTAI_vs_LSTAI-LV": {
+     "n_scans": 0,
+     "scans": []
+    },
+    "LSTAI_vs_LSTAI-ORD2": {
+     "n_scans": 0,
+     "scans": []
+    },
+    "APP_vs_LSTAI": {
+     "n_scans": 0,
+     "scans": []
+    }
+   },
+   "pv_lesions_total": {
+    "APP": 986,
+    "APP-LV": 982,
+    "LSTAI": 1002,
+    "LSTAI-LV": 998
+   }
+  }
+ },
+ "S5_indicator": {
+  "n_variants": 12,
+  "internal_variants": {
+   "vs_default_differs_from_reference": {
+    "flagged": {
+     "est": 0.0081,
+     "lo": 0.0,
+     "hi": 0.0261
+    },
+    "p_outcome_if_flagged": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.0244,
+     "lo": 0.0,
+     "hi": 0.0569
+    },
+    "risk_difference": {
+     "est": 0.9756,
+     "lo": 0.9426,
+     "hi": 1.0
+    },
+    "sensitivity": {
+     "est": 0.25,
+     "lo": 0.0,
+     "hi": 1.0
+    },
+    "specificity": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 1,
+     "flag_only": 0,
+     "outcome_only": 3,
+     "neither": 120
+    }
+   },
+   "vs_not_unanimous_in_primary_grid": {
+    "flagged": {
+     "est": 0.0081,
+     "lo": 0.0,
+     "hi": 0.0261
+    },
+    "p_outcome_if_flagged": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.3821,
+     "lo": 0.2857,
+     "hi": 0.4844
+    },
+    "risk_difference": {
+     "est": 0.6179,
+     "lo": 0.5126,
+     "hi": 0.712
+    },
+    "sensitivity": {
+     "est": 0.0208,
+     "lo": 0.0,
+     "hi": 0.0682
+    },
+    "specificity": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 1,
+     "flag_only": 0,
+     "outcome_only": 47,
+     "neither": 76
+    }
+   }
+  },
+  "pivotal_lesion": {
+   "vs_default_differs_from_reference": {
+    "flagged": {
+     "est": 0.0242,
+     "lo": 0.0,
+     "hi": 0.0556
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.0331,
+     "lo": 0.0078,
+     "hi": 0.0708
+    },
+    "risk_difference": {
+     "est": -0.0331,
+     "lo": -0.0709,
+     "hi": -0.0078
+    },
+    "sensitivity": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "specificity": {
+     "est": 0.975,
+     "lo": 0.9417,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 0,
+     "flag_only": 3,
+     "outcome_only": 4,
+     "neither": 117
+    }
+   },
+   "vs_not_unanimous_in_primary_grid": {
+    "flagged": {
+     "est": 0.0242,
+     "lo": 0.0,
+     "hi": 0.0556
+    },
+    "p_outcome_if_flagged": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.3719,
+     "lo": 0.2736,
+     "hi": 0.4769
+    },
+    "risk_difference": {
+     "est": 0.6281,
+     "lo": 0.5233,
+     "hi": 0.7259
+    },
+    "sensitivity": {
+     "est": 0.0625,
+     "lo": 0.0,
+     "hi": 0.1429
+    },
+    "specificity": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 3,
+     "flag_only": 0,
+     "outcome_only": 45,
+     "neither": 76
+    }
+   }
+  },
+  "union": {
+   "vs_default_differs_from_reference": {
+    "flagged": {
+     "est": 0.0323,
+     "lo": 0.0075,
+     "hi": 0.0677
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.25,
+     "lo": 0.0,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.025,
+     "lo": 0.0,
+     "hi": 0.0583
+    },
+    "risk_difference": {
+     "est": 0.225,
+     "lo": -0.0498,
+     "hi": 0.9669
+    },
+    "sensitivity": {
+     "est": 0.25,
+     "lo": 0.0,
+     "hi": 1.0
+    },
+    "specificity": {
+     "est": 0.975,
+     "lo": 0.9417,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 1,
+     "flag_only": 3,
+     "outcome_only": 3,
+     "neither": 117
+    }
+   },
+   "vs_not_unanimous_in_primary_grid": {
+    "flagged": {
+     "est": 0.0323,
+     "lo": 0.0075,
+     "hi": 0.0677
+    },
+    "p_outcome_if_flagged": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.3667,
+     "lo": 0.2698,
+     "hi": 0.4701
+    },
+    "risk_difference": {
+     "est": 0.6333,
+     "lo": 0.5299,
+     "hi": 0.7303
+    },
+    "sensitivity": {
+     "est": 0.0833,
+     "lo": 0.0189,
+     "hi": 0.1739
+    },
+    "specificity": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 4,
+     "flag_only": 0,
+     "outcome_only": 44,
+     "neither": 76
+    }
+   }
+  }
+ },
+ "posthoc_indicators": {
+  "_note": "POST HOC, in-sample, descriptive; not a pre-specified outcome",
+  "cross_segmenter_F0_FENS_LENS": {
+   "vs_default_differs_from_reference": {
+    "flagged": {
+     "est": 0.1129,
+     "lo": 0.0615,
+     "hi": 0.1732
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.2143,
+     "lo": 0.0,
+     "hi": 0.4545
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.0091,
+     "lo": 0.0,
+     "hi": 0.0303
+    },
+    "risk_difference": {
+     "est": 0.2052,
+     "lo": 0.0,
+     "hi": 0.436
+    },
+    "sensitivity": {
+     "est": 0.75,
+     "lo": 0.2,
+     "hi": 1.0
+    },
+    "specificity": {
+     "est": 0.9083,
+     "lo": 0.8559,
+     "hi": 0.9556
+    },
+    "counts": {
+     "flag_and_outcome": 3,
+     "flag_only": 11,
+     "outcome_only": 1,
+     "neither": 109
+    }
+   },
+   "vs_not_unanimous_in_primary_grid": {
+    "flagged": {
+     "est": 0.1129,
+     "lo": 0.0615,
+     "hi": 0.1732
+    },
+    "p_outcome_if_flagged": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.3091,
+     "lo": 0.217,
+     "hi": 0.4063
+    },
+    "risk_difference": {
+     "est": 0.6909,
+     "lo": 0.5937,
+     "hi": 0.783
+    },
+    "sensitivity": {
+     "est": 0.2917,
+     "lo": 0.1731,
+     "hi": 0.4107
+    },
+    "specificity": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 14,
+     "flag_only": 0,
+     "outcome_only": 34,
+     "neither": 76
+    }
+   }
+  },
+  "cross_registration_G0_G1": {
+   "vs_default_differs_from_reference": {
+    "flagged": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.0417
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.5,
+     "lo": 0.0,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.0246,
+     "lo": 0.0,
+     "hi": 0.0574
+    },
+    "risk_difference": {
+     "est": 0.4754,
+     "lo": -0.0431,
+     "hi": 0.9919
+    },
+    "sensitivity": {
+     "est": 0.25,
+     "lo": 0.0,
+     "hi": 1.0
+    },
+    "specificity": {
+     "est": 0.9917,
+     "lo": 0.973,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 1,
+     "flag_only": 1,
+     "outcome_only": 3,
+     "neither": 119
+    }
+   },
+   "vs_not_unanimous_in_primary_grid": {
+    "flagged": {
+     "est": 0.0161,
+     "lo": 0.0,
+     "hi": 0.0417
+    },
+    "p_outcome_if_flagged": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.377,
+     "lo": 0.28,
+     "hi": 0.4769
+    },
+    "risk_difference": {
+     "est": 0.623,
+     "lo": 0.5231,
+     "hi": 0.7215
+    },
+    "sensitivity": {
+     "est": 0.0417,
+     "lo": 0.0,
+     "hi": 0.1064
+    },
+    "specificity": {
+     "est": 1.0,
+     "lo": 1.0,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 2,
+     "flag_only": 0,
+     "outcome_only": 46,
+     "neither": 76
+    }
+   }
+  },
+  "thin_margin": {
+   "vs_default_differs_from_reference": {
+    "flagged": {
+     "est": 0.0968,
+     "lo": 0.0496,
+     "hi": 0.152
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.0833,
+     "lo": 0.0,
+     "hi": 0.2857
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.0268,
+     "lo": 0.0,
+     "hi": 0.0625
+    },
+    "risk_difference": {
+     "est": 0.0565,
+     "lo": -0.0536,
+     "hi": 0.25
+    },
+    "sensitivity": {
+     "est": 0.25,
+     "lo": 0.0,
+     "hi": 1.0
+    },
+    "specificity": {
+     "est": 0.9083,
+     "lo": 0.8545,
+     "hi": 0.9562
+    },
+    "counts": {
+     "flag_and_outcome": 1,
+     "flag_only": 11,
+     "outcome_only": 3,
+     "neither": 109
+    }
+   },
+   "vs_not_unanimous_in_primary_grid": {
+    "flagged": {
+     "est": 0.0968,
+     "lo": 0.0496,
+     "hi": 0.152
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.9167,
+     "lo": 0.7273,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.3304,
+     "lo": 0.2286,
+     "hi": 0.4388
+    },
+    "risk_difference": {
+     "est": 0.5863,
+     "lo": 0.3668,
+     "hi": 0.7479
+    },
+    "sensitivity": {
+     "est": 0.2292,
+     "lo": 0.125,
+     "hi": 0.3542
+    },
+    "specificity": {
+     "est": 0.9868,
+     "lo": 0.9538,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 11,
+     "flag_only": 1,
+     "outcome_only": 37,
+     "neither": 75
+    }
+   }
+  },
+  "thin_margin_or_cross_segmenter": {
+   "vs_default_differs_from_reference": {
+    "flagged": {
+     "est": 0.1855,
+     "lo": 0.1228,
+     "hi": 0.2521
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.1304,
+     "lo": 0.0,
+     "hi": 0.2857
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.0099,
+     "lo": 0.0,
+     "hi": 0.0337
+    },
+    "risk_difference": {
+     "est": 0.1205,
+     "lo": 0.0,
+     "hi": 0.2754
+    },
+    "sensitivity": {
+     "est": 0.75,
+     "lo": 0.2,
+     "hi": 1.0
+    },
+    "specificity": {
+     "est": 0.8333,
+     "lo": 0.7672,
+     "hi": 0.8957
+    },
+    "counts": {
+     "flag_and_outcome": 3,
+     "flag_only": 20,
+     "outcome_only": 1,
+     "neither": 100
+    }
+   },
+   "vs_not_unanimous_in_primary_grid": {
+    "flagged": {
+     "est": 0.1855,
+     "lo": 0.1228,
+     "hi": 0.2521
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.9565,
+     "lo": 0.8571,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.2574,
+     "lo": 0.1667,
+     "hi": 0.3592
+    },
+    "risk_difference": {
+     "est": 0.6991,
+     "lo": 0.5617,
+     "hi": 0.8174
+    },
+    "sensitivity": {
+     "est": 0.4583,
+     "lo": 0.3333,
+     "hi": 0.5882
+    },
+    "specificity": {
+     "est": 0.9868,
+     "lo": 0.9538,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 22,
+     "flag_only": 1,
+     "outcome_only": 26,
+     "neither": 75
+    }
+   }
+  },
+  "any_of_three": {
+   "vs_default_differs_from_reference": {
+    "flagged": {
+     "est": 0.1855,
+     "lo": 0.1228,
+     "hi": 0.2521
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.1304,
+     "lo": 0.0,
+     "hi": 0.2857
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.0099,
+     "lo": 0.0,
+     "hi": 0.0337
+    },
+    "risk_difference": {
+     "est": 0.1205,
+     "lo": 0.0,
+     "hi": 0.2754
+    },
+    "sensitivity": {
+     "est": 0.75,
+     "lo": 0.2,
+     "hi": 1.0
+    },
+    "specificity": {
+     "est": 0.8333,
+     "lo": 0.7672,
+     "hi": 0.8957
+    },
+    "counts": {
+     "flag_and_outcome": 3,
+     "flag_only": 20,
+     "outcome_only": 1,
+     "neither": 100
+    }
+   },
+   "vs_not_unanimous_in_primary_grid": {
+    "flagged": {
+     "est": 0.1855,
+     "lo": 0.1228,
+     "hi": 0.2521
+    },
+    "p_outcome_if_flagged": {
+     "est": 0.9565,
+     "lo": 0.8571,
+     "hi": 1.0
+    },
+    "p_outcome_if_not_flagged": {
+     "est": 0.2574,
+     "lo": 0.1667,
+     "hi": 0.3592
+    },
+    "risk_difference": {
+     "est": 0.6991,
+     "lo": 0.5617,
+     "hi": 0.8174
+    },
+    "sensitivity": {
+     "est": 0.4583,
+     "lo": 0.3333,
+     "hi": 0.5882
+    },
+    "specificity": {
+     "est": 0.9868,
+     "lo": 0.9538,
+     "hi": 1.0
+    },
+    "counts": {
+     "flag_and_outcome": 22,
+     "flag_only": 1,
+     "outcome_only": 26,
+     "neither": 75
+    }
+   }
+  }
+ },
+ "posthoc_default_flip_cases": [
+  {
+   "case": "mslesseg_P15_T1",
+   "reference_counts_pv_jc_it_dwm": [
+    4,
+    0,
+    0,
+    1
+   ],
+   "default_counts_pv_jc_it_dwm": [
+    5,
+    1,
+    1,
+    2
+   ],
+   "reference_dis": 0,
+   "default_dis": 1,
+   "share_of_automated_grid_met": 0.85
+  },
+  {
+   "case": "mslesseg_P28_T1",
+   "reference_counts_pv_jc_it_dwm": [
+    2,
+    3,
+    1,
+    2
+   ],
+   "default_counts_pv_jc_it_dwm": [
+    0,
+    3,
+    0,
+    9
+   ],
+   "reference_dis": 1,
+   "default_dis": 0,
+   "share_of_automated_grid_met": 0.575
+  },
+  {
+   "case": "mslesseg_P30_T1",
+   "reference_counts_pv_jc_it_dwm": [
+    4,
+    0,
+    0,
+    2
+   ],
+   "default_counts_pv_jc_it_dwm": [
+    5,
+    1,
+    1,
+    2
+   ],
+   "reference_dis": 0,
+   "default_dis": 1,
+   "share_of_automated_grid_met": 0.664
+  },
+  {
+   "case": "mslesseg_P44_T1",
+   "reference_counts_pv_jc_it_dwm": [
+    0,
+    8,
+    0,
+    2
+   ],
+   "default_counts_pv_jc_it_dwm": [
+    2,
+    12,
+    2,
+    6
+   ],
+   "reference_dis": 0,
+   "default_dis": 1,
+   "share_of_automated_grid_met": 0.954
+  }
+ ],
+ "S6_sensitivity": {
+  "a_with_flames_in_sample": {
+   "n_scans": 144,
+   "n_patients": 105,
+   "reference_dis_met": {
+    "est": 0.9583,
+    "lo": 0.9225,
+    "hi": 0.9868
+   },
+   "P1": {
+    "device_default_flip": {
+     "est": 0.0278,
+     "lo": 0.0066,
+     "hi": 0.0576
+    },
+    "device_default_direction": {
+     "ref_met_pipeline_not": 1,
+     "ref_not_pipeline_met": 3
+    },
+    "lstai_as_shipped_flip": {
+     "est": 0.0694,
+     "lo": 0.0282,
+     "hi": 0.1151
+    },
+    "grid_mean_flip": {
+     "est": 0.0462,
+     "lo": 0.0251,
+     "hi": 0.0715
+    },
+    "per_pipeline_flip": {
+     "min": 0.0069,
+     "median": 0.0417,
+     "max": 0.25,
+     "share_pipelines_le_5pct": 0.7089,
+     "best": [
+      [
+       "FENS",
+       "0.4",
+       "v14",
+       "APP",
+       "G0",
+       0.0069
+      ],
+      [
+       "FENS",
+       "0.4",
+       "v14",
+       "APP-LV",
+       "G0",
+       0.0069
+      ],
+      [
+       "FENS",
+       "0.5",
+       "v14",
+       "APP",
+       "G0",
+       0.0139
+      ],
+      [
+       "FENS",
+       "0.4",
+       "v14",
+       "LSTAI-LV",
+       "G0",
+       0.0139
+      ],
+      [
+       "FENS",
+       "0.5",
+       "v14",
+       "APP-LV",
+       "G0",
+       0.0139
+      ]
+     ],
+     "worst": [
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "LSTAI-LV",
+       "G1",
+       0.2153
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP",
+       "G0",
+       0.2292
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP-LV",
+       "G0",
+       0.2292
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP",
+       "G1",
+       0.25
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP-LV",
+       "G1",
+       0.25
+      ]
+     ]
+    },
+    "any_flip": {
+     "est": 0.3542,
+     "lo": 0.2671,
+     "hi": 0.4452
+    },
+    "flip_direction_grid": {
+     "ref_met_mean_share_not": 0.022,
+     "ref_not_mean_share_met": 0.6036
+    }
+   },
+   "P2_automated": {
+    "not_unanimous": {
+     "est": 0.3542,
+     "lo": 0.2671,
+     "hi": 0.4452
+    },
+    "contested": {
+     "est": 0.0833,
+     "lo": 0.0438,
+     "hi": 0.1314
+    },
+    "pairwise": {
+     "est": 0.0467,
+     "lo": 0.0301,
+     "hi": 0.0663
+    }
+   },
+   "P2_expert": {
+    "not_unanimous": {
+     "est": 0.0417,
+     "lo": 0.0132,
+     "hi": 0.0791
+    },
+    "contested": {
+     "est": 0.0347,
+     "lo": 0.0069,
+     "hi": 0.0672
+    },
+    "pairwise": {
+     "est": 0.0184,
+     "lo": 0.004,
+     "hi": 0.0355
+    }
+   },
+   "expert_grid_flip_vs_ref_mean": {
+    "est": 0.0176,
+    "lo": 0.0037,
+    "hi": 0.034
+   },
+   "n_pipelines": {
+    "automated": 1120,
+    "expert": 32
+   }
+  },
+  "a_flames_in_sample_only": {
+   "n_scans": 20,
+   "n_patients": 20,
+   "reference_dis_met": {
+    "est": 1.0,
+    "lo": 1.0,
+    "hi": 1.0
+   },
+   "P1": {
+    "device_default_flip": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "device_default_direction": {
+     "ref_met_pipeline_not": 0,
+     "ref_not_pipeline_met": 0
+    },
+    "lstai_as_shipped_flip": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "grid_mean_flip": {
+     "est": 0.0017,
+     "lo": 0.0,
+     "hi": 0.0041
+    },
+    "per_pipeline_flip": {
+     "min": 0.0,
+     "median": 0.0,
+     "max": 0.05,
+     "share_pipelines_le_5pct": 1.0,
+     "best": [
+      [
+       "F0",
+       "0.3",
+       "la3",
+       "APP",
+       "G0",
+       0.0
+      ],
+      [
+       "F4",
+       "0.5",
+       "v14",
+       "LSTAI-LV",
+       "G0",
+       0.0
+      ],
+      [
+       "F4",
+       "0.5",
+       "v14",
+       "LSTAI-LV",
+       "G1",
+       0.0
+      ],
+      [
+       "F4",
+       "0.5",
+       "v3",
+       "APP",
+       "G0",
+       0.0
+      ],
+      [
+       "F4",
+       "0.5",
+       "v3",
+       "APP",
+       "G1",
+       0.0
+      ]
+     ],
+     "worst": [
+      [
+       "LENS",
+       "0.7",
+       "la3",
+       "LSTAI-LV",
+       "G0",
+       0.05
+      ],
+      [
+       "F1",
+       "0.6",
+       "v14",
+       "APP",
+       "G1",
+       0.05
+      ],
+      [
+       "LENS",
+       "0.7",
+       "none",
+       "APP",
+       "G0",
+       0.05
+      ],
+      [
+       "F1",
+       "0.7",
+       "v14",
+       "APP-LV",
+       "G1",
+       0.05
+      ],
+      [
+       "F1",
+       "0.7",
+       "v14",
+       "LSTAI",
+       "G1",
+       0.05
+      ]
+     ]
+    },
+    "any_flip": {
+     "est": 0.15,
+     "lo": 0.0,
+     "hi": 0.3
+    },
+    "flip_direction_grid": {
+     "ref_met_mean_share_not": 0.0017,
+     "ref_not_mean_share_met": null
+    }
+   },
+   "P2_automated": {
+    "not_unanimous": {
+     "est": 0.15,
+     "lo": 0.0,
+     "hi": 0.3
+    },
+    "contested": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "pairwise": {
+     "est": 0.0033,
+     "lo": 0.0,
+     "hi": 0.0081
+    }
+   },
+   "P2_expert": {
+    "not_unanimous": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "contested": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "pairwise": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    }
+   },
+   "expert_grid_flip_vs_ref_mean": {
+    "est": 0.0,
+    "lo": 0.0,
+    "hi": 0.0
+   },
+   "n_pipelines": {
+    "automated": 1120,
+    "expert": 32
+   }
+  },
+  "c_pv_at_least_3": {
+   "n_scans": 124,
+   "n_patients": 85,
+   "reference_dis_met": {
+    "est": 0.9113,
+    "lo": 0.8571,
+    "hi": 0.9587
+   },
+   "P1": {
+    "device_default_flip": {
+     "est": 0.0726,
+     "lo": 0.0317,
+     "hi": 0.1185
+    },
+    "device_default_direction": {
+     "ref_met_pipeline_not": 2,
+     "ref_not_pipeline_met": 7
+    },
+    "lstai_as_shipped_flip": {
+     "est": 0.1129,
+     "lo": 0.054,
+     "hi": 0.1846
+    },
+    "grid_mean_flip": {
+     "est": 0.1012,
+     "lo": 0.0644,
+     "hi": 0.1429
+    },
+    "per_pipeline_flip": {
+     "min": 0.0565,
+     "median": 0.0887,
+     "max": 0.4032,
+     "share_pipelines_le_5pct": 0.0,
+     "best": [
+      [
+       "F3",
+       "0.5",
+       "v3",
+       "LSTAI",
+       "G0",
+       0.0565
+      ],
+      [
+       "F3",
+       "0.3",
+       "v3",
+       "LSTAI",
+       "G0",
+       0.0565
+      ],
+      [
+       "F3",
+       "0.5",
+       "la3",
+       "LSTAI",
+       "G0",
+       0.0565
+      ],
+      [
+       "F3",
+       "0.6",
+       "v3",
+       "LSTAI",
+       "G0",
+       0.0565
+      ],
+      [
+       "F3",
+       "0.4",
+       "la3",
+       "LSTAI",
+       "G0",
+       0.0565
+      ]
+     ],
+     "worst": [
+      [
+       "LENS",
+       "0.7",
+       "la3",
+       "APP",
+       "G0",
+       0.371
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "LSTAI",
+       "G0",
+       0.3871
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "LSTAI-LV",
+       "G0",
+       0.3871
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP",
+       "G0",
+       0.4032
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP-LV",
+       "G0",
+       0.4032
+      ]
+     ]
+    },
+    "any_flip": {
+     "est": 0.5726,
+     "lo": 0.475,
+     "hi": 0.6765
+    },
+    "flip_direction_grid": {
+     "ref_met_mean_share_not": 0.0578,
+     "ref_not_mean_share_met": 0.5471
+    }
+   },
+   "P2_automated": {
+    "not_unanimous": {
+     "est": 0.5726,
+     "lo": 0.475,
+     "hi": 0.6765
+    },
+    "contested": {
+     "est": 0.1855,
+     "lo": 0.1157,
+     "hi": 0.2667
+    },
+    "pairwise": {
+     "est": 0.092,
+     "lo": 0.0651,
+     "hi": 0.1219
+    }
+   },
+   "P2_expert": {
+    "not_unanimous": {
+     "est": 0.0565,
+     "lo": 0.0226,
+     "hi": 0.0985
+    },
+    "contested": {
+     "est": 0.0484,
+     "lo": 0.0157,
+     "hi": 0.0885
+    },
+    "pairwise": {
+     "est": 0.0244,
+     "lo": 0.0081,
+     "hi": 0.0445
+    }
+   },
+   "expert_grid_flip_vs_ref_mean": {
+    "est": 0.0229,
+    "lo": 0.0074,
+    "hi": 0.0424
+   },
+   "n_pipelines": {
+    "automated": 1120,
+    "expert": 32
+   }
+  },
+  "d_mslesseg_only": {
+   "n_scans": 114,
+   "n_patients": 75,
+   "reference_dis_met": {
+    "est": 0.9474,
+    "lo": 0.9009,
+    "hi": 0.9837
+   },
+   "P1": {
+    "device_default_flip": {
+     "est": 0.0351,
+     "lo": 0.0082,
+     "hi": 0.0727
+    },
+    "device_default_direction": {
+     "ref_met_pipeline_not": 1,
+     "ref_not_pipeline_met": 3
+    },
+    "lstai_as_shipped_flip": {
+     "est": 0.0877,
+     "lo": 0.0351,
+     "hi": 0.15
+    },
+    "grid_mean_flip": {
+     "est": 0.053,
+     "lo": 0.0266,
+     "hi": 0.0855
+    },
+    "per_pipeline_flip": {
+     "min": 0.0088,
+     "median": 0.0439,
+     "max": 0.2807,
+     "share_pipelines_le_5pct": 0.5536,
+     "best": [
+      [
+       "FENS",
+       "0.4",
+       "v14",
+       "LSTAI",
+       "G0",
+       0.0088
+      ],
+      [
+       "FENS",
+       "0.4",
+       "v14",
+       "APP",
+       "G0",
+       0.0088
+      ],
+      [
+       "FENS",
+       "0.4",
+       "v14",
+       "APP-LV",
+       "G0",
+       0.0088
+      ],
+      [
+       "FENS",
+       "0.4",
+       "v14",
+       "LSTAI-LV",
+       "G0",
+       0.0088
+      ],
+      [
+       "FENS",
+       "0.5",
+       "none",
+       "LSTAI",
+       "G0",
+       0.0175
+      ]
+     ],
+     "worst": [
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP",
+       "G0",
+       0.2456
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "LSTAI-LV",
+       "G1",
+       0.2456
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP-LV",
+       "G0",
+       0.2456
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP-LV",
+       "G1",
+       0.2807
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP",
+       "G1",
+       0.2807
+      ]
+     ]
+    },
+    "any_flip": {
+     "est": 0.3772,
+     "lo": 0.2778,
+     "hi": 0.4728
+    },
+    "flip_direction_grid": {
+     "ref_met_mean_share_not": 0.0224,
+     "ref_not_mean_share_met": 0.6036
+    }
+   },
+   "P2_automated": {
+    "not_unanimous": {
+     "est": 0.3772,
+     "lo": 0.2778,
+     "hi": 0.4728
+    },
+    "contested": {
+     "est": 0.0877,
+     "lo": 0.0417,
+     "hi": 0.1429
+    },
+    "pairwise": {
+     "est": 0.0502,
+     "lo": 0.0305,
+     "hi": 0.0737
+    }
+   },
+   "P2_expert": {
+    "not_unanimous": {
+     "est": 0.0439,
+     "lo": 0.0085,
+     "hi": 0.0874
+    },
+    "contested": {
+     "est": 0.0439,
+     "lo": 0.0085,
+     "hi": 0.0874
+    },
+    "pairwise": {
+     "est": 0.0226,
+     "lo": 0.0044,
+     "hi": 0.0451
+    }
+   },
+   "expert_grid_flip_vs_ref_mean": {
+    "est": 0.0219,
+    "lo": 0.0043,
+    "hi": 0.0437
+   },
+   "n_pipelines": {
+    "automated": 1120,
+    "expert": 32
+   }
+  },
+  "d_ljubljana_only": {
+   "n_scans": 10,
+   "n_patients": 10,
+   "reference_dis_met": {
+    "est": 1.0,
+    "lo": 1.0,
+    "hi": 1.0
+   },
+   "P1": {
+    "device_default_flip": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "device_default_direction": {
+     "ref_met_pipeline_not": 0,
+     "ref_not_pipeline_met": 0
+    },
+    "lstai_as_shipped_flip": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "grid_mean_flip": {
+     "est": 0.0577,
+     "lo": 0.0064,
+     "hi": 0.1188
+    },
+    "per_pipeline_flip": {
+     "min": 0.0,
+     "median": 0.0,
+     "max": 0.4,
+     "share_pipelines_le_5pct": 0.5893,
+     "best": [
+      [
+       "F0",
+       "0.3",
+       "la3",
+       "APP",
+       "G0",
+       0.0
+      ],
+      [
+       "FENS",
+       "0.7",
+       "v14",
+       "LSTAI-LV",
+       "G0",
+       0.0
+      ],
+      [
+       "FENS",
+       "0.7",
+       "v14",
+       "LSTAI",
+       "G0",
+       0.0
+      ],
+      [
+       "F2",
+       "0.6",
+       "v3",
+       "APP",
+       "G0",
+       0.0
+      ],
+      [
+       "F2",
+       "0.6",
+       "v3",
+       "APP",
+       "G1",
+       0.0
+      ]
+     ],
+     "worst": [
+      [
+       "LENS",
+       "0.7",
+       "v3",
+       "APP",
+       "G0",
+       0.4
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v14",
+       "APP",
+       "G0",
+       0.4
+      ],
+      [
+       "LENS",
+       "0.7",
+       "v3",
+       "APP-LV",
+       "G0",
+       0.4
+      ],
+      [
+       "LENS",
+       "0.7",
+       "none",
+       "APP",
+       "G0",
+       0.4
+      ],
+      [
+       "LENS",
+       "0.7",
+       "la3",
+       "APP-LV",
+       "G0",
+       0.4
+      ]
+     ]
+    },
+    "any_flip": {
+     "est": 0.5,
+     "lo": 0.2,
+     "hi": 0.8
+    },
+    "flip_direction_grid": {
+     "ref_met_mean_share_not": 0.0577,
+     "ref_not_mean_share_met": null
+    }
+   },
+   "P2_automated": {
+    "not_unanimous": {
+     "est": 0.5,
+     "lo": 0.2,
+     "hi": 0.8
+    },
+    "contested": {
+     "est": 0.2,
+     "lo": 0.0,
+     "hi": 0.5
+    },
+    "pairwise": {
+     "est": 0.0936,
+     "lo": 0.0125,
+     "hi": 0.1897
+    }
+   },
+   "P2_expert": {
+    "not_unanimous": {
+     "est": 0.1,
+     "lo": 0.0,
+     "hi": 0.3
+    },
+    "contested": {
+     "est": 0.0,
+     "lo": 0.0,
+     "hi": 0.0
+    },
+    "pairwise": {
+     "est": 0.0063,
+     "lo": 0.0,
+     "hi": 0.0187
+    }
+   },
+   "expert_grid_flip_vs_ref_mean": {
+    "est": 0.0031,
+    "lo": 0.0,
+    "hi": 0.0094
+   },
+   "n_pipelines": {
+    "automated": 1120,
+    "expert": 32
+   }
+  },
+  "e_g1_qc": {
+   "n_with_qc": 124,
+   "dice_brain_warped_vs_t1": {
+    "median": 0.9071274990524807,
+    "min": 0.7817704323771729
+   },
+   "dice_brain_g0_vs_t1_median": 0.882677612333707,
+   "dice_ventricles_warped_vs_g0_median": 0.5926274036376163,
+   "below_0_70": []
+  }
+ },
+ "criteria": {
+  "C1_fragile": {
+   "rule": "lower bound of P2 (not unanimous, automated) >= 0.10",
+   "lower": 0.2906,
+   "met": true
+  },
+  "C2_fragile_with_expert_mask": {
+   "rule": "lower bound of P2 expert >= 0.02",
+   "lower": 0.0148,
+   "met": false
+  },
+  "C3_single_biggest_driver": {
+   "rule": "top-minus-second CI excludes 0",
+   "top": "segmenter_family",
+   "second": "registration",
+   "diff": [
+    0.0333,
+    0.0121,
+    0.0563
+   ],
+   "met": true
+  },
+  "C5_ventricle_definition_material": {
+   "rule": ">= 1 % of expert lesions change region (APP->APP-LV, G0)",
+   "pct": 0.08,
+   "met": false
+  }
+ }
+}

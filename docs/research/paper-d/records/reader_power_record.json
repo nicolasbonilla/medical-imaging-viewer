@@ -1,0 +1,80 @@
+{
+ "date": "2026-10-31",
+ "seed": 20261031,
+ "n_nonunanimous": 48,
+ "n_controls": 36,
+ "mean_z_nonunanimous": -0.430170395809131,
+ "mean_z_controls": 0.5735605277455081,
+ "R1a_fisher": [
+  {
+   "p_nonunanimous": 0.2,
+   "p_controls": 0.05,
+   "power": 0.5555
+  },
+  {
+   "p_nonunanimous": 0.25,
+   "p_controls": 0.05,
+   "power": 0.7665
+  },
+  {
+   "p_nonunanimous": 0.3,
+   "p_controls": 0.08,
+   "power": 0.769
+  },
+  {
+   "p_nonunanimous": 0.35,
+   "p_controls": 0.1,
+   "power": 0.824
+  }
+ ],
+ "R1b_adjusted": [
+  {
+   "odds_ratio_stratum": 3,
+   "odds_ratio_per_sd_log_lesions": 1.0,
+   "mean_rate_nonunanimous": 0.160152777777778,
+   "mean_rate_controls": 0.05811111111111121,
+   "power_adjusted": 0.3993333333333333,
+   "power_fisher": 0.30666666666666664
+  },
+  {
+   "odds_ratio_stratum": 3,
+   "odds_ratio_per_sd_log_lesions": 0.6,
+   "mean_rate_nonunanimous": 0.20109722222222226,
+   "mean_rate_controls": 0.04851851851851896,
+   "power_adjusted": 0.414,
+   "power_fisher": 0.58
+  },
+  {
+   "odds_ratio_stratum": 4,
+   "odds_ratio_per_sd_log_lesions": 1.0,
+   "mean_rate_nonunanimous": 0.2060833333333334,
+   "mean_rate_controls": 0.06077777777777788,
+   "power_adjusted": 0.5726666666666667,
+   "power_fisher": 0.5106666666666667
+  },
+  {
+   "odds_ratio_stratum": 4,
+   "odds_ratio_per_sd_log_lesions": 0.6,
+   "mean_rate_nonunanimous": 0.25119444444444444,
+   "mean_rate_controls": 0.04929629629629663,
+   "power_adjusted": 0.5973333333333334,
+   "power_fisher": 0.7826666666666666
+  },
+  {
+   "odds_ratio_stratum": 6,
+   "odds_ratio_per_sd_log_lesions": 1.0,
+   "mean_rate_nonunanimous": 0.2776944444444452,
+   "mean_rate_controls": 0.06009259259259258,
+   "power_adjusted": 0.7986666666666666,
+   "power_fisher": 0.8073333333333333
+  },
+  {
+   "odds_ratio_stratum": 6,
+   "odds_ratio_per_sd_log_lesions": 0.6,
+   "mean_rate_nonunanimous": 0.3268194444444442,
+   "mean_rate_controls": 0.05087037037037062,
+   "power_adjusted": 0.7973333333333333,
+   "power_fisher": 0.9393333333333334
+  }
+ ]
+}
