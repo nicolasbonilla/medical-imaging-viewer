@@ -1,0 +1,548 @@
+\begin{thebibliography}{46}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\href}[2]{#2}
+\providecommand{\path}[1]{#1}
+\providecommand{\DOIprefix}{doi:}
+\providecommand{\ArXivprefix}{arXiv:}
+\providecommand{\URLprefix}{URL: }
+\providecommand{\Pubmedprefix}{pmid:}
+\providecommand{\doi}[1]{\href{http://dx.doi.org/#1}{\path{#1}}}
+\providecommand{\Pubmed}[1]{\href{pmid:#1}{\path{#1}}}
+\providecommand{\bibinfo}[2]{#2}
+\ifx\xfnm\relax \def\xfnm[#1]{\unskip,\space#1}\fi
+%Type = Misc
+\bibitem[{Bashiri~Bawil(2026)}]{bawil2026ms3segdata}
+\bibinfo{author}{Bashiri~Bawil, M.}, \bibinfo{year}{2026}.
+\newblock \bibinfo{title}{{MS3SEG} dataset}.
+\newblock \DOIprefix\doi{10.6084/m9.figshare.30393475}. \bibinfo{note}{dataset;
+  licence CC BY 4.0}.
+%Type = Article
+\bibitem[{Bawil et~al.(2026)Bawil, Shamsi, Ghalehasadi, Jafargholkhanloo and
+  Bavil}]{bawil2026ms3seg}
+\bibinfo{author}{Bawil, M.B.}, \bibinfo{author}{Shamsi, M.},
+  \bibinfo{author}{Ghalehasadi, A.}, \bibinfo{author}{Jafargholkhanloo, A.F.},
+  \bibinfo{author}{Bavil, A.S.}, \bibinfo{year}{2026}.
+\newblock \bibinfo{title}{{A Multiple Sclerosis {MRI} Dataset with Tri-Mask
+  Annotations for Lesion Segmentation}}.
+\newblock \bibinfo{journal}{Scientific Data} \bibinfo{volume}{13},
+  \bibinfo{pages}{867}.
+\newblock \DOIprefix\doi{10.1038/s41597-026-07184-5}.
+%Type = Article
+\bibitem[{Billot et~al.(2023)Billot, Greve, Puonti, Thielscher, Van~Leemput,
+  Fischl, Dalca and Iglesias}]{billot2023synthseg}
+\bibinfo{author}{Billot, B.}, \bibinfo{author}{Greve, D.N.},
+  \bibinfo{author}{Puonti, O.}, \bibinfo{author}{Thielscher, A.},
+  \bibinfo{author}{Van~Leemput, K.}, \bibinfo{author}{Fischl, B.},
+  \bibinfo{author}{Dalca, A.V.}, \bibinfo{author}{Iglesias, J.E.},
+  \bibinfo{year}{2023}.
+\newblock \bibinfo{title}{{SynthSeg}: Segmentation of brain {MRI} scans of any
+  contrast and resolution without retraining}.
+\newblock \bibinfo{journal}{Medical Image Analysis} \bibinfo{volume}{86},
+  \bibinfo{pages}{102789}.
+\newblock \DOIprefix\doi{10.1016/j.media.2023.102789}.
+%Type = Article
+\bibitem[{Carass et~al.(2017)Carass, Roy, Jog, Cuzzocreo, Magrath, Gherman,
+  Button, Nguyen, Prados, Sudre et~al.}]{carass2017isbi}
+\bibinfo{author}{Carass, A.}, \bibinfo{author}{Roy, S.}, \bibinfo{author}{Jog,
+  A.}, \bibinfo{author}{Cuzzocreo, J.L.}, \bibinfo{author}{Magrath, E.},
+  \bibinfo{author}{Gherman, A.}, \bibinfo{author}{Button, J.},
+  \bibinfo{author}{Nguyen, J.}, \bibinfo{author}{Prados, F.},
+  \bibinfo{author}{Sudre, C.H.}, et~al., \bibinfo{year}{2017}.
+\newblock \bibinfo{title}{{Longitudinal multiple sclerosis lesion segmentation:
+  Resource and challenge}}.
+\newblock \bibinfo{journal}{NeuroImage} \bibinfo{volume}{148},
+  \bibinfo{pages}{77--102}.
+\newblock \DOIprefix\doi{10.1016/j.neuroimage.2016.12.064}.
+%Type = Article
+\bibitem[{Cerri et~al.(2021)Cerri, Puonti, Meier, Wuerfel, M{\"u}hlau, Siebner
+  and Van~Leemput}]{cerri2021samseg}
+\bibinfo{author}{Cerri, S.}, \bibinfo{author}{Puonti, O.},
+  \bibinfo{author}{Meier, D.S.}, \bibinfo{author}{Wuerfel, J.},
+  \bibinfo{author}{M{\"u}hlau, M.}, \bibinfo{author}{Siebner, H.R.},
+  \bibinfo{author}{Van~Leemput, K.}, \bibinfo{year}{2021}.
+\newblock \bibinfo{title}{{A contrast-adaptive method for simultaneous
+  whole-brain and lesion segmentation in multiple sclerosis}}.
+\newblock \bibinfo{journal}{NeuroImage} \bibinfo{volume}{225},
+  \bibinfo{pages}{117471}.
+\newblock \DOIprefix\doi{10.1016/j.neuroimage.2020.117471}.
+%Type = Article
+\bibitem[{Commowick et~al.(2018)Commowick, Istace, Kain, Laurent, Leray, Simon,
+  Pop, Girard, Am{\'e}li, Ferr{\'e} et~al.}]{commowick2018msseg}
+\bibinfo{author}{Commowick, O.}, \bibinfo{author}{Istace, A.},
+  \bibinfo{author}{Kain, M.}, \bibinfo{author}{Laurent, B.},
+  \bibinfo{author}{Leray, F.}, \bibinfo{author}{Simon, M.},
+  \bibinfo{author}{Pop, S.C.}, \bibinfo{author}{Girard, P.},
+  \bibinfo{author}{Am{\'e}li, R.}, \bibinfo{author}{Ferr{\'e}, J.C.}, et~al.,
+  \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{{Objective Evaluation of Multiple Sclerosis Lesion
+  Segmentation using a Data Management and Processing Infrastructure}}.
+\newblock \bibinfo{journal}{Scientific Reports} \bibinfo{volume}{8},
+  \bibinfo{pages}{13650}.
+\newblock \DOIprefix\doi{10.1038/s41598-018-31911-7}.
+%Type = Article
+\bibitem[{Commowick et~al.(2021)Commowick, Kain, Casey, Ameli, Ferr{\'e},
+  Kerbrat, Tourdias, Cervenansky, Camarasu-Pop, Glatard
+  et~al.}]{commowick2021msseg}
+\bibinfo{author}{Commowick, O.}, \bibinfo{author}{Kain, M.},
+  \bibinfo{author}{Casey, R.}, \bibinfo{author}{Ameli, R.},
+  \bibinfo{author}{Ferr{\'e}, J.C.}, \bibinfo{author}{Kerbrat, A.},
+  \bibinfo{author}{Tourdias, T.}, \bibinfo{author}{Cervenansky, F.},
+  \bibinfo{author}{Camarasu-Pop, S.}, \bibinfo{author}{Glatard, T.}, et~al.,
+  \bibinfo{year}{2021}.
+\newblock \bibinfo{title}{{Multiple sclerosis lesions segmentation from
+  multiple experts: The {MICCAI} 2016 challenge dataset}}.
+\newblock \bibinfo{journal}{NeuroImage} \bibinfo{volume}{244},
+  \bibinfo{pages}{118589}.
+\newblock \DOIprefix\doi{10.1016/j.neuroimage.2021.118589}.
+%Type = Article
+\bibitem[{Dereskewicz et~al.(2025a)Dereskewicz, La~Rosa, Dos Santos~Silva,
+  Sizer, Kohli, Wynen, Mullins, Maggi, Levy, Onyemeh
+  et~al.}]{dereskewicz2025flames}
+\bibinfo{author}{Dereskewicz, E.}, \bibinfo{author}{La~Rosa, F.},
+  \bibinfo{author}{Dos Santos~Silva, J.}, \bibinfo{author}{Sizer, E.},
+  \bibinfo{author}{Kohli, A.}, \bibinfo{author}{Wynen, M.},
+  \bibinfo{author}{Mullins, W.A.}, \bibinfo{author}{Maggi, P.},
+  \bibinfo{author}{Levy, S.}, \bibinfo{author}{Onyemeh, K.}, et~al.,
+  \bibinfo{year}{2025}a.
+\newblock \bibinfo{title}{{A Novel Convolutional Neural Network for Automated
+  Multiple Sclerosis Brain Lesion Segmentation}}.
+\newblock \bibinfo{journal}{Journal of Neuroimaging} \bibinfo{volume}{35},
+  \bibinfo{pages}{e70085}.
+\newblock \DOIprefix\doi{10.1111/jon.70085}.
+%Type = Misc
+\bibitem[{Dereskewicz et~al.(2025b)Dereskewicz, La~Rosa, dos Santos~Silva,
+  Sizer, Kohli, Wynen, Mullins, Maggi, Levy, Onyemeh
+  et~al.}]{dereskewicz2025flamespreprint}
+\bibinfo{author}{Dereskewicz, E.}, \bibinfo{author}{La~Rosa, F.},
+  \bibinfo{author}{dos Santos~Silva, J.}, \bibinfo{author}{Sizer, E.},
+  \bibinfo{author}{Kohli, A.}, \bibinfo{author}{Wynen, M.},
+  \bibinfo{author}{Mullins, W.A.}, \bibinfo{author}{Maggi, P.},
+  \bibinfo{author}{Levy, S.}, \bibinfo{author}{Onyemeh, K.}, et~al.,
+  \bibinfo{year}{2025}b.
+\newblock \bibinfo{title}{{FLAMeS}: A robust deep learning model for automated
+  multiple sclerosis lesion segmentation}.
+\newblock \bibinfo{howpublished}{medRxiv preprint}.
+\newblock \DOIprefix\doi{10.1101/2025.05.19.25327707}.
+%Type = Article
+\bibitem[{Dice(1945)}]{dice1945}
+\bibinfo{author}{Dice, L.R.}, \bibinfo{year}{1945}.
+\newblock \bibinfo{title}{Measures of the amount of ecologic association
+  between species}.
+\newblock \bibinfo{journal}{Ecology} \bibinfo{volume}{26},
+  \bibinfo{pages}{297--302}.
+\newblock \DOIprefix\doi{10.2307/1932409}.
+%Type = Book
+\bibitem[{Efron and Tibshirani(1993)}]{efron1993bootstrap}
+\bibinfo{author}{Efron, B.}, \bibinfo{author}{Tibshirani, R.J.},
+  \bibinfo{year}{1993}.
+\newblock \bibinfo{title}{An Introduction to the Bootstrap}.
+\newblock \bibinfo{publisher}{Chapman \& Hall}, \bibinfo{address}{New York}.
+%Type = Article
+\bibitem[{Field and Welsh(2007)}]{field2007clustered}
+\bibinfo{author}{Field, C.A.}, \bibinfo{author}{Welsh, A.H.},
+  \bibinfo{year}{2007}.
+\newblock \bibinfo{title}{Bootstrapping clustered data}.
+\newblock \bibinfo{journal}{Journal of the Royal Statistical Society Series B:
+  Statistical Methodology} \bibinfo{volume}{69}, \bibinfo{pages}{369--390}.
+\newblock \DOIprefix\doi{10.1111/j.1467-9868.2007.00593.x}.
+%Type = Article
+\bibitem[{Filippi et~al.(2019)Filippi, Preziosa, Banwell, Barkhof, Ciccarelli,
+  De~Stefano, Geurts, Paul, Reich, Toosy et~al.}]{filippi2019lesions}
+\bibinfo{author}{Filippi, M.}, \bibinfo{author}{Preziosa, P.},
+  \bibinfo{author}{Banwell, B.L.}, \bibinfo{author}{Barkhof, F.},
+  \bibinfo{author}{Ciccarelli, O.}, \bibinfo{author}{De~Stefano, N.},
+  \bibinfo{author}{Geurts, J.J.G.}, \bibinfo{author}{Paul, F.},
+  \bibinfo{author}{Reich, D.S.}, \bibinfo{author}{Toosy, A.T.}, et~al.,
+  \bibinfo{year}{2019}.
+\newblock \bibinfo{title}{{Assessment of lesions on magnetic resonance imaging
+  in multiple sclerosis: practical guidelines}}.
+\newblock \bibinfo{journal}{Brain} \bibinfo{volume}{142},
+  \bibinfo{pages}{1858--1875}.
+\newblock \DOIprefix\doi{10.1093/brain/awz144}.
+%Type = Article
+\bibitem[{Fischl(2012)}]{fischl2012freesurfer}
+\bibinfo{author}{Fischl, B.}, \bibinfo{year}{2012}.
+\newblock \bibinfo{title}{{FreeSurfer}}.
+\newblock \bibinfo{journal}{NeuroImage} \bibinfo{volume}{62},
+  \bibinfo{pages}{774--781}.
+\newblock \DOIprefix\doi{10.1016/j.neuroimage.2012.01.021}.
+%Type = Article
+\bibitem[{Goebl et~al.(2025)Goebl, Wingrove, Abdelmannan, Brito~Vega, Stutters,
+  Ramos, Kenway, Rossor, Wassmer, Arnold et~al.}]{goebl2025mindglide}
+\bibinfo{author}{Goebl, P.}, \bibinfo{author}{Wingrove, J.},
+  \bibinfo{author}{Abdelmannan, O.}, \bibinfo{author}{Brito~Vega, B.},
+  \bibinfo{author}{Stutters, J.}, \bibinfo{author}{Ramos, S.D.G.},
+  \bibinfo{author}{Kenway, O.}, \bibinfo{author}{Rossor, T.},
+  \bibinfo{author}{Wassmer, E.}, \bibinfo{author}{Arnold, D.L.}, et~al.,
+  \bibinfo{year}{2025}.
+\newblock \bibinfo{title}{{Enabling new insights from old scans by repurposing
+  clinical {MRI} archives for multiple sclerosis research}}.
+\newblock \bibinfo{journal}{Nature Communications} \bibinfo{volume}{16},
+  \bibinfo{pages}{3149}.
+\newblock \DOIprefix\doi{10.1038/s41467-025-58274-8}.
+%Type = Article
+\bibitem[{Guarnera et~al.(2025a)Guarnera, Rondinella, Crispino, Russo,
+  Di~Lorenzo, Maimone, Pappalardo and Battiato}]{guarnera2025mslesseg}
+\bibinfo{author}{Guarnera, F.}, \bibinfo{author}{Rondinella, A.},
+  \bibinfo{author}{Crispino, E.}, \bibinfo{author}{Russo, G.},
+  \bibinfo{author}{Di~Lorenzo, C.}, \bibinfo{author}{Maimone, D.},
+  \bibinfo{author}{Pappalardo, F.}, \bibinfo{author}{Battiato, S.},
+  \bibinfo{year}{2025}a.
+\newblock \bibinfo{title}{{MSLesSeg}: baseline and benchmarking of a new
+  multiple sclerosis lesion segmentation dataset}.
+\newblock \bibinfo{journal}{Scientific Data} \bibinfo{volume}{12},
+  \bibinfo{pages}{920}.
+\newblock \DOIprefix\doi{10.1038/s41597-025-05250-y}.
+%Type = Misc
+\bibitem[{Guarnera et~al.(2025b)Guarnera, Rondinella, Crispino, Russo,
+  Di~Lorenzo, Maimone, Pappalardo and Battiato}]{guarnera2025mslessegdata}
+\bibinfo{author}{Guarnera, F.}, \bibinfo{author}{Rondinella, A.},
+  \bibinfo{author}{Crispino, E.}, \bibinfo{author}{Russo, G.},
+  \bibinfo{author}{Di~Lorenzo, C.}, \bibinfo{author}{Maimone, D.},
+  \bibinfo{author}{Pappalardo, F.}, \bibinfo{author}{Battiato, S.},
+  \bibinfo{year}{2025}b.
+\newblock \bibinfo{title}{{MSLesSeg}: baseline and benchmarking of a new
+  multiple sclerosis lesion segmentation dataset}.
+\newblock \DOIprefix\doi{10.6084/m9.figshare.27919209}. \bibinfo{note}{dataset;
+  licence CC BY 4.0}.
+%Type = Article
+\bibitem[{Hanley and McNeil(1982)}]{hanley1982auc}
+\bibinfo{author}{Hanley, J.A.}, \bibinfo{author}{McNeil, B.J.},
+  \bibinfo{year}{1982}.
+\newblock \bibinfo{title}{{The meaning and use of the area under a receiver
+  operating characteristic ({ROC}) curve}}.
+\newblock \bibinfo{journal}{Radiology} \bibinfo{volume}{143},
+  \bibinfo{pages}{29--36}.
+\newblock \DOIprefix\doi{10.1148/radiology.143.1.7063747}.
+%Type = Article
+\bibitem[{Holm(1979)}]{holm1979}
+\bibinfo{author}{Holm, S.}, \bibinfo{year}{1979}.
+\newblock \bibinfo{title}{A simple sequentially rejective multiple test
+  procedure}.
+\newblock \bibinfo{journal}{Scandinavian Journal of Statistics}
+  \bibinfo{volume}{6}, \bibinfo{pages}{65--70}.
+\newblock \URLprefix \url{https://www.jstor.org/stable/4615733}.
+  \bibinfo{note}{zbl 0402.62058}.
+%Type = Article
+\bibitem[{Hoopes et~al.(2022)Hoopes, Mora, Dalca, Fischl and
+  Hoffmann}]{hoopes2022synthstrip}
+\bibinfo{author}{Hoopes, A.}, \bibinfo{author}{Mora, J.S.},
+  \bibinfo{author}{Dalca, A.V.}, \bibinfo{author}{Fischl, B.},
+  \bibinfo{author}{Hoffmann, M.}, \bibinfo{year}{2022}.
+\newblock \bibinfo{title}{{SynthStrip}: skull-stripping for any brain image}.
+\newblock \bibinfo{journal}{NeuroImage} \bibinfo{volume}{260},
+  \bibinfo{pages}{119474}.
+\newblock \DOIprefix\doi{10.1016/j.neuroimage.2022.119474}.
+%Type = Article
+\bibitem[{Iglesias et~al.(2023)Iglesias, Billot, Balbastre, Magdamo, Arnold,
+  Das, Edlow, Alexander, Golland and Fischl}]{iglesias2023synthsr}
+\bibinfo{author}{Iglesias, J.E.}, \bibinfo{author}{Billot, B.},
+  \bibinfo{author}{Balbastre, Y.}, \bibinfo{author}{Magdamo, C.},
+  \bibinfo{author}{Arnold, S.E.}, \bibinfo{author}{Das, S.},
+  \bibinfo{author}{Edlow, B.L.}, \bibinfo{author}{Alexander, D.C.},
+  \bibinfo{author}{Golland, P.}, \bibinfo{author}{Fischl, B.},
+  \bibinfo{year}{2023}.
+\newblock \bibinfo{title}{{SynthSR}: A public {AI} tool to turn heterogeneous
+  clinical brain scans into high-resolution {T1}-weighted images for {3D}
+  morphometry}.
+\newblock \bibinfo{journal}{Science Advances} \bibinfo{volume}{9},
+  \bibinfo{pages}{eadd3607}.
+\newblock \DOIprefix\doi{10.1126/sciadv.add3607}.
+%Type = Article
+\bibitem[{Isensee et~al.(2021)Isensee, Jaeger, Kohl, Petersen and
+  Maier-Hein}]{isensee2021nnunet}
+\bibinfo{author}{Isensee, F.}, \bibinfo{author}{Jaeger, P.F.},
+  \bibinfo{author}{Kohl, S.A.A.}, \bibinfo{author}{Petersen, J.},
+  \bibinfo{author}{Maier-Hein, K.H.}, \bibinfo{year}{2021}.
+\newblock \bibinfo{title}{{nnU-Net}: a self-configuring method for deep
+  learning-based biomedical image segmentation}.
+\newblock \bibinfo{journal}{Nature Methods} \bibinfo{volume}{18},
+  \bibinfo{pages}{203--211}.
+\newblock \DOIprefix\doi{10.1038/s41592-020-01008-z}.
+%Type = Article
+\bibitem[{Isensee et~al.(2019)Isensee, Schell, Pflueger, Brugnara, Bonekamp,
+  Neuberger, Wick, Schlemmer, Heiland, Wick et~al.}]{isensee2019hdbet}
+\bibinfo{author}{Isensee, F.}, \bibinfo{author}{Schell, M.},
+  \bibinfo{author}{Pflueger, I.}, \bibinfo{author}{Brugnara, G.},
+  \bibinfo{author}{Bonekamp, D.}, \bibinfo{author}{Neuberger, U.},
+  \bibinfo{author}{Wick, A.}, \bibinfo{author}{Schlemmer, H.P.},
+  \bibinfo{author}{Heiland, S.}, \bibinfo{author}{Wick, W.}, et~al.,
+  \bibinfo{year}{2019}.
+\newblock \bibinfo{title}{{Automated brain extraction of multisequence {MRI}
+  using artificial neural networks}}.
+\newblock \bibinfo{journal}{Human Brain Mapping} \bibinfo{volume}{40},
+  \bibinfo{pages}{4952--4964}.
+\newblock \DOIprefix\doi{10.1002/hbm.24750}.
+%Type = Misc
+\bibitem[{Isensee et~al.(2024)Isensee, Schell, Tursunova, Brugnara, Bonekamp,
+  Neuberger, Wick, Schlemmer, Heiland, Wick, Bendszus, Maier-Hein and
+  Kickingereder}]{hdbet2024params}
+\bibinfo{author}{Isensee, F.}, \bibinfo{author}{Schell, M.},
+  \bibinfo{author}{Tursunova, I.}, \bibinfo{author}{Brugnara, G.},
+  \bibinfo{author}{Bonekamp, D.}, \bibinfo{author}{Neuberger, U.},
+  \bibinfo{author}{Wick, A.}, \bibinfo{author}{Schlemmer, H.P.},
+  \bibinfo{author}{Heiland, S.}, \bibinfo{author}{Wick, W.},
+  \bibinfo{author}{Bendszus, M.}, \bibinfo{author}{Maier-Hein, K.},
+  \bibinfo{author}{Kickingereder, P.}, \bibinfo{year}{2024}.
+\newblock \bibinfo{title}{{HD-BET} v1.5 parameters}.
+\newblock \DOIprefix\doi{10.5281/zenodo.14445620}. \bibinfo{note}{model
+  parameters downloaded by HD-BET 2.x (HD\_BET/paths.py,
+  ZENODO\_DOWNLOAD\_URL); licence CC BY-NC 4.0}.
+%Type = Article
+\bibitem[{{Journal of Neuroimaging}(2025)}]{jon2025flamescorrection}
+\bibinfo{author}{{Journal of Neuroimaging}}, \bibinfo{year}{2025}.
+\newblock \bibinfo{title}{{Correction to ``{A} Novel Convolutional Neural
+  Network for Automated Multiple Sclerosis Brain Lesion Segmentation''}}.
+\newblock \bibinfo{journal}{Journal of Neuroimaging} \bibinfo{volume}{35},
+  \bibinfo{pages}{e70093}.
+\newblock \DOIprefix\doi{10.1111/jon.70093}.
+%Type = Article
+\bibitem[{Kapoor and Narayanan(2023)}]{kapoor2023leakage}
+\bibinfo{author}{Kapoor, S.}, \bibinfo{author}{Narayanan, A.},
+  \bibinfo{year}{2023}.
+\newblock \bibinfo{title}{{Leakage and the reproducibility crisis in
+  machine-learning-based science}}.
+\newblock \bibinfo{journal}{Patterns} \bibinfo{volume}{4},
+  \bibinfo{pages}{100804}.
+\newblock \DOIprefix\doi{10.1016/j.patter.2023.100804}.
+%Type = Misc
+\bibitem[{La~Rosa(2025)}]{larosa2025flameszenodo}
+\bibinfo{author}{La~Rosa, F.}, \bibinfo{year}{2025}.
+\newblock \bibinfo{title}{{FLAMeS}: {FLAIR} lesion analysis in multiple
+  sclerosis}.
+\newblock \DOIprefix\doi{10.5281/zenodo.17955359}. \bibinfo{note}{model weights
+  (Dataset004\_WML.zip), version 2.0, 2025-12-16; licence CC BY 4.0}.
+%Type = Inproceedings
+\bibitem[{Laso et~al.(2024)Laso, Cerri, Sorby-Adams, Guo, Mateen, Goebl, Wu,
+  Liu, Li, Young et~al.}]{laso2024wmhsynthseg}
+\bibinfo{author}{Laso, P.}, \bibinfo{author}{Cerri, S.},
+  \bibinfo{author}{Sorby-Adams, A.}, \bibinfo{author}{Guo, J.},
+  \bibinfo{author}{Mateen, F.}, \bibinfo{author}{Goebl, P.},
+  \bibinfo{author}{Wu, J.}, \bibinfo{author}{Liu, P.}, \bibinfo{author}{Li,
+  H.B.}, \bibinfo{author}{Young, S.I.}, et~al., \bibinfo{year}{2024}.
+\newblock \bibinfo{title}{{Quantifying White Matter Hyperintensity and Brain
+  Volumes in Heterogeneous Clinical and Low-Field Portable {MRI}}}, in:
+  \bibinfo{booktitle}{2024 IEEE International Symposium on Biomedical Imaging
+  (ISBI)}, \bibinfo{publisher}{IEEE}, \bibinfo{address}{Athens, Greece}. pp.
+  \bibinfo{pages}{1--5}.
+\newblock \DOIprefix\doi{10.1109/ISBI56570.2024.10635502}.
+%Type = Article
+\bibitem[{Lesjak et~al.(2018)Lesjak, Galimzianova, Koren, Lukin, Pernu{\v{s}},
+  Likar and {\v{S}}piclin}]{lesjak2018ljubljana}
+\bibinfo{author}{Lesjak, {\v{Z}}.}, \bibinfo{author}{Galimzianova, A.},
+  \bibinfo{author}{Koren, A.}, \bibinfo{author}{Lukin, M.},
+  \bibinfo{author}{Pernu{\v{s}}, F.}, \bibinfo{author}{Likar, B.},
+  \bibinfo{author}{{\v{S}}piclin, {\v{Z}}.}, \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{{A Novel Public {MR} Image Dataset of Multiple
+  Sclerosis Patients With Lesion Segmentations Based on Multi-rater
+  Consensus}}.
+\newblock \bibinfo{journal}{Neuroinformatics} \bibinfo{volume}{16},
+  \bibinfo{pages}{51--63}.
+\newblock \DOIprefix\doi{10.1007/s12021-017-9348-7}.
+%Type = Article
+\bibitem[{Maier-Hein et~al.(2024)Maier-Hein, Reinke, Godau, Tizabi, Buettner,
+  Christodoulou, Glocker, Isensee, Kleesiek, Kozubek
+  et~al.}]{maierhein2024metrics}
+\bibinfo{author}{Maier-Hein, L.}, \bibinfo{author}{Reinke, A.},
+  \bibinfo{author}{Godau, P.}, \bibinfo{author}{Tizabi, M.D.},
+  \bibinfo{author}{Buettner, F.}, \bibinfo{author}{Christodoulou, E.},
+  \bibinfo{author}{Glocker, B.}, \bibinfo{author}{Isensee, F.},
+  \bibinfo{author}{Kleesiek, J.}, \bibinfo{author}{Kozubek, M.}, et~al.,
+  \bibinfo{year}{2024}.
+\newblock \bibinfo{title}{{Metrics reloaded: recommendations for image analysis
+  validation}}.
+\newblock \bibinfo{journal}{Nature Methods} \bibinfo{volume}{21},
+  \bibinfo{pages}{195--212}.
+\newblock \DOIprefix\doi{10.1038/s41592-023-02151-z}.
+%Type = Misc
+\bibitem[{Malinin et~al.(2022)Malinin, Athanasopoulos, Barakovic, Bach~Cuadra,
+  Gales, Granziera, Graziani, Kartashev, Kyriakopoulos, Lu
+  et~al.}]{malinin2022shifts}
+\bibinfo{author}{Malinin, A.}, \bibinfo{author}{Athanasopoulos, A.},
+  \bibinfo{author}{Barakovic, M.}, \bibinfo{author}{Bach~Cuadra, M.},
+  \bibinfo{author}{Gales, M.J.F.}, \bibinfo{author}{Granziera, C.},
+  \bibinfo{author}{Graziani, M.}, \bibinfo{author}{Kartashev, N.},
+  \bibinfo{author}{Kyriakopoulos, K.}, \bibinfo{author}{Lu, P.J.}, et~al.,
+  \bibinfo{year}{2022}.
+\newblock \bibinfo{title}{{Shifts 2.0: Extending The Dataset of Real
+  Distributional Shifts}}.
+\newblock \bibinfo{howpublished}{arXiv preprint arXiv:2206.15407}.
+\newblock \URLprefix \url{https://arxiv.org/abs/2206.15407}.
+%Type = Article
+\bibitem[{Mendelsohn et~al.(2023)Mendelsohn, Pemberton, Gray, Goodkin,
+  Carrasco, Scheel, Nawabi and Barkhof}]{mendelsohn2023commercial}
+\bibinfo{author}{Mendelsohn, Z.}, \bibinfo{author}{Pemberton, H.G.},
+  \bibinfo{author}{Gray, J.}, \bibinfo{author}{Goodkin, O.},
+  \bibinfo{author}{Carrasco, F.P.}, \bibinfo{author}{Scheel, M.},
+  \bibinfo{author}{Nawabi, J.}, \bibinfo{author}{Barkhof, F.},
+  \bibinfo{year}{2023}.
+\newblock \bibinfo{title}{{Commercial volumetric {MRI} reporting tools in
+  multiple sclerosis: a systematic review of the evidence}}.
+\newblock \bibinfo{journal}{Neuroradiology} \bibinfo{volume}{65},
+  \bibinfo{pages}{5--24}.
+\newblock \DOIprefix\doi{10.1007/s00234-022-03074-w}.
+%Type = Article
+\bibitem[{Molyneux et~al.(1998)Molyneux, Tubridy, Parker, Barker, MacManus,
+  Tofts, Moseley and Miller}]{molyneux1998thickness}
+\bibinfo{author}{Molyneux, P.D.}, \bibinfo{author}{Tubridy, N.},
+  \bibinfo{author}{Parker, G.J.}, \bibinfo{author}{Barker, G.J.},
+  \bibinfo{author}{MacManus, D.G.}, \bibinfo{author}{Tofts, P.S.},
+  \bibinfo{author}{Moseley, I.F.}, \bibinfo{author}{Miller, D.H.},
+  \bibinfo{year}{1998}.
+\newblock \bibinfo{title}{{The effect of section thickness on {MR} lesion
+  detection and quantification in multiple sclerosis}}.
+\newblock \bibinfo{journal}{AJNR American Journal of Neuroradiology}
+  \bibinfo{volume}{19}, \bibinfo{pages}{1715--1720}.
+\newblock \bibinfo{note}{PMID: 9802495; PMCID: PMC8337483}.
+%Type = Misc
+\bibitem[{Muslim(2022)}]{muslim2022data}
+\bibinfo{author}{Muslim, A.M.}, \bibinfo{year}{2022}.
+\newblock \bibinfo{title}{{Brain {MRI} Dataset of Multiple Sclerosis with
+  Consensus Manual Lesion Segmentation and Patient Meta Information}}.
+\newblock \DOIprefix\doi{10.17632/8bctsm8jz7.1}. \bibinfo{note}{dataset;
+  licence CC BY 4.0}.
+%Type = Article
+\bibitem[{Muslim et~al.(2022)Muslim, Mashohor, Gawwam, Mahmud, Hanafi,
+  Alnuaimi, Josephine and Almutairi}]{muslim2022dib}
+\bibinfo{author}{Muslim, A.M.}, \bibinfo{author}{Mashohor, S.},
+  \bibinfo{author}{Gawwam, G.A.}, \bibinfo{author}{Mahmud, R.},
+  \bibinfo{author}{Hanafi, M.b.}, \bibinfo{author}{Alnuaimi, O.},
+  \bibinfo{author}{Josephine, R.}, \bibinfo{author}{Almutairi, A.D.},
+  \bibinfo{year}{2022}.
+\newblock \bibinfo{title}{{Brain {MRI} dataset of multiple sclerosis with
+  consensus manual lesion segmentation and patient meta information}}.
+\newblock \bibinfo{journal}{Data in Brief} \bibinfo{volume}{42},
+  \bibinfo{pages}{108139}.
+\newblock \DOIprefix\doi{10.1016/j.dib.2022.108139}.
+%Type = Article
+\bibitem[{Nosek et~al.(2018)Nosek, Ebersole, DeHaven and
+  Mellor}]{nosek2018prereg}
+\bibinfo{author}{Nosek, B.A.}, \bibinfo{author}{Ebersole, C.R.},
+  \bibinfo{author}{DeHaven, A.C.}, \bibinfo{author}{Mellor, D.T.},
+  \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{{The preregistration revolution}}.
+\newblock \bibinfo{journal}{Proceedings of the National Academy of Sciences}
+  \bibinfo{volume}{115}, \bibinfo{pages}{2600--2606}.
+\newblock \DOIprefix\doi{10.1073/pnas.1708274114}.
+%Type = Article
+\bibitem[{Popa et~al.(2025a)Popa, Vi{\textcommabelow{s}}a and
+  {\textcommabelow{S}}ofariu}]{popa2025pedims}
+\bibinfo{author}{Popa, M.}, \bibinfo{author}{Vi{\textcommabelow{s}}a, G.A.},
+  \bibinfo{author}{{\textcommabelow{S}}ofariu, C.R.}, \bibinfo{year}{2025}a.
+\newblock \bibinfo{title}{{PediMS}: A pediatric multiple sclerosis lesion
+  segmentation dataset}.
+\newblock \bibinfo{journal}{Scientific Data} \bibinfo{volume}{12},
+  \bibinfo{pages}{1184}.
+\newblock \DOIprefix\doi{10.1038/s41597-025-05346-5}.
+%Type = Misc
+\bibitem[{Popa et~al.(2025b)Popa, Vi{\textcommabelow{s}}a and
+  {\textcommabelow{S}}ofariu}]{popa2025pedimsdata}
+\bibinfo{author}{Popa, M.}, \bibinfo{author}{Vi{\textcommabelow{s}}a, G.A.},
+  \bibinfo{author}{{\textcommabelow{S}}ofariu, C.R.}, \bibinfo{year}{2025}b.
+\newblock \bibinfo{title}{{PediMS}: A pediatric multiple sclerosis lesion
+  segmentation dataset}.
+\newblock \DOIprefix\doi{10.6084/m9.figshare.28701065}. \bibinfo{note}{dataset;
+  licence CC BY 4.0}.
+%Type = Incollection
+\bibitem[{Rondinella et~al.(2025)Rondinella, Guarnera, Crispino, Russo,
+  Di~Lorenzo, Maimone, Pappalardo and Battiato}]{rondinella2025icpr}
+\bibinfo{author}{Rondinella, A.}, \bibinfo{author}{Guarnera, F.},
+  \bibinfo{author}{Crispino, E.}, \bibinfo{author}{Russo, G.},
+  \bibinfo{author}{Di~Lorenzo, C.}, \bibinfo{author}{Maimone, D.},
+  \bibinfo{author}{Pappalardo, F.}, \bibinfo{author}{Battiato, S.},
+  \bibinfo{year}{2025}.
+\newblock \bibinfo{title}{{ICPR} 2024 competition on multiple sclerosis lesion
+  segmentation---methods and results}, in: \bibinfo{booktitle}{Pattern
+  Recognition. Competitions}. \bibinfo{publisher}{Springer Nature Switzerland}.
+  Lecture Notes in Computer Science, pp. \bibinfo{pages}{1--16}.
+\newblock \DOIprefix\doi{10.1007/978-3-031-80139-6_1}.
+%Type = Article
+\bibitem[{Schuirmann(1987)}]{schuirmann1987tost}
+\bibinfo{author}{Schuirmann, D.J.}, \bibinfo{year}{1987}.
+\newblock \bibinfo{title}{{A comparison of the Two One-Sided Tests Procedure
+  and the Power Approach for assessing the equivalence of average
+  bioavailability}}.
+\newblock \bibinfo{journal}{Journal of Pharmacokinetics and Biopharmaceutics}
+  \bibinfo{volume}{15}, \bibinfo{pages}{657--680}.
+\newblock \DOIprefix\doi{10.1007/BF01068419}.
+%Type = Article
+\bibitem[{Spagnolo et~al.(2023)Spagnolo, Depeursinge, Sch{\"a}delin, Akbulut,
+  M{\"u}ller, Barakovic, Melie-Garcia, Bach~Cuadra and
+  Granziera}]{spagnolo2023clinical}
+\bibinfo{author}{Spagnolo, F.}, \bibinfo{author}{Depeursinge, A.},
+  \bibinfo{author}{Sch{\"a}delin, S.}, \bibinfo{author}{Akbulut, A.},
+  \bibinfo{author}{M{\"u}ller, H.}, \bibinfo{author}{Barakovic, M.},
+  \bibinfo{author}{Melie-Garcia, L.}, \bibinfo{author}{Bach~Cuadra, M.},
+  \bibinfo{author}{Granziera, C.}, \bibinfo{year}{2023}.
+\newblock \bibinfo{title}{{How far {MS} lesion detection and segmentation are
+  integrated into the clinical workflow? {A} systematic review}}.
+\newblock \bibinfo{journal}{NeuroImage: Clinical} \bibinfo{volume}{39},
+  \bibinfo{pages}{103491}.
+\newblock \DOIprefix\doi{10.1016/j.nicl.2023.103491}.
+%Type = Article
+\bibitem[{Tejani et~al.(2024)Tejani, Klontzas, Gatti, Mongan, Moy, Park, Kahn
+  et~al.}]{tejani2024claim}
+\bibinfo{author}{Tejani, A.S.}, \bibinfo{author}{Klontzas, M.E.},
+  \bibinfo{author}{Gatti, A.A.}, \bibinfo{author}{Mongan, J.T.},
+  \bibinfo{author}{Moy, L.}, \bibinfo{author}{Park, S.H.},
+  \bibinfo{author}{Kahn, C.E.}, et~al., \bibinfo{year}{2024}.
+\newblock \bibinfo{title}{{Checklist for Artificial Intelligence in Medical
+  Imaging ({CLAIM}): 2024 Update}}.
+\newblock \bibinfo{journal}{Radiology: Artificial Intelligence}
+  \bibinfo{volume}{6}, \bibinfo{pages}{e240300}.
+\newblock \DOIprefix\doi{10.1148/ryai.240300}.
+%Type = Article
+\bibitem[{Thompson et~al.(2018)Thompson, Banwell, Barkhof, Carroll, Coetzee,
+  Comi, Correale, Fazekas, Filippi, Freedman et~al.}]{thompson2018mcdonald}
+\bibinfo{author}{Thompson, A.J.}, \bibinfo{author}{Banwell, B.L.},
+  \bibinfo{author}{Barkhof, F.}, \bibinfo{author}{Carroll, W.M.},
+  \bibinfo{author}{Coetzee, T.}, \bibinfo{author}{Comi, G.},
+  \bibinfo{author}{Correale, J.}, \bibinfo{author}{Fazekas, F.},
+  \bibinfo{author}{Filippi, M.}, \bibinfo{author}{Freedman, M.S.}, et~al.,
+  \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{{Diagnosis of multiple sclerosis: 2017 revisions of
+  the {McDonald} criteria}}.
+\newblock \bibinfo{journal}{The Lancet Neurology} \bibinfo{volume}{17},
+  \bibinfo{pages}{162--173}.
+\newblock \DOIprefix\doi{10.1016/S1474-4422(17)30470-2}.
+%Type = Article
+\bibitem[{Varoquaux and Cheplygina(2022)}]{varoquaux2022failures}
+\bibinfo{author}{Varoquaux, G.}, \bibinfo{author}{Cheplygina, V.},
+  \bibinfo{year}{2022}.
+\newblock \bibinfo{title}{{Machine learning for medical imaging: methodological
+  failures and recommendations for the future}}.
+\newblock \bibinfo{journal}{npj Digital Medicine} \bibinfo{volume}{5},
+  \bibinfo{pages}{48}.
+\newblock \DOIprefix\doi{10.1038/s41746-022-00592-y}.
+%Type = Article
+\bibitem[{Wattjes et~al.(2021)Wattjes, Ciccarelli, Reich, Banwell, de~Stefano,
+  Enzinger, Fazekas, Filippi, Frederiksen, Gasperini
+  et~al.}]{wattjes2021magnims}
+\bibinfo{author}{Wattjes, M.P.}, \bibinfo{author}{Ciccarelli, O.},
+  \bibinfo{author}{Reich, D.S.}, \bibinfo{author}{Banwell, B.},
+  \bibinfo{author}{de~Stefano, N.}, \bibinfo{author}{Enzinger, C.},
+  \bibinfo{author}{Fazekas, F.}, \bibinfo{author}{Filippi, M.},
+  \bibinfo{author}{Frederiksen, J.}, \bibinfo{author}{Gasperini, C.}, et~al.,
+  \bibinfo{year}{2021}.
+\newblock \bibinfo{title}{{2021 {MAGNIMS}--{CMSC}--{NAIMS} consensus
+  recommendations on the use of {MRI} in patients with multiple sclerosis}}.
+\newblock \bibinfo{journal}{The Lancet Neurology} \bibinfo{volume}{20},
+  \bibinfo{pages}{653--670}.
+\newblock \DOIprefix\doi{10.1016/S1474-4422(21)00095-8}.
+%Type = Article
+\bibitem[{Wiltgen et~al.(2024)Wiltgen, McGinnis, Schlaeger, Kofler, Voon,
+  Berthele, Bischl, Grundl, Will, Metz et~al.}]{wiltgen2024lstai}
+\bibinfo{author}{Wiltgen, T.}, \bibinfo{author}{McGinnis, J.},
+  \bibinfo{author}{Schlaeger, S.}, \bibinfo{author}{Kofler, F.},
+  \bibinfo{author}{Voon, C.}, \bibinfo{author}{Berthele, A.},
+  \bibinfo{author}{Bischl, D.}, \bibinfo{author}{Grundl, L.},
+  \bibinfo{author}{Will, N.}, \bibinfo{author}{Metz, M.}, et~al.,
+  \bibinfo{year}{2024}.
+\newblock \bibinfo{title}{{LST-AI}: A deep learning ensemble for accurate {MS}
+  lesion segmentation}.
+\newblock \bibinfo{journal}{NeuroImage: Clinical} \bibinfo{volume}{42},
+  \bibinfo{pages}{103611}.
+\newblock \DOIprefix\doi{10.1016/j.nicl.2024.103611}.
+
+\end{thebibliography}
