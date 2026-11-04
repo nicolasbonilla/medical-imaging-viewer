@@ -502,7 +502,7 @@ training.
 | leave-one-site-out · PediMS | 0.007 [0.000, 0.022] holds; sens. 0.064; n = 73 | 0.050 [0.016, 0.093] holds; sens. 0.164; n = 195 | 0.00 [0.00, 0.12] holds (abst.); sens. 0.025; n = 28 | 0.00 [0.00, 0.12] holds (abst.); sens. 0.025; n = 28 |
 <!-- END TABLE t4 -->
 
-![Figure 1. The 32 pre-registered primary cells. Left: realised FDR of conformal BH (P1). Right: realised FDX of the CALM-FDX threshold (P2). Shapes and colours encode the pre-registered class. Hollow markers pass only by abstention. The grey band is the pre-registered margin (nominal to nominal + 0.05).](figures/fig1_primary_cells.png)
+![Figure 1. The 32 pre-registered primary cells, by design (1-mm grid → thick slices, D3; leave one site out, D2), site and target level. (a) Realised FDR (mean per-scan FDP) of conformal BH (P1; target FDR ≤ α). (b) Realised FDX (share of scans with FDP > γ) of the CALM-FDX threshold (P2; target P(FDP > γ) ≤ 0.1). Shapes and colours encode the pre-registered class: holds (no violation detected; upper bound within the margin), inconclusive, violated (lower bound above nominal). Hollow markers pass only by abstention (fewer than 10 selections or sensitivity below 0.05). The vertical tick is the nominal level and the grey band the pre-registered margin (nominal to nominal + 0.05). Bars are 95 % patient-cluster bootstrap intervals (P2: union with the exact Clopper–Pearson interval). † Ljubljana is a FLAMeS training site: its 10 patients were never trained on, but the site was.](figures/fig1_primary_cells.png)
 
 **No P1 cell was violated, but this is weaker than "the guarantee held".** Across the 16
 held-out-site P1 cells, none had a lower bound above α. Fourteen of these cells are on sites FLAMeS
@@ -556,11 +556,11 @@ apply:
   so that violation is borderline. The Muslim violations remain (0.27 [0.12, 0.41] and
   0.25 [0.12, 0.37]).
 
-![Figure 2. Why the per-scan threshold fails on thick slices. (A) Share of scans with a false candidate above the 1-mm-calibrated threshold 0.965 [post hoc], next to the pre-registered realised FDX of 1-mm → thick transport. (B) Share of false candidates scoring at least 0.95, fold 0 versus 5-fold ensemble [post hoc].](figures/fig2_threshold_mechanism.png)
+![Figure 2. Why the per-scan threshold fails on thick slices. (a) Share of scans with a false candidate above the 1-mm-calibrated threshold 0.965 [post hoc], next to the pre-registered realised FDX of 1-mm → thick transport at γ = 0.1; the dashed line is δ = 0.1. (b) Share of false candidates scoring at least 0.95, fold 0 versus 5-fold ensemble [post hoc].](figures/fig2_threshold_mechanism.png)
 
 **Mechanism [post hoc].** P2 reduces to a single global threshold. The share of scans with a false
 candidate above 0.965 was 6.1 % on MSLesSeg and 10 % on Ljubljana-10, but 24 % on MS3SEG and 29.4 %
-on Muslim. These shares nearly equal the realised FDX (Figure 2A). The false-score law of thick-slice
+on Muslim. These shares nearly equal the realised FDX (Figure 2a). The false-score law of thick-slice
 scans differs from the 1-mm law. The pre-registered scan-clustered permutation KS test gave
 D = 0.107 on MS3SEG (p = 0.0005, the smallest attainable with 2000 permutations), D = 0.094 on
 Muslim (p = 0.025) and D = 0.057 on PediMS (p = 0.51).
@@ -593,7 +593,7 @@ threshold in 90 % of patients".
 | B1 precision-matched threshold, no guarantee (pre-registered) | 0.2 | 0.230 [0.206, 0.255] **violated**; sens. 0.586 | 0.235 [0.186, 0.286] inconclusive; sens. 0.446 | 0.197 [0.152, 0.242] holds; sens. 0.639 |
 <!-- END TABLE t5 -->
 
-![Figure 7. Validity against power for every procedure under 1-mm → thick transport. The vertical line is α; the grey band reaches α + 0.05.](figures/fig7_baselines_validity_power.png)
+![Figure 7. Validity against power for every procedure under 1-mm → thick transport (calibration on the 1-mm-grid sites, test on each thick-slice site, D3), by site (columns) and α (rows). Horizontal bars are 95 % CIs of the realised FDR. The dashed vertical line is α; the grey band reaches α + 0.05. Hierarchical e-values selected nothing in every D3 cell (sensitivity 0).](figures/fig7_baselines_validity_power.png)
 
 **Pre-registered baselines.**
 
@@ -678,7 +678,7 @@ before selection; at the guarantee = selected by P1 at α = 0.2 in D2).
 | *within MSLesSeg, native 4–5 mm [post hoc]* | 25 / 59 / 143 / 71 / 35 | 0.16 / 0.39 / 0.73 / 0.82 / 0.71 | — | — | — |
 <!-- END TABLE t7 -->
 
-![Figure 3. Share of expert lesions found by lesion volume and thickness band: (A) raw segmentation, (B) after P1 selection at α = 0.2, leave-one-site-out.](figures/fig3_detection_by_size_and_band.png)
+![Figure 3. Share of expert lesions found by lesion volume and thickness band: (a) raw segmentation, (b) after P1 selection at α = 0.2, leave-one-site-out. Bands: ≤ 1.5 mm grid (125 scans; 110 natively 2–5 mm), 3.9 mm (PediMS, 28 scans / 9 children), 4.5–6.5 mm (Muslim 45, MS3SEG 31) and > 6.5 mm (MS3SEG 69, Muslim 6). Thin horizontal lines mark 0.5 and 0.8. Bands are confounded with site, scanner, population and annotation protocol; they describe these cohorts, not a controlled thickness effect.](figures/fig3_detection_by_size_and_band.png)
 
 On 2D slices of 4.5 mm or more, before any selection:
 
@@ -723,7 +723,7 @@ bootstrap).**
 | pooled 5-fold, all sites | 0.1 | 0.038 / 0.040 | -0.002 [-0.018, 0.016] | 0.063 / 0.019 | +0.044 [0.030, 0.059] |
 <!-- END TABLE t8 -->
 
-![Figure 4. 5-fold ensemble against fold 0, P1 at α = 0.2: (A) realised FDR, (B) end-to-end sensitivity, with paired differences and 95 % CIs.](figures/fig4_ensemble_vs_fold0.png)
+![Figure 4. 5-fold ensemble against fold 0 (the v0.2 pipeline), P1 at α = 0.2, on the same scans and expert lesions: (a) realised FDR (dashed line: α), (b) end-to-end sensitivity. The columns give the paired difference Δ = ensemble − fold 0 with its 95 % CI.](figures/fig4_ensemble_vs_fold0.png)
 
 At α = 0.2, the ensemble roughly doubled end-to-end sensitivity at the guarantee:
 
@@ -751,7 +751,7 @@ new violated cells". Folds 1–4 behaved like fold 0 (1-mm → thick, P1 α = 0.
 0.157–0.176), so the gain comes from averaging, not from a bad fold.
 
 **[post hoc]** Averaging removes over-confident false candidates. The share of false candidates
-scoring at least 0.95 fell from 16–32 % (fold 0) to 3–6 % (ensemble) at every site (Figure 2B).
+scoring at least 0.95 fell from 16–32 % (fold 0) to 3–6 % (ensemble) at every site (Figure 2b).
 
 LST-AI replicated the direction through a different mechanism. Its three-model ensemble did not rank
 better than its first sub-model (MSLesSeg AUROC 0.737 against 0.758). It did produce far fewer false
@@ -778,7 +778,7 @@ was 0.034–0.075 and sensitivity 0.14–0.31.
 | Muslim · P2 γ = 0.1 · 1-mm pool + k site patients | FDX 0.250 (100 % of draws > nominal); sens. 0.027 | FDX 0.235 (100 % of draws > nominal); sens. 0.023 | FDX 0.196 (70 % of draws > nominal); sens. 0.017 | none |
 <!-- END TABLE t9 -->
 
-![Figure 5. Recalibration with k local patients on MS3SEG and Muslim: realised error (top) and end-to-end sensitivity (bottom).](figures/fig5_recalibration_curve.png)
+![Figure 5. Recalibration with k local patients on MS3SEG and Muslim: realised FDR or FDX (a, b; mean of 200 draws; dashed lines at 0.1 and 0.2) and end-to-end sensitivity (c, d). P2 site-only abstains by construction for k < 9 (δ = 0.1) and is drawn from k = 10.](figures/fig5_recalibration_curve.png)
 
 **P1, site patients only.** P1 stayed below α at every k. With 10 local patients it reached about
 90 % of the full within-site power (MS3SEG α = 0.2: realised FDR 0.069, sensitivity 0.183 against
@@ -821,7 +821,7 @@ class.** Primary cells are in bold.
 | fold 0 · own null (leave-one-control-out; exchangeable by construction) | 9 [4.2, 16.4] | 21 [13.5, 30.3] | — | — | — |
 <!-- END TABLE t10 -->
 
-![Figure 6. Healthy controls with at least one reported lesion, by arm, calibration pool and procedure (exact 95 % CIs). Grey band: nominal to nominal + 0.05.](figures/fig6_healthy_controls.png)
+![Figure 6. Healthy controls with at least one reported lesion, by arm, calibration pool and procedure (exact 95 % CIs). On a lesion-free scan the FDR promise reads P(≥ 1 reported lesion) ≤ α. Tick: nominal level; grey band: nominal to nominal + 0.05. Without selection, 85 of the 100 controls had at least one candidate.](figures/fig6_healthy_controls.png)
 
 **Primary result.** With the calibration a deployer would use for 1-mm-grid studies, the healthy
 false-alarm rate was undecided and above nominal. **14/100 [7.9, 22.4 %] controls had a reported

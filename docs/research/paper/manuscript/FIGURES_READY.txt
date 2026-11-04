@@ -1,0 +1,30 @@
+FIGURES READY - Paper A (MELBA)
+Date: 2026-11-04
+
+All figures were redrawn in the MSTool-AI house style. File names are unchanged, so the LaTeX picks them up.
+
+Figures (vector PDF with Arial embedded as TrueType/Type 42, plus 600 dpi PNG, drawn at FINAL print size):
+  fig1_primary_cells.pdf / .png   180 x 96 mm
+  fig2_threshold_mechanism.pdf / .png   180 x 62 mm
+  fig3_detection_by_size_and_band.pdf / .png   180 x 60 mm
+  fig4_ensemble_vs_fold0.pdf / .png   180 x 51 mm
+  fig5_recalibration_curve.pdf / .png   180 x 100 mm
+  fig6_healthy_controls.pdf / .png   180 x 61 mm
+  fig7_baselines_validity_power.pdf / .png   180 x 103 mm
+
+Width: 180 mm wide = double column; MELBA text block is 190 mm, so \includegraphics without a width keeps 100 %.
+Do not rescale: the type is set at final size (7 pt ticks, 8 pt axis labels, 9 pt bold lowercase panel letters).
+
+House style: figures/mstool_figstyle.py + figures/mstool.mplstyle (identical copy in every paper).
+  White ground, 0.5 pt axes, outward ticks, no top/right spines, no titles or footnotes inside the plots,
+  direct labels instead of legends where possible, decimal-aligned numbers with real minus signs.
+  Muted colour-blind-safe palette (deuteranopia, protanopia, tritanopia checked: python mstool_figstyle.py).
+  Fixed meanings in all papers: FLAMeS ensemble dark grey, FLAMeS fold 0 mid grey, MindGlide blue,
+  WMH-SynthSeg ochre, SAMSEG umber, LST-AI mauve; met/holds teal, inconclusive grey, not met/violated brick.
+
+Captions: the explanatory notes that were inside the old figures now live in the figure captions of
+manuscript.md (wording only; panel references now use lowercase letters a, b, c).
+
+Regenerate: python docs/research/paper/manuscript/figures/make_figures.py
+Data unchanged - numbers check: python docs/research/paper/manuscript/tools/check_numbers.py
+  -> 186 claims: 186 PASS, 0 FAIL (on the committed manuscript with the new captions)
