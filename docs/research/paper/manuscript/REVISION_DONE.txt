@@ -1,0 +1,27 @@
+REVISION DONE - Paper A, major revision after the independent review
+Date: 2026-11-04. Commit 2e9a615 on research/paper-a-manuscript (pushed).
+
+manuscript.md is now version 2.0. Point-by-point answer: RESPONSE_TO_REVIEW.md.
+Numbers: python docs/research/paper/manuscript/tools/check_numbers.py -> 219 claims, 219 PASS, 0 ROUNDING, 0 FAIL
+(compared with FULL-PRECISION records; tables regenerated and identical).
+
+For the LaTeX template build (latex/build_latex.py):
+- New title (YAML): "Thin-slice calibration does not transfer to thick-slice MS FLAIR: a protocol-first
+  five-cohort audit of conformal lesion-wise false-discovery control".
+- New running title (YAML running-title): "Conformal false-lesion control under acquisition shift".
+  build_latex.py still hard-codes the old running title ("... across sites and slice thickness"): please update.
+- Author block in YAML now: Nicolás Bonilla Vargas (Universidad Nacional de Colombia; SRH University München;
+  Daita AI; ngbonillav@unal.edu.co) - matches AUTHOR in build_latex.py.
+- Heading structure unchanged: "# Abstract", "# Declarations" (same bold labels: Data availability, Code
+  availability, Ethics, Licences, Funding, Competing interests, Author contributions (CRediT), Use of AI
+  assistance, Acknowledgements), "# References", "# Appendix A/B/C", and
+  "# Appendix D — Open items before submission (owner checklist)" (dropped by the template config).
+- New tables: Table 4b (after Table 4) and Appendix Tables A4-A14 (wide; several have 7-10 columns).
+- references.bib changed: key rondinella2025mslesseg renamed guarnera2025mslesseg; SibBMS is now an @article
+  (MELBA 2025:046); several entries gained pages/DOIs; IEC 62304 title changed.
+- Figures: same file names. Figure 1 now has a fifth key item (dark-edged teal marker: "Holds, estimate >
+  nominal"); figures are drawn from the *_fullprec.json records. Captions of Figures 1 and 3 were amended
+  by one phrase each (Figure 1: dark-edge sentence; Figure 3: "pre-registered band (a cohort-acquisition
+  group, labelled by slice spacing)").
+- figures/mstool_figstyle.py has an uncommitted change in the working tree that is NOT from this revision
+  (layout-checker code); it was left untouched and uncommitted.
