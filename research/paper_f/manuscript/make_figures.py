@@ -63,7 +63,8 @@ def pfmt(p, family_size):
         return "not run"
     if p == 0.0:
         return "< 0.002" if family_size <= 6 else "< 0.003"
-    return f"{p:.3f}" if p < 0.995 else "1.00"
+    # two significant figures, as in the manuscript (Monte Carlo SE of a bootstrap p near 0.45 is ~0.008)
+    return f"{p:.2g}" if p < 0.995 else "1.0"
 
 
 # ----------------------------------------------------------------------------- Figure 1: forest plot

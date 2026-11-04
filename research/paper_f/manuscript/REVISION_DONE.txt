@@ -1,0 +1,29 @@
+REVISION DONE - Paper F major revision (after the internal review F_REVIEW.md)
+Date: 2026-11-04
+
+The text of manuscript.md is final for this revision (draft v1.1). Rebuild the Elsevier LaTeX version from it.
+
+What changed for the template:
+- New title, author line (Nicolás Bonilla Vargas, affiliations 1-3) and affiliation paragraph.
+- Highlights and structured abstract rewritten (abstract 298 words).
+- New Methods paragraph "Roles in the research process, including an AI coding agent" (Section 2.1).
+- Table 3: "not run" cells with footnotes b and c; p-values to two significant figures.
+- Table 4: new Dice column.
+- Table 5: new row "Total including reused runs".
+- Table 6: first column is now "Time (UTC)"; new row for the structural check.
+- Table 7: Ljubljana and HD-BET rows rewritten.
+- "Use of AI assistance" was REMOVED. It is replaced by "Declaration of generative AI and AI-assisted
+  technologies in the writing process", which must stay IMMEDIATELY ABOVE the References (Elsevier policy).
+- Appendix: new "Appendix B. Training-overlap checks ..." paragraph and new Tables A3 and A4.
+- references.bib: new entries jon2025flamescorrection and hdbet2024params; collins2024tripodai was
+  removed earlier.
+
+Figures: the designer's redesigned figures and captions are kept. After FIGURES_READY.txt, make_figures.py
+was changed only to print p-values with two significant figures (Figure 1: 0.45 and 0.99; Figure 4: 1.0),
+and all four figures were regenerated. Copy the figures again into latex/; the copies there are older.
+
+Checks:
+- numbers_check.py: 480/480 PASS, 0 unmapped tokens.
+- pandoc docx and pdf build without unresolved citations.
+
+Point-by-point answers: RESPONSE_TO_REVIEW.md.

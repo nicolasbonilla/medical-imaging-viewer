@@ -162,7 +162,9 @@ The rule therefore explains part of the volume deficit but not the F1 deficit. T
 
 ## Minor issues
 - **m1.** §2.6 states the Monte Carlo SE (about 0.008 for p near 0.45). Non-bound p-values are given to
-  two significant figures (Table 3: 0.45, 0.99, 1.0).
+  two significant figures (Table 3: 0.45, 0.99, 1.0). After the figure designer finished, the same
+  format was applied to the p-values printed in Figures 1 and 4 (`make_figures.py`, `pfmt`), and the
+  figures were regenerated from the committed code.
 - **m2.** Done (item 9).
 - **m3.** The abstract now says that "existing LST-AI maps were added on the 1 mm grid" and no longer
   says that LST-AI ran on the identical input.
@@ -200,8 +202,10 @@ The rule therefore explains part of the volume deficit but not the F1 deficit. T
   - The Holm issue number is confirmed only by a secondary source, so it was not added.
   - Shifts 2.0 is kept as the arXiv preprint.
 - **m17.** The repository licence and CLAIM checklist remain owner TODOs in the text.
-- **m18.** The untracked `figures/mstool.mplstyle` and `figures/mstool_figstyle.py` belong to the figure
-  designer working in parallel. They are not committed by this revision.
+- **m18.** `figures/mstool.mplstyle` and `figures/mstool_figstyle.py` are the house-style files of the
+  figure designer, who redrew all figures in parallel (`FIGURES_READY.txt`). They are now committed
+  together with `make_figures.py`, so the figures are regenerated from committed code only
+  (`python research/paper_f/manuscript/make_figures.py`).
 
 ## Files changed or added
 - **Changed:**
@@ -216,5 +220,6 @@ The rule therefore explains part of the volume deficit but not the F1 deficit. T
   - `fingerprint_check.py` and `data/flames_fingerprint_check.json`;
   - `data/mslesseg_flames_overlap_check_87e998d.json`;
   - this file.
-- **Not touched:** figure files and figure captions (the figure designer's), and `latex/` (the
-  template agent's).
+- **Figures:** redrawn by the figure designer (captions are theirs and were kept); after
+  `FIGURES_READY.txt` this revision changed only the p-value format in `make_figures.py` and
+  regenerated the four figures. `latex/` (the template agent's work) was not touched.
