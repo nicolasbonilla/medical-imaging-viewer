@@ -1,0 +1,31 @@
+FIGURES READY - Paper H (Empirical Software Engineering, Springer)
+Date: 2026-11-04
+
+All figures were redrawn in the MSTool-AI house style. File names are unchanged, so the LaTeX picks them up.
+
+Figures (vector PDF with Arial embedded as TrueType/Type 42, plus 600 dpi PNG, drawn at FINAL print size):
+  fig1_timeline.pdf / .png   174 x 60 mm
+  fig2_process.pdf / .png   174 x 47 mm
+  fig3_negative_controls.pdf / .png   174 x 63 mm
+  fig4_reviews.pdf / .png   174 x 61 mm
+  fig5_approvals.pdf / .png   174 x 58 mm
+  fig6_verification.pdf / .png   174 x 56 mm
+  fig7_channels.pdf / .png   129 x 58 mm
+  fig8_tests_ci.pdf / .png   174 x 53 mm
+
+Width: 174 mm wide = Springer full width (Figure 7: 129 mm); include at natural size.
+Do not rescale: the type is set at final size (7 pt ticks, 8 pt axis labels, 9 pt bold lowercase panel letters).
+
+House style: figures/mstool_figstyle.py + figures/mstool.mplstyle (identical copy in every paper).
+  White ground, 0.5 pt axes, outward ticks, no top/right spines, no titles or footnotes inside the plots,
+  direct labels instead of legends where possible, decimal-aligned numbers with real minus signs.
+  Muted colour-blind-safe palette (deuteranopia, protanopia, tritanopia checked: python mstool_figstyle.py).
+  Fixed meanings in all papers: FLAMeS ensemble dark grey, FLAMeS fold 0 mid grey, MindGlide blue,
+  WMH-SynthSeg ochre, SAMSEG umber, LST-AI mauve; met/holds teal, inconclusive grey, not met/violated brick.
+
+Captions: the explanatory notes that were inside the old figures now live in the figure captions of
+manuscript.md (wording only; panel references now use lowercase letters a, b, c).
+
+Regenerate: python docs/research/paper-h/manuscript/figures/make_figures.py
+Data unchanged - numbers check: python research/paper_h/numbers_check.py
+  -> 73 of 73 numeric claims OK; problems: 0
