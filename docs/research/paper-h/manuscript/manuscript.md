@@ -1,6 +1,6 @@
 ---
 title: "Evidence That Can Fail: An AI Coding Agent as Primary Developer of IEC 62304 Class C Medical-Imaging Software — A Single-Case Study of Verification, Review and Approval"
-author: "N. G. Bonilla Vargas"
+author: "Nicolás Bonilla Vargas"
 date: "Manuscript draft v1.0, 31 October 2026 (supersedes draft v0.1 of 21 October 2026)"
 bibliography: references.bib
 link-citations: true
@@ -14,10 +14,11 @@ OWNER_REVIEW.md must be resolved before submission. Target: Empirical Software E
 Journal of Systems and Software; a 10-page ICSE-SEIP 2027 version would be cut from §§3, 5.3-5.5 and 6.
 -->
 
-**Author.** N. G. Bonilla Vargas, MSTool-AI *(affiliation, city, country and ORCID to be confirmed by
-the author — OWNER_REVIEW item A1)*.
+**Author.** Nicolás Bonilla Vargas — Universidad Nacional de Colombia, Bogotá, Colombia; SRH
+University München, Munich, Germany; Daita AI *(ORCID to be added by the author — OWNER_REVIEW item
+A1)*.
 
-**Corresponding author.** N. G. Bonilla Vargas *(contact address to be added by the author)*.
+**Corresponding author.** Nicolás Bonilla Vargas, ngbonillav@unal.edu.co.
 
 ## Abstract
 
@@ -1002,16 +1003,29 @@ this statement with the target journal's policy on AI-assisted writing — OWNER
 
 **Funding.** None declared *(to be confirmed by the author, OWNER_REVIEW A2)*.
 
-**Conflicts of interest.** The author owns the product studied, operated the agent and approved the
-changes studied. *(Relationships with authors of cited works, and with the vendor of the agent, to be
-declared by the author — OWNER_REVIEW A2.)*
+**Conflicts of interest.** The author owns the product studied (MSTool-AI, software intended to become
+a commercial medical device), operated the agent and approved the changes studied, so the study
+evaluates his own work. He is also affiliated with Daita AI *(owner to confirm: his role there, and
+whether Daita AI has any financial interest in MSTool-AI or in this study)*. The agent studied, Claude
+Code, is a commercial product of Anthropic; the author uses it as a customer and has no other
+relationship with Anthropic *(owner to confirm)*. *(Ownership or equity, patents, paid roles, and
+relationships with authors of cited works, to be declared by the author — OWNER_REVIEW A2.)*
+
+**Ethics approval and consent to participate.** No ethics-board approval was sought; the only human
+participant is the author, who consents (Section 8) *(to be confirmed against the journal's policy —
+OWNER_REVIEW A4)*.
+
+**Consent for publication.** The author consents to the publication of the project records quoted
+here; no other person's data are reported (Section 8).
 
 **Data and code availability.** The repository is public. Analysis scripts, coding sheets and the
 redacted GitHub snapshot: `research/paper_h/`; figures and their script:
 `docs/research/paper-h/manuscript/figures/`; pinned commits `6209131` and `8805882`. *(To be archived
 with a DOI before submission, OWNER_REVIEW B4.)*
 
-**Author contributions (CRediT).** N. G. Bonilla Vargas: conceptualisation, supervision, resources,
+**Materials availability.** Not applicable.
+
+**Author contributions (CRediT).** Nicolás Bonilla Vargas: conceptualisation, supervision, resources,
 validation, writing — review and editing *(to be confirmed after the author's review)*.
 
 ## References
