@@ -302,9 +302,9 @@ def fig4_ensemble(res):
         r0 = cells[0]
         left, right = sorted(((r0["b"], "Fold 0"), (r0["a"], "Ensemble")))
         ax.annotate(left[1], (left[0], 0), xytext=(2, 4.5), textcoords="offset points", ha="right", va="bottom",
-                    fontsize=6.5, color=fs.INK2)
+                    fontsize=6.5, color=fs.INK2, bbox=dict(fc="white", ec="none", pad=0.4), zorder=5)
         ax.annotate(right[1], (right[0], 0), xytext=(-2, 4.5), textcoords="offset points", ha="left", va="bottom",
-                    fontsize=6.5, color=fs.INK2)
+                    fontsize=6.5, color=fs.INK2, bbox=dict(fc="white", ec="none", pad=0.4), zorder=5)
         ax.set_xlim(*xlim)
         ax.set_xticks(ticks)
         ax.set_xticklabels(["0" if v == 0 else f"{v:g}" for v in ticks])

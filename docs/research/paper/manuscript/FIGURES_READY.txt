@@ -27,4 +27,5 @@ manuscript.md (wording only; panel references now use lowercase letters a, b, c)
 
 Regenerate: python docs/research/paper/manuscript/figures/make_figures.py
 Data unchanged - numbers check: python docs/research/paper/manuscript/tools/check_numbers.py
-  -> 186 claims: 186 PASS, 0 FAIL (on the committed manuscript with the new captions)
+  -> 219 claims: 219 PASS, 0 FAIL (manuscript 2.0 at 1a92e60, with the new captions)
+v2: label-collision fix done
