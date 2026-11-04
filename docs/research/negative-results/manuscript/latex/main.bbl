@@ -1,0 +1,294 @@
+\begin{thebibliography}{36}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[msl(2025)]{mslesseg2025data}
+{MSLesSeg} dataset (figshare record, file 52771814).
+\newblock Figshare, 2025.
+\newblock CC BY 4.0.
+
+\bibitem[Bawil et~al.(2026)Bawil, Shamsi, Ghalehasadi, Jafargholkhanloo, and
+  Bavil]{bawil2026ms3seg}
+M.~B. Bawil, M.~Shamsi, A.~Ghalehasadi, A.~F. Jafargholkhanloo, and A.~S.
+  Bavil.
+\newblock {A Multiple Sclerosis {MRI} Dataset with Tri-Mask Annotations for
+  Lesion Segmentation}.
+\newblock \emph{Scientific Data}, 13:\penalty0 867, 2026.
+\newblock \doi{10.1038/s41597-026-07184-5}.
+\newblock Data: Figshare 10.6084/m9.figshare.30393475 (CC BY 4.0).
+
+\bibitem[Benjamini and Hochberg(1995)]{benjamini1995fdr}
+Y.~Benjamini and Y.~Hochberg.
+\newblock {Controlling the False Discovery Rate: A Practical and Powerful
+  Approach to Multiple Testing}.
+\newblock \emph{Journal of the Royal Statistical Society: Series B
+  (Methodological)}, 57\penalty0 (1):\penalty0 289--300, 1995.
+\newblock \doi{10.1111/j.2517-6161.1995.tb02031.x}.
+
+\bibitem[Billot et~al.(2023)Billot, Greve, Puonti, Thielscher, Van~Leemput,
+  Fischl, Dalca, and Iglesias]{billot2023synthseg}
+B.~Billot, D.~N. Greve, O.~Puonti, A.~Thielscher, K.~Van~Leemput, B.~Fischl,
+  A.~V. Dalca, and J.~E. Iglesias.
+\newblock {SynthSeg}: Segmentation of brain {MRI} scans of any contrast and
+  resolution without retraining.
+\newblock \emph{Medical Image Analysis}, 86:\penalty0 102789, 2023.
+\newblock \doi{10.1016/j.media.2023.102789}.
+
+\bibitem[Carass et~al.(2017)Carass, Roy, Jog, others, and
+  Prince]{carass2017isbi}
+A.~Carass, S.~Roy, A.~Jog, others, and J.~L. Prince.
+\newblock {Longitudinal multiple sclerosis lesion segmentation: Resource and
+  challenge}.
+\newblock \emph{NeuroImage}, 148:\penalty0 77--102, 2017.
+\newblock \doi{10.1016/j.neuroimage.2016.12.064}.
+
+\bibitem[Commowick et~al.(2018)Commowick, Istace, Kain, others, and
+  Barillot]{commowick2018msseg}
+O.~Commowick, A.~Istace, M.~Kain, others, and C.~Barillot.
+\newblock {Objective evaluation of multiple sclerosis lesion segmentation using
+  a data management and processing infrastructure}.
+\newblock \emph{Scientific Reports}, 8:\penalty0 13650, 2018.
+\newblock \doi{10.1038/s41598-018-31911-7}.
+\newblock CHECK ONLINE: title, journal, volume, article number and DOI are from
+  bibliographic memory.
+
+\bibitem[DeGrave et~al.(2021)DeGrave, Janizek, and Lee]{degrave2021shortcuts}
+A.~J. DeGrave, J.~D. Janizek, and S.-I. Lee.
+\newblock {AI} for radiographic {COVID-19} detection selects shortcuts over
+  signal.
+\newblock \emph{Nature Machine Intelligence}, 3:\penalty0 610--619, 2021.
+\newblock \doi{10.1038/s42256-021-00338-7}.
+
+\bibitem[Dereskewicz et~al.(2025)Dereskewicz, La~Rosa, others, and
+  Beck]{dereskewicz2025flames}
+E.~Dereskewicz, F.~La~Rosa, others, and E.~S. Beck.
+\newblock {FLAMeS}: A robust deep learning model for automated multiple
+  sclerosis lesion segmentation.
+\newblock \emph{Journal of Neuroimaging}, 35\penalty0 (5):\penalty0 e70085,
+  2025.
+\newblock \doi{10.1111/jon.70085}.
+\newblock CHECK ONLINE: exact title (journal, volume, article number, DOI and
+  PubMed 40937688 confirmed in local notes).
+
+\bibitem[Efron and Tibshirani(1993)]{efron1993bootstrap}
+B.~Efron and R.~J. Tibshirani.
+\newblock \emph{{An Introduction to the Bootstrap}}.
+\newblock Chapman \& Hall, New York, 1993.
+
+\bibitem[Fanelli(2012)]{fanelli2012negative}
+D.~Fanelli.
+\newblock {Negative results are disappearing from most disciplines and
+  countries}.
+\newblock \emph{Scientometrics}, 90\penalty0 (3):\penalty0 891--904, 2012.
+\newblock \doi{10.1007/s11192-011-0494-7}.
+
+\bibitem[Fortin et~al.(2018)Fortin, Cullen, Sheline, others, and
+  Shinohara]{fortin2018combat}
+J.-P. Fortin, N.~Cullen, Y.~I. Sheline, others, and R.~T. Shinohara.
+\newblock {Harmonization of cortical thickness measurements across scanners and
+  sites}.
+\newblock \emph{NeuroImage}, 167:\penalty0 104--120, 2018.
+\newblock \doi{10.1016/j.neuroimage.2017.11.024}.
+
+\bibitem[Geirhos et~al.(2020)Geirhos, Jacobsen, Michaelis, Zemel, Brendel,
+  Bethge, and Wichmann]{geirhos2020shortcut}
+R.~Geirhos, J.-H. Jacobsen, C.~Michaelis, R.~Zemel, W.~Brendel, M.~Bethge, and
+  F.~A. Wichmann.
+\newblock {Shortcut learning in deep neural networks}.
+\newblock \emph{Nature Machine Intelligence}, 2:\penalty0 665--673, 2020.
+\newblock \doi{10.1038/s42256-020-00257-z}.
+
+\bibitem[Glocker et~al.(2019)Glocker, Robinson, Castro, Dou, and
+  Konukoglu]{glocker2019scanner}
+B.~Glocker, R.~Robinson, D.~C. Castro, Q.~Dou, and E.~Konukoglu.
+\newblock {Machine Learning with Multi-Site Imaging Data: An Empirical Study on
+  the Impact of Scanner Effects}, 2019.
+
+\bibitem[Goebl et~al.(2025)Goebl, others, Iglesias, Barkhof, Ciccarelli, and
+  Eshaghi]{goebl2025mindglide}
+P.~Goebl, others, J.~E. Iglesias, F.~Barkhof, O.~Ciccarelli, and A.~Eshaghi.
+\newblock {Enabling new insights from old scans by repurposing clinical {MRI}
+  archives for multiple sclerosis research}.
+\newblock \emph{Nature Communications}, 16:\penalty0 3149, 2025.
+\newblock \doi{10.1038/s41467-025-58274-8}.
+
+\bibitem[Guarnera et~al.(2025)Guarnera, Rondinella, Crispino, Russo,
+  Di~Lorenzo, Maimone, Pappalardo, et~al.]{guarnera2025mslesseg}
+F.~Guarnera, A.~Rondinella, E.~Crispino, G.~Russo, C.~Di~Lorenzo, D.~Maimone,
+  F.~Pappalardo, et~al.
+\newblock {MSLesSeg}: baseline and benchmarking of a new multiple sclerosis
+  lesion segmentation dataset.
+\newblock \emph{Scientific Data}, 12:\penalty0 920, 2025.
+\newblock \doi{10.1038/s41597-025-05250-y}.
+
+\bibitem[Hanley and McNeil(1982)]{hanley1982auc}
+J.~A. Hanley and B.~J. McNeil.
+\newblock {The meaning and use of the area under a receiver operating
+  characteristic ({ROC}) curve}.
+\newblock \emph{Radiology}, 143\penalty0 (1):\penalty0 29--36, 1982.
+\newblock \doi{10.1148/radiology.143.1.7063747}.
+
+\bibitem[Isensee et~al.(2019)Isensee, Schell, Pflueger, Brugnara, Bonekamp,
+  Neuberger, Wick, Schlemmer, Heiland, Wick, Bendszus, Maier-Hein, and
+  Kickingereder]{isensee2019hdbet}
+F.~Isensee, M.~Schell, I.~Pflueger, G.~Brugnara, D.~Bonekamp, U.~Neuberger,
+  A.~Wick, H.-P. Schlemmer, S.~Heiland, W.~Wick, M.~Bendszus, K.~H. Maier-Hein,
+  and P.~Kickingereder.
+\newblock {Automated brain extraction of multisequence {MRI} using artificial
+  neural networks}.
+\newblock \emph{Human Brain Mapping}, 40\penalty0 (17):\penalty0 4952--4964,
+  2019.
+\newblock \doi{10.1002/hbm.24750}.
+
+\bibitem[Isensee et~al.(2021)Isensee, Jaeger, Kohl, Petersen, and
+  Maier-Hein]{isensee2021nnunet}
+F.~Isensee, P.~F. Jaeger, S.~A.~A. Kohl, J.~Petersen, and K.~H. Maier-Hein.
+\newblock {nnU-Net}: a self-configuring method for deep learning-based
+  biomedical image segmentation.
+\newblock \emph{Nature Methods}, 18:\penalty0 203--211, 2021.
+\newblock \doi{10.1038/s41592-020-01008-z}.
+
+\bibitem[Isensee et~al.(2024)Isensee, Wald, Ulrich, Baumgartner, Roy,
+  Maier-Hein, and Jaeger]{isensee2024revisited}
+F.~Isensee, T.~Wald, C.~Ulrich, M.~Baumgartner, S.~Roy, K.~Maier-Hein, and
+  P.~F. Jaeger.
+\newblock {nnU-Net} revisited: A call for rigorous validation in {3D} medical
+  image segmentation.
+\newblock In \emph{Medical Image Computing and Computer Assisted Intervention
+  -- MICCAI 2024}, 2024.
+\newblock CHECK ONLINE: author list beyond Isensee and Jaeger.
+
+\bibitem[Jin and Cand{\`e}s(2023)]{jin2023selection}
+Y.~Jin and E.~J. Cand{\`e}s.
+\newblock {Selection by Prediction with Conformal p-values}.
+\newblock \emph{Journal of Machine Learning Research}, 24\penalty0
+  (244):\penalty0 1--41, 2023.
+
+\bibitem[Kapoor and Narayanan(2023)]{kapoor2023leakage}
+S.~Kapoor and A.~Narayanan.
+\newblock {Leakage and the reproducibility crisis in machine-learning-based
+  science}.
+\newblock \emph{Patterns}, 4\penalty0 (9):\penalty0 100804, 2023.
+\newblock \doi{10.1016/j.patter.2023.100804}.
+
+\bibitem[La~Rosa(2025)]{larosa2025flamesweights}
+F.~La~Rosa.
+\newblock {FLAMeS} model weights ({Dataset004\_WML},
+  {nnUNetTrainer\_8000epochs}), version 2.0.
+\newblock Zenodo, 2025.
+\newblock CC BY 4.0.
+
+\bibitem[Lakens(2017)]{lakens2017equivalence}
+D.~Lakens.
+\newblock {Equivalence Tests: A Practical Primer for t Tests, Correlations, and
+  Meta-Analyses}.
+\newblock \emph{Social Psychological and Personality Science}, 8\penalty0
+  (4):\penalty0 355--362, 2017.
+\newblock \doi{10.1177/1948550617697177}.
+
+\bibitem[Lakshminarayanan et~al.(2017)Lakshminarayanan, Pritzel, and
+  Blundell]{lakshminarayanan2017ensembles}
+B.~Lakshminarayanan, A.~Pritzel, and C.~Blundell.
+\newblock {Simple and Scalable Predictive Uncertainty Estimation using Deep
+  Ensembles}.
+\newblock In \emph{Advances in Neural Information Processing Systems 30
+  (NeurIPS 2017)}, pages 6402--6413, 2017.
+
+\bibitem[Lesjak et~al.(2018)Lesjak, Galimzianova, Koren, Lukin, Pernu{\v{s}},
+  Likar, and {\v{S}}piclin]{lesjak2018ljubljana}
+{\v{Z}}.~Lesjak, A.~Galimzianova, A.~Koren, M.~Lukin, F.~Pernu{\v{s}},
+  B.~Likar, and {\v{Z}}.~{\v{S}}piclin.
+\newblock {A novel public {MR} image dataset of multiple sclerosis patients
+  with lesion segmentations based on multi-rater consensus}.
+\newblock \emph{Neuroinformatics}, 16\penalty0 (1):\penalty0 51--63, 2018.
+\newblock \doi{10.1007/s12021-017-9348-7}.
+\newblock CHECK ONLINE: co-author list, pages and DOI (title, journal, volume
+  and year confirmed in local records).
+
+\bibitem[Maier-Hein et~al.(2024)Maier-Hein, Reinke, Godau,
+  et~al.]{maierhein2024metrics}
+L.~Maier-Hein, A.~Reinke, P.~Godau, et~al.
+\newblock {Metrics reloaded: recommendations for image analysis validation}.
+\newblock \emph{Nature Methods}, 21:\penalty0 195--212, 2024.
+\newblock \doi{10.1038/s41592-023-02151-z}.
+
+\bibitem[Malinin et~al.(2022)]{malinin2022shifts2}
+A.~Malinin et~al.
+\newblock {Shifts 2.0: Extending The Dataset of Real Distributional Shifts},
+  2022.
+
+\bibitem[Muslim et~al.(2022)Muslim, Mashohor, Gawwam, Mahmud, Hanafi, Alnuaimi,
+  Josephine, and Almutairi]{muslim2022baghdad}
+A.~M. Muslim, S.~Mashohor, G.~A. Gawwam, R.~Mahmud, M.~B. Hanafi, O.~Alnuaimi,
+  R.~Josephine, and A.~D. Almutairi.
+\newblock {Brain {MRI} dataset of multiple sclerosis with consensus manual
+  lesion segmentation and patient meta information}.
+\newblock \emph{Data in Brief}, 42:\penalty0 108139, 2022.
+\newblock \doi{10.1016/j.dib.2022.108139}.
+\newblock Data: Mendeley Data 10.17632/8bctsm8jz7.1 (CC BY 4.0).
+
+\bibitem[Nair et~al.(2020)Nair, Precup, Arnold, and Arbel]{nair2020uncertainty}
+T.~Nair, D.~Precup, D.~L. Arnold, and T.~Arbel.
+\newblock {Exploring uncertainty measures in deep networks for multiple
+  sclerosis lesion detection and segmentation}.
+\newblock \emph{Medical Image Analysis}, 59:\penalty0 101557, 2020.
+\newblock \doi{10.1016/j.media.2019.101557}.
+
+\bibitem[Nosek et~al.(2018)Nosek, Ebersole, DeHaven, and
+  Mellor]{nosek2018preregistration}
+B.~A. Nosek, C.~R. Ebersole, A.~C. DeHaven, and D.~T. Mellor.
+\newblock {The preregistration revolution}.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 115\penalty0
+  (11):\penalty0 2600--2606, 2018.
+\newblock \doi{10.1073/pnas.1708274114}.
+
+\bibitem[Popa et~al.(2025)Popa, Vi{\c{s}}a, and {\c{S}}ofariu]{popa2025pedims}
+M.~Popa, G.~A. Vi{\c{s}}a, and C.~R. {\c{S}}ofariu.
+\newblock {PediMS}: A pediatric multiple sclerosis lesion segmentation dataset.
+\newblock \emph{Scientific Data}, 12:\penalty0 1184, 2025.
+\newblock \doi{10.1038/s41597-025-05346-5}.
+\newblock Data: Figshare 10.6084/m9.figshare.28701065 (CC BY 4.0).
+
+\bibitem[Tuchinov et~al.(2025)]{tuchinov2025sibbms}
+B.~N. Tuchinov et~al.
+\newblock {SibBMS}: Siberian brain multiple sclerosis dataset with lesion
+  segmentation and patient meta information.
+\newblock medRxiv preprint, 2025.
+\newblock Data archive dated 2025-08-04; licence stated as both CC BY 3.0 and
+  CC BY-NC-SA 3.0 (stricter applied). CHECK ONLINE: journal version (MELBA 2025
+  reported, not confirmed).
+
+\bibitem[Varoquaux and Cheplygina(2022)]{varoquaux2022failures}
+G.~Varoquaux and V.~Cheplygina.
+\newblock {Machine learning for medical imaging: methodological failures and
+  recommendations for the future}.
+\newblock \emph{npj Digital Medicine}, 5:\penalty0 48, 2022.
+\newblock \doi{10.1038/s41746-022-00592-y}.
+
+\bibitem[Wiltgen et~al.(2024)Wiltgen, McGinnis, Schlaeger, others, M{\"u}hlau,
+  and Wiestler]{wiltgen2024lstai}
+T.~Wiltgen, J.~McGinnis, S.~Schlaeger, others, M.~M{\"u}hlau, and B.~Wiestler.
+\newblock {LST-AI}: A deep learning ensemble for accurate {MS} lesion
+  segmentation.
+\newblock \emph{NeuroImage: Clinical}, 42:\penalty0 103611, 2024.
+\newblock \doi{10.1016/j.nicl.2024.103611}.
+
+\bibitem[Wong(2011)]{wong2011color}
+B.~Wong.
+\newblock {Points of view: Color blindness}.
+\newblock \emph{Nature Methods}, 8:\penalty0 441, 2011.
+\newblock \doi{10.1038/nmeth.1618}.
+
+\bibitem[Zech et~al.(2018)Zech, Badgeley, Liu, Costa, Titano, and
+  Oermann]{zech2018pneumonia}
+J.~R. Zech, M.~A. Badgeley, M.~Liu, A.~B. Costa, J.~J. Titano, and E.~K.
+  Oermann.
+\newblock {Variable generalization performance of a deep learning model to
+  detect pneumonia in chest radiographs: A cross-sectional study}.
+\newblock \emph{PLOS Medicine}, 15\penalty0 (11):\penalty0 e1002683, 2018.
+\newblock \doi{10.1371/journal.pmed.1002683}.
+
+\end{thebibliography}

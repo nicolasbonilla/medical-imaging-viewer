@@ -1,0 +1,374 @@
+% references.bib — negative-results manuscript (FLAMeS-thick + lesion detector v3/v3.1/v3.2)
+% Every entry is a real, published or archived work. How each one was checked (offline, 2026-10-31)
+% is listed in NUMBERS_CHECK.md, section "Reference verification". Entries marked
+% "note = {CHECK ONLINE: ...}" have one field taken from bibliographic memory that could not be
+% confirmed from a local record; confirm before submission.
+
+% ------------------------------------------------------------------ models and tools
+@article{dereskewicz2025flames,
+  author  = {Dereskewicz, E. and La Rosa, F. and others and Beck, E. S.},
+  title   = {{FLAMeS}: A Robust Deep Learning Model for Automated Multiple Sclerosis Lesion Segmentation},
+  journal = {Journal of Neuroimaging},
+  year    = {2025},
+  volume  = {35},
+  number  = {5},
+  pages   = {e70085},
+  doi     = {10.1111/jon.70085},
+  note    = {CHECK ONLINE: exact title (journal, volume, article number, DOI and PubMed 40937688 confirmed in local notes)}
+}
+
+@misc{larosa2025flamesweights,
+  author       = {La Rosa, F.},
+  title        = {{FLAMeS} model weights ({Dataset004\_WML}, {nnUNetTrainer\_8000epochs}), version 2.0},
+  howpublished = {Zenodo},
+  year         = {2025},
+  doi          = {10.5281/zenodo.17955359},
+  note         = {CC BY 4.0}
+}
+
+@article{isensee2021nnunet,
+  author  = {Isensee, F. and Jaeger, P. F. and Kohl, S. A. A. and Petersen, J. and Maier-Hein, K. H.},
+  title   = {{nnU-Net}: a self-configuring method for deep learning-based biomedical image segmentation},
+  journal = {Nature Methods},
+  year    = {2021},
+  volume  = {18},
+  pages   = {203--211},
+  doi     = {10.1038/s41592-020-01008-z}
+}
+
+@inproceedings{isensee2024revisited,
+  author    = {Isensee, F. and Wald, T. and Ulrich, C. and Baumgartner, M. and Roy, S. and Maier-Hein, K. and Jaeger, P. F.},
+  title     = {{nnU-Net} Revisited: A Call for Rigorous Validation in {3D} Medical Image Segmentation},
+  booktitle = {Medical Image Computing and Computer Assisted Intervention -- MICCAI 2024},
+  year      = {2024},
+  eprint    = {2404.09556},
+  archivePrefix = {arXiv},
+  note      = {CHECK ONLINE: author list beyond Isensee and Jaeger}
+}
+
+@article{isensee2019hdbet,
+  author  = {Isensee, F. and Schell, M. and Pflueger, I. and Brugnara, G. and Bonekamp, D. and Neuberger, U. and Wick, A. and Schlemmer, H.-P. and Heiland, S. and Wick, W. and Bendszus, M. and Maier-Hein, K. H. and Kickingereder, P.},
+  title   = {Automated brain extraction of multisequence {MRI} using artificial neural networks},
+  journal = {Human Brain Mapping},
+  year    = {2019},
+  volume  = {40},
+  number  = {17},
+  pages   = {4952--4964},
+  doi     = {10.1002/hbm.24750}
+}
+
+@article{wiltgen2024lstai,
+  author  = {Wiltgen, T. and McGinnis, J. and Schlaeger, S. and others and M{\"u}hlau, M. and Wiestler, B.},
+  title   = {{LST-AI}: A deep learning ensemble for accurate {MS} lesion segmentation},
+  journal = {NeuroImage: Clinical},
+  year    = {2024},
+  volume  = {42},
+  pages   = {103611},
+  doi     = {10.1016/j.nicl.2024.103611}
+}
+
+@article{goebl2025mindglide,
+  author  = {Goebl, P. and others and Iglesias, J. E. and Barkhof, F. and Ciccarelli, O. and Eshaghi, A.},
+  title   = {Enabling new insights from old scans by repurposing clinical {MRI} archives for multiple sclerosis research},
+  journal = {Nature Communications},
+  year    = {2025},
+  volume  = {16},
+  pages   = {3149},
+  doi     = {10.1038/s41467-025-58274-8}
+}
+
+@article{billot2023synthseg,
+  author  = {Billot, B. and Greve, D. N. and Puonti, O. and Thielscher, A. and Van Leemput, K. and Fischl, B. and Dalca, A. V. and Iglesias, J. E.},
+  title   = {{SynthSeg}: Segmentation of brain {MRI} scans of any contrast and resolution without retraining},
+  journal = {Medical Image Analysis},
+  year    = {2023},
+  volume  = {86},
+  pages   = {102789},
+  doi     = {10.1016/j.media.2023.102789}
+}
+
+% ------------------------------------------------------------------ datasets
+@article{guarnera2025mslesseg,
+  author  = {Guarnera, F. and Rondinella, A. and Crispino, E. and Russo, G. and Di Lorenzo, C. and Maimone, D. and Pappalardo, F. and others},
+  title   = {{MSLesSeg}: baseline and benchmarking of a new Multiple Sclerosis Lesion Segmentation dataset},
+  journal = {Scientific Data},
+  year    = {2025},
+  volume  = {12},
+  pages   = {920},
+  doi     = {10.1038/s41597-025-05250-y}
+}
+
+@misc{mslesseg2025data,
+  title        = {{MSLesSeg} Dataset (Figshare record, file 52771814)},
+  howpublished = {Figshare},
+  year         = {2025},
+  doi          = {10.6084/m9.figshare.27919209.v1},
+  note         = {CC BY 4.0}
+}
+
+@article{lesjak2018ljubljana,
+  author  = {Lesjak, {\v{Z}}. and Galimzianova, A. and Koren, A. and Lukin, M. and Pernu{\v{s}}, F. and Likar, B. and {\v{S}}piclin, {\v{Z}}.},
+  title   = {A novel public {MR} image dataset of multiple sclerosis patients with lesion segmentations based on multi-rater consensus},
+  journal = {Neuroinformatics},
+  year    = {2018},
+  volume  = {16},
+  number  = {1},
+  pages   = {51--63},
+  doi     = {10.1007/s12021-017-9348-7},
+  note    = {CHECK ONLINE: co-author list, pages and DOI (title, journal, volume and year confirmed in local records)}
+}
+
+@article{bawil2026ms3seg,
+  author  = {Bawil, M. B. and Shamsi, M. and Ghalehasadi, A. and Jafargholkhanloo, A. F. and Bavil, A. S.},
+  title   = {A Multiple Sclerosis {MRI} Dataset with Tri-Mask Annotations for Lesion Segmentation},
+  journal = {Scientific Data},
+  year    = {2026},
+  volume  = {13},
+  pages   = {867},
+  doi     = {10.1038/s41597-026-07184-5},
+  note    = {Data: Figshare 10.6084/m9.figshare.30393475 (CC BY 4.0)}
+}
+
+@article{muslim2022baghdad,
+  author  = {Muslim, A. M. and Mashohor, S. and Gawwam, G. A. and Mahmud, R. and Hanafi, M. B. and Alnuaimi, O. and Josephine, R. and Almutairi, A. D.},
+  title   = {Brain {MRI} dataset of multiple sclerosis with consensus manual lesion segmentation and patient meta information},
+  journal = {Data in Brief},
+  year    = {2022},
+  volume  = {42},
+  pages   = {108139},
+  doi     = {10.1016/j.dib.2022.108139},
+  note    = {Data: Mendeley Data 10.17632/8bctsm8jz7.1 (CC BY 4.0)}
+}
+
+@article{popa2025pedims,
+  author  = {Popa, M. and Vi{\c{s}}a, G. A. and {\c{S}}ofariu, C. R.},
+  title   = {{PediMS}: A Pediatric Multiple Sclerosis Lesion Segmentation Dataset},
+  journal = {Scientific Data},
+  year    = {2025},
+  volume  = {12},
+  pages   = {1184},
+  doi     = {10.1038/s41597-025-05346-5},
+  note    = {Data: Figshare 10.6084/m9.figshare.28701065 (CC BY 4.0)}
+}
+
+@misc{tuchinov2025sibbms,
+  author       = {Tuchinov, B. N. and others},
+  title        = {{SibBMS}: Siberian Brain Multiple Sclerosis Dataset with lesion segmentation and patient meta information},
+  howpublished = {medRxiv preprint},
+  year         = {2025},
+  doi          = {10.1101/2025.08.14.25333741},
+  note         = {Data archive dated 2025-08-04; licence stated as both CC BY 3.0 and CC BY-NC-SA 3.0 (stricter applied). CHECK ONLINE: journal version (MELBA 2025 reported, not confirmed)}
+}
+
+@article{commowick2018msseg,
+  author  = {Commowick, O. and Istace, A. and Kain, M. and others and Barillot, C.},
+  title   = {Objective evaluation of multiple sclerosis lesion segmentation using a data management and processing infrastructure},
+  journal = {Scientific Reports},
+  year    = {2018},
+  volume  = {8},
+  pages   = {13650},
+  doi     = {10.1038/s41598-018-31911-7},
+  note    = {CHECK ONLINE: title, journal, volume, article number and DOI are from bibliographic memory}
+}
+
+@article{carass2017isbi,
+  author  = {Carass, A. and Roy, S. and Jog, A. and others and Prince, J. L.},
+  title   = {Longitudinal multiple sclerosis lesion segmentation: Resource and challenge},
+  journal = {NeuroImage},
+  year    = {2017},
+  volume  = {148},
+  pages   = {77--102},
+  doi     = {10.1016/j.neuroimage.2016.12.064}
+}
+
+@misc{malinin2022shifts2,
+  author        = {Malinin, A. and others},
+  title         = {Shifts 2.0: Extending The Dataset of Real Distributional Shifts},
+  year          = {2022},
+  eprint        = {2206.15407},
+  archivePrefix = {arXiv}
+}
+
+% ------------------------------------------------------------------ uncertainty, ensembles, selection
+@inproceedings{lakshminarayanan2017ensembles,
+  author    = {Lakshminarayanan, B. and Pritzel, A. and Blundell, C.},
+  title     = {Simple and Scalable Predictive Uncertainty Estimation using Deep Ensembles},
+  booktitle = {Advances in Neural Information Processing Systems 30 (NeurIPS 2017)},
+  year      = {2017},
+  pages     = {6402--6413}
+}
+
+@article{nair2020uncertainty,
+  author  = {Nair, T. and Precup, D. and Arnold, D. L. and Arbel, T.},
+  title   = {Exploring uncertainty measures in deep networks for multiple sclerosis lesion detection and segmentation},
+  journal = {Medical Image Analysis},
+  year    = {2020},
+  volume  = {59},
+  pages   = {101557},
+  doi     = {10.1016/j.media.2019.101557}
+}
+
+@article{jin2023selection,
+  author  = {Jin, Y. and Cand{\`e}s, E. J.},
+  title   = {Selection by Prediction with Conformal p-values},
+  journal = {Journal of Machine Learning Research},
+  year    = {2023},
+  volume  = {24},
+  number  = {244},
+  pages   = {1--41}
+}
+
+@article{benjamini1995fdr,
+  author  = {Benjamini, Y. and Hochberg, Y.},
+  title   = {Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing},
+  journal = {Journal of the Royal Statistical Society: Series B (Methodological)},
+  year    = {1995},
+  volume  = {57},
+  number  = {1},
+  pages   = {289--300},
+  doi     = {10.1111/j.2517-6161.1995.tb02031.x}
+}
+
+% ------------------------------------------------------------------ shortcuts, site effects, rigour
+@article{zech2018pneumonia,
+  author  = {Zech, J. R. and Badgeley, M. A. and Liu, M. and Costa, A. B. and Titano, J. J. and Oermann, E. K.},
+  title   = {Variable generalization performance of a deep learning model to detect pneumonia in chest radiographs: A cross-sectional study},
+  journal = {PLOS Medicine},
+  year    = {2018},
+  volume  = {15},
+  number  = {11},
+  pages   = {e1002683},
+  doi     = {10.1371/journal.pmed.1002683}
+}
+
+@article{degrave2021shortcuts,
+  author  = {DeGrave, A. J. and Janizek, J. D. and Lee, S.-I.},
+  title   = {{AI} for radiographic {COVID-19} detection selects shortcuts over signal},
+  journal = {Nature Machine Intelligence},
+  year    = {2021},
+  volume  = {3},
+  pages   = {610--619},
+  doi     = {10.1038/s42256-021-00338-7}
+}
+
+@article{geirhos2020shortcut,
+  author  = {Geirhos, R. and Jacobsen, J.-H. and Michaelis, C. and Zemel, R. and Brendel, W. and Bethge, M. and Wichmann, F. A.},
+  title   = {Shortcut learning in deep neural networks},
+  journal = {Nature Machine Intelligence},
+  year    = {2020},
+  volume  = {2},
+  pages   = {665--673},
+  doi     = {10.1038/s42256-020-00257-z}
+}
+
+@misc{glocker2019scanner,
+  author        = {Glocker, B. and Robinson, R. and Castro, D. C. and Dou, Q. and Konukoglu, E.},
+  title         = {Machine Learning with Multi-Site Imaging Data: An Empirical Study on the Impact of Scanner Effects},
+  year          = {2019},
+  eprint        = {1910.04597},
+  archivePrefix = {arXiv}
+}
+
+@article{fortin2018combat,
+  author  = {Fortin, J.-P. and Cullen, N. and Sheline, Y. I. and others and Shinohara, R. T.},
+  title   = {Harmonization of cortical thickness measurements across scanners and sites},
+  journal = {NeuroImage},
+  year    = {2018},
+  volume  = {167},
+  pages   = {104--120},
+  doi     = {10.1016/j.neuroimage.2017.11.024}
+}
+
+@article{varoquaux2022failures,
+  author  = {Varoquaux, G. and Cheplygina, V.},
+  title   = {Machine learning for medical imaging: methodological failures and recommendations for the future},
+  journal = {npj Digital Medicine},
+  year    = {2022},
+  volume  = {5},
+  pages   = {48},
+  doi     = {10.1038/s41746-022-00592-y}
+}
+
+@article{kapoor2023leakage,
+  author  = {Kapoor, S. and Narayanan, A.},
+  title   = {Leakage and the reproducibility crisis in machine-learning-based science},
+  journal = {Patterns},
+  year    = {2023},
+  volume  = {4},
+  number  = {9},
+  pages   = {100804},
+  doi     = {10.1016/j.patter.2023.100804}
+}
+
+@article{maierhein2024metrics,
+  author  = {Maier-Hein, L. and Reinke, A. and Godau, P. and others},
+  title   = {Metrics reloaded: recommendations for image analysis validation},
+  journal = {Nature Methods},
+  year    = {2024},
+  volume  = {21},
+  pages   = {195--212},
+  doi     = {10.1038/s41592-023-02151-z}
+}
+
+% ------------------------------------------------------------------ pre-registration, negative results, statistics
+@article{nosek2018preregistration,
+  author  = {Nosek, B. A. and Ebersole, C. R. and DeHaven, A. C. and Mellor, D. T.},
+  title   = {The preregistration revolution},
+  journal = {Proceedings of the National Academy of Sciences},
+  year    = {2018},
+  volume  = {115},
+  number  = {11},
+  pages   = {2600--2606},
+  doi     = {10.1073/pnas.1708274114}
+}
+
+@article{lakens2017equivalence,
+  author  = {Lakens, D.},
+  title   = {Equivalence Tests: A Practical Primer for t Tests, Correlations, and Meta-Analyses},
+  journal = {Social Psychological and Personality Science},
+  year    = {2017},
+  volume  = {8},
+  number  = {4},
+  pages   = {355--362},
+  doi     = {10.1177/1948550617697177}
+}
+
+@article{fanelli2012negative,
+  author  = {Fanelli, D.},
+  title   = {Negative results are disappearing from most disciplines and countries},
+  journal = {Scientometrics},
+  year    = {2012},
+  volume  = {90},
+  number  = {3},
+  pages   = {891--904},
+  doi     = {10.1007/s11192-011-0494-7}
+}
+
+@book{efron1993bootstrap,
+  author    = {Efron, B. and Tibshirani, R. J.},
+  title     = {An Introduction to the Bootstrap},
+  publisher = {Chapman \& Hall},
+  address   = {New York},
+  year      = {1993}
+}
+
+@article{hanley1982auc,
+  author  = {Hanley, J. A. and McNeil, B. J.},
+  title   = {The meaning and use of the area under a receiver operating characteristic ({ROC}) curve},
+  journal = {Radiology},
+  year    = {1982},
+  volume  = {143},
+  number  = {1},
+  pages   = {29--36},
+  doi     = {10.1148/radiology.143.1.7063747}
+}
+
+@article{wong2011color,
+  author  = {Wong, B.},
+  title   = {Points of view: Color blindness},
+  journal = {Nature Methods},
+  year    = {2011},
+  volume  = {8},
+  pages   = {441},
+  doi     = {10.1038/nmeth.1618}
+}
