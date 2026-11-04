@@ -25,3 +25,4 @@ manuscript.md (wording only; panel references now use lowercase letters a, b, c)
 Regenerate: python research/paper_f/manuscript/make_figures.py
 Data unchanged - numbers check: python research/paper_f/manuscript/numbers_check.py
   -> 480/480 PASS, 0 FAIL, 0 unmapped tokens (manuscript at 41ad117, which carries the new captions)
+v2: label-collision fix done

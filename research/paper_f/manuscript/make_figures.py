@@ -203,20 +203,46 @@ def fig2():
 
 
 # ----------------------------------------------------------------------------- Figure 3: small lesions
+def end_labels(ax, series, x_left, x_right, min_gap, lo=0.03, hi=0.99):
+    """Direct labels at the end of each line where it is best separated from the others.
+
+    series: list of (name, xs, ys). Each line is labelled at its first or its last point, whichever is farther
+    from every other line at that end; labels on one side are repelled vertically (``min_gap``, order kept, so
+    leader lines never cross) and set in a column at x_left (right-aligned) or x_right (left-aligned)."""
+    def isolation(i, end):
+        y = series[i][2][end]
+        return min(abs(y - s_[2][end]) for j, s_ in enumerate(series) if j != i)
+    sides = {"left": [], "right": []}
+    for i, (name, xs, ys) in enumerate(series):
+        side = "left" if isolation(i, 0) >= isolation(i, -1) else "right"
+        k = 0 if side == "left" else -1
+        sides[side].append((name, xs[k], ys[k]))
+    for side, items in sides.items():
+        if not items:
+            continue
+        items.sort(key=lambda t: t[2])
+        ylab = fs.spread([y for _, _, y in items], min_gap, lo=lo, hi=hi)
+        for (name, x, y), yl in zip(items, ylab):
+            ax.annotate(name, (x, y), xytext=(x_left if side == "left" else x_right, yl), textcoords="data",
+                        ha="right" if side == "left" else "left", va="center", fontsize=7, color=fs.INK,
+                        annotation_clip=False,
+                        arrowprops=dict(arrowstyle="-", lw=0.4, color=fs.GREY_MID, shrinkA=1.0, shrinkB=2.8))
+    return {k: [n for n, _, _ in v] for k, v in sides.items()}
+
+
 def fig3():
     bins = ("14-50", "50-200", "200-1000", ">=1000")
     blabel = ("14–50", "50–200", "200–1000", "≥1000")
     sb = {(r["band"], r["tool"], r["bin"]): r for r in SUMM["size_bins"]}
     fig = fs.figure(fs.DOUBLE, 61)
-    L, T, PW, PH, GX = 12.0, 5.0, 79.0, 44.0, 10.0
-    for p, (band, letter, head) in enumerate((("iso", "a", "1 mm isotropic"), ("thick", "b", "Thick slices (> 3 mm)"))):
-        x0 = L + p * (PW + GX)
-        ax = fs.axes(fig, x0, T, PW, PH)
+    T, PH = 5.0, 44.0
+    panels = (("iso", "a", "1 mm isotropic", 12.0, 71.0), ("thick", "b", "Thick slices (> 3 mm)", 93.0, 66.0))
+    for p, (band, letter, head, x0, pw) in enumerate(panels):
+        ax = fs.axes(fig, x0, T, pw, PH)
         fs.panel_label(fig, letter, x0 - (11.5 if p == 0 else 4.0), 0.4)
-        fs.facet_label(ax, head, x=0.62, ha="center", color=fs.INK2)
         tools = [t for t in ORDER if (band, t, bins[0]) in sb]
         k = len(tools)
-        first = []
+        series = []
         for j, tool in enumerate(tools):
             st = STYLE[tool]
             dx = (j - (k - 1) / 2) * 0.075
@@ -226,13 +252,8 @@ def fig3():
                 ax.plot([xx, xx], sb[(band, tool, b)]["ci95"], color=st["color"], lw=fs.LW_CI, zorder=2)
             ax.plot(xs, est, color=st["color"], lw=fs.LW_DATA, zorder=2)
             ax.plot(xs, est, marker=st["marker"], color=st["color"], mec="white", mew=0.5, ms=4.4, ls="none", zorder=3)
-            first.append((est[0], tool, xs[0]))
-        # direct labels, inside the plot to the left of the smallest-lesion bin, spread so they never touch
-        ylab = fs.spread([e for e, _, _ in first], 0.075, lo=0.03, hi=0.97)
-        for (e, tool, x0_), yl in zip(first, ylab):
-            ax.annotate(NAME[tool].replace(", raw input", " raw"), (x0_, e), xytext=(-0.42, yl), textcoords="data",
-                        ha="right", va="center", fontsize=7, color=fs.INK,
-                        arrowprops=dict(arrowstyle="-", lw=0.4, color=fs.GREY_MID, shrinkA=1.0, shrinkB=2.6))
+            series.append((NAME[tool].replace(", raw input", " raw"), xs, est))
+        end_labels(ax, series, x_left=-0.42, x_right=3.42, min_gap=0.075)
         ax.set_xticks(range(len(bins)))
         ax.set_xticklabels(blabel)
         ax.set_xlim(-1.75, len(bins) - 0.6)
@@ -240,8 +261,10 @@ def fig3():
         ax.set_ylim(0, 1.0)
         ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
         ax.set_yticklabels(["0", "0.25", "0.50", "0.75", "1.00"] if p == 0 else [])
+        xc = ((-0.3 + len(bins) - 0.6) / 2 + 1.75) / (len(bins) - 0.6 + 1.75)
         ax.set_xlabel("Expert lesion volume (mm³)")
-        ax.xaxis.set_label_coords(((-0.3 + len(bins) - 0.6) / 2 + 1.75) / (len(bins) - 0.6 + 1.75), -0.15)
+        ax.xaxis.set_label_coords(xc, -0.15)
+        fs.facet_label(ax, head, x=xc, ha="center", color=fs.INK2)
         if p == 0:
             ax.set_ylabel("Expert lesions detected")
     save(fig, "fig3_detection_by_lesion_size")
@@ -264,7 +287,9 @@ def per_scan_f1():
 
 
 def _pair_marker(ax, x, y, st, filled):
-    ax.plot(x, y, marker=st["marker"], ms=5.0, mew=0.6 if filled else 0.9, ls="none", zorder=4, color=st["color"],
+    """Summary marker on a white halo, so it reads clearly on top of the per-scan dots."""
+    ax.plot(x, y, marker=st["marker"], ms=7.4, mew=0, ls="none", zorder=4, color="white")
+    ax.plot(x, y, marker=st["marker"], ms=5.2, mew=0.6 if filled else 1.0, ls="none", zorder=5, color=st["color"],
             mfc=st["color"] if filled else "white", mec="white" if filled else st["color"])
 
 
@@ -305,10 +330,11 @@ def fig4():
             if (b, tool) not in pb:
                 continue
             v = dots[(b, tool)]
-            ax.scatter(v, yy + fs.jitter(len(v), 0.62, phase=0.37 * i + (0.5 if b == "thick" else 0)), s=1.4,
-                       color=st["color"], alpha=0.3, lw=0, zorder=1, rasterized=True)
+            ax.scatter(v, yy + fs.jitter(len(v), 0.5, phase=0.37 * i + (0.5 if b == "thick" else 0)), s=0.7,
+                       color=tint(st["color"], 0.35), alpha=0.32, lw=0, zorder=1, rasterized=True)
             r = pb[(b, tool)]["f1"]
             pts.append((r["estimate"], yy))
+            ax.plot(r["ci95"], [yy, yy], color="white", lw=2.4, zorder=2.5, solid_capstyle="butt")
             ax.plot(r["ci95"], [yy, yy], color=fs.INK, lw=fs.LW_CI, zorder=3)
             _pair_marker(ax, r["estimate"], yy, st, b == "thick")
         if len(pts) == 2:
