@@ -1,0 +1,358 @@
+[
+ {
+  "name": "ms3seg_001",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.29,
+  "peak_gib_largest_process": 0.09,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 100.0% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "ms3seg_002",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 100.0% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "ms3seg_003",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.09,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 100.0% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_01",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 5.5% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_02",
+  "seconds": 2.8,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "Voxel spacing 0.96 x 0.96 x 6.75 mm is outside the supported range (0.1-6 mm)."
+ },
+ {
+  "name": "muslim_03",
+  "seconds": 2.7,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "Voxel spacing 0.97 x 0.97 x 6.50 mm is outside the supported range (0.1-6 mm)."
+ },
+ {
+  "name": "pedims_P1_T1",
+  "seconds": 105.3,
+  "peak_gib_all_processes": 2.75,
+  "peak_gib_largest_process": 2.38,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 105.25261499999999,
+  "dims": [
+   290,
+   320,
+   40
+  ],
+  "spacing": [
+   0.75,
+   0.75,
+   3.8999998569488525
+  ],
+  "summary": {
+   "lesionCount": 23,
+   "lesionVoxels": 931,
+   "lesionVolumeMl": 2.0423811750859024
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": [
+    0
+   ],
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 104.9,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.2.0-prototype"
+  },
+  "comparison": {
+   "dice": 0.9497025419145484,
+   "differing_voxels": 93,
+   "voxels_browser": 931,
+   "voxels_reference": 918,
+   "lesions_browser": 21,
+   "lesions_reference": 21,
+   "lesions_matched": 21,
+   "score_mean_abs_difference": 0.0344912081082662,
+   "score_max_abs_difference": 0.23281239757537842,
+   "same_side_worst_cut": 0.7619047619047619,
+   "same_side_by_cut": {
+    "0.95": 0.8571428571428571,
+    "0.925": 0.7619047619047619,
+    "0.9": 0.9047619047619048,
+    "0.875": 0.9523809523809523,
+    "0.85": 0.9047619047619048,
+    "0.825": 0.9047619047619048,
+    "0.8": 0.9047619047619048,
+    "0.775": 0.9047619047619048,
+    "0.75": 0.9047619047619048,
+    "0.725": 0.9047619047619048,
+    "0.7": 0.9047619047619048,
+    "0.675": 0.9047619047619048,
+    "0.65": 1.0,
+    "0.625": 1.0,
+    "0.6": 1.0
+   },
+   "expert_browser": {
+    "marked": 21,
+    "expert": 15,
+    "precision": 0.7142857142857143,
+    "sensitivity": 0.9333333333333333
+   },
+   "expert_reference": {
+    "marked": 21,
+    "expert": 15,
+    "precision": 0.7142857142857143,
+    "sensitivity": 0.9333333333333333
+   }
+  }
+ },
+ {
+  "name": "pedims_P3_T4",
+  "seconds": 113.1,
+  "peak_gib_all_processes": 2.78,
+  "peak_gib_largest_process": 2.41,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 113.0022599999999,
+  "dims": [
+   290,
+   320,
+   40
+  ],
+  "spacing": [
+   0.75,
+   0.75,
+   3.8999998569488525
+  ],
+  "summary": {
+   "lesionCount": 39,
+   "lesionVoxels": 4128,
+   "lesionVolumeMl": 9.055799667835236
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": [
+    0
+   ],
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 112.6,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.2.0-prototype"
+  },
+  "comparison": {
+   "dice": 0.9534883720930233,
+   "differing_voxels": 388,
+   "voxels_browser": 4128,
+   "voxels_reference": 4214,
+   "lesions_browser": 36,
+   "lesions_reference": 36,
+   "lesions_matched": 36,
+   "score_mean_abs_difference": 0.019134911237822638,
+   "score_max_abs_difference": 0.11861753416061405,
+   "same_side_worst_cut": 0.8055555555555556,
+   "same_side_by_cut": {
+    "0.95": 0.8055555555555556,
+    "0.925": 0.8333333333333334,
+    "0.9": 0.9722222222222222,
+    "0.875": 0.8611111111111112,
+    "0.85": 0.9444444444444444,
+    "0.825": 0.9444444444444444,
+    "0.8": 0.9722222222222222,
+    "0.775": 1.0,
+    "0.75": 1.0,
+    "0.725": 0.9722222222222222,
+    "0.7": 1.0,
+    "0.675": 1.0,
+    "0.65": 1.0,
+    "0.625": 1.0,
+    "0.6": 1.0
+   },
+   "expert_browser": {
+    "marked": 36,
+    "expert": 31,
+    "precision": 0.6388888888888888,
+    "sensitivity": 0.8387096774193549
+   },
+   "expert_reference": {
+    "marked": 36,
+    "expert": 31,
+    "precision": 0.6111111111111112,
+    "sensitivity": 0.8387096774193549
+   }
+  }
+ },
+ {
+  "name": "pedims_P8_T1",
+  "seconds": 118.6,
+  "peak_gib_all_processes": 2.76,
+  "peak_gib_largest_process": 2.39,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 118.49511499999998,
+  "dims": [
+   290,
+   320,
+   50
+  ],
+  "spacing": [
+   0.75,
+   0.75,
+   3.8999998569488525
+  ],
+  "summary": {
+   "lesionCount": 30,
+   "lesionVoxels": 3676,
+   "lesionVolumeMl": 8.06422470420599
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": [
+    0
+   ],
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 118.1,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.2.0-prototype"
+  },
+  "comparison": {
+   "dice": 0.9578082191780822,
+   "differing_voxels": 308,
+   "voxels_browser": 3676,
+   "voxels_reference": 3624,
+   "lesions_browser": 29,
+   "lesions_reference": 29,
+   "lesions_matched": 26,
+   "score_mean_abs_difference": 0.023173574675046476,
+   "score_max_abs_difference": 0.1062998153686523,
+   "same_side_worst_cut": 0.8076923076923077,
+   "same_side_by_cut": {
+    "0.95": 0.8846153846153846,
+    "0.925": 0.8076923076923077,
+    "0.9": 0.8076923076923077,
+    "0.875": 0.8846153846153846,
+    "0.85": 0.9230769230769231,
+    "0.825": 0.9615384615384616,
+    "0.8": 1.0,
+    "0.775": 1.0,
+    "0.75": 1.0,
+    "0.725": 1.0,
+    "0.7": 1.0,
+    "0.675": 1.0,
+    "0.65": 1.0,
+    "0.625": 1.0,
+    "0.6": 1.0
+   },
+   "expert_browser": {
+    "marked": 29,
+    "expert": 21,
+    "precision": 0.5862068965517241,
+    "sensitivity": 0.8571428571428571
+   },
+   "expert_reference": {
+    "marked": 29,
+    "expert": 21,
+    "precision": 0.5862068965517241,
+    "sensitivity": 0.8571428571428571
+   }
+  }
+ },
+ {
+  "name": "pedims_P9_T1",
+  "seconds": 109.5,
+  "peak_gib_all_processes": 2.75,
+  "peak_gib_largest_process": 2.38,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 109.35317500000005,
+  "dims": [
+   290,
+   320,
+   40
+  ],
+  "spacing": [
+   0.75,
+   0.75,
+   3.8999998569488525
+  ],
+  "summary": {
+   "lesionCount": 58,
+   "lesionVoxels": 11454,
+   "lesionVolumeMl": 25.127211578339338
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": [
+    0
+   ],
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 109,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.2.0-prototype"
+  },
+  "comparison": {
+   "dice": 0.9962386284114766,
+   "differing_voxels": 86,
+   "voxels_browser": 11454,
+   "voxels_reference": 11410,
+   "lesions_browser": 53,
+   "lesions_reference": 53,
+   "lesions_matched": 51,
+   "score_mean_abs_difference": 0.008709028692806467,
+   "score_max_abs_difference": 0.07665861625671389,
+   "same_side_worst_cut": 0.9215686274509803,
+   "same_side_by_cut": {
+    "0.95": 0.9607843137254902,
+    "0.925": 0.9215686274509803,
+    "0.9": 0.9607843137254902,
+    "0.875": 1.0,
+    "0.85": 0.9411764705882353,
+    "0.825": 0.9607843137254902,
+    "0.8": 0.9803921568627451,
+    "0.775": 0.9803921568627451,
+    "0.75": 1.0,
+    "0.725": 1.0,
+    "0.7": 1.0,
+    "0.675": 1.0,
+    "0.65": 1.0,
+    "0.625": 1.0,
+    "0.6": 1.0
+   },
+   "expert_browser": {
+    "marked": 53,
+    "expert": 62,
+    "precision": 0.7358490566037735,
+    "sensitivity": 0.8709677419354839
+   },
+   "expert_reference": {
+    "marked": 53,
+    "expert": 62,
+    "precision": 0.7169811320754716,
+    "sensitivity": 0.8709677419354839
+   }
+  }
+ }
+]

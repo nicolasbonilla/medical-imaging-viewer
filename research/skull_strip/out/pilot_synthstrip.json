@@ -1,0 +1,130 @@
+{
+ "cases": [
+  {
+   "name": "ms3seg_001",
+   "seconds": 28.7,
+   "spacing": [
+    0.9,
+    0.9,
+    6.8
+   ],
+   "dice_vs_hdbet": 0.9566,
+   "lesion_cut_synthstrip_pct": 0.0,
+   "lesion_cut_hdbet_pct": 0.0
+  },
+  {
+   "name": "ms3seg_002",
+   "seconds": 41.7,
+   "spacing": [
+    0.9,
+    0.9,
+    8.1
+   ],
+   "dice_vs_hdbet": 0.946,
+   "lesion_cut_synthstrip_pct": 0.0,
+   "lesion_cut_hdbet_pct": 0.0
+  },
+  {
+   "name": "ms3seg_003",
+   "seconds": 41.4,
+   "spacing": [
+    0.9,
+    0.9,
+    7.3
+   ],
+   "dice_vs_hdbet": 0.9614,
+   "lesion_cut_synthstrip_pct": 0.0,
+   "lesion_cut_hdbet_pct": 0.0
+  },
+  {
+   "name": "ms3seg_004",
+   "seconds": 26.9,
+   "spacing": [
+    0.9,
+    0.9,
+    7.2
+   ],
+   "dice_vs_hdbet": 0.9587,
+   "lesion_cut_synthstrip_pct": 0.0,
+   "lesion_cut_hdbet_pct": 0.0
+  },
+  {
+   "name": "muslim_01",
+   "seconds": 26.7,
+   "spacing": [
+    0.86,
+    0.86,
+    5.5
+   ],
+   "dice_vs_hdbet": 0.962,
+   "lesion_cut_synthstrip_pct": 0.0,
+   "lesion_cut_hdbet_pct": 0.0
+  },
+  {
+   "name": "muslim_02",
+   "seconds": 40.6,
+   "spacing": [
+    0.96,
+    0.96,
+    6.75
+   ],
+   "dice_vs_hdbet": 0.9426,
+   "lesion_cut_synthstrip_pct": 0.0,
+   "lesion_cut_hdbet_pct": 0.0
+  },
+  {
+   "name": "muslim_03",
+   "seconds": 40.2,
+   "spacing": [
+    0.97,
+    0.97,
+    6.5
+   ],
+   "dice_vs_hdbet": 0.9498,
+   "lesion_cut_synthstrip_pct": 0.0,
+   "lesion_cut_hdbet_pct": 0.0
+  },
+  {
+   "name": "muslim_04",
+   "seconds": 26.5,
+   "spacing": [
+    0.94,
+    0.94,
+    5.5
+   ],
+   "dice_vs_hdbet": 0.9715,
+   "lesion_cut_synthstrip_pct": 0.0,
+   "lesion_cut_hdbet_pct": 0.0
+  }
+ ],
+ "export": {
+  "max_abs_difference": 9.5367431640625e-06
+ },
+ "memory": [
+  {
+   "shape": [
+    160,
+    192,
+    160
+   ],
+   "error": "^^^^^^^\nonnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Non-zero status code returned while running Concat node. Name:'/Concat' Status Message: concatbase.h:133 PrepareForComputeImpl Non concat axis dimensions must match: Axis 2 has mismatched dimensions of 5 and 4\n"
+  },
+  {
+   "shape": [
+    192,
+    224,
+    192
+   ],
+   "error": "^^^^^^^\nonnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Non-zero status code returned while running Concat node. Name:'/Concat' Status Message: concatbase.h:133 PrepareForComputeImpl Non concat axis dimensions must match: Axis 3 has mismatched dimensions of 7 and 6\n"
+  },
+  {
+   "shape": [
+    256,
+    256,
+    256
+   ],
+   "seconds_one_thread": 55.2,
+   "peak_gib": 10.07
+  }
+ ]
+}

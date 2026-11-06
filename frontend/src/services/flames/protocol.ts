@@ -21,8 +21,10 @@ export interface FlamesSegmentRequest {
   mirror: boolean;
   /** Series description the app holds for this file (header evidence for the FLAIR gate; never the file name). */
   seriesDescription?: string | null;
-  /** RC-049: the clinician explicitly confirmed that this file is a skull-stripped T2-FLAIR (positive evidence). */
+  /** RC-049: the clinician explicitly confirmed that this file is a T2-FLAIR (positive evidence). */
   clinicianConfirmedFlair: boolean;
+  /** RC-101: the nifti comes from the app's skull-removal service. */
+  strippedByApp: boolean;
 }
 
 export type FlamesWorkerRequest = FlamesSegmentRequest;

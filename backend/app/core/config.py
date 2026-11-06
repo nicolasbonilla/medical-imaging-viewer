@@ -215,6 +215,10 @@ class Settings(BaseSettings):
     # Dark until FLAMES_ENABLED=true and FLAMES_ENDPOINT are set post-deploy.
     FLAMES_ENDPOINT: str = Field(default="", description="FLAMeS GPU worker URL (Cloud Run, e.g., https://flames-worker-xxxxx.run.app)")
     FLAMES_ENABLED: bool = Field(default=False)
+    # Skull removal for the in-browser AI (REQ-FUNC-115): a private, CPU-only, scale-to-zero worker. Dark until both are set.
+    SKULL_STRIP_ENABLED: bool = Field(default=False)
+    SKULL_STRIP_ENDPOINT: str = Field(default="", description="Skull-removal worker URL (Cloud Run)")
+    SKULL_STRIP_TIMEOUT_SECONDS: int = Field(default=180, ge=30, le=280)
     FLAMES_TIMEOUT_SECONDS: int = Field(default=900, ge=60, le=3600)
     FLAMES_THRESHOLD: float = Field(default=0.5, ge=0.05, le=0.95, description="Lesion-probability binarization threshold")
     CLINICAL_TOOLS_SHARED_VOLUME: str = Field(default="/tmp/clinical-tools-shared", description="Shared volume for NIfTI I/O with sidecar containers")

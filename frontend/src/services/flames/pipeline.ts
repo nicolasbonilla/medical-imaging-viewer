@@ -84,6 +84,8 @@ export interface FlamesPipelineOptions {
   mirrorAxes?: readonly number[];
   /** enforce the skull-stripped plausibility gate (default true). Only unit tests on synthetic data disable it. */
   skullStripGate?: boolean;
+  /** RC-101: the app removed the skull itself; see checkInputGates */
+  strippedByApp?: boolean;
   /** enforce the FLAIR contrast gate (default true). Only unit tests on synthetic data disable it. */
   contrastGate?: boolean;
   /** header evidence about the sequence (headerEvidence.ts); refuses, or counts as positive evidence */
@@ -150,6 +152,11 @@ export function checkInputGates(
   vol: FlamesVolume,
   opts: {
     skullStripGate?: boolean;
+    /**
+     * RC-101: the app removed the skull itself, so the border check no longer tells anything: on thick slices a stripped brain reaches
+     * the first and last slice, and the check refused such images with any strip. The volume, scalp and contrast checks still apply.
+     */
+    strippedByApp?: boolean;
     contrastGate?: boolean;
     headerEvidence?: HeaderEvidence;
     /** RC-049 positive evidence: the clinician explicitly confirmed this file is a skull-stripped T2-FLAIR */
@@ -164,7 +171,7 @@ export function checkInputGates(
   const brainVolumeMl = (brainVoxels * spacing[0] * spacing[1] * spacing[2]) / 1000;
 
   if (opts.skullStripGate !== false) {
-    if (border > GATES.maxBorderNonzeroFraction) {
+    if (!opts.strippedByApp && border > GATES.maxBorderNonzeroFraction) {
       throw new FlamesInputError(
         `This image does not look skull-stripped: ${(border * 100).toFixed(1)}% of the image border is nonzero. ` +
           'FLAMeS requires a skull-stripped FLAIR; no segmentation was produced.',
@@ -252,6 +259,7 @@ export async function segmentFlairVolume(vol: FlamesVolume, opts: FlamesPipeline
     { data, dims, spacing },
     {
       skullStripGate: opts.skullStripGate,
+      strippedByApp: opts.strippedByApp,
       contrastGate: opts.contrastGate,
       headerEvidence: opts.headerEvidence,
       clinicianConfirmedFlair: opts.clinicianConfirmedFlair,

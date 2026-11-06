@@ -10,7 +10,8 @@ the tool version, academic citation, and regulatory status.
 @module api.routes.clinical_tools
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 
 from app.security import get_current_active_user
@@ -54,6 +55,29 @@ async def _authorized_inputs(file_ids, patient_id, study_id, user: User):
         if str(await authorize_study_id(study_id, user)) != str(owner):
             raise HTTPException(status_code=400, detail="study_id does not belong to the images' patient")
     return paths
+
+
+class SkullStripRequest(BaseModel):
+    file_id: str = Field(..., min_length=1, max_length=500)
+
+
+@router.post("/skull-strip")
+async def skull_strip(
+    request: SkullStripRequest,
+    tool_runner=Depends(get_tool_runner_service),
+    current_user: User = Depends(get_current_active_user),
+):
+    """The FLAIR without its skull, for the in-browser AI (REQ-FUNC-115, RC-101). Nothing is stored; 503 when the worker is not configured,
+    and the browser then reads the file as it is, where the input gates refuse an image that still has its skull."""
+    paths = await _authorized_inputs([request.file_id], None, None, current_user)
+    if not tool_runner.is_skull_strip_available():
+        raise HTTPException(status_code=503, detail="Skull removal is not available")
+    try:
+        brain = await tool_runner.skull_strip(paths[0])
+    except Exception as exc:
+        logger.warning("Skull removal failed", extra={"reason": type(exc).__name__})
+        raise HTTPException(status_code=502, detail="The skull could not be removed")
+    return Response(content=brain, media_type="application/gzip", headers={"Cache-Control": "no-store"})
 
 
 @router.get("/tools", response_model=List[Dict[str, Any]])

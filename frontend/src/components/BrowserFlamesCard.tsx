@@ -112,7 +112,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       <p className="text-[9px] text-gray-400 leading-snug">
         {t(
           'clinical.browserFlames.desc',
-          'Runs FLAMeS on this computer; the image never leaves the browser. Needs a skull-stripped FLAIR (other sequences are refused). The first run downloads a 62 MB model. Result = unreviewed AI draft.',
+          'Runs FLAMeS on this computer, after the server of the app removes the skull. Needs a T2-FLAIR (other sequences are refused). The first run downloads a 62 MB model. Result = unreviewed AI draft.',
         )}
       </p>
 
@@ -132,7 +132,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
             <span>
               {t(
                 'clinical.browserFlames.confirmSequence',
-                'I confirm that the selected image is a skull-stripped T2-FLAIR (not T1, T2, PD or post-contrast). This confirmation is recorded with the result.',
+                'I confirm that the selected image is a T2-FLAIR (not T1, T2, PD or post-contrast). This confirmation is recorded with the result.',
               )}{' '}
               <span className="text-gray-400 break-all">{flairFileId ? `(${flairFileId.split('/').pop()})` : ''}</span>
             </span>

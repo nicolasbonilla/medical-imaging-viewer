@@ -64,7 +64,7 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
     const headerEvidence = headerContrastEvidence(flair.headerText, flair.dicom, job.seriesDescription ?? null);
     const gate = checkInputGates(
       { data: flair.data, dims: flair.dims, spacing: flair.spacing },
-      { headerEvidence, clinicianConfirmedFlair: job.clinicianConfirmedFlair === true },
+      { headerEvidence, clinicianConfirmedFlair: job.clinicianConfirmedFlair === true, strippedByApp: job.strippedByApp === true },
     );
     const sequenceEvidence = gate.contrast?.sequenceEvidence;
     if (!sequenceEvidence) throw new FlamesInputError('The sequence is not confirmed as FLAIR. No segmentation was produced.');
@@ -83,6 +83,7 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
         {
           headerEvidence,
           clinicianConfirmedFlair: job.clinicianConfirmedFlair === true,
+          strippedByApp: job.strippedByApp === true,
           mirrorAxes: job.mirror ? FLAMES_PLAN.mirrorAxes : [],
           runPatch: async (tile) => {
             const input = new ort.Tensor('float32', tile, [1, 1, ...FLAMES_PLAN.patchSize]);

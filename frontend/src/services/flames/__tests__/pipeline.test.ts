@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { niftiToApp, type Dims3 } from '../axes';
-import { FlamesInputError, segmentFlairVolume, type FlamesVolume } from '../pipeline';
+import { checkInputGates, FlamesInputError, segmentFlairVolume, type FlamesVolume } from '../pipeline';
 import { FLAMES_PLAN } from '../plan';
 import type { RunPatch } from '../slidingWindow';
 import { makePhantom } from './phantoms';
@@ -137,5 +137,25 @@ describe('fail-closed gates', () => {
     const data = new Float32Array(8000);
     await expect(segmentFlairVolume({ dims, spacing: [1, 1, 8], data }, { runPatch: thresholdNet })).rejects.toThrow(/spacing/);
     await expect(segmentFlairVolume({ dims: [8, 20, 20], spacing: [1, 1, 1], data }, { runPatch: thresholdNet })).rejects.toThrow();
+  });
+});
+
+describe('an image the app stripped itself (RC-101)', () => {
+  const touchingTheBorder = () => {
+    const dims: Dims3 = [40, 40, 12];
+    const data = new Float32Array(40 * 40 * 12);
+    for (let z = 0; z < 12; z++) for (let y = 5; y < 35; y++) for (let x = 5; x < 35; x++) data[x + 40 * (y + 40 * z)] = 100;
+    return { data, dims, spacing: [5, 5, 5] as Dims3 };
+  };
+
+  it('drops only the border check: a brain reaching the first and last slice is not a skull', () => {
+    const vol = touchingTheBorder();
+    expect(() => checkInputGates(vol, { contrastGate: false })).toThrow(/image border is nonzero/);
+    expect(() => checkInputGates(vol, { contrastGate: false, strippedByApp: true })).not.toThrow(/image border is nonzero/);
+  });
+
+  it('keeps the volume check', () => {
+    const tiny = { ...touchingTheBorder(), spacing: [1, 1, 1] as Dims3 };
+    expect(() => checkInputGates(tiny, { contrastGate: false, strippedByApp: true })).toThrow(/plausible range/);
   });
 });

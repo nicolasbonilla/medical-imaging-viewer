@@ -72,6 +72,24 @@ class ToolRunnerService:
         """Check if mindGlide sidecar is configured."""
         return bool(settings.MINDGLIDE_ENABLED and settings.MINDGLIDE_ENDPOINT)
 
+    def is_skull_strip_available(self) -> bool:
+        """Check if the skull-removal worker is configured."""
+        return bool(settings.SKULL_STRIP_ENABLED and settings.SKULL_STRIP_ENDPOINT)
+
+    async def skull_strip(self, file_path: str) -> bytes:
+        """The FLAIR at this authorized path, without its skull (REQ-FUNC-115). The image travels in the request and nothing is stored:
+        the worker has no bucket access and keeps no copy."""
+        import gzip
+
+        data = await self._storage.download(file_path)
+        if data[:2] != b"\x1f\x8b":
+            data = gzip.compress(data, compresslevel=1)
+        async with httpx.AsyncClient(timeout=httpx.Timeout(settings.SKULL_STRIP_TIMEOUT_SECONDS, connect=10.0)) as client:
+            headers = await self._worker_auth_headers(settings.SKULL_STRIP_ENDPOINT)
+            response = await client.post(f"{settings.SKULL_STRIP_ENDPOINT}/strip", headers=headers, content=data)
+            response.raise_for_status()
+            return response.content
+
     def is_flames_available(self) -> bool:
         """Check if the FLAMeS GPU worker is configured."""
         return bool(settings.FLAMES_ENABLED and settings.FLAMES_ENDPOINT)

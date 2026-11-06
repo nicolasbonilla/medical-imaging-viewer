@@ -22,6 +22,21 @@ export interface BrowserFlamesResult {
   provenance: FlamesProvenance;
 }
 
+/**
+ * The image the model reads (REQ-FUNC-115). The server removes the skull; if that service is not there, the file itself is read, and the
+ * input gates then refuse an image that still has its skull, as they always did (RC-043).
+ */
+async function flairForTheModel(fileId: string): Promise<{ nifti: ArrayBuffer; strippedByApp: boolean }> {
+  try {
+    const { data } = await apiClient.post('/api/v1/clinical/skull-strip', { file_id: fileId }, { responseType: 'arraybuffer', timeout: 240000 });
+    return { nifti: data as ArrayBuffer, strippedByApp: true };
+  } catch (e) {
+    console.warn('[BrowserFLAMeS] Skull removal not available; reading the file as it is', e);
+    const { data } = await apiClient.get(`/api/v1/imaging/nifti/${fileId}`, { responseType: 'arraybuffer' });
+    return { nifti: data as ArrayBuffer, strippedByApp: false };
+  }
+}
+
 export function useBrowserFlames() {
   const [status, setStatus] = useState<BrowserFlamesStatus>('idle');
   const [stage, setStage] = useState<FlamesStage | null>(null);
@@ -55,7 +70,7 @@ export function useBrowserFlames() {
       setError(null);
       setStage('read');
       setFraction(0);
-      setMessage('Downloading the FLAIR from the study…');
+      setMessage('Removing the skull on the server…');
       const fail = (msg: string) => {
         if (jobRef.current !== jobId) return;
         terminate();
@@ -63,9 +78,8 @@ export function useBrowserFlames() {
         setStatus('error');
       };
       try {
-        const response = await apiClient.get(`/api/v1/imaging/nifti/${fileId}`, { responseType: 'arraybuffer' });
+        const { nifti, strippedByApp } = await flairForTheModel(fileId);
         if (jobRef.current !== jobId) return; // cancelled meanwhile
-        const nifti = response.data as ArrayBuffer;
         const worker = new Worker(new URL('../workers/flamesInBrowser.worker.ts', import.meta.url), { type: 'module' });
         workerRef.current = worker;
         const envUrl = import.meta.env.VITE_FLAMES_MODEL_URL as string | undefined;
@@ -108,6 +122,7 @@ export function useBrowserFlames() {
             mirror: Boolean(options.mirror),
             seriesDescription: options.seriesDescription ?? null,
             clinicianConfirmedFlair: options.clinicianConfirmedFlair === true,
+            strippedByApp,
           },
           [nifti],
         );
