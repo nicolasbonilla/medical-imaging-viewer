@@ -153,8 +153,9 @@ export function checkInputGates(
   opts: {
     skullStripGate?: boolean;
     /**
-     * RC-101: the app removed the skull itself, so the border check no longer tells anything: on thick slices a stripped brain reaches
-     * the first and last slice, and the check refused such images with any strip. The volume, scalp and contrast checks still apply.
+     * RC-101: the app removed the skull itself, so two checks that look for a skull no longer tell anything. On thick slices a stripped
+     * brain reaches the first and last slice, and the outer 6 mm is a whole slice: the border and scalp checks refused the same images
+     * with HD-BET and with SynthStrip. The volume, dark-share and contrast checks still apply.
      */
     strippedByApp?: boolean;
     contrastGate?: boolean;
@@ -202,7 +203,7 @@ export function checkInputGates(
     // border/volume limits above: bright scalp fat at the edge of the region, or a large dark share
     // (bone, air, background noise enclosed by the head).
     if (opts.skullStripGate !== false) {
-      if (features.rimBrightFraction > GATES.maxRimBrightFraction) {
+      if (!opts.strippedByApp && features.rimBrightFraction > GATES.maxRimBrightFraction) {
         reasons.push(
           `This image does not look skull-stripped: ${(100 * features.rimBrightFraction).toFixed(1)}% of its outer 6 mm is ` +
             'very bright (scalp fat), as when the skull and scalp are still present.',

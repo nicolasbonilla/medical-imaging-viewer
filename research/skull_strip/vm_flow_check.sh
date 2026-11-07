@@ -54,7 +54,7 @@ import glob, json, os
 import nibabel as nib
 picked = []
 for f in sorted(glob.glob("/w/raw/**/muslim_*_flair.nii.gz", recursive=True)):
-    if max(nib.load(f).header.get_zooms()[:3]) <= 6 and len(picked) < 12:
+    if max(nib.load(f).header.get_zooms()[:3]) <= 6 and len(picked) < 20:
         picked.append({"name": os.path.basename(f).split("_flair")[0], "raw": f})
 print(picked)
 json.dump(picked, open("/w/picked.json", "w"))
@@ -69,7 +69,7 @@ import json, shutil, sys, tempfile
 from pathlib import Path
 sys.path.insert(0, "/w/repo/strip-worker")
 import server
-for tag, weights in (("default", "/w/synthstrip.1.pt"), ("nocsf", "/w/synthstrip.nocsf.1.pt")):
+for tag, weights in (("nocsf", "/w/synthstrip.nocsf.1.pt"),):
     server.MODEL = weights
     cases = []
     for c in json.load(open("/w/picked.json")):
@@ -83,12 +83,12 @@ for tag, weights in (("default", "/w/synthstrip.1.pt"), ("nocsf", "/w/synthstrip
 print("stripped")
 PY
 log
-for tag in default nocsf; do
+for tag in nocsf; do
   python repo/research/skull_strip/browser/ensemble_check.py --dist repo/frontend/dist --models $W/models --cases /w/cases_$tag.json --out $W/out/$tag --folds 0
 done
 python - <<'PY'
 import json, statistics as st
-for tag in ("default", "nocsf"):
+for tag in ("nocsf",):
     rows = json.load(open(f"/w/out/{tag}/ensemble_check.json"))
     good = [r for r in rows if "comparison" in r]
     print(tag, "complete", len(good), "of", len(rows)); [print("  ", r["name"], str(r.get("error"))[:110]) for r in rows if "comparison" not in r]

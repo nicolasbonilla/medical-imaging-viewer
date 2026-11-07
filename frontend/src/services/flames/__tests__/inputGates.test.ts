@@ -114,6 +114,10 @@ describe('skull-stripped gate (RC-043): FLAIR with skull and zero background', (
     }
   });
 
+  it('rc101 an image the app stripped itself is not judged by the rim clue', () => {
+    expect(refusal(() => checkInputGates(fat, { strippedByApp: true })) ?? '').not.toMatch(/outer 6 mm/);
+  });
+
   it('rc043 a head with bright scalp fat is refused by the rim clue', () => {
     expect(refusal(() => checkInputGates(fat, {}))).toMatch(/outer 6 mm is very bright \(scalp fat\)/);
     const f = computeContrastFeatures(fat.data, fat.dims, fat.spacing);

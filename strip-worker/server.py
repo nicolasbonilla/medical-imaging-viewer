@@ -16,7 +16,7 @@ import nibabel as nib
 import numpy as np
 from fastapi import FastAPI, HTTPException, Request, Response
 
-MODEL = os.environ.get("SYNTHSTRIP_MODEL", "/models/synthstrip.1.pt")
+MODEL = os.environ.get("SYNTHSTRIP_MODEL", "/models/synthstrip.nocsf.1.pt")
 MAX_BYTES = 30 * 1024 * 1024
 TIMEOUT_SECONDS = 150
 

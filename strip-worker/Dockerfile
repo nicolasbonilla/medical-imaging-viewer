@@ -5,9 +5,9 @@ ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 RUN pip install torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install nipreps-synthstrip nibabel numpy scipy fastapi "uvicorn[standard]"
 
-# SynthStrip weights (MIT or CC BY 4.0), pinned by hash.
-ADD https://surfer.nmr.mgh.harvard.edu/docs/synthstrip/requirements/synthstrip.1.pt /models/synthstrip.1.pt
-RUN echo "37417f802196186441aae3e7f385d94f8a98c64a88acaeaa2723af995c653e33  /models/synthstrip.1.pt" | sha256sum -c -
+# SynthStrip weights without cerebrospinal fluid (MIT or CC BY 4.0), pinned by hash.
+ADD https://surfer.nmr.mgh.harvard.edu/docs/synthstrip/requirements/synthstrip.nocsf.1.pt /models/synthstrip.nocsf.1.pt
+RUN echo "62bf01137c45b5f0cc04d59dbaed5b9ac138b3f25b766c062a7c1a0d696ecb28  /models/synthstrip.nocsf.1.pt" | sha256sum -c -
 
 WORKDIR /app
 COPY server.py .
