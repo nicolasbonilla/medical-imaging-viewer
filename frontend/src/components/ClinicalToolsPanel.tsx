@@ -31,6 +31,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const allFileIds = useViewerStore((s) => s.allFileIds);
+  const fileNames = useViewerStore((s) => s.fileNames);
   const currentSeries = useViewerStore((s) => s.currentSeries);
 
   // Tool availability
@@ -65,17 +66,19 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
     let foundFlair = '';
 
     for (const fid of allFileIds) {
-      const seq = detectSequence(fid);
+      const seq = detectSequence(fileNames[fid] ?? fid);
       if (seq === 'T1w' && !foundT1) foundT1 = fid;
       if (seq === 'FLAIR' && !foundFlair) foundFlair = fid;
     }
+    // The FLAIR open on screen comes first: it is the one the user means.
+    if (fileId && detectSequence(fileNames[fileId] ?? fileId) === 'FLAIR') foundFlair = fileId;
 
     if (foundT1) setT1FileId(foundT1);
     if (foundFlair) setFlairFileId(foundFlair);
 
     // Default SynthSeg to current file
     if (fileId) setSynthSegFileId(fileId);
-  }, [allFileIds, fileId]);
+  }, [allFileIds, fileId, fileNames]);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -203,12 +206,12 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
   // File ID → short display name
   const shortName = (fid: string): string => {
     const parts = fid.split('/');
-    const fname = parts[parts.length - 1] || fid;
+    const fname = fileNames[fid] || parts[parts.length - 1] || fid;
     return fname.length > 30 ? '...' + fname.slice(-28) : fname;
   };
 
   const fileSeqLabel = (fid: string): string => {
-    const seq = detectSequence(fid);
+    const seq = detectSequence(fileNames[fid] ?? fid);
     return seq !== 'unknown' ? SEQUENCE_INFO[seq].shortLabel : '';
   };
 
@@ -287,7 +290,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
         {/* PROTOTYPE: in-browser FLAMeS (no GPU server). Hidden unless VITE_ENABLE_BROWSER_FLAMES=true. */}
         {FEATURES.BROWSER_FLAMES && (
           <React.Suspense fallback={null}>
-            <BrowserFlamesCard flairFileId={flairFileId} />
+            <BrowserFlamesCard flairFileId={flairFileId} flairName={fileNames[flairFileId]} />
           </React.Suspense>
         )}
       </div>

@@ -176,6 +176,7 @@ function ViewerApp() {
   const currentSeries = useViewerStore((state) => state.currentSeries);
   const setHierarchicalContext = useViewerStore((state) => state.setHierarchicalContext);
   const setAllFileIds = useViewerStore((state) => state.setAllFileIds);
+  const setFileNames = useViewerStore((state) => state.setFileNames);
   const setCurrentSliceIndex = useViewerStore((state) => state.setCurrentSliceIndex);
   const currentSliceIndex = useViewerStore((state) => state.currentSliceIndex);
   const zoomLevel = useViewerStore((state) => state.zoomLevel);
@@ -348,6 +349,9 @@ function ViewerApp() {
         .map(inst => inst.gcs_object_name)
         .filter(Boolean);
       setAllFileIds(fileIds);
+      setFileNames(Object.fromEntries(loadedStudyInfo.instances
+        .filter((inst) => inst.gcs_object_name && inst.original_filename)
+        .map((inst) => [inst.gcs_object_name, inst.original_filename])));
 
       // Auto-select first instance if available
       if (loadedStudyInfo.instances.length > 0 && !selectedInstanceId) {

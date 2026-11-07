@@ -31,9 +31,11 @@ import { currentEnvironment, estimateDuration, formatElapsed } from '@/services/
 
 interface BrowserFlamesCardProps {
   flairFileId: string;
+  /** the name the file was uploaded with */
+  flairName?: string;
 }
 
-export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileId }) => {
+export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileId, flairName }) => {
   const { t } = useTranslation();
   const flames = useBrowserFlames();
   const currentSeries = useViewerStore((s) => s.currentSeries);
@@ -134,7 +136,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
                 'clinical.browserFlames.confirmSequence',
                 'I confirm that the selected image is a T2-FLAIR (not T1, T2, PD or post-contrast). This confirmation is recorded with the result.',
               )}{' '}
-              <span className="text-gray-400 break-all">{flairFileId ? `(${flairFileId.split('/').pop()})` : ''}</span>
+              <span className="text-gray-400 break-all">{flairFileId ? `(${flairName ?? flairFileId.split('/').pop()})` : ''}</span>
             </span>
           </label>
           <button
