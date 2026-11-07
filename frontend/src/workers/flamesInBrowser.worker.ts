@@ -8,13 +8,14 @@
  * Fail-closed contract: a job ends with ONE message, either 'result' (complete, gated mask) or 'error'.
  * If WebGPU fails at any point (exception, non-finite or constant scores) the WHOLE job restarts on
  * WebAssembly; patches from two backends are never mixed.
- * No image data leaves the browser; the only network request is the pinned model download.
+ * The worker itself sends no image anywhere; its only network request is the pinned model download. (An image with a skull may
+ * have been stripped on the app's server before it got here: REQ-FUNC-115.)
  */
 import * as ort from 'onnxruntime-web/webgpu';
 import wasmUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.wasm?url';
 import wasmModuleUrl from 'onnxruntime-web/ort-wasm-simd-threaded.asyncify.mjs?url';
 import { readNifti } from '@/services/flames/nifti';
-import { checkInputGates, FlamesInputError, segmentFlairVolume } from '@/services/flames/pipeline';
+import { checkInputGates, FlamesInputError, segmentFlairVolume, SkullGateError } from '@/services/flames/pipeline';
 import { headerContrastEvidence } from '@/services/flames/headerEvidence';
 import { FLAMES_PIPELINE_VERSION, FLAMES_PLAN } from '@/services/flames/plan';
 import { loadVerifiedModel, ModelIntegrityError } from '@/services/flames/modelStore';
@@ -64,7 +65,7 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
     const headerEvidence = headerContrastEvidence(flair.headerText, flair.dicom, job.seriesDescription ?? null);
     const gate = checkInputGates(
       { data: flair.data, dims: flair.dims, spacing: flair.spacing },
-      { headerEvidence, clinicianConfirmedFlair: job.clinicianConfirmedFlair === true },
+      { headerEvidence, clinicianConfirmedFlair: job.clinicianConfirmedFlair === true, strippedByApp: job.strippedByApp === true },
     );
     const sequenceEvidence = gate.contrast?.sequenceEvidence;
     if (!sequenceEvidence) throw new FlamesInputError('The sequence is not confirmed as FLAIR. No segmentation was produced.');
@@ -83,6 +84,7 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
         {
           headerEvidence,
           clinicianConfirmedFlair: job.clinicianConfirmedFlair === true,
+          strippedByApp: job.strippedByApp === true,
           mirrorAxes: job.mirror ? FLAMES_PLAN.mirrorAxes : [],
           runPatch: async (tile) => {
             const input = new ort.Tensor('float32', tile, [1, 1, ...FLAMES_PLAN.patchSize]);
@@ -153,13 +155,15 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
             ? { header: headerEvidence.verdict === 'supports' ? 'supports' : 'none', score: gate.contrast.score, threshold: gate.contrast.threshold }
             : undefined,
           sequenceEvidence,
+          inputPreparation: job.strippedByApp === true ? 'skull-removed' : 'as-uploaded',
+          stripModel: job.strippedByApp === true ? job.stripModel : undefined,
         },
       },
       [result.maskApp.buffer],
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const kind = error instanceof FlamesInputError ? 'input' : error instanceof ModelIntegrityError ? 'model' : 'runtime';
+    const kind = error instanceof SkullGateError ? 'skull' : error instanceof FlamesInputError ? 'input' : error instanceof ModelIntegrityError ? 'model' : 'runtime';
     post({ type: 'error', jobId, kind, message });
   } finally {
     const s = session as ort.InferenceSession | null;

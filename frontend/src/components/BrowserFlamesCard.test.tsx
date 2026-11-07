@@ -154,7 +154,7 @@ describe('sequence confirmation (REQ-SAFE-033, RC-049)', () => {
     expect(run).not.toHaveBeenCalled();
 
     const confirm = screen.getByTestId('browser-flames-confirm-sequence');
-    expect(confirm).toHaveTextContent(/skull-stripped T2-FLAIR/);
+    expect(confirm).toHaveTextContent(/is a T2-FLAIR/);
     expect(confirm).toHaveTextContent('flair.nii.gz');
     fireEvent.click(within(confirm).getByRole('checkbox'));
     expect(start).toBeEnabled();

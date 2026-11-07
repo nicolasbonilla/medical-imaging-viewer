@@ -5,9 +5,10 @@ import { InstanceButton } from './InstanceButton';
 const inst = { id: 'i1', original_filename: 'sub-01_FLAIR.nii.gz', file_size_bytes: 3_670_016 };
 
 describe('InstanceButton', () => {
-  it('renders the filename and size in MB', () => {
+  it('reads as the sequence, keeps the file name in the tooltip, and shows the size in MB', () => {
     render(<InstanceButton instance={inst} selected={false} onSelect={() => {}} variant="original" />);
-    expect(screen.getByText('sub-01_FLAIR.nii.gz')).toBeInTheDocument();
+    expect(screen.getByText('FLAIR')).toBeInTheDocument();
+    expect(screen.getByTitle('sub-01_FLAIR.nii.gz')).toBeInTheDocument();
     expect(screen.getByText('3.5MB')).toBeInTheDocument();
   });
 

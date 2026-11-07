@@ -59,6 +59,7 @@ export function draftDescription(p: FlamesProvenance, s: LesionSummary): string 
   const text =
     `AI DRAFT (unreviewed) — ${p.model}, in-browser ${p.pipeline}; model sha256 ${p.modelSha256.slice(0, 12)}; ` +
     `${p.backend === 'webgpu' ? 'WebGPU' : `WebAssembly x${p.threads}`}${p.mirror ? ', mirroring TTA' : ''}; ` +
+    `${p.inputPreparation === 'skull-removed' ? `skull removed by the app server (SynthStrip ${p.stripModel ?? 'unknown'}); ` : ''}` +
     `${result}; ${p.generatedAt}. ` +
     'Research prototype: must be reviewed and edited by a clinician before any use.';
   return text.slice(0, 1000);
@@ -92,6 +93,7 @@ export function buildAiProvenance(p: FlamesProvenance, s: LesionSummary, fold: n
     reviewed_at: null,
     reviewed_mask_sha256: null,
     sequence_evidence: p.sequenceEvidence,
+    input_preparation: p.inputPreparation === 'skull-removed' ? `skull_removed:${p.stripModel ?? 'unknown'}` : 'as_uploaded',
   };
 }
 
@@ -114,7 +116,8 @@ export function provenanceRecorded(sent: AIProvenance, echoed: AIProvenance | nu
     echoed.fold === sent.fold &&
     echoed.source_checkpoint_sha256 === sent.source_checkpoint_sha256 &&
     echoed.pipeline_version === sent.pipeline_version &&
-    echoed.sequence_evidence === sent.sequence_evidence;
+    echoed.sequence_evidence === sent.sequence_evidence &&
+    (echoed.input_preparation ?? null) === (sent.input_preparation ?? null);
   const stillUnreviewed =
     echoed.review_status === 'unreviewed' && !echoed.reviewed_by && !echoed.reviewed_at && !echoed.reviewed_mask_sha256;
   return sameModel && stillUnreviewed;

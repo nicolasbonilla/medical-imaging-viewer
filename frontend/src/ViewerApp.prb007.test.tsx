@@ -205,11 +205,11 @@ describe('PRB-008 — the viewer opens on a slice inside the head', () => {
   it('prb008 another image of the same size keeps the slice; an image of another size opens on its middle slice', async () => {
     await openViewer();
     useViewerStore.getState().setCurrentSliceIndex(5);
-    fireEvent.click(screen.getByText(fileOf('i-t1').original_filename));
+    fireEvent.click(screen.getByTitle(fileOf('i-t1').original_filename));
     await waitFor(() => expect(useViewerStore.getState().currentSeries?.file_id).toBe(fileOf('i-t1').gcs_object_name));
     expect(useViewerStore.getState().currentSliceIndex).toBe(5);
 
-    fireEvent.click(screen.getByText(fileOf('i-t2').original_filename));
+    fireEvent.click(screen.getByTitle(fileOf('i-t2').original_filename));
     await waitFor(() => expect(useViewerStore.getState().currentSeries?.file_id).toBe(fileOf('i-t2').gcs_object_name));
     expect(useViewerStore.getState().currentSliceIndex).toBe(4); // 9 slices → slice 5 of 9
   });

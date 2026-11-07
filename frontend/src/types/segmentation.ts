@@ -58,6 +58,8 @@ export interface AIProvenance {
   reviewed_mask_sha256?: string | null;
   /** RC-049: positive evidence that the input was a FLAIR */
   sequence_evidence: 'header' | 'clinician';
+  /** RC-101: 'as_uploaded', or 'skull_removed:<model sha256, 12 hex>' when the app removed the skull first */
+  input_preparation?: string | null;
   /** server-set: the authenticated user who confirmed the sequence */
   sequence_confirmed_by?: string | null;
 }

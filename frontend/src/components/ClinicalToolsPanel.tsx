@@ -15,7 +15,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { clinicalToolsAPI } from '@/api/clinicalTools';
 import { useViewerStore } from '@/store/useViewerStore';
-import { detectSequence, type SequenceType, SEQUENCE_INFO } from '@/utils/sequenceDetection';
+import { detectSequence, distinctImageNames, sequenceFromSuffix, type SequenceType, SEQUENCE_INFO } from '@/utils/sequenceDetection';
+import { isPreprocessedInstance, isSegmentationDerivative } from '@/utils/instanceClassification';
 import type { ClinicalToolInfo, ToolTaskResult, ToolTaskStatus } from '@/types';
 import { FEATURES } from '@/config/features';
 import { AutomaticMarkingNotice, isLesionDetectionSource } from './AutomaticMarkingNotice';
@@ -31,6 +32,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const allFileIds = useViewerStore((s) => s.allFileIds);
+  const fileNames = useViewerStore((s) => s.fileNames);
   const currentSeries = useViewerStore((s) => s.currentSeries);
 
   // Tool availability
@@ -43,6 +45,8 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
   // LST-AI state
   const [t1FileId, setT1FileId] = useState<string>('');
   const [flairFileId, setFlairFileId] = useState<string>('');
+  const pickedFlair = useRef(false);
+  const pickedT1 = useRef(false);
   const [lstaiTask, setLstaiTask] = useState<ToolTaskResult | null>(null);
 
   // FLAMeS state (single-FLAIR SOTA — reuses flairFileId)
@@ -64,18 +68,25 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
     let foundT1 = '';
     let foundFlair = '';
 
-    for (const fid of allFileIds) {
-      const seq = detectSequence(fid);
-      if (seq === 'T1w' && !foundT1) foundT1 = fid;
-      if (seq === 'FLAIR' && !foundFlair) foundFlair = fid;
+    // Review M2: only an original image whose BIDS name ends in the sequence, never a mask or a post-contrast image; the FLAIR on
+    // screen first, then originals before preprocessed ones; and never over a choice the user made.
+    const eligible = (fid: string, sequence: string) => {
+      const name = fileNames[fid];
+      return Boolean(name) && sequenceFromSuffix(name) === sequence && !isSegmentationDerivative(name) && !/(?:^|_)ce-/i.test(name);
+    };
+    const ordered = [...allFileIds].sort((a, b) => Number(isPreprocessedInstance(fileNames[a] ?? '')) - Number(isPreprocessedInstance(fileNames[b] ?? '')));
+    for (const fid of ordered) {
+      if (eligible(fid, 'T1') && !foundT1) foundT1 = fid;
+      if (eligible(fid, 'FLAIR') && !foundFlair) foundFlair = fid;
     }
+    if (fileId && eligible(fileId, 'FLAIR')) foundFlair = fileId;
 
-    if (foundT1) setT1FileId(foundT1);
-    if (foundFlair) setFlairFileId(foundFlair);
+    if (foundT1 && !pickedT1.current) setT1FileId(foundT1);
+    if (foundFlair && !pickedFlair.current) setFlairFileId(foundFlair);
 
     // Default SynthSeg to current file
     if (fileId) setSynthSegFileId(fileId);
-  }, [allFileIds, fileId]);
+  }, [allFileIds, fileId, fileNames]);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -200,15 +211,18 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
     return labels[status] || status;
   };
 
+  const labels = distinctImageNames(allFileIds.map((fid) => fileNames[fid] ?? fid));
+
   // File ID → short display name
   const shortName = (fid: string): string => {
     const parts = fid.split('/');
-    const fname = parts[parts.length - 1] || fid;
+    const index = allFileIds.indexOf(fid);
+    const fname = fileNames[fid] && index >= 0 ? labels[index] : parts[parts.length - 1] || fid;
     return fname.length > 30 ? '...' + fname.slice(-28) : fname;
   };
 
   const fileSeqLabel = (fid: string): string => {
-    const seq = detectSequence(fid);
+    const seq = detectSequence(fileNames[fid] ? (sequenceFromSuffix(fileNames[fid]) ?? '') : fid);
     return seq !== 'unknown' ? SEQUENCE_INFO[seq].shortLabel : '';
   };
 
@@ -257,7 +271,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
           <label className="text-[10px] text-gray-300">FLAIR:</label>
           <select
             value={flairFileId}
-            onChange={(e) => setFlairFileId(e.target.value)}
+            onChange={(e) => { pickedFlair.current = true; setFlairFileId(e.target.value); }}
             className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
           >
             <option value="">{t('clinical.selectFile', 'Select file...')}</option>
@@ -287,7 +301,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
         {/* PROTOTYPE: in-browser FLAMeS (no GPU server). Hidden unless VITE_ENABLE_BROWSER_FLAMES=true. */}
         {FEATURES.BROWSER_FLAMES && (
           <React.Suspense fallback={null}>
-            <BrowserFlamesCard flairFileId={flairFileId} />
+            <BrowserFlamesCard flairFileId={flairFileId} flairName={fileNames[flairFileId]} />
           </React.Suspense>
         )}
       </div>
@@ -316,7 +330,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
           <label className="text-[10px] text-gray-300">T1-weighted:</label>
           <select
             value={t1FileId}
-            onChange={(e) => setT1FileId(e.target.value)}
+            onChange={(e) => { pickedT1.current = true; setT1FileId(e.target.value); }}
             className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
           >
             <option value="">{t('clinical.selectFile', 'Select file...')}</option>
@@ -330,7 +344,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
           <label className="text-[10px] text-gray-300">FLAIR:</label>
           <select
             value={flairFileId}
-            onChange={(e) => setFlairFileId(e.target.value)}
+            onChange={(e) => { pickedFlair.current = true; setFlairFileId(e.target.value); }}
             className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-[10px] text-white"
           >
             <option value="">{t('clinical.selectFile', 'Select file...')}</option>

@@ -1,0 +1,482 @@
+[
+ {
+  "name": "muslim_01",
+  "strip_seconds": 20.5,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   23
+  ],
+  "spacing": [
+   0.86,
+   0.86,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.582
+ },
+ {
+  "name": "muslim_02",
+  "strip_seconds": 27.7,
+  "strip_peak_gib": 8.71,
+  "shape": [
+   280,
+   320,
+   23
+  ],
+  "spacing": [
+   0.96,
+   0.96,
+   6.75
+  ],
+  "outside_brain_share_of_signal": 0.346
+ },
+ {
+  "name": "muslim_03",
+  "strip_seconds": 27.0,
+  "strip_peak_gib": 8.78,
+  "shape": [
+   280,
+   320,
+   20
+  ],
+  "spacing": [
+   0.97,
+   0.97,
+   6.5
+  ],
+  "outside_brain_share_of_signal": 0.335
+ },
+ {
+  "name": "muslim_04",
+  "strip_seconds": 18.3,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.94,
+   0.94,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.463
+ },
+ {
+  "name": "muslim_05",
+  "strip_seconds": 19.2,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.93,
+   0.93,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.576
+ },
+ {
+  "name": "muslim_06",
+  "strip_seconds": 19.1,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.92,
+   0.92,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.605
+ },
+ {
+  "name": "muslim_07",
+  "strip_seconds": 18.2,
+  "strip_peak_gib": 5.74,
+  "shape": [
+   256,
+   256,
+   22
+  ],
+  "spacing": [
+   0.82,
+   0.82,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.53
+ },
+ {
+  "name": "muslim_08",
+  "strip_seconds": 19.0,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.91,
+   0.91,
+   6.0
+  ],
+  "outside_brain_share_of_signal": 0.547
+ },
+ {
+  "name": "muslim_09",
+  "strip_seconds": 22.2,
+  "strip_peak_gib": 5.76,
+  "shape": [
+   512,
+   512,
+   30
+  ],
+  "spacing": [
+   0.43,
+   0.43,
+   4.86
+  ],
+  "outside_brain_share_of_signal": 0.593
+ },
+ {
+  "name": "muslim_10",
+  "strip_seconds": 19.2,
+  "strip_peak_gib": 5.74,
+  "shape": [
+   280,
+   320,
+   20
+  ],
+  "spacing": [
+   0.77,
+   0.77,
+   8.0
+  ],
+  "outside_brain_share_of_signal": 0.389
+ },
+ {
+  "name": "muslim_11",
+  "strip_seconds": 18.2,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.94,
+   0.94,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.437
+ },
+ {
+  "name": "muslim_12",
+  "strip_seconds": 18.6,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.82,
+   0.82,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.589
+ },
+ {
+  "name": "muslim_13",
+  "strip_seconds": 18.3,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.88,
+   0.88,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.427
+ },
+ {
+  "name": "muslim_15",
+  "strip_seconds": 19.3,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   288,
+   288,
+   25
+  ],
+  "spacing": [
+   0.8,
+   0.8,
+   6.0
+  ],
+  "outside_brain_share_of_signal": 0.641
+ },
+ {
+  "name": "muslim_16",
+  "strip_seconds": 30.1,
+  "strip_peak_gib": 8.77,
+  "shape": [
+   512,
+   512,
+   26
+  ],
+  "spacing": [
+   0.76,
+   0.76,
+   6.0
+  ],
+  "outside_brain_share_of_signal": 0.56
+ },
+ {
+  "name": "muslim_17",
+  "strip_seconds": 18.4,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.9,
+   0.9,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.422
+ },
+ {
+  "name": "muslim_18",
+  "strip_seconds": 18.6,
+  "strip_peak_gib": 5.74,
+  "shape": [
+   256,
+   256,
+   21
+  ],
+  "spacing": [
+   0.91,
+   0.91,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.524
+ },
+ {
+  "name": "muslim_19",
+  "strip_seconds": 19.4,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.94,
+   0.94,
+   6.0
+  ],
+  "outside_brain_share_of_signal": 0.527
+ },
+ {
+  "name": "muslim_20",
+  "strip_seconds": 19.0,
+  "strip_peak_gib": 5.76,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.85,
+   0.85,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.675
+ },
+ {
+  "name": "muslim_21",
+  "strip_seconds": 18.6,
+  "strip_peak_gib": 5.74,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.8,
+   0.8,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.609
+ },
+ {
+  "name": "muslim_22",
+  "strip_seconds": 18.9,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.89,
+   0.89,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.632
+ },
+ {
+  "name": "muslim_24",
+  "strip_seconds": 18.9,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.9,
+   0.9,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.551
+ },
+ {
+  "name": "muslim_25",
+  "strip_seconds": 18.5,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.8,
+   0.8,
+   6.0
+  ],
+  "outside_brain_share_of_signal": 0.583
+ },
+ {
+  "name": "muslim_26",
+  "strip_seconds": 18.9,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   320,
+   320,
+   22
+  ],
+  "spacing": [
+   0.68,
+   0.68,
+   5.2
+  ],
+  "outside_brain_share_of_signal": 0.268
+ },
+ {
+  "name": "muslim_27",
+  "strip_seconds": 19.2,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.87,
+   0.87,
+   6.0
+  ],
+  "outside_brain_share_of_signal": 0.548
+ },
+ {
+  "name": "muslim_28",
+  "strip_seconds": 15.7,
+  "strip_peak_gib": 4.38,
+  "shape": [
+   280,
+   320,
+   21
+  ],
+  "spacing": [
+   0.67,
+   0.67,
+   6.5
+  ],
+  "outside_brain_share_of_signal": 0.371
+ },
+ {
+  "name": "muslim_29",
+  "strip_seconds": 18.4,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.89,
+   0.89,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.559
+ },
+ {
+  "name": "muslim_30",
+  "strip_seconds": 18.8,
+  "strip_peak_gib": 5.73,
+  "shape": [
+   256,
+   256,
+   23
+  ],
+  "spacing": [
+   0.91,
+   0.91,
+   5.5
+  ],
+  "outside_brain_share_of_signal": 0.427
+ },
+ {
+  "name": "muslim_31",
+  "strip_seconds": 21.2,
+  "strip_peak_gib": 5.74,
+  "shape": [
+   512,
+   448,
+   27
+  ],
+  "spacing": [
+   0.46,
+   0.46,
+   5.18
+  ],
+  "outside_brain_share_of_signal": 0.529
+ },
+ {
+  "name": "muslim_33",
+  "strip_seconds": 15.0,
+  "strip_peak_gib": 4.39,
+  "shape": [
+   280,
+   320,
+   20
+  ],
+  "spacing": [
+   0.68,
+   0.68,
+   6.5
+  ],
+  "outside_brain_share_of_signal": 0.343
+ }
+]

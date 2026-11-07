@@ -227,6 +227,8 @@ class AIProvenance(BaseModel):
     # or the clinician explicitly confirmed the sequence before the run ("clinician", recorded with
     # the authenticated user by the server).
     sequence_evidence: Literal["header", "clinician"]
+    # RC-101: what the model read — the file as uploaded, or the image after the app removed its skull (model hash, 12 hex).
+    input_preparation: Optional[str] = Field(None, pattern=r"^(as_uploaded|skull_removed:([0-9a-f]{12}|unknown))$")
     sequence_confirmed_by: Optional[str] = None
 
 

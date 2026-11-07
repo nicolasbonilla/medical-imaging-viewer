@@ -21,6 +21,9 @@ interface ViewerState {
   // All file_ids from all instances in the current study (for study-level segmentation queries)
   allFileIds: string[];
   setAllFileIds: (fileIds: string[]) => void;
+  /** the name each stored file was uploaded with: storage ids mean nothing to a person */
+  fileNames: Record<string, string>;
+  setFileNames: (names: Record<string, string>) => void;
 
   // Current image series
   currentSeries: ImageSeriesResponse | null;
@@ -137,6 +140,8 @@ export const useViewerStore = create<ViewerState>((set) => ({
     set({ currentPatientId: patientId, currentStudyId: studyId, currentSeriesId: seriesId }),
 
   setAllFileIds: (fileIds) => set({ allFileIds: fileIds }),
+  fileNames: {},
+  setFileNames: (fileNames) => set({ fileNames }),
 
   setCurrentSeries: (series) => set({ currentSeries: series }),
 

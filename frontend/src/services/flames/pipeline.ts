@@ -68,6 +68,14 @@ export class FlamesInputError extends Error {
   }
 }
 
+/** RC-101: a refusal by the skull clues; the hook may then ask the server to remove the skull and try once more. */
+export class SkullGateError extends FlamesInputError {
+  constructor(message: string, contrast?: ContrastAssessment) {
+    super(message, contrast);
+    this.name = 'SkullGateError';
+  }
+}
+
 export interface FlamesVolume {
   /** NIfTI storage order (i fastest) */
   data: Float32Array;
@@ -84,6 +92,8 @@ export interface FlamesPipelineOptions {
   mirrorAxes?: readonly number[];
   /** enforce the skull-stripped plausibility gate (default true). Only unit tests on synthetic data disable it. */
   skullStripGate?: boolean;
+  /** RC-101: the app removed the skull itself; see checkInputGates */
+  strippedByApp?: boolean;
   /** enforce the FLAIR contrast gate (default true). Only unit tests on synthetic data disable it. */
   contrastGate?: boolean;
   /** header evidence about the sequence (headerEvidence.ts); refuses, or counts as positive evidence */
@@ -150,6 +160,12 @@ export function checkInputGates(
   vol: FlamesVolume,
   opts: {
     skullStripGate?: boolean;
+    /**
+     * RC-101: the app removed the skull itself, so two checks that look for a skull no longer tell anything. On thick slices a stripped
+     * brain reaches the first and last slice, and the outer 6 mm is a whole slice: the border and scalp checks refused the same images
+     * with HD-BET and with SynthStrip. The volume, dark-share and contrast checks still apply.
+     */
+    strippedByApp?: boolean;
     contrastGate?: boolean;
     headerEvidence?: HeaderEvidence;
     /** RC-049 positive evidence: the clinician explicitly confirmed this file is a skull-stripped T2-FLAIR */
@@ -164,14 +180,16 @@ export function checkInputGates(
   const brainVolumeMl = (brainVoxels * spacing[0] * spacing[1] * spacing[2]) / 1000;
 
   if (opts.skullStripGate !== false) {
-    if (border > GATES.maxBorderNonzeroFraction) {
-      throw new FlamesInputError(
+    if (!opts.strippedByApp && border > GATES.maxBorderNonzeroFraction) {
+      throw new SkullGateError(
         `This image does not look skull-stripped: ${(border * 100).toFixed(1)}% of the image border is nonzero. ` +
           'FLAMeS requires a skull-stripped FLAIR; no segmentation was produced.',
       );
     }
     if (brainVolumeMl < GATES.minBrainMl || brainVolumeMl > GATES.maxBrainMl) {
-      throw new FlamesInputError(
+      // too large: a head, not a brain; too small: not a whole brain, which removing a skull cannot fix
+      const Refusal = brainVolumeMl > GATES.maxBrainMl && !opts.strippedByApp ? SkullGateError : FlamesInputError;
+      throw new Refusal(
         `The nonzero region measures ${brainVolumeMl.toFixed(0)} mL, outside the plausible range for a ` +
           `skull-stripped adult brain (${GATES.minBrainMl}-${GATES.maxBrainMl} mL). No segmentation was produced.`,
       );
@@ -195,7 +213,7 @@ export function checkInputGates(
     // border/volume limits above: bright scalp fat at the edge of the region, or a large dark share
     // (bone, air, background noise enclosed by the head).
     if (opts.skullStripGate !== false) {
-      if (features.rimBrightFraction > GATES.maxRimBrightFraction) {
+      if (!opts.strippedByApp && features.rimBrightFraction > GATES.maxRimBrightFraction) {
         reasons.push(
           `This image does not look skull-stripped: ${(100 * features.rimBrightFraction).toFixed(1)}% of its outer 6 mm is ` +
             'very bright (scalp fat), as when the skull and scalp are still present.',
@@ -208,10 +226,14 @@ export function checkInputGates(
         );
       }
     }
+    // A skull clue decides the kind: on a head, the contrast measures are not those of a brain. The stripped image is checked again,
+    // contrast included, and that refusal is final.
+    const skullFound = reasons.length > 0;
     if (opts.contrastGate !== false && !contrast.ok) reasons.push(contrast.reason ?? 'The image does not look like a FLAIR.');
     if (reasons.length) {
       const tail = reasons.some((r) => /skull-stripped/.test(r)) ? ' FLAMeS requires a skull-stripped FLAIR.' : '';
-      throw new FlamesInputError(
+      const Refusal = skullFound && !opts.strippedByApp ? SkullGateError : FlamesInputError;
+      throw new Refusal(
         `${reasons.join(' ')}${tail}${/no segmentation was produced/i.test(reasons.join(' ')) ? '' : ' No segmentation was produced.'}`,
         contrast,
       );
@@ -252,6 +274,7 @@ export async function segmentFlairVolume(vol: FlamesVolume, opts: FlamesPipeline
     { data, dims, spacing },
     {
       skullStripGate: opts.skullStripGate,
+      strippedByApp: opts.strippedByApp,
       contrastGate: opts.contrastGate,
       headerEvidence: opts.headerEvidence,
       clinicianConfirmedFlair: opts.clinicianConfirmedFlair,

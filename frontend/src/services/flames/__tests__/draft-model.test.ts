@@ -46,6 +46,7 @@ describe('draft provenance', () => {
     seconds: 266,
     generatedAt: '2026-10-17T20:00:00.000Z',
     sequenceEvidence: 'clinician',
+    inputPreparation: 'as-uploaded' as const,
   };
   it('marks the result as an unreviewed AI draft with model identity, within 1000 chars', () => {
     const d = draftDescription(p, { lesionCount: 85, lesionVoxels: 38892, lesionVolumeMl: 38.892, componentVolumesMl: [] });
@@ -110,5 +111,25 @@ describe('model integrity pin', () => {
     expect(manifest.bytes).toBe(FLAMES_FOLD0_MODEL.bytes);
     expect(manifest.source_checkpoint_sha256).toBe(FLAMES_FOLD0_MODEL.sourceCheckpointSha256);
     expect(readFileSync(join(repo, '.gitignore'), 'utf-8')).toMatch(/^frontend\/public\/models\/flames\/$/m);
+  });
+});
+
+describe('what the model read is recorded (RC-101; review M4)', () => {
+  const base = { pipeline: 'p', model: 'm', modelSha256: 'a'.repeat(64), sourceCheckpointSha256: 'b'.repeat(64), backend: 'wasm' as const,
+    threads: 8, onnxRuntimeWeb: '1.24.1', mirror: false, windows: 1, networkCalls: 1, resampledShape: [1, 1, 1] as [number, number, number],
+    seconds: 1, generatedAt: '2026-11-07T00:00:00.000Z', sequenceEvidence: 'clinician' as const };
+  const summary = { lesionCount: 1, lesionVoxels: 2, lesionVolumeMl: 0.01, componentVolumesMl: [] };
+
+  it('names the file as uploaded, or the stripped image with the model that stripped it', () => {
+    expect(buildAiProvenance({ ...base, inputPreparation: 'as-uploaded' }, summary, 0).input_preparation).toBe('as_uploaded');
+    const stripped = buildAiProvenance({ ...base, inputPreparation: 'skull-removed', stripModel: '37417f802196' }, summary, 0);
+    expect(stripped.input_preparation).toBe('skull_removed:37417f802196');
+    expect(draftDescription({ ...base, inputPreparation: 'skull-removed', stripModel: '37417f802196' }, summary)).toMatch(/skull removed by the app server/);
+  });
+
+  it('a server that drops the field has not recorded the draft', () => {
+    const sent = buildAiProvenance({ ...base, inputPreparation: 'skull-removed', stripModel: '37417f802196' }, summary, 0);
+    expect(provenanceRecorded(sent, { ...sent })).toBe(true);
+    expect(provenanceRecorded(sent, { ...sent, input_preparation: undefined })).toBe(false);
   });
 });

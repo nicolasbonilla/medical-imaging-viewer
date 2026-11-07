@@ -144,6 +144,21 @@ fails (blank panel). The new frontend shows both answers (old and new backend), 
 an error boundary. After both are deployed: open a segmentation, press "Analyze" — the DIS card reads
 "DIS (brain MRI): not evaluated" until the regions are classified and a radiologist confirms them.
 
+## In-browser AI with skull removal (REQ-FUNC-115, RC-101 — DRAFT until the owner signs)
+
+In this order, all with `--project=brain-mri-476110` written out (the machine's default project is another product):
+
+1. Skull-removal worker: `cd strip-worker && bash deploy.sh`. It needs the service account `strip-worker@brain-mri-476110.iam.gserviceaccount.com`
+   with **no role** (create it once). It grants `roles/run.invoker` on the worker to the main service's account.
+2. Backend: `bash scripts/deploy_backend.sh`, then on `brain-mri`: `--update-env-vars SKULL_STRIP_ENABLED=true,SKULL_STRIP_ENDPOINT=<worker URL>`.
+3. Model: copy `flames-fold0-2a10bb9d.onnx` (pinned in `plan.ts`, verified by size and SHA-256 in the browser) to `frontend/dist/models/flames/`
+   after the build and before `firebase deploy`. It is not in git.
+4. Frontend: `cd frontend && npm run build`, step 3, then `npx firebase deploy --only hosting --project brain-mri-476110`. `firebase.json` now
+   sends COOP `same-origin` and COEP `credentialless`: the browser AI gets 8 threads.
+5. Check: `curl -sI https://app.mstool-ai.com/ | grep -i cross-origin` shows both headers; run the AI on one study with a skull.
+
+Without step 1 or 2 the app still works: an image with a skull is refused by the input gates, with a message that skull removal is not available.
+
 ## Common failures
 
 | Symptom | Cause | Fix |
