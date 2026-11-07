@@ -45,4 +45,13 @@ export const FLAMES_NOTICES: readonly ThirdPartyNotice[] = Object.freeze([
     licenceUrl: '/licenses/onnxruntime-web-MIT.txt',
     attribution: 'Copyright (c) Microsoft Corporation. https://github.com/microsoft/onnxruntime',
   },
+  {
+    component: 'SynthStrip model weights (skull removal on the app server, only for images that still have a skull)',
+    licence: 'MIT or CC BY 4.0',
+    licenceUrl: 'https://surfer.nmr.mgh.harvard.edu/docs/synthstrip/',
+    attribution:
+      'Hoopes A, Mora JS, Dalca AV, Fischl B, Hoffmann M. SynthStrip: skull-stripping for any brain image. NeuroImage 2022;260:119474, ' +
+      'doi:10.1016/j.neuroimage.2022.119474.',
+    changes: 'Used unchanged; the app applies the brain mask to the image so that everything outside the brain is exactly zero.',
+  },
 ]);
