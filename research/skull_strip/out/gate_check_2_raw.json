@@ -1,0 +1,162 @@
+[
+ {
+  "name": "muslim_01_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.09,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 91.8% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_04_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 93.4% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_05_as_uploaded",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 90.7% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_06_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 89.5% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_07_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 92.3% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_08_as_uploaded",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 27.7% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_09_as_uploaded",
+  "seconds": 0.4,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 88.1% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_11_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 93.4% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_12_as_uploaded",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 91.1% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_13_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 93.3% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_15_as_uploaded",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 30.0% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_16_as_uploaded",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 35.5% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_17_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 93.4% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_18_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 92.6% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_19_as_uploaded",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 33.5% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_20_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 90.8% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_21_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 90.7% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_22_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 89.4% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_24_as_uploaded",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 90.6% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_25_as_uploaded",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "This image does not look skull-stripped: 34.5% of the image border is nonzero. FLAMeS requires a skull-stripped FLAIR; no segmentation was produced."
+ }
+]

@@ -1,0 +1,1435 @@
+[
+ {
+  "name": "muslim_01",
+  "seconds": 87.1,
+  "peak_gib_all_processes": 2.72,
+  "peak_gib_largest_process": 2.35,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 87.02405499999993,
+  "dims": [
+   256,
+   256,
+   23
+  ],
+  "spacing": [
+   0.8599279522895813,
+   0.8599279522895813,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 22,
+   "lesionVoxels": 804,
+   "lesionVolumeMl": 3.2699632395962275
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 86.9,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9024230517354289,
+   "differing_voxels": 149,
+   "voxels_browser": 804,
+   "voxels_reference": 723,
+   "lesions_browser": 0,
+   "lesions_reference": 22,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 22,
+    "expert": 52,
+    "precision": 0.7272727272727273,
+    "sensitivity": 0.36538461538461536
+   },
+   "expert_reference": {
+    "marked": 22,
+    "expert": 52,
+    "precision": 0.7727272727272727,
+    "sensitivity": 0.36538461538461536
+   }
+  }
+ },
+ {
+  "name": "muslim_04",
+  "seconds": 45.6,
+  "peak_gib_all_processes": 2.72,
+  "peak_gib_largest_process": 2.35,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 45.59807499999995,
+  "dims": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.9446990489959717,
+   0.9446990489959717,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 27,
+   "lesionVoxels": 9945,
+   "lesionVolumeMl": 48.815128095879025
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 45.5,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.953391551584078,
+   "differing_voxels": 918,
+   "voxels_browser": 9945,
+   "voxels_reference": 9751,
+   "lesions_browser": 0,
+   "lesions_reference": 25,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 27,
+    "expert": 19,
+    "precision": 0.37037037037037035,
+    "sensitivity": 0.8947368421052632
+   },
+   "expert_reference": {
+    "marked": 25,
+    "expert": 19,
+    "precision": 0.4,
+    "sensitivity": 0.9473684210526315
+   }
+  }
+ },
+ {
+  "name": "muslim_05",
+  "seconds": 87.6,
+  "peak_gib_all_processes": 2.74,
+  "peak_gib_largest_process": 2.36,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 87.54101000000001,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.926260232925415,
+   0.926260232925415,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 26,
+   "lesionVoxels": 562,
+   "lesionVolumeMl": 2.6519482370351453
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 87.4,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9118165784832452,
+   "differing_voxels": 100,
+   "voxels_browser": 562,
+   "voxels_reference": 572,
+   "lesions_browser": 0,
+   "lesions_reference": 26,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 26,
+    "expert": 58,
+    "precision": 0.8461538461538461,
+    "sensitivity": 0.3793103448275862
+   },
+   "expert_reference": {
+    "marked": 26,
+    "expert": 58,
+    "precision": 0.8461538461538461,
+    "sensitivity": 0.3793103448275862
+   }
+  }
+ },
+ {
+  "name": "muslim_06",
+  "seconds": 87.3,
+  "peak_gib_all_processes": 2.77,
+  "peak_gib_largest_process": 2.4,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 87.23044500000006,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.919181227684021,
+   0.919181227684021,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 15,
+   "lesionVoxels": 2594,
+   "lesionVolumeMl": 12.054104543104087
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 87.1,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9407843137254902,
+   "differing_voxels": 302,
+   "voxels_browser": 2594,
+   "voxels_reference": 2506,
+   "lesions_browser": 0,
+   "lesions_reference": 15,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 15,
+    "expert": 13,
+    "precision": 0.4666666666666667,
+    "sensitivity": 0.6153846153846154
+   },
+   "expert_reference": {
+    "marked": 15,
+    "expert": 13,
+    "precision": 0.5333333333333333,
+    "sensitivity": 0.6153846153846154
+   }
+  }
+ },
+ {
+  "name": "muslim_07",
+  "seconds": 87.2,
+  "peak_gib_all_processes": 2.73,
+  "peak_gib_largest_process": 2.36,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 87.10556499999994,
+  "dims": [
+   256,
+   256,
+   22
+  ],
+  "spacing": [
+   0.8209187388420105,
+   0.8209187388420105,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 20,
+   "lesionVoxels": 8762,
+   "lesionVolumeMl": 32.47627998450829
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 87,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9666875462672968,
+   "differing_voxels": 585,
+   "voxels_browser": 8762,
+   "voxels_reference": 8799,
+   "lesions_browser": 0,
+   "lesions_reference": 24,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 21,
+    "expert": 30,
+    "precision": 0.47619047619047616,
+    "sensitivity": 0.7
+   },
+   "expert_reference": {
+    "marked": 24,
+    "expert": 30,
+    "precision": 0.4583333333333333,
+    "sensitivity": 0.7333333333333333
+   }
+  }
+ },
+ {
+  "name": "muslim_08",
+  "seconds": 87.3,
+  "peak_gib_all_processes": 2.77,
+  "peak_gib_largest_process": 2.4,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 87.23670500000007,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.907369077205658,
+   0.907369077205658,
+   6
+  ],
+  "summary": {
+   "lesionCount": 44,
+   "lesionVoxels": 5218,
+   "lesionVolumeMl": 25.77646005215933
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 87.1,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9057449789817842,
+   "differing_voxels": 1009,
+   "voxels_browser": 5218,
+   "voxels_reference": 5487,
+   "lesions_browser": 0,
+   "lesions_reference": 54,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 48,
+    "expert": 32,
+    "precision": 0.3333333333333333,
+    "sensitivity": 0.9375
+   },
+   "expert_reference": {
+    "marked": 54,
+    "expert": 32,
+    "precision": 0.2777777777777778,
+    "sensitivity": 0.9375
+   }
+  }
+ },
+ {
+  "name": "muslim_09",
+  "seconds": 1.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.09,
+  "finished": true,
+  "error": "The image does not look like a FLAIR: white matter is brighter than the cortex, as on a T1-weighted image. FLAMeS works only on FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_11",
+  "seconds": 45.5,
+  "peak_gib_all_processes": 2.74,
+  "peak_gib_largest_process": 2.36,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 45.48189499999979,
+  "dims": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.9442314505577087,
+   0.9442314505577087,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 34,
+   "lesionVoxels": 4619,
+   "lesionVolumeMl": 22.649967097091796
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 45.4,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9099924544572598,
+   "differing_voxels": 835,
+   "voxels_browser": 4619,
+   "voxels_reference": 4658,
+   "lesions_browser": 0,
+   "lesions_reference": 34,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 35,
+    "expert": 23,
+    "precision": 0.42857142857142855,
+    "sensitivity": 1.0
+   },
+   "expert_reference": {
+    "marked": 34,
+    "expert": 23,
+    "precision": 0.47058823529411764,
+    "sensitivity": 1.0
+   }
+  }
+ },
+ {
+  "name": "muslim_12",
+  "seconds": 87.3,
+  "peak_gib_all_processes": 2.73,
+  "peak_gib_largest_process": 2.36,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 87.2348600000001,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.8236962556838989,
+   0.8236962556838989,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 18,
+   "lesionVoxels": 7089,
+   "lesionVolumeMl": 26.453421350502232
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 87.1,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9363598384626096,
+   "differing_voxels": 914,
+   "voxels_browser": 7089,
+   "voxels_reference": 7273,
+   "lesions_browser": 0,
+   "lesions_reference": 25,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 20,
+    "expert": 20,
+    "precision": 0.2,
+    "sensitivity": 1.0
+   },
+   "expert_reference": {
+    "marked": 25,
+    "expert": 20,
+    "precision": 0.16,
+    "sensitivity": 1.0
+   }
+  }
+ },
+ {
+  "name": "muslim_13",
+  "seconds": 45.6,
+  "peak_gib_all_processes": 2.73,
+  "peak_gib_largest_process": 2.36,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 45.54878500000015,
+  "dims": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.8775190711021423,
+   0.8775190711021423,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 27,
+   "lesionVoxels": 9423,
+   "lesionVolumeMl": 39.9084635562486
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 45.4,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.943366951124903,
+   "differing_voxels": 1095,
+   "voxels_browser": 9423,
+   "voxels_reference": 9912,
+   "lesions_browser": 0,
+   "lesions_reference": 26,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 28,
+    "expert": 29,
+    "precision": 0.6071428571428571,
+    "sensitivity": 0.5517241379310345
+   },
+   "expert_reference": {
+    "marked": 26,
+    "expert": 29,
+    "precision": 0.6153846153846154,
+    "sensitivity": 0.6551724137931034
+   }
+  }
+ },
+ {
+  "name": "muslim_15",
+  "seconds": 92.4,
+  "peak_gib_all_processes": 2.73,
+  "peak_gib_largest_process": 2.36,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 92.37275499999988,
+  "dims": [
+   288,
+   288,
+   25
+  ],
+  "spacing": [
+   0.8027553558349609,
+   0.8027553558349609,
+   6
+  ],
+  "summary": {
+   "lesionCount": 15,
+   "lesionVoxels": 1290,
+   "lesionVolumeMl": 4.987781088630072
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 92,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9126925898752751,
+   "differing_voxels": 238,
+   "voxels_browser": 1290,
+   "voxels_reference": 1436,
+   "lesions_browser": 0,
+   "lesions_reference": 18,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 16,
+    "expert": 35,
+    "precision": 0.875,
+    "sensitivity": 0.37142857142857144
+   },
+   "expert_reference": {
+    "marked": 18,
+    "expert": 35,
+    "precision": 0.8888888888888888,
+    "sensitivity": 0.4
+   }
+  }
+ },
+ {
+  "name": "muslim_16",
+  "seconds": 117.6,
+  "peak_gib_all_processes": 2.78,
+  "peak_gib_largest_process": 2.41,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 117.52347999999998,
+  "dims": [
+   512,
+   512,
+   26
+  ],
+  "spacing": [
+   0.7599155902862549,
+   0.7599155902862549,
+   6
+  ],
+  "summary": {
+   "lesionCount": 17,
+   "lesionVoxels": 2328,
+   "lesionVolumeMl": 8.066124766501977
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 116.6,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9470740103270223,
+   "differing_voxels": 246,
+   "voxels_browser": 2328,
+   "voxels_reference": 2320,
+   "lesions_browser": 0,
+   "lesions_reference": 17,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 18,
+    "expert": 60,
+    "precision": 0.6111111111111112,
+    "sensitivity": 0.23333333333333334
+   },
+   "expert_reference": {
+    "marked": 17,
+    "expert": 60,
+    "precision": 0.6470588235294118,
+    "sensitivity": 0.23333333333333334
+   }
+  }
+ },
+ {
+  "name": "muslim_17",
+  "seconds": 47.7,
+  "peak_gib_all_processes": 2.7,
+  "peak_gib_largest_process": 2.33,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 47.632560000000055,
+  "dims": [
+   256,
+   256,
+   18
+  ],
+  "spacing": [
+   0.8967534303665161,
+   0.8967534303665161,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 26,
+   "lesionVoxels": 7540,
+   "lesionVolumeMl": 33.34879366582951
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 47.5,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9496765847347994,
+   "differing_voxels": 778,
+   "voxels_browser": 7540,
+   "voxels_reference": 7920,
+   "lesions_browser": 0,
+   "lesions_reference": 26,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 30,
+    "expert": 32,
+    "precision": 0.6333333333333333,
+    "sensitivity": 0.5
+   },
+   "expert_reference": {
+    "marked": 26,
+    "expert": 32,
+    "precision": 0.5769230769230769,
+    "sensitivity": 0.5
+   }
+  }
+ },
+ {
+  "name": "muslim_18",
+  "seconds": 46.5,
+  "peak_gib_all_processes": 2.7,
+  "peak_gib_largest_process": 2.33,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 46.433495000000114,
+  "dims": [
+   256,
+   256,
+   21
+  ],
+  "spacing": [
+   0.9121133685112,
+   0.9121133685112,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 16,
+   "lesionVoxels": 1177,
+   "lesionVolumeMl": 5.385633484488566
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 46.3,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.8820386354295109,
+   "differing_voxels": 287,
+   "voxels_browser": 1177,
+   "voxels_reference": 1256,
+   "lesions_browser": 0,
+   "lesions_reference": 19,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 16,
+    "expert": 13,
+    "precision": 0.625,
+    "sensitivity": 1.0
+   },
+   "expert_reference": {
+    "marked": 19,
+    "expert": 13,
+    "precision": 0.5263157894736842,
+    "sensitivity": 1.0
+   }
+  }
+ },
+ {
+  "name": "muslim_19",
+  "seconds": 88.5,
+  "peak_gib_all_processes": 2.77,
+  "peak_gib_largest_process": 2.4,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 88.47061500000022,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.9401897192001343,
+   0.9401897192001343,
+   6
+  ],
+  "summary": {
+   "lesionCount": 21,
+   "lesionVoxels": 2197,
+   "lesionVolumeMl": 11.652317326037467
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 88.3,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9071380622063101,
+   "differing_voxels": 415,
+   "voxels_browser": 2197,
+   "voxels_reference": 2272,
+   "lesions_browser": 0,
+   "lesions_reference": 18,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 21,
+    "expert": 25,
+    "precision": 0.5238095238095238,
+    "sensitivity": 0.84
+   },
+   "expert_reference": {
+    "marked": 18,
+    "expert": 25,
+    "precision": 0.5555555555555556,
+    "sensitivity": 0.88
+   }
+  }
+ },
+ {
+  "name": "muslim_20",
+  "seconds": 88.5,
+  "peak_gib_all_processes": 2.73,
+  "peak_gib_largest_process": 2.36,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 88.48202499999991,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.849331259727478,
+   0.849331259727478,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 35,
+   "lesionVoxels": 1977,
+   "lesionVolumeMl": 7.843746982276003
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 88.3,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.918918918918919,
+   "differing_voxels": 321,
+   "voxels_browser": 1977,
+   "voxels_reference": 1982,
+   "lesions_browser": 0,
+   "lesions_reference": 35,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 35,
+    "expert": 52,
+    "precision": 0.8857142857142857,
+    "sensitivity": 0.6538461538461539
+   },
+   "expert_reference": {
+    "marked": 35,
+    "expert": 52,
+    "precision": 0.8285714285714286,
+    "sensitivity": 0.6346153846153846
+   }
+  }
+ },
+ {
+  "name": "muslim_21",
+  "seconds": 88.5,
+  "peak_gib_all_processes": 2.73,
+  "peak_gib_largest_process": 2.35,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 88.39940000000037,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.7996739745140076,
+   0.7996739745140076,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 3,
+   "lesionVoxels": 563,
+   "lesionVolumeMl": 1.9801450684672892
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 88.2,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.8713910761154856,
+   "differing_voxels": 147,
+   "voxels_browser": 563,
+   "voxels_reference": 580,
+   "lesions_browser": 0,
+   "lesions_reference": 5,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 3,
+    "expert": 2,
+    "precision": 0.3333333333333333,
+    "sensitivity": 0.5
+   },
+   "expert_reference": {
+    "marked": 5,
+    "expert": 2,
+    "precision": 0.2,
+    "sensitivity": 0.5
+   }
+  }
+ },
+ {
+  "name": "muslim_22",
+  "seconds": 88.0,
+  "peak_gib_all_processes": 2.77,
+  "peak_gib_largest_process": 2.4,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 87.89713499999978,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.8896345496177673,
+   0.8896345496177673,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 25,
+   "lesionVoxels": 4885,
+   "lesionVolumeMl": 21.264272984364155
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 87.7,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.9622192319635648,
+   "differing_voxels": 365,
+   "voxels_browser": 4885,
+   "voxels_reference": 4776,
+   "lesions_browser": 0,
+   "lesions_reference": 27,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 26,
+    "expert": 26,
+    "precision": 0.7307692307692307,
+    "sensitivity": 0.7692307692307693
+   },
+   "expert_reference": {
+    "marked": 27,
+    "expert": 26,
+    "precision": 0.6666666666666666,
+    "sensitivity": 0.7307692307692307
+   }
+  }
+ },
+ {
+  "name": "muslim_24",
+  "seconds": 88.2,
+  "peak_gib_all_processes": 2.77,
+  "peak_gib_largest_process": 2.4,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 88.141,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.8952035307884216,
+   0.8952035307884216,
+   5.5
+  ],
+  "summary": {
+   "lesionCount": 6,
+   "lesionVoxels": 329,
+   "lesionVolumeMl": 1.4501140496994942
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 87.9,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.89280868385346,
+   "differing_voxels": 79,
+   "voxels_browser": 329,
+   "voxels_reference": 408,
+   "lesions_browser": 0,
+   "lesions_reference": 9,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 6,
+    "expert": 20,
+    "precision": 0.8333333333333334,
+    "sensitivity": 0.25
+   },
+   "expert_reference": {
+    "marked": 9,
+    "expert": 20,
+    "precision": 0.6666666666666666,
+    "sensitivity": 0.3
+   }
+  }
+ },
+ {
+  "name": "muslim_25",
+  "seconds": 126.2,
+  "peak_gib_all_processes": 2.73,
+  "peak_gib_largest_process": 2.36,
+  "finished": true,
+  "isolated": true,
+  "hardwareConcurrency": 8,
+  "wallSeconds": 126.18110499999999,
+  "dims": [
+   256,
+   256,
+   26
+  ],
+  "spacing": [
+   0.8008201122283936,
+   0.8008201122283936,
+   6
+  ],
+  "summary": {
+   "lesionCount": 30,
+   "lesionVoxels": 900,
+   "lesionVolumeMl": 3.463089401607283
+  },
+  "provenance": {
+   "backend": "wasm",
+   "threads": 8,
+   "folds": null,
+   "modelSha256": "2a10bb9d72dc33381a3f44dd6a59ec612dfd87534e02f15488b426ae127176ae",
+   "seconds": 126,
+   "onnxRuntimeWeb": "1.24.1",
+   "pipeline": "mstool-flames-browser/0.1.1-prototype"
+  },
+  "comparison": {
+   "dice": 0.8259838786154575,
+   "differing_voxels": 367,
+   "voxels_browser": 900,
+   "voxels_reference": 1209,
+   "lesions_browser": 0,
+   "lesions_reference": 36,
+   "lesions_matched": 0,
+   "score_mean_abs_difference": null,
+   "score_max_abs_difference": null,
+   "same_side_worst_cut": 0.0,
+   "same_side_by_cut": {
+    "0.95": 0.0,
+    "0.925": 0.0,
+    "0.9": 0.0,
+    "0.875": 0.0,
+    "0.85": 0.0,
+    "0.825": 0.0,
+    "0.8": 0.0,
+    "0.775": 0.0,
+    "0.75": 0.0,
+    "0.725": 0.0,
+    "0.7": 0.0,
+    "0.675": 0.0,
+    "0.65": 0.0,
+    "0.625": 0.0,
+    "0.6": 0.0
+   },
+   "expert_browser": {
+    "marked": 32,
+    "expert": 15,
+    "precision": 0.4375,
+    "sensitivity": 1.0
+   },
+   "expert_reference": {
+    "marked": 36,
+    "expert": 15,
+    "precision": 0.3611111111111111,
+    "sensitivity": 1.0
+   }
+  }
+ }
+]

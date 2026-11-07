@@ -1,0 +1,242 @@
+[
+ {
+  "name": "muslim_01_T1",
+  "seconds": 2.3,
+  "peak_gib_all_processes": 0.29,
+  "peak_gib_largest_process": 0.09,
+  "finished": true,
+  "error": "The image does not look like a FLAIR: white matter is brighter than the cortex, as on a T1-weighted image. FLAMeS works only on FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_01_T2",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 372 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_02_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 105 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_02_T2",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 493 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_03_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 397 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_03_T2",
+  "seconds": 2.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The image does not look like a FLAIR: fluid (CSF) is bright, as on a T2-weighted or PD image. FLAMeS works only on FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_04_T1",
+  "seconds": 2.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The image does not look like a FLAIR: white matter is brighter than the cortex, as on a T1-weighted image. FLAMeS works only on FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_04_T2",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 322 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_05_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 347 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_05_T2",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 300 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_06_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 453 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_06_T2",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 329 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_07_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.09,
+  "finished": true,
+  "error": "The nonzero region measures 421 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_07_T2",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 376 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_08_T1",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 367 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_08_T2",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 349 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_09_T1",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 391 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_09_T2",
+  "seconds": 0.5,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 475 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_10_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 423 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_10_T2",
+  "seconds": 2.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The image does not look like a FLAIR: fluid (CSF) is bright, as on a T2-weighted or PD image. FLAMeS works only on FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_11_T1",
+  "seconds": 2.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The image does not look like a FLAIR: white matter is brighter than the cortex, as on a T1-weighted image. FLAMeS works only on FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_11_T2",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.09,
+  "finished": true,
+  "error": "The nonzero region measures 311 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_12_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 310 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_12_T2",
+  "seconds": 0.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 316 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_13_T1",
+  "seconds": 2.2,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The image does not look like a FLAIR: white matter is brighter than the cortex, as on a T1-weighted image. FLAMeS works only on FLAIR; no segmentation was produced."
+ },
+ {
+  "name": "muslim_13_T2",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 374 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_14_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 312 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_14_T2",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.09,
+  "finished": true,
+  "error": "The nonzero region measures 409 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_15_T1",
+  "seconds": 0.3,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 332 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ },
+ {
+  "name": "muslim_15_T2",
+  "seconds": 0.1,
+  "peak_gib_all_processes": 0.17,
+  "peak_gib_largest_process": 0.08,
+  "finished": true,
+  "error": "The nonzero region measures 326 mL, outside the plausible range for a skull-stripped adult brain (500-2600 mL). No segmentation was produced."
+ }
+]
