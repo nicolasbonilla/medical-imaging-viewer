@@ -1,0 +1,11 @@
+# Builds the backend of feat/skull-strip for the TEST service only. It deploys nothing and never touches the production service.
+steps:
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'project-guard'
+    entrypoint: 'bash'
+    args: ['-c', 'test "$PROJECT_ID" = "brain-mri-476110"']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/brain-mri-test:latest', '-f', 'backend/Dockerfile', './backend']
+images:
+  - 'gcr.io/$PROJECT_ID/brain-mri-test:latest'
+timeout: 1800s
