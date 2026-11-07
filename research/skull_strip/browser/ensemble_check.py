@@ -195,6 +195,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--timeout-minutes", type=int, default=45)
     ap.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2])
+    ap.add_argument("--stripped", default="1", help="0: the image is read as uploaded, all gates on")
     a = ap.parse_args()
     MODELS[:] = [m for m in MODELS if m["fold"] in a.folds]
     out = Path(a.out)
@@ -214,7 +215,7 @@ def main():
             page = browser.new_page()
             page.on("crash", lambda *_: (State.received.setdefault("result", b'{"error": {"message": "the page crashed"}}'), State.done.set()))
             started = time.time()
-            page.goto(f"http://127.0.0.1:{PORT}/harness.html?worker=/assets/{worker.name}")
+            page.goto(f"http://127.0.0.1:{PORT}/harness.html?worker=/assets/{worker.name}&stripped={a.stripped}")
             finished = State.done.wait(a.timeout_minutes * 60)
             stop.set()
             result = json.loads(State.received.get("result", b'{"error": {"message": "timed out"}}'))
@@ -226,7 +227,8 @@ def main():
                 row.update({k: result.get(k) for k in ("isolated", "hardwareConcurrency", "wallSeconds", "dims", "spacing", "summary")})
                 row["provenance"] = {k: result["provenance"].get(k) for k in ("backend", "threads", "folds", "modelSha256", "seconds", "onnxRuntimeWeb", "pipeline")}
                 try:
-                    row["comparison"] = compare(result, State.received["mask"], json.loads(State.received["candidates"]), case["probs"], case.get("gt"))
+                    if case.get("probs"):
+                        row["comparison"] = compare(result, State.received["mask"], json.loads(State.received["candidates"]), case["probs"], case.get("gt"))
                 except Exception as error:
                     row["error"] = f"comparison failed: {type(error).__name__}: {error}"[:300]
             report.append(row)

@@ -84,4 +84,4 @@ export const FLAMES_FOLD0_MODEL: FlamesModelAsset = Object.freeze({
 });
 
 /** Bumped whenever pipeline arithmetic changes; stored in every result's provenance. */
-export const FLAMES_PIPELINE_VERSION = 'mstool-flames-browser/0.1.0-prototype';
+export const FLAMES_PIPELINE_VERSION = 'mstool-flames-browser/0.1.1-prototype';   // 0.1.1: skull removal by the app (RC-101)

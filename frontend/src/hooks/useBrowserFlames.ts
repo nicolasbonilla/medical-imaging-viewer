@@ -1,9 +1,12 @@
 /**
  * useBrowserFlames — runs the in-browser FLAMeS worker for one FLAIR file (PROTOTYPE, feature-flagged).
  *
- * One worker per job, terminated when the job ends or is cancelled, so the WebAssembly heap
- * (up to ~3-4 GB during inference) is returned to the OS immediately. A job yields either a
- * complete result or an error — never a partial mask.
+ * One worker per attempt, terminated when it ends or is cancelled, so the WebAssembly heap (up to ~3-4 GB during inference) is
+ * returned to the OS immediately. A job yields either a complete result or an error — never a partial mask.
+ *
+ * REQ-FUNC-115 (RC-101): the file is read as it is first, through every input gate. Only when the skull gates refuse it is the
+ * image sent to the app's server to remove the skull, and the stripped image is run once more with those two gates off. An image
+ * that already has no skull never leaves the browser. A failure of the server is said as such, never as a fault of the image.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient } from '@/services/apiClient';
@@ -22,20 +25,10 @@ export interface BrowserFlamesResult {
   provenance: FlamesProvenance;
 }
 
-/**
- * The image the model reads (REQ-FUNC-115). The server removes the skull; if that service is not there, the file itself is read, and the
- * input gates then refuse an image that still has its skull, as they always did (RC-043).
- */
-async function flairForTheModel(fileId: string): Promise<{ nifti: ArrayBuffer; strippedByApp: boolean }> {
-  try {
-    const { data } = await apiClient.post('/api/v1/clinical/skull-strip', { file_id: fileId }, { responseType: 'arraybuffer', timeout: 240000 });
-    return { nifti: data as ArrayBuffer, strippedByApp: true };
-  } catch (e) {
-    console.warn('[BrowserFLAMeS] Skull removal not available; reading the file as it is', e);
-    const { data } = await apiClient.get(`/api/v1/imaging/nifti/${fileId}`, { responseType: 'arraybuffer' });
-    return { nifti: data as ArrayBuffer, strippedByApp: false };
-  }
-}
+type Options = { mirror?: boolean; webgpu?: boolean; seriesDescription?: string | null; clinicianConfirmedFlair?: boolean };
+type Prepared = { nifti: ArrayBuffer; strippedByApp: boolean; stripModel?: string };
+
+export const STRIP_UNAVAILABLE = 'Skull removal is not available on this server.';
 
 export function useBrowserFlames() {
   const [status, setStatus] = useState<BrowserFlamesStatus>('idle');
@@ -47,44 +40,64 @@ export function useBrowserFlames() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const jobRef = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const terminate = useCallback(() => {
     workerRef.current?.terminate();
     workerRef.current = null;
+    abortRef.current?.abort();
+    abortRef.current = null;
     jobRef.current = null;
   }, []);
 
   useEffect(() => terminate, [terminate]);
 
   const run = useCallback(
-    async (
-      fileId: string,
-      options: { mirror?: boolean; webgpu?: boolean; seriesDescription?: string | null; clinicianConfirmedFlair?: boolean } = {},
-    ) => {
+    async (fileId: string, options: Options = {}) => {
       terminate();
       const jobId = crypto.randomUUID();
       jobRef.current = jobId;
+      const abort = new AbortController();
+      abortRef.current = abort;
       setStartedAt(Date.now());
       setStatus('running');
       setResult(null);
       setError(null);
       setStage('read');
       setFraction(0);
-      setMessage('Removing the skull on the server…');
+      setMessage('Downloading the FLAIR from the study…');
+      const current = () => jobRef.current === jobId;
       const fail = (msg: string) => {
-        if (jobRef.current !== jobId) return;
+        if (!current()) return;
         terminate();
         setError(msg);
         setStatus('error');
       };
-      try {
-        const { nifti, strippedByApp } = await flairForTheModel(fileId);
-        if (jobRef.current !== jobId) return; // cancelled meanwhile
+
+      const stripOnServer = async (refusal: string): Promise<Prepared | null> => {
+        setStage('read');
+        setFraction(0);
+        setMessage('The image has its skull: removing it on the server…');
+        try {
+          const response = await apiClient.post('/api/v1/clinical/skull-strip', { file_id: fileId },
+            { responseType: 'arraybuffer', timeout: 240000, signal: abort.signal });
+          const model = String(response.headers?.['x-strip-model'] ?? '');
+          return { nifti: response.data as ArrayBuffer, strippedByApp: true, stripModel: /^[0-9a-f]{12}$/.test(model) ? model : undefined };
+        } catch (e) {
+          if (!current()) return null;
+          const code = (e as { response?: { status?: number } })?.response?.status;
+          fail(code === 503 ? `${refusal} ${STRIP_UNAVAILABLE}`
+            : `The skull could not be removed on the server${code ? ` (error ${code})` : ''}. No segmentation was produced; try again later.`);
+          return null;
+        }
+      };
+
+      const start = (prepared: Prepared) => {
         const worker = new Worker(new URL('../workers/flamesInBrowser.worker.ts', import.meta.url), { type: 'module' });
         workerRef.current = worker;
         const envUrl = import.meta.env.VITE_FLAMES_MODEL_URL as string | undefined;
         const model = { ...FLAMES_FOLD0_MODEL, url: envUrl || FLAMES_FOLD0_MODEL.url };
-        worker.onmessage = (event: MessageEvent<FlamesWorkerResponse>) => {
+        worker.onmessage = async (event: MessageEvent<FlamesWorkerResponse>) => {
           const m = event.data;
           if (m.jobId !== jobRef.current) return;
           if (m.type === 'progress') {
@@ -94,38 +107,46 @@ export function useBrowserFlames() {
           } else if (m.type === 'log') {
             console.info('[BrowserFLAMeS]', m.message);
           } else if (m.type === 'result') {
-            terminate();
-            setResult({
-              fileId,
-              maskApp: m.maskApp,
-              dims: m.dims,
-              spacing: m.spacing,
-              summary: m.summary,
-              provenance: m.provenance,
-            });
+            workerRef.current?.terminate();
+            workerRef.current = null;
+            jobRef.current = null;
+            setResult({ fileId, maskApp: m.maskApp, dims: m.dims, spacing: m.spacing, summary: m.summary, provenance: m.provenance });
             setStatus('done');
           } else if (m.type === 'error') {
+            if (m.kind === 'skull' && !prepared.strippedByApp) {
+              worker.terminate();
+              workerRef.current = null;
+              const stripped = await stripOnServer(m.message);
+              if (stripped && current()) start(stripped);
+              return;
+            }
             fail(m.message);
           }
         };
         worker.onerror = (e) => fail(e.message || 'The segmentation worker stopped unexpectedly.');
-        // WebGPU is NOT attempted by default: ONNX Runtime Web 1.24.1 (the app's SOUP version) rejects 3D
-        // convolutions on WebGPU, and with 1.29 an integrated GPU lost the device (DESIGN.md §7.1). The worker
-        // keeps the WebGPU path (with a whole-job WebAssembly restart) for when the SOUP upgrade is approved.
+        // WebGPU is NOT attempted by default: ONNX Runtime Web 1.24.1 (the app's SOUP version) rejects 3D convolutions on WebGPU,
+        // and with 1.29 an integrated GPU lost the device (DESIGN.md §7.1).
         worker.postMessage(
           {
             type: 'segment',
             jobId,
-            nifti,
+            nifti: prepared.nifti,
             model,
             preferWebGPU: Boolean(options.webgpu),
             mirror: Boolean(options.mirror),
             seriesDescription: options.seriesDescription ?? null,
             clinicianConfirmedFlair: options.clinicianConfirmedFlair === true,
-            strippedByApp,
+            strippedByApp: prepared.strippedByApp,
+            stripModel: prepared.stripModel,
           },
-          [nifti],
+          [prepared.nifti],
         );
+      };
+
+      try {
+        const { data } = await apiClient.get(`/api/v1/imaging/nifti/${fileId}`, { responseType: 'arraybuffer', signal: abort.signal });
+        if (!current()) return;
+        start({ nifti: data as ArrayBuffer, strippedByApp: false });
       } catch (err) {
         fail(err instanceof Error ? err.message : String(err));
       }
@@ -134,7 +155,7 @@ export function useBrowserFlames() {
   );
 
   /**
-   * Cancel: terminates the worker and forgets the job. It never touches the segmentation store,
+   * Cancel: terminates the worker, aborts a skull removal in flight and forgets the job. It never touches the segmentation store,
    * so the clinician's open segmentation (saved or not) is unaffected.
    */
   const cancel = useCallback(() => {

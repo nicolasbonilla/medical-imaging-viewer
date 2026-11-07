@@ -9,7 +9,7 @@
  * Negative controls: research/flames_in_browser/negative_controls_v2.py (G1-G6).
  */
 import { describe, expect, it } from 'vitest';
-import { checkInputGates, FlamesInputError, GATES, borderNonzeroFraction } from '../pipeline';
+import { checkInputGates, FlamesInputError, GATES, borderNonzeroFraction, SkullGateError } from '../pipeline';
 import { computeContrastFeatures, decideFlairContrast, FLAIR_GATE } from '../contrastGate';
 import { headerContrastEvidence } from '../headerEvidence';
 import { makePhantom } from './phantoms';
@@ -150,5 +150,24 @@ describe('header evidence (never the file name)', () => {
     expect(headerContrastEvidence([], {}, 'AX T2 TSE').verdict).toBe('contradicts');
     expect(headerContrastEvidence(['3D_SPACE_DARK-FLUID'], {}, null).verdict).toBe('supports');
     expect(headerContrastEvidence(['TI=2.5'], {}, null).inversionTimeMs).toBe(2500);
+  });
+});
+
+describe('an image the app stripped itself keeps the other refusals (RC-101; review M10)', () => {
+  const fat = makePhantom({ contrast: 'FLAIR', skull: 'fat' });
+  const dark = makePhantom({ contrast: 'FLAIR', skull: 'dark' });
+  const message = (f: () => unknown) => { try { f(); return ''; } catch (e) { return (e as Error).message; } };
+
+  it('the dark-share clue still refuses', () => {
+    expect(message(() => checkInputGates(dark, { strippedByApp: true }))).toMatch(/very dark/);
+  });
+
+  it('the scalp clue is a skull refusal on an image as uploaded, so the app may remove the skull and try again', () => {
+    expect(() => checkInputGates(fat, {})).toThrow(SkullGateError);
+  });
+
+  it('after the app stripped it, the same refusal is final', () => {
+    expect(() => checkInputGates(dark, { strippedByApp: true })).toThrow(FlamesInputError);
+    expect(() => checkInputGates(dark, { strippedByApp: true })).not.toThrow(SkullGateError);
   });
 });

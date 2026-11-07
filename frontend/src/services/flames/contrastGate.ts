@@ -355,7 +355,7 @@ export function computeContrastFeatures(data0: Float32Array, dims0: Dims3, spaci
  *   content says FLAIR  <=>  deepOverCortex <= 0.915 AND frac45to80 <= 0.27 AND fracAbove1p6 <= 0.025
  */
 export const FLAIR_GATE = Object.freeze({
-  version: 'flair-gate/2',
+  version: 'flair-gate/3',   // 3: border and scalp clues off on images the app stripped (RC-101)
   /** T1 rule 1: white matter clearly brighter than cortex (locally normalised) => not FLAIR */
   maxDeepOverCortex: 0.915,
   /** T1 rule 2: a large darker grey-matter class (0.45-0.8 x the tissue mode), as on T1-weighted images */

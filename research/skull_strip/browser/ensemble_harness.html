@@ -48,7 +48,7 @@ worker.onmessage = async (event) => {
   }
 };
 worker.postMessage({ type: 'segment', jobId: 'check', nifti: flair, model: models[0], preferWebGPU: false, mirror: false,
-  seriesDescription: null, clinicianConfirmedFlair: true, strippedByApp: true }, [flair]);
+  seriesDescription: null, clinicianConfirmedFlair: true, strippedByApp: params.get('stripped') !== '0' }, [flair]);
 </script>
 </body>
 </html>

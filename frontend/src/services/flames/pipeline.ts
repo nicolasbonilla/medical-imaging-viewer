@@ -68,6 +68,14 @@ export class FlamesInputError extends Error {
   }
 }
 
+/** RC-101: a refusal by the skull clues; the hook may then ask the server to remove the skull and try once more. */
+export class SkullGateError extends FlamesInputError {
+  constructor(message: string, contrast?: ContrastAssessment) {
+    super(message, contrast);
+    this.name = 'SkullGateError';
+  }
+}
+
 export interface FlamesVolume {
   /** NIfTI storage order (i fastest) */
   data: Float32Array;
@@ -173,13 +181,15 @@ export function checkInputGates(
 
   if (opts.skullStripGate !== false) {
     if (!opts.strippedByApp && border > GATES.maxBorderNonzeroFraction) {
-      throw new FlamesInputError(
+      throw new SkullGateError(
         `This image does not look skull-stripped: ${(border * 100).toFixed(1)}% of the image border is nonzero. ` +
           'FLAMeS requires a skull-stripped FLAIR; no segmentation was produced.',
       );
     }
     if (brainVolumeMl < GATES.minBrainMl || brainVolumeMl > GATES.maxBrainMl) {
-      throw new FlamesInputError(
+      // too large: a head, not a brain; too small: not a whole brain, which removing a skull cannot fix
+      const Refusal = brainVolumeMl > GATES.maxBrainMl && !opts.strippedByApp ? SkullGateError : FlamesInputError;
+      throw new Refusal(
         `The nonzero region measures ${brainVolumeMl.toFixed(0)} mL, outside the plausible range for a ` +
           `skull-stripped adult brain (${GATES.minBrainMl}-${GATES.maxBrainMl} mL). No segmentation was produced.`,
       );
@@ -216,10 +226,14 @@ export function checkInputGates(
         );
       }
     }
+    // A skull clue decides the kind: on a head, the contrast measures are not those of a brain. The stripped image is checked again,
+    // contrast included, and that refusal is final.
+    const skullFound = reasons.length > 0;
     if (opts.contrastGate !== false && !contrast.ok) reasons.push(contrast.reason ?? 'The image does not look like a FLAIR.');
     if (reasons.length) {
       const tail = reasons.some((r) => /skull-stripped/.test(r)) ? ' FLAMeS requires a skull-stripped FLAIR.' : '';
-      throw new FlamesInputError(
+      const Refusal = skullFound && !opts.strippedByApp ? SkullGateError : FlamesInputError;
+      throw new Refusal(
         `${reasons.join(' ')}${tail}${/no segmentation was produced/i.test(reasons.join(' ')) ? '' : ' No segmentation was produced.'}`,
         contrast,
       );

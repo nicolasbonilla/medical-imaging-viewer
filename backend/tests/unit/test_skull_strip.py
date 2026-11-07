@@ -35,7 +35,7 @@ class FakeRunner:
         self.asked.append(path)
         if self.error:
             raise self.error
-        return b"brain"
+        return b"brain", "37417f802196"
 
 
 @pytest.fixture
@@ -67,6 +67,7 @@ def test_the_brain_comes_back_from_the_authorized_path_and_is_not_cached(client)
     assert r.status_code == 200 and r.content == b"brain"
     assert runner.asked == [f"checked/{FILE}"]
     assert r.headers["cache-control"] == "no-store"
+    assert r.headers["x-strip-model"] == "37417f802196" and "X-Strip-Model" in r.headers["access-control-expose-headers"]
 
 
 def test_no_worker_means_503_and_nothing_is_read(client):
@@ -93,7 +94,7 @@ def test_the_image_travels_compressed_and_only_in_the_request(monkeypatch, store
 
     def answer(request):
         seen["url"], seen["body"] = str(request.url), request.content
-        return httpx.Response(200, content=b"brain")
+        return httpx.Response(200, content=b"brain", headers={"x-strip-model": "37417f802196"})
     real = httpx.AsyncClient
     monkeypatch.setattr(runner_module.httpx, "AsyncClient", lambda **k: real(transport=httpx.MockTransport(answer), **k))
     monkeypatch.setattr(runner_module.settings, "SKULL_STRIP_ENDPOINT", "https://worker")
@@ -103,7 +104,7 @@ def test_the_image_travels_compressed_and_only_in_the_request(monkeypatch, store
         return {}
     monkeypatch.setattr(service, "_worker_auth_headers", no_auth)
     import asyncio
-    assert asyncio.run(service.skull_strip(FILE)) == b"brain"
+    assert asyncio.run(service.skull_strip(FILE)) == (b"brain", "37417f802196")
     assert seen["url"] == "https://worker/strip"
     assert seen["body"] == sent if sent else gzip.decompress(seen["body"]) == stored
 
@@ -121,3 +122,31 @@ def test_a_worker_error_is_not_taken_for_an_image(monkeypatch):
     import asyncio
     with pytest.raises(httpx.HTTPStatusError):
         asyncio.run(service.skull_strip(FILE))
+
+
+def test_the_audit_trail_names_the_image_sent_to_the_worker():
+    from app.core.logging.audit_middleware import BODY_ID_ROUTES, ROUTE_ACTIONS, AuditEventType
+    assert ROUTE_ACTIONS[("POST", "/api/v1/clinical/skull-strip")] == (AuditEventType.CLINICAL_AI_RUN, "image")
+    assert "/api/v1/clinical/skull-strip" in BODY_ID_ROUTES
+
+
+def test_an_image_too_large_is_never_sent(monkeypatch):
+    monkeypatch.setattr(runner_module.settings, "SKULL_STRIP_ENDPOINT", "https://worker")
+    monkeypatch.setattr(runner_module, "SKULL_STRIP_MAX_BYTES", 4)
+    service = ToolRunnerService(FakeStorage(b"\x1f\x8b0123456789"))
+    import asyncio
+    with pytest.raises(ValueError):
+        asyncio.run(service.skull_strip(FILE))
+
+
+@pytest.mark.parametrize("value,ok", [("as_uploaded", True), ("skull_removed:37417f802196", True), ("skull_removed:unknown", True),
+                                      ("skull_removed:../x", False), ("anything", False)])
+def test_the_record_of_what_the_model_read_is_strict(value, ok):
+    from pydantic import ValidationError
+    from app.models.schemas import AIProvenance
+    from tests.unit.test_rc047_ai_draft_provenance import _prov
+    if ok:
+        assert AIProvenance(**_prov(input_preparation=value)).input_preparation == value
+    else:
+        with pytest.raises(ValidationError):
+            AIProvenance(**_prov(input_preparation=value))

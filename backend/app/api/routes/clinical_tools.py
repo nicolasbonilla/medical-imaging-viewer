@@ -10,6 +10,8 @@ the tool version, academic citation, and regulatory status.
 @module api.routes.clinical_tools
 """
 
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
@@ -73,11 +75,14 @@ async def skull_strip(
     if not tool_runner.is_skull_strip_available():
         raise HTTPException(status_code=503, detail="Skull removal is not available")
     try:
-        brain = await tool_runner.skull_strip(paths[0])
+        brain, model = await tool_runner.skull_strip(paths[0])
     except Exception as exc:
-        logger.warning("Skull removal failed", extra={"reason": type(exc).__name__})
+        code = getattr(getattr(exc, "response", None), "status_code", None)
+        logger.warning("Skull removal failed", extra={"reason": type(exc).__name__, "status_code": code})
         raise HTTPException(status_code=502, detail="The skull could not be removed")
-    return Response(content=brain, media_type="application/gzip", headers={"Cache-Control": "no-store"})
+    return Response(content=brain, media_type="application/gzip", headers={
+        "Cache-Control": "no-store", "X-Strip-Model": model if re.fullmatch(r"[0-9a-f]{12}", model or "") else "",
+        "Access-Control-Expose-Headers": "X-Strip-Model"})
 
 
 @router.get("/tools", response_model=List[Dict[str, Any]])

@@ -25,6 +25,8 @@ export interface FlamesSegmentRequest {
   clinicianConfirmedFlair: boolean;
   /** RC-101: the nifti comes from the app's skull-removal service. */
   strippedByApp: boolean;
+  /** first 12 hex of the SHA-256 of the skull-removal model, as the server reported it */
+  stripModel?: string;
 }
 
 export type FlamesWorkerRequest = FlamesSegmentRequest;
@@ -48,6 +50,9 @@ export interface FlamesProvenance {
   contrastGate?: { header: 'supports' | 'none'; score: number; threshold: number };
   /** RC-049: positive evidence the input was a FLAIR — header, or explicit clinician confirmation */
   sequenceEvidence: 'header' | 'clinician';
+  /** RC-101: what the model read — the file as uploaded, or the image after the app removed its skull */
+  inputPreparation: 'as-uploaded' | 'skull-removed';
+  stripModel?: string;
 }
 
 export type FlamesWorkerResponse =
@@ -64,4 +69,4 @@ export type FlamesWorkerResponse =
       summary: LesionSummary;
       provenance: FlamesProvenance;
     }
-  | { type: 'error'; jobId: string; kind: 'input' | 'model' | 'runtime'; message: string };
+  | { type: 'error'; jobId: string; kind: 'input' | 'skull' | 'model' | 'runtime'; message: string };

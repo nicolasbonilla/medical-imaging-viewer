@@ -114,7 +114,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       <p className="text-[9px] text-gray-400 leading-snug">
         {t(
           'clinical.browserFlames.desc',
-          'Runs FLAMeS on this computer, after the server of the app removes the skull. Needs a T2-FLAIR (other sequences are refused). The first run downloads a 62 MB model. Result = unreviewed AI draft.',
+          'Runs FLAMeS on this computer. Needs a T2-FLAIR (other sequences are refused). If the image still has its skull, the server of the app removes it first. The first run downloads a 62 MB model. Result = unreviewed AI draft.',
         )}
       </p>
 
