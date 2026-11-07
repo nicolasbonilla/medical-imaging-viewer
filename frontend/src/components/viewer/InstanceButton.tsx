@@ -1,4 +1,5 @@
 import { FileImage, FlaskConical } from 'lucide-react';
+import { friendlyImageName } from '@/utils/sequenceDetection';
 
 export interface InstanceButtonData {
   id: string;
@@ -33,11 +34,12 @@ export function InstanceButton({ instance, selected, onSelect, variant }: Instan
         selected ? `${selectedBg} text-white` : 'bg-gray-800/60 hover:bg-gray-800 text-gray-300'
       }`}
       style={{ padding: '4px 8px', borderRadius: 6 }}
+      title={instance.original_filename}
     >
       <div className="flex items-center gap-2">
         <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${selected ? 'text-white' : iconColor}`} />
         <p className="text-[11px] font-medium truncate flex-1">
-          {instance.original_filename || fallbackName}
+          {instance.original_filename ? friendlyImageName(instance.original_filename) : fallbackName}
         </p>
         <span className={`text-[10px] ${selected ? 'text-white/70' : 'text-gray-400'}`}>
           {(instance.file_size_bytes / 1024 / 1024).toFixed(1)}MB

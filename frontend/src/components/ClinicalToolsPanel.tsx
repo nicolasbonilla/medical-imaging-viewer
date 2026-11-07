@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { clinicalToolsAPI } from '@/api/clinicalTools';
 import { useViewerStore } from '@/store/useViewerStore';
-import { detectSequence, type SequenceType, SEQUENCE_INFO } from '@/utils/sequenceDetection';
+import { detectSequence, friendlyImageName, type SequenceType, SEQUENCE_INFO } from '@/utils/sequenceDetection';
 import type { ClinicalToolInfo, ToolTaskResult, ToolTaskStatus } from '@/types';
 import { FEATURES } from '@/config/features';
 import { AutomaticMarkingNotice, isLesionDetectionSource } from './AutomaticMarkingNotice';
@@ -206,7 +206,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
   // File ID → short display name
   const shortName = (fid: string): string => {
     const parts = fid.split('/');
-    const fname = fileNames[fid] || parts[parts.length - 1] || fid;
+    const fname = fileNames[fid] ? friendlyImageName(fileNames[fid]) : parts[parts.length - 1] || fid;
     return fname.length > 30 ? '...' + fname.slice(-28) : fname;
   };
 
@@ -290,7 +290,7 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
         {/* PROTOTYPE: in-browser FLAMeS (no GPU server). Hidden unless VITE_ENABLE_BROWSER_FLAMES=true. */}
         {FEATURES.BROWSER_FLAMES && (
           <React.Suspense fallback={null}>
-            <BrowserFlamesCard flairFileId={flairFileId} flairName={fileNames[flairFileId]} />
+            <BrowserFlamesCard flairFileId={flairFileId} flairName={fileNames[flairFileId] && friendlyImageName(fileNames[flairFileId])} />
           </React.Suspense>
         )}
       </div>

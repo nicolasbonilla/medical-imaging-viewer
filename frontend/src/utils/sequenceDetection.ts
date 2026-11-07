@@ -45,6 +45,23 @@ export function detectSequence(filename: string): SequenceType {
   return 'unknown';
 }
 
+const FRIENDLY: Record<Exclude<SequenceType, 'unknown'>, string> = { FLAIR: 'FLAIR', T1w: 'T1', T2w: 'T2', PDw: 'PD' };
+
+/**
+ * What a person reads in a list: the sequence, not the research file name, which stays in the tooltip. A name that says nothing
+ * recognisable is shown as it is: an image is never given a sequence it may not be.
+ */
+export function friendlyImageName(filename: string): string {
+  const lower = filename.toLowerCase();
+  if (lower.includes('label-lesion') || /lesion.*(mask|seg)|(mask|seg).*lesion/.test(lower)) {
+    const rater = lower.match(/(?:rater|mask|expert|annotator)[-_]?(\d+)/)?.[1];
+    return rater ? `Expert lesions ${Number(rater)}` : 'Expert lesions';
+  }
+  const sequence = detectSequence(filename);
+  if (sequence === 'unknown') return filename;
+  return lower.includes('desc-prep') ? `${FRIENDLY[sequence]} (preprocessed)` : FRIENDLY[sequence];
+}
+
 /**
  * Group instances by detected sequence type.
  * Only includes original (non-mask, non-preprocessed) instances.
