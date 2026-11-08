@@ -1,0 +1,18 @@
+extraction done: 100 controls (0 s)
+raw candidates: {"ens": {"scans_with_any_candidate": 85, "candidates_total": 263, "per_scan_mean": 2.63}, "f0": {"scans_with_any_candidate": 93, "candidates_total": 306, "per_scan_mean": 3.06}, "f1": {"scans_with_any_candidate": 90, "candidates_total": 334, "per_scan_mean": 3.34}, "f2": {"scans_with_any_candidate": 87, "candidates_total": 244, "per_scan_mean": 2.44}, "f3": {"scans_with_any_candidate": 85, "candidates_total": 263, "per_scan_mean": 2.63}, "f4": {"scans_with_any_candidate": 88, "candidates_total": 260, "per_scan_mean": 2.6}}
+PRIMARY ens | 1-mm sites | P1 0.1: 14/100 [0.0787, 0.2237] -> inconclusive; false lesions/scan 0.22; Bonferroni [0.0662, 0.2477] -> inconclusive
+PRIMARY ens | 1-mm sites | P1 0.2: 24/100 [0.1602, 0.3357] -> inconclusive; false lesions/scan 0.37; Bonferroni [0.1422, 0.362] -> inconclusive
+PRIMARY ens | 1-mm sites | P2 0.1: 6/100 [0.0223, 0.126] -> holds; false lesions/scan 0.06; Bonferroni [0.0164, 0.1461] -> holds
+PRIMARY ens | 1-mm sites | P2 0.2: 6/100 [0.0223, 0.126] -> holds; false lesions/scan 0.06; Bonferroni [0.0164, 0.1461] -> holds
+S8 reproduction: {'compared': 30, 'same_count': 30, 'max_score_diff': 0.00078, 'mismatches': [], 'passed': True}
+S3 DIS raw ens: 19/100 [0.1184, 0.2807]; any DIS region 79
+S3 DIS raw f0: 22/100 [0.1433, 0.3139]; any DIS region 89
+S3 DIS ens|1-mm sites|P1|0.1: 2/100 [0.0024, 0.0704]; any DIS region 14
+S3 DIS ens|1-mm sites|P1|0.2: 3/100 [0.0062, 0.0852]; any DIS region 24
+S3 DIS ens|1-mm sites|P2|0.1: 0/100 [0.0, 0.0362]; any DIS region 4
+S3 DIS ens|1-mm sites|P2|0.2: 0/100 [0.0, 0.0362]; any DIS region 4
+S3 DIS ens|all five patient sites|P1|0.1: 0/100 [0.0, 0.0362]; any DIS region 4
+S3 DIS ens|all five patient sites|P1|0.2: 2/100 [0.0024, 0.0704]; any DIS region 19
+S7 location raw ens: {'n': 263, 'within_3mm_of_brainmask_edge': 2, 'share_within_3mm': 0.0076, 'touching_outside_mask': 0, 'min_edt_mm_quantiles_10_50_90': [18.03, 23.28, 37.26], 'regions': {'PV': 165, 'JC': 33, 'IT': 4, 'DWM': 61, 'none': 0}, 'vol_mm3_quantiles_50_90': [27.0, 208.4], 'score_quantiles_50_90': [0.738, 0.9315]}
+wrote C:\Users\Nicolas\medical-imaging-viewer\.claude\worktrees\agent-a51c3395ccf800cad\docs\research\records\2026-10-24_paper_a_v03c_controls.json in 317.6 s
+exit 0

@@ -1,0 +1,5 @@
+openms_all  vs mslesseg : D=0.048  scan-permutation p=0.692  scans 30/115
+heldout10   vs mslesseg : D=0.095  scan-permutation p=0.562  scans 10/115
+trained20   vs mslesseg : D=0.043  scan-permutation p=0.891  scans 20/115
+trained20   vs heldout10: D=0.088  scan-permutation p=0.537  scans 20/10
+wrote C:\Users\Nicolas\medical-imaging-viewer\.claude\worktrees\agent-a326eb09a5f433bb1\docs\research\records\2026-10-17_paper_a_v02_exchangeability.json

@@ -1,0 +1,11 @@
+A openms: draws 200 distinct 30 | v0.1-style {'curve_violated': 15, 'fdp_gt_gamma': 0, 'false_certified_dis': 0, 'draws': 200} | false-cert distinct 0/30 upper95 0.095
+A mslesseg: draws 220 distinct 92 | v0.1-style {'curve_violated': 9, 'fdp_gt_gamma': 1, 'false_certified_dis': 0, 'draws': 220} | false-cert distinct 0/92 upper95 0.032
+A sibbms: draws 200 distinct 30 | v0.1-style {'curve_violated': 6, 'fdp_gt_gamma': 0, 'false_certified_dis': 0, 'draws': 200} | false-cert distinct 0/30 upper95 0.095
+  L1 controls, MSLesSeg-only null    N= 30 | FDX 18/30 [0.406, 0.773] power None abstain 0.4 curve-fail 18/30 | BH@g 22/30 pw None | BH@gd 8/30 pw None
+                                     DIS: certified 0/0 GT-DIS scans | FALSE certified 1/30 [0.001, 0.172] (area-wrong 16) | raw-seg false DIS 5/30 | BH false DIS 2/30
+B controls clean pool: false-cert distinct 0/30 | curve-violated draws 10/200 distinct 3
+C heldout10: L2 rotation n=10 curve-violated 0 FDP>g 0 false-cert 0 | certified on GT-DIS {'gt_dis_distinct_scans': 10, 'distinct_ever_certified': 0, 'draws_gt_dis': 10, 'draws_certified': 0} | power 0.0 abstain 1.0
+C clean12: L2 rotation n=12 curve-violated 0 FDP>g 0 false-cert 0 | certified on GT-DIS {'gt_dis_distinct_scans': 12, 'distinct_ever_certified': 0, 'draws_gt_dis': 12, 'draws_certified': 0} | power 0.0 abstain 1.0
+C trained20: L2 rotation n=20 curve-violated 0 FDP>g 0 false-cert 0 | certified on GT-DIS {'gt_dis_distinct_scans': 20, 'distinct_ever_certified': 1, 'draws_gt_dis': 20, 'draws_certified': 1} | power 0.0124 abstain 0.8
+D A1 heldout10: {'H': 26.93, 'perm_p': 0.0009995002498750624, 'scans': 9}
+wrote C:\Users\Nicolas\medical-imaging-viewer\.claude\worktrees\agent-a326eb09a5f433bb1\docs\research\records\2026-10-17_paper_a_v02_fdx_distinct_scans.json in 1139.9 s

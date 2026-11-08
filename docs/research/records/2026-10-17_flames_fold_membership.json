@@ -1,0 +1,286 @@
+{
+ "fold_validation_sizes": {
+  "0": 134,
+  "1": 134,
+  "2": 134,
+  "3": 133,
+  "4": 133
+ },
+ "identifier_order_check": {
+  "ok": 668,
+  "mismatch": 0
+ },
+ "ljubljana_training_entries": [
+  {
+   "patient": "patient01",
+   "fingerprint_index": 84,
+   "identifier": "FLAIR_085",
+   "validation_fold": 1,
+   "trained_by_folds": [
+    0,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient02",
+   "fingerprint_index": 85,
+   "identifier": "FLAIR_086",
+   "validation_fold": 1,
+   "trained_by_folds": [
+    0,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient03",
+   "fingerprint_index": 86,
+   "identifier": "FLAIR_087",
+   "validation_fold": 4,
+   "trained_by_folds": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "patient": "patient04",
+   "fingerprint_index": 87,
+   "identifier": "FLAIR_088",
+   "validation_fold": 0,
+   "trained_by_folds": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient05",
+   "fingerprint_index": 88,
+   "identifier": "FLAIR_089",
+   "validation_fold": 2,
+   "trained_by_folds": [
+    0,
+    1,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient06",
+   "fingerprint_index": 89,
+   "identifier": "FLAIR_090",
+   "validation_fold": 1,
+   "trained_by_folds": [
+    0,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient07",
+   "fingerprint_index": 90,
+   "identifier": "FLAIR_091",
+   "validation_fold": 0,
+   "trained_by_folds": [
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient08",
+   "fingerprint_index": 91,
+   "identifier": "FLAIR_092",
+   "validation_fold": 4,
+   "trained_by_folds": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "patient": "patient09",
+   "fingerprint_index": 92,
+   "identifier": "FLAIR_093",
+   "validation_fold": 3,
+   "trained_by_folds": [
+    0,
+    1,
+    2,
+    4
+   ]
+  },
+  {
+   "patient": "patient10",
+   "fingerprint_index": 93,
+   "identifier": "FLAIR_094",
+   "validation_fold": 2,
+   "trained_by_folds": [
+    0,
+    1,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient11",
+   "fingerprint_index": 94,
+   "identifier": "FLAIR_095",
+   "validation_fold": 4,
+   "trained_by_folds": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "patient": "patient12",
+   "fingerprint_index": 95,
+   "identifier": "FLAIR_096",
+   "validation_fold": 2,
+   "trained_by_folds": [
+    0,
+    1,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient13",
+   "fingerprint_index": 96,
+   "identifier": "FLAIR_097",
+   "validation_fold": 4,
+   "trained_by_folds": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "patient": "patient14",
+   "fingerprint_index": 97,
+   "identifier": "FLAIR_098",
+   "validation_fold": 1,
+   "trained_by_folds": [
+    0,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient15",
+   "fingerprint_index": 98,
+   "identifier": "FLAIR_099",
+   "validation_fold": 3,
+   "trained_by_folds": [
+    0,
+    1,
+    2,
+    4
+   ]
+  },
+  {
+   "patient": "patient21",
+   "fingerprint_index": 99,
+   "identifier": "FLAIR_100",
+   "validation_fold": 1,
+   "trained_by_folds": [
+    0,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient22",
+   "fingerprint_index": 100,
+   "identifier": "FLAIR_101",
+   "validation_fold": 1,
+   "trained_by_folds": [
+    0,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient23",
+   "fingerprint_index": 101,
+   "identifier": "FLAIR_102",
+   "validation_fold": 1,
+   "trained_by_folds": [
+    0,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "patient": "patient24",
+   "fingerprint_index": 102,
+   "identifier": "FLAIR_103",
+   "validation_fold": 3,
+   "trained_by_folds": [
+    0,
+    1,
+    2,
+    4
+   ]
+  },
+  {
+   "patient": "patient25",
+   "fingerprint_index": 103,
+   "identifier": "FLAIR_104",
+   "validation_fold": 2,
+   "trained_by_folds": [
+    0,
+    1,
+    3,
+    4
+   ]
+  }
+ ],
+ "never_trained_any_fold": [
+  "patient16",
+  "patient17",
+  "patient18",
+  "patient19",
+  "patient20",
+  "patient26",
+  "patient27",
+  "patient28",
+  "patient29",
+  "patient30"
+ ],
+ "fold0_validation_ljubljana": [
+  "patient04",
+  "patient07"
+ ],
+ "clean_wrt_fold0_weights": [
+  "patient04",
+  "patient07",
+  "patient16",
+  "patient17",
+  "patient18",
+  "patient19",
+  "patient20",
+  "patient26",
+  "patient27",
+  "patient28",
+  "patient29",
+  "patient30"
+ ],
+ "maps_produced_with": "nnUNetv2_predict -d 004 -c 3d_fullres -tr nnUNetTrainer_8000epochs -f 0 --disable_tta (checkpoint_final)"
+}

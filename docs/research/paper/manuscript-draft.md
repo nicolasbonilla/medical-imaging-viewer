@@ -1,374 +1,627 @@
-# When does conformal false-discovery control hold for MS lesion detection? A multi-site characterization, and per-scan guarantees under scan clustering
+# Does conformal lesion-level false-discovery control survive site, slice-thickness and segmenter shift in MS MRI? A pre-registered five-cohort audit with training-overlap control
 
-*Draft v0.1 — target venue: MICCAI UNSURE workshop (short) / MELBA (full). Numbers in §4 are frozen
-from committed records; §5 is completed from the per-scan FDX study. Reproducibility: every number
-has a script + JSON record in this repository (paths in the Reproducibility section).*
+*Draft v0.3 (2026-10-21; healthy-control addendum 2026-10-24) — target venue: MELBA (full) / MICCAI UNSURE workshop (short). Every
+number comes from a committed script and a dated record in this repository (Reproducibility
+section). The v0.3 analysis was pre-registered (`docs/research/paper/PROTOCOL-v0.3.md`, committed
+before any v0.3 outcome was computed); post-hoc explanations are labelled as such. Numbers that
+could not be recomputed are marked "not re-verified". Research code, not the medical device.*
 
 *Authors: N. G. Bonilla Vargas [+ co-authors TBD]*
 
 ---
 
+## Changelog v0.2 → v0.3 (2026-10-21)
+
+1. **New data (local CPU analysis, no cloud command).** FLAMeS run fold-by-fold (five folds, no
+   test-time augmentation) on MSLesSeg (115 scans / 75 patients), Ljubljana (30; only the 10
+   FLAMeS-clean scans used), and three thick-slice 2D-FLAIR cohorts: **MS3SEG** (Iran, 100 patients,
+   6.0–8.1 mm), **Muslim 2022** (Baghdad, ~20 centres, 51 axial scans, 4.86–8.3 mm, in-plane pixel
+   size estimated) and **PediMS** (28 scans of 9 children, 3.9 mm). LST-AI maps on the same MSLesSeg
+   and Ljubljana images (paired segmenter comparison). Healthy controls: 30 (fold 0 only) in the
+   first v0.3 text; **100 with both arms in the 2026-10-24 addendum** (item 9).
+   Every input file opened, matched its mask's grid and is hashed in the inventory record; the new
+   fold-0 maps reproduce the August maps used by v0.1/v0.2 (max |Δp| 0.002) and the v0.2 candidate
+   labels (4400/4400 identical).
+2. **Pre-registration** of candidates, scores, procedures, calibration designs, targets, outcomes,
+   statistics and success criteria before any outcome (protocol commits 9951494, c0c5fa1; one
+   gate deviation, 50c9b08, logged before outcomes).
+3. **New questions**: transport from 1-mm to thick-slice sites; validity and power by slice
+   thickness (with a lesion-size table); 5-fold ensemble vs single fold; per-site recalibration
+   size; a paired (same-image) segmenter shift.
+4. **New procedure in the comparison, not a new method**: a scan-conformal FDX threshold (P2: the
+   split-conformal quantile of per-scan "safe thresholds"), the single-threshold analogue of v0.2's
+   Layer 2, evaluated next to conformal BH (P1) and v0.2's baselines.
+5. **Claims changed by v0.3** (details §7.3): v0.2's lesion-level AUROC 0.70–0.75 was a property of
+   a *single fold*; the 5-fold ensemble scores 0.78–0.82 at every site. v0.2's "segmenter change
+   collapses power (the FDR-safe direction)" was half of the story: on the same images the reverse
+   direction violates the guarantee (realised FDR 0.21 at α = 0.1) — expected, given the different
+   score scales. The v0.2 fold-0 pipeline violates the guarantee on a thick-slice site (MS3SEG)
+   where the ensemble does not; on another site (Muslim) the ensemble is the one with higher FDR.
+6. v0.2's per-scan region certificates (Layer 1/Layer 2, §6) were not re-run on the new sites.
+7. **Revision after an independent re-implementation (2026-10-21).** A separate re-implementation
+   reproduced candidates and primary rates to three decimals and found no leakage; its review led
+   to rewording overclaims of the first v0.3 text (§7.3, items 4–8), one added post-hoc analysis
+   (low-lesion-load scans, §5.1) and the disclosure of a 3-case pilot that preceded the protocol
+   (protocol §13 entry 7). All post-hoc analyses are marked **[post hoc]**.
+8. **MSLesSeg is not natively 1 mm** (2026-10-21): its acquisition table lists 2–5 mm FLAIR slices,
+   resampled to MNI 1 mm in the public release. "1-mm sites" now means "delivered on a 1-mm grid";
+   only Ljubljana is natively thin. Labels, §3.1, §5.2 and the limitations are corrected.
+9. **Healthy-control addendum (2026-10-24), separately pre-registered**
+   (`PROTOCOL-v0.3-addendum-controls.md`, commit caa47e7, before any control outcome): 100 distinct
+   SibBMS healthy controls (one site, template-normalised, CC BY-NC-SA), FLAMeS 5 folds; not in
+   FLAMeS training (its Table 1 and weight fingerprint). Replaces the 30-control fold-0 analysis and
+   the old healthy-DIS statements (§5.5, §6, §7.3). An independent re-implementation reproduced every
+   primary count exactly.
+
+*The v0.1 → v0.2 changelog is kept in Appendix A.*
+
+---
+
 ## Abstract
 
-Distribution-free conformal selection offers lesion detectors a *precision dial*: select candidate
-lesions so that the false-discovery rate (FDR) is at most α, with no assumption on the segmentation
-network. Whether that guarantee survives the realities of multiple sclerosis (MS) MRI — different
-scanners, different populations, different segmenters, and candidates that are clustered within
-scans — has not been characterized. We study conformal lesion selection (conformal p-values from
-false-candidate calibration scores + Benjamini–Hochberg) on four public cohorts: two patient cohorts
-and one healthy-control cohort segmented by the same model (FLAMeS), and one cohort segmented by a
-different model (LST-AI). Using one-to-one (Hungarian) lesion matching, subject-level resampling and
-scan-clustered permutation tests, we find that (i) marginal lesion-FDR control **transports** across
-same-segmenter patient cohorts — consistent with their false-positive score laws being exchangeable
-at the scan level (permutation p = 0.71) — and outperforms both a precision-matched global
-threshold and weighted (covariate-shift) conformal selection, which respectively fail to transport
-and overshoot the level at tight α; (ii) the guarantee is only **marginal**: 3–17 % of individual
-scans exceed the target false-discovery proportion; (iii) **specificity degrades** under population
-shift — a patient-calibrated null yields 90–203 false detections per 100 healthy scans versus 10–27
-under the controls' own null — and **power collapses** under a segmenter change; (iv) false-candidate
-scores carry a significant **scan-level random effect** (ICC 0.08–0.09, p = 0.0002), violating the
-candidate-level exchangeability assumed by recent simultaneous FDP bounds for conformal p-values.
-We therefore calibrate per-scan false-discovery exceedance at the level of the scan (subject), not the candidate: an exact lattice-path envelope under the conformal rank law, repaired by split-conformal calibration on the simultaneous event. In a pre-registered evaluation it kept the per-scan guarantee on every cohort (curve violation 3.0–7.5 % at δ = 10 %) and yields **certified dissemination in space**: on healthy controls it certified DIS in 0/200 scans (95 % CI ≤ 1.8 %), whereas the raw segmentation met the brain DIS pattern in 40/200 and BH-selected candidates in 17/200. All selection runs at low
-lesion-level recall (≤ 0.30), which we report as the honest cost of guaranteed precision at current
-score quality.
+Conformal selection gives lesion detectors a distribution-free *precision dial*: select candidate
+lesions so that the expected false-discovery proportion (FDR) per scan is at most α. Whether the
+dial survives the shifts of real multiple-sclerosis (MS) imaging — other sites, thick-slice 2D
+FLAIR, another segmenter — and whether it is evaluated on data the segmenter never saw, is
+untested. In a pre-registered audit of five public patient cohorts (304 scans, 245 patients; data
+delivered on a 1-mm MNI grid from Slovenia (native 3D, 0.8 mm) and Italy (native 2–5 mm, resampled)
+and natively stored 2D FLAIR with 3.9–8.3 mm slices from Iran, Iraq and a paediatric cohort), segmented by the five folds of FLAMeS, we excluded the 20 Ljubljana scans FLAMeS trained
+on and used patients, never scans, as the unit of splitting and resampling. For conformal
+Benjamini–Hochberg selection (P1) no violation was detected in 16 held-out-site comparisons, but
+this is weaker than validity: on one thick-slice site the result at α = 0.1 is undecided (Muslim
+0.122 [95 % CI 0.062, 0.197]), three comparisons pass only because almost nothing is selected, and
+two sites have 9–10 patients. Calibration from 1-mm sites does not transfer as such: on the two
+large thick-slice sites realised FDR at α = 0.1 (0.107 and 0.122) is 2.6–3.2× its within-site value,
+and in a post-hoc analysis of the third of thick-slice scans with ≥ 40 % false candidates it is
+0.196 [0.120, 0.282] (within-site calibration: 0.050). A per-scan false-discovery-exceedance
+threshold (P2) calibrated on 1-mm sites failed on thick slices (21 % [13, 30] and 29 % [17, 44] of
+scans above γ = 0.1 against a 10 % budget; only the latter survives correction for 32 comparisons);
+site-only recalibration with ≥ 10 patients restored it by near-abstention (3.8 % and 0.6 % of
+lesions found). Differences across slice-thickness bands are confounded with site; on 4.5–8.3 mm
+slices lesions ≥ 50 mm³ were detected 59–76 % of the time and no lesion size reached 80 %. Averaging
+the five folds raised candidate AUROC from 0.67–0.76 to 0.78–0.82 and doubled lesion sensitivity at
+α = 0.2 (0.102 → 0.203 leave-one-site-out; about +3 points at α = 0.1); it removed the single-fold
+violations on one site but raised realised FDR on another (0.122 vs 0.051). The guarantee is
+usable only with calibration from the deployed segmenter and from the site (or at least the
+acquisition type) it is applied to, and the power it leaves is low. On 100 healthy controls (one
+site, template-normalised; separately pre-registered), where the promise becomes "at most α of
+healthy scans get a false lesion", 1-mm-calibrated selection flagged 14/100 (95 % CI 8–22 %) at
+α = 0.1 and 24/100 (16–34 %) at α = 0.2 — undecided, above nominal — and a single fold flagged
+59/100; without selection the segmentation marked ≥ 1 lesion in 85/100 healthy brains and met a
+brain dissemination-in-space rule in 19/100 (12–28 %).
 
 ---
 
 ## 1. Introduction
 
-Automated MS lesion segmentation has reached voxel Dice ≈ 0.7–0.75 on external data with
-nnU-Net-class models (e.g. FLAMeS), yet deployed detectors still over-segment: our legacy
-thesis-era model had lesion-level precision ≈ 0.22 at sensitivity 0.85. For a radiologist, the
-operationally relevant quantity is not Dice but *how many of the flagged lesions are false*.
-Conformal selection [Jin & Candès 2023] turns any scoring model into a selector with a finite-sample
-FDR guarantee, provided the false candidates of a new scan are exchangeable with a calibration set of
-false candidates. That proviso is exactly what MS MRI stresses: acquisition differs across sites,
-lesion load differs across populations, the segmenter may change, and — as we show — false
-candidates inside one scan are not independent draws.
+Automated MS lesion segmentation reaches voxel Dice ≈ 0.7–0.75 on external data with
+nnU-Net-class models such as FLAMeS, but a radiologist reading one scan needs to know how many of
+the flagged lesions are false. Conformal selection [Jin & Candès 2023] turns any score into a
+selector with a finite-sample FDR guarantee, provided the false candidates of a new scan are
+exchangeable with a calibration set. MS imaging stresses that proviso: sites differ in scanner and
+protocol, much routine FLAIR is still acquired as 2D slices of 4–8 mm, lesion load differs across
+populations, segmenters are replaced, false candidates within a scan are correlated, and public
+MS cohorts are often in the training data of the segmenter being evaluated.
 
-This paper does not propose a new conformal method. The selection wrapper is a faithful application
-of conformal p-values and Benjamini–Hochberg; the per-scan procedure in §5 builds on exact
-simultaneous FDP bounds for conformal p-values [Gazin, Blanchard & Roquain 2024; Song, Jin & Candès
-2026]. Our contribution is an **honest, reproducible characterization** of where the guarantee holds
-and where it fails on real multi-site MS data, with the statistical safeguards that such a claim
-requires, and a per-scan procedure that remains valid under the scan clustering we measure.
+This paper does not propose a new conformal method. It is an **honest, pre-registered,
+reproducible audit** of where lesion-level conformal false-discovery control holds and where it
+fails on real MS data, with the safeguards such a claim needs: a check of which evaluation scans
+the segmenter trained on, the patient as the unit of splitting and resampling, held-out sites,
+multiplicity-aware intervals, and plainly reported negative results.
 
 **Contributions.**
-1. A four-cohort study separating three shift axes — same-segmenter acquisition/population shift,
-   zero-prevalence population shift (healthy controls), and segmenter shift — with one-to-one lesion
-   matching, subject-level bootstrap intervals and scan-clustered permutation tests.
-2. Evidence that marginal lesion-FDR control transports across same-segmenter patient cohorts and
-   beats a global threshold and weighted conformal selection; and that it degrades in specificity
-   under population shift and in power under segmenter shift.
-3. Evidence that marginal control is not per-scan control, and that an empirically calibrated
-   per-scan operating point transfers only from the more to the less heterogeneous site.
-4. Measurement of a significant scan-level random effect in false-candidate scores, which invalidates
-   candidate-level exchangeability, and a per-scan false-discovery-exceedance (FDX) procedure whose
-   validity rests on scan-level exchangeability instead [§5].
-5. A negative-results record: three claims we made and then retracted after adversarial review
-   (§6.3), kept in the paper because they are the likely mistakes of anyone repeating this analysis.
+1. A five-cohort, training-overlap-aware evaluation of conformal lesion selection under
+   acquisition shift including **thick-slice 2D FLAIR** (3.9–8.3 mm), with leave-one-site-out and
+   1-mm → thick designs (§5.1).
+2. A **slice-thickness reliability table** — validity, power, per-scan exceedance and the smallest
+   reliably detected lesion size per thickness band (§5.2) — intended as input to a
+   "reliability by slice thickness" display (research input only).
+3. Evidence that **ensembling the segmenter's folds** roughly doubles power at the guarantee,
+   with a mixed effect on validity (better on one site, worse on another) (§5.3).
+4. A **recalibration-size** analysis: how many local patients restore validity, and what power is
+   left when they do (§5.4).
+5. A **paired segmenter-shift** check on identical images illustrating the rule "calibrate with the
+   deployed segmenter" (§5.6), and the v0.2 training-overlap forensics (§3.2).
+6. A negative-results record (§7.3), including claims of our own earlier drafts.
 
 ## 2. Related work
 
-**Conformal selection and FDR.** Conformal p-values with a shared calibration set are
-positively regression dependent on a subset (PRDS), so Benjamini–Hochberg on them controls FDR
-[Bates et al. 2023]; Jin & Candès [2023] cast selection by prediction in this framework. Covariate
-shift can be handled by weighted conformal p-values [Tibshirani et al. 2019] and weighted conformal
-selection, at the cost of estimated likelihood ratios and — for selection — the loss of the
-unweighted PRDS argument. Hierarchical data motivate calibrating at the level of the exchangeable
-unit [Dunn, Wasserman & Ramdas 2023].
+**Conformal selection and FDR.** Conformal p-values with a shared calibration set are PRDS, so
+Benjamini–Hochberg on them controls FDR [Bates et al. 2023]; Jin & Candès [2023] cast selection
+by prediction in this framework. Covariate shift can be handled by weighted conformal p-values
+[Tibshirani et al. 2019] and weighted conformal selection, at the cost of estimated likelihood
+ratios; group-conditional (Mondrian) calibration [Vovk et al. 2005, *verify*] calibrates within
+strata such as sites or thickness bands.
 
-**Simultaneous FDP bounds.** Post hoc bounds on the false-discovery proportion via reference
-families and λ-calibration [Blanchard, Neuvial & Roquain 2020], closed-form simultaneous bounds
-under independence [Katsevich & Ramdas 2020], the exact (Pólya-urn) joint law of conformal p-values
-[Gazin, Blanchard & Roquain 2024], and — most recently — everywhere-valid FDP bounds for conformal
-inference [Song, Jin & Candès 2026] provide the machinery for per-scan (FDX) guarantees. All of them
-require exchangeability of the null test scores with the calibration scores *at the level of the
-individual candidate*.
+**Grouped data and scan-level risk control.** Dunn, Wasserman & Ramdas [2023] calibrate at the
+group level; Lee & Ren [2025, arXiv 2501.02514] give subsampling and hierarchical conformal
+e-values with e-BH, requiring group sizes independent of the observations. Conformal risk control
+[Angelopoulos et al. 2024] and Learn-then-Test [Angelopoulos et al. 2021, *verify venue*] control
+the expectation (or a high-probability bound) of a bounded loss over exchangeable units; with the
+scan as unit and the per-scan FDP or the indicator {FDP > γ} as loss they give scan-level FDR or
+FDX control for a global threshold (our P2 and baselines).
 
-**Uncertainty for MS lesion segmentation.** Conformal prediction has been applied to patient-level
-MS diagnosis [npj Digital Medicine 2025, verify] and to lesion-level miss-rate (FNR) control in 3D
-segmentation [arXiv:2510.17897, verify]; the latter controls the complementary error to ours. Shift
-benchmarks for MS segmentation exist (Shifts 2.0), but to our knowledge no study characterizes
-lesion-level FDR guarantees across real scanner/population/segmenter shift.
+**Simultaneous FDP bounds.** Reference-family bounds [Blanchard, Neuvial & Roquain 2020],
+closed-form bounds under independence [Katsevich & Ramdas 2020], the exact joint law of conformal
+p-values [Gazin, Blanchard & Roquain 2024] and everywhere-valid bounds for conformal inference
+[Song, Jin & Candès 2026] underlie per-scan certificates (§6); all assume candidate-level
+exchangeability.
 
-## 3. Data and candidate generation
+**Uncertainty in MS lesion segmentation.** Conformal prediction has been applied to patient-level
+MS diagnosis [npj Digital Medicine 2025, *verify*] and to lesion-level miss-rate (FNR) control in
+3D segmentation [arXiv:2510.17897, *verify*] — the complementary error to ours. Deep ensembles
+improve calibration and ranking of predictive uncertainty [Lakshminarayanan et al. 2017,
+*verify*]; Shifts 2.0 benchmarks MS segmentation under shift with cohorts that are FLAMeS training
+data. To our knowledge no study characterises lesion-level FDR/FDX guarantees across site,
+slice-thickness and paired segmenter shift while controlling for the segmenter's training-set
+overlap; we make no stronger novelty claim.
 
-| cohort | segmenter | kind | scans | subjects | candidates | false (one-to-one) | GT lesions ≥3 mm³ / ≥14.14 mm³ |
-|---|---|---|---:|---:|---:|---:|---:|
-| open_ms_data [Lesjak et al. 2018, verify] | FLAMeS | patients | 30 | 30 | 2358 | 461 | 2892 / 1737 |
-| MSLesSeg [Rondinella et al. 2025] | FLAMeS | patients | 115 | 75 | 3866 | 1348 | 3344 / 3082 |
-| healthy controls [source, verify] | FLAMeS | controls | 30 (27 with ≥1 candidate) | 27 | 83 | 83 | 0 |
-| ISBI-2015 | LST-AI [Wiltgen et al. 2024] | patients | 19 | not recoverable | 1176 | 832 (any-voxel) | — |
+## 3. Data and training-set overlap
 
-All maps are 1 mm isotropic (on three different grids, so no location feature is used). Candidates
-are connected components of the probability map at 0.5 with volume ≥ 3 mm³; the candidate score is
-the mean lesion probability. A candidate is a true detection if it is the Hungarian (maximum-IoU,
-one-to-one) match of a ground-truth lesion (lenient: IoU > 0; strict: IoU ≥ 0.10); unmatched
-fragments — including surplus over-segmentation fragments of an already-matched lesion — are false.
-Subjects, not scans, are the resampling unit (MSLesSeg patients contribute up to three timepoints).
-ISBI-2015 case names do not encode the patient, so ISBI is used only as a test cohort, never as a
-calibration source.
+### 3.1 Cohorts
 
-## 4. Characterization of marginal lesion-FDR control
+**Table 1. Cohorts (ensemble arm; candidates and labels as defined in §4.1).**
 
-**Procedure.** For a test scan with candidate scores s₁…s_m and a calibration set of n false-candidate
-scores c₁…c_n (from other subjects of the same site, or from another site), the conformal p-value is
-p_j = (1 + #{i : c_i ≥ s_j}) / (n + 1) and candidates are selected by Benjamini–Hochberg at level α
-within the scan. We report micro-FDR (pooled false/selected, subject-bootstrap 95 % CI), the fraction
-of scans whose own FDP exceeds α (over all scans), and three lesion-level recalls: *selection*
-(denominator: GT lesions that some candidate is matched to), *end-to-end* (all GT ≥ 3 mm³) and
-*clinical* (GT ≥ 14.14 mm³, the 3 mm-diameter criterion).
+| cohort | scans / patients | native FLAIR (slice spacing) | detectable expert lesions | candidates (false) | candidate AUROC: 5-fold ensemble [95 % CI] | fold 0 |
+|---|---|---|---:|---|---|---|
+| MSLesSeg [Rondinella et al. 2025] | 115 / 75 | 8 scanner models (Philips, GE, Siemens); **native 2–5 mm** (2–2.3 mm: 43, 3 mm: 52, 4–5 mm: 15, unknown: 5), resampled to MNI 1 mm | 3344 | 3788 (1257) | 0.818 [0.798, 0.837] | 0.735 [0.708, 0.761] |
+| Ljubljana, FLAMeS-clean (16–20, 26–30) [Lesjak et al. 2018] | 10 / 10 | 3 T 3D FLAIR; MNI 1 mm | 667 | 517 (82) | 0.802 [0.729, 0.883] | 0.698 [0.625, 0.773] |
+| MS3SEG [Bawil et al. 2026] | 100 / 100 | Toshiba 1.5 T 2D (6.0–8.1 mm, median 7.2) | 3354 | 3402 (1162) | 0.802 [0.786, 0.816] | 0.720 [0.701, 0.737] |
+| Muslim 2022 [Muslim et al. 2022] | 51 / 51 | ~20 centres, 1.5 T 2D (4.86–8.3 mm); in-plane pixel **estimated** | 1819 | 1540 (568) | 0.784 [0.741, 0.822] | 0.746 [0.710, 0.782] |
+| PediMS [Popa et al. 2025] | 28 / 9 (children) | Siemens 3 T 2D (3.9 mm) | 1104 | 1110 (321) | 0.801 [0.774, 0.864] | 0.698 [0.679, 0.768] |
+| SibBMS healthy controls [Tuchinov et al. 2025] (addendum) | 100 / 100 | one site; `Norm` images registered to an MNI-type 1-mm template (native geometry not verified) | 0 | 263 (263); fold 0: 306 (306) | — | — |
 
-### 4.1 Same-segmenter cross-site transport
+Native MSLesSeg geometry comes from the dataset's acquisition table
+(`info_dataset/patient_scanners_info/patient_scanners_info_FLAIR.csv`); throughout, "1-mm sites"
+means sites *delivered* on a 1-mm grid, of which only Ljubljana is natively thin. MS3SEG and Muslim
+were skull-stripped with HD-BET 2.0.1 (CPU, no TTA); PediMS is distributed
+stripped. Maps are on each scan's native grid for the thick-slice cohorts (voxels 2.2–6.5 mm³) and
+on the MNI 1-mm grid for MSLesSeg and Ljubljana. LST-AI v1.2.0 maps exist for MSLesSeg (114; one
+scan skipped for a blank T1) and all 30 Ljubljana scans. Expert masks: MS3SEG's MS-lesion class
+excludes periventricular hyperintensities its raters judged non-MS; Muslim's masks come from a
+sequential correction chain; PediMS has one rater validated by two specialists.
 
-Cross-site realized FDR (lenient matching), subject-bootstrap 95 % CI:
+### 3.2 Training-set overlap
 
-| α | method | openms → MSLesSeg: FDR [CI] · recall sel/e2e · % scans FDP>α | MSLesSeg → openms: FDR [CI] · recall sel/e2e · % scans FDP>α |
+**Table 2. Was the cohort part of the segmenter's training data?**
+
+| segmenter | Ljubljana (30) | MSLesSeg (115) | MS3SEG / Muslim / PediMS | SibBMS controls | ISBI-2015 (v0.2 only) |
+|---|---|---|---|---|---|
+| FLAMeS 5-fold ensemble | **contaminated 20/30** (01–15, 21–25); clean 16–20, 26–30 | clean (FLAMeS external test) | no known overlap (dataset descriptions; not forensically checked) | clean (FLAMeS Table 1 + weight fingerprint, §3.2) | contaminated |
+| LST-AI | clean (test-only in the LST-AI paper) | clean | not used | maps pending (addendum E1) | clean |
+
+*How the 20 were identified (v0.2).* The released FLAMeS weights contain nnU-Net's
+`dataset_fingerprint.json` (per-case spacing and brain bounding box of all 668 training cases).
+Twenty consecutive entries carry the Ljubljana spacing and match the bounding box of exactly one
+patient each, with zero voxels of disagreement on all three axes — patients 01–15 and 21–25. The
+training logs show that each fold trains on 4/5 of the cases, so only the ten never-trained scans
+are clean for the ensemble. They are excluded from every FLAMeS analysis, including calibration.
+(Details, scripts and the HTTP-range recipe: v0.2 records `2026-10-17_flames_*`.)
+
+*SibBMS controls (addendum).* FLAMeS's Table 1 [Dereskewicz et al. 2025] lists its 668 training
+scans by source (RADIEMS, NIH, LCL, MSSEG-1 centres 01/03/07/08, MSCog, ISBI-2015, PubMRI, NYU;
+people with MS only); the Zenodo card of the weights we use (v2.0) repeats "668 scans"; the weights'
+fingerprint has 668 entries, none with a crop near the SibBMS template grid or within 2 voxels of
+any control's brain box; and SibBMS was released (August 2025) after FLAMeS was submitted (May 2025).
+We treat the controls as clean.
+
+## 4. Methods (pre-registered)
+
+### 4.1 Candidates, expert lesions, matching
+
+Candidates are 18-connected components of {p ≥ 0.5} with physical volume ≥ 3 mm³ (v0.2's rule,
+with each scan's own voxel volume); expert lesions are 18-connected components of the mask with
+volume ≥ 3 mm³ (clinical: ≥ 14.14 mm³). A candidate is true if it is the Hungarian
+(maximum-IoU, one-to-one) match of an expert lesion (lenient IoU > 0; strict IoU ≥ 0.10 as
+sensitivity analysis); surplus fragments are false.
+
+### 4.2 Scores and arms
+
+*Ensemble arm (primary)*: candidates on the voxelwise mean of the five fold probabilities; score =
+mean ensemble probability over the candidate. *Secondary score*: S_cons = minimum over folds of
+the per-fold mean probability (fold-agreement score). *Fold-0 arm*: the v0.2 pipeline (fold 0
+alone); folds 1–4 likewise as context. *LST-AI arms*: ensemble and sub-model 1.
+
+### 4.3 Procedures
+
+- **P1, conformal BH (FDR).** Null = all false-candidate scores of the calibration patients;
+  p_j = (1 + #{null ≥ s_j}) / (n + 1); BH at α within each test scan. Guarantee E[FDP_scan] ≤ α
+  under candidate-level exchangeability.
+- **P2, scan-conformal FDX threshold.** For each calibration patient (first timepoint), the safe
+  threshold t_i is the smallest grid value above which the scan's FDP never exceeds γ; the
+  threshold is the ⌈(K+1)(1−δ)⌉-th smallest t_i (abstain if that exceeds K). Guarantee
+  P(FDP_test > γ) ≤ δ under exchangeability of calibration and test *patients*.
+- **Baselines (v0.2)**: B1 precision-matched global threshold (no guarantee); B2 conformal risk
+  control, per-scan FDP loss; B3 Learn-then-Test (Hoeffding–Bentkus, δ = 0.1). Weighted conformal
+  selection (features not comparable across anisotropic grids) and Lee–Ren e-values (no power at
+  our group sizes in v0.2) were not carried over — decided before results.
+
+Targets: α ∈ {0.1, 0.2} (0.3 secondary); γ ∈ {0.1, 0.2}, δ = 0.1.
+
+### 4.4 Calibration designs
+
+D1 within-site (patient-grouped 5-fold; leave-one-patient-out for Ljubljana-10 and PediMS-9);
+**D2 leave-one-site-out**; **D3 1-mm → thick** (calibrate on MSLesSeg + Ljubljana-10, test each
+thick-slice site); D3r the reverse; D4 pooled 5-fold over all sites; D5 recalibration curve (k
+target-site patients, k ∈ {1, 2, 3, 5, 10, 20, 40}, 200 draws, site-only or added to the 1-mm
+pool). Repeated timepoints of a patient are never split across calibration and test.
+
+### 4.5 Outcomes and statistics
+
+Primary: on held-out sites (D3: 3 thick sites; D2: 5 sites), realised FDR (mean per-scan FDP,
+FDP = 0 when nothing is selected) for P1 and realised FDX (share of test scans with FDP > γ) for P2
+— 32 cells — with 95 % patient-cluster bootstrap intervals (2000 resamples; FDX: union with the
+exact Clopper–Pearson interval). A cell is *violated* if the lower bound exceeds the nominal
+level, *holds* if the upper bound is ≤ nominal + 0.05, otherwise *inconclusive*; a non-violated
+cell with < 10 selections or end-to-end sensitivity < 0.05 is flagged as abstention. Bonferroni
+intervals (32 cells) and a two-level bootstrap (calibration and test patients resampled) are
+reported. Secondary: end-to-end lesion sensitivity at the guarantee; false detections on healthy
+controls (separately pre-registered addendum: share of 100 controls with ≥ 1 reported lesion, exact
+Clopper–Pearson intervals, same classification rule, primary = ensemble with 1-mm-site calibration,
+P1 α ∈ {0.1, 0.2}, P2 γ ∈ {0.1, 0.2}; the app's brain-DIS rule on raw and selected lesions); thickness bands (≤ 1.5, 3.9, 4.5–6.5, > 6.5 mm) with lesion-size bins; ensemble
+vs fold 0 (patient-paired bootstrap); recalibration size k*.
+
+## 5. Results
+
+### 5.1 Held-out sites, including 1-mm → thick-slice transport
+
+**Table 3. Primary cells (ensemble arm): realised value [95 % CI] → class; end-to-end sensitivity.**
+
+| design · site | P1 α = 0.1 | P1 α = 0.2 | P2 γ = 0.1 (vs δ = 0.1) | P2 γ = 0.2 |
+|---|---|---|---|---|
+| 1-mm → MS3SEG | 0.107 [0.074, 0.145] holds*; 0.26 | 0.123 [0.099, 0.151] holds; 0.40 | **0.21 [0.13, 0.30] violated**; 0.12 | 0.12 [0.06, 0.20] inconcl. |
+| 1-mm → Muslim | **0.122 [0.062, 0.197] inconcl.**; 0.10 | 0.097 [0.058, 0.146] holds; 0.23 | **0.29 [0.17, 0.44] violated**; 0.04 | **0.27 [0.16, 0.42] violated** |
+| 1-mm → PediMS | 0.041 [0.009, 0.102] holds; 0.12 | 0.086 [0.056, 0.122] holds; 0.33 | 0.07 [0.00, 0.24] inconcl.; 0.05 | 0.07 [0.00, 0.24] inconcl. |
+| LOSO MSLesSeg | 0.009 holds (abstention); 0.01 | 0.018 [0.004, 0.042] holds; 0.09 | 0.02 holds (abstention) | 0.03 holds (abstention) |
+| LOSO Ljubljana-10 | 0.000 holds (abstention); 0.01 | 0.011 [0.000, 0.033] holds; 0.12 | 0.00 [0, 0.31] inconcl. (abstention) | same |
+| LOSO MS3SEG | 0.087 [0.059, 0.121] holds; 0.20 | 0.116 [0.093, 0.142] holds; 0.38 | 0.16 [0.09, 0.25] inconcl.; 0.09 | 0.12 [0.06, 0.20] inconcl. |
+| LOSO Muslim | 0.082 [0.033, 0.137] holds (abstention); 0.03 | 0.100 [0.048, 0.163] holds; 0.14 | 0.18 [0.08, 0.31] inconcl. (abstention) | same |
+| LOSO PediMS | 0.007 [0.000, 0.022] holds; 0.06 | 0.050 [0.016, 0.093] holds; 0.16 | 0.00 [0, 0.12] holds (abstention) | same |
+
+\*point estimate above α, upper bound within the pre-registered +0.05 margin.
+
+**No P1 violation was detected — which is not the same as validity.** The pre-registered verdict
+for 1-mm → thick transport of P1 is *inconclusive*: Muslim at α = 0.1 is undecided; three of the 16
+P1 comparisons pass only through abstention (leave-one-site-out MSLesSeg, Ljubljana and Muslim at
+α = 0.1); Ljubljana (10 patients) and PediMS (9) are underpowered; and MS3SEG at α = 0.1 passes with
+a point estimate above α thanks to the pre-registered +0.05 margin. The two-level bootstrap
+(calibration patients re-drawn too) gives MS3SEG α = 0.1: 0.101 [0.070, 0.136]; Muslim: 0.104
+[0.042, 0.182].
+
+**The calibration does not transfer as such.** With within-site calibration the realised FDR at
+α = 0.1 is 0.041 (MS3SEG) and 0.038 (Muslim), close to **[post hoc]** α·π0 = 0.034 / 0.037 (π0 =
+share of false candidates), which is what conformal BH attains under exchangeability. With 1-mm
+calibration it is 2.6–3.2× higher. Exchangeability is broken; the average bound survives because
+many thick-slice scans are lesion-rich, so their false selections are diluted by true ones.
+**[post hoc]** On the third of MS3SEG + Muslim scans with ≥ 40 % false candidates (51 of 151),
+realised FDR at α = 0.1 is 0.196 [0.120, 0.282] with 1-mm calibration vs 0.050 [0.011, 0.103] with
+within-site calibration (≥ 50 % false candidates, 24 scans: 0.225 [0.101, 0.366]). The marginal
+guarantee is an average over a mixture of scans; for low-lesion-load thick-slice scans the 1-mm
+calibration does not deliver it.
+
+**P2 is refuted**: 21 % [13, 30] of MS3SEG scans (γ = 0.1) and 29 % [17, 44] / 27 % [16, 42] of
+Muslim scans (γ = 0.1 / 0.2) exceeded γ against a 10 % budget. Only Muslim γ = 0.1 remains violated
+after Bonferroni correction for the 32 primary comparisons ([0.12, 0.52]); with calibration patients
+re-drawn as well, the MS3SEG lower bound falls to 0.10, i.e. that violation is borderline. Strict matching and
+dropping the one PediMS patient with Baló's concentric sclerosis change no class. With the
+fold-consensus score S_cons every 1-mm → thick P1 cell holds (Muslim α = 0.1: 0.068 [0.026, 0.122])
+and no P2 cell is violated, at a modest power cost (sensitivity 0.30 vs 0.34 at α = 0.2) — a
+pre-specified sensitivity analysis, not the primary result.
+
+Among all procedures, only conformal BH had no violated 1-mm → thick cell: the precision-matched
+threshold B1 was violated on MS3SEG at α = 0.1 and 0.2 (0.164 [0.136, 0.196]; 0.230 [0.206, 0.255])
+and on Muslim at α = 0.1 (0.144 [0.107, 0.180]); conformal risk control B2 on Muslim at α = 0.1
+(0.180 [0.103, 0.265]).
+
+*Mechanism.* Thick-slice sites produce more very-confident false candidates: the false-score law
+differs from the 1-mm sites' (pre-registered scan-clustered permutation KS: MS3SEG D = 0.107,
+p = 0.0005; Muslim D = 0.094, p = 0.025; PediMS D = 0.057, p = 0.51), and **[post hoc]** the share
+of scans with a false candidate above the 1-mm-calibrated P2 threshold (0.965) is 24 % (MS3SEG) and
+29 % (Muslim) vs 6–10 % on the 1-mm sites — almost exactly the realised FDX. A single threshold carries that
+tail into exceedance; P1's expectation-level guarantee absorbs it with reduced slack. In the
+opposite direction, foreign calibration makes the 1-mm sites nearly silent (MSLesSeg, α = 0.1:
+sensitivity 0.010 vs 0.102 within-site).
+
+### 5.2 Slice thickness
+
+**Table 4. By thickness band (leave-one-site-out calibration, ensemble).**
+
+| band | scans / patients | P1 α = 0.2: realised FDR [CI] | scans with FDP > 0.1 | sensitivity [CI] | false / true lesions per scan | P2 γ = 0.1: FDX [CI] |
+|---|---|---|---:|---|---|---|
+| ≤ 1.5 mm grid (110 of 125 natively 2–5 mm) | 125 / 85 | 0.018 [0.004, 0.040] | 6 % | 0.094 [0.053, 0.141] | 0.13 / 3.0 | 0.016 [0.002, 0.057] (abstention) |
+| 3.9 mm | 28 / 9 | 0.050 [0.016, 0.093] | 14 % | 0.164 [0.042, 0.440] | 0.50 / 6.5 | 0.000 [0, 0.12] (abstention) |
+| 4.5–6.5 mm | 76 / 76 | 0.101 [0.063, 0.145] | 30 % | 0.236 [0.180, 0.298] | 0.88 / 7.9 | 0.158 [0.079, 0.260] |
+| > 6.5 mm | 75 / 75 | 0.120 [0.093, 0.152] | 49 % | 0.355 [0.310, 0.402] | 1.73 / 12.4 | 0.173 [0.093, 0.278] |
+
+The first band is not natively thin: 110 of its 125 scans (MSLesSeg) were acquired at 2–5 mm and
+resampled to 1 mm. **[post hoc]** Within MSLesSeg, raw detection of 14–50 mm³ lesions falls with
+native thickness (0.74 at 2–2.3 mm, 0.65 at 3 mm, 0.39 at 4–5 mm; 43 / 52 / 15 scans), a within-site
+gradient in detection, confounded with scanner and patient. No violation is detected in any band; across bands the slack shrinks and per-scan variability
+grows, and the pooled design gives the same ordering. **This gradient is confounded with site**:
+each band is one or two sites, and within a site it is small (MS3SEG 4.5–6.5 → > 6.5 mm: 0.103 →
+0.121; Muslim 0.099 → 0.102 with 6 scans above 6.5 mm; **[post hoc]** within MS3SEG, Spearman
+ρ = 0.03 between spacing and per-scan FDP). We therefore read Table 4 as a description of these
+sites, not as a thickness effect. Power at the guarantee is higher on the thick-slice sites, where
+**[post hoc]** expert lesions are larger (median 108–117 mm³ vs 68 mm³ on MSLesSeg), and the 1-mm
+band is penalised by the foreign null.
+
+**Table 5. Expert-lesion sensitivity by lesion volume** (raw segmentation / at P1 α = 0.2).
+
+| band | [3, 14) mm³ | [14, 50) | [50, 150) | [150, 500) | ≥ 500 | raw ≥ 80 % from | raw ≥ 50 % from |
+|---|---|---|---|---|---|---|---|
+| ≤ 1.5 mm grid | 0.36 / 0.02 | 0.72 / 0.04 | 0.81 / 0.09 | 0.87 / 0.20 | 0.90 / 0.21 | 50 mm³ | 14 mm³ |
+| 3.9 mm | 0.37 / 0.03 | 0.67 / 0.08 | 0.76 / 0.19 | 0.77 / 0.22 | 0.80 / 0.33 | not reached | 14 mm³ |
+| 4.5–6.5 mm | 0.13 / 0.00 | 0.45 / 0.10 | 0.59 / 0.23 | 0.66 / 0.30 | 0.76 / 0.38 | not reached | 50 mm³ |
+| > 6.5 mm | 0.21 / 0.06 | 0.43 / 0.10 | 0.69 / 0.32 | 0.72 / 0.48 | 0.70 / 0.56 | not reached | 50 mm³ |
+
+On 2D slices of 4.5 mm or more, lesions ≥ 50 mm³ (≈ 4.6 mm across) are found 59–76 % of the time
+depending on size, lesions of 14–50 mm³ 43–45 %, and no size is found 80 % of the time (1-mm scans:
+80 % from 50 mm³). At the guarantee, sensitivity exceeds 50 % only for
+lesions ≥ 500 mm³ on > 6.5 mm slices. Muslim's estimated pixel size moves its own 50 %-detection
+size between 50 and 150 mm³ (volumes × 0.9 / × 1.1).
+
+### 5.3 The 5-fold ensemble vs a single fold
+
+Every single fold scores candidates with AUROC 0.67–0.76; the ensemble mean, 0.78–0.82 at every
+site (Table 1); fold disagreement alone reaches 0.77–0.81. At the guarantee (P1, α = 0.2) the
+ensemble's end-to-end sensitivity is twice fold 0's — leave-one-site-out 0.203 vs 0.102
+(Δ +0.10 [0.07, 0.13]); 1-mm → thick 0.341 vs 0.194 (Δ +0.15 [0.12, 0.18]); within-site 0.219 vs
+0.078 — with lower pooled realised FDR (1-mm → thick 0.110 vs 0.178, Δ −0.068 [−0.098, −0.037]).
+At α = 0.1 the gain is much smaller: leave-one-site-out sensitivity 0.053 → 0.082 (Δ +0.028
+[0.016, 0.042], about 3 points). **Validity is not uniformly better.** With fold 0 alone — the v0.2
+pipeline — MS3SEG is violated (1-mm → thick α = 0.1: 0.201 [0.166, 0.242]; leave-one-site-out
+α = 0.1: 0.176 [0.139, 0.216]; every MS3SEG P2 cell, FDX 0.39–0.62), and the ensemble removes these
+violations; but on Muslim the ensemble **raises** realised FDR (1-mm → thick α = 0.1: 0.122 vs 0.051,
+Δ +0.070 [0.012, 0.143]; leave-one-site-out α = 0.2: 0.100 vs 0.044) and creates two new violated
+cells (P2), where fold 0 selected almost nothing (sensitivity 0.002–0.035). Folds 1–4 behave like
+fold 0, so the gain comes from averaging, not from a bad fold. Pre-registered verdict: "helps on
+power, but with new violated cells" — a power improvement, not a validity fix. **[post hoc]** The
+share of false candidates scoring ≥ 0.95 falls from 16–32 % (fold 0) to 3–6 % (ensemble). With LST-AI the ensemble does not rank better than its first sub-model (AUROC 0.737
+vs 0.758 on MSLesSeg) but produces far fewer false candidates (precision 0.45 vs 0.25), so its
+sensitivity at the guarantee is again higher (0.10 vs 0.02).
+
+### 5.4 Per-site recalibration
+
+Within-site calibration kept P1 well below α at every site (α = 0.2: realised 0.034–0.075) with
+sensitivity 0.14–0.31; P2's FDX was 0.08–0.10 (PediMS abstains: 8 calibration patients < 9).
+On the recalibration curve, site-only P1 stays below α at every k and reaches ~90 % of the full
+within-site power with 10 patients (MS3SEG α = 0.2: realised 0.069, sensitivity 0.183 vs 0.198;
+Muslim 0.053, 0.150 vs 0.163); 2 patients suffice on the small sites (PediMS, Ljubljana). P2
+needs ≥ 9 site patients to select at all; with 10 its exceedance is back within budget (MS3SEG FDX
+0.075, Muslim 0.092) **but it then finds 3.8 % (MS3SEG) and 0.6 % (Muslim) of lesions** — validity
+restored by near-abstention, not a usable per-scan detector. Adding site patients to the
+85-patient 1-mm pool never restored P2 (MS3SEG 0.16–0.20, Muslim 0.20–0.28 for k ≤ 40) and kept P1
+at α = 0.1 on the edge (MS3SEG 0.10–0.11 with k ≤ 10): the foreign pool dominates the quantile.
+
+### 5.5 Healthy controls (100 SibBMS controls; separately pre-registered addendum)
+
+On a lesion-free scan every candidate is false, FDP = 1{≥ 1 reported lesion}, and the FDR promise of
+conformal BH becomes "P(a healthy scan gets ≥ 1 reported lesion) ≤ α" — if healthy candidates are
+exchangeable with the patients' false candidates; P2's becomes "≤ δ = 0.1". The addendum
+(`PROTOCOL-v0.3-addendum-controls.md`, committed before any control outcome) fixed the calibrations
+from patient data, the primary cells (ensemble, 1-mm-site calibration, P1 α = 0.1 / 0.2, P2
+γ = 0.1 / 0.2) and the classification rule (§4.5) on 100 distinct controls with exact intervals. An
+independent re-implementation (own decoding, labelling, p-values, BH) reproduced every count.
+
+**Table 6. Healthy controls (of 100) with ≥ 1 reported lesion [exact 95 % CI, %] → class.**
+
+| arm · calibration | P1 α = 0.1 | P1 α = 0.2 | P2 γ = 0.1 (= 0.2) |
 |---|---|---|---|
-| 0.30 | conformal BH | 0.182 [0.142, 0.219] · 0.30/0.23 · 13.9 % | 0.160 [0.099, 0.210] · 0.07/0.05 · 3.3 % |
-| 0.30 | weighted conformal | 0.146 [0.103, 0.182] · 0.14/0.11 · 8.7 % | 0.142 [0.081, 0.205] · 0.10/0.07 · 6.7 % |
-| 0.30 | precision-matched threshold | **0.349** [0.309, 0.388] · 1.00/0.75 · 59.1 % | 0.167 [0.143, 0.197] · 0.90/0.59 · 13.3 % |
-| 0.20 | conformal BH | 0.161 [0.120, 0.201] · 0.18/0.14 · 16.5 % | 0.089 [0.020, 0.140] · 0.04/0.02 · 3.3 % |
-| 0.20 | weighted conformal | 0.125 [0.080, 0.172] · 0.07/0.05 · 9.6 % | 0.139 [0.088, 0.183] · 0.05/0.03 · 6.7 % |
-| 0.20 | precision-matched threshold | **0.349** [0.309, 0.389] · 1.00/0.75 · 80.9 % | 0.128 [0.100, 0.160] · 0.49/0.32 · 30.0 % |
-| 0.10 | conformal BH | 0.093 [0.050, 0.141] · 0.07/0.05 · 9.6 % | 0.051 [0.000, 0.118] · 0.02/0.01 · 6.7 % |
-| 0.10 | weighted conformal | **0.174** [0.088, 0.275] · 0.03/0.02 · 8.7 % | 0.065 [0.000, 0.125] · 0.02/0.01 · 10.0 % |
-| 0.10 | precision-matched threshold | **0.147** [0.108, 0.184] · 0.11/0.08 · 30.4 % | 0.000 (nothing selected) |
+| **ensemble · 1-mm sites (primary)** | **14 [7.9, 22.4] inconclusive** | **24 [16.0, 33.6] inconclusive** | **6 [2.2, 12.6] holds** |
+| ensemble · all five patient sites | 5 [1.6, 11.3] holds | 19 [11.8, 28.1] inconclusive | 2 [0.2, 7.0] holds |
+| ensemble · own null (leave-one-control-out) | 4 [1.1, 9.9] | 13 [7.1, 21.2] | — |
+| fold 0 · 1-mm sites | 59 [48.7, 68.7] **violated** | 72 [62.1, 80.5] **violated** | 32 [23.0, 42.1] **violated** |
+| no selection | ensemble: 85 [76.5, 91.4] with ≥ 1 candidate (2.63 per scan); fold 0: 93 (3.06 per scan) | | |
 
-Conformal BH keeps the realized FDR at or below α in every cross-site cell. A global threshold tuned
-to the calibration site's precision does not transport (it is stuck at FDR 0.35 on MSLesSeg for
-every target, or selects nothing), and weighted conformal selection — a marginal approximation with
-estimated density ratios fitted transductively — overshoots at α = 0.10 (0.174). The conclusions are
-unchanged under the strict IoU ≥ 0.10 criterion.
+With the calibration a deployer would use for 1-mm-grid studies, the promise on healthy brains is
+**undecided**: both P1 point estimates exceed α (14 % vs 10 %, 24 % vs 20 %), and on the 70 controls
+never analysed before the α = 0.1 cell alone is violated (13/70, 18.6 % [10.3, 29.7]; the 30 seen
+before: 1/30). The per-scan threshold P2 holds (6 %), but it is the procedure that finds 0.1–12 % of
+patients' lesions. Pools including thick-slice patients give fewer healthy false alarms (all sites:
+5/100 at α = 0.1), because their false-candidate score tail is heavier; **[post hoc]** the controls'
+candidates have a tail like the thick-slice null (share ≥ 0.95: 5.7 % vs 2.7 % for the 1-mm null),
+so exchangeability with the 1-mm null is doubtful here too. **A single fold fails on healthy brains**
+(59/100 at α = 0.1; ensemble − fold 0: −45 points [−55, −35]); Learn-then-Test at α = 0.2 is violated
+with every pool (29–32/100).
 
-**Why it transports.** A scan-clustered permutation test (relabelling whole scans between sites,
-2000 permutations) finds the two sites' false-candidate score laws indistinguishable (KS-D = 0.048,
-p = 0.71). A naive candidate-level KS test reports p ≈ 5·10⁻⁴; it is invalid under within-scan
-clustering, and under a lenient many-to-one matching it also mislabels over-segmentation fragments
-as true, inflating the apparent shift (D = 0.15).
+**The app's dissemination-in-space rule.** Our application's brain-DIS code (MSMask atlas zones,
+MAGNIMS contact rule, ≥ 2 of periventricular / juxtacortical / infratentorial; spinal cord and optic
+nerve not available) runs on these MNI-grid images. Applied to the **unselected** automatic
+segmentation it is met in **19/100 healthy controls (11.8–28.1 %; fold 0: 22/100)**; 79/100 have an
+automatic lesion in a DIS region. After selection: 2/100 (P1 α = 0.1), 3/100 (α = 0.2), 0/100 (P2;
+one-sided 95 % bound 3.0 %). The false lesions are not skull-strip artefacts (2/263 within 3 mm of
+the mask edge): 63 % are periventricular, median 27 mm³; **[post hoc]** on visual review the
+top-scoring ones look like normal periventricular caps and small focal white-matter
+hyperintensities. These controls were not read by an expert, so some may be genuine incidental
+hyperintensities; one site, template-normalised images (effect on difficulty unknown in sign),
+non-commercial licence.
 
-### 4.2 Marginal is not per-scan
+### 5.6 Paired segmenter shift (same MSLesSeg images)
 
-Even where micro-FDR ≤ α, 3–17 % of scans exceed α (table above). An empirically calibrated per-scan
-operating point — the largest α whose own-site leave-one-subject-out exceedance P(FDP > 0.2) is
-≤ 0.1 — transfers from MSLesSeg (α* = 0.14; achieved exceedance on openms 0.00) but not from
-openms to MSLesSeg (α* = 0.22; achieved 0.217). Marginal transport does not imply per-scan
-transport; per-scan control calibrated on a homogeneous site fails on a heterogeneous one.
+With calibration and test patients disjoint (5-fold), FLAMeS-calibrated selection on LST-AI
+candidates selected nothing (power collapse, as in v0.2 with ISBI). The reverse — LST-AI
+calibration, FLAMeS candidates — **violated the guarantee**: realised FDR 0.207 [0.175, 0.240] at
+α = 0.1 and 0.236 [0.203, 0.268] at α = 0.2, with 78 % of scans above FDP 0.1. Within-segmenter
+calibration was valid for both (FLAMeS 0.019 / 0.052; LST-AI 0.053 / 0.095). Because the images,
+patients and expert masks are identical, this isolates the segmenter. The failure was **expected**
+— the two segmenters' scores live on different scales (mean false-candidate score 0.65 vs 0.76) —
+and was tested on one site only; it illustrates the deployment rule (calibrate with the deployed
+segmenter version) rather than adding a finding.
 
-### 4.3 Population shift: specificity on healthy controls
+## 6. Per-scan region certificates (v0.2 analysis; not re-run on the new sites)
 
-On healthy controls every selection is false, so we report false detections per 100 acquired scans
-(all 30 scans in the denominator) against the controls' own leave-one-subject-out null — the
-exchangeable floor, which is non-zero because a valid conformal null still fires at roughly its
-nominal rate:
+v0.2 measured a scan-level random effect in false-candidate scores (ICC 0.094 on MSLesSeg with
+fold 0; reproduced in v0.3: 0.095; with the ensemble 0.104) and proposed a two-layer per-scan
+procedure: an exact lattice-path envelope under the conformal rank law (Layer 1, valid only under
+candidate-level exchangeability, which the scan effect breaks) and split-conformal calibration of
+the simultaneous event across scans (Layer 2), which yields certificates such as **certified
+dissemination in space** with P(false certificate) ≤ δ. On v0.2's data the simultaneous curve was
+violated in 4.1 % of draws on MSLesSeg [1.3, 7.6] and 5.0 % on healthy controls [0, 12] against
+δ = 10 %, at the cost of 92–100 % abstention and lesion-level power ≤ 0.02. (v0.2 also reported that
+no healthy control was certified as DIS, 0/30 distinct scans; that 30-scan, fold-0 statement is
+superseded by §5.5: on 100 distinct controls the application's brain-DIS rule is met by the
+unselected segmentation in 19/100 and after conformal selection in 0–3/100.) Those results come
+from fold-0 maps; §5.3 suggests the ensemble would raise power, and §5.1 that thick-slice sites
+need their own calibration. Re-running Layer 2 on the ensemble and the new sites is future work.
+(Full v0.2 text, tables and synthetic study: v0.2 of this file, commit 87e998d.)
 
-| α | own-null floor | openms null | MSLesSeg null | pooled patient null |
-|---|---:|---:|---:|---:|
-| 0.30 | 26.7 | 203.3 | 183.3 | 186.7 |
-| 0.20 | 20.0 | 173.3 | 136.7 | 140.0 |
-| 0.10 | 10.0 | 120.0 | 86.7 | 90.0 |
+## 7. Discussion
 
-A patient-calibrated null produces 7–13× the floor: about one to two false "lesions" per healthy
-scan. Control false candidates score higher (mean 0.94) than patient false candidates (0.86–0.88).
+### 7.1 What a deployer can rely on
+- **Average false-lesion control (P1) on unseen sites**: no violation was detected, but that is
+  all. On thick-slice sites, 1-mm calibration gives 2.6–3.2× the within-site realised FDR, one site
+  is undecided at α = 0.1, and **[post hoc]** low-lesion-load thick-slice scans see about twice the
+  promised rate at α = 0.1. A deployer should calibrate with patients from the same site — or at
+  least the same acquisition type — before relying on the dial for thick-slice studies.
+- **Per-scan promises (P2) do not transport** from thin to thick slices; with ≥ 10 local patients
+  they are valid again but find only 1–4 % of lesions — in practice, abstention.
+- **Ensemble the segmenter** for power (twice the sensitivity at α = 0.2); do not expect it to fix
+  validity — it fixed one site and made another worse.
+- **Calibrate with the deployed segmenter version** (a different segmenter's calibration roughly
+  doubled the false-discovery rate on the same images — an expected, scale-driven failure).
+- **Detection itself is limited on thick slices**: on 4.5–8.3 mm slices, lesions ≥ 50 mm³ are found
+  59–76 % of the time and smaller ones less than half the time, before any selection.
+- **Healthy brains are not covered by the patient calibration.** With 1-mm-site calibration the
+  healthy false-alarm rate was undecided and above α (14/100 at α = 0.1, 24/100 at α = 0.2); a single
+  fold flagged most healthy brains; the unselected segmentation marked a lesion in 85/100 and met a
+  brain-DIS rule in 19/100. Screening or "rule-out" use is not supported, and DIS must never be
+  computed from an unreviewed automatic segmentation.
 
-### 4.4 Segmenter shift
+### 7.2 The cost
+At the guarantee, end-to-end lesion sensitivity is 0.01–0.40 (P1) and 0.001–0.12 (P2). Better
+scores move this frontier: the ensemble's AUROC gain doubled power without touching the
+wrapper.
 
-A FLAMeS-calibrated null applied to LST-AI-segmented ISBI selects nothing at any α: LST-AI scores
-lie lower (false 0.75, true 0.81), so no candidate clears the FLAMeS null. This is a collapse of
-power, the FDR-safe direction. ISBI confounds segmenter, acquisition and population, so we do not
-attribute the effect to the segmenter alone.
+### 7.3 Claims we retracted or changed (negative-results record)
+From v0.2 (changed by v0.3):
+1. *"Lesion-level AUROC 0.70–0.75 on the clean cohorts; the score is the bottleneck."* True for a
+   single fold; the 5-fold ensemble scores 0.78–0.82. The bottleneck was partly self-inflicted by
+   running one fold.
+2. *"A segmenter change collapses power — the FDR-safe direction."* Half the story: on the same
+   images the reverse direction violates the guarantee (§5.6).
+3. *"Marginal lesion-FDR control is reliable within a site and consistent with transport."* With
+   fold 0, transport to MS3SEG is violated (§5.3); with the ensemble no violation is detected there.
+From the first v0.3 text (same day, corrected after an independent re-implementation):
+4. *"The guarantee held in every held-out cell."* → no violation was detected; one site undecided,
+   three cells pass by abstention, two sites underpowered, and 1-mm calibration gives 2.6–3.2× the
+   within-site FDR on thick slices.
+5. *"Same conclusions"* under the two-level bootstrap → the MS3SEG per-scan violation becomes
+   borderline (lower bound 0.10) when calibration patients are re-drawn.
+6. *"Validity and power change with slice thickness"* → the cross-band gradient is confounded with
+   site; within sites it is small.
+7. *"The ensemble restores validity"* → it removes the MS3SEG violations but raises FDR on Muslim
+   and adds two violated cells; its gain at α = 0.1 is about 3 points.
+8. *"Recalibration with 10 local patients restores the per-scan guarantee"* → it does, by finding
+   0.6–3.8 % of lesions. And the segmenter-swap failure is an expected scale effect, not a
+   discovery.
+From the healthy-control addendum (2026-10-24):
+9. *"No healthy control was certified as DIS (0/30; ≤ 9.5 %)"* (v0.2, Layer-2 certificates, fold 0)
+   and v0.1's *"0/200, CI ≤ 1.8 %"* are withdrawn as current evidence. On 100 distinct controls the
+   app's brain-DIS rule is met in 19/100 without selection and 0–3/100 after selection (§5.5); the
+   Layer-2 certificate was not re-run.
+10. *"Pooling heterogeneous sites more than halves false detections on healthy brains"* (first v0.3
+   text, fold 0, 30 controls) — the direction holds with 100 controls and the ensemble (1-mm pool
+   14/100 vs all-site pool 5/100 at α = 0.1), but neither pool's healthy false-alarm rate is
+   established as ≤ α at both levels.
+From v0.1 (corrected in v0.2, still valid): the training-set contamination of Ljubljana (20/30);
+the healthy-control interval (1.8 % → 9.5 %, now replaced by 100 distinct controls, item 9); repeated splits counted as independent scans;
+"7–13× the floor"; "candidate AUC 0.75–0.82" without a source; "conformal outperforms a
+precision-matched threshold" (direction-dependent in v0.2; in v0.3 the threshold is violated on
+thick-slice sites); the "transport, p = 0.71" claim; "44–95 % of scans exceed α"; "conformal breaks
+across MS site shift" (refuted by our own same-segmenter axis).
 
-### 4.5 Scan clustering
+### 7.4 Limitations
+- One segmenter family (FLAMeS) for the multi-site results; LST-AI only on the 1-mm cohorts.
+- **Contamination**: the 20 FLAMeS-trained Ljubljana scans are excluded everywhere; the clean
+  Ljubljana set has 10 scans. Overlap of MS3SEG, Muslim and PediMS with FLAMeS training is excluded
+  only by the dataset descriptions, not forensically.
+- **Muslim's in-plane pixel size is estimated** (±5 % per axis, ±10 % in volume); it moves Muslim's
+  size thresholds (50 vs 150 mm³). Muslim also mixes ~20 centres and sequential annotation.
+- **PediMS: 9 children** (28 scans); bootstrap intervals with 9–10 patient clusters (PediMS,
+  Ljubljana) under-cover; within-site P2 is impossible there.
+- **Healthy controls: one site, one dataset (SibBMS), template-normalised images** (MNI-type 1-mm
+  grid, brains ≈ 2.0 L), native acquisition and ages not verified; "lesion-free" is an assumption
+  about volunteers, not an expert read; licence CC BY-NC-SA 3.0 (research only); 30 of the 100 had
+  been analysed with fold 0 before the addendum (that arm not blind). The LST-AI arm on controls is
+  pending.
+- Site, thickness, scanner, population and annotation protocol are confounded; MS3SEG's protocol
+  counts FLAMeS hits on "normal" periventricular hyperintensities as false.
+- **MSLesSeg is not natively 1 mm**: acquired at 2–5 mm and resampled to MNI 1 mm (dataset
+  acquisition table), so the "1-mm" band mixes 10 natively thin and 110 resampled scans, which
+  further confounds the thickness comparison. (v0.3's first text wrongly called the native geometry
+  unpublished.)
+- 3D components on 4–8 mm slices can merge or split lesions; lesion counts across grids are not
+  comparable.
+- The "holds" rule tolerates realised values up to α + 0.05 at the CI upper bound; "holds" means
+  "no violation detected", not proof.
+- **A 3-case thick-slice pilot (2026-10-18; one scan per thick-slice cohort, fold 0) preceded the
+  protocol**; its maps are among the inputs; disclosed in protocol §13 entry 7.
+- Several explanatory analyses are post hoc (marked); the low-lesion-load analysis was added after
+  an independent review of the first v0.3 text.
+- Region certificates (§6) were not re-evaluated on the new data.
 
-Grouping false candidates by scan (one-to-one labels), the intraclass correlation of their scores is
-0.078 (openms, 28 scans, 460 false) and 0.094 (MSLesSeg, 112 scans, 1346 false); the between-scan
-variance is 2.2× and 2.05× its value under exchangeable reshuffling (permutation p = 0.0002 in both).
-Candidates of one scan are therefore not exchangeable draws from the pooled false-candidate law —
-the assumption under which the joint law of conformal p-values, and every simultaneous FDP bound
-built on it, is exact.
-
-## 5. Per-scan false-discovery exceedance control under scan clustering
-
-A radiologist reads one scan. The target is therefore false-discovery *exceedance* control per scan,
-P(FDP_scan > γ) ≤ δ, and — since clinical decisions are made per anatomical area — simultaneous
-lower bounds on the number of true lesions in any region, with **certified dissemination in space**
-as the clinically meaningful consequence.
-
-### 5.1 Layer 1: an exact envelope under the conformal rank law
-
-For a scan with m candidates, write k_j = (n+1)p_j ∈ {1,…,n+1} for the conformal ranks and let
-V_k (R_k) be the number of false (all) candidates with rank ≤ k. If the calibration false scores
-and the scan's m₀ false scores are jointly exchangeable (assumption A1), (V_1,…,V_{n+1}) follows a
-universal law P_{n,m₀}: all C(n+m₀, m₀) interleavings of calibration and false test scores are
-equally likely [Gazin, Blanchard & Roquain 2024]; the true candidates never enter a false
-candidate's p-value. We fix a non-decreasing integer envelope G^{(r)} per candidate null count r —
-a truncated higher-criticism shape G_k = min{r, max_{l≤k} ⌊r t_l + λ √(r t_l(1−t_l)(1+r/n))⌋} on
-t_k = k/(n+1) ≤ 0.5 (pre-registered on synthetic data only; a Simes-type template and an
-HC∧Simes hybrid are reported as secondary) — and choose λ as the smallest value whose **exact**
-crossing probability P_{n,r}(∃k: V_k > G_k) is ≤ δ. The crossing probability is computed exactly by
-a dynamic program over the anti-diagonals of the lattice path (state = calibration and test points
-consumed; a state is killed when the tests seen before the (i+1)-th calibration point exceed
-G_{i+1}); it matches brute-force enumeration of all interleavings to 10⁻¹² and carries no Monte
-Carlo error. Unknown m₀ is handled by the completion coupling (adding null test points can only
-increase V) and an m₀-adaptive closure over a geometric grid of r, and the bound is self-refined
-[Song, Jin & Candès 2026; Blanchard, Neuvial & Roquain 2020]. On the single event
-E = {V_k ≤ G^{(r*)}_k ∀k} (probability ≥ 1−δ) this yields B*_k ≥ V_k for all k at once, so the
-selection "largest k with B*_k ≤ γR_k" has FDP ≤ γ, and — by interpolation — for **any** subset S
-of candidates, #false(S) ≤ min_k(|S ∩ {rank > k}| + B*_k).
-
-A closed-form alternative is not available: the Katsevich–Ramdas constant, derived under
-independence, crosses its envelope with probability 0.118–0.136 > δ = 0.1 under the conformal
-dependence (exact computation; a regression test pins this).
-
-### 5.2 Layer 1 is not valid on MS data
-
-A1 is a statement about candidates, and it is false for MS MRI: false-candidate scores share a
-scan-level component (ICC 0.08–0.09, §4.5; exact permutation tests of cross-scan exchangeability
-reject at every site). In the tight regime (few false candidates, strong signal) Layer 1 has no slack,
-and a scan random effect of the measured size pushes realized FDX above δ [§5.4, synthetic study].
-We therefore report Layer 1 on real data as **empirical only**.
-
-### 5.3 Layer 2: scan-level calibration on the simultaneous event
-
-We index a nested family by an integer inflation c ≥ 0 added to every envelope (B* is
-non-decreasing in c, so selections shrink and bounds loosen as c grows). For each of K labelled
-subjects (one random scan each) we compute the smallest c such that the scan's true null counts
-satisfy V_k ≤ B*_k(c) for **all** k — the simultaneous event, not merely the FDP of one selection —
-and set ĉ to the ⌈(K+1)(1−δ)⌉-th smallest value (abstain if that index exceeds K). If the K labelled
-subjects and the test subject are exchangeable given the calibration pool, the split-conformal
-quantile lemma gives P(the test scan's curve is violated at ĉ) ≤ δ, which covers the selected set,
-any post-hoc threshold, and every region certificate at once [cf. Dunn, Wasserman & Ramdas 2023].
-Candidate-level exchangeability is no longer required. The pool may come from another site: only
-the labelled and test subjects must be exchangeable. (Calibrating Layer 2 on the selected set's FDP
-alone — an earlier design — covers only that selection and not the region certificates.)
-
-### 5.4 Certified dissemination in space
-
-Each candidate is assigned a MAGNIMS area with the application's own atlas-based zone map (LST-AI
-MSMask, periventricular / juxtacortical / infratentorial / deep white matter; per-lesion cascade
-IT > PV > JC, else DWM). For the brain McDonald areas a ∈ {PV, JC, IT}, the certified true-lesion
-count is L_a = |S_a| − min(|S_a|, min_k(|S_a ∩ {rank > k}| + B*_k)). DIS is **certified** when
-L_a ≥ 1 in at least two areas; on the good event every certified area truly contains a true lesion,
-so P(a certified DIS is false) ≤ δ. We compare with DIS read off the raw segmentation and off the
-BH-selected candidates, on patients and — decisively — on healthy controls, where every DIS call is
-false.
-
-### 5.5 Pre-registration
-
-Template, γ = 0.2, δ = 0.1, grids, labels and splits were fixed and committed to version control
-before the real-data run (commit c47c88d). One amendment (v2) was made before any Layer-2 real-data
-output was observed, after the adversarial validity review: Layer 2 moved to the simultaneous event
-and to pools from other sources; Layer 1 was demoted to empirical. The amendment and its reasons
-are recorded verbatim in the evaluation script.
-
-### 5.6 Results
-
-**Synthetic worlds** (`synthetic_icc_study.py`; 1500 worlds per cell; K = 29 labelled scans; γ = 0.2,
-δ = 0.1; pool of clustered scans with the same marginal score law as the test scan — only the scan
-random effect varies). Entries: probability that the simultaneous curve is violated (the event every
-certificate relies on), with power in brackets.
-
-| regime | ICC | Layer 1 (candidate-level) | Layer 2 (scan-level) |
-|---|---:|---:|---:|
-| MSLesSeg-like (n = 1160, m₀≈8, m₁≈19) | 0.00 | 0.083 (0.97) | 0.051 (0.95) |
-| | 0.09 | 0.097 (0.94) | 0.049 (0.89) |
-| | 0.23 | 0.104 (0.86) | 0.054 (0.75) |
-| | 0.50 | **0.165** (0.65) | 0.075 (0.42) |
-| few false candidates (m₀≈2, m₁≈6) | 0.00 | 0.115* (1.00) | 0.050 (0.89) |
-| | 0.50 | 0.103 (0.87) | 0.048 (0.67) |
-| openms-like (n = 210, m₀≈5, m₁≈10) | 0.00 | 0.079 (0.93) | 0.037 (0.85) |
-| | 0.23 | 0.111 (0.81) | 0.050 (0.63) |
-| | 0.50 | **0.145** (0.62) | 0.071 (0.37) |
-
-Layer 1 breaks as the scan random effect grows (bold: exceeds δ by > 2 SE); Layer 2 holds in every cell
-(0.031–0.075) at a power cost that grows with the ICC. *The 0.115 under A1 is Monte Carlo noise: a
-20 000-world rerun of that cell gives 0.1019 ± 0.0021 against the exact prediction 0.0997, matching the
-exact crossing probability for every m₀ and never violating the proof invariant — in this regime the
-bound is attained, as theory predicts. With a strong synthetic signal (μ = 3–4) power is high; on real
-data it is not (below).
-
-**Real data** (pre-registered, commits c47c88d/3e27ee9; results 22d455b). Candidate-level
-exchangeability is rejected at both patient sites (Kruskal–Wallis of false scores across scans,
-permutation p = 0.0005 at openms and MSLesSeg). Primary template (HC), Layer 2 on the simultaneous
-event, 20 random subject splits per site (one scan per subject; γ = 0.2, δ = 0.1):
-
-| cohort (pool → labelled K / test) | curve violated | scans FDP > γ | false certified DIS | certified DIS on true-DIS scans | power | abstention |
-|---|---:|---:|---:|---:|---:|---:|
-| openms (MSLesSeg pool → 20 / 10) | 15/200 (7.5 %) | 0/200 | **0/200** | 13/200 | 0.011 | 81.5 % |
-| MSLesSeg (35-subject pool → 29 / 11) | 9/220 (4.1 %) | 1/220 | **0/220** | 11/195 | 0.022 | 91.8 % |
-| MSLesSeg, PAC (device) quantile | 3/220 | 0/220 | 0/220 | 1/195 | 0.003 | 99.1 % |
-| healthy controls (patient pool → 20 / 10) | 6/200 (3.0 %) | 0/200 | **0/200 [0, 1.8 %]** | — | — | 100 % |
-
-On the same healthy-control test scans, reading DIS off the raw segmentation met the brain pattern
-(≥ 1 candidate in ≥ 2 of PV/JC/IT) in **40/200** scans and off the BH-selected candidates in **17/200**;
-per-scan BH at γ exceeded FDP > γ on 151/200. Layer 1 with a patient-calibrated null on controls — the
-population-shift case — exceeded FDP > γ on 18/30 scans and wrongly certified an area on 16/30; Layer 2
-repairs it. The secondary (hybrid) template is also valid (Layer-2 curve violation ≤ 7.5 %) but less
-powerful.
-
-**The honest cost.** Certified DIS was reached in only ~6 % of patient scans that truly meet the
-pattern, and lesion-level power is 0.01–0.02. The guarantee is bought with abstention: at the score
-quality of the FLAMeS mean probability (candidate AUC ≈ 0.73; the top-ranked candidate is false in 16.5 %
-of MSLesSeg scans) no valid per-scan rule can select much. The envelope is not the bottleneck — the
-score is. With a strong score (synthetic μ = 3) the same Layer-2 procedure keeps 0.37–0.95 power.
-
-## 6. Discussion
-
-### 6.1 What a deployer can rely on
-Within a site and a segmenter, marginal lesion-FDR control is reliable and transports to a similar
-site. Per-scan control — what a clinician reading one scan needs — requires calibrating at the level of
-the scan: candidate-level guarantees assume away a scan random effect that is present in MS MRI. With
-scan-level calibration, the certificate a deployer can rely on is one-sided and strong: a *certified*
-DIS or region count is wrong with probability ≤ δ, including on healthy subjects, where uncertified
-readings of the same segmentation call DIS in one scan in five. It is not a detector: most scans receive
-no certificate. Calibration must be redone with labelled subjects from the target population when the
-population (e.g. screening of healthy subjects) or the segmenter changes; with the segmenter the failure
-mode is silence (no selections), not false reassurance.
-
-### 6.2 The cost: recall
-At the score quality of current models (candidate-level AUC ≈ 0.75–0.82), guaranteed precision is
-bought with low lesion-level recall (≤ 0.30 end-to-end at α = 0.3, ≈ 0.01–0.05 at α = 0.1). The
-guarantee makes the trade-off explicit; it does not remove it. Better scores, not better conformal
-wrappers, move this frontier.
-
-### 6.3 Claims we retracted (negative-results record)
-1. *"Conformal lesion-FDR breaks across MS site shift."* Refuted by our own clean axis (§4.1).
-2. *"The guarantee transports despite non-exchangeability."* The non-exchangeability was an artifact
-   of a candidate-level KS test and many-to-one matching; at the scan level the laws are
-   exchangeable (§4.1).
-3. *"44–95 % of scans exceed α."* An exceedance denominator restricted to scans that selected
-   something; over all scans the figure is 3–17 % (§4.2).
-Each retraction came from an independent adversarial review of code and claims and is pinned by a
-regression test.
-
-### 6.4 Limitations
-Two same-segmenter patient cohorts is a small number of acquisition-shift sites; a self-trained
-single segmenter applied to further held-out cohorts is the planned extension. Healthy-control and
-ISBI provenance/licensing must be confirmed for publication. The per-scan guarantee of §5 is marginal
-over the calibration draw, not conditional on one calibration set.
+**TODO before submission.** (1) Healthy controls from a second site, ideally natively acquired
+and expert-read; the LST-AI control arm (addendum E1, maps being computed); clarify the SibBMS
+licence (CC BY 3.0 vs CC BY-NC-SA 3.0) with its authors. (2) A second site per thickness band; MSSEG-2 / MICCAI-2008 if obtainable. (3) Layer 2 on
+the ensemble and the new sites. (4) Mondrian (per-band) calibration as a pre-registered remedy.
+(5) Verify citations marked *verify*.
 
 ## Reproducibility
 
 | result | script | record |
 |---|---|---|
-| §4.1 (any-voxel), §4.3, §4.4 | `scripts/calm-ms/multisite_conformal_fdr.py` | `backend/app/services/assets/multisite_conformal_record.json` |
-| §4.1 (one-to-one), §4.2, permutation test | `scripts/calm-ms/multisite_conformal_advanced.py` | `backend/app/services/assets/multisite_conformal_advanced_record.json` |
-| cohort handling / leakage rules | `scripts/calm-ms/cohort_registry.py` | — |
-| regression tests | `scripts/calm-ms/tests/` | — |
-| base segmenter for more sites | `research/nnunet/train_base_segmenter.ipynb` | — |
+| v0.3 protocol + deviations | — | `docs/research/paper/PROTOCOL-v0.3.md` |
+| input hashes, grids, fold-0 reproduction | `research/paper_a/v03_inventory.py` | `docs/research/records/2026-10-21_paper_a_v03_inventory.json` |
+| candidates, labels, gate G1 | `research/paper_a/v03_candidates.py` | `docs/research/records/2026-10-21_paper_a_v03_candidates.json` |
+| Tables 1, 3–5; §5.1–5.6 | `research/paper_a/v03_analysis.py` (+ `v03_metrics.py`, `v03_data.py`) | `docs/research/records/2026-10-21_paper_a_v03_results.json` |
+| post-hoc explanations (labelled) | `research/paper_a/v03_posthoc.py` | `docs/research/records/2026-10-21_paper_a_v03_posthoc.json` |
+| metric tests (33 pass) | `research/paper_a/test_v03_metrics.py` | — |
+| healthy-control addendum: protocol | — | `docs/research/paper/PROTOCOL-v0.3-addendum-controls.md` (caa47e7) |
+| controls: inventory, contamination fingerprint check | `research/paper_a/v03c_inventory.py` | `docs/research/records/2026-10-24_paper_a_v03c_inventory.json` |
+| controls: frozen operating points | `research/paper_a/v03c_calibration.py` | `docs/research/records/2026-10-24_paper_a_v03c_calibration.json` |
+| §5.5, Table 6 | `research/paper_a/v03c_controls.py` | `docs/research/records/2026-10-24_paper_a_v03c_controls.json` |
+| independent re-implementation of §5.5 counts | `research/paper_a/v03c_controls_check.py` | `docs/research/records/2026-10-24_paper_a_v03c_controls_check.json` |
+| full v0.3 results | — | `docs/research/paper/RESULTS-v0.3.md` |
+| training-overlap forensics, v0.2 §4–§5 | `research/paper_a/*_v02.py`, `ljubljana_flames_match.py`, `flames_fold_membership.py` | `docs/research/records/2026-10-17_*` |
+| exact DP, Layer 1/2 (v0.2) | `research/conformal_fdx/`, `scripts/calm-ms/calm_fdx_realdata.py` | v0.2 records |
 
-## References (to be formatted; entries marked *verify* need a checked citation)
-- Bates, Candès, Lei, Romano, Sesia (2023). Testing for outliers with conformal p-values. *Annals of Statistics* 51(1).
-- Blanchard, Neuvial, Roquain (2020). Post hoc confidence bounds on false positives using reference families. *Annals of Statistics* 48(3):1281–1303.
-- Dunn, Wasserman, Ramdas (2023). Distribution-free prediction sets for two-layer hierarchical models. *JASA* 118(544):2491–2502.
-- Gazin, Blanchard, Roquain (2024). Transductive conformal inference with adaptive scores. *AISTATS*, PMLR 238:1504–1512.
+## References (to be formatted; *verify* = citation not yet checked)
+- Angelopoulos, Bates, Candès, Jordan, Lei (2021). Learn then Test. arXiv:2110.01052 — *verify venue*.
+- Angelopoulos, Bates, Fisch, Lei, Schuster (2024). Conformal risk control. *ICLR*.
+- Bates, Candès, Lei, Romano, Sesia (2023). Testing for outliers with conformal p-values. *Ann. Stat.* 51(1).
+- Bawil M. B., Shamsi M., Ghalehasadi A., Jafargholkhanloo A. F., Bavil A. S. (2026). A multiple sclerosis MRI dataset with tri-mask annotations for lesion segmentation (MS3SEG). *Sci. Data* 13:867, doi:10.1038/s41597-026-07184-5; data doi:10.6084/m9.figshare.30393475 (CC BY 4.0).
+- Blanchard, Neuvial, Roquain (2020). Post hoc confidence bounds on false positives using reference families. *Ann. Stat.* 48(3).
+- Dereskewicz E., La Rosa F., et al. (2025). FLAMeS. *J. Neuroimaging*, doi:10.1111/jon.70085; weights Zenodo 17955359.
+- Dunn, Wasserman, Ramdas (2023). Distribution-free prediction sets for two-layer hierarchical models. *JASA* 118(544).
+- Gazin, Blanchard, Roquain (2024). Transductive conformal inference with adaptive scores. *AISTATS*.
 - Isensee et al. (2021). nnU-Net. *Nature Methods* 18:203–211.
 - Jin, Candès (2023). Selection by prediction with conformal p-values. *JMLR* 24(244).
-- Katsevich, Ramdas (2020). Simultaneous high-probability bounds on the false discovery proportion in structured, regression and online settings. *Annals of Statistics* 48(6).
-- Lesjak et al. (2018). A novel public MR image dataset of multiple sclerosis patients with lesion segmentations based on multi-rater consensus. *Neuroinformatics* 16 — *verify*.
-- Rondinella et al. (2025). MSLesSeg: baseline and benchmarking of a new multiple sclerosis lesion segmentation dataset. *Scientific Data*.
+- Katsevich, Ramdas (2020). Simultaneous high-probability bounds on the FDP. *Ann. Stat.* 48(6).
+- Lakshminarayanan, Pritzel, Blundell (2017). Simple and scalable predictive uncertainty estimation using deep ensembles. *NeurIPS* — *verify*.
+- Lee Y., Ren Z. (2025). Selection from hierarchical data with conformal e-values. arXiv:2501.02514.
+- Lesjak Ž. et al. (2018). A novel public MR image dataset of multiple sclerosis patients with lesion segmentations based on multi-rater consensus. *Neuroinformatics* 16 — *verify pages*.
+- Muslim A. M., Mashohor S., Gawwam G. A., et al. (2022). Brain MRI dataset of multiple sclerosis with consensus manual lesion segmentation and patient meta information. *Data in Brief* 42:108139, doi:10.1016/j.dib.2022.108139; data doi:10.17632/8bctsm8jz7.1 (CC BY 4.0).
+- Popa M., Vișa G. A., Șofariu C. R. (2025). PediMS: a pediatric multiple sclerosis lesion segmentation dataset. *Sci. Data* 12:1184, doi:10.1038/s41597-025-05346-5; data doi:10.6084/m9.figshare.28701065 (CC BY 4.0).
+- Rondinella et al. (2025). MSLesSeg. *Sci. Data*.
 - Song, Jin, Candès (2026). Everywhere valid bounds on false discovery proportions in conformal inference. arXiv:2605.20726.
 - Tibshirani, Barber, Candès, Ramdas (2019). Conformal prediction under covariate shift. *NeurIPS*.
-- Wiltgen et al. (2024). LST-AI. *NeuroImage: Clinical* — *verify*.
-- FLAMeS — *verify citation*. Healthy-control cohort — *verify source*. Conformal MS diagnosis (npj Digital Medicine 2025) — *verify*. arXiv:2510.17897 — *verify*.
+- Tuchinov B. N. et al. (2025). SibBMS: Siberian Brain Multiple Sclerosis Dataset with lesion segmentation and patient meta information. medRxiv 10.1101/2025.08.14.25333741 (MELBA 2025 — *verify*); data https://ai.nsu.ru/files/sibbms/sibbms.zip (archive dated 2025-08-04); licence stated as CC BY 3.0 and CC BY-NC-SA 3.0 — the stricter is applied.
+- Vovk, Gammerman, Shafer (2005). *Algorithmic Learning in a Random World* (Mondrian conformal prediction) — *verify*.
+- Wiltgen T., McGinnis J., et al. (2024). LST-AI. *NeuroImage: Clinical* 42:103611.
+- Conformal MS diagnosis (npj Digital Medicine 2025) — *verify*. arXiv:2510.17897 — *verify*.
+
+---
+
+## Appendix A. Changelog v0.1 → v0.2 (2026-10-17, kept)
+
+v0.1 contained two errors a reviewer would have found fatal. (1) **Training-set contamination**:
+20 of the 30 Ljubljana scans are FLAMeS training data (patients 01–15, 21–25, identified exactly
+from the released nnU-Net fingerprint); all-30 results were reclassified as in-distribution and
+every analysis re-run on the 10 never-trained scans; patient nulls were rebuilt from MSLesSeg only.
+(2) **Healthy-control interval**: "0 of 200 healthy scans certified as DIS, 95 % CI ≤ 1.8 %" counted
+repeated splits of 30 scans as independent; corrected to 0/30 distinct scans, one-sided upper bound
+9.5 % (and in the v0.3 addendum replaced by 100 distinct controls, §5.5). Further: all figures that pooled repeated splits were re-expressed per distinct scan; labels
+harmonised to one-to-one matching; numbers without a committed script recomputed (ICC 0.078/0.094;
+top-ranked candidate false in 21/115 = 18.3 %, not 16.5 %); "candidate AUC 0.75–0.82" withdrawn
+(measured 0.70–0.75 with fold 0); three scan-aware baselines added (subsampled null, CRC/LTT, Lee &
+Ren e-values); citations of FLAMeS, LST-AI and Lee & Ren checked against primary sources.

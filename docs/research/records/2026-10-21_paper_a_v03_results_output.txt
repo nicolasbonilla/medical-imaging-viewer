@@ -1,0 +1,55 @@
+scans per arm: {'ens': 304, 'f0': 304, 'f1': 304, 'f2': 304, 'f3': 304, 'f4': 304, 'ens_cons': 304}
+designs done for ens (4 s)
+designs done for f0 (8 s)
+designs done for f1 (9 s)
+designs done for f2 (10 s)
+designs done for f3 (11 s)
+designs done for f4 (12 s)
+designs done for ens_cons (13 s)
+PRIMARY D3|ms3seg        P1 0.1: est 0.1067 CI [0.0745, 0.1448] -> holds (bonf inconclusive) n_sel 957 sens 0.2582
+PRIMARY D3|ms3seg        P1 0.2: est 0.1234 CI [0.0991, 0.1506] -> holds (bonf holds) n_sel 1545 sens 0.4037
+PRIMARY D3|ms3seg        P2 0.1: est 0.21 CI [0.13, 0.3029] -> violated (bonf inconclusive) n_sel 436 sens 0.1208
+PRIMARY D3|ms3seg        P2 0.2: est 0.12 CI [0.06, 0.2002] -> inconclusive (bonf inconclusive) n_sel 436 sens 0.1208
+PRIMARY D3|muslim        P1 0.1: est 0.1218 CI [0.0616, 0.1974] -> inconclusive (bonf inconclusive) n_sel 195 sens 0.0951
+PRIMARY D3|muslim        P1 0.2: est 0.0965 CI [0.0582, 0.1457] -> holds (bonf holds) n_sel 471 sens 0.2347
+PRIMARY D3|muslim        P2 0.1: est 0.2941 CI [0.1749, 0.4383] -> violated (bonf violated) n_sel 81 sens 0.0363
+PRIMARY D3|muslim        P2 0.2: est 0.2745 CI [0.1569, 0.4174] -> violated (bonf inconclusive) n_sel 81 sens 0.0363
+PRIMARY D3|pedims        P1 0.1: est 0.0406 CI [0.0086, 0.1019] -> holds (bonf inconclusive) n_sel 139 sens 0.1196
+PRIMARY D3|pedims        P1 0.2: est 0.0858 CI [0.0555, 0.1223] -> holds (bonf holds) n_sel 399 sens 0.3261
+PRIMARY D3|pedims        P2 0.1: est 0.0714 CI [0.0, 0.235] -> inconclusive (bonf inconclusive) n_sel 60 sens 0.0525
+PRIMARY D3|pedims        P2 0.2: est 0.0714 CI [0.0, 0.235] -> inconclusive (bonf inconclusive) n_sel 60 sens 0.0525
+PRIMARY D2|mslesseg      P1 0.1: est 0.0087 CI [0.0, 0.0294] -> holds (bonf holds) [uninformative] n_sel 34 sens 0.0099
+PRIMARY D2|mslesseg      P1 0.2: est 0.0183 CI [0.0038, 0.0421] -> holds (bonf holds) n_sel 312 sens 0.0888
+PRIMARY D2|mslesseg      P2 0.1: est 0.0174 CI [0.0, 0.0614] -> holds (bonf holds) [uninformative] n_sel 4 sens 0.0006
+PRIMARY D2|mslesseg      P2 0.2: est 0.0261 CI [0.0, 0.0743] -> holds (bonf holds) [uninformative] n_sel 16 sens 0.0039
+PRIMARY D2|openms        P1 0.1: est 0.0 CI [0.0, 0.0] -> holds (bonf holds) [uninformative] n_sel 6 sens 0.009
+PRIMARY D2|openms        P1 0.2: est 0.0111 CI [0.0, 0.0333] -> holds (bonf holds) n_sel 80 sens 0.1184
+PRIMARY D2|openms        P2 0.1: est 0.0 CI [0.0, 0.3085] -> inconclusive (bonf inconclusive) [uninformative] n_sel 7 sens 0.0105
+PRIMARY D2|openms        P2 0.2: est 0.0 CI [0.0, 0.3085] -> inconclusive (bonf inconclusive) [uninformative] n_sel 7 sens 0.0105
+PRIMARY D2|ms3seg        P1 0.1: est 0.0872 CI [0.0594, 0.1208] -> holds (bonf holds) n_sel 744 sens 0.2013
+PRIMARY D2|ms3seg        P1 0.2: est 0.1155 CI [0.0931, 0.1415] -> holds (bonf holds) n_sel 1453 sens 0.3813
+PRIMARY D2|ms3seg        P2 0.1: est 0.16 CI [0.09, 0.2468] -> inconclusive (bonf inconclusive) n_sel 316 sens 0.0871
+PRIMARY D2|ms3seg        P2 0.2: est 0.12 CI [0.06, 0.2002] -> inconclusive (bonf inconclusive) n_sel 316 sens 0.0871
+PRIMARY D2|muslim        P1 0.1: est 0.0824 CI [0.0328, 0.1373] -> holds (bonf inconclusive) [uninformative] n_sel 66 sens 0.0297
+PRIMARY D2|muslim        P1 0.2: est 0.0997 CI [0.0475, 0.1627] -> holds (bonf holds) n_sel 276 sens 0.1391
+PRIMARY D2|muslim        P2 0.1: est 0.1765 CI [0.0784, 0.3087] -> inconclusive (bonf inconclusive) [uninformative] n_sel 37 sens 0.0154
+PRIMARY D2|muslim        P2 0.2: est 0.1765 CI [0.0784, 0.3087] -> inconclusive (bonf inconclusive) [uninformative] n_sel 37 sens 0.0154
+PRIMARY D2|pedims        P1 0.1: est 0.0065 CI [0.0, 0.0218] -> holds (bonf holds) n_sel 73 sens 0.0643
+PRIMARY D2|pedims        P1 0.2: est 0.0496 CI [0.0155, 0.093] -> holds (bonf holds) n_sel 195 sens 0.1639
+PRIMARY D2|pedims        P2 0.1: est 0.0 CI [0.0, 0.1234] -> holds (bonf inconclusive) [uninformative] n_sel 28 sens 0.0254
+PRIMARY D2|pedims        P2 0.2: est 0.0 CI [0.0, 0.1234] -> holds (bonf inconclusive) [uninformative] n_sel 28 sens 0.0254
+primary done (111 s)
+Q1 verdicts: {'P1': 'inconclusive', 'P2': 'refuted'}
+thickness done (113 s)
+Q3 verdict: {'sens_diff_ci_P1_0.2': {'D2': [0.0743, 0.1287], 'D3': [0.1166, 0.1768]}, 'violations_new_with_ensemble': [['D3|muslim', 'P2', 0.1], ['D3|muslim', 'P2', 0.2]], 'violations_removed_by_ensemble': [['D3|ms3seg', 'P1', 0.1], ['D3|ms3seg', 'P2', 0.2], ['D2|ms3seg', 'P1', 0.1], ['D2|ms3seg', 'P2', 0.1], ['D2|ms3seg', 'P2', 0.2]], 'verdict': 'helps on power, but with new violated cell(s)'}
+Q3 done (150 s)
+Q4 ms3seg done (244 s)
+Q4 muslim done (296 s)
+Q4 pedims done (312 s)
+Q4 openms done (319 s)
+Q4 verdict: {'D3|ms3seg|P2|0.1': {'d1_estimate': 0.1, 'd1_ci': [0.049, 0.1762], 'd1_class': 'inconclusive', 'd1_sens_e2e': 0.04, 'k_star': {'site_only': {'k_star': 10, 'd1_power': 0.04, 'note': None}, 'augmented': {'k_star': None, 'd1_power': 0.04, 'note': None}}, 'restores': True}, 'D3|muslim|P2|0.1': {'d1_estimate': 0.0784, 'd1_ci': [0.0196, 0.1888], 'd1_class': 'inconclusive', 'd1_sens_e2e': 0.0038, 'k_star': {'site_only': {'k_star': 10, 'd1_power': 0.0038, 'note': None}, 'augmented': {'k_star': None, 'd1_power': 0.0038, 'note': None}}, 'restores': True}, 'D3|muslim|P2|0.2': {'d1_estimate': 0.0784, 'd1_ci': [0.0196, 0.1888], 'd1_class': 'inconclusive', 'd1_sens_e2e': 0.0038, 'k_star': {'site_only': {'k_star': 10, 'd1_power': 0.0038, 'note': None}, 'augmented': {'k_star': None, 'd1_power': 0.0038, 'note': None}}, 'restores': True}}
+controls done (320 s)
+mechanism done (342 s)
+sensitivity done (344 s)
+LST-AI done (353 s)
+wrote C:\Users\Nicolas\medical-imaging-viewer\.claude\worktrees\agent-a51c3395ccf800cad\docs\research\records\2026-10-21_paper_a_v03_results.json in 352.5 s

@@ -1,0 +1,202 @@
+sub-001 ok
+sub-002 ok
+sub-003 ok
+sub-004 ok
+sub-005 ok
+sub-006 ok
+sub-007 ok
+sub-008 ok
+sub-009 ok
+sub-010 ok
+sub-011 ok
+sub-012 ok
+sub-013 ok
+sub-014 ok
+sub-015 ok
+sub-016 ok
+sub-017 ok
+sub-018 ok
+sub-019 ok
+sub-020 ok
+sub-021 ok
+sub-022 ok
+sub-023 ok
+sub-024 ok
+sub-025 ok
+sub-026 ok
+sub-027 ok
+sub-028 ok
+sub-029 ok
+sub-030 ok
+sub-031 ok
+sub-032 ok
+sub-033 ok
+sub-034 ok
+sub-035 ok
+sub-036 ok
+sub-037 ok
+sub-038 ok
+sub-039 ok
+sub-040 ok
+sub-041 ok
+sub-042 ok
+sub-043 ok
+sub-044 ok
+sub-045 ok
+sub-046 ok
+sub-047 ok
+sub-048 ok
+sub-049 ok
+sub-050 ok
+sub-051 ok
+sub-052 ok
+sub-053 ok
+sub-054 ok
+sub-055 ok
+sub-056 ok
+sub-057 ok
+sub-058 ok
+sub-059 ok
+sub-060 ok
+sub-061 ok
+sub-062 ok
+sub-063 ok
+sub-064 ok
+sub-065 ok
+sub-066 ok
+sub-067 ok
+sub-068 ok
+sub-069 ok
+sub-070 ok
+sub-071 ok
+sub-072 ok
+sub-073 ok
+sub-074 ok
+sub-075 ok
+sub-076 ok
+sub-077 ok
+sub-078 ok
+sub-079 ok
+sub-080 ok
+sub-081 ok
+sub-082 ok
+sub-083 ok
+sub-084 ok
+sub-085 ok
+sub-086 ok
+sub-087 ok
+sub-088 ok
+sub-089 ok
+sub-090 ok
+sub-091 ok
+sub-092 ok
+sub-093 ok
+sub-094 ok
+sub-095 ok
+sub-096 ok
+sub-097 ok
+sub-098 ok
+sub-099 ok
+sub-100 ok
+{
+ "created": "2026-10-24 15:48:59",
+ "purpose": "PROTOCOL-v0.3 controls addendum, gate C0 (inventory; no outcome computed)",
+ "data_dir_layout": "cohort/sub-XXX_{gt,f0..f4_prob}.nii.gz (gs://mstool-research-data/flames-ensemble/cohort), brainmask/sub-XXX_brainmask.nii.gz (gs://mstool-research-data/controls/sibbms)",
+ "manifests_sha256": {
+  "manifests/controls/sibbms-ctl-a.json": "62d6b0dccc970c6e00cd3cc89bbf668b1088f6cc20abb95cff7f867ebf5c0da9",
+  "manifests/controls/sibbms-ctl-b.json": "e4b9000da2b22b54f95fb9e94bac0636185cca9159c71a64f5165150bd1c8b62",
+  "manifests/controls/sibbms-ctl-c.json": "2a9ef31fa200e9dc1dcae60b040c9c913a43e8d7e59f173750c214848d1d485b",
+  "manifests/controls/sibbms-ctl-pilot.json": "dc31524f6bc6bd4c3a1da09b00ce336c4182245cd667a63fa85929f03e8cced8",
+  "manifests/flames/sibbms-ctl-a.json": "69ddf6865299135243f76430dd8a79f56d333a5ec66068a693540e87567581bc",
+  "manifests/flames/sibbms-ctl-b.json": "93538531410aa59fa54e20040b5ea6a2c0a8021612248f1ad5962c4db3f1b7fd",
+  "manifests/flames/sibbms-ctl-c.json": "22b0aacc0aa0e20ea91d597dc5e15cc09b1e7808e5623342c3b3b6d0bda49fe6",
+  "manifests/flames/sibbms-ctl-pilot.json": "9776767d100420e12021f874ae151238cb44d1fe0315c0247c51625f5a5ba21a"
+ },
+ "n_controls": 100,
+ "distinct_grids": 1,
+ "grid": {
+  "shape": [
+   197,
+   233,
+   189
+  ],
+  "zooms": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "affine": [
+   [
+    1.0,
+    0.0,
+    -0.0,
+    -98.0
+   ],
+   [
+    0.0,
+    1.0,
+    -0.0,
+    -134.0
+   ],
+   [
+    0.0,
+    0.0,
+    1.0,
+    -72.0
+   ],
+   [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+   ]
+  ]
+ },
+ "looks_mni_all": true,
+ "brain_ml": {
+  "min": 1914.7,
+  "median": 1987.05,
+  "max": 2828.9
+ },
+ "atlas_vs_brainmask_dice": {
+  "min": 0.7955,
+  "median": 0.968,
+  "max": 0.9764
+ },
+ "wm_zones_covered_by_brainmask": {
+  "min": 0.9848,
+  "median": 0.99835
+ },
+ "fold0_vs_august_30": {
+  "n": 30,
+  "max_abs_diff": 0.00225,
+  "scans_with_voxels_crossing_0.5": [],
+  "total_voxels_crossing_0.5": 0
+ },
+ "flames_fingerprint": {
+  "file_sha256": "3206a641b729bc62c3edc600614224bf6f45e9aac9ca336f4576bcedd94406f8",
+  "entries": 668,
+  "entries_with_control_spacing": 319,
+  "entries_with_crop_close_to_full_control_grid(+-10 vox)": [],
+  "controls_with_an_entry_within_2_voxels_of_brain_bbox_any_axis_order": 0,
+  "control_brain_bbox_sorted_median": [
+   146.0,
+   155.0,
+   182.0
+  ],
+  "fingerprint_1mm_crop_sorted_median": [
+   132.0,
+   137.0,
+   172.0
+  ],
+  "fingerprint_1mm_crop_sorted_max": [
+   146,
+   150,
+   192
+  ],
+  "note": "Supporting evidence only: SibBMS Output/Norm is distributed with skull, so a FLAMeS crop of a SibBMS image would be either ~the full template grid (unstripped) or a brain box from the authors' own stripping; HD-BET boxes need not match exactly."
+ },
+ "fails": [],
+ "passed": true,
+ "runtime_s": 103.0
+}

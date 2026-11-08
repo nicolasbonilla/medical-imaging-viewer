@@ -1,0 +1,94 @@
+{
+ "cohort_summary": {
+  "ms3seg": {
+   "scans": 100,
+   "patients": 100,
+   "slice_spacing_mm": {
+    "min": 6.0,
+    "median": 7.2,
+    "max": 8.1
+   },
+   "voxel_volume_mm3": {
+    "min": 4.8427,
+    "median": 5.8113,
+    "max": 6.5377
+   },
+   "with_lstai": 0,
+   "problems": 0
+  },
+  "mslesseg": {
+   "scans": 115,
+   "patients": 75,
+   "slice_spacing_mm": {
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "voxel_volume_mm3": {
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "with_lstai": 114,
+   "problems": 0
+  },
+  "muslim": {
+   "scans": 51,
+   "patients": 51,
+   "slice_spacing_mm": {
+    "min": 4.86,
+    "median": 6.0,
+    "max": 8.3
+   },
+   "voxel_volume_mm3": {
+    "min": 0.9054,
+    "median": 4.1762,
+    "max": 6.2586
+   },
+   "with_lstai": 0,
+   "problems": 0
+  },
+  "openms": {
+   "scans": 30,
+   "patients": 30,
+   "slice_spacing_mm": {
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "voxel_volume_mm3": {
+    "min": 1.0,
+    "median": 1.0,
+    "max": 1.0
+   },
+   "with_lstai": 30,
+   "problems": 0
+  },
+  "pedims": {
+   "scans": 28,
+   "patients": 9,
+   "slice_spacing_mm": {
+    "min": 3.9,
+    "median": 3.9,
+    "max": 3.9
+   },
+   "voxel_volume_mm3": {
+    "min": 2.1938,
+    "median": 2.1938,
+    "max": 2.1938
+   },
+   "with_lstai": 0,
+   "problems": 0
+  }
+ },
+ "fold0_reproduction_vs_august": {
+  "scans_compared": 145,
+  "max_abs_diff_max": 0.00224,
+  "scans_with_any_threshold_disagreement": 5,
+  "total_threshold_disagree_voxels": 6
+ },
+ "scans_with_problems": [],
+ "controls_with_problems": [],
+ "runtime_s": 102.2
+}
+controls: 30; wrote C:\Users\Nicolas\medical-imaging-viewer\.claude\worktrees\agent-a51c3395ccf800cad\docs\research\records\2026-10-21_paper_a_v03_inventory.json

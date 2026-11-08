@@ -1,0 +1,11 @@
+leeren_hier_small_fdp        mean 0.0000  (MC s.e. 0.0000)
+leeren_hier_small_power      mean 0.0000  (MC s.e. 0.0000)
+leeren_sub_small_fdp         mean 0.0932  (MC s.e. 0.0071)
+leeren_sub_small_power       mean 0.2659  (MC s.e. 0.0198)
+leeren_hier_large_fdp        mean 0.1726  (MC s.e. 0.0030)
+leeren_hier_large_power      mean 0.9575  (MC s.e. 0.0020)
+leeren_sub_large_fdp         mean 0.1713  (MC s.e. 0.0035)
+leeren_sub_large_power       mean 0.9550  (MC s.e. 0.0027)
+crc_fdp                      mean 0.1559  (MC s.e. 0.0099)
+ltt_bad                      mean 0.0000  (MC s.e. 0.0000)
+all baseline sanity checks passed

@@ -1,0 +1,6 @@
+ens null 1339 sha ok {'P1|0.1': 14, 'P1|0.2': 24, 'P2|0.1': 6, 'P2|0.2': 6, 'raw_any': 85}
+f0 null 1442 sha ok {'P1|0.1': 59, 'P1|0.2': 72, 'P2|0.1': 32, 'P2|0.2': 32, 'raw_any': 93}
+ens independent {'P1|0.1': 14, 'P1|0.2': 24, 'P2|0.1': 6, 'P2|0.2': 6, 'raw_any': 85} main {'P1|0.1': 14, 'P1|0.2': 24, 'P2|0.1': 6, 'P2|0.2': 6, 'raw_any': 85} EQUAL | candidate-count diffs: [] | selection diffs: []
+f0 independent {'P1|0.1': 59, 'P1|0.2': 72, 'P2|0.1': 32, 'P2|0.2': 32, 'raw_any': 93} main {'P1|0.1': 59, 'P1|0.2': 72, 'P2|0.1': 32, 'P2|0.2': 32, 'raw_any': 93} EQUAL | candidate-count diffs: [] | selection diffs: []
+ALL EQUAL
+exit 0
