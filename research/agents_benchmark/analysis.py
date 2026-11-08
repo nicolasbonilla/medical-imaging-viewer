@@ -214,6 +214,15 @@ def summarise(rows, man):
             kinds[f"{r['model']}/{r['arm']}"][f"{e['cls']}:{e['kind'].split('+')[0]}"] += 1
     s["secondary"]["element_kinds"] = {k: dict(v.most_common(12)) for k, v in kinds.items()}
     s["n_analysis_records"] = len([r for r in man["records"] if r["record_id"] not in set(man["subsets"]["pilot"])])
+    from .ledger import spent
+    runs = {}
+    for p in sorted(Path(config.RUNS_DIR).glob("*/ledger.jsonl")):
+        tot = Counter()
+        for line in p.read_text(encoding="utf-8").splitlines():
+            d = json.loads(line)
+            tot[d["provider"]] += float(d.get("usd") or 0)
+        runs[p.parent.name] = {k: round(v, 5) for k, v in tot.items()}
+    s["spend_usd"] = {"anthropic": round(spent("anthropic"), 5), "gemini": round(spent("gemini"), 5), "by_run": runs}
     return s
 
 
