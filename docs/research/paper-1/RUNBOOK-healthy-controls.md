@@ -56,3 +56,19 @@ arms) and G2 (`check_counts.py`) with no cloud credentials, and writes `research
 `python research/cloud/build_ledger.py` updates the compute ledger.
 
 ## 5. Launch record
+
+- **Pilot** `toolbench-ctl-pilot` 2026-11-08 17:26–18:12 UTC, 0.184 USD, **PASS** (record:
+  `research/paper_1/pilot/`). Budget rule → **tier A**, projected 7.95 USD, worst case at the guards 9.85 USD.
+- **Full run**, launched 2026-11-08 18:17–18:19 UTC with
+  `python research/paper_1/launch_full_run.py --pilot-manifest <pilot manifest> --pilot-cost <pilot cost file>`
+  (code commit be0690b; driver and inputs in `toolbench/code-paper1/` from commit 0d30b9d):
+
+| VM | Machine | Work | max-hours (in-VM guard) / Google hard stop | Expected end (UTC) |
+|---|---|---|---|---|
+| `toolbench-ctl-wmh-mg` | n2d-highmem-4, 90 GB, AMD Milan | WMH-SynthSeg then MindGlide, 98 controls (sub-002 … sub-100 without sub-021) | 21 h / 22 h | ≈ 2026-11-09 07:30 (13 h); at the latest 15:17 |
+| `toolbench-ctl-samseg-a` | n2d-standard-4, 80 GB, AMD Milan | SAMSEG, 49 controls (sub-002 … sub-051) | 12 h / 13 h | ≈ 2026-11-09 02:10 (7.8 h); at the latest 06:18 |
+| `toolbench-ctl-samseg-b` | n2-standard-4, 80 GB, Intel Cascade Lake | SAMSEG, 49 controls (sub-052 … sub-100) | 12 h / 13 h | ≈ 2026-11-09 02:10; at the latest 06:19 |
+
+Every VM has `--max-run-duration` with `--instance-termination-action=DELETE` and the exit trap of
+`vm_toolbench.sh` (uploads log, cost and runinfo, then deletes itself). Check: `gcloud compute instances list
+--project=mstool-research` must be empty before the evaluation.

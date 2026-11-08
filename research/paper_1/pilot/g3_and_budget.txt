@@ -1,0 +1,21 @@
+Pilot toolbench-ctl-pilot (n2d-highmem-4, AMD EPYC 7B13, us-central1-a), 2026-11-08 17:26:37-18:12:30 UTC,
+2753 s, 0.1838 USD (list price 0.24029 USD/h incl. 90 GB disk). VM deleted itself (checked 18:15 UTC).
+
+Log: TOOLS AFTER CHECKS: wmhsynthseg mindglide samseg; 0 "TOOL DROPPED"; TOOLBENCH DONE 6 ok, 0 errors,
+0 input problems. Manifest: both image digests match; MindGlide weights match (version 1.3.0); FreeSurfer
+build freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45; WMH model 790531383 bytes, SHA-256 0ece39dd...
+(= the bucket mirror); licence present; input_problems []; every output on the input grid (identity).
+
+G3 (python research/paper_1/evaluate_controls.py check --tools wmhsynthseg mindglide samseg --cases sub-001 sub-021):
+PASS sub-001 wmhsynthseg (transform identity)
+PASS sub-001 mindglide (transform identity)
+PASS sub-001 samseg (transform identity)
+PASS sub-021 wmhsynthseg (transform identity)
+PASS sub-021 mindglide (transform identity)
+PASS sub-021 samseg (transform identity)
+G3: 6 PASS, 0 FAIL
+
+Budget rule (python research/paper_1/launch_full_run.py ... = plan_controls_budget.plan):
+m = WMH-SynthSeg 397.2 s, MindGlide 85.4 s, SAMSEG 559.1 s per control (peak memory 31.3 / 5.6 / 7.6 GB).
+Tier A (every tool on all 100). Projected total 7.951 USD (pilot 0.184 + VM hours A 16.68, B 9.76, C 9.76 with the
+1.25 factor). Guards (max-hours) A 21, B 12, C 12 (factor 1.2); worst case if every VM ran to its guard 9.851 USD <= 10.

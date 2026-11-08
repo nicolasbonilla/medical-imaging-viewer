@@ -245,4 +245,10 @@ execution notes that change no rule (e.g. a crash fixed before any number was pr
 
 ## 12. Deviations log
 
-*(empty at registration)*
+*(empty at registration, commit 1e62f5c)*
+
+| Date | Entry | Rule changed? | Seen before? |
+|---|---|---|---|
+| 2026-11-08 | **Execution note.** The first interim run of `evaluate_controls.py` (FLAMeS + LST-AI) stopped while importing the app (`fastapi` needs `anyio`, absent from the system Python) before printing anything; it was re-run unchanged with the backend's own environment (`backend/venv`, Python 3.11.4, numpy 1.26.4, scipy 1.13.1, nibabel 5.3.0; recorded in `summary.json`). | no | nothing (no number printed) |
+| 2026-11-08 | **Implementation note on section 8 (guards).** `plan_controls_budget.py` first raised the guards to 1.25–1.5 × the projected hours, which can exceed the cap even when the projection is far below it; it now takes the largest factor in 1.0–1.5 × the projected hours (which already include the 1.25 safety factor) such that pilot + Σ rate × max-hours ≤ 10 USD, as section 8 states. Changed before the planner was run on the pilot. | no (implements the registered sentence) | pilot timing of one WMH-SynthSeg case (396 s) |
+| 2026-11-08 | **Not a deviation — pilot and budget rule applied.** Pilot `toolbench-ctl-pilot` PASS (G3 6/6, all checks of `research/paper_1/pilot/`), 0.184 USD. As disclosed in section 10 item 5, its log showed the lesion-voxel count of each pilot case-tool (sub-001 / sub-021: WMH-SynthSeg 2695 / 2827, MindGlide 8160 / 8314, SAMSEG 0 / 0); no component, count, region or DIS status was computed. Budget rule → **tier A** (all tools, all 100 controls), projected 7.95 USD, guards 21 / 12 / 12 h (worst case 9.85 USD). Full run launched 18:17–18:19 UTC. | no | pilot voxel counts only (above) |

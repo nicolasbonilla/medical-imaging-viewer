@@ -1,0 +1,169 @@
+{
+ "run_id": "toolbench-ctl-pilot",
+ "started_utc": "2026-11-08T17:37:43Z",
+ "finished_utc": "2026-11-08T18:12:27Z",
+ "cost_record": "COST_RECORD,run_id=toolbench-ctl-pilot,machine=n2d-highmem-4,seconds=2753,rate_usd_per_h=0.24029,cost_usd_compute_estimate=0.1838",
+ "hardware": {
+  "cpu_platform": "AMD Milan",
+  "cpu_model": "AMD EPYC 7B13",
+  "vcpus": "4",
+  "threads_per_core": "2",
+  "memory_gb": "31",
+  "gpu": "",
+  "os": "Ubuntu 22.04.5 LTS",
+  "kernel": "6.8.0-1073-gcp",
+  "machine_type": "n2d-highmem-4",
+  "zone": "us-central1-a",
+  "provisioning": "",
+  "boot_disk_gb": "88"
+ },
+ "stages_utc": {
+  "boot": "2026-11-08T17:26:37Z",
+  "env_start": "2026-11-08T17:27:08Z",
+  "image_start": "2026-11-08T17:27:30Z",
+  "license_start": "2026-11-08T17:36:53Z",
+  "datasets_start": "2026-11-08T17:37:17Z",
+  "code_start": "2026-11-08T17:37:21Z",
+  "inference_start": "2026-11-08T17:37:23Z",
+  "inference_end": "2026-11-08T18:12:29Z",
+  "end": "2026-11-08T18:12:30Z"
+ },
+ "images": {
+  "fs": {
+   "image_ref": "freesurfer/freesurfer@sha256:5648104ca75a24f6ee5a8786146f99b405c2bda1da12bff723a15056da8ddf6b",
+   "digest_matches": true,
+   "weights_match_expected": null,
+   "fs_build": "freesurfer-linux-rocky8_x86_64-8.2.0-20260314-d932c45",
+   "mindglide_version": null,
+   "freesurfer_home": "/usr/local/freesurfer/8.2.0-1",
+   "image_id": "sha256:5648104ca75a24f6ee5a8786146f99b405c2bda1da12bff723a15056da8ddf6b"
+  },
+  "mindglide": {
+   "image_ref": "ghcr.io/ms-pinpoint/mindglide@sha256:14e88f61d6cba18322d03774b168682e255383387aaab55e6a5aa33a2dbdd971",
+   "digest_matches": true,
+   "weights_match_expected": true,
+   "fs_build": null,
+   "mindglide_version": "1.3.0",
+   "freesurfer_home": null,
+   "image_id": "sha256:14e88f61d6cba18322d03774b168682e255383387aaab55e6a5aa33a2dbdd971"
+  }
+ },
+ "wmh_model": {
+  "path": "/w/models/WMH-SynthSeg_v10_231110.pth",
+  "bytes": 790531383,
+  "sha256": "0ece39dd651357aa95222fc4d45fa32d00f11e763d2583cae3f869989ce35988",
+  "crop": false
+ },
+ "fs_license_present": true,
+ "input_problems": [],
+ "errors": [],
+ "code_sha256": {
+  "toolbench_driver.py": "4703363f27056cadca4df1435cc918e59887d8a2e6611a88499c5ecc902bba9b",
+  "job_common.py": "9a731c470f6bfad61a289b0210ff15bb279310b827a54b7dacfd0aa65dd1a8d5",
+  "controls_inputs.json": "65f8c163c4aa589a6f032ab3557d9877be6415d4fad26c60f441c93331b12381"
+ },
+ "commands": {
+  "wmhsynthseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt -v /w/models/WMH-SynthSeg_v10_231110.pth:/usr/local/freesurfer/8.2.0-1/models/WMH-SynthSeg_v10_231110.pth:ro --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" mri_WMHsynthseg --i /work/in/flair.nii.gz --o /work/out/wmh_seg.nii.gz --csv_vols /work/out/wmh_vols.csv --device cpu --threads 4 --save_lesion_probabilities",
+  "mindglide": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 mindglide:bench -i /work/in/flair.nii.gz -o /work/out/mindglide_seg.nii.gz --device cpu",
+  "samseg": "docker run --rm --network=none --shm-size=4g -v <case_dir>:/work -e OMP_NUM_THREADS=4 -e MKL_NUM_THREADS=4 -e ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=4 -v /w/fs_license/license.txt:/fs_license/license.txt:ro -e FS_LICENSE=/fs_license/license.txt --entrypoint /bin/bash freesurfer:bench -c source \"$FREESURFER_HOME/SetUpFreeSurfer.sh\" >/dev/null 2>&1 || true; exec \"$0\" \"$@\" run_samseg --input /work/in/flair.nii.gz --output /work/out/samseg --lesion --lesion-mask-pattern 1 --pallidum-separate --threads 4 --random-seed 12345 --save-posteriors Lesions"
+ },
+ "cases": [
+  {
+   "case": "sub-001",
+   "tool": "wmhsynthseg",
+   "seconds": 396.1,
+   "seconds_tool": 393.4,
+   "peak_mem_used_gb": 31.3,
+   "peak_swap_used_gb": 3.29,
+   "seg_transform": "identity",
+   "native_shape": [
+    197,
+    233,
+    189
+   ],
+   "native_axcodes": "RAS",
+   "seg_sha256": "55595813cee653cd629b65f41c0a5b45ee0e530c39ca92a5f6061f36833e9921"
+  },
+  {
+   "case": "sub-021",
+   "tool": "wmhsynthseg",
+   "seconds": 398.4,
+   "seconds_tool": 395.4,
+   "peak_mem_used_gb": 31.34,
+   "peak_swap_used_gb": 3.52,
+   "seg_transform": "identity",
+   "native_shape": [
+    197,
+    233,
+    189
+   ],
+   "native_axcodes": "RAS",
+   "seg_sha256": "ad96efcc298df557ba9776c309e7584cf612698673244d4ec2c5c6989f94180c"
+  },
+  {
+   "case": "sub-001",
+   "tool": "mindglide",
+   "seconds": 89.3,
+   "seconds_tool": 88.6,
+   "peak_mem_used_gb": 5.43,
+   "peak_swap_used_gb": 0.16,
+   "seg_transform": "identity",
+   "native_shape": [
+    197,
+    233,
+    189
+   ],
+   "native_axcodes": "RAS",
+   "seg_sha256": "45ca57e683b36bf2c71199c21b739171d8360d938b2c0b32596c1db9a409889d"
+  },
+  {
+   "case": "sub-021",
+   "tool": "mindglide",
+   "seconds": 81.6,
+   "seconds_tool": 80.9,
+   "peak_mem_used_gb": 5.59,
+   "peak_swap_used_gb": 0.16,
+   "seg_transform": "identity",
+   "native_shape": [
+    197,
+    233,
+    189
+   ],
+   "native_axcodes": "RAS",
+   "seg_sha256": "6358ee5d0650f5a99f0372b58c0590b16a51de45b19ecf17fa598912240112e3"
+  },
+  {
+   "case": "sub-001",
+   "tool": "samseg",
+   "seconds": 558.8,
+   "seconds_tool": 557.2,
+   "peak_mem_used_gb": 7.6,
+   "peak_swap_used_gb": 0.16,
+   "seg_transform": "identity",
+   "native_shape": [
+    197,
+    233,
+    189
+   ],
+   "native_axcodes": "RAS",
+   "seg_sha256": "948139575d590b797385c6cdc5d16bfa61b5681332c809a4cbcb391b47d2d736"
+  },
+  {
+   "case": "sub-021",
+   "tool": "samseg",
+   "seconds": 559.5,
+   "seconds_tool": 558.0,
+   "peak_mem_used_gb": 7.47,
+   "peak_swap_used_gb": 0.16,
+   "seg_transform": "identity",
+   "native_shape": [
+    197,
+    233,
+    189
+   ],
+   "native_axcodes": "RAS",
+   "seg_sha256": "948139575d590b797385c6cdc5d16bfa61b5681332c809a4cbcb391b47d2d736"
+  }
+ ],
+ "note": "structural record only; lesion counts are not copied here (they appear in the job log, PREREG section 10 item 5)"
+}
