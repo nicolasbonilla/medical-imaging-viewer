@@ -91,18 +91,29 @@ def run(alias, subset, max_calls=None, provider=None, max_tokens_a0=None):
             owners[k] = job
         if not items:
             break
-        try:
-            resps = provider.submit(model, items)
-        except BudgetExceeded as e:
-            print(f"[run] STOP (budget): {e}", flush=True)
-            info["stopped"] = str(e)
+        # online providers: submit in chunks and persist each chunk (a stopped run loses at most one chunk)
+        chunk = len(items) if getattr(provider, "batch", True) else 240
+        stopped = False
+        for c0 in range(0, len(items), chunk):
+            part = items[c0:c0 + chunk]
+            try:
+                resps = provider.submit(model, part)
+            except BudgetExceeded as e:
+                print(f"[run] STOP (budget): {e}", flush=True)
+                info["stopped"] = str(e)
+                stopped = True
+                break
+            calls += len(part)
+            with open(out_path, "a", encoding="utf-8") as fh:
+                for k, _ in part:
+                    job = owners[k]
+                    job.consume(resps.get(k) or {"error": "no_response"})
+                    if job.done:
+                        fh.write(json.dumps(job_line(job, model), ensure_ascii=False) + "\n")
+            if chunk < len(items):
+                print(f"[run] round {rnd}: {c0 + len(part)}/{len(items)} calls", flush=True)
+        if stopped:
             break
-        calls += len(items)
-        with open(out_path, "a", encoding="utf-8") as fh:
-            for k, job in owners.items():
-                job.consume(resps.get(k) or {"error": "no_response"})
-                if job.done:
-                    fh.write(json.dumps(job_line(job, model), ensure_ascii=False) + "\n")
         active = [j for j in active if not j.done]
         print(f"[run] round {rnd}: {len(items)} calls, {len(active)} jobs still open, {calls} calls in total", flush=True)
         if max_calls is not None and calls >= max_calls:

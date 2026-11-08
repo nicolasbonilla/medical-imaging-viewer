@@ -96,7 +96,7 @@ def _strip_private(m):
 class GeminiVertex:
     batch = False
 
-    def __init__(self, run_dir, workers=6):
+    def __init__(self, run_dir, workers=int(os.environ.get("AB_GEMINI_WORKERS", "24"))):
         from google import genai
         self.genai = genai
         self.ledger = Ledger(run_dir)
