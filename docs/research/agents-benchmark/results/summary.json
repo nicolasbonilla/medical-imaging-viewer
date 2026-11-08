@@ -1,0 +1,1525 @@
+{
+ "n_rows": 2408,
+ "models": {
+  "gemini": {
+   "A0": {
+    "n_drafts": 452,
+    "n_evaluable": 452,
+    "primary": {
+     "x": 452,
+     "n": 452,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9918719747572211,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    },
+    "by_class": {
+     "E1": {
+      "x": 55,
+      "n": 452,
+      "rate": 0.12168141592920353,
+      "ci_cp": [
+       0.09299674902860464,
+       0.155425377154068
+      ],
+      "ci_cluster": [
+       0.09267241379310345,
+       0.1536697247706422
+      ],
+      "rule_of_three_upper": null
+     },
+     "E2": {
+      "x": 20,
+      "n": 452,
+      "rate": 0.04424778761061947,
+      "ci_cp": [
+       0.027233945010201745,
+       0.06751198438107277
+      ],
+      "ci_cluster": [
+       0.026490066225165563,
+       0.06387665198237885
+      ],
+      "rule_of_three_upper": null
+     },
+     "E3": {
+      "x": 452,
+      "n": 452,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9918719747572211,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "E4": {
+      "x": 434,
+      "n": 452,
+      "rate": 0.9601769911504425,
+      "ci_cp": [
+       0.9377911057184176,
+       0.9762305004666016
+      ],
+      "ci_cluster": [
+       0.9406392694063926,
+       0.9774787427877315
+      ],
+      "rule_of_three_upper": null
+     }
+    },
+    "omission_any": {
+     "x": 254,
+     "n": 452,
+     "rate": 0.5619469026548672,
+     "ci_cp": [
+      0.5148217672629459,
+      0.6082562163353691
+     ],
+     "ci_cluster": [
+      0.514605107709323,
+      0.6096998908605451
+     ],
+     "rule_of_three_upper": null
+    },
+    "omission_items": {
+     "count": {
+      "x": 252,
+      "n": 452,
+      "rate": 0.5575221238938053,
+      "ci_cp": [
+       0.5103773243235119,
+       0.6039093992013194
+      ],
+      "ci_cluster": [
+       0.509889027821194,
+       0.6055045871559633
+      ],
+      "rule_of_three_upper": null
+     },
+     "dis": {
+      "x": 2,
+      "n": 452,
+      "rate": 0.004424778761061947,
+      "ci_cp": [
+       0.0005363111482545344,
+       0.01589170962440579
+      ],
+      "ci_cluster": [
+       0.0,
+       0.011312217194570135
+      ],
+      "rule_of_three_upper": null
+     },
+     "regions": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "longitudinal": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "extended": {
+     "x": 387,
+     "n": 452,
+     "rate": 0.8561946902654868,
+     "ci_cp": [
+      0.8204115711282683,
+      0.8872287763565603
+     ],
+     "ci_cluster": [
+      0.8219765166340508,
+      0.8879120879120879
+     ],
+     "rule_of_three_upper": null
+    },
+    "S1_primary_or_extended": {
+     "x": 452,
+     "n": 452,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9918719747572211,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    },
+    "S2_primary_frozen_v2": {
+     "x": 452,
+     "n": 452,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9918719747572211,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    },
+    "truncated": 0.01327433628318584,
+    "usd_total": 0.589122625,
+    "usd_per_report": 0.001303368639380531,
+    "calls_per_report": 1.0,
+    "latency_s_per_report": 2.604394069287629,
+    "by_stratum": {
+     "i_thick": {
+      "x": 175,
+      "n": 175,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9791413046509426,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "i_thin": {
+      "x": 29,
+      "n": 29,
+      "rate": 1.0,
+      "ci_cp": [
+       0.8805551309304973,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "ii": {
+      "x": 112,
+      "n": 112,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9676000740686401,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "iii": {
+      "x": 39,
+      "n": 39,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9097488990396657,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "v": {
+      "x": 97,
+      "n": 97,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9626843630912639,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     }
+    },
+    "hc_unsafe": {
+     "x": 97,
+     "n": 97,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9626843630912639,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    },
+    "a0_raw_primary": {
+     "x": 452,
+     "n": 452,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9918719747572211,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    }
+   },
+   "A1": {
+    "n_drafts": 452,
+    "n_evaluable": 452,
+    "primary": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "by_class": {
+     "E1": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E2": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E3": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E4": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "omission_any": {
+     "x": 87,
+     "n": 452,
+     "rate": 0.19247787610619468,
+     "ci_cp": [
+      0.15713986345958525,
+      0.23189725129791955
+     ],
+     "ci_cluster": [
+      0.15212399096897905,
+      0.23296703296703297
+     ],
+     "rule_of_three_upper": null
+    },
+    "omission_items": {
+     "count": {
+      "x": 47,
+      "n": 452,
+      "rate": 0.10398230088495575,
+      "ci_cp": [
+       0.07740760027682299,
+       0.1358695538076725
+      ],
+      "ci_cluster": [
+       0.07373091877880185,
+       0.13525627803846746
+      ],
+      "rule_of_three_upper": null
+     },
+     "dis": {
+      "x": 40,
+      "n": 452,
+      "rate": 0.08849557522123894,
+      "ci_cp": [
+       0.0639749254793506,
+       0.1185558331759504
+      ],
+      "ci_cluster": [
+       0.05909090909090909,
+       0.1187915863591899
+      ],
+      "rule_of_three_upper": null
+     },
+     "regions": {
+      "x": 11,
+      "n": 452,
+      "rate": 0.024336283185840708,
+      "ci_cp": [
+       0.012209771589044611,
+       0.04312644798047473
+      ],
+      "ci_cluster": [
+       0.011061946902654867,
+       0.03938730853391685
+      ],
+      "rule_of_three_upper": null
+     },
+     "longitudinal": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "extended": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "S1_primary_or_extended": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "S2_primary_frozen_v2": {
+     "x": 33,
+     "n": 452,
+     "rate": 0.07300884955752213,
+     "ci_cp": [
+      0.05078592690001074,
+      0.10100612089719388
+     ],
+     "ci_cluster": [
+      0.049217002237136466,
+      0.0982152604491578
+     ],
+     "rule_of_three_upper": null
+    },
+    "truncated": 0.0,
+    "usd_total": 0.3850477499999995,
+    "usd_per_report": 0.0008518755530973441,
+    "calls_per_report": 1.0,
+    "latency_s_per_report": 1.7830377796054941,
+    "by_stratum": {
+     "i_thick": {
+      "x": 0,
+      "n": 175,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.020858695349057415
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.017142857142857144
+     },
+     "i_thin": {
+      "x": 0,
+      "n": 29,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.11944486906950269
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.10344827586206896
+     },
+     "ii": {
+      "x": 0,
+      "n": 112,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.03239992593135989
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.026785714285714284
+     },
+     "iii": {
+      "x": 0,
+      "n": 39,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.0902511009603343
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.07692307692307693
+     },
+     "v": {
+      "x": 0,
+      "n": 97,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.03731563690873607
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.030927835051546393
+     }
+    },
+    "hc_unsafe": {
+     "x": 0,
+     "n": 97,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.03731563690873607
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.030927835051546393
+    }
+   },
+   "A2": {
+    "n_drafts": 452,
+    "n_evaluable": 452,
+    "primary": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "by_class": {
+     "E1": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E2": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E3": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E4": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "omission_any": {
+     "x": 174,
+     "n": 452,
+     "rate": 0.38495575221238937,
+     "ci_cp": [
+      0.33987319789594667,
+      0.43155430084808644
+     ],
+     "ci_cluster": [
+      0.33836206896551724,
+      0.4304643185935319
+     ],
+     "rule_of_three_upper": null
+    },
+    "omission_items": {
+     "count": {
+      "x": 156,
+      "n": 452,
+      "rate": 0.34513274336283184,
+      "ci_cp": [
+       0.30133755031882054,
+       0.390970168972841
+      ],
+      "ci_cluster": [
+       0.300220631356114,
+       0.3887733887733888
+      ],
+      "rule_of_three_upper": null
+     },
+     "dis": {
+      "x": 28,
+      "n": 452,
+      "rate": 0.061946902654867256,
+      "ci_cp": [
+       0.041554306140067866,
+       0.08828865876805046
+      ],
+      "ci_cluster": [
+       0.03917050691244239,
+       0.08714596949891068
+      ],
+      "rule_of_three_upper": null
+     },
+     "regions": {
+      "x": 2,
+      "n": 452,
+      "rate": 0.004424778761061947,
+      "ci_cp": [
+       0.0005363111482545344,
+       0.01589170962440579
+      ],
+      "ci_cluster": [
+       0.0,
+       0.011160714285714286
+      ],
+      "rule_of_three_upper": null
+     },
+     "longitudinal": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "extended": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "S1_primary_or_extended": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "S2_primary_frozen_v2": {
+     "x": 31,
+     "n": 452,
+     "rate": 0.06858407079646017,
+     "ci_cp": [
+      0.04707190299210729,
+      0.09593963276944341
+     ],
+     "ci_cluster": [
+      0.04535624905109632,
+      0.0945054945054945
+     ],
+     "rule_of_three_upper": null
+    },
+    "truncated": 0.0,
+    "usd_total": 0.48286299999999954,
+    "usd_per_report": 0.0010682809734513265,
+    "calls_per_report": 2.0,
+    "latency_s_per_report": 3.1081943337896227,
+    "by_stratum": {
+     "i_thick": {
+      "x": 0,
+      "n": 175,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.020858695349057415
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.017142857142857144
+     },
+     "i_thin": {
+      "x": 0,
+      "n": 29,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.11944486906950269
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.10344827586206896
+     },
+     "ii": {
+      "x": 0,
+      "n": 112,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.03239992593135989
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.026785714285714284
+     },
+     "iii": {
+      "x": 0,
+      "n": 39,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.0902511009603343
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.07692307692307693
+     },
+     "v": {
+      "x": 0,
+      "n": 97,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.03731563690873607
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.030927835051546393
+     }
+    },
+    "hc_unsafe": {
+     "x": 0,
+     "n": 97,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.03731563690873607
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.030927835051546393
+    },
+    "tool_steps_mean": 1.0
+   },
+   "A3": {
+    "n_drafts": 452,
+    "n_evaluable": 452,
+    "primary": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "by_class": {
+     "E1": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E2": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E3": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E4": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "omission_any": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "omission_items": {
+     "count": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "dis": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "regions": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "longitudinal": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "extended": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "S1_primary_or_extended": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "S2_primary_frozen_v2": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "truncated": 0.0,
+    "usd_total": 0.39693810000000007,
+    "usd_per_report": 0.0008781816371681417,
+    "calls_per_report": 1.2079646017699115,
+    "latency_s_per_report": 1.5200587843371705,
+    "by_stratum": {
+     "i_thick": {
+      "x": 0,
+      "n": 175,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.020858695349057415
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.017142857142857144
+     },
+     "i_thin": {
+      "x": 0,
+      "n": 29,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.11944486906950269
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.10344827586206896
+     },
+     "ii": {
+      "x": 0,
+      "n": 112,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.03239992593135989
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.026785714285714284
+     },
+     "iii": {
+      "x": 0,
+      "n": 39,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.0902511009603343
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.07692307692307693
+     },
+     "v": {
+      "x": 0,
+      "n": 97,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.03731563690873607
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.030927835051546393
+     }
+    },
+    "hc_unsafe": {
+     "x": 0,
+     "n": 97,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.03731563690873607
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.030927835051546393
+    },
+    "a3_outcomes": {
+     "passed_0": 366,
+     "passed_1": 78,
+     "passed_2": 4,
+     "blocked": 4
+    },
+    "a3_blocked": {
+     "x": 4,
+     "n": 452,
+     "rate": 0.008849557522123894,
+     "ci_cp": [
+      0.0024163200752836834,
+      0.022502348990522728
+     ],
+     "ci_cluster": [
+      0.0021366382373845063,
+      0.018182853592876354
+     ],
+     "rule_of_three_upper": null
+    },
+    "a3_first_draft_primary": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    }
+   }
+  }
+ },
+ "family": [
+  {
+   "model": "gemini",
+   "first": "A0",
+   "second": "A3",
+   "n_pairs": 452,
+   "rate_first": 1.0,
+   "rate_second": 0.0,
+   "difference": 1.0,
+   "difference_ci_cluster": [
+    1.0,
+    1.0
+   ],
+   "first_only": 452,
+   "second_only": 0,
+   "p_two_sided": 1.7197762835371747e-136,
+   "p_holm": 6.879105134148699e-136
+  },
+  {
+   "model": "gemini",
+   "first": "A1",
+   "second": "A3",
+   "n_pairs": 452,
+   "rate_first": 0.0,
+   "rate_second": 0.0,
+   "difference": 0.0,
+   "difference_ci_cluster": [
+    0.0,
+    0.0
+   ],
+   "first_only": 0,
+   "second_only": 0,
+   "p_two_sided": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "model": "gemini",
+   "first": "A2",
+   "second": "A3",
+   "n_pairs": 452,
+   "rate_first": 0.0,
+   "rate_second": 0.0,
+   "difference": 0.0,
+   "difference_ci_cluster": [
+    0.0,
+    0.0
+   ],
+   "first_only": 0,
+   "second_only": 0,
+   "p_two_sided": 1.0,
+   "p_holm": 1.0
+  },
+  {
+   "model": "gemini",
+   "first": "A1",
+   "second": "A2",
+   "n_pairs": 452,
+   "rate_first": 0.0,
+   "rate_second": 0.0,
+   "difference": 0.0,
+   "difference_ci_cluster": [
+    0.0,
+    0.0
+   ],
+   "first_only": 0,
+   "second_only": 0,
+   "p_two_sided": 1.0,
+   "p_holm": 1.0
+  }
+ ],
+ "secondary": {
+  "injection": {
+   "gemini/A0": {
+    "x": 8,
+    "n": 50,
+    "rate": 0.16,
+    "ci_cp": [
+     0.0717007671832862,
+     0.29112630659511063
+    ],
+    "ci_cluster": [
+     0.061224489795918366,
+     0.26
+    ],
+    "rule_of_three_upper": null,
+    "baseline_same_records": {
+     "x": 22,
+     "n": 50,
+     "rate": 0.44,
+     "ci_cp": [
+      0.2999072209275437,
+      0.5874558770583268
+     ],
+     "ci_cluster": [
+      0.3,
+      0.58
+     ],
+     "rule_of_three_upper": null
+    },
+    "reachable_A0": 0
+   },
+   "gemini/A1": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06,
+    "baseline_same_records": {
+     "x": 0,
+     "n": 50,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.07112173646419764
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.06
+    },
+    "reachable_A0": 0
+   },
+   "gemini/A2": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06,
+    "baseline_same_records": {
+     "x": 0,
+     "n": 50,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.07112173646419764
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.06
+    },
+    "reachable_A0": 0
+   },
+   "gemini/A3": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06,
+    "baseline_same_records": {
+     "x": 0,
+     "n": 50,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.07112173646419764
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.06
+    },
+    "reachable_A0": 0
+   }
+  },
+  "multilingual": {
+   "gemini/A0/es": {
+    "x": 50,
+    "n": 50,
+    "rate": 1.0,
+    "ci_cp": [
+     0.9288782635358024,
+     1.0
+    ],
+    "ci_cluster": [
+     1.0,
+     1.0
+    ],
+    "rule_of_three_upper": null
+   },
+   "gemini/A0/de": {
+    "x": 50,
+    "n": 50,
+    "rate": 1.0,
+    "ci_cp": [
+     0.9288782635358024,
+     1.0
+    ],
+    "ci_cluster": [
+     1.0,
+     1.0
+    ],
+    "rule_of_three_upper": null
+   },
+   "gemini/A1/es": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06
+   },
+   "gemini/A1/de": {
+    "x": 1,
+    "n": 50,
+    "rate": 0.02,
+    "ci_cp": [
+     0.0005062279830408294,
+     0.10646954571149987
+    ],
+    "ci_cluster": [
+     0.0,
+     0.061224489795918366
+    ],
+    "rule_of_three_upper": null
+   },
+   "gemini/A2/es": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06
+   },
+   "gemini/A2/de": {
+    "x": 1,
+    "n": 50,
+    "rate": 0.02,
+    "ci_cp": [
+     0.0005062279830408294,
+     0.10646954571149987
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0625
+    ],
+    "rule_of_three_upper": null
+   },
+   "gemini/A3/es": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06
+   },
+   "gemini/A3/de": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06
+   }
+  },
+  "element_kinds": {
+   "gemini/A0": {
+    "E4:lexicon": 1250,
+    "E3:contrast": 1101,
+    "E3:technique": 724,
+    "E3:section:CLINICAL INDICATION": 390,
+    "E1:number": 89,
+    "E3:clinical": 63,
+    "E3:section:TECHNIQUE": 39,
+    "E3:spinal_cord": 17,
+    "E2:count": 17,
+    "E2:region_count": 9,
+    "E3:optic_nerve": 6,
+    "E2:dis_count": 3
+   }
+  }
+ },
+ "n_analysis_records": 452,
+ "spend_usd": {
+  "anthropic": 0.0,
+  "gemini": 2.9999,
+  "by_run": {
+   "gemini-injection": {
+    "gemini": 0.20413
+   },
+   "gemini-main": {
+    "gemini": 2.21969
+   },
+   "gemini-multilingual": {
+    "gemini": 0.44598
+   },
+   "gemini-pilot": {
+    "gemini": 0.04134
+   },
+   "judges-gemini": {
+    "gemini": 0.08652
+   },
+   "smoke-gemini": {
+    "gemini": 0.00224
+   }
+  }
+ }
+}

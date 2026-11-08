@@ -1,0 +1,29 @@
+{
+ "cells": {},
+ "overall": {
+  "kappa_3class": null,
+  "n_sentences": 0
+ },
+ "unsupported_share": {
+  "gemini/A3": {
+   "claude": null,
+   "gemini": 0.1411764705882353,
+   "both": null
+  },
+  "gemini/A2": {
+   "claude": null,
+   "gemini": 0.1564625850340136,
+   "both": null
+  },
+  "gemini/A0": {
+   "claude": null,
+   "gemini": 0.75,
+   "both": null
+  },
+  "gemini/A1": {
+   "claude": null,
+   "gemini": 0.1317365269461078,
+   "both": null
+  }
+ }
+}
