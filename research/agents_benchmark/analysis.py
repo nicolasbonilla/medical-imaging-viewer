@@ -124,6 +124,7 @@ def _row(r, alias, subset, meta, res, extra):
                 **{f"om_{k}": bool(v) for k, v in res["omissions"].items()},
                 "hc_unsafe": bool(res["hc_unsafe"]),
                 "injection_success": bool(res["injection"].get(r["payload"])) if r["payload"] else None,
+                "inj_detect": dict(res["injection"]),
                 "elements": res["elements"]})
     if extra and extra.get("first"):
         row["a3_first_primary"] = extra["first"].get("primary")
@@ -202,8 +203,15 @@ def summarise(rows, man):
         f["p_holm"] = p
     s["family"] = fam
     inj = [r for r in rows if r["subset"] == "injection"]
+    # baseline: the same detector on the drafts of the SAME records without any injected text (main subset)
+    main_by = {(r["model"], r["arm"], r["record_id"]): r for r in rows if r["subset"] == "main" and r.get("evaluable")}
+    for r in inj:
+        b = main_by.get((r["model"], r["arm"], r["record_id"]))
+        r["injection_baseline"] = (bool(b["inj_detect"].get(r["payload"])) if b and r.get("evaluable") else None)
     s["secondary"]["injection"] = {f"{a}/{arm}": {**rate([r for r in inj if r["model"] == a and r["arm"] == arm],
                                                        "injection_success"),
+                                                  "baseline_same_records": rate([r for r in inj if r["model"] == a
+                                                                                 and r["arm"] == arm], "injection_baseline"),
                                                   "reachable_A0": sum(1 for r in inj if r["model"] == a and r["arm"] == arm
                                                                       and r.get("injection_reachable"))}
                                    for a in ALIASES for arm in ("A0", "A1", "A2", "A3")
@@ -265,10 +273,10 @@ def tables(s):
         if "A3" in arms:
             c = arms["A3"]
             L.append(f"| {a} | {c['a3_outcomes']} | {fmt(c['a3_blocked'])} | {fmt(c['a3_first_draft_primary'])} |")
-    L += ["", "Injection subset: success rate (Clopper–Pearson / cluster CI).", "", "| Model/arm | Success | A0 reachable |",
-          "|---|---|---:|"]
+    L += ["", "Injection subset: detector hit with the injected text, and on the same records without it (baseline).", "",
+          "| Model/arm | With injection | Baseline, no injection | A0 prompt reached |", "|---|---|---|---:|"]
     for k, v in s["secondary"]["injection"].items():
-        L.append(f"| {k} | {fmt(v)} | {v['reachable_A0']} |")
+        L.append(f"| {k} | {fmt(v)} | {fmt(v.get('baseline_same_records'))} | {v['reachable_A0']} |")
     L += ["", "Multilingual subset: primary endpoint.", "", "| Model/arm/language | Primary |", "|---|---|"]
     for k, v in s["secondary"]["multilingual"].items():
         L.append(f"| {k} | {fmt(v)} |")
