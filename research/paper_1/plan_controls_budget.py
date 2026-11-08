@@ -7,8 +7,10 @@ m_t = pilot mean seconds per control for tool t (manifest field "seconds", case-
 VM A (n2d-highmem-4): WMH-SynthSeg then MindGlide on the controls not yet done; VMs B (n2d-standard-4) and
 C (n2-standard-4): SAMSEG, half each. projected = pilot actual + sum_VM rate x (0.25 h + scans x m x 1.25 / 3600).
 Tier A (all 100) if projected <= cap; else tier B (SAMSEG on the 50 odd-numbered controls); else SAMSEG not run.
-Guards: max-hours per VM = ceil(f x projected hours) with f = 1.5, lowered in steps of 0.05 (not below 1.25)
-until pilot + sum_VM rate x max-hours <= cap.
+Guards (the in-VM wall-clock stop): max-hours per VM = ceil(f x projected hours, which already carry the 1.25
+safety factor), with the largest f in 1.5, 1.45, ..., 1.0 such that pilot + sum_VM rate x max-hours <= cap
+(PREREG section 8: even if every VM ran to its guard, the total stays within the cap). If even f = 1.0 does
+not fit, the next tier is tried.
 """
 import argparse
 import json
@@ -45,20 +47,19 @@ def plan(means, pilot_usd, done, cap=10.0, rates=RATES):
             per = sum(means[t] for t in b["tools"])
             hours[vm] = SETUP_H + len(b["cases"]) * per * SAFETY / 3600.0
         proj = pilot_usd + sum(rates[vm] * h for vm, h in hours.items())
-        if proj <= cap:
-            f = 1.5
-            while True:
-                mh = {vm: math.ceil(f * h) for vm, h in hours.items()}
-                worst = pilot_usd + sum(rates[vm] * mh[vm] for vm in mh)
-                if worst <= cap or f <= SAFETY + 1e-9:
-                    break
-                f = round(f - 0.05, 2)
-            out.update({"tier": tier, "projected_usd": round(proj, 3), "projected_hours": {k: round(v, 2) for k, v in hours.items()},
-                        "max_hours": mh, "guard_factor": f, "worst_case_usd_at_guards": round(worst, 3),
-                        "worst_case_within_cap": worst <= cap,
-                        "blocks": {vm: {"tools": b["tools"], "n": len(b["cases"]), "cases": b["cases"]}
-                                   for vm, b in blocks.items() if b["cases"]}})
-            return out
+        if proj > cap:
+            continue
+        for f in [round(1.5 - 0.05 * i, 2) for i in range(11)]:             # 1.5 ... 1.0
+            mh = {vm: math.ceil(f * h) for vm, h in hours.items()}
+            worst = pilot_usd + sum(rates[vm] * mh[vm] for vm in mh)
+            if worst <= cap:
+                out.update({"tier": tier, "projected_usd": round(proj, 3),
+                            "projected_hours": {k: round(v, 2) for k, v in hours.items()},
+                            "max_hours": mh, "guard_factor": f, "worst_case_usd_at_guards": round(worst, 3),
+                            "worst_case_within_cap": True,
+                            "blocks": {vm: {"tools": b["tools"], "n": len(b["cases"]), "cases": b["cases"]}
+                                       for vm, b in blocks.items() if b["cases"]}})
+                return out
     out.update({"tier": "none fits", "projected_usd": None})
     return out
 

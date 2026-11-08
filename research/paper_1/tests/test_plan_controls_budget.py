@@ -28,6 +28,13 @@ def test_slow_samseg_falls_to_the_odd_controls_then_out():
     assert p["tier"] == "no SAMSEG" and "B" not in p["blocks"]
 
 
+def test_guards_shrink_to_fit_the_cap_before_the_tier_drops():
+    p = P.plan({"wmhsynthseg": 400, "mindglide": 100, "samseg": 700}, 0.25, DONE)
+    assert p["tier"] == "A" and p["worst_case_usd_at_guards"] <= 10
+    assert all(p["max_hours"][vm] >= p["projected_hours"][vm] for vm in p["max_hours"])   # never below projection
+    assert 1.0 <= p["guard_factor"] < 1.5
+
+
 def test_pilot_cost_parser():
     t = "COST_RECORD,run_id=toolbench-ctl-pilot,machine=n2d-highmem-4,seconds=2900,rate_usd_per_h=0.24029,cost_usd_compute_estimate=0.1936"
     assert P.pilot_cost(t) == 0.1936
