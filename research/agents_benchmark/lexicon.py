@@ -169,6 +169,8 @@ NOT_PROVIDED = re.compile(r"\b(?:not (?:been )?(?:provided|available|supplied|gi
                           r"documented|assessed|evaluated|imaged|covered|part of|performed|administered|acquired|applicable)|"
                           r"see the clinician'?s entry|clinician'?s entry|no (?:information|data|details|post-?contrast)|"
                           r"no (?:clinical )?(?:history|indication|information)|"
+                          r"no (?:other|additional|further) (?:sequences?|images?|imaging|data)|"
+                          r"ningun[ao]? otr[ao]s? (?:secuencias?|imagen\w*)|keine (?:weiteren|anderen) (?:sequenzen|bilder|daten)|"
                           r"unknown|n/?a\b|without (?:contrast|post-?contrast) (?:data|imaging|images)|cannot be assessed|"
                           r"outside the|no (?:se )?(?:proporcion\w*|dispon\w*|aport\w*|especific\w*|evalu\w*|incluy\w*|valor\w*)|"
                           r"no disponible\w*|sin datos|sin informacion|datos del medico|no evaluad\w*|no incluid\w*|"
@@ -196,6 +198,21 @@ OPTIC = re.compile(r"\b(?:optic nerves?|optic neuritis|nervios? optic\w*|neuriti
 SECTION_HEADING_E3 = re.compile(r"\b(?:technique|protocol|sequences|clinical (?:indication|history|information)|indication|"
                                 r"tecnica|protocolo|secuencias|indicacion(?: clinica)?|historia clinica|technik|protokoll|"
                                 r"sequenzen|klinische (?:fragestellung|angaben)|indikation|fragestellung)\b")
+
+# Technique exception and abstention-reason context (deviation 4)
+FLAIR_SEQUENCE = re.compile(r"\b(?:(?:provided|single|given|segmented|available|same|one)\s+)?(?:t2[- ])?flair[- ]?"
+                            r"(?:sequences?|sequenz\w*|images?|imaging)\b|\bsecuencias? (?:de )?flair\b|"
+                            r"\bsequences?\s+flair\b")
+VISIT_WORDS = re.compile(r"\b(?:visits?|prior|previous|timepoints?|time points?|comparison|comparable|longitudinal|"
+                         r"visitas?|anterior(?:es)?|comparaci\w+|comparable\w*|longitudinal\w*|voruntersuchung\w*|"
+                         r"vergleich\w*|untersuchungen|zeitpunkt\w*)\b")
+CANNOT_ESTABLISH = re.compile(r"\b(?:could not|cannot|can't|unable to|inability to|not)\b[^.;]{0,40}\b(?:establish\w*|"
+                              r"determin\w*|confirm\w*)|\bno se (?:pudo|puede) establecer|\bnicht (?:feststell\w*|"
+                              r"festgestellt)|\bliess sich nicht")
+UNDETERMINED = re.compile(r"\b(?:not (?:been )?(?:determined|assessed|evaluated|assessable)|cannot be (?:determined|"
+                          r"assessed|established)|undetermined|not determinable|no (?:se )?(?:puede )?determin\w*|"
+                          r"no evaluad\w*|nicht (?:bestimmbar|bestimmt|beurteilt|beurteilbar))\b")
+ACTIVITY_TERM = re.compile(r"disease activity|krankheitsaktivitat|actividad de la enfermedad")
 
 # Extended class (secondary)
 EXTENDED = re.compile(r"\b(?:black holes?|t1 hypointens\w*|hypointens\w* on t1|atroph\w*|brain volume|ventricular "

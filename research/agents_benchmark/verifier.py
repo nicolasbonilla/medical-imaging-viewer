@@ -135,12 +135,18 @@ class Pools:
             for m in re.finditer(r"\d+(?:\.\d+)?", v):
                 self.all.add(float(m.group(0)))
 
+    @staticmethod
+    def _unit_key(k):
+        k = (k or "").lower()
+        return "mm3" in k or k.endswith("_ml") or k.endswith("ml")
+
     def _walk(self, o, key):
         if isinstance(o, dict):
             for k, v in o.items():
                 if k in ("lesion_table",):
                     continue
-                self._walk(v, k)
+                # a dict keyed by names (e.g. volumes_ml: {region: value}) passes its unit on to its values
+                self._walk(v, k if self._unit_key(k) or not self._unit_key(key) else key)
         elif isinstance(o, list):
             for v in o:
                 self._walk(v, key)
@@ -186,6 +192,14 @@ def _lex_hits(fold: str, pats, exempt_conditional: bool, exempt_negation: bool =
             if exempt_conditional and _before(fold, m, L.CONDITIONAL):
                 continue
             hits.append(m.group(0))
+    return hits
+
+
+def _l3_hits(fold: str) -> List[str]:
+    """L3 with the PREREG exception: 'disease activity' is allowed when the sentence says it is not determined."""
+    hits = _lex_hits(fold, L.L3, True)
+    if hits and L.UNDETERMINED.search(fold):
+        hits = [h for h in hits if not L.ACTIVITY_TERM.fullmatch(h)]
     return hits
 
 
@@ -304,8 +318,12 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
         in_e3_section = u["section"] in e3_sections
         exempt = bool(L.NOT_PROVIDED.search(f))
         topics = []
-        tech = [m.group(0) for m in L.TECHNIQUE.finditer(f)]
-        if tech:
+        # technique exception: "the FLAIR sequence" is the record's own segmented sequence (PREREG E3); and, for a pair
+        # that abstained, statements of the abstention reason (acquisition / protocol not comparable) are the record's
+        f_tech = L.FLAIR_SEQUENCE.sub(" ", f)
+        abst_reason = bool(lng and lng.get("abstained") and (L.VISIT_WORDS.search(f) or L.CANNOT_ESTABLISH.search(f)))
+        tech = [m.group(0) for m in L.TECHNIQUE.finditer(f_tech)]
+        if tech and not abst_reason:
             topics.append("technique")
         elif L.SLICE_THICKNESS.search(f):
             pass                                       # technique exception: slice thickness (numbers checked by E1)
@@ -317,13 +335,13 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
             topics.append("spinal_cord")
         if L.OPTIC.search(f):
             topics.append("optic_nerve")
-        if in_e3_section and not topics:
+        if in_e3_section and not topics and not abst_reason:
             topics.append("section:" + u["section"])
         if topics and not exempt:
             add("E3", "+".join(topics), u, f"statement on {', '.join(topics)} the record cannot support")
         # ---- E4 lexicon
         hits = (_lex_hits(f, L.L1, True) + _lex_hits(f, L.L2, False, exempt_negation=False)
-                + _lex_hits(f, L.L3, True) + _lex_hits(f, L.L4, True) + _lex_hits(f, L.L5, False))
+                + _l3_hits(f) + _lex_hits(f, L.L4, True) + _lex_hits(f, L.L5, False))
         if hits:
             add("E4", "lexicon", u, f"forbidden wording: {sorted(set(hits))[:4]}")
         # ---- extended class
