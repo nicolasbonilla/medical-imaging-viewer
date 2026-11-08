@@ -319,4 +319,6 @@ change is a deviation and is logged below with date, reason and impact, before t
 
 | # | Date | Deviation | Reason | Impact |
 |---|---|---|---|---|
-| — | — | none yet | — | — |
+| 1 | 2026-11-08 | L1, L3 and L4 are also exempt when the sentence has, before the match, a conditional cue (EN whether, if, requires/required, needed, necessary, "to establish/confirm/determine/assess/evaluate/exclude"; ES si, requiere, necesario, "para establecer/confirmar/determinar/valorar/evaluar/descartar"; DE ob, erfordert, erforderlich, notwendig, "um … zu") | Found while writing the unit tests: "clinical correlation is required to determine whether these represent demyelinating lesions" is not diagnostic language | Made before any draft was generated; narrows E4 slightly |
+| 2 | 2026-11-08 | E3 "clinical indication/history" is implemented as statements of the patient's clinical facts (clinical indication/history, history of, relapses, optic neuritis, numbness, weakness, paresthesia, known or suspected MS) and the body of a CLINICAL INDICATION heading; generic hedges ("clinical correlation is recommended") are not counted | Same | Before any draft |
+| 3 | 2026-11-08 | Clarification: E1/E2a numbers are numerals; spelled-out numbers are not extracted. A range upper bound or a category bound ("20-50 lesions", "more than 100 lesions") is not read as a lesion count by E2a (it is checked by E2c) | Same | Before any draft |

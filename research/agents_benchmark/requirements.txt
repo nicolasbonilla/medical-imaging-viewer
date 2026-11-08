@@ -1,0 +1,4 @@
+# Benchmark extras on top of the backend environment (backend/requirements*.txt): install in a virtual environment
+# created with --system-site-packages so the app's own modules and pins are reused read-only.
+anthropic>=1.0
+google-genai>=1.40
