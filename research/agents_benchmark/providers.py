@@ -14,6 +14,9 @@ from . import config
 from .ledger import Ledger, check_budget
 
 ANTHROPIC_KEY_FILE = Path("C:/Users/Nicolas/.anthropic/research_key.txt")
+import threading  # noqa: E402
+
+_CLIENT_LOCK = threading.Lock()
 
 
 # ===================================================================================== Anthropic (Message Batches)
@@ -114,13 +117,16 @@ class GeminiVertex:
         return tok
 
     def client(self):
-        if self._client is None or time.time() - self._token_at > 40 * 60:
-            from google.oauth2.credentials import Credentials
-            creds = Credentials(token=self._gcloud_token())
-            self._client = self.genai.Client(vertexai=True, project=config.GCP_PROJECT, location="global",
-                                             credentials=creds)
-            self._token_at = time.time()
-        return self._client
+        with _CLIENT_LOCK:
+            if self._client is None or time.time() - self._token_at > 40 * 60:
+                from google.genai import types
+                from google.oauth2.credentials import Credentials
+                creds = Credentials(token=self._gcloud_token())
+                self._client = self.genai.Client(vertexai=True, project=config.GCP_PROJECT, location="global",
+                                                 credentials=creds,
+                                                 http_options=types.HttpOptions(timeout=120_000))  # ms: no hung call
+                self._token_at = time.time()
+            return self._client
 
     def _contents(self, req):
         from google.genai import types

@@ -99,6 +99,8 @@ def run(alias, subset, max_calls=None, provider=None, max_tokens_a0=None):
             "already_done": len(finished), "max_calls": max_calls, "code": code_fingerprint()}
     (rd / f"run_info_{int(time.time())}.json").write_text(json.dumps(info, indent=1))
     print(f"[run] {alias}/{subset}: {len(jobs)} jobs to run ({len(finished)} already done)", flush=True)
+    if not getattr(provider, "batch", True) and max_calls is None:
+        return run_online(provider, model, jobs, out_path, info, rd)
     calls, rnd = 0, 0
     active = list(jobs)
     while active:
@@ -144,6 +146,52 @@ def run(alias, subset, max_calls=None, provider=None, max_tokens_a0=None):
             break
     info.update({"ended": time.time(), "calls": calls, "rounds": rnd, "unfinished": len(active)})
     (rd / f"run_info_{int(info['started'])}.json").write_text(json.dumps(info, indent=1))
+    return info
+
+
+def run_online(provider, model, jobs, out_path, info, rd):
+    """Online providers: every job runs to completion in its own worker and is saved as soon as it finishes."""
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+    from .ledger import estimate_request_usd, provider_of, spent
+    prov = provider_of(model)
+    cap = config.ANTHROPIC_HARD_STOP_USD if prov == "anthropic" else config.GEMINI_CAP_USD
+    state = {"spent": spent(prov), "calls": 0, "done": 0, "stop": None}
+    lock = threading.Lock()
+
+    def drive(job):
+        n = 0
+        while not job.done and state["stop"] is None:
+            req = job.next_request()
+            if req is None:
+                break
+            with lock:
+                if state["spent"] + estimate_request_usd(model, req, batch=False) > cap:
+                    state["stop"] = f"{prov}: spent {state['spent']:.4f} USD + next request > cap {cap} USD"
+                    break
+            n += 1
+            resp = provider.one(model, f"{job.key}#{n}", req)
+            with lock:
+                state["spent"] += cost(model, resp.get("usage") or {}, batch=False)
+                state["calls"] += 1
+            job.consume(resp)
+        if job.done:
+            with lock, open(out_path, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps(job_line(job, model), ensure_ascii=False) + "\n")
+                state["done"] += 1
+                if state["done"] % 100 == 0:
+                    print(f"[run] {state['done']}/{len(jobs)} jobs done, {state['calls']} calls, "
+                          f"{state['spent']:.3f} USD spent ({prov})", flush=True)
+
+    with ThreadPoolExecutor(provider.workers) as ex:
+        list(ex.map(drive, jobs))
+    if state["stop"]:
+        print(f"[run] STOP (budget): {state['stop']}", flush=True)
+        info["stopped"] = state["stop"]
+    info.update({"ended": time.time(), "calls": state["calls"], "done": state["done"],
+                 "unfinished": len(jobs) - state["done"]})
+    (rd / f"run_info_{int(info['started'])}.json").write_text(json.dumps(info, indent=1))
+    print(f"[run] finished: {state['done']}/{len(jobs)} jobs, {state['calls']} calls", flush=True)
     return info
 
 
