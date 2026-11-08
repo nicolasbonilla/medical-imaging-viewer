@@ -167,7 +167,7 @@ class GeminiVertex:
 
     def one(self, model, key, req):
         last = None
-        for attempt in range(4):
+        for attempt in range(int(os.environ.get("AB_GEMINI_ATTEMPTS", "4"))):
             t0 = time.time()
             try:
                 resp = self.client().models.generate_content(model=model, contents=self._contents(req),
@@ -198,7 +198,8 @@ class GeminiVertex:
             except Exception as e:  # noqa: BLE001 - retried, then reported as a missing draft
                 last = f"{type(e).__name__}: {str(e)[:300]}"
                 if "RESOURCE_EXHAUSTED" in last or "429" in last or "503" in last or "500" in last:
-                    time.sleep(5 * (attempt + 1) ** 2)
+                    import random
+                    time.sleep(min(120, 5 * 2 ** attempt) + random.uniform(0, 5))   # back off with jitter
                     continue
                 if attempt == 0 and "thinking" in last.lower():
                     raise
