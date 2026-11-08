@@ -31,7 +31,7 @@ L1 = _c(
     r"\bdiagnos(?:is|tic|ed)\b[^.;]{0,40}\b" + MS + r"\b",
     r"\b(?:consistent with|typical of|typical for|characteristic of|suggestive of|compatible with|indicative of|"
     r"in keeping with|diagnostic of|pathognomonic of)\s+(?:an?\s+)?(?:" + MS + r"\b|demyelinat)",
-    r"\b(?:mcdonald|diagnostic)\s+(?:\d{4}\s+)?criteria\b[^.;]{0,30}\b(?:are|is|were|be|been)\s+(?:met|fulfilled|satisfied)\b",
+    r"\b(?:mcdonald|diagnostic)\s+(?:\d{4}\s+)?criteria\b[^.;()]{0,15}\b(?:are|is|were|be|been)\s+(?:met|fulfilled|satisfied)\b",
     r"\b(?:meets?|meeting|fulfil+s?|fulfil+ing|satisf(?:y|ies|ying))\s+(?:the\s+)?(?:\d{4}\s+)?(?:revised\s+)?(?:mcdonald|diagnostic)\b",
     r"\bcriteria\s+for\s+" + MS + r"\s+(?:are|is|were)\s+(?:met|fulfilled|satisfied)",
     r"\bdissemination in time\b[^.;]{0,30}\b(?:is |are )?(?:met|demonstrated|present|fulfilled|satisfied|established)\b",
@@ -116,6 +116,9 @@ DIS_TERM = re.compile(r"\b(?:dissemination in space|dis|diseminacion en (?:el )?
 DIS_NEG = re.compile(r"\b(?:not met|not fulfilled|not satisfied|not supported|not supporting|does not (?:meet|support|"
                      r"fulfil)|do not (?:meet|support)|no se cumple|no cumple|no (?:apoya|respalda)|nicht erfullt|"
                      r"nicht gegeben|nicht nachgewiesen|unterstutzt nicht|fails?)\b")
+# Deviation 5: the status of an evaluated DIS is read from explicit status words only ("present" names lesions)
+DIS_POS_STATUS = re.compile(r"\b(?:met|fulfilled|satisfied|supported|demonstrated|positive|established|cumple\w*|"
+                            r"demostrad[oa]|erfullt|gegeben|nachgewiesen)\b")
 DIS_POS = re.compile(r"\b(?:met|fulfilled|satisfied|supported|supports?|supporting|demonstrated|present|positive|"
                      r"consistent with|established|cumple\w*|presente|demostrad[oa]|apoya\w*|respalda\w*|compatible|"
                      r"erfullt|gegeben|nachgewiesen|vorhanden|unterstutzt|vereinbar)\b")
@@ -176,7 +179,7 @@ NOT_PROVIDED = re.compile(r"\b(?:not (?:been )?(?:provided|available|supplied|gi
                           r"no disponible\w*|sin datos|sin informacion|datos del medico|no evaluad\w*|no incluid\w*|"
                           r"nicht (?:angegeben|verfugbar|vorliegend|bekannt|ubermittelt|beurteilt|erfasst|abgebildet|"
                           r"untersucht|enthalten|vorhanden)|keine angaben|keine daten|liegen nicht vor|angaben der arzt\w*)\b")
-TECHNIQUE = re.compile(r"\b(?:technique|technical|protocol|sequences?|acquisition parameters|field strength|tesla|"
+TECHNIQUE = re.compile(r"\b(?:technique|protocol|sequences?|acquisition parameters|field strength|tesla|"
                        r"\d+(?:[.,]\d+)?\s*-?t\b|3d|2d|isotropic\w*|t[12][- ]?weighted|t[12]w|dwi|adc|swi|mprage|mp-rage|"
                        r"diffusion|susceptibility|repetition time|echo time|inversion time|tr/te|scanner|"
                        r"tecnica|protocolo|secuencias?|parametros de adquisicion|isotropic[oa]s?|ponderad[oa]s?|difusion|"
@@ -199,6 +202,38 @@ SECTION_HEADING_E3 = re.compile(r"\b(?:technique|protocol|sequences|clinical (?:
                                 r"tecnica|protocolo|secuencias|indicacion(?: clinica)?|historia clinica|technik|protokoll|"
                                 r"sequenzen|klinische (?:fragestellung|angaben)|indikation|fragestellung)\b")
 
+# Deviation 5: statements that information was NOT available / not included / lacking (PREREG E3 exemption), generic
+# clinical hedges, and further forms of the FLAIR technique exception
+NOT_AVAILABLE_GENERIC = re.compile(
+    r"\b(?:was|were|is|are|been|be|has|have|had|do|does|did)\s+not\b[^.;]{0,25}\b(?:provided|available|supplied|"
+    r"included|assessed|evaluated|addressed|considered|correlated|incorporated|determined|determinable|known|given|"
+    r"performed|imaged)\b|"
+    r"\bnot (?:been |be )?(?:provided|available|supplied|included|assessed|evaluated|addressed|considered|correlated|"
+    r"incorporated|determined|determinable|known|given|performed|imaged)\b|"
+    r"\bno\s+(?:[\w/-]+[\s,]+){0,10}?(?:was|were|is|are|has been|have been)\s+(?:provided|available|supplied|included|"
+    r"performed|given)\b|"
+    r"\b(?:does|do|did)\s+not\s+(?:include|reflect|account for|assess|address|consider|incorporate|evaluate|cover)\b|"
+    r"\b(?:lack|absence) of\b|\b(?:were|was|are|is) (?:unavailable|missing)\b|\bunavailable\b|"
+    r"\blimited to the (?:provided |single |segmented )?flair\b|"
+    r"\bno se (?:proporcion\w*|dispon\w*|aport\w*|incluy\w*|evalu\w*|consider\w*)|"
+    r"\bno (?:fue|fueron|ha sido|han sido|esta|estan|estuvo|estuvieron) (?:proporcionad\w*|disponibles?|incluid\w*|"
+    r"evaluad\w*|aportad\w*)|\bno (?:incluye|incluyen|refleja|reflejan|considera|evalua)\b|\b(?:ausencia|falta) de\b|"
+    r"\blimitad[oa]s? a la secuencia flair\b|"
+    r"\bnicht (?:verfugbar|vorliegend|enthalten|beurteilt|berucksichtigt|einbezogen|angegeben|bekannt|vorhanden|"
+    r"ubermittelt)\b|\b(?:enthalt|umfasst|berucksichtigt|beinhaltet)\s+(?:\w+\s+){0,3}?(?:keine|nicht)\b|"
+    r"\b(?:fehlen\w*|mangels)\b|\bkeine (?:angaben|daten|informationen)\b|\bbeschrankt auf die flair\b")
+CLINICAL_HEDGE = re.compile(r"\b(?:correlat\w*|in (?:the )?(?:context|light) of|interpret\w*|review\w*|consider\w*|"
+                            r"integrat\w*|together with|alongside|should|must|requires?|required|recommended|contexto|"
+                            r"correlaci\w*|revis\w*|kontext|korrelier\w*|zusammenschau|interpretier\w*)\b")
+CLINICAL_FACT = re.compile(r"\b(?:history of (?!the\b|clinical\b)\w+|relapses?|optic neuritis|numbness|weakness|"
+                           r"paresthesi\w*|known (?:ms|multiple sclerosis)|suspected|presents? with|presented with|"
+                           r"brotes?|antecedentes de|sospecha|schub\w*|verdacht)\b")
+FLAIR_SEQUENCE_EXTRA = re.compile(r"\bsegmented sequence (?:is|was) flair\b|\bflair(?:[- ]visible)?(?: mri)? (?:sequence|"
+                                  r"lesion load)\w*|\bsingle[- ]sequence\b|\bsequence (?:is|was) flair\b|"
+                                  r"\bsecuencia segmentada (?:es|fue) flair\b|\bsegmentierte sequenz (?:ist|war) flair\b|"
+                                  r"\bvoxel\w*\b[^.;]{0,60}|\bacquisition parameters?\b(?=[^.;]{0,40}\b(?:voxel|"
+                                  r"slice thickness))")
+
 # Technique exception and abstention-reason context (deviation 4)
 FLAIR_SEQUENCE = re.compile(r"\b(?:(?:provided|single|given|segmented|available|same|one)\s+)?(?:t2[- ])?flair[- ]?"
                             r"(?:sequences?|sequenz\w*|images?|imaging)\b|\bsecuencias? (?:de )?flair\b|"
@@ -209,7 +244,8 @@ VISIT_WORDS = re.compile(r"\b(?:visits?|prior|previous|timepoints?|time points?|
 CANNOT_ESTABLISH = re.compile(r"\b(?:could not|cannot|can't|unable to|inability to|not)\b[^.;]{0,40}\b(?:establish\w*|"
                               r"determin\w*|confirm\w*)|\bno se (?:pudo|puede) establecer|\bnicht (?:feststell\w*|"
                               r"festgestellt)|\bliess sich nicht")
-UNDETERMINED = re.compile(r"\b(?:not (?:been )?(?:determined|assessed|evaluated|assessable)|cannot be (?:determined|"
+UNDETERMINED = re.compile(r"\b(?:not (?:been )?(?:determined|assessed|evaluated|assessable|addressed|covered|included|"
+                          r"provided)|no se abord\w*|nicht berucksichtigt|cannot be (?:determined|"
                           r"assessed|established)|undetermined|not determinable|no (?:se )?(?:puede )?determin\w*|"
                           r"no evaluad\w*|nicht (?:bestimmbar|bestimmt|beurteilt|beurteilbar))\b")
 ACTIVITY_TERM = re.compile(r"disease activity|krankheitsaktivitat|actividad de la enfermedad")

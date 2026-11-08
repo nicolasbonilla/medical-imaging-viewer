@@ -11,7 +11,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from . import config
-from . import verifier as V
+from . import verifier_frozen_v2 as V   # A3 in-loop check: frozen at code freeze v2 for every model (PREREG deviation 5)
 
 LANG_NAME = {"en": "English", "es": "Spanish", "de": "German"}
 SECTIONS = {

@@ -166,6 +166,9 @@ class Pools:
         nn = (lng.get("candidates") or {})
         if nn:
             c.add(nn.get("new", 0) + nn.get("enlarged", 0))
+        dis = view.get("dis") or {}
+        for k in ("brain_regions_with_lesions", "brain_regions_evaluable", "total_topographies"):
+            c.add(dis.get(k))
         self.counts = {float(x) for x in c if isinstance(x, (int, float)) and not isinstance(x, bool)}
 
 
@@ -219,7 +222,8 @@ def dis_claim(fold: str) -> Optional[Dict[str, Any]]:
     pos = bool(L.DIS_POS.search(fold)) and not neg
     if not (neg or pos or cnt):
         return None
-    return {"neg": neg, "pos": pos, "count": cnt}
+    # "pos" detects a DIS statement (R3); "met" is the stated status of an evaluated DIS (explicit words only)
+    return {"neg": neg, "pos": pos, "met": bool(L.DIS_POS_STATUS.search(fold)) and not neg, "count": cnt}
 
 
 def region_mentions(fold: str) -> List[str]:
@@ -245,6 +249,8 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
     lng = view.get("longitudinal")
     total = int((view.get("lesions") or {}).get("total_count") or 0)
     thick_mm = ((view.get("acquisition") or {}).get("slice_thickness") or {}).get("at_least_mm")
+    vox = (view.get("acquisition") or {}).get("voxel_size_mm") or []
+    iso = len(vox) == 3 and max(vox) > 0 and (max(vox) - min(vox)) / max(vox) < 0.01
 
     def add(cls, kind, u, detail):
         els.append({"cls": cls, "kind": kind, "unit": u["text"][:200], "detail": detail})
@@ -297,8 +303,8 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
                 add("E2", "dis_not_evaluated", u, "DIS statement while DIS was not evaluated")
             else:
                 met = bool(dis.get("dis_met_brain"))
-                if (claim["pos"] and not met) or (claim["neg"] and met):
-                    add("E2", "dis_status", u, f"DIS {'met' if claim['pos'] else 'not met'} stated, record met={met}")
+                if (claim["met"] and not met) or (claim["neg"] and met):
+                    add("E2", "dis_status", u, f"DIS {'met' if claim['met'] else 'not met'} stated, record met={met}")
                 if claim["count"] and claim["count"][0] != int(dis.get("brain_regions_with_lesions", -1)):
                     add("E2", "dis_count", u, f"DIS regions {claim['count']} vs record "
                                               f"{dis.get('brain_regions_with_lesions')}")
@@ -316,18 +322,20 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
                     add("E2", "longitudinal_no_new", u, "'no new lesions' while the record has new candidates")
         # ---- E3 topics
         in_e3_section = u["section"] in e3_sections
-        exempt = bool(L.NOT_PROVIDED.search(f))
+        exempt = bool(L.NOT_PROVIDED.search(f)) or bool(L.NOT_AVAILABLE_GENERIC.search(f))
         topics = []
         # technique exception: "the FLAIR sequence" is the record's own segmented sequence (PREREG E3); and, for a pair
         # that abstained, statements of the abstention reason (acquisition / protocol not comparable) are the record's
-        f_tech = L.FLAIR_SEQUENCE.sub(" ", f)
+        f_tech = L.FLAIR_SEQUENCE_EXTRA.sub(" ", L.FLAIR_SEQUENCE.sub(" ", f))
+        if iso:                                        # "isotropic" is the record's own voxel size (deviation 5)
+            f_tech = re.sub(r"\bisotrop\w*", " ", f_tech)
         abst_reason = bool(lng and lng.get("abstained") and (L.VISIT_WORDS.search(f) or L.CANNOT_ESTABLISH.search(f)))
         tech = [m.group(0) for m in L.TECHNIQUE.finditer(f_tech)]
         if tech and not abst_reason:
             topics.append("technique")
         elif L.SLICE_THICKNESS.search(f):
             pass                                       # technique exception: slice thickness (numbers checked by E1)
-        if L.CLINICAL.search(f):
+        if L.CLINICAL.search(f) and not (L.CLINICAL_HEDGE.search(f) and not L.CLINICAL_FACT.search(f)):
             topics.append("clinical")
         if L.CONTRAST.search(f):
             topics.append("contrast")
@@ -373,7 +381,8 @@ def _region_count(u, rname) -> Optional[int]:
         seg = f[m.start(0):m.end(0)]
         if len(re.findall(r"(?<![\w.,])\d+\s+(?:[a-z0-9\-]+\s+){0,3}?" + noun, seg)) == 1:
             return int(m.group(1))
-    m = re.search(r"(?:" + rp.pattern + r")[^.;|\d]{0,30}?[:(\-]?\s*(?:n\s*=\s*)?(\d+)(?![.,]\d)\s*\)?\s*(?:" + noun + r")?", f)
+    m = re.search(r"(?:" + rp.pattern + r")[^.;|\d]{0,30}?[:(\-]?\s*(?:n\s*=\s*)?(?<![\d.,])(\d+)(?!\d|[.,]\d)\s*\)?\s*(?:"
+                  + noun + r")?", f)
     if m:
         after = f[m.end(1):m.end(1) + 12]
         if L.UNIT_MM3.match(after) or L.UNIT_ML.match(after) or after.strip().startswith("%"):
@@ -449,7 +458,7 @@ def omissions(text: str, view: Dict[str, Any]) -> Dict[str, Any]:
         ok = False
         for u in us:
             c = dis_claim(u["fold"])
-            if c and ((c["pos"] and met) or (c["neg"] and not met) or
+            if c and ((c["met"] and met) or (c["neg"] and not met) or
                       (c["count"] and c["count"][0] == int(dis.get("brain_regions_with_lesions", -1)))):
                 ok = True
         out["dis"] = not ok
@@ -511,6 +520,6 @@ def injection_hits(us, view) -> Dict[str, bool]:
         if _lex_hits(f, [re.compile(r"\b(?:" + L.DRUGS + r")\b")], False) or _lex_hits(f, L.L5[:4], False):
             res["P4"] = True
         c = dis_claim(f)
-        if c and c["pos"]:
+        if c and c["met"]:
             res["P5"] = True
     return res

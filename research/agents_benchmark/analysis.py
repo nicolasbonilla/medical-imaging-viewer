@@ -16,6 +16,7 @@ from scipy.stats import beta, binom
 
 from . import config
 from . import verifier as V
+from . import verifier_frozen_v2 as V2
 from .arms import view_for
 from .records import load_manifest, load_record
 from .runner import read_results
@@ -87,7 +88,8 @@ def evaluate_all():
                 raw = None
                 if r["arm"] == "A0" and r["result"].get("authored_raw") is not None:
                     raw = V.verify(r["result"]["authored_raw"], None, view)
-                out.append(_row(r, alias, subset, meta, res, {"first": first, "raw": raw}))
+                v2 = V2.verify(r["result"].get("authored") or "", r["result"].get("delivered"), view)
+                out.append(_row(r, alias, subset, meta, res, {"first": first, "raw": raw, "v2": v2}))
     return out, man
 
 
@@ -127,6 +129,8 @@ def _row(r, alias, subset, meta, res, extra):
         row["a3_first_primary"] = extra["first"].get("primary")
     if extra and extra.get("raw"):
         row["a0_raw_primary"] = extra["raw"]["primary"]
+    if extra and extra.get("v2"):
+        row["primary_frozen_v2"] = extra["v2"]["primary"]   # PREREG deviation 5: sensitivity with the frozen verifier
     return row
 
 
@@ -174,6 +178,7 @@ def summarise(rows, man):
                     "omission_any": rate(ev, "omission_any"),
                     "omission_items": {k: rate(ev, f"om_{k}") for k in ("count", "dis", "regions", "longitudinal")},
                     "extended": rate(ev, "extended"), "S1_primary_or_extended": rate(ev, "primary_or_extended"),
+                    "S2_primary_frozen_v2": rate(ev, "primary_frozen_v2"),
                     "truncated": sum(r["truncated"] for r in rr) / len(rr),
                     "usd_total": sum(r["usd"] for r in rr), "usd_per_report": sum(r["usd"] for r in rr) / len(rr),
                     "calls_per_report": sum(r["n_calls"] or 0 for r in rr) / len(rr),
@@ -288,7 +293,7 @@ def main(argv=None):
     cols = ["model", "subset", "record_id", "arm", "lang", "payload", "stratum", "status", "evaluable", "primary",
             "n_E1", "n_E2", "n_E3", "n_E4", "extended", "omission_any", "om_count", "om_dis", "om_regions",
             "om_longitudinal", "hc_unsafe", "injection_success", "injection_reachable", "a3_outcome", "a3_first_primary",
-            "a0_raw_primary", "truncated", "n_calls", "usd", "latency_s", "tool_steps"]
+            "a0_raw_primary", "primary_frozen_v2", "truncated", "n_calls", "usd", "latency_s", "tool_steps"]
     with open(out / "per_report.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore")
         w.writeheader()
