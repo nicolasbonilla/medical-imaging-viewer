@@ -545,6 +545,8 @@ def cmd_run(a):
                                  for f in ("ms_region_classifier.py", "lesion_analysis_service.py", "lesion_metrics.py")},
             "atlas_sha256": sha256(os.path.join(ROOT, "backend", "data", "msmask", "sub-mni152_space-mni_msmask.nii.gz")),
             "inputs": {"files": len(hashes), "digest_sha256_of_sorted_list": digest},
+            "versions": {"python": sys.version.split()[0], "executable": sys.executable, "numpy": np.__version__,
+                         "nibabel": nib.__version__, "scipy": __import__("scipy").__version__},
             "seed": SEED, "n_boot": N_BOOT, "runtime_s": round(time.time() - t0, 1)}
     res["run_info"] = info
     res["S9_runtime"] = runtime_table(a.manifests, set(cases))

@@ -144,5 +144,17 @@
  },
  "toolbench-mgraw": {
   "purpose_es": "Artículo F, brazo secundario: MindGlide 1.3.0 con la FLAIR original (sin quitar el cráneo) en MS3SEG, Bagdad y PediMS (179 estudios)"
+ },
+ "toolbench-ctl-pilot": {
+  "purpose_es": "Artículo 1, controles sanos, piloto: WMH-SynthSeg, MindGlide y SAMSEG en 2 cerebros sanos de SibBMS (sub-001 y sub-021)"
+ },
+ "toolbench-ctl-wmh-mg": {
+  "purpose_es": "Artículo 1, controles sanos: WMH-SynthSeg y después MindGlide en los 100 cerebros sanos de SibBMS"
+ },
+ "toolbench-ctl-samseg-a": {
+  "purpose_es": "Artículo 1, controles sanos: SAMSEG con lesiones, primera mitad de los 100 cerebros sanos"
+ },
+ "toolbench-ctl-samseg-b": {
+  "purpose_es": "Artículo 1, controles sanos: SAMSEG con lesiones, segunda mitad de los 100 cerebros sanos"
  }
 }
