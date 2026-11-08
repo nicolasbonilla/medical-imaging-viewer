@@ -28,14 +28,38 @@ def planned_jobs(alias, subset, manifest=None):
     pilot = set(subs["pilot"])
     if subset == "pilot":
         return [(r, a, "en", None) for r in subs["pilot"] for a in arms]
+    red = reductions()
     if subset == "main":
         ids = [r["record_id"] for r in man["records"] if r["record_id"] not in pilot]
+        if alias == "sonnet" and red.get("sonnet_half"):
+            ids = sonnet_half(man, ids)
         return [(r, a, "en", None) for r in ids for a in arms]
+    if alias == "haiku" and red.get("haiku_a2_main_only"):
+        arms = [a for a in arms if a != "A2"]
     if subset == "injection":
         return [(r, a, "en", p) for r, p in sorted(subs["injection"].items()) for a in arms]
     if subset == "multilingual":
         return [(r, a, lang, None) for lang in ("es", "de") for r in subs["multilingual"][lang] for a in arms]
     raise ValueError(subset)
+
+
+def reductions():
+    """Pre-stated budget reductions applied so far (PREREG 8), recorded in runs/reductions.json."""
+    p = Path(config.RUNS_DIR) / "reductions.json"
+    return json.loads(p.read_text()) if p.exists() else {}
+
+
+def sonnet_half(man, ids):
+    """Reduction (1): a seeded, stratified 50 % half of the analysis set for Sonnet."""
+    import numpy as np
+    strat = {r["record_id"]: r["stratum"] for r in man["records"]}
+    rng = np.random.default_rng(config.SEED + 11)
+    keep = []
+    for st in sorted({strat[i] for i in ids}):
+        pool = sorted(i for i in ids if strat[i] == st)
+        k = int(round(len(pool) / 2))
+        keep += [pool[j] for j in sorted(rng.choice(len(pool), size=k, replace=False))]
+    return sorted(keep)
 
 
 def run_dir(alias, subset):
@@ -170,7 +194,28 @@ def project(alias):
     for subset in config.PLAN[alias]["subsets"]:
         for _, arm, _, _ in planned_jobs(alias, subset):
             plan[arm] += 1
-    proj = {arm: (sum(v) / len(v) if v else None) for arm, v in per_arm.items()}
+    # cost per CALL from the ledger (finished and unfinished pilot jobs) x expected calls per job: the finished jobs'
+    # mean when >= 80 % of the arm's started jobs finished, else the arm's maximum (A2: 9, A3: 3) - conservative
+    led = run_dir(alias, "pilot") / "ledger.jsonl"
+    call_cost, started = defaultdict(list), defaultdict(set)
+    if led.exists():
+        for line in led.read_text(encoding="utf-8").splitlines():
+            d = json.loads(line)
+            k = d["job"].split("#")[0]
+            arm = k.split("|")[1]
+            call_cost[arm].append(d["usd"])
+            started[arm].add(k)
+    max_calls = {"A0": 1, "A1": 1, "A2": config.A2_MAX_STEPS + 1, "A3": config.A3_MAX_REGENERATIONS + 1}
+    proj = {}
+    for arm in plan:
+        if not call_cost.get(arm):
+            proj[arm] = (sum(per_arm[arm]) / len(per_arm[arm])) if per_arm.get(arm) else None
+            continue
+        fin = [r for r in rows if r["arm"] == arm]
+        mean_calls = (sum(r["n_calls"] for r in fin) / len(fin)) if fin else max_calls[arm]
+        if len(fin) < 0.8 * len(started[arm]):
+            mean_calls = max_calls[arm]
+        proj[arm] = sum(call_cost[arm]) / len(call_cost[arm]) * mean_calls
     total = sum((proj.get(a) or 0) * n for a, n in plan.items())
     out = {"alias": alias, "model": config.MODELS[alias], "pilot_jobs": {a: len(v) for a, v in per_arm.items()},
            "pilot_usd": round(sum(sum(v) for v in per_arm.values()), 5),
@@ -181,6 +226,18 @@ def project(alias):
            "a0_contingency_triggered": bool(n_a0 and trunc["A0"] / n_a0 > 0.20)}
     (run_dir(alias, "pilot") / "projection.json").write_text(json.dumps(out, indent=1))
     return out
+
+
+JUDGE_RESERVE_USD = 0.6   # Claude judges (PREREG 6): ~100 Sonnet + ~200 Haiku judge calls, worst case
+
+
+def anthropic_projection():
+    tot = JUDGE_RESERVE_USD
+    for a_ in ("haiku", "sonnet"):
+        p = run_dir(a_, "pilot") / "projection.json"
+        if p.exists():
+            tot += json.loads(p.read_text())["projected_usd"]
+    return tot
 
 
 def main(argv=None):
@@ -205,13 +262,26 @@ def main(argv=None):
     limit = (config.ANTHROPIC_PROJECTION_LIMIT_USD if args.model in ("haiku", "sonnet")
              else config.GEMINI_PROJECTION_LIMIT_USD)
     if args.model in ("haiku", "sonnet"):
-        other = "sonnet" if args.model == "haiku" else "haiku"
-        op = run_dir(other, "pilot") / "projection.json"
-        both = proj["projected_usd"] + (json.loads(op.read_text())["projected_usd"] if op.exists() else 0)
-        print(f"[run] Anthropic projection (Haiku + Sonnet): {both:.3f} USD; limit {limit}")
+        both = anthropic_projection()
+        print(f"[run] Anthropic projection (Haiku + Sonnet + judges): {both:.3f} USD; limit {limit}")
+        steps = [("sonnet_half", "Sonnet on a seeded 50 % stratified half of the analysis set"),
+                 ("haiku_a2_main_only", "Haiku A2 limited to the analysis set (no subsets)")]
+        for flag, what in steps:
+            if both <= limit or args.force:
+                break
+            red = reductions()
+            if not red.get(flag):
+                red[flag] = {"applied_at": time.time(), "what": what, "projection_before_usd": both}
+                (Path(config.RUNS_DIR) / "reductions.json").write_text(json.dumps(red, indent=1))
+                for a_ in ("haiku", "sonnet"):
+                    if (run_dir(a_, "pilot") / "results.jsonl").exists():
+                        project(a_)
+                both = anthropic_projection()
+                print(f"[run] pre-stated reduction applied: {what}; projection now {both:.3f} USD", flush=True)
         if both > limit and not args.force:
-            print("[run] projection exceeds the limit: apply the pre-stated reductions (PREREG 8) first")
+            print("[run] projection still exceeds the limit after the pre-stated reductions: not started")
             return 3
+        proj = json.loads(proj_path.read_text())
     elif proj["projected_usd"] > limit and not args.force:
         print(f"[run] projection {proj['projected_usd']} > {limit} USD: not started")
         return 3
