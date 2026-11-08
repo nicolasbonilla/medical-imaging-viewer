@@ -239,6 +239,7 @@ FLAIR_SEQUENCE = re.compile(r"\b(?:(?:provided|single|given|segmented|available|
                             r"(?:sequences?|sequenz\w*|images?|imaging)\b|\bsecuencias? (?:de )?flair\b|"
                             r"\bsequences?\s+flair\b")
 VISIT_WORDS = re.compile(r"\b(?:visits?|prior|previous|timepoints?|time points?|comparison|comparable|longitudinal|"
+                         r"pairs?|abstain\w*|abstuv\w*|enthalt\w*|"
                          r"visitas?|anterior(?:es)?|comparaci\w+|comparable\w*|longitudinal\w*|voruntersuchung\w*|"
                          r"vergleich\w*|untersuchungen|zeitpunkt\w*)\b")
 CANNOT_ESTABLISH = re.compile(r"\b(?:could not|cannot|can't|unable to|inability to|not)\b[^.;]{0,40}\b(?:establish\w*|"
