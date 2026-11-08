@@ -46,4 +46,7 @@ cp "$D/g3_check.txt" research/paper_1/results/g3_structural_check.txt
 echo "== 4. G2 independent recount"
 "$PY" -I research/paper_1/check_counts.py --results research/paper_1/results --flames-dir "$D/flames" \
     --lstai-dir "$D/lstai" --tool-dir "$D/toolbench"
+echo "== 5. compute ledger (reads mstool-research only; isolated config set inside build_ledger.py)"
+( unset GOOGLE_APPLICATION_CREDENTIALS GOOGLE_CLOUD_PROJECT; export CLOUDSDK_CONFIG=C:/Users/Nicolas/.gcloud-mstool
+  python research/cloud/build_ledger.py )
 echo "done: research/paper_1/results/{summary.json,tables.md,per_control.csv,lesions.csv,independent_check.json}"

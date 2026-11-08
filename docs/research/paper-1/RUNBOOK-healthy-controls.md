@@ -69,6 +69,9 @@ arms) and G2 (`check_counts.py`) with no cloud credentials, and writes `research
 | `toolbench-ctl-samseg-a` | n2d-standard-4, 80 GB, AMD Milan | SAMSEG, 49 controls (sub-002 … sub-051) | 12 h / 13 h | ≈ 2026-11-09 02:10 (7.8 h); at the latest 06:18 |
 | `toolbench-ctl-samseg-b` | n2-standard-4, 80 GB, Intel Cascade Lake | SAMSEG, 49 controls (sub-052 … sub-100) | 12 h / 13 h | ≈ 2026-11-09 02:10; at the latest 06:19 |
 
+First finished cases (18:35–18:44 UTC): WMH-SynthSeg 310 s, SAMSEG 542 s per control, so the expected ends
+are ≈ 05:15 UTC (VM A), ≈ 02:00 (B) and ≈ 03:00 (C) on 2026-11-09, ≈ 6 USD in total with the pilot.
+
 Every VM has `--max-run-duration` with `--instance-termination-action=DELETE` and the exit trap of
 `vm_toolbench.sh` (uploads log, cost and runinfo, then deletes itself). Check: `gcloud compute instances list
 --project=mstool-research` must be empty before the evaluation.
