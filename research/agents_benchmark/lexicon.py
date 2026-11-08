@@ -112,7 +112,7 @@ CONDITIONAL = re.compile(r"\b(?:whether|if|requires?|required|needed|necessary|t
 
 # R3 DIS statement
 DIS_TERM = re.compile(r"\b(?:dissemination in space|dis|diseminacion en (?:el )?espacio|raumliche dissemination|"
-                      r"disseminierung im raum|disseminacion espacial)\b")
+                      r"disseminierung im raum|disseminacion espacial|dissemination (?:in|im) (?:raum|space))\b")
 DIS_NEG = re.compile(r"\b(?:not met|not fulfilled|not satisfied|not supported|not supporting|does not (?:meet|support|"
                      r"fulfil)|do not (?:meet|support)|no se cumple|no cumple|no (?:apoya|respalda)|nicht erfullt|"
                      r"nicht gegeben|nicht nachgewiesen|unterstutzt nicht|fails?)\b")
@@ -146,10 +146,10 @@ REGION_DENIAL = re.compile(r"\b(?:not (?:been )?(?:confirmed|given|assigned|prov
                            r"(?:bestatigt|zugeordnet|angegeben|klassifiziert)|unconfirmed)\b")
 
 # Count categories (E2c)
-CAT_LT20 = re.compile(r"(?:\bfewer than|\bless than|\bunder|<|\bmenos de|\bweniger als|\bunter)\s*20\b(?!\s*(?:mm|ml|%|cm))")
-CAT_20_50 = re.compile(r"\b20\s*-\s*50\b(?!\s*(?:mm|ml|%|cm))|\bbetween 20 and 50\b|\bentre 20 y 50\b|\bzwischen 20 und 50\b")
-CAT_50_100 = re.compile(r"\b50\s*-\s*100\b(?!\s*(?:mm|ml|%|cm))|\bbetween 50 and 100\b|\bentre 50 y 100\b|\bzwischen 50 und 100\b")
-CAT_GT100 = re.compile(r"(?:\bmore than|\bover|\bgreater than|>|\bmas de|\bmehr als|\buber)\s*100\b(?!\s*(?:mm|ml|%|cm))|\b100\+")
+CAT_LT20 = re.compile(r"(?:\bfewer than|\bless than|\bunder|<|\bmenos de|\bweniger als|\bunter)\s*20\b(?!\s*(?:mm|ml|%|cm|-\s*\d))")
+CAT_20_50 = re.compile(r"\b20\s*-\s*50\b(?!\s*(?:mm|ml|%|cm|-\s*\d))|\bbetween 20 and 50\b|\bentre 20 y 50\b|\bzwischen 20 und 50\b")
+CAT_50_100 = re.compile(r"\b50\s*-\s*100\b(?!\s*(?:mm|ml|%|cm|-\s*\d))|\bbetween 50 and 100\b|\bentre 50 y 100\b|\bzwischen 50 und 100\b")
+CAT_GT100 = re.compile(r"(?:\bmore than|\bover|\bgreater than|>|\bmas de|\bmehr als|\buber)\s*100\b(?!\s*(?:mm|ml|%|cm|-\s*\d))|\b100\+")
 
 # Longitudinal (E2e)
 CHANGE_WORDS = re.compile(r"\b(?:new|enlarg\w*|resolved|shrunk|shrinking|stable|unchanged|nuev[oa]s?|aument\w*|crecid\w*|"
@@ -158,7 +158,7 @@ CHANGE_WORDS = re.compile(r"\b(?:new|enlarg\w*|resolved|shrunk|shrinking|stable|
 NEW_ENLARGING = re.compile(r"\b(?:new|enlarg\w*|nuev[oa]s?|aumentad[oa]s?|agrandad[oa]s?|crecid[oa]s?|neu(?:e|en|er)?|"
                            r"vergrossert\w*|grossenprogredient\w*)\b")
 CANDIDATE_WORDS = re.compile(r"\b(?:candidates?|unconfirmed|potential|possible|proposed|putative|candidat[oa]s?|sin confirmar|"
-                             r"no confirmad\w*|posibles?|propuest[oa]s?|kandidat\w*|unbestatigt\w*|moglich\w*|vorgeschlagen\w*)\b")
+                             r"no confirmad\w*|posibles?|propuest[oa]s?|\w*kandidat\w*|unbestatigt\w*|moglich\w*|vorgeschlagen\w*)\b")
 NO_NEW = re.compile(r"\b(?:no (?:new|enlarging|interval) (?:or enlarging )?(?:t2 |flair )?(?:lesions?|change)|without new lesions|"
                     r"sin (?:lesiones )?nuevas|ninguna lesion nueva|sin cambios|keine neuen|keine neue|unverandert|stable disease|"
                     r"radiologically stable|estable|stabiler befund)\b")
@@ -182,8 +182,10 @@ NOT_PROVIDED = re.compile(r"\b(?:not (?:been )?(?:provided|available|supplied|gi
 TECHNIQUE = re.compile(r"\b(?:technique|protocol|sequences?|acquisition parameters|field strength|tesla|"
                        r"\d+(?:[.,]\d+)?\s*-?t\b|3d|2d|isotropic\w*|t[12][- ]?weighted|t[12]w|dwi|adc|swi|mprage|mp-rage|"
                        r"diffusion|susceptibility|repetition time|echo time|inversion time|tr/te|scanner|"
-                       r"tecnica|protocolo|secuencias?|parametros de adquisicion|isotropic[oa]s?|ponderad[oa]s?|difusion|"
-                       r"technik|protokoll|sequenz\w*|feldstarke|isotrop\w*|gewichtet\w*|diffusionsgewichtet\w*)\b")
+                       r"tecnica (?:de |empleada|utilizada|incluy\w*|consist\w*|estandar)|protocolo|secuencias?|"
+                       r"parametros de adquisicion|isotropic[oa]s?|ponderad[oa]s?|difusion|"
+                       r"technik (?:der|des|umfasste|bestand)|protokoll|sequenz\w*|feldstarke|isotrop\w*|gewichtet\w*|"
+                       r"diffusionsgewichtet\w*)\b")
 SLICE_THICKNESS = re.compile(r"\b(?:slice thickness|slices?\b[^.;]{0,30}\bthick|grosor de corte|espesor de corte|cortes? de|"
                              r"schichtdicke|schichten)\b")
 CLINICAL = re.compile(r"\b(?:clinical (?:indication|history|information|presentation|context|question)|history of|"
@@ -221,14 +223,24 @@ NOT_AVAILABLE_GENERIC = re.compile(
     r"\blimitad[oa]s? a la secuencia flair\b|"
     r"\bnicht (?:verfugbar|vorliegend|enthalten|beurteilt|berucksichtigt|einbezogen|angegeben|bekannt|vorhanden|"
     r"ubermittelt)\b|\b(?:enthalt|umfasst|berucksichtigt|beinhaltet)\s+(?:\w+\s+){0,3}?(?:keine|nicht)\b|"
-    r"\b(?:fehlen\w*|mangels)\b|\bkeine (?:angaben|daten|informationen)\b|\bbeschrankt auf die flair\b")
+    r"\b(?:fehlen\w*|mangels)\b|\bkeine (?:angaben|daten|informationen)\b|\bbeschrankt auf die flair\b|"
+    # deviation 5j: Spanish and German forms
+    r"\bno\b[^.;]{0,50}\b(?:proporcionad\w*|suministrad\w*|aportad\w*|evaluad\w*|incluid\w*|realizad\w*|valorad\w*|"
+    r"disponible\w*|especificad\w*|posible)\b|\bno se (?:dispuso|dispone|cuenta|conto)\b|\bno hay (?:informacion|datos)\b|"
+    r"\bsin (?:informacion|datos)\b|"
+    r"\b(?:nicht|kein\w*)\b[^.;]{0,50}\b(?:verfugbar|vorliegend|vorhanden|angegeben|ubermittelt|beurteilt|untersucht|"
+    r"durchgefuhrt|bereitgestellt|enthalten|bekannt|moglich|erfolgt)\b|\b(?:liegen|lagen) (?:\w+ )?nicht vor\b|"
+    r"\b(?:keine|nicht)\b[^.;]{0,160}\b(?:bereitgestellt|geliefert|ubermittelt|mitgeteilt|zur verfugung|verwendet|"
+    r"einbezogen|berucksichtigt|ausgewertet|vorgelegt|angefordert)\b")
 CLINICAL_HEDGE = re.compile(r"\b(?:correlat\w*|in (?:the )?(?:context|light) of|interpret\w*|review\w*|consider\w*|"
                             r"integrat\w*|together with|alongside|should|must|requires?|required|recommended|contexto|"
                             r"correlaci\w*|revis\w*|kontext|korrelier\w*|zusammenschau|interpretier\w*)\b")
 CLINICAL_FACT = re.compile(r"\b(?:history of (?!the\b|clinical\b)\w+|relapses?|optic neuritis|numbness|weakness|"
                            r"paresthesi\w*|known (?:ms|multiple sclerosis)|suspected|presents? with|presented with|"
                            r"brotes?|antecedentes de|sospecha|schub\w*|verdacht)\b")
-FLAIR_SEQUENCE_EXTRA = re.compile(r"\bsegmented sequence (?:is|was) flair\b|\bflair(?:[- ]visible)?(?: mri)? (?:sequence|"
+FLAIR_SEQUENCE_EXTRA = re.compile(r"\b(?:sequence|secuencia|sequenz)\w*\b[^.;]{0,50}?\bflair\b|"
+                                  r"\bflair\b[^.;]{0,30}?\b(?:sequence|secuencia|sequenz)\w*|"
+                                  r"\bsegmented sequence (?:is|was) flair\b|\bflair(?:[- ]visible)?(?: mri)? (?:sequence|"
                                   r"lesion load)\w*|\bsingle[- ]sequence\b|\bsequence (?:is|was) flair\b|"
                                   r"\bsecuencia segmentada (?:es|fue) flair\b|\bsegmentierte sequenz (?:ist|war) flair\b|"
                                   r"\bvoxel\w*\b[^.;]{0,60}|\bacquisition parameters?\b(?=[^.;]{0,40}\b(?:voxel|"
@@ -239,16 +251,20 @@ FLAIR_SEQUENCE = re.compile(r"\b(?:(?:provided|single|given|segmented|available|
                             r"(?:sequences?|sequenz\w*|images?|imaging)\b|\bsecuencias? (?:de )?flair\b|"
                             r"\bsequences?\s+flair\b")
 VISIT_WORDS = re.compile(r"\b(?:visits?|prior|previous|timepoints?|time points?|comparison|comparable|longitudinal|"
-                         r"pairs?|abstain\w*|abstuv\w*|enthalt\w*|"
+                         r"pairs?|abstain\w*|abstuv\w*|enthalt\w*|estudios|studien|"
                          r"visitas?|anterior(?:es)?|comparaci\w+|comparable\w*|longitudinal\w*|voruntersuchung\w*|"
                          r"vergleich\w*|untersuchungen|zeitpunkt\w*)\b")
 CANNOT_ESTABLISH = re.compile(r"\b(?:could not|cannot|can't|unable to|inability to|not)\b[^.;]{0,40}\b(?:establish\w*|"
-                              r"determin\w*|confirm\w*)|\bno se (?:pudo|puede) establecer|\bnicht (?:feststell\w*|"
+                              r"determin\w*|confirm\w*)|\bno se (?:pudo|puede) establecer|\bno (?:fue|es) posible establecer|\bnicht (?:feststell\w*|"
                               r"festgestellt)|\bliess sich nicht")
+ACCORDING_TO = re.compile(r"(?:nach den|gemass den|gemass|laut|according to(?: the)?|per the|segun(?: los)?|"
+                          r"de acuerdo con(?: los)?|conforme a(?: los)?)\b")
 UNDETERMINED = re.compile(r"\b(?:not (?:been )?(?:determined|assessed|evaluated|assessable|addressed|covered|included|"
                           r"provided)|no se abord\w*|nicht berucksichtigt|cannot be (?:determined|"
                           r"assessed|established)|undetermined|not determinable|no (?:se )?(?:puede )?determin\w*|"
-                          r"no evaluad\w*|nicht (?:bestimmbar|bestimmt|beurteilt|beurteilbar))\b")
+                          r"no evaluad\w*|nicht (?:bestimmbar|bestimmt|beurteilt|beurteilbar|gegenstand|moglich|teil|"
+                          r"bestandteil|"
+                          r"vorgesehen)|no (?:es|son) objeto|no forman? parte|no es posible|not part of)\b")
 ACTIVITY_TERM = re.compile(r"disease activity|krankheitsaktivitat|actividad de la enfermedad")
 
 # Extended class (secondary)

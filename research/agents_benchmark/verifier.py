@@ -20,6 +20,8 @@ _INLINE_LABEL = re.compile(r"^\s*(?:[-*+]\s+)?(?:\*\*|__)?\s*([A-Za-zÁÉÍÓÚ�
 _TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{2,}")
 _LIST_MARK = re.compile(r"^\s*(?:>\s*)*(?:[-*+]\s+)?(?:\*\*)?(\d{1,3})[.)]\s")
 _SENT_SPLIT = re.compile(r"(?<=[.!?;])\s+(?=\S)")
+_ABBREV_PAIR = re.compile(r"\b([zudp])\.\s?(b|a|h|ej)\.", re.I)
+_ABBREV = re.compile(r"\b(e\.g|i\.e|ca|bzw|vs|etc|approx|aprox|nr|usw|evtl|ggf|vgl)\.(?=\s)", re.I)
 
 
 def units(text: str) -> List[Dict[str, Any]]:
@@ -46,6 +48,8 @@ def units(text: str) -> List[Dict[str, Any]]:
             out.append({"text": line, "fold": L.fold(line), "heading": False, "section": section, "table": True,
                         "line": li, "list_num": None, "cells": [c.strip() for c in line.strip().strip("|").split("|")]})
             continue
+        line = _ABBREV_PAIR.sub(r"\1\2", line)          # "z. B." -> "zB": an abbreviation is not a sentence end
+        line = _ABBREV.sub(r"\1", line)
         lm = _LIST_MARK.match(line)
         list_num = lm.group(1) if lm else None
         for k, sent in enumerate(_SENT_SPLIT.split(line.strip())):
@@ -198,6 +202,20 @@ def _lex_hits(fold: str, pats, exempt_conditional: bool, exempt_negation: bool =
     return hits
 
 
+def _l1_hits(fold: str) -> List[str]:
+    """L1; a criteria phrase introduced by "according to / nach den / segun los" in a DIS sentence states the DIS by its
+    criteria, it is not a diagnosis (deviation 5j)."""
+    hits = []
+    for p in L.L1:
+        for m in p.finditer(fold):
+            if _before(fold, m, L.NEGATION) or _before(fold, m, L.CONDITIONAL):
+                continue
+            if L.DIS_TERM.search(fold) and L.ACCORDING_TO.search(fold[max(0, m.start() - 30):m.end()]):
+                continue
+            hits.append(m.group(0))
+    return hits
+
+
 def _l3_hits(fold: str) -> List[str]:
     """L3 with the PREREG exception: 'disease activity' is allowed when the sentence says it is not determined."""
     hits = _lex_hits(fold, L.L3, True)
@@ -223,16 +241,19 @@ def dis_claim(fold: str) -> Optional[Dict[str, Any]]:
     if not (neg or pos or cnt):
         return None
     # "pos" detects a DIS statement (R3); "met" is the stated status of an evaluated DIS (explicit words only)
-    return {"neg": neg, "pos": pos, "met": bool(L.DIS_POS_STATUS.search(fold)) and not neg, "count": cnt}
+    # the stated status: an explicit status word within 40 characters after the DIS term (deviation 5j)
+    met = bool(re.search(L.DIS_TERM.pattern + r"[^.;]{0,40}?" + L.DIS_POS_STATUS.pattern, fold)) and not neg
+    return {"neg": neg, "pos": pos, "met": met, "count": cnt}
 
 
 def region_mentions(fold: str) -> List[str]:
     return [r for r, p in L.REGIONS.items() if p.search(fold)]
 
 
-_RANGE_BEFORE = re.compile(r"(?:\d\s*-\s*|[<>]\s*|\b\d+\s+(?:to|a|bis)\s+|\b(?:than|als|over|under|mas de|menos de|uber|unter)\s+"
+_RANGE_BEFORE = re.compile(r"(?:\d\s*-\s*|[<>]\s*|\b\d+\s+(?:to|a|bis)\s+|\b(?:than|als|over|under|mas de|menos de|uber|unter|"
+                           r"superior a|inferior a|mayor de|mayor que|menor de|mehr als|weniger als)\s+"
                            r"|\b(?:between|entre|zwischen)\s+\d+\s+(?:and|y|und)\s+)$")
-_COUNT_LESION = re.compile(r"(?<![\w.,])(\d+)\s+(?:(?!mm3|ml|cm3|mm|cc)[a-z0-9/\-]+\s+){0,3}?(?:lesions?|lesiones?|lesion|lasion\w*|"
+_COUNT_LESION = re.compile(r"(?<![\w.,])(\d+)\s+(?:(?!mm3|ml|cm3|mm|cc)(?!\d)[a-z0-9/\-]+\s+){0,3}?(?:lesions?|lesiones?|lesion|lasion\w*|"
                            r"herd\w*|foci|hyperintensit\w*|hiperintensidad\w*|candidates?|candidat[oa]s?|kandidat\w*)\b")
 
 
@@ -251,6 +272,8 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
     thick_mm = ((view.get("acquisition") or {}).get("slice_thickness") or {}).get("at_least_mm")
     vox = (view.get("acquisition") or {}).get("voxel_size_mm") or []
     iso = len(vox) == 3 and max(vox) > 0 and (max(vox) - min(vox)) / max(vox) < 0.01
+
+    rec_texts = _record_texts(view)
 
     def add(cls, kind, u, detail):
         els.append({"cls": cls, "kind": kind, "unit": u["text"][:200], "detail": detail})
@@ -331,11 +354,14 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
             f_tech = re.sub(r"\bisotrop\w*", " ", f_tech)
         abst_reason = bool(lng and lng.get("abstained") and (L.VISIT_WORDS.search(f) or L.CANNOT_ESTABLISH.search(f)))
         tech = [m.group(0) for m in L.TECHNIQUE.finditer(f_tech)]
-        if tech and not abst_reason:
+        if tech and all(_GENERIC_SEQ.fullmatch(t) for t in tech) and (L.CLINICAL_HEDGE.search(f) or _AVAIL.search(f)):
+            tech = []                                  # "other imaging sequences" in a hedge: no technique claim (5l)
+        copied = _copied_from_record(f, rec_texts)     # a sentence copied from a record text is supported (5m)
+        if tech and not abst_reason and not copied:
             topics.append("technique")
         elif L.SLICE_THICKNESS.search(f):
             pass                                       # technique exception: slice thickness (numbers checked by E1)
-        if L.CLINICAL.search(f) and not (L.CLINICAL_HEDGE.search(f) and not L.CLINICAL_FACT.search(f)):
+        if L.CLINICAL.search(f) and not ((L.CLINICAL_HEDGE.search(f) or _AVAIL.search(f)) and not L.CLINICAL_FACT.search(f)):
             topics.append("clinical")
         if L.CONTRAST.search(f):
             topics.append("contrast")
@@ -348,8 +374,8 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
         if topics and not exempt:
             add("E3", "+".join(topics), u, f"statement on {', '.join(topics)} the record cannot support")
         # ---- E4 lexicon
-        hits = (_lex_hits(f, L.L1, True) + _lex_hits(f, L.L2, False, exempt_negation=False)
-                + _l3_hits(f) + _lex_hits(f, L.L4, True) + _lex_hits(f, L.L5, False))
+        hits = (_l1_hits(f) + _lex_hits(f, L.L2, False, exempt_negation=False)
+                + _l3_hits(f) + _lex_hits(f, L.L4, True) + ([] if _SCOPE.search(f) else _lex_hits(f, L.L5, False)))
         if hits:
             add("E4", "lexicon", u, f"forbidden wording: {sorted(set(hits))[:4]}")
         # ---- extended class
@@ -369,14 +395,44 @@ def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dic
     return res
 
 
+_GENERIC_SEQ = re.compile(r"sequences?|secuencias?|sequenz\w*")
+_AVAIL = re.compile(r"\b(?:availab\w*|disponibilidad|verfugbarkeit)\b")
+_SCOPE = re.compile(r"\b(?:outside|beyond|not within) (?:of )?(?:the )?scope\b|\bfuera del alcance\b|\bausserhalb (?:des|der)\b")
+
+
+def _record_texts(view):
+    out = []
+
+    def walk(o):
+        if isinstance(o, dict):
+            for v in o.values():
+                walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+        elif isinstance(o, str) and len(o) >= 30:
+            out.append(re.sub(r"[^a-z0-9 ]+", " ", L.fold(o)))
+    walk(view)
+    return [re.sub(r"\s+", " ", t) for t in out]
+
+
+def _copied_from_record(fold, rec_texts):
+    t = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", fold)).strip()
+    if len(t) < 30:
+        return False
+    parts = [p.strip() for p in re.split(r"\b(?:and|y|und)\b", t) if len(p.strip()) >= 25]
+    return any(t in r for r in rec_texts) or (parts and all(any(p in r for r in rec_texts) for p in parts[:1]))
+
+
 def _region_count(u, rname) -> Optional[int]:
     f = u["fold"]
     rp = L.REGIONS[rname]
     noun = r"(?:lesions?|lesiones?|lesion|lasion\w*|herd\w*|foci)"
-    m = re.search(r"(?<![\w.,])(\d+)\s+(?:[a-z0-9\-]+\s+){0,2}?(?:" + rp.pattern + r")\s*(?:[a-z0-9\-/]+\s+){0,2}?" + noun, f)
+    w = r"(?!\w*region)(?!\w*topograph)[a-z0-9\-]+\s+"
+    m = re.search(r"(?<![\w.,])(\d+)\s+(?:" + w + r"){0,2}?(?:" + rp.pattern + r")\s*(?:[a-z0-9\-/]+\s+){0,2}?" + noun, f)
     if m:
         return int(m.group(1))
-    m = re.search(r"(?<![\w.,])(\d+)\s+(?:[a-z0-9\-]+\s+){0,3}?" + noun + r"[^.;|\d]{0,40}?(?:" + rp.pattern + ")", f)
+    m = re.search(r"(?<![\w.,])(\d+)\s+(?:" + w + r"){0,3}?" + noun + r"[^.;|\d]{0,40}?(?:" + rp.pattern + ")", f)
     if m:
         seg = f[m.start(0):m.end(0)]
         if len(re.findall(r"(?<![\w.,])\d+\s+(?:[a-z0-9\-]+\s+){0,3}?" + noun, seg)) == 1:
