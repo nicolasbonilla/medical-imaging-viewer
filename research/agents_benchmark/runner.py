@@ -217,15 +217,19 @@ def code_fingerprint():
 
 
 def read_results(alias, subset):
+    """One row per job: the last successful result, else the last error (a failed job is re-run on resume)."""
     p = run_dir(alias, subset) / "results.jsonl"
-    rows = []
+    best = {}
     if p.exists():
         for line in p.read_text(encoding="utf-8").splitlines():
             try:
-                rows.append(json.loads(line))
+                d = json.loads(line)
             except ValueError:
-                pass
-    return rows
+                continue
+            prev = best.get(d["key"])
+            if prev is None or d["result"].get("status") == "ok" or prev["result"].get("status") != "ok":
+                best[d["key"]] = d
+    return list(best.values())
 
 
 def project(alias):
