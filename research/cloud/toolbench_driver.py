@@ -33,6 +33,11 @@ Input variants (--input-variant): "flames" (default, primary arm) = the FLAMeS F
 PediMS, grid checked against the FLAMeS grid; outputs and manifest entries are then named {tool}-raw
 (e.g. {case}_mindglide-raw_seg.nii.gz).
 
+Healthy controls (paper 1, docs/research/paper-1/PREREG-healthy-controls.md): --datasets sibbms with
+--roots sibbms=<dir of sub-XXX_FLAIR.nii.gz> and --expected research/paper_1/controls_inputs.json (the
+FLAMeS control inputs, SHA-256 from the FLAMeS run manifests); outputs {sub-XXX}_{tool}_seg.nii.gz under
+the same prefix. Same tools, commands, grid rule and checks as for the patients.
+
     python toolbench_driver.py --bucket mstool-research-data --run-id <vm> --tools wmhsynthseg mindglide samseg \
         --datasets mslesseg openms ms3seg muslim pedims --roots mslesseg=/w/data/mslesseg \
         openms=/w/data/open_ms_data/cross_sectional/MNI extra_raw=/w/extra_raw extra_brain=/w/extra_brain \
@@ -59,6 +64,10 @@ import job_common as jc  # noqa: E402
 PREFIX = "toolbench"
 COHORTS = ("mslesseg", "openms", "ms3seg", "muslim", "pedims")
 EXTRA = ("ms3seg", "muslim", "pedims")
+# Paper 1 healthy-control arm (docs/research/paper-1/PREREG-healthy-controls.md): the 100 SibBMS
+# controls, never part of the default (paper F) datasets. Case ids are the FLAMeS/LST-AI ids sub-XXX.
+CONTROLS = ("sibbms",)
+CONTROL_RE = re.compile(r"^(sub-\d{3})_FLAIR\.nii\.gz$")
 DEFAULT_ORDER = ("wmhsynthseg", "mindglide", "samseg")         # cheapest first (PROTOCOL.md section 4)
 
 # Pinned references (registry digests read 2026-10-21; RUNBOOK.md section 1 says how they were read).
@@ -87,8 +96,16 @@ def enumerate_cases(roots, datasets):
     openms    <root>/patient*/FLAIR*regtoMNI.nii.gz (with GOLD_STANDARD*regtoMNI)       -> openms_patientNN
     extra     <extra_raw>/cases_extra.json; cases that were skull-stripped use the HD-BET brain the
               FLAMeS run used, <extra_brain>/{case}_flair_brain.nii.gz (never re-stripped here)
+    sibbms    <root>/sub-XXX_FLAIR.nii.gz = gs://<bucket>/controls/sibbms/ (HD-BET brain the FLAMeS
+              control runs used; never re-stripped here)                                -> sub-XXX
     """
     out = {}
+    if "sibbms" in datasets:
+        root = roots["sibbms"]
+        for f in sorted(os.listdir(root)) if os.path.isdir(root) else []:
+            m = CONTROL_RE.match(f)
+            if m:
+                out[m.group(1)] = {"cohort": "sibbms", "flair": os.path.join(root, f)}
     if "mslesseg" in datasets:
         root = roots["mslesseg"]
         splits = glob.glob(os.path.join(root, "**", "train"), recursive=True) + \
@@ -127,6 +144,8 @@ NO_RAW = {
     "mslesseg": "MSLesSeg is public only as skull-stripped MNI-registered images: no raw FLAIR",
     "openms": "Ljubljana raw FLAIR exists (open_ms_data cross_sectional/raw) but not on the MNI grid of the "
               "FLAMeS maps and no transform is shipped: excluded rather than re-registered",
+    "sibbms": "no raw-input arm for the healthy controls (paper 1 PREREG section 10: paper F 7.6 found raw "
+              "and skull-stripped input equivalent for MindGlide)",
 }
 
 
@@ -367,9 +386,11 @@ def main():
     ap.add_argument("--prefix", default=PREFIX)
     ap.add_argument("--run-id", required=True)
     ap.add_argument("--tools", nargs="+", default=list(DEFAULT_ORDER))
-    ap.add_argument("--datasets", nargs="+", default=list(COHORTS))
+    ap.add_argument("--datasets", nargs="+", default=list(COHORTS),
+                    help=f"patient cohorts {COHORTS} (default) and/or the healthy controls {CONTROLS}")
     ap.add_argument("--roots", nargs="+", required=True, help="name=path pairs")
-    ap.add_argument("--expected", required=True, help="research/paper_f/flames_inputs.json")
+    ap.add_argument("--expected", required=True,
+                    help="research/paper_f/flames_inputs.json (patients) or research/paper_1/controls_inputs.json")
     ap.add_argument("--offset", type=int, default=0)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--cases", default="", help="explicit case ids (win over offset/limit)")

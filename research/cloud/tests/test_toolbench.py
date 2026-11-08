@@ -303,3 +303,72 @@ def test_vm_script_is_safe_to_launch():
 def test_ledger_reads_toolbench_cost_and_manifests():
     s = open(os.path.join(CLOUD, "build_ledger.py")).read()
     assert '"toolbench/cost"' in s and '"toolbench/manifests"' in s
+
+
+# ------------------------------------------------------------------ paper 1: healthy controls (sibbms)
+def make_controls(root):
+    d = os.path.join(root, "sibbms")
+    for c in ("sub-001", "sub-002", "sub-100"):
+        nii(os.path.join(d, f"{c}_FLAIR.nii.gz"), brain(seed=int(c[-3:])))
+    nii(os.path.join(d, "sub-001_T1.nii.gz"), brain())                      # T1 / masks are not FLAIR inputs
+    nii(os.path.join(d, "sub-001_brainmask.nii.gz"), np.ones((12, 10, 8)), dtype=np.uint8)
+    nii(os.path.join(d, "sub-01_FLAIR.nii.gz"), brain())                    # not a control id
+    nii(os.path.join(d, "sub-003_FLAIR_brain.nii.gz"), brain())             # not the FLAMeS input name
+    return {"sibbms": d}
+
+
+def test_controls_are_never_in_the_paper_f_default():
+    assert "sibbms" not in tb.COHORTS and tb.CONTROLS == ("sibbms",)
+    assert tb.enumerate_cases({"sibbms": "/nonexistent"}, ["sibbms"]) == {}       # missing folder: no case
+
+
+def test_enumerate_controls_takes_only_the_flames_flair(tmp_path):
+    roots = make_controls(str(tmp_path))
+    c = tb.enumerate_cases(roots, ["sibbms"])
+    assert list(c) == ["sub-001", "sub-002", "sub-100"]
+    assert all(v["cohort"] == "sibbms" for v in c.values())
+    assert c["sub-001"]["flair"].endswith(os.path.join("sibbms", "sub-001_FLAIR.nii.gz"))
+    patients = make_tree(str(tmp_path / "p"))
+    both = tb.enumerate_cases({**patients, **roots}, ["pedims", "sibbms"])
+    assert list(both) == ["pedims_P1_T1", "sub-001", "sub-002", "sub-100"]
+    assert "sub-001" not in tb.enumerate_cases({**patients, **roots}, list(tb.COHORTS))
+
+
+def test_controls_inputs_are_sha_checked_and_selected_like_patients(tmp_path):
+    roots = make_controls(str(tmp_path))
+    c = tb.enumerate_cases(roots, ["sibbms"])
+    ids = jc.select_ids(list(c), explicit=jc.split_ids("sub-001 sub-100"))
+    assert ids == ["sub-001", "sub-100"]
+    exp = {"sub-001": {"flair_sha256": jc.sha256(c["sub-001"]["flair"]), "band": "iso"},
+           "sub-100": {"flair_sha256": jc.sha256(c["sub-002"]["flair"]), "band": "iso"}}   # wrong bytes
+    ok, bad = tb.verify_inputs({k: c[k] for k in ids}, exp)
+    assert list(ok) == ["sub-001"] and bad[0]["case"] == "sub-100" and "differs" in bad[0]["reason"]
+    assert [k for k, _ in tb.thick_first(ok, exp)] == ["sub-001"]
+    assert tb.output_tag("samseg", "flames") == "samseg"                    # -> sub-001_samseg_seg.nii.gz
+    assert tb.container_name("toolbench-ctl-pilot", "sub-001", "wmhsynthseg") == "tb-toolbench-ctl-pilot-wmhsynthseg-sub-001"
+
+
+def test_no_raw_input_arm_for_controls(tmp_path):
+    roots = make_controls(str(tmp_path))
+    c, notes = tb.enumerate_raw_cases(roots, ["sibbms"])
+    assert c == {} and notes[0]["cohort"] == "sibbms" and "paper 1" in notes[0]["reason"]
+
+
+def test_frozen_controls_inputs_cover_the_100_flames_controls():
+    d = json.load(open(os.path.join(os.path.dirname(CLOUD), "paper_1", "controls_inputs.json")))
+    assert list(d) == [f"sub-{i:03d}" for i in range(1, 101)]
+    assert all(re.fullmatch(r"[0-9a-f]{64}", v["flair_sha256"]) for v in d.values())
+    assert len({v["flair_sha256"] for v in d.values()}) == 100                # 100 distinct files
+    assert all(v["shape"] == [197, 233, 189] and v["zooms"] == [1.0, 1.0, 1.0] and v["band"] == "iso" for v in d.values())
+    assert all(v["affine"][0][3] == -98.0 and v["affine"][1][3] == -134.0 and v["affine"][2][3] == -72.0 for v in d.values())
+    assert all(v["lstai_flair_sha256_equal"] is True for v in d.values())      # LST-AI saw the same FLAIR
+    assert all(v["flames_runs"] for v in d.values())
+
+
+def test_vm_script_handles_the_controls_without_touching_paper_f_code():
+    s = open(os.path.join(CLOUD, "vm_toolbench.sh"), "rb").read().decode()
+    assert 'gcloud storage cp "$BK/controls/sibbms/*_FLAIR.nii.gz" $W/data/sibbms/' in s
+    assert "sibbms=$W/data/sibbms" in s and "--expected $W/$EXPECTED" in s
+    assert "CODEPFX=${CODEPFX:-$PFX/code}" in s and "EXPECTED=${EXPECTED:-flames_inputs.json}" in s
+    assert '"$BK/$CODEPFX/toolbench_driver.py" "$BK/$CODEPFX/job_common.py" "$BK/$CODEPFX/$EXPECTED"' in s
+    assert "licen" not in s.split("datasets_start")[1].split("code_start")[0].lower()   # data stage never reads the licence

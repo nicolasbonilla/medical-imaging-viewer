@@ -17,6 +17,8 @@
 #           max-minutes (optional, overrides max-hours for the in-VM guard)
 #           input-variant=flames (primary arm: the FLAMeS skull-stripped FLAIR) | raw (secondary arm,
 #           PROTOCOL.md 7.6: FLAIR before skull stripping, MS3SEG/Muslim/PediMS only; outputs {tool}-raw)
+#           Paper 1 healthy controls: datasets=sibbms  expected=controls_inputs.json
+#           code-prefix=toolbench/code-paper1 (the paper F code snapshot in toolbench/code stays untouched)
 exec > /var/log/job.log 2>&1
 set -x
 MD="http://metadata/computeMetadata/v1/instance"
@@ -39,6 +41,8 @@ MAXH=$(meta attributes/max-hours);       MAXH=${MAXH:-12}
 MAXM=$(meta attributes/max-minutes)      # optional finer guard (pilot: 105 min under a 2 h hard stop)
 GUARD_S=$((MAXH*3600)); [ -n "$MAXM" ] && GUARD_S=$((MAXM*60))
 BKT="mstool-research-data"; BK="gs://$BKT"; PFX="toolbench"
+CODEPFX=$(meta attributes/code-prefix);  CODEPFX=${CODEPFX:-$PFX/code}
+EXPECTED=$(meta attributes/expected);    EXPECTED=${EXPECTED:-flames_inputs.json}
 START=$(date +%s)
 
 log(){ gcloud storage cp /var/log/job.log "$BK/$PFX/logs/$NAME.log" --quiet 2>/dev/null || true; }
@@ -196,6 +200,12 @@ case " $DATASETS " in *" mslesseg "*)
   cache_get mslesseg_52771814.zip || exit 1
   mkdir -p $W/data/mslesseg && unzip -q -o $W/cache/mslesseg_52771814.zip -d $W/data/mslesseg && rm -f $W/cache/mslesseg_52771814.zip ;;
 esac
+# Healthy controls (paper 1): the HD-BET FLAIRs the FLAMeS control runs used (SHA-256 re-checked by the driver).
+case " $DATASETS " in *" sibbms "*)
+  mkdir -p $W/data/sibbms
+  gcloud storage cp "$BK/controls/sibbms/*_FLAIR.nii.gz" $W/data/sibbms/ --quiet || exit 1
+  ls $W/data/sibbms | wc -l ;;
+esac
 EXTRA=""; for d in ms3seg muslim pedims; do case " $DATASETS " in *" $d "*) EXTRA="$EXTRA $d";; esac; done
 if [ -n "$EXTRA" ]; then
   cache_get extra_cohorts_raw_v1.tar.gz || exit 1
@@ -226,16 +236,16 @@ esac; fi
 log
 
 stage code_start; echo "=== [5/6] code (uploaded by the coordinator before launch) ==="
-gcloud storage cp "$BK/$PFX/code/toolbench_driver.py" "$BK/$PFX/code/job_common.py" "$BK/$PFX/code/flames_inputs.json" $W/ --quiet || exit 1
-sha256sum $W/toolbench_driver.py $W/job_common.py $W/flames_inputs.json
+gcloud storage cp "$BK/$CODEPFX/toolbench_driver.py" "$BK/$CODEPFX/job_common.py" "$BK/$CODEPFX/$EXPECTED" $W/ --quiet || exit 1
+sha256sum $W/toolbench_driver.py $W/job_common.py $W/$EXPECTED
 log
 
 stage inference_start; echo "=== [6/6] tools per case (tool-major), per-case upload, resumable ==="
 ( while sleep 600; do log; done ) &
 python3 $W/toolbench_driver.py --bucket $BKT --prefix $PFX --run-id "$NAME" --tools $TOOLS --datasets $DATASETS \
-  --roots mslesseg=$W/data/mslesseg openms=$W/data/open_ms_data/cross_sectional/MNI extra_raw=$W/extra_raw extra_brain=$W/extra_brain pedims_raw=$W/pedims_raw \
+  --roots mslesseg=$W/data/mslesseg openms=$W/data/open_ms_data/cross_sectional/MNI extra_raw=$W/extra_raw extra_brain=$W/extra_brain pedims_raw=$W/pedims_raw sibbms=$W/data/sibbms \
   --input-variant "$VARIANT" \
-  --expected $W/flames_inputs.json --offset "$OFFSET" --limit "$LIMIT" --cases "$CASES" --timeout-min "$TMIN" \
+  --expected $W/$EXPECTED --offset "$OFFSET" --limit "$LIMIT" --cases "$CASES" --timeout-min "$TMIN" \
   --images mindglide=mindglide:bench fs=freesurfer:bench --image-refs mindglide="$MGIMG" fs="$FSIMG" \
   ${LIC:+--fs-license "$LIC"} ${WMH:+--wmh-model "$WMH"} --wmh-crop "$WMHCROP" --work $W/run
 stage inference_end
