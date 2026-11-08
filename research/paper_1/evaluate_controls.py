@@ -481,8 +481,11 @@ def write_csvs(recs, arms, out_dir):
 
 def git_commit():
     r = subprocess.run(["git", "-C", ROOT, "rev-parse", "HEAD"], capture_output=True, text=True)
-    s = subprocess.run(["git", "-C", ROOT, "status", "--porcelain", "--", "research/paper_1"], capture_output=True, text=True)
-    return {"commit": r.stdout.strip() or None, "paper_1_code_dirty": bool(s.stdout.strip())}
+    # tracked code only: the results folder being written (untracked) must not mark the code as modified
+    s = subprocess.run(["git", "-C", ROOT, "status", "--porcelain", "--untracked-files=no", "--",
+                        "research/paper_1", "research/paper_f/metrics.py", "backend/app/services"],
+                       capture_output=True, text=True)
+    return {"commit": r.stdout.strip() or None, "tracked_code_modified": bool(s.stdout.strip())}
 
 
 def runtime_table(manifest_dir, cases):

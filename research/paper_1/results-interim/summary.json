@@ -1,0 +1,784 @@
+{
+ "arms": {
+  "flames_ens": {
+   "n": 100,
+   "missing": 0,
+   "incomplete": false,
+   "a_false_alarm_scans": {
+    "x": 85,
+    "n": 100,
+    "rate": 0.85,
+    "ci95_exact": [
+     0.7647,
+     0.9135
+    ]
+   },
+   "b_dis_met_brain": {
+    "x": 19,
+    "n": 100,
+    "rate": 0.19,
+    "ci95_exact": [
+     0.1184,
+     0.2807
+    ]
+   },
+   "any_dis_region": {
+    "x": 79,
+    "n": 100,
+    "rate": 0.79,
+    "ci95_exact": [
+     0.6971,
+     0.8651
+    ]
+   }
+  },
+  "flames_f0": {
+   "n": 100,
+   "missing": 0,
+   "incomplete": false,
+   "a_false_alarm_scans": {
+    "x": 93,
+    "n": 100,
+    "rate": 0.93,
+    "ci95_exact": [
+     0.8611,
+     0.9714
+    ]
+   },
+   "b_dis_met_brain": {
+    "x": 22,
+    "n": 100,
+    "rate": 0.22,
+    "ci95_exact": [
+     0.1433,
+     0.3139
+    ]
+   },
+   "any_dis_region": {
+    "x": 89,
+    "n": 100,
+    "rate": 0.89,
+    "ci95_exact": [
+     0.8117,
+     0.9438
+    ]
+   }
+  },
+  "lstai": {
+   "n": 100,
+   "missing": 0,
+   "incomplete": false,
+   "a_false_alarm_scans": {
+    "x": 90,
+    "n": 100,
+    "rate": 0.9,
+    "ci95_exact": [
+     0.8238,
+     0.951
+    ]
+   },
+   "b_dis_met_brain": {
+    "x": 16,
+    "n": 100,
+    "rate": 0.16,
+    "ci95_exact": [
+     0.0943,
+     0.2468
+    ]
+   },
+   "any_dis_region": {
+    "x": 76,
+    "n": 100,
+    "rate": 0.76,
+    "ci95_exact": [
+     0.6643,
+     0.8398
+    ]
+   }
+  }
+ },
+ "comparisons": {
+  "a": {
+   "flames_f0": {
+    "run": true,
+    "n_paired": 100,
+    "arm_x": 93,
+    "reference_x": 85,
+    "arm_only": 8,
+    "reference_only": 0,
+    "p_two_sided": 0.0078125,
+    "rate_diff": {
+     "diff": 0.08,
+     "ci95_boot": [
+      0.03,
+      0.14
+     ]
+    },
+    "p_holm_family": 0.039062,
+    "established_holm_lt_0.05": true,
+    "p_holm_all10": 0.078125
+   },
+   "lstai": {
+    "run": true,
+    "n_paired": 100,
+    "arm_x": 90,
+    "reference_x": 85,
+    "arm_only": 13,
+    "reference_only": 8,
+    "p_two_sided": 0.38331031799316406,
+    "rate_diff": {
+     "diff": 0.05,
+     "ci95_boot": [
+      -0.04,
+      0.14
+     ]
+    },
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   },
+   "mindglide": {
+    "run": false,
+    "p_two_sided": null,
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   },
+   "wmhsynthseg": {
+    "run": false,
+    "p_two_sided": null,
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   },
+   "samseg": {
+    "run": false,
+    "p_two_sided": null,
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   }
+  },
+  "b": {
+   "flames_f0": {
+    "run": true,
+    "n_paired": 100,
+    "arm_x": 22,
+    "reference_x": 19,
+    "arm_only": 7,
+    "reference_only": 4,
+    "p_two_sided": 0.548828125,
+    "rate_diff": {
+     "diff": 0.03,
+     "ci95_boot": [
+      -0.04,
+      0.1
+     ]
+    },
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   },
+   "lstai": {
+    "run": true,
+    "n_paired": 100,
+    "arm_x": 16,
+    "reference_x": 19,
+    "arm_only": 11,
+    "reference_only": 14,
+    "p_two_sided": 0.6900379657745361,
+    "rate_diff": {
+     "diff": -0.03,
+     "ci95_boot": [
+      -0.13,
+      0.07
+     ]
+    },
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   },
+   "mindglide": {
+    "run": false,
+    "p_two_sided": null,
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   },
+   "wmhsynthseg": {
+    "run": false,
+    "p_two_sided": null,
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   },
+   "samseg": {
+    "run": false,
+    "p_two_sided": null,
+    "p_holm_family": 1.0,
+    "established_holm_lt_0.05": false,
+    "p_holm_all10": 1.0
+   }
+  }
+ },
+ "secondary": {
+  "flames_ens": {
+   "S1": {
+    "false_lesions_per_scan": {
+     "n": 100,
+     "mean": 2.63,
+     "sd": 2.1398,
+     "median": 2.0,
+     "iqr": [
+      1.0,
+      4.0
+     ],
+     "max": 8.0
+    },
+    "per_100_scans": 263.0,
+    "distribution_0_1_2_ge3": [
+     15,
+     21,
+     19,
+     45
+    ],
+    "total": 263
+   },
+   "S2": {
+    "false_volume_ml": {
+     "n": 100,
+     "mean": 0.1978,
+     "sd": 0.2805,
+     "median": 0.092,
+     "iqr": [
+      0.02,
+      0.2333
+     ],
+     "max": 1.591
+    },
+    "ppm_of_brain_mask": {
+     "n": 100,
+     "mean": 99.8366,
+     "sd": 142.5292,
+     "median": 46.0603,
+     "iqr": [
+      10.255,
+      116.8534
+     ],
+     "max": 809.057
+    },
+    "controls_gt_0.1_ml": 49
+   },
+   "S3": {
+    "lesions_by_region": {
+     "PV": 165,
+     "JC": 33,
+     "IT": 4,
+     "DWM": 61,
+     "none": 0
+    },
+    "outside_atlas_coverage": 33,
+    "controls_with_region": {
+     "PV": 73,
+     "JC": 22,
+     "IT": 3,
+     "DWM": 39
+    },
+    "controls_any_dis_region": 79
+   },
+   "S4": {
+    "lesions": {
+     "3-14": 89,
+     "14-50": 74,
+     "50-200": 71,
+     "200-1000": 29,
+     ">=1000": 0
+    },
+    "per_scan": {
+     "3-14": 0.89,
+     "14-50": 0.74,
+     "50-200": 0.71,
+     "200-1000": 0.29,
+     ">=1000": 0.0
+    }
+   },
+   "S5": {
+    "a_paper_f_rule": {
+     "x": 75,
+     "n": 100,
+     "rate": 0.75,
+     "ci95_exact": [
+      0.6534,
+      0.8312
+     ]
+    },
+    "b_paper_f_rule": {
+     "x": 9,
+     "n": 100,
+     "rate": 0.09,
+     "ci95_exact": [
+      0.042,
+      0.164
+     ]
+    }
+   },
+   "S6": {
+    "a_without_sub-075": {
+     "x": 84,
+     "n": 99,
+     "rate": 0.8485,
+     "ci95_exact": [
+      0.7624,
+      0.9126
+     ]
+    },
+    "b_without_sub-075": {
+     "x": 18,
+     "n": 99,
+     "rate": 0.1818,
+     "ci95_exact": [
+      0.1115,
+      0.272
+     ]
+    }
+   },
+   "S7": {
+    "lesions": 263,
+    "within_3mm_of_brainmask_edge": 2,
+    "share_within_3mm": 0.0076,
+    "min_edt_mm_quantiles_10_50_90": [
+     18.03,
+     23.28,
+     37.26
+    ],
+    "touching_outside_mask": 0
+   },
+   "S8_missing": null
+  },
+  "flames_f0": {
+   "S1": {
+    "false_lesions_per_scan": {
+     "n": 100,
+     "mean": 3.06,
+     "sd": 2.0977,
+     "median": 3.0,
+     "iqr": [
+      1.0,
+      4.0
+     ],
+     "max": 9.0
+    },
+    "per_100_scans": 306.0,
+    "distribution_0_1_2_ge3": [
+     7,
+     20,
+     19,
+     54
+    ],
+    "total": 306,
+    "paired_mean_diff_vs_ens": {
+     "diff": 0.43,
+     "ci95_boot": [
+      0.23,
+      0.64
+     ]
+    }
+   },
+   "S2": {
+    "false_volume_ml": {
+     "n": 100,
+     "mean": 0.2078,
+     "sd": 0.2561,
+     "median": 0.1175,
+     "iqr": [
+      0.0362,
+      0.254
+     ],
+     "max": 1.207
+    },
+    "ppm_of_brain_mask": {
+     "n": 100,
+     "mean": 104.8962,
+     "sd": 130.0407,
+     "median": 59.0018,
+     "iqr": [
+      17.9726,
+      130.3772
+     ],
+     "max": 613.7849
+    },
+    "controls_gt_0.1_ml": 57
+   },
+   "S3": {
+    "lesions_by_region": {
+     "PV": 196,
+     "JC": 44,
+     "IT": 3,
+     "DWM": 63,
+     "none": 0
+    },
+    "outside_atlas_coverage": 26,
+    "controls_with_region": {
+     "PV": 79,
+     "JC": 30,
+     "IT": 2,
+     "DWM": 43
+    },
+    "controls_any_dis_region": 89
+   },
+   "S4": {
+    "lesions": {
+     "3-14": 109,
+     "14-50": 95,
+     "50-200": 75,
+     "200-1000": 27,
+     ">=1000": 0
+    },
+    "per_scan": {
+     "3-14": 1.09,
+     "14-50": 0.95,
+     "50-200": 0.75,
+     "200-1000": 0.27,
+     ">=1000": 0.0
+    }
+   },
+   "S5": {
+    "a_paper_f_rule": {
+     "x": 82,
+     "n": 100,
+     "rate": 0.82,
+     "ci95_exact": [
+      0.7305,
+      0.8897
+     ]
+    },
+    "b_paper_f_rule": {
+     "x": 12,
+     "n": 100,
+     "rate": 0.12,
+     "ci95_exact": [
+      0.0636,
+      0.2002
+     ]
+    }
+   },
+   "S6": {
+    "a_without_sub-075": {
+     "x": 92,
+     "n": 99,
+     "rate": 0.9293,
+     "ci95_exact": [
+      0.8597,
+      0.9711
+     ]
+    },
+    "b_without_sub-075": {
+     "x": 21,
+     "n": 99,
+     "rate": 0.2121,
+     "ci95_exact": [
+      0.1364,
+      0.3058
+     ]
+    }
+   },
+   "S7": {
+    "lesions": 306,
+    "within_3mm_of_brainmask_edge": 2,
+    "share_within_3mm": 0.0065,
+    "min_edt_mm_quantiles_10_50_90": [
+     18.67,
+     23.73,
+     37.92
+    ],
+    "touching_outside_mask": 0
+   },
+   "S8_missing": null
+  },
+  "lstai": {
+   "S1": {
+    "false_lesions_per_scan": {
+     "n": 100,
+     "mean": 4.38,
+     "sd": 5.3234,
+     "median": 3.0,
+     "iqr": [
+      1.0,
+      6.0
+     ],
+     "max": 42.0
+    },
+    "per_100_scans": 438.0,
+    "distribution_0_1_2_ge3": [
+     10,
+     20,
+     17,
+     53
+    ],
+    "total": 438,
+    "paired_mean_diff_vs_ens": {
+     "diff": 1.75,
+     "ci95_boot": [
+      0.76,
+      2.92
+     ]
+    }
+   },
+   "S2": {
+    "false_volume_ml": {
+     "n": 100,
+     "mean": 0.0563,
+     "sd": 0.0914,
+     "median": 0.0235,
+     "iqr": [
+      0.0067,
+      0.0653
+     ],
+     "max": 0.474
+    },
+    "ppm_of_brain_mask": {
+     "n": 100,
+     "mean": 28.2622,
+     "sd": 45.924,
+     "median": 11.7032,
+     "iqr": [
+      3.5017,
+      32.2439
+     ],
+     "max": 237.9878
+    },
+    "controls_gt_0.1_ml": 13
+   },
+   "S3": {
+    "lesions_by_region": {
+     "PV": 40,
+     "JC": 229,
+     "IT": 3,
+     "DWM": 166,
+     "none": 0
+    },
+    "outside_atlas_coverage": 98,
+    "controls_with_region": {
+     "PV": 24,
+     "JC": 67,
+     "IT": 3,
+     "DWM": 69
+    },
+    "controls_any_dis_region": 76
+   },
+   "S4": {
+    "lesions": {
+     "3-14": 373,
+     "14-50": 47,
+     "50-200": 15,
+     "200-1000": 3,
+     ">=1000": 0
+    },
+    "per_scan": {
+     "3-14": 3.73,
+     "14-50": 0.47,
+     "50-200": 0.15,
+     "200-1000": 0.03,
+     ">=1000": 0.0
+    }
+   },
+   "S5": {
+    "a_paper_f_rule": {
+     "x": 36,
+     "n": 100,
+     "rate": 0.36,
+     "ci95_exact": [
+      0.2664,
+      0.4621
+     ]
+    },
+    "b_paper_f_rule": {
+     "x": 5,
+     "n": 100,
+     "rate": 0.05,
+     "ci95_exact": [
+      0.0164,
+      0.1128
+     ]
+    }
+   },
+   "S6": {
+    "a_without_sub-075": {
+     "x": 89,
+     "n": 99,
+     "rate": 0.899,
+     "ci95_exact": [
+      0.8221,
+      0.9505
+     ]
+    },
+    "b_without_sub-075": {
+     "x": 15,
+     "n": 99,
+     "rate": 0.1515,
+     "ci95_exact": [
+      0.0874,
+      0.2376
+     ]
+    }
+   },
+   "S7": {
+    "lesions": 438,
+    "within_3mm_of_brainmask_edge": 1,
+    "share_within_3mm": 0.0023,
+    "min_edt_mm_quantiles_10_50_90": [
+     10.2,
+     18.26,
+     28.53
+    ],
+    "touching_outside_mask": 0
+   },
+   "S8_missing": null
+  },
+  "lstai_threshold_check": {
+   "voxels_exactly_0.5_total": 0,
+   "controls_with_any": 0
+  },
+  "E1_exploratory_cross_tool": {
+   "flames_ens": {
+    "false_lesions": 263,
+    "overlap_with": {
+     "lstai": {
+      "lesions_overlapping": 44,
+      "share": 0.1673
+     }
+    },
+    "consensus_ge3_tools": 0,
+    "controls_with_consensus_ge3": 0,
+    "tools_available": 2
+   },
+   "lstai": {
+    "false_lesions": 438,
+    "overlap_with": {
+     "flames_ens": {
+      "lesions_overlapping": 44,
+      "share": 0.1005
+     }
+    },
+    "consensus_ge3_tools": 0,
+    "controls_with_consensus_ge3": 0,
+    "tools_available": 2
+   }
+  }
+ },
+ "gate_G1_paper_a": {
+  "run": true,
+  "passed": true,
+  "got": {
+   "flames_ens": {
+    "scans_with_any_candidate": 85,
+    "candidates_total": 263,
+    "dis_met_brain": 19,
+    "any_dis_region": 79,
+    "per_control_counts_equal": 100,
+    "dis_cases_equal": true
+   },
+   "flames_f0": {
+    "scans_with_any_candidate": 93,
+    "candidates_total": 306,
+    "dis_met_brain": 22,
+    "any_dis_region": 89,
+    "per_control_counts_equal": 100,
+    "dis_cases_equal": true
+   },
+   "regions_raw_ens": {
+    "PV": 165,
+    "JC": 33,
+    "IT": 4,
+    "DWM": 61,
+    "none": 0
+   }
+  },
+  "expected_paper_a": {
+   "flames_ens": {
+    "scans_with_any_candidate": 85,
+    "candidates_total": 263,
+    "dis_met_brain": 19,
+    "any_dis_region": 79,
+    "per_control_counts_equal": 100,
+    "dis_cases_equal": true
+   },
+   "flames_f0": {
+    "scans_with_any_candidate": 93,
+    "candidates_total": 306,
+    "dis_met_brain": 22,
+    "any_dis_region": 89,
+    "per_control_counts_equal": 100,
+    "dis_cases_equal": true
+   },
+   "regions_raw_ens": {
+    "PV": 165,
+    "JC": 33,
+    "IT": 4,
+    "DWM": 61,
+    "none": 0
+   }
+  }
+ },
+ "run_info": {
+  "created": "2026-11-08 18:47:43",
+  "interim": true,
+  "arms": [
+   "flames_ens",
+   "flames_f0",
+   "lstai"
+  ],
+  "n_controls": 100,
+  "prereg": "docs/research/paper-1/PREREG-healthy-controls.md (commit 1e62f5c)",
+  "code": {
+   "commit": "84fb9c9bdff33baebf4d3034cb53d5c29a50d225",
+   "paper_1_code_dirty": true
+  },
+  "code_sha256": {
+   "evaluate_controls.py": "79ae691412ddaad62ae246a55ed3f7915999c38290c9f2e1e7c5ed45a27afedb",
+   "hc_core.py": "b020f4d9f13e37d6c58302181b72ac813325bec30a4a4024d39226b6920b2898",
+   "controls_inputs.json": "65f8c163c4aa589a6f032ab3557d9877be6415d4fad26c60f441c93331b12381"
+  },
+  "paper_f_metrics_sha256": "bd4a301c21755bcb409244cafbf8a8ef0dc76263c36dd2fc43a78ce6f73122bd",
+  "app_files_sha256": {
+   "ms_region_classifier.py": "f184498bf45418f0e35380f76417a2a343d9045d591decab8d3c5036c2afdb19",
+   "lesion_analysis_service.py": "40a5eed7ba20025126a8e7c4c1cd48fff660ebe97f82e2085ca629924a877710",
+   "lesion_metrics.py": "9ca32db943260a8d0cd5432448513bfbb56bd17a589e6895fa1745caf18577ad"
+  },
+  "atlas_sha256": "2ad50b1433a040a4d5b58ac064f984211b466f83081fc5d344ff13eff56cdd0f",
+  "inputs": {
+   "files": 800,
+   "digest_sha256_of_sorted_list": "ebad6a4ee223b38cbbf68ce0f7593b8b6ecf38f9dc124daf745afdeee2d0a391"
+  },
+  "versions": {
+   "python": "3.11.4",
+   "executable": "C:\\Users\\Nicolas\\medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe",
+   "numpy": "1.26.4",
+   "nibabel": "5.3.0",
+   "scipy": "1.13.1"
+  },
+  "seed": 20261108,
+  "n_boot": 10000,
+  "runtime_s": 515.4
+ },
+ "S9_runtime": {
+  "lstai": {
+   "n": 100,
+   "seconds": {
+    "n": 100,
+    "mean": 98.096,
+    "sd": 0.797,
+    "median": 98.1,
+    "iqr": [
+     97.575,
+     98.525
+    ],
+    "max": 100.8
+   },
+   "peak_mem_gb_max": 8.27,
+   "runs": [
+    "lstai-ctl"
+   ]
+  }
+ }
+}

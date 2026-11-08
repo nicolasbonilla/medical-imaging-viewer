@@ -1,0 +1,21 @@
+{
+ "compared": 300,
+ "count_equal": 300,
+ "volume_equal": 300,
+ "mismatches": [],
+ "by_arm": {
+  "flames_ens": {
+   "compared": 100,
+   "equal": 100
+  },
+  "flames_f0": {
+   "compared": 100,
+   "equal": 100
+  },
+  "lstai": {
+   "compared": 100,
+   "equal": 100
+  }
+ },
+ "passed": true
+}
