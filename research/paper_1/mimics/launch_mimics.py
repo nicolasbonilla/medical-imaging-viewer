@@ -34,12 +34,14 @@ SHUTDOWN = ('#!/bin/bash\nMD=http://metadata/computeMetadata/v1/instance\n'
             'echo "$N preempted=$P $(date -u +%Y-%m-%dT%H:%M:%SZ)" | '
             'gcloud storage cp - gs://mstool-research-data/mimics/interruptions/$N-$(date -u +%s).txt --quiet\n')
 TOOLS_NN = ["flames", "lstai", "mindglide"]
+# Disk per VM from the pilot (docker disk use: FreeSurfer 41.2 GB, LST-AI 30.2 GB, MindGlide 13.3 GB): one image
+# family per machine, 70 + 60 + 60 + 50 = 240 GB <= the 250 GB regional SSD quota.
 VM = {  # name: (machine type, disk GB, swap GB, needs, rate key)
     "mimics-pilot": ("c2d-highmem-4", 130, 16, "hdbet flames lstai mindglide fs cdata", "pilot"),
-    "mimics-nn-a": ("c2d-standard-4", 50, 8, "hdbet flames lstai mindglide", "nn"),
-    "mimics-nn-b": ("c2d-standard-4", 50, 8, "hdbet flames lstai mindglide", "nn"),
-    "mimics-fs-a": ("c2d-highmem-4", 75, 16, "fs", "fs_hm"),
-    "mimics-fs-b": ("c2d-standard-4", 75, 8, "fs", "fs_std"),
+    "mimics-nn-l": ("c2d-standard-4", 60, 8, "hdbet flames lstai", "nn"),
+    "mimics-nn-m": ("c2d-standard-4", 50, 8, "hdbet flames mindglide", "nn"),
+    "mimics-fs-a": ("c2d-highmem-4", 70, 16, "fs", "fs_hm"),
+    "mimics-fs-b": ("c2d-standard-4", 60, 8, "fs", "fs_std"),
 }
 
 
@@ -102,19 +104,26 @@ def full_plans(s, kw, sec):
     a_ids = sorted(s["A_wmh2017"])
     a_test = [i for i in a_ids if s["A_wmh2017"][i]["split"] == "test"]
     c1, sam_c1, c2 = c_ids(s, thick, with_c2)
-    nn_s = lambda blk: sum(PM.seconds_for(blk, st, sec) for st in ("flames5", "lstai", "mindglide"))  # noqa: E731
     hd = PM.seconds_for
-    # nn: A on nn-a (with its HD-BET), B (+ C2) on nn-b (with its HD-BET); C1 split to balance the two.
-    fixed = [len(a_ids) * (hd("A", "hdbet", sec) + nn_s("A")) / 3600.0,
-             len(b_ids) * (2 * hd("B1", "hdbet", sec) + nn_s("B1")) / 3600.0 + len(c2) * nn_s("C2") / 3600.0]
-    (c1_a, c1_b), nn_load = split_balanced([(i, nn_s("C1")) for i in c1], fixed, sec)
+    h = lambda blk, step, ids: len(ids) * hd(blk, step, sec) / 3600.0  # noqa: E731
+    c1_lstai = [i for i in c1 if not i.startswith("mslesseg_P49_T2")]
+    # nn-l: HD-BET of A, LST-AI everywhere, FLAMeS on A + a share of C1.
+    # nn-m: HD-BET of B, MindGlide everywhere, FLAMeS on B, C2 + the other share of C1. Each waits only for the
+    # block the other one prepares (B for LST-AI on nn-l, A for MindGlide on nn-m), placed late in its list.
+    fixed = [h("A", "hdbet", a_ids) + h("A", "lstai", a_ids) + h("B1", "lstai", b_ids) + h("C2", "lstai", c2)
+             + h("C1", "lstai", c1_lstai) + h("A", "flames5", a_ids),
+             2 * h("B1", "hdbet", b_ids) + h("B1", "mindglide", b_ids) + h("A", "mindglide", a_ids)
+             + h("C2", "mindglide", c2) + h("C1", "mindglide", c1) + h("B1", "flames5", b_ids) + h("C2", "flames5", c2)]
+    (c1_l, c1_m), nn_load = split_balanced([(i, hd("C1", "flames5", sec)) for i in c1], fixed, sec)
+    opt = lambda ids, tools, wait: ([{"tools": tools, "inputs": ids, **({"wait_blocks": wait} if wait else {})}]  # noqa: E731
+                                    if ids else [])
     plans = {
-        "mimics-nn-a": {"prep": [{"kind": "hdbet", "block": "A", "cohort": "wmh2017", "ids": a_ids, "finalize": a_ids}],
-                        "steps": [{"tools": TOOLS_NN, "inputs": a_ids}, {"tools": TOOLS_NN, "inputs": c1_a, "wait_blocks": ["C1"]}]},
-        "mimics-nn-b": {"prep": [{"kind": "hdbet", "block": "B", "cohort": "dlbs", "ids": b_ids, "finalize": b_ids}],
-                        "steps": [{"tools": TOOLS_NN, "inputs": b_ids}]
-                        + ([{"tools": TOOLS_NN, "inputs": c2, "wait_blocks": ["C2"]}] if c2 else [])
-                        + [{"tools": TOOLS_NN, "inputs": c1_b, "wait_blocks": ["C1"]}]},
+        "mimics-nn-l": {"prep": [{"kind": "hdbet", "block": "A", "cohort": "wmh2017", "ids": a_ids, "finalize": a_ids}],
+                        "steps": opt(a_ids, ["lstai"], None) + opt(a_ids, ["flames"], None) + opt(c2, ["lstai"], ["C2"])
+                        + opt(c1_lstai, ["lstai"], ["C1"]) + opt(c1_l, ["flames"], ["C1"]) + opt(b_ids, ["lstai"], ["B"])},
+        "mimics-nn-m": {"prep": [{"kind": "hdbet", "block": "B", "cohort": "dlbs", "ids": b_ids, "finalize": b_ids}],
+                        "steps": opt(b_ids, ["mindglide"], None) + opt(b_ids, ["flames"], None) + opt(c2, ["mindglide", "flames"], ["C2"])
+                        + opt(c1, ["mindglide"], ["C1"]) + opt(c1_m, ["flames"], ["C1"]) + opt(a_ids, ["mindglide"], ["A"])},
     }
     # fs: WMH-SynthSeg on fs-a (C2, C1, A test, B); SAMSEG split so that fs-a and fs-b end together.
     wmh = [(c2, "C2"), (c1, "C1"), (a_test, "A"), (b_ids, "B")]
@@ -143,8 +152,21 @@ def full_plans(s, kw, sec):
     plans["mimics-fs-b"] = {"prep": [], "steps": steps("samseg", fsb_sam)}
     for p in plans.values():
         p["idle_wait_h"] = 8
-    hours = {"mimics-nn-a": nn_load[0], "mimics-nn-b": nn_load[1], "mimics-fs-a": acc, "mimics-fs-b": total - acc}
+    hours = {"mimics-nn-l": nn_load[0], "mimics-nn-m": nn_load[1], "mimics-fs-a": acc, "mimics-fs-b": total - acc}
     return plans, hours
+
+
+def vm_guards(hours, spent):
+    """max-hours per VM (projected hours x factor + set-up) so that every VM running to its guard keeps the total
+    spend <= the cap; the largest factor in 1.0-1.6 that fits."""
+    import math
+    left = PM.CAP_USD - spent - sum(PM.FIXED_USD.values())
+    for f in (1.6, 1.5, 1.4, 1.3, 1.25, 1.2, 1.1, 1.0):
+        g = {k: math.ceil(h * f + PM.SETUP_H) for k, h in hours.items()}
+        worst = sum(g[k] * PM.RATE[VM[k][4]] for k in g)
+        if worst <= left:
+            return {"factor": f, "max_hours": g, "worst_case_usd": round(worst + spent + sum(PM.FIXED_USD.values()), 2)}
+    return None
 
 
 def upload_code():
@@ -203,10 +225,10 @@ def cmd_full(a):
     rule = PM.apply_rule(sec, a.spent_usd)
     if not rule.get("selected"):
         raise SystemExit(f"budget rule: no launch ({rule['reason']})")
-    g = PM.guards(rule["kwargs"], sec, a.spent_usd)
+    plans, hours = full_plans(s, rule["kwargs"], sec)
+    g = vm_guards(hours, a.spent_usd)
     if not g:
         raise SystemExit("no guard setting keeps the worst case under the cap: no launch")
-    plans, hours = full_plans(s, rule["kwargs"], sec)
     print(json.dumps({"variant": rule["selected"], "projection": rule["projection"], "guards": g,
                       "projected_hours": {k: round(v, 1) for k, v in hours.items()},
                       "inputs_per_vm": {k: sum(len(st["inputs"]) for st in p["steps"]) for k, p in plans.items()}}, indent=1))
@@ -217,9 +239,8 @@ def cmd_full(a):
     json.dump({**rule["kwargs"], "variant": rule["selected"], "seconds": sec, "spent_before_usd": a.spent_usd,
                "guards": g, "projection": rule["projection"]}, open(os.path.join(d, "variant.json"), "w"), indent=1)
     gs(f'cp "{os.path.join(d, "variant.json")}" {BK}/mimics/plans/variant.json --quiet')
-    guard_of = {"mimics-nn-a": "nn-a", "mimics-nn-b": "nn-b", "mimics-fs-a": "fs-a", "mimics-fs-b": "fs-b"}
     for name, plan in plans.items():
-        launch(name, upload_plan(name, plan), g["max_hours"][guard_of[name]],
+        launch(name, upload_plan(name, plan), g["max_hours"][name],
                f"Paper 1 addendum full run ({rule['selected']}): {name.split('-', 1)[1]} - "
                f"{', '.join(sorted({t for st in plan['steps'] for t in st['tools']}))}", False)
 

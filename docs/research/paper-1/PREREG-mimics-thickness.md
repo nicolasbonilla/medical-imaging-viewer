@@ -528,6 +528,7 @@ also carries `--project=mstool-research`.
 
 | Date | Entry | Rule changed? | Seen before? |
 |---|---|---|---|
+| 2026-11-09 | **Execution note (layout, no rule changed).** The pilot measured the docker disk use of the images (FreeSurfer 41.2 GB, LST-AI 30.2 GB, MindGlide 13.3 GB), more than section 15.3's layout allowed under the 250 GB SSD quota. The two "nn" VMs therefore each carry one image family: `mimics-nn-l` (60 GB: HD-BET of A, LST-AI everywhere, FLAMeS on A and part of C1) and `mimics-nn-m` (50 GB: HD-BET of B, MindGlide everywhere, FLAMeS on B, C2 and the rest of C1); `mimics-fs-a` 70 GB, `mimics-fs-b` 60 GB (240 GB). Same tools, inputs, settings and outputs; only which machine runs what. The FreeSurfer-only VMs use the toolbench host environment lock. | no | pilot timings and disk use only; no output value read |
 | 2026-11-09 | **Amendment 1 (section 15): budget.** Spot VMs, hard cap 45 USD, DLBS stratified sample of 100 (B2 dropped), SAMSEG on a pre-listed 50-scan subset in part C1, C2 at 7 mm only, WMH-SynthSeg run on the 110 WMH test subjects only, new reduction order, one-input-per-data-type pilot. Registered and pushed before any VM of the addendum (pilot included) was launched. | yes (sections 2.1, 2.2, 6.2, 6.3, 6.5, 9, 13) | nothing beyond section 12: no tool had run on any new input |
 
 ## 15. Amendment 1 — budget (2026-11-09, before any VM launch; pre-analysis)

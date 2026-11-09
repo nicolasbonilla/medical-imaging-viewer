@@ -78,9 +78,15 @@ fallocate -l ${SWAPGB}G /swapfile && chmod 600 /swapfile && mkswap /swapfile && 
 stage env_start; echo "=== [1/5] python env: the frozen FLAMeS + HD-BET lock (also serves the host side of the tools) ==="
 python3 -m venv /opt/venv && . /opt/venv/bin/activate
 pip install -q --upgrade pip 2>&1 | tail -1
-gcloud storage cp "$BK/env/requirements-controls.lock" $W/requirements.lock --quiet || exit 1
-pip install -q -r $W/requirements.lock --extra-index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
-python3 -c "import torch,nnunetv2,nibabel,scipy.ndimage; from google.cloud import storage; from HD_BET.hd_bet_prediction import get_hdbet_predictor; from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor; print('env ok', torch.__version__)" || exit 1
+if need hdbet || need flames; then
+  gcloud storage cp "$BK/env/requirements-controls.lock" $W/requirements.lock --quiet || exit 1
+  pip install -q -r $W/requirements.lock --extra-index-url https://download.pytorch.org/whl/cpu 2>&1 | tail -2
+  python3 -c "import torch,nnunetv2,nibabel,scipy.ndimage; from google.cloud import storage; from HD_BET.hd_bet_prediction import get_hdbet_predictor; from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor; print('env ok', torch.__version__)" || exit 1
+else   # FreeSurfer-only VMs: the host lock of the toolbench/LST-AI jobs (the tools live in their image)
+  gcloud storage cp "$BK/env/requirements-lstai-host.lock" $W/requirements.lock --quiet || exit 1
+  pip install -q -r $W/requirements.lock 2>&1 | tail -2
+  python3 -c "import nibabel, numpy, scipy.ndimage; from google.cloud import storage; print('host env ok', nibabel.__version__)" || exit 1
+fi
 log
 
 stage code_start; echo "=== [2/5] code and plan (uploaded by launch_mimics.py) ==="

@@ -62,8 +62,8 @@ def test_every_input_tool_pair_is_planned_exactly_once(kw):
     sam = [f"{c}_th{t}" for c in SETS["C1_samseg_subset"]["ids"] for t in (1,) + thick]
     c2 = [f"{c}_th7" for c in SETS["C2_sibbms"]] if kw.get("with_c2", True) else []
     want = Counter()
-    for t in ("flames", "lstai", "mindglide"):
-        want.update((i, t) for i in a + b + c1 + c2)
+    for t in ("flames", "lstai", "mindglide"):                 # LST-AI: P49_T2 has a blank T1 (registered skip)
+        want.update((i, t) for i in a + b + c1 + c2 if not (t == "lstai" and i.startswith("mslesseg_P49_T2")))
     want.update((i, "wmhsynthseg") for i in a_test + b + c1 + c2)
     want.update((i, "samseg") for i in a + b + sam + c2)
     assert got == want                                    # nothing missing, nothing twice
@@ -75,8 +75,8 @@ def test_fs_steps_wait_for_their_block_and_nn_prepare_their_own():
     plans, _ = LM.full_plans(SETS, {}, dict(PM.LEDGER_SECONDS))
     for name in ("mimics-fs-a", "mimics-fs-b"):
         assert all(st.get("wait_blocks") for st in plans[name]["steps"]) and not plans[name]["prep"]
-    assert plans["mimics-nn-a"]["prep"][0]["block"] == "A" and len(plans["mimics-nn-a"]["prep"][0]["finalize"]) == 170
-    assert plans["mimics-nn-b"]["prep"][0]["block"] == "B" and len(plans["mimics-nn-b"]["prep"][0]["finalize"]) == 100
+    assert plans["mimics-nn-l"]["prep"][0]["block"] == "A" and len(plans["mimics-nn-l"]["prep"][0]["finalize"]) == 170
+    assert plans["mimics-nn-m"]["prep"][0]["block"] == "B" and len(plans["mimics-nn-m"]["prep"][0]["finalize"]) == 100
 
 
 def test_pilot_plan_simulates_every_c_input_and_runs_one_input_per_data_type():
