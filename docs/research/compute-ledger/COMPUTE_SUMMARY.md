@@ -1,27 +1,30 @@
 # Registro de cómputo de la investigación MSTool-AI
 
-Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1253 USD (tipo de referencia del BCE del 2026-10-16). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
+Generado el 2026-11-09 14:18 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1165 USD (tipo de referencia del BCE del 2026-11-06). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
 
 ## Resumen
 
 | Concepto | Valor |
 |---|---|
-| Corridas en la nube con tiempo medido | 11 en mstool-research · 9 en agosto (brain-mri-476110) |
-| Horas de máquina, proyecto de investigación | 41.38 h |
-| Coste a precio de lista, proyecto de investigación | 7.55 USD ≈ 6.71 EUR |
-| Almacenamiento en el cubo (hoy) | 4.96 GB ≈ 0.099 USD/mes |
-| Crédito gratuito usado (estimado) | 6.80 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 233.20 EUR |
-| Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.70 USD (pagado por la cuenta de la app, no por el crédito) |
+| Corridas en la nube con tiempo medido | 39 en mstool-research · 9 en agosto (brain-mri-476110) |
+| Horas de máquina, proyecto de investigación | 167.33 h |
+| Coste a precio de lista, proyecto de investigación | 32.80 USD ≈ 29.38 EUR |
+| Almacenamiento en el cubo (hoy) | 10.57 GB ≈ 0.211 USD/mes |
+| Crédito gratuito usado (estimado) | 29.57 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 210.43 EUR |
+| Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.68 USD (pagado por la cuenta de la app, no por el crédito) |
 
 ## Máquinas usadas
 
 | Máquina | Procesador | vCPU | Memoria (GB) | Tarjeta gráfica | Modalidad | USD/hora (lista) |
 |---|---|---|---|---|---|---|
 | e2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.1614 |
-| n1-standard-4 | no registrado | 4 | 15.0 | nvidia-tesla-p4:1 | Spot (interrumpible) | 0.36268 |
+| n1-standard-4 | no registrado | 4 | 15.0 | nvidia-tesla-p4:1 | Spot (interrumpible) | 0.31404 |
 | n2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.23987 |
 | n2d-standard-4 | AMD Milan — AMD EPYC 7B13 | 4 | 16.0 | — | estándar | 0.17583 |
 | n2-standard-4 | Intel Cascade Lake — Intel(R) Xeon(R) CPU @ 2.80GHz | 4 | 16.0 | — | estándar | 0.20109 |
+| e2-standard-4 | Intel Broadwell — Intel(R) Xeon(R) CPU @ 2.20GHz | 4 | 16.0 | — | estándar | 0.14772 |
+| n2d-highmem-4 | AMD Milan — AMD EPYC 7B13 | 4 | 32.0 | — | estándar | 0.24851 |
+| e2-standard-8 | AMD Rome | 8 | 32.0 | — | estándar | 0.27489 |
 
 ## Todas las corridas
 
@@ -31,7 +34,7 @@ Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-08-17 | flames-pilot | FLAMeS, piloto 1 de agosto: 3 casos de principio a fin | e2-standard-8 | no registrado | Spot (interrumpible) | 0:17:33 | — / — | — / — | — | 0.0471 | 0.0292 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot2 | FLAMeS, piloto 2 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:12:42 | — / — | — / — | — | 0.0342 | 0.0212 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot3 | FLAMeS, piloto 3 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:22:19 | — / — | — / — | — | 0.0600 | 0.0372 | fallida (errores del piloto corregidos) |
-| 2026-08-17 | flames-pilot4-gpu | FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4 | n1-standard-4 | no registrado | Spot (interrumpible) | 0:25:49 | — / — | — / — | — | 0.1561 | 0.0947 | fallida (errores del piloto corregidos) |
+| 2026-08-17 | flames-pilot4-gpu | FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4 | n1-standard-4 | no registrado | Spot (interrumpible) | 0:25:49 | — / — | — / — | — | 0.1352 | 0.0947 | fallida (errores del piloto corregidos) |
 | 2026-08-17 | flames-pilot5-cpu | FLAMeS, piloto 5 de agosto solo con procesador (validado) | e2-standard-8 | no registrado | Spot (interrumpible) | 0:26:06 | — / — | — / — | — | 0.0702 | 0.0435 | correcta |
 | 2026-08-17 | flames-full | FLAMeS completo de agosto: mapas de 145 casos (30 Ljubljana + 115 MSLesSeg) | n1-standard-4 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
 | 2026-08-17 | flames-controls | FLAMeS en 100 controles sanos SibBMS (planificada en agosto) | n1-standard-8 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
@@ -51,6 +54,50 @@ Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-10-18 | flames-extra-a | Colecciones nuevas, bloque A (casos 1 a 90 de 179): HD-BET + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 11:46:50 | 3:28:29 / 8:18:20 | 449 / 0 | 67.5 | 2.0714 | 2.0714 | correcta |
 | 2026-10-18 | flames-extra-b | Colecciones nuevas, bloque B (casos 91 a 179): HD-BET + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 10:00:17 | 2:09:06 / 7:51:10 | 443 / 0 | 68.2 | 1.7591 | 1.7591 | correcta |
 | 2026-10-18 | lstai-full-a | LST-AI v1.2.0: todo MSLesSeg (P49_T2 saltado) + 30 Ljubljana; controles cuando llegue el permiso de SibBMS | n2-standard-4 | Intel Cascade Lake | estándar | 4:02:49 | 0:05:21 / 3:57:26 | 142 / 0 | 99.6 | 0.8415 | 0.8415 | correcta |
+| 2026-10-21 | paperc-oml-full | Paper C: FLAMeS 5 folds on 40 open_ms longitudinal FLAIRs | n2d-standard-4 | AMD Milan | estándar | 3:54:19 | 0:02:29 / 3:51:48 | — / — | — | 0.6867 | — | correcta |
+| 2026-10-21 | paperc-oml-pilot | Paper C pilot: FLAMeS fold 0 on open_ms longitudinal patient16 (2 studies) | n2d-standard-4 | AMD Milan | estándar | 0:06:06 | 0:03:38 / 0:02:27 | — / — | — | 0.0179 | — | correcta |
+| 2026-10-21 | toolbench-mindglide-a | Paper F: MindGlide primary arm (same skull-stripped input as FLAMeS), chunk a (offset 0, limit 162 of 324) | n2d-standard-4 | AMD Milan | estándar | 3:33:37 | 0:06:47 / 3:26:49 | 160 / 0 | 84.3 | 0.6504 | 0.6504 | correcta |
+| 2026-10-21 | toolbench-mindglide-b | Paper F: MindGlide primary arm (same skull-stripped input as FLAMeS), chunk b (offset 162, limit 0 of 324) | n2-standard-4 | Intel Cascade Lake | estándar | 3:12:56 | 0:07:46 / 3:05:09 | 161 / 0 | 77.2 | 0.6686 | 0.6686 | correcta |
+| 2026-10-21 | toolbench-pilot-mindglide | Paper F pilot (MindGlide only; FreeSurfer licence pending): ms3seg_001, pedims_P1_T1, mslesseg_P10_T1 | e2-standard-4 | Intel Broadwell | estándar | 0:13:27 | 0:07:27 / 0:05:58 | 0 / 3 | — | 0.0331 | 0.0331 | fallida |
+| 2026-10-21 | toolbench-pilot-mindglide-2 | Paper F pilot 2 (MindGlide, 1 case, full error capture) | e2-standard-4 | Intel Broadwell | estándar | 0:10:41 | 0:08:25 / 0:02:13 | 0 / 1 | — | 0.0263 | 0.0263 | fallida |
+| 2026-10-21 | toolbench-pilot-mindglide-3 | Paper F pilot 3 (MindGlide, writable mounts): ms3seg_001, pedims_P1_T1, mslesseg_P10_T1 | n2d-standard-4 | AMD Milan | estándar | 0:12:15 | 0:07:54 / 0:04:18 | 3 / 0 | 84.2 | 0.0373 | 0.0373 | correcta |
+| 2026-10-22 | flames-thick-eval-1 | FLAMeS-thick evaluation, chunk 1/2 of the 211 pre-registered scans, arms A and B (fold 0, no TTA) | n2d-standard-4 | AMD Milan | estándar | 4:02:55 | 0:05:30 / 3:57:24 | — / — | — | 0.7119 | — | correcta |
+| 2026-10-22 | flames-thick-eval-2 | FLAMeS-thick evaluation, chunk 2/2 of the 211 pre-registered scans, arms A and B (fold 0, no TTA) | n2d-standard-4 | AMD Milan | estándar | 3:54:15 | 0:04:19 / 3:49:55 | — / — | — | 0.6865 | — | correcta |
+| 2026-10-22 | flames-thick-eval-pilot | FLAMeS-thick evaluation pilot: 5 scans (one per site), arm A model trained on Kaggle | n2d-standard-4 | AMD Milan | estándar | 0:07:58 | 0:02:51 / 0:05:06 | — / — | — | 0.0233 | — | correcta |
+| 2026-10-22 | toolbench-mgraw | Artículo F, brazo secundario: MindGlide 1.3.0 con la FLAIR original (sin quitar el cráneo) en MS3SEG, Bagdad y PediMS (179 estudios) | e2-standard-4 | Intel Broadwell | estándar | 10:00:01 | 0:08:57 / — | 143 / 3 | 252.8 | 1.4772 | 1.4772 | fallida |
+| 2026-10-22 | toolbench-mgraw-2 | Paper F arm 7.6 resume: remaining MindGlide raw-input cases (resumable; done cases skipped) | e2-standard-4 | Intel Broadwell | estándar | 3:04:22 | 0:08:16 / 2:56:04 | 36 / 0 | 286.1 | 0.4539 | 0.4539 | correcta |
+| 2026-10-23 | toolbench-pilot-fs | Paper F pilot: WMH-SynthSeg and SAMSEG (FreeSurfer 8.2.0) on ms3seg_001, pedims_P1_T1, mslesseg_P10_T1 | n2d-highmem-4 | AMD Milan | estándar | 0:29:32 | 0:06:46 / 0:22:45 | 3 / 0 | 243.1 | 0.1223 | 0.1223 | correcta |
+| 2026-10-23 | toolbench-pilot-fs-2 | Paper F pilot 2: SAMSEG remaining cases (ms3seg_001 already done) + manifest fix | n2d-standard-4 | AMD Milan | estándar | 0:26:14 | 0:08:33 / 0:17:40 | 2 / 0 | 524.1 | 0.0829 | 0.0829 | correcta |
+| 2026-10-24 | lstai-ctl | LST-AI v1.2.0 maps on the 100 SibBMS healthy controls (sub-001 from the pilot is skipped) | n2-standard-4 | Intel Cascade Lake | estándar | 2:53:14 | 0:05:00 / 2:48:13 | 100 / 0 | 100.5 | 0.6003 | 0.6003 | correcta |
+| 2026-10-24 | sibbms-ctl-a | Controles sanos SibBMS, bloque A (sub-001 a sub-034): imágenes sin cráneo + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 6:02:02 | 0:04:45 / 5:57:16 | 160 / 0 | 69.8 | 1.0609 | 1.0609 | correcta |
+| 2026-10-24 | sibbms-ctl-b | Controles sanos SibBMS, bloque B (sub-035 a sub-067): imágenes sin cráneo + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 6:12:45 | 0:02:18 / 6:10:25 | 165 / 0 | 70.4 | 1.0923 | 1.0923 | correcta |
+| 2026-10-24 | sibbms-ctl-c | Controles sanos SibBMS, bloque C (sub-068 a sub-100): imágenes sin cráneo + FLAMeS 5 modelos | n2-standard-4 | Intel Cascade Lake | estándar | 5:46:14 | 0:02:31 / 5:43:42 | 165 / 0 | 66.1 | 1.1604 | 1.1604 | correcta |
+| 2026-10-24 | sibbms-ctl-pilot | Piloto controles sanos SibBMS: 2 controles (sub-001 de agosto y sub-021 nuevo), HD-BET + FLAMeS 5 modelos | n2d-standard-4 | AMD Milan | estándar | 0:26:23 | 0:03:48 / 0:22:33 | 10 / 0 | 70.0 | 0.0773 | 0.0773 | correcta |
+| 2026-10-24 | toolbench-wmh | Artículo F: WMH-SynthSeg (FreeSurfer 8.2.0) en los 324 estudios | n2d-highmem-4 | AMD Milan | estándar | 22:28:04 | 0:05:46 / 22:22:17 | 320 / 1 | 216.0 | 5.5835 | 5.5835 | fallida |
+| 2026-10-28 | toolbench-samseg-a | Artículo F: SAMSEG con lesiones, bloque 1 de 3 (según el nivel decidido tras el piloto) | n2d-standard-4 | AMD Milan | estándar | 5:49:52 | 0:06:06 / 5:43:45 | 42 / 0 | 489.1 | 1.0493 | 1.0493 | correcta |
+| 2026-10-28 | toolbench-samseg-b | Artículo F: SAMSEG con lesiones, bloque 2 de 3 | n2d-standard-4 | AMD Milan | estándar | 5:48:12 | 0:06:02 / 5:42:09 | 43 / 0 | 469.6 | 1.0443 | 1.0443 | correcta |
+| 2026-10-28 | toolbench-samseg-c | Artículo F: SAMSEG con lesiones, bloque 3 de 3 | n2-standard-4 | Intel Cascade Lake | estándar | 6:13:45 | 0:07:17 / 6:06:26 | 42 / 0 | 523.9 | 1.2782 | 1.2782 | correcta |
+| 2026-10-28 | toolbench-wmh-crop | Paper F: WMH-SynthSeg re-run of muslim_16 with --crop after an out-of-memory stop (pre-stated fallback) | n2d-highmem-4 | AMD Milan | estándar | 0:11:09 | 0:06:08 / 0:05:00 | 1 / 0 | 287.4 | 0.0444 | 0.0444 | correcta |
+| 2026-11-06 | flow-check-1 | Full flow with a real skull: worker code, real gates, both SynthStrip models | e2-standard-8 | AMD Rome | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | onnx-export-a | Export FLAMeS folds 0-2 to ONNX for the in-browser 3-model ensemble (site guarantee) | n2d-standard-4 | AMD Milan | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | sitesim-d1 | Site guarantee final design on public data through the production code (steady, scanner change, biased radiologist) | n2d-standard-4 | AMD Milan | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | sitesim-d2 | Site guarantee final design on public data through the production code (rerun, plain data file) | n2d-standard-4 | AMD Milan | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | sitesim-d3 | Site guarantee: sweep of first check and hidden-contour share (speed only, validity unaffected) | n2d-standard-4 | AMD Milan | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | sitesim-e1 | Site guarantee design E: public data, review scenarios, sweep | n2d-standard-4 | AMD Milan | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | sitesim-e2 | Site guarantee design E final parameters | n2d-standard-4 | AMD Milan | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | sitetest-e1 | Site guarantee: full suites and 109 negative controls | n2d-standard-4 | AMD Milan | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | strip-compare-1 | SynthStrip vs current strip: same lesions, real browser | e2-standard-8 | AMD Rome | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | strip-compare-2 | SynthStrip vs current strip, cases inside the app range, 1 mm included | e2-standard-8 | AMD Rome | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | strip-compare-3 | SynthStrip on images with a real skull, gates relaxed on the VM only | e2-standard-8 | AMD Rome | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-06 | strip-pilot-1 | SynthStrip pilot for the in-browser AI | n2d-standard-4 | AMD Milan | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-07 | flow-check-2 | Full flow, no-fluid model, 20 images with a real skull | e2-standard-8 | AMD Rome | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-07 | flow-control-1 | Control: same images with the current strip through the same gates | e2-standard-8 | AMD Rome | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-07 | gate-check-1 | Review B1: T1/T2 with skull stripped must still be refused; flow check | e2-standard-8 | AMD Rome | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-07 | gate-check-2 | Review B1: T1/T2 with skull stripped must still be refused; flow check | e2-standard-8 | AMD Rome | estándar | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-08 | toolbench-ctl-pilot | Artículo 1, controles sanos, piloto: WMH-SynthSeg, MindGlide y SAMSEG en 2 cerebros sanos de SibBMS (sub-001 y sub-021) | n2d-highmem-4 | AMD Milan | estándar | 0:45:53 | 0:10:46 / 0:35:06 | 6 / 0 | 397.2 | 0.1838 | 0.1838 | correcta |
+| 2026-11-08 | toolbench-ctl-samseg-a | Artículo 1, controles sanos: SAMSEG con lesiones, primera mitad de los 100 cerebros sanos | n2d-standard-4 | AMD Milan | estándar | 7:45:32 | 0:05:41 / 7:39:50 | 49 / 0 | 551.9 | 1.3961 | 1.3961 | correcta |
+| 2026-11-08 | toolbench-ctl-samseg-b | Artículo 1, controles sanos: SAMSEG con lesiones, segunda mitad de los 100 cerebros sanos | n2-standard-4 | Intel Cascade Lake | estándar | 8:43:33 | 0:09:45 / 8:33:46 | 49 / 0 | 607.7 | 1.7905 | 1.7905 | correcta |
+| 2026-11-08 | toolbench-ctl-wmh-mg | Artículo 1, controles sanos: WMH-SynthSeg y después MindGlide en los 100 cerebros sanos de SibBMS | n2d-highmem-4 | AMD Milan | estándar | 13:21:36 | 0:10:34 / 13:11:00 | 196 / 0 | 206.0 | 3.2103 | 3.2103 | correcta |
 
 ## Rendimiento medido (FLAMeS, un modelo, un caso, sin TTA)
 
@@ -65,6 +112,27 @@ Generado el 2026-10-18 16:24 UTC con `research/cloud/build_ledger.py`. Precios: 
 | flames-extra-a | n2d-standard-4 | AMD Milan | 67.5 | 0.00330 |
 | flames-extra-b | n2d-standard-4 | AMD Milan | 68.2 | 0.00333 |
 | lstai-full-a | n2-standard-4 | Intel Cascade Lake | 99.6 | 0.00575 |
+| toolbench-mindglide-a | n2d-standard-4 | AMD Milan | 84.3 | 0.00428 |
+| toolbench-mindglide-b | n2-standard-4 | Intel Cascade Lake | 77.2 | 0.00446 |
+| toolbench-pilot-mindglide-3 | n2d-standard-4 | AMD Milan | 84.2 | 0.00427 |
+| toolbench-mgraw | e2-standard-4 | Intel Broadwell | 252.8 | 0.01037 |
+| toolbench-mgraw-2 | e2-standard-4 | Intel Broadwell | 286.1 | 0.01174 |
+| toolbench-pilot-fs | n2d-highmem-4 | AMD Milan | 243.1 | 0.01678 |
+| toolbench-pilot-fs-2 | n2d-standard-4 | AMD Milan | 524.1 | 0.02759 |
+| lstai-ctl | n2-standard-4 | Intel Cascade Lake | 100.5 | 0.00580 |
+| sibbms-ctl-a | n2d-standard-4 | AMD Milan | 69.8 | 0.00341 |
+| sibbms-ctl-b | n2d-standard-4 | AMD Milan | 70.4 | 0.00344 |
+| sibbms-ctl-c | n2-standard-4 | Intel Cascade Lake | 66.1 | 0.00369 |
+| sibbms-ctl-pilot | n2d-standard-4 | AMD Milan | 70.0 | 0.00342 |
+| toolbench-wmh | n2d-highmem-4 | AMD Milan | 216.0 | 0.01491 |
+| toolbench-samseg-a | n2d-standard-4 | AMD Milan | 489.1 | 0.02445 |
+| toolbench-samseg-b | n2d-standard-4 | AMD Milan | 469.6 | 0.02347 |
+| toolbench-samseg-c | n2-standard-4 | Intel Cascade Lake | 523.9 | 0.02986 |
+| toolbench-wmh-crop | n2d-highmem-4 | AMD Milan | 287.4 | 0.01907 |
+| toolbench-ctl-pilot | n2d-highmem-4 | AMD Milan | 397.2 | 0.02651 |
+| toolbench-ctl-samseg-a | n2d-standard-4 | AMD Milan | 551.9 | 0.02759 |
+| toolbench-ctl-samseg-b | n2-standard-4 | Intel Cascade Lake | 607.7 | 0.03464 |
+| toolbench-ctl-wmh-mg | n2d-highmem-4 | AMD Milan | 206.0 | 0.01375 |
 
 ## Computador local
 
