@@ -1,5 +1,5 @@
 {
- "n_rows": 2408,
+ "n_rows": 3612,
  "models": {
   "gemini": {
    "A0": {
@@ -1175,6 +1175,617 @@
      "rule_of_three_upper": 0.00663716814159292
     }
    }
+  },
+  "gemma": {
+   "A0": {
+    "n_drafts": 452,
+    "n_evaluable": 452,
+    "primary": {
+     "x": 452,
+     "n": 452,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9918719747572211,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    },
+    "by_class": {
+     "E1": {
+      "x": 2,
+      "n": 452,
+      "rate": 0.004424778761061947,
+      "ci_cp": [
+       0.0005363111482545344,
+       0.01589170962440579
+      ],
+      "ci_cluster": [
+       0.0,
+       0.011235955056179775
+      ],
+      "rule_of_three_upper": null
+     },
+     "E2": {
+      "x": 26,
+      "n": 452,
+      "rate": 0.05752212389380531,
+      "ci_cp": [
+       0.037915724496135304,
+       0.08314996675313456
+      ],
+      "ci_cluster": [
+       0.036613272311212815,
+       0.07964648151240236
+      ],
+      "rule_of_three_upper": null
+     },
+     "E3": {
+      "x": 452,
+      "n": 452,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9918719747572211,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "E4": {
+      "x": 191,
+      "n": 452,
+      "rate": 0.4225663716814159,
+      "ci_cp": [
+       0.3765589673339604,
+       0.4695936887662866
+      ],
+      "ci_cluster": [
+       0.37045442378820326,
+       0.47608695652173916
+      ],
+      "rule_of_three_upper": null
+     }
+    },
+    "omission_any": {
+     "x": 271,
+     "n": 452,
+     "rate": 0.5995575221238938,
+     "ci_cp": [
+      0.5527491698967928,
+      0.6450542358031349
+     ],
+     "ci_cluster": [
+      0.5522718792401629,
+      0.6465324384787472
+     ],
+     "rule_of_three_upper": null
+    },
+    "omission_items": {
+     "count": {
+      "x": 265,
+      "n": 452,
+      "rate": 0.5862831858407079,
+      "ci_cp": [
+       0.5393321804636483,
+       0.63209761449383
+      ],
+      "ci_cluster": [
+       0.5382930934216492,
+       0.6338702681682894
+      ],
+      "rule_of_three_upper": null
+     },
+     "dis": {
+      "x": 9,
+      "n": 452,
+      "rate": 0.01991150442477876,
+      "ci_cp": [
+       0.009144250730192498,
+       0.03746065888210577
+      ],
+      "ci_cluster": [
+       0.008658008658008658,
+       0.0334075723830735
+      ],
+      "rule_of_three_upper": null
+     },
+     "regions": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "longitudinal": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "extended": {
+     "x": 91,
+     "n": 452,
+     "rate": 0.2013274336283186,
+     "ci_cp": [
+      0.16531151305872496,
+      0.2413047814598884
+     ],
+     "ci_cluster": [
+      0.1533329519450801,
+      0.2505400744411035
+     ],
+     "rule_of_three_upper": null
+    },
+    "S1_primary_or_extended": {
+     "x": 452,
+     "n": 452,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9918719747572211,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    },
+    "S2_primary_frozen_v2": {
+     "x": 452,
+     "n": 452,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9918719747572211,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    },
+    "truncated": 0.035398230088495575,
+    "usd_total": 0.0,
+    "usd_per_report": 0.0,
+    "calls_per_report": 1.0,
+    "latency_s_per_report": 0.0,
+    "by_stratum": {
+     "i_thick": {
+      "x": 175,
+      "n": 175,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9791413046509426,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "i_thin": {
+      "x": 29,
+      "n": 29,
+      "rate": 1.0,
+      "ci_cp": [
+       0.8805551309304973,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "ii": {
+      "x": 112,
+      "n": 112,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9676000740686401,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "iii": {
+      "x": 39,
+      "n": 39,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9097488990396657,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     },
+     "v": {
+      "x": 97,
+      "n": 97,
+      "rate": 1.0,
+      "ci_cp": [
+       0.9626843630912639,
+       1.0
+      ],
+      "ci_cluster": [
+       1.0,
+       1.0
+      ],
+      "rule_of_three_upper": null
+     }
+    },
+    "hc_unsafe": {
+     "x": 97,
+     "n": 97,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9626843630912639,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    },
+    "a0_raw_primary": {
+     "x": 452,
+     "n": 452,
+     "rate": 1.0,
+     "ci_cp": [
+      0.9918719747572211,
+      1.0
+     ],
+     "ci_cluster": [
+      1.0,
+      1.0
+     ],
+     "rule_of_three_upper": null
+    }
+   },
+   "A3": {
+    "n_drafts": 452,
+    "n_evaluable": 452,
+    "primary": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "by_class": {
+     "E1": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E2": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E3": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "E4": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "omission_any": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "omission_items": {
+     "count": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "dis": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "regions": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     },
+     "longitudinal": {
+      "x": 0,
+      "n": 452,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.008128025242778867
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.00663716814159292
+     }
+    },
+    "extended": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "S1_primary_or_extended": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "S2_primary_frozen_v2": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "truncated": 0.0,
+    "usd_total": 0.0,
+    "usd_per_report": 0.0,
+    "calls_per_report": 1.095132743362832,
+    "latency_s_per_report": 0.0,
+    "by_stratum": {
+     "i_thick": {
+      "x": 0,
+      "n": 175,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.020858695349057415
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.017142857142857144
+     },
+     "i_thin": {
+      "x": 0,
+      "n": 29,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.11944486906950269
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.10344827586206896
+     },
+     "ii": {
+      "x": 0,
+      "n": 112,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.03239992593135989
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.026785714285714284
+     },
+     "iii": {
+      "x": 0,
+      "n": 39,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.0902511009603343
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.07692307692307693
+     },
+     "v": {
+      "x": 0,
+      "n": 97,
+      "rate": 0.0,
+      "ci_cp": [
+       0.0,
+       0.03731563690873607
+      ],
+      "ci_cluster": [
+       0.0,
+       0.0
+      ],
+      "rule_of_three_upper": 0.030927835051546393
+     }
+    },
+    "hc_unsafe": {
+     "x": 0,
+     "n": 97,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.03731563690873607
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.030927835051546393
+    },
+    "a3_outcomes": {
+     "passed_0": 411,
+     "passed_1": 39,
+     "passed_2": 2
+    },
+    "a3_blocked": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    },
+    "a3_first_draft_primary": {
+     "x": 0,
+     "n": 452,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.008128025242778867
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.00663716814159292
+    }
+   }
   }
  },
  "family": [
@@ -1193,7 +1804,7 @@
    "first_only": 452,
    "second_only": 0,
    "p_two_sided": 1.7197762835371747e-136,
-   "p_holm": 6.879105134148699e-136
+   "p_holm": 8.598881417685874e-136
   },
   {
    "model": "gemini",
@@ -1245,6 +1856,23 @@
    "second_only": 0,
    "p_two_sided": 1.0,
    "p_holm": 1.0
+  },
+  {
+   "model": "gemma",
+   "first": "A0",
+   "second": "A3",
+   "n_pairs": 452,
+   "rate_first": 1.0,
+   "rate_second": 0.0,
+   "difference": 1.0,
+   "difference_ci_cluster": [
+    1.0,
+    1.0
+   ],
+   "first_only": 452,
+   "second_only": 0,
+   "p_two_sided": 1.7197762835371747e-136,
+   "p_holm": 8.598881417685874e-136
   }
  ],
  "secondary": {
@@ -1337,6 +1965,64 @@
     "reachable_A0": 0
    },
    "gemini/A3": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06,
+    "baseline_same_records": {
+     "x": 0,
+     "n": 50,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.07112173646419764
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.06
+    },
+    "reachable_A0": 0
+   },
+   "gemma/A0": {
+    "x": 1,
+    "n": 50,
+    "rate": 0.02,
+    "ci_cp": [
+     0.0005062279830408294,
+     0.10646954571149987
+    ],
+    "ci_cluster": [
+     0.0,
+     0.057692307692307696
+    ],
+    "rule_of_three_upper": null,
+    "baseline_same_records": {
+     "x": 0,
+     "n": 50,
+     "rate": 0.0,
+     "ci_cp": [
+      0.0,
+      0.07112173646419764
+     ],
+     "ci_cluster": [
+      0.0,
+      0.0
+     ],
+     "rule_of_three_upper": 0.06
+    },
+    "reachable_A0": 0
+   },
+   "gemma/A3": {
     "x": 0,
     "n": 50,
     "rate": 0.0,
@@ -1478,6 +2164,62 @@
      0.0
     ],
     "rule_of_three_upper": 0.06
+   },
+   "gemma/A0/es": {
+    "x": 50,
+    "n": 50,
+    "rate": 1.0,
+    "ci_cp": [
+     0.9288782635358024,
+     1.0
+    ],
+    "ci_cluster": [
+     1.0,
+     1.0
+    ],
+    "rule_of_three_upper": null
+   },
+   "gemma/A0/de": {
+    "x": 50,
+    "n": 50,
+    "rate": 1.0,
+    "ci_cp": [
+     0.9288782635358024,
+     1.0
+    ],
+    "ci_cluster": [
+     1.0,
+     1.0
+    ],
+    "rule_of_three_upper": null
+   },
+   "gemma/A3/es": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06
+   },
+   "gemma/A3/de": {
+    "x": 0,
+    "n": 50,
+    "rate": 0.0,
+    "ci_cp": [
+     0.0,
+     0.07112173646419764
+    ],
+    "ci_cluster": [
+     0.0,
+     0.0
+    ],
+    "rule_of_three_upper": 0.06
    }
   },
   "element_kinds": {
@@ -1494,6 +2236,20 @@
     "E2:region_count": 9,
     "E3:optic_nerve": 6,
     "E2:dis_count": 3
+   },
+   "gemma/A0": {
+    "E3:technique": 452,
+    "E4:lexicon": 328,
+    "E3:section:CLINICAL INDICATION": 220,
+    "E3:clinical": 185,
+    "E2:region_count": 49,
+    "E3:contrast": 47,
+    "E3:section:TECHNIQUE": 14,
+    "E2:dis_count": 2,
+    "E2:longitudinal_abstained": 2,
+    "E1:unit": 1,
+    "E1:number": 1,
+    "E2:count": 1
    }
   }
  },
