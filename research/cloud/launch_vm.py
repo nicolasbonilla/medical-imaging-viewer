@@ -88,7 +88,7 @@ def main():
     d = tempfile.mkdtemp()
     json.dump(vm, open(os.path.join(d, "vm.json"), "w"), indent=1)
     json.dump(plan, open(os.path.join(d, "plan.json"), "w"), indent=1)
-    sh(f'gcloud storage cp "{d}/vm.json" "{d}/plan.json" {BUCKET}/runs/{a.name}/ --quiet')
+    sh(f'gcloud storage cp "{d}/vm.json" "{d}/plan.json" {BUCKET}/runs/{a.name}/ --project={PROJECT} --quiet')
     print(json.dumps({k: plan[k] for k in ("run_id", "machine_type", "cpu_platform", "provisioning", "zone")}
                      | {"usd_per_hour": price["usd_per_hour"]}, indent=1))
 

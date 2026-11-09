@@ -1,0 +1,13 @@
+{
+ "dest": "gs://mstool-research-data/wmh2017/",
+ "list": "wmh2017.tsv",
+ "files_listed": 941,
+ "files_ok": 941,
+ "files_failed": 0,
+ "bytes_ok": 812471599,
+ "sha1_checked": 941,
+ "digest_sha256_of_sorted_relpath_sha256_list": "f9571b89ffdbb39543ab850b27f9ee7519fca832160db0551a08e5d3f322d76c",
+ "failures": [],
+ "seconds": 165.1,
+ "created_utc": "2026-11-09T15:42:20Z"
+}

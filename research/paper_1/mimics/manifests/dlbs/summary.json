@@ -1,0 +1,13 @@
+{
+ "dest": "gs://mstool-research-data/dlbs/",
+ "list": "dlbs.tsv",
+ "files_listed": 1531,
+ "files_ok": 1531,
+ "files_failed": 0,
+ "bytes_ok": 6233902560,
+ "sha1_checked": 0,
+ "digest_sha256_of_sorted_relpath_sha256_list": "15c5f3db4c5307960d3bdbd28a1db46498570ff0c8dc25910fb51a043edb5267",
+ "failures": [],
+ "seconds": 90.5,
+ "created_utc": "2026-11-09T15:44:25Z"
+}
