@@ -68,6 +68,8 @@ EXTRA = ("ms3seg", "muslim", "pedims")
 # controls, never part of the default (paper F) datasets. Case ids are the FLAMeS/LST-AI ids sub-XXX.
 CONTROLS = ("sibbms",)
 CONTROL_RE = re.compile(r"^(sub-\d{3})_FLAIR\.nii\.gz$")
+FLAT = ("flat",)                                                 # paper 1 addendum (mimics, thickness)
+FLAT_RE = re.compile(r"^(.+)_FLAIR\.nii\.gz$")
 DEFAULT_ORDER = ("wmhsynthseg", "mindglide", "samseg")         # cheapest first (PROTOCOL.md section 4)
 
 # Pinned references (registry digests read 2026-10-21; RUNBOOK.md section 1 says how they were read).
@@ -100,6 +102,14 @@ def enumerate_cases(roots, datasets):
               control runs used; never re-stripped here)                                -> sub-XXX
     """
     out = {}
+    # Paper 1 addendum (PREREG-mimics-thickness.md): a flat folder of staged inputs {id}_FLAIR.nii.gz (WMH 2017,
+    # DLBS, simulated thicknesses), SHA-256-checked against --expected like every other cohort.
+    if "flat" in datasets:
+        root = roots["flat"]
+        for f in sorted(os.listdir(root)) if os.path.isdir(root) else []:
+            m = FLAT_RE.match(f)
+            if m:
+                out[m.group(1)] = {"cohort": "mimics", "flair": os.path.join(root, f)}
     if "sibbms" in datasets:
         root = roots["sibbms"]
         for f in sorted(os.listdir(root)) if os.path.isdir(root) else []:
@@ -404,6 +414,8 @@ def main():
     ap.add_argument("--input-variant", choices=["flames", "raw"], default="flames",
                     help="flames = FLAMeS (skull-stripped) FLAIR; raw = FLAIR before skull stripping (7.6)")
     ap.add_argument("--work", default="/w/run")
+    ap.add_argument("--log-outcomes", type=int, default=1,
+                    help="0 = the log line of a finished case omits its lesion-voxel count (paper 1 addendum 15.5)")
     a = ap.parse_args()
 
     import nibabel as nib
@@ -537,8 +549,8 @@ def main():
                 bucket.blob(f"{a.prefix}/cohort/{cid}_{tag}_seg.nii.gz").upload_from_filename(seg_local)   # last
                 rec.update(ok=True, seconds=round(time.time() - t0, 1))
                 print(f"[{tag}] {cid} done in {rec['seconds']:.0f}s (tool {rec['seconds_tool']:.0f}s, peak "
-                      f"{rec.get('peak_mem_used_gb')} GB, {info['seg_transform']['kind']}, {rec['lesion_voxels']} lesion voxels)",
-                      flush=True)
+                      f"{rec.get('peak_mem_used_gb')} GB, {info['seg_transform']['kind']}"
+                      + (f", {rec['lesion_voxels']} lesion voxels)" if a.log_outcomes else ")"), flush=True)
                 manifest["cases"].append(rec)
             except Exception as exc:                                     # record and continue; never silent
                 manifest["errors"].append({"case": cid, "tool": tag, "base_tool": tool, "error": repr(exc)[:3500],

@@ -88,6 +88,13 @@ def enumerate_candidates(roots, datasets):
             case = os.path.basename(fl)[:-len("_FLAIR.nii.gz")]
             t1 = os.path.join(roots["controls"], f"{case}_T1.nii.gz")
             cands[case] = {"cohort": "sibbms-controls", "flair": fl, "t1": t1 if os.path.exists(t1) else None}
+    # Paper 1 addendum (PREREG-mimics-thickness.md): a flat folder of staged inputs {id}_FLAIR.nii.gz + {id}_T1.nii.gz
+    # (WMH 2017, DLBS and the simulated thicknesses), staged and SHA-256-checked by research/paper_1/mimics/mimics_vm.py.
+    if "flat" in datasets:
+        for fl in sorted(glob.glob(os.path.join(roots["flat"], "*_FLAIR.nii.gz"))):
+            case = os.path.basename(fl)[:-len("_FLAIR.nii.gz")]
+            t1 = os.path.join(roots["flat"], f"{case}_T1.nii.gz")
+            cands[case] = {"cohort": "mimics", "flair": fl, "t1": t1 if os.path.exists(t1) else None}
     return dict(sorted(cands.items()))
 
 
