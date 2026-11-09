@@ -67,3 +67,15 @@ def test_grid_check():
     perm = np.array([[0, 0, 1, 0], [0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 1]], float)
     with pytest.raises(ValueError):
         st.check_grid(perm, (1.0, 1.0, 1.0))                                   # voxel axis 2 is L-R here
+
+
+def test_independent_reimplementation_matches_the_registered_operator():
+    sys.path.insert(0, os.path.join(HERE, "..", "mimics"))
+    import check_counts_mimics as G2
+    rng = np.random.RandomState(1)
+    x = rng.uniform(0.5, 3.0, size=(5, 4, 61)).astype(np.float32)
+    x[0, 0, :5] = 0.0
+    for t in (3.0, 5.0, 7.0):
+        mine = G2.simulate_independent(x.astype(np.float64), t)
+        ref = st.simulate_array(x, t)
+        assert np.abs(mine - ref).max() <= 1e-4 * float(x.max() - x.min())

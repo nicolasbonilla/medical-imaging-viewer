@@ -176,8 +176,9 @@ def launch(name, plan_path, max_hours, purpose, dry):
     if dry:
         return
     r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
-    print(r.stdout.strip(), r.stderr.strip()[-1500:], flush=True)
+    print(r.stdout.strip(), flush=True)
     if r.returncode != 0:
+        print("STDERR:", "\n".join(x for x in r.stderr.splitlines() if "FutureWarning" not in x)[-3000:], flush=True)
         raise SystemExit(f"launch of {name} failed")
 
 
@@ -212,6 +213,10 @@ def cmd_full(a):
     if a.dry_run:
         return
     upload_code()
+    d = tempfile.mkdtemp()
+    json.dump({**rule["kwargs"], "variant": rule["selected"], "seconds": sec, "spent_before_usd": a.spent_usd,
+               "guards": g, "projection": rule["projection"]}, open(os.path.join(d, "variant.json"), "w"), indent=1)
+    gs(f'cp "{os.path.join(d, "variant.json")}" {BK}/mimics/plans/variant.json --quiet')
     guard_of = {"mimics-nn-a": "nn-a", "mimics-nn-b": "nn-b", "mimics-fs-a": "fs-a", "mimics-fs-b": "fs-b"}
     for name, plan in plans.items():
         launch(name, upload_plan(name, plan), g["max_hours"][guard_of[name]],
@@ -225,6 +230,166 @@ def cmd_status(a):
         out = sh(f"gcloud storage ls {BK}/mimics/{pre}/ --project={PROJECT}", check=False)
         names = [x.rsplit('/', 1)[-1] for x in out.split() if x.strip()]
         print(f"{pre}: {len(names)} files" + (f" {names}" if pre == "interruptions" else ""))
+
+
+def expected_outputs(plan):
+    """Bucket names every step of a plan must leave (LST-AI skips a blank T1: mslesseg_P49_T2)."""
+    out = set()
+    for st in plan["steps"]:
+        for i in st["inputs"]:
+            for t in st["tools"]:
+                if t == "flames":
+                    out |= {f"flames/cohort/{i}_f{k}_prob.nii.gz" for k in range(5)}
+                elif t == "lstai":
+                    if not i.startswith("mslesseg_P49_T2"):
+                        out.add(f"lstai/cohort/{i}_lstai_prob.nii.gz")
+                else:
+                    out.add(f"toolbench/cohort/{i}_{t}_seg.nii.gz")
+    return out
+
+
+def listing():
+    have = set()
+    for pre in ("flames/cohort", "lstai/cohort", "toolbench/cohort"):
+        out = sh(f"gcloud storage ls {BK}/mimics/{pre}/ --project={PROJECT}", check=False)
+        have |= {x.split("/mimics/", 1)[1] for x in out.split() if "/mimics/" in x}
+    return have
+
+
+def running():
+    out = sh(f"gcloud compute instances list --project={PROJECT} --filter=name~^mimics- --format=value(name)", check=False)
+    return [x for x in out.split() if x]
+
+
+def plans_in_bucket():
+    out = {}
+    for name in gs(f"ls {BK}/mimics/plans/").split():
+        b = name.rsplit("/", 1)[-1]
+        if b.startswith("mimics-") and b.endswith(".json") and b != "mimics-pilot.json":
+            out[b[:-5]] = json.loads(gs(f"cat {name}"))
+    return out
+
+
+def spent_usd():
+    """List-price spend of the addendum so far: cost records, plus VMs that left none (pre-empted or running),
+    estimated from their plan creation time to their last interruption marker (or now) at their list rate."""
+    import datetime
+    total, notes = 0.0093, []                                     # the mirror job
+    costs = {}
+    for name in sh(f"gcloud storage ls {BK}/mimics/cost/ --project={PROJECT}", check=False).split():
+        txt = gs(f"cat {name}")
+        kv = dict(x.split("=", 1) for x in txt.strip().split(",")[1:] if "=" in x)
+        costs[kv.get("run_id")] = float(kv.get("cost_usd_compute_estimate", 0) or 0)
+    inter = {}
+    for name in sh(f"gcloud storage ls {BK}/mimics/interruptions/ --project={PROJECT}", check=False).split():
+        b = name.rsplit("/", 1)[-1]
+        vm, ts = b.rsplit("-", 1)
+        inter[vm] = max(inter.get(vm, 0), int(ts.split(".")[0]))
+    for name in sh(f"gcloud storage ls {BK}/runs/ --project={PROJECT}", check=False).split():
+        vm = name.rstrip("/").rsplit("/", 1)[-1]
+        if not vm.startswith("mimics-"):
+            continue
+        if vm in costs:
+            total += costs[vm]
+            continue
+        try:
+            plan = json.loads(gs(f"cat {BK}/runs/{vm}/plan.json"))
+        except SystemExit:
+            continue
+        t0 = datetime.datetime.strptime(plan["created_utc"], "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=datetime.timezone.utc).timestamp()
+        t1 = inter.get(vm) or datetime.datetime.now(datetime.timezone.utc).timestamp()
+        est = max(0.0, (t1 - t0) / 3600.0) * float(plan["list_price"]["usd_per_hour"])
+        total += est
+        notes.append(f"{vm}: no cost record, estimated {est:.2f} USD")
+    return round(total, 2), notes
+
+
+def cmd_complete(a):
+    have, run = listing(), running()
+    missing = {}
+    for vm, plan in plans_in_bucket().items():
+        base = vm.rsplit("-r", 1)[0] if vm.rsplit("-", 1)[-1].startswith("r") else vm
+        miss = sorted(expected_outputs(plan) - have)
+        if miss:
+            missing.setdefault(base, set()).update(miss)
+    spent, notes = spent_usd()
+    print(json.dumps({"running": run, "spent_usd_estimate": spent, "notes": notes,
+                      "missing_by_vm": {k: len(v) for k, v in missing.items()}}, indent=1))
+    if missing and not run:
+        print("incomplete and nothing running: relaunch with  python research/paper_1/mimics/launch_mimics.py relaunch "
+              + " ".join(sorted(missing)) + f"   (only within the {PM.CAP_USD} USD cap)")
+    return 0 if not missing and not run else 1
+
+
+def cmd_relaunch(a):
+    """Relaunch pre-empted VMs with their identical plan (drivers skip finished outputs), only within the cap."""
+    spent, notes = spent_usd()
+    plans = plans_in_bucket()
+    run = running()
+    for vm in a.vms:
+        if any(r == vm or r.startswith(vm + "-r") for r in run):
+            print(f"{vm}: still running, not relaunched")
+            continue
+        rk = VM[vm][4]
+        rate = PM.RATE[rk]
+        left = PM.CAP_USD - spent - sum(PM.FIXED_USD.values())
+        hours = int(min(a.max_hours, left / rate))
+        if hours < 1:
+            raise SystemExit(f"cap reached (spent {spent} USD): no relaunch")
+        k = 1 + sum(1 for p in plans if p.startswith(vm + "-r"))
+        name = f"{vm}-r{k}"
+        VM[name] = VM[vm]
+        launch(name, upload_plan(name, plans[vm]), hours, f"Paper 1 addendum: relaunch {k} of {vm} after a pre-emption "
+               f"(same plan; finished outputs are skipped)", a.dry_run)
+        spent += hours * rate
+
+
+def cmd_evaluate(a):
+    """Final evaluation: refuses while any mimics VM runs or outputs are missing; then one Spot VM runs GR, G3, the
+    frozen evaluation and G2; results are downloaded into research/paper_1/mimics/results/."""
+    import time
+    if cmd_complete(a) != 0 and not a.allow_incomplete:
+        raise SystemExit("not complete: see above")
+    commit = sh("git rev-parse HEAD").strip()
+    if sh("git status --porcelain --untracked-files=no -- research/paper_1 research/paper_f backend/app").strip():
+        raise SystemExit("tracked evaluation code has uncommitted changes: commit first")
+    d = tempfile.mkdtemp()
+    tar = os.path.join(d, f"{commit}.tar.gz")
+    sh(f'git archive --format=tar.gz -o "{tar}" {commit} backend/app backend/data/msmask research/paper_1 research/paper_f')
+    gs(f'cp "{tar}" {BK}/mimics/evalcode/{commit}.tar.gz --quiet')
+    name = f"mimics-eval-{commit[:7]}"
+    cmd = [sys.executable, os.path.join(ROOT, "research", "cloud", "launch_vm.py"), "--name", name, "--machine-type",
+           "c2d-standard-8", "--disk-gb", "60", "--spot", "--startup", os.path.join(ROOT, "research", "cloud", "vm_mimics_eval.sh"),
+           "--paper", "1", "--max-hours", "8", "--purpose", "Paper 1 addendum: frozen final evaluation (GR, G3, run once, G2)",
+           "--meta", f"evalcode=mimics/evalcode/{commit}.tar.gz", f"commit={commit}", "workers=8", f"shutdown-script={SHUTDOWN}"]
+    r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
+    print(r.stdout[-2000:])
+    if r.returncode != 0:
+        print("\n".join(x for x in r.stderr.splitlines() if "FutureWarning" not in x)[-3000:])
+        raise SystemExit("evaluation VM launch failed")
+    print(f"waiting for {BK}/mimics/results/{name}/DONE (polls every 5 min) ...", flush=True)
+    done = False
+    while True:
+        time.sleep(300)
+        done = subprocess.run(f"gcloud storage ls {BK}/mimics/results/{name}/DONE --project={PROJECT}", shell=True,
+                              capture_output=True, text=True).returncode == 0
+        if done or name not in running():
+            break
+    if not done:
+        raise SystemExit(f"{name} ended without results (pre-empted?): run this command again")
+    out = os.path.join(HERE, "results")
+    os.makedirs(out, exist_ok=True)
+    gs(f'cp -r "{BK}/mimics/results/{name}/*" "{out}" --quiet')
+    for f in ("gr_registration.txt", "g3_structural_check.txt"):
+        p = os.path.join(out, f)
+        if os.path.exists(p):
+            print(open(p).read().strip().splitlines()[-1])
+    s_ = json.load(open(os.path.join(out, "summary.json")))
+    print("G1:", json.dumps(s_["gate_G1"]))
+    print("G2 passed:", json.load(open(os.path.join(out, "independent_check.json"))).get("passed"))
+    print(f"results in {out} (tables.md, summary.json, per_unit.csv, lesions.csv)")
+    return 0
 
 
 def cmd_check(a):
@@ -284,12 +449,20 @@ def main():
     f.add_argument("--spent-usd", type=float, default=0.0)
     f.add_argument("--dry-run", action="store_true")
     sub.add_parser("status")
+    sub.add_parser("complete")
+    rl = sub.add_parser("relaunch")
+    rl.add_argument("vms", nargs="+")
+    rl.add_argument("--max-hours", type=int, default=72)
+    rl.add_argument("--dry-run", action="store_true")
+    ev = sub.add_parser("evaluate")
+    ev.add_argument("--allow-incomplete", action="store_true")
     c = sub.add_parser("check")
     c.add_argument("scratch")
     c.add_argument("--inputs", nargs="+", required=True)
     c.add_argument("--tools", nargs="+", default=["wmhsynthseg", "mindglide", "samseg"])
     a = ap.parse_args()
-    sys.exit({"pilot": cmd_pilot, "full": cmd_full, "status": cmd_status, "check": cmd_check}[a.cmd](a) or 0)
+    sys.exit({"pilot": cmd_pilot, "full": cmd_full, "status": cmd_status, "check": cmd_check, "complete": cmd_complete,
+              "relaunch": cmd_relaunch, "evaluate": cmd_evaluate}[a.cmd](a) or 0)
 
 
 if __name__ == "__main__":
