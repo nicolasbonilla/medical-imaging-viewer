@@ -228,7 +228,8 @@ def bucket_storage():
 ES = {"not recorded": "no registrado", "ok": "correcta", "running": "en curso", "SPOT": "Spot (interrumpible)",
       "STANDARD": "estándar", "own hardware": "equipo propio", "no run time recorded": "sin tiempo registrado",
       "failed (pilot bugs fixed)": "fallida (errores del piloto corregidos)",
-      "failed (software environment)": "fallida (entorno de software)", "failed": "fallida"}
+      "failed (software environment)": "fallida (entorno de software)", "failed": "fallida",
+      "deleted (quota)": "borrada (cuota de procesadores)"}
 
 
 def es(v):

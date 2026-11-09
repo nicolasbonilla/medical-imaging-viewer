@@ -35,7 +35,7 @@
  "plan": {},
  "runinfo": {},
  "price": {
-  "date_utc": "2026-11-09T14:20:31Z",
+  "date_utc": "2026-11-09T19:41:39Z",
   "machine_type": "n2-standard-8",
   "region": "us-central1",
   "spot": true,

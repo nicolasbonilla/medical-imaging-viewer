@@ -1,16 +1,16 @@
 # Registro de cómputo de la investigación MSTool-AI
 
-Generado el 2026-11-09 14:18 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1165 USD (tipo de referencia del BCE del 2026-11-06). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
+Generado el 2026-11-09 19:39 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1193 USD (tipo de referencia del BCE del 2026-11-09). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
 
 ## Resumen
 
 | Concepto | Valor |
 |---|---|
-| Corridas en la nube con tiempo medido | 39 en mstool-research · 9 en agosto (brain-mri-476110) |
-| Horas de máquina, proyecto de investigación | 167.33 h |
-| Coste a precio de lista, proyecto de investigación | 32.80 USD ≈ 29.38 EUR |
-| Almacenamiento en el cubo (hoy) | 10.57 GB ≈ 0.211 USD/mes |
-| Crédito gratuito usado (estimado) | 29.57 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 210.43 EUR |
+| Corridas en la nube con tiempo medido | 41 en mstool-research · 9 en agosto (brain-mri-476110) |
+| Horas de máquina, proyecto de investigación | 169.90 h |
+| Coste a precio de lista, proyecto de investigación | 33.13 USD ≈ 29.60 EUR |
+| Almacenamiento en el cubo (hoy) | 21.51 GB ≈ 0.430 USD/mes |
+| Crédito gratuito usado (estimado) | 29.98 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 210.02 EUR |
 | Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.68 USD (pagado por la cuenta de la app, no por el crédito) |
 
 ## Máquinas usadas
@@ -25,6 +25,9 @@ Generado el 2026-11-09 14:18 UTC con `research/cloud/build_ledger.py`. Precios: 
 | e2-standard-4 | Intel Broadwell — Intel(R) Xeon(R) CPU @ 2.20GHz | 4 | 16.0 | — | estándar | 0.14772 |
 | n2d-highmem-4 | AMD Milan — AMD EPYC 7B13 | 4 | 32.0 | — | estándar | 0.24851 |
 | e2-standard-8 | AMD Rome | 8 | 32.0 | — | estándar | 0.27489 |
+| c2d-highmem-4 | AMD Milan — AMD EPYC 7B13 | 4 | 32.0 | — | Spot (interrumpible) | 0.13002 |
+| c2d-standard-4 | AMD Milan | 4 | 16.0 | — | Spot (interrumpible) | 0.09209 |
+| e2-standard-2 | Intel Broadwell — Intel(R) Xeon(R) CPU @ 2.20GHz | 2 | 8.0 | — | estándar | 0.07112 |
 
 ## Todas las corridas
 
@@ -98,6 +101,14 @@ Generado el 2026-11-09 14:18 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-11-08 | toolbench-ctl-samseg-a | Artículo 1, controles sanos: SAMSEG con lesiones, primera mitad de los 100 cerebros sanos | n2d-standard-4 | AMD Milan | estándar | 7:45:32 | 0:05:41 / 7:39:50 | 49 / 0 | 551.9 | 1.3961 | 1.3961 | correcta |
 | 2026-11-08 | toolbench-ctl-samseg-b | Artículo 1, controles sanos: SAMSEG con lesiones, segunda mitad de los 100 cerebros sanos | n2-standard-4 | Intel Cascade Lake | estándar | 8:43:33 | 0:09:45 / 8:33:46 | 49 / 0 | 607.7 | 1.7905 | 1.7905 | correcta |
 | 2026-11-08 | toolbench-ctl-wmh-mg | Artículo 1, controles sanos: WMH-SynthSeg y después MindGlide en los 100 cerebros sanos de SibBMS | n2d-highmem-4 | AMD Milan | estándar | 13:21:36 | 0:10:34 / 13:11:00 | 196 / 0 | 206.0 | 3.2103 | 3.2103 | correcta |
+| 2026-11-09 | mimics-fs-a | Artículo 1, anexo: primer reparto (FreeSurfer), detenida por cuota | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | borrada (cuota de procesadores) |
+| 2026-11-09 | mimics-nn-l | Artículo 1, anexo: primer reparto (LST-AI), detenida por cuota | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | borrada (cuota de procesadores) |
+| 2026-11-09 | mimics-nn-m | Artículo 1, anexo: primer reparto (MindGlide), detenida por cuota | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | borrada (cuota de procesadores) |
+| 2026-11-09 | mimics-pilot | Artículo 1, anexo: piloto (interrumpible) — todas las imágenes de cortes engrosados y las seis herramientas en un estudio de cada tipo | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 2:26:22 | 0:17:27 / 2:08:54 | — / — | — | 0.3172 | 0.3172 | correcta |
+| 2026-11-09 | mimics-v1 | Artículo 1, anexo, corrida completa (interrumpible): quitar cráneo a WMH 2017, LST-AI en todo y parte de FLAMeS | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-09 | mimics-v2 | Artículo 1, anexo, corrida completa (interrumpible): WMH-SynthSeg y MindGlide en todo, parte de SAMSEG y de FLAMeS | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-09 | mimics-v3 | Artículo 1, anexo, corrida completa (interrumpible): quitar cráneo a DLBS, parte de SAMSEG y de FLAMeS | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-09 | mirror-wmh-dlbs | Artículo 1, anexo: copia de WMH 2017 (DataverseNL) y DLBS (OpenNeuro) al cubo, con huellas | e2-standard-2 | Intel Broadwell | estándar | 0:07:49 | — / — | — / — | — | 0.0093 | 0.0093 | correcta |
 
 ## Rendimiento medido (FLAMeS, un modelo, un caso, sin TTA)
 
@@ -157,6 +168,11 @@ Generado el 2026-11-09 14:18 UTC con `research/cloud/build_ledger.py`. Precios: 
 - **flames-v2-pilot**: Falló antes del primer caso: torchvision de otra versión de torch. Corregido instalando ambos del mismo origen y con una autoprueba del entorno que para todo antes de gastar.
 - **flames-v2-pilot2**: Comparación SUPERADA: mapas idénticos a los de agosto (Dice 1,0; diferencia máxima 0,002 por redondeo). 66 s por caso y modelo con 4 procesadores.
 - **lstai-pilot**: Superado: 2 casos en 140 s cada uno, memoria máxima 10,7 GB sin intercambio; P49_T2 saltado (T1 vacía). Mapas en la rejilla de FLAMeS (error de guardado 0,002). La versión de código no se pudo leer en la imagen (sin python ni git); identidad comprobada por huella de la imagen y de los 3 modelos. Comprobación corregida después.
+- **mimics-fs-a**: Lanzada a las 19:16-19:19 UTC y borrada a los ~4 minutos: la cuota global de 12 procesadores del proyecto no permitía la cuarta máquina; se rehízo el reparto en tres máquinas (mimics-v1/v2/v3). No terminó nada; coste estimado ≈ 0,01 USD.
+- **mimics-nn-l**: Lanzada a las 19:16-19:19 UTC y borrada a los ~4 minutos: la cuota global de 12 procesadores del proyecto no permitía la cuarta máquina; se rehízo el reparto en tres máquinas (mimics-v1/v2/v3). No terminó nada; coste estimado ≈ 0,01 USD.
+- **mimics-nn-m**: Lanzada a las 19:16-19:19 UTC y borrada a los ~4 minutos: la cuota global de 12 procesadores del proyecto no permitía la cuarta máquina; se rehízo el reparto en tres máquinas (mimics-v1/v2/v3). No terminó nada; coste estimado ≈ 0,01 USD.
+- **mimics-pilot**: Sin errores ni interrupciones; comprobación estructural 36/36 correcta. Tiempos usados por la regla de presupuesto: plan completo sin recortes.
+- **mirror-wmh-dlbs**: 941 + 1.531 archivos; huellas SHA-1 de WMH 2017 iguales a las oficiales en los 941.
 
 ## Cómo se mide
 

@@ -156,5 +156,37 @@
  },
  "toolbench-ctl-samseg-b": {
   "purpose_es": "Artículo 1, controles sanos: SAMSEG con lesiones, segunda mitad de los 100 cerebros sanos"
+ },
+ "mimics-nn-l": {
+  "status": "deleted (quota)",
+  "notes_es": "Lanzada a las 19:16-19:19 UTC y borrada a los ~4 minutos: la cuota global de 12 procesadores del proyecto no permitía la cuarta máquina; se rehízo el reparto en tres máquinas (mimics-v1/v2/v3). No terminó nada; coste estimado ≈ 0,01 USD.",
+  "purpose_es": "Artículo 1, anexo: primer reparto (LST-AI), detenida por cuota"
+ },
+ "mimics-nn-m": {
+  "status": "deleted (quota)",
+  "notes_es": "Lanzada a las 19:16-19:19 UTC y borrada a los ~4 minutos: la cuota global de 12 procesadores del proyecto no permitía la cuarta máquina; se rehízo el reparto en tres máquinas (mimics-v1/v2/v3). No terminó nada; coste estimado ≈ 0,01 USD.",
+  "purpose_es": "Artículo 1, anexo: primer reparto (MindGlide), detenida por cuota"
+ },
+ "mimics-fs-a": {
+  "status": "deleted (quota)",
+  "notes_es": "Lanzada a las 19:16-19:19 UTC y borrada a los ~4 minutos: la cuota global de 12 procesadores del proyecto no permitía la cuarta máquina; se rehízo el reparto en tres máquinas (mimics-v1/v2/v3). No terminó nada; coste estimado ≈ 0,01 USD.",
+  "purpose_es": "Artículo 1, anexo: primer reparto (FreeSurfer), detenida por cuota"
+ },
+ "mirror-wmh-dlbs": {
+  "purpose_es": "Artículo 1, anexo: copia de WMH 2017 (DataverseNL) y DLBS (OpenNeuro) al cubo, con huellas",
+  "notes_es": "941 + 1.531 archivos; huellas SHA-1 de WMH 2017 iguales a las oficiales en los 941."
+ },
+ "mimics-pilot": {
+  "purpose_es": "Artículo 1, anexo: piloto (interrumpible) — todas las imágenes de cortes engrosados y las seis herramientas en un estudio de cada tipo",
+  "notes_es": "Sin errores ni interrupciones; comprobación estructural 36/36 correcta. Tiempos usados por la regla de presupuesto: plan completo sin recortes."
+ },
+ "mimics-v1": {
+  "purpose_es": "Artículo 1, anexo, corrida completa (interrumpible): quitar cráneo a WMH 2017, LST-AI en todo y parte de FLAMeS"
+ },
+ "mimics-v2": {
+  "purpose_es": "Artículo 1, anexo, corrida completa (interrumpible): WMH-SynthSeg y MindGlide en todo, parte de SAMSEG y de FLAMeS"
+ },
+ "mimics-v3": {
+  "purpose_es": "Artículo 1, anexo, corrida completa (interrumpible): quitar cráneo a DLBS, parte de SAMSEG y de FLAMeS"
  }
 }
