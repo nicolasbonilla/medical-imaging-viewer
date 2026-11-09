@@ -2,7 +2,7 @@
 
 Sources (nothing is estimated where a measurement exists):
   * Cloud runs in mstool-research — gs://mstool-research-data/runs/<run>/{plan,vm,runinfo}.json
-    (written by launch_vm.py and by the job itself), {flames-ensemble,controls,lstai,toolbench}/cost/<run>.txt
+    (written by launch_vm.py and by the job itself), {flames-ensemble,controls,lstai,toolbench,mirror,mimics}/cost/<run>.txt
     and {flames-ensemble,lstai,toolbench}/manifests/<run>.json (per case timings, software versions, checksums;
     a toolbench item is one case x one tool).
   * August 2026 runs in brain-mri-476110 — docs/calm-ms/cost-ledger.csv (as recorded then).
@@ -95,7 +95,8 @@ def fetch_bucket(tmp):
     # per-item timings live in the FLAMeS manifest (flames-ensemble/manifests/<run>.json), so it is
     # not merged.
     sources = {"runs": ["runs"],
-               "flames-ensemble_cost": ["flames-ensemble/cost", "controls/cost", "lstai/cost", "toolbench/cost"],
+               "flames-ensemble_cost": ["flames-ensemble/cost", "controls/cost", "lstai/cost", "toolbench/cost",
+                                        "mirror/cost", "mimics/cost"],
                "flames-ensemble_manifests": ["flames-ensemble/manifests", "lstai/manifests", "toolbench/manifests"]}
     for local, subs in sources.items():
         dst = os.path.join(tmp, local)

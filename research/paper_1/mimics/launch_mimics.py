@@ -392,6 +392,41 @@ def cmd_evaluate(a):
     return 0
 
 
+def cmd_timings(a):
+    """Pilot seconds per step (and per data type) for the budget rule, from the pilot manifests (timings only)."""
+    kind = lambda i: "_wmh" if i.startswith("wmh_") else ("_dlbs" if i.startswith("sub-") and "_th" not in i else "")  # noqa: E731
+    acc = {}
+
+    def add(key, v):
+        if v is not None:
+            acc.setdefault(key, []).append(float(v))
+    prep = json.loads(gs(f"cat {BK}/mimics/manifests/prep-{a.run}.json"))
+    for i, r in prep["records"].items():
+        if r.get("seconds_hdbet_flair") is not None:
+            add("hdbet" + kind(i), r["seconds_hdbet_flair"])
+            add("hdbet" + kind(i), r.get("seconds_hdbet_t1"))
+    fl = json.loads(gs(f"cat {BK}/mimics/flames/manifests/{a.run}-s0.json"))
+    per = {}
+    for c in fl["cases"]:
+        per[c["case"]] = per.get(c["case"], 0.0) + c["seconds"]
+    for i, v in per.items():
+        add("flames5" + kind(i), v)
+    ls = json.loads(gs(f"cat {BK}/mimics/lstai/manifests/{a.run}-s0.json"))
+    for c in ls["cases"]:
+        add("lstai" + kind(c["case"]), c["seconds"])
+    tb = json.loads(gs(f"cat {BK}/mimics/toolbench/manifests/{a.run}-s0.json"))
+    peaks = {}
+    for c in tb["cases"]:
+        add(c["tool"] + kind(c["case"]), c["seconds"])
+        peaks[f"{c['tool']}{kind(c['case'])}"] = max(peaks.get(f"{c['tool']}{kind(c['case'])}", 0), c.get("peak_mem_used_gb") or 0)
+    out = {k: round(sum(v) / len(v), 1) for k, v in acc.items()}
+    errors = {"flames": fl.get("errors"), "lstai": ls.get("errors"), "toolbench": tb.get("errors"), "prep": prep.get("errors")}
+    print(json.dumps({"seconds": out, "peak_mem_gb": peaks, "errors": errors}, indent=1))
+    if a.out:
+        json.dump(out, open(a.out, "w"), indent=1)
+    return 0
+
+
 def cmd_check(a):
     """G3 structural check of the outputs of the given inputs (downloads them to a scratch folder; PASS/FAIL only)."""
     import nibabel as nib
@@ -450,6 +485,9 @@ def main():
     f.add_argument("--dry-run", action="store_true")
     sub.add_parser("status")
     sub.add_parser("complete")
+    tm = sub.add_parser("timings")
+    tm.add_argument("--run", default="mimics-pilot")
+    tm.add_argument("--out")
     rl = sub.add_parser("relaunch")
     rl.add_argument("vms", nargs="+")
     rl.add_argument("--max-hours", type=int, default=72)
@@ -462,7 +500,7 @@ def main():
     c.add_argument("--tools", nargs="+", default=["wmhsynthseg", "mindglide", "samseg"])
     a = ap.parse_args()
     sys.exit({"pilot": cmd_pilot, "full": cmd_full, "status": cmd_status, "check": cmd_check, "complete": cmd_complete,
-              "relaunch": cmd_relaunch, "evaluate": cmd_evaluate}[a.cmd](a) or 0)
+              "relaunch": cmd_relaunch, "evaluate": cmd_evaluate, "timings": cmd_timings}[a.cmd](a) or 0)
 
 
 if __name__ == "__main__":
