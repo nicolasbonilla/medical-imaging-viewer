@@ -71,12 +71,24 @@ def test_every_input_tool_pair_is_planned_exactly_once(kw):
     assert max(hours.values()) / min(hours.values()) < 1.6
 
 
-def test_fs_steps_wait_for_their_block_and_nn_prepare_their_own():
-    plans, _ = LM.full_plans(SETS, {}, dict(PM.LEDGER_SECONDS))
-    for name in ("mimics-fs-a", "mimics-fs-b"):
-        assert all(st.get("wait_blocks") for st in plans[name]["steps"]) and not plans[name]["prep"]
-    assert plans["mimics-nn-l"]["prep"][0]["block"] == "A" and len(plans["mimics-nn-l"]["prep"][0]["finalize"]) == 170
-    assert plans["mimics-nn-m"]["prep"][0]["block"] == "B" and len(plans["mimics-nn-m"]["prep"][0]["finalize"]) == 100
+def test_three_vms_images_waits_and_preparation():
+    plans, hours = LM.full_plans(SETS, {}, dict(PM.LEDGER_SECONDS))
+    assert set(plans) == set(LM.FULL_VMS) and len(plans) == 3                 # global quota: 12 vCPUs
+    assert sum(LM.VM[v][1] for v in LM.FULL_VMS) <= 250                      # regional SSD quota
+    tools = {v: {t for st in p["steps"] for t in st["tools"]} for v, p in plans.items()}
+    assert "lstai" in tools["mimics-v1"] and not tools["mimics-v1"] & {"wmhsynthseg", "samseg", "mindglide"}
+    assert {"wmhsynthseg", "mindglide"} <= tools["mimics-v2"] and "lstai" not in tools["mimics-v2"]
+    assert not tools["mimics-v3"] & {"lstai", "mindglide", "wmhsynthseg"}
+    for v, needs in (("mimics-v1", "lstai"), ("mimics-v2", "fs"), ("mimics-v3", "fs")):
+        assert needs in LM.VM[v][3].split()
+    assert plans["mimics-v1"]["prep"][0]["block"] == "A" and len(plans["mimics-v1"]["prep"][0]["finalize"]) == 170
+    assert plans["mimics-v3"]["prep"][0]["block"] == "B" and len(plans["mimics-v3"]["prep"][0]["finalize"]) == 100
+    assert all(st.get("wait_blocks") for st in plans["mimics-v2"]["steps"]) and not plans["mimics-v2"]["prep"]
+    own = {"mimics-v1": "A", "mimics-v3": "B"}
+    for v, b in own.items():                                              # no VM waits for the block it prepares
+        assert all(st.get("wait_blocks") != [b] for st in plans[v]["steps"])
+    c = LM.plan_cost(hours, 0.33)
+    assert c["usd_high"] <= PM.CAP_USD
 
 
 def test_pilot_plan_simulates_every_c_input_and_runs_one_input_per_data_type():

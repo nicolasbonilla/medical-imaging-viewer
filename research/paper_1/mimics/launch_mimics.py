@@ -34,15 +34,16 @@ SHUTDOWN = ('#!/bin/bash\nMD=http://metadata/computeMetadata/v1/instance\n'
             'echo "$N preempted=$P $(date -u +%Y-%m-%dT%H:%M:%SZ)" | '
             'gcloud storage cp - gs://mstool-research-data/mimics/interruptions/$N-$(date -u +%s).txt --quiet\n')
 TOOLS_NN = ["flames", "lstai", "mindglide"]
-# Disk per VM from the pilot (docker disk use: FreeSurfer 41.2 GB, LST-AI 30.2 GB, MindGlide 13.3 GB): one image
-# family per machine, 70 + 60 + 60 + 50 = 240 GB <= the 250 GB regional SSD quota.
+# Global quota CPUS_ALL_REGIONS = 12 vCPUs -> three 4-vCPU machines at a time. Disk per VM from the pilot (docker disk
+# use: FreeSurfer 41.2 GB, LST-AI 30.2 GB, MindGlide 13.3 GB): 65 + 95 + 75 = 235 GB <= the 250 GB regional SSD quota.
 VM = {  # name: (machine type, disk GB, swap GB, needs, rate key)
     "mimics-pilot": ("c2d-highmem-4", 130, 16, "hdbet flames lstai mindglide fs cdata", "pilot"),
-    "mimics-nn-l": ("c2d-standard-4", 60, 8, "hdbet flames lstai", "nn"),
-    "mimics-nn-m": ("c2d-standard-4", 50, 8, "hdbet flames mindglide", "nn"),
-    "mimics-fs-a": ("c2d-highmem-4", 70, 16, "fs", "fs_hm"),
-    "mimics-fs-b": ("c2d-standard-4", 60, 8, "fs", "fs_std"),
+    "mimics-v1": ("c2d-standard-4", 65, 8, "hdbet flames lstai", "v1"),
+    "mimics-v2": ("c2d-highmem-4", 95, 16, "hdbet flames mindglide fs", "v2"),
+    "mimics-v3": ("c2d-standard-4", 75, 8, "hdbet flames fs", "v3"),
 }
+RATE_VM = {"v1": 0.0921, "v2": 0.1252, "v3": 0.0935, "pilot": 0.13002}      # Spot list price incl. boot disk
+FULL_VMS = ("mimics-v1", "mimics-v2", "mimics-v3")
 
 
 def sh(cmd, check=True):
@@ -98,62 +99,66 @@ def split_balanced(items, hours_fixed, sec):
 
 
 def full_plans(s, kw, sec):
+    """Three Spot VMs. Fixed: HD-BET of A and LST-AI on v1 (LST-AI image), WMH-SynthSeg and MindGlide on v2 (FreeSurfer +
+    MindGlide images, 32 GB), HD-BET of B on v3 (FreeSurfer image). Flexible: SAMSEG (v2, v3) then FLAMeS (v1, v2, v3),
+    each input to the least-loaded allowed VM. One step per (block, tool); blocks a VM does not prepare itself come after
+    the ones it can do at once (A is prepared by v1, B by v3; C1 and C2 by the pilot)."""
     thick = tuple(kw.get("c1_thick", (3, 5, 7)))
     with_c2 = kw.get("with_c2", True)
     b_ids = s["B1_sample"]["reduced_75"]["ids"] if kw.get("dlbs_n") == 75 else s["B1_sample"]["ids"]
     a_ids = sorted(s["A_wmh2017"])
     a_test = [i for i in a_ids if s["A_wmh2017"][i]["split"] == "test"]
     c1, sam_c1, c2 = c_ids(s, thick, with_c2)
-    hd = PM.seconds_for
-    h = lambda blk, step, ids: len(ids) * hd(blk, step, sec) / 3600.0  # noqa: E731
-    c1_lstai = [i for i in c1 if not i.startswith("mslesseg_P49_T2")]
-    # nn-l: HD-BET of A, LST-AI everywhere, FLAMeS on A + a share of C1.
-    # nn-m: HD-BET of B, MindGlide everywhere, FLAMeS on B, C2 + the other share of C1. Each waits only for the
-    # block the other one prepares (B for LST-AI on nn-l, A for MindGlide on nn-m), placed late in its list.
-    fixed = [h("A", "hdbet", a_ids) + h("A", "lstai", a_ids) + h("B1", "lstai", b_ids) + h("C2", "lstai", c2)
-             + h("C1", "lstai", c1_lstai) + h("A", "flames5", a_ids),
-             2 * h("B1", "hdbet", b_ids) + h("B1", "mindglide", b_ids) + h("A", "mindglide", a_ids)
-             + h("C2", "mindglide", c2) + h("C1", "mindglide", c1) + h("B1", "flames5", b_ids) + h("C2", "flames5", c2)]
-    (c1_l, c1_m), nn_load = split_balanced([(i, hd("C1", "flames5", sec)) for i in c1], fixed, sec)
-    opt = lambda ids, tools, wait: ([{"tools": tools, "inputs": ids, **({"wait_blocks": wait} if wait else {})}]  # noqa: E731
-                                    if ids else [])
-    plans = {
-        "mimics-nn-l": {"prep": [{"kind": "hdbet", "block": "A", "cohort": "wmh2017", "ids": a_ids, "finalize": a_ids}],
-                        "steps": opt(a_ids, ["lstai"], None) + opt(a_ids, ["flames"], None) + opt(c2, ["lstai"], ["C2"])
-                        + opt(c1_lstai, ["lstai"], ["C1"]) + opt(c1_l, ["flames"], ["C1"]) + opt(b_ids, ["lstai"], ["B"])},
-        "mimics-nn-m": {"prep": [{"kind": "hdbet", "block": "B", "cohort": "dlbs", "ids": b_ids, "finalize": b_ids}],
-                        "steps": opt(b_ids, ["mindglide"], None) + opt(b_ids, ["flames"], None) + opt(c2, ["mindglide", "flames"], ["C2"])
-                        + opt(c1, ["mindglide"], ["C1"]) + opt(c1_m, ["flames"], ["C1"]) + opt(a_ids, ["mindglide"], ["A"])},
-    }
-    # fs: WMH-SynthSeg on fs-a (C2, C1, A test, B); SAMSEG split so that fs-a and fs-b end together.
-    wmh = [(c2, "C2"), (c1, "C1"), (a_test, "A"), (b_ids, "B")]
-    wmh_h = sum(len(ids) * hd({"A": "A", "B": "B1"}.get(b, b), "wmhsynthseg", sec) for ids, b in wmh) / 3600.0
-    sam_seq = [(i, "C2") for i in c2] + [(i, "C1") for i in sam_c1] + [(i, "A") for i in a_ids] + [(i, "B") for i in b_ids]
-    sam_s = lambda b: hd({"A": "A", "B": "B1"}.get(b, b), "samseg", sec)  # noqa: E731
-    total = wmh_h + sum(sam_s(b) for _, b in sam_seq) / 3600.0
-    fsa_sam, acc = [], wmh_h
-    for iid, b in reversed(sam_seq):                     # fs-a takes SAMSEG from the end (A, B) up to balance
-        if acc + sam_s(b) / 3600.0 > total / 2:
-            break
-        fsa_sam.append((iid, b))
-        acc += sam_s(b) / 3600.0
-    fsa_set = {i for i, _ in fsa_sam}
-    fsb_sam = [(i, b) for i, b in sam_seq if i not in fsa_set]
+    blk = {"A": "A", "B": "B1", "C1": "C1", "C2": "C2"}
+    sec_of = lambda b, step: PM.seconds_for(blk[b], step, sec)  # noqa: E731
+    load = {v: 0.0 for v in FULL_VMS}
+    work = {v: [] for v in FULL_VMS}                             # (block, tool, input)
 
-    def steps(tool, seq):
-        out = []
-        for blk in ("C2", "C1", "A", "B"):
-            ids = [i for i, b in seq if b == blk]
-            if ids:
-                out.append({"tools": [tool], "inputs": ids, "wait_blocks": [blk]})
-        return out
-    plans["mimics-fs-a"] = {"prep": [], "steps": [{"tools": ["wmhsynthseg"], "inputs": ids, "wait_blocks": [b]}
-                                                  for ids, b in wmh if ids] + steps("samseg", list(reversed(fsa_sam)))}
-    plans["mimics-fs-b"] = {"prep": [], "steps": steps("samseg", fsb_sam)}
-    for p in plans.values():
-        p["idle_wait_h"] = 8
-    hours = {"mimics-nn-l": nn_load[0], "mimics-nn-m": nn_load[1], "mimics-fs-a": acc, "mimics-fs-b": total - acc}
-    return plans, hours
+    def put(v, b, tool, ids, step):
+        for i in ids:
+            work[v].append((b, tool, i))
+            load[v] += sec_of(b, step) / 3600.0
+    load["mimics-v1"] += len(a_ids) * sec_of("A", "hdbet") / 3600.0
+    load["mimics-v3"] += 2 * len(b_ids) * sec_of("B", "hdbet") / 3600.0
+    for b, ids in (("A", a_ids), ("B", b_ids), ("C2", c2), ("C1", c1)):
+        put("mimics-v1", b, "lstai", [i for i in ids if not i.startswith("mslesseg_P49_T2")], "lstai")
+        put("mimics-v2", b, "mindglide", ids, "mindglide")
+    for b, ids in (("A", a_test), ("B", b_ids), ("C2", c2), ("C1", c1)):
+        put("mimics-v2", b, "wmhsynthseg", ids, "wmhsynthseg")
+    flex = [(b, "samseg", i, ("mimics-v2", "mimics-v3")) for b, ids in (("C2", c2), ("C1", sam_c1), ("A", a_ids), ("B", b_ids))
+            for i in ids]
+    flex += [(b, "flames", i, FULL_VMS) for b, ids in (("C2", c2), ("C1", c1), ("A", a_ids), ("B", b_ids)) for i in ids]
+    for b, tool, i, allowed in flex:
+        v = min(allowed, key=lambda x: (load[x], FULL_VMS.index(x)))
+        put(v, b, tool, [i], "flames5" if tool == "flames" else tool)
+    order = {"mimics-v1": ("A", "C2", "C1", "B"), "mimics-v2": ("C2", "C1", "A", "B"), "mimics-v3": ("B", "C2", "C1", "A")}
+    own = {"mimics-v1": "A", "mimics-v3": "B"}
+    plans = {}
+    for v in FULL_VMS:
+        steps = []
+        for b in order[v]:
+            for tool in ("flames", "lstai", "wmhsynthseg", "mindglide", "samseg"):
+                ids = [i for bb, t, i in work[v] if bb == b and t == tool]
+                if ids:
+                    steps.append({"tools": [tool], "inputs": ids, **({} if own.get(v) == b else {"wait_blocks": [b]})})
+        prep = []
+        if v == "mimics-v1":
+            prep = [{"kind": "hdbet", "block": "A", "cohort": "wmh2017", "ids": a_ids, "finalize": a_ids}]
+        if v == "mimics-v3":
+            prep = [{"kind": "hdbet", "block": "B", "cohort": "dlbs", "ids": b_ids, "finalize": b_ids}]
+        plans[v] = {"prep": prep, "steps": steps, "idle_wait_h": 12}
+    return plans, dict(load)
+
+
+def plan_cost(hours, spent):
+    """Projected list-price spend of a plan: central (measured seconds) and high (x1.25), + set-up and fixed costs."""
+    fixed = sum(PM.FIXED_USD.values()) + spent
+    rate = {v: RATE_VM[VM[v][4]] for v in hours}
+    central = sum((h + PM.SETUP_H) * rate[v] for v, h in hours.items()) + fixed
+    high = sum((PM.SAFETY * h + PM.SETUP_H) * rate[v] for v, h in hours.items()) + fixed
+    return {"usd_central": round(central, 2), "usd_high": round(high, 2),
+            "wall_clock_h_central": round(max(hours.values()) + PM.SETUP_H, 1),
+            "wall_clock_h_high": round(PM.SAFETY * max(hours.values()) + PM.SETUP_H, 1)}
 
 
 def vm_guards(hours, spent):
@@ -163,7 +168,7 @@ def vm_guards(hours, spent):
     left = PM.CAP_USD - spent - sum(PM.FIXED_USD.values())
     for f in (1.6, 1.5, 1.4, 1.3, 1.25, 1.2, 1.1, 1.0):
         g = {k: math.ceil(h * f + PM.SETUP_H) for k, h in hours.items()}
-        worst = sum(g[k] * PM.RATE[VM[k][4]] for k in g)
+        worst = sum(g[k] * RATE_VM[VM[k][4]] for k in g)
         if worst <= left:
             return {"factor": f, "max_hours": g, "worst_case_usd": round(worst + spent + sum(PM.FIXED_USD.values()), 2)}
     return None
@@ -218,30 +223,40 @@ def cmd_pilot(a):
 
 
 def cmd_full(a):
+    """Budget rule (PREREG 15.3) on the real three-VM plan: the first variant (full, then the registered reductions in
+    order) whose HIGH projection is <= the cap; guards so that every VM running to its guard stays under the cap."""
     s = sets()
     sec = dict(PM.LEDGER_SECONDS)
     if a.pilot_json:
         sec.update({k: float(v) for k, v in json.load(open(a.pilot_json)).items()})
-    rule = PM.apply_rule(sec, a.spent_usd)
-    if not rule.get("selected"):
-        raise SystemExit(f"budget rule: no launch ({rule['reason']})")
-    plans, hours = full_plans(s, rule["kwargs"], sec)
+    chosen = None
+    considered = []
+    for label, kw in PM.VARIANTS:
+        plans, hours = full_plans(s, kw, sec)
+        c = plan_cost(hours, a.spent_usd)
+        considered.append({"variant": label, **c})
+        if c["usd_high"] <= PM.CAP_USD:
+            chosen = (label, kw, plans, hours, c)
+            break
+    if not chosen:
+        raise SystemExit(f"budget rule: nothing fits the cap: {json.dumps(considered)}")
+    label, kw, plans, hours, c = chosen
     g = vm_guards(hours, a.spent_usd)
     if not g:
         raise SystemExit("no guard setting keeps the worst case under the cap: no launch")
-    print(json.dumps({"variant": rule["selected"], "projection": rule["projection"], "guards": g,
+    print(json.dumps({"variant": label, "projection": c, "considered": considered, "guards": g,
                       "projected_hours": {k: round(v, 1) for k, v in hours.items()},
                       "inputs_per_vm": {k: sum(len(st["inputs"]) for st in p["steps"]) for k, p in plans.items()}}, indent=1))
     if a.dry_run:
         return
     upload_code()
     d = tempfile.mkdtemp()
-    json.dump({**rule["kwargs"], "variant": rule["selected"], "seconds": sec, "spent_before_usd": a.spent_usd,
-               "guards": g, "projection": rule["projection"]}, open(os.path.join(d, "variant.json"), "w"), indent=1)
+    json.dump({**kw, "variant": label, "vms": list(FULL_VMS), "seconds": sec, "spent_before_usd": a.spent_usd,
+               "guards": g, "projection": c, "projected_hours": hours}, open(os.path.join(d, "variant.json"), "w"), indent=1)
     gs(f'cp "{os.path.join(d, "variant.json")}" {BK}/mimics/plans/variant.json --quiet')
     for name, plan in plans.items():
         launch(name, upload_plan(name, plan), g["max_hours"][name],
-               f"Paper 1 addendum full run ({rule['selected']}): {name.split('-', 1)[1]} - "
+               f"Paper 1 addendum full run ({label}): {name} - "
                f"{', '.join(sorted({t for st in plan['steps'] for t in st['tools']}))}", False)
 
 
@@ -283,11 +298,12 @@ def running():
 
 
 def plans_in_bucket():
+    vms = json.loads(gs(f"cat {BK}/mimics/plans/variant.json")).get("vms", [])
     out = {}
     for name in gs(f"ls {BK}/mimics/plans/").split():
-        b = name.rsplit("/", 1)[-1]
-        if b.startswith("mimics-") and b.endswith(".json") and b != "mimics-pilot.json":
-            out[b[:-5]] = json.loads(gs(f"cat {name}"))
+        b = name.rsplit("/", 1)[-1][:-5]
+        if any(b == v or b.startswith(v + "-r") for v in vms):
+            out[b] = json.loads(gs(f"cat {name}"))
     return out
 
 
@@ -353,7 +369,7 @@ def cmd_relaunch(a):
             print(f"{vm}: still running, not relaunched")
             continue
         rk = VM[vm][4]
-        rate = PM.RATE[rk]
+        rate = RATE_VM[rk]
         left = PM.CAP_USD - spent - sum(PM.FIXED_USD.values())
         hours = int(min(a.max_hours, left / rate))
         if hours < 1:
