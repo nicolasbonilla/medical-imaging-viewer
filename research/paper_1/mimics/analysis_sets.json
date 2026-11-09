@@ -10857,5 +10857,1063 @@
   "sub-098",
   "sub-099",
   "sub-100"
- ]
+ ],
+ "B1_sample": {
+  "rule": "25 per decade (50-59, 60-69, 70-79, 80-89) from B1; RandomState(20261109).permutation per decade in ascending order over ids sorted by participant number",
+  "seed": 20261109,
+  "ids": [
+   "sub-178",
+   "sub-208",
+   "sub-349",
+   "sub-361",
+   "sub-376",
+   "sub-408",
+   "sub-465",
+   "sub-595",
+   "sub-609",
+   "sub-680",
+   "sub-784",
+   "sub-801",
+   "sub-829",
+   "sub-831",
+   "sub-833",
+   "sub-865",
+   "sub-890",
+   "sub-935",
+   "sub-940",
+   "sub-941",
+   "sub-953",
+   "sub-965",
+   "sub-1003",
+   "sub-1007",
+   "sub-1043",
+   "sub-1045",
+   "sub-1093",
+   "sub-1136",
+   "sub-1139",
+   "sub-1178",
+   "sub-1200",
+   "sub-1220",
+   "sub-1531",
+   "sub-1600",
+   "sub-1613",
+   "sub-1863",
+   "sub-1866",
+   "sub-1868",
+   "sub-1875",
+   "sub-1882",
+   "sub-1886",
+   "sub-1891",
+   "sub-2012",
+   "sub-2034",
+   "sub-2043",
+   "sub-2054",
+   "sub-2133",
+   "sub-2231",
+   "sub-2561",
+   "sub-2740",
+   "sub-2748",
+   "sub-2790",
+   "sub-2852",
+   "sub-2872",
+   "sub-2893",
+   "sub-2940",
+   "sub-3005",
+   "sub-3086",
+   "sub-3102",
+   "sub-3126",
+   "sub-3211",
+   "sub-3212",
+   "sub-3242",
+   "sub-3306",
+   "sub-3328",
+   "sub-3446",
+   "sub-3457",
+   "sub-3531",
+   "sub-3608",
+   "sub-3653",
+   "sub-3693",
+   "sub-3727",
+   "sub-3846",
+   "sub-3911",
+   "sub-3946",
+   "sub-3999",
+   "sub-4030",
+   "sub-4104",
+   "sub-4129",
+   "sub-4169",
+   "sub-4288",
+   "sub-4301",
+   "sub-4328",
+   "sub-4329",
+   "sub-4398",
+   "sub-4539",
+   "sub-4575",
+   "sub-4581",
+   "sub-4615",
+   "sub-4629",
+   "sub-4660",
+   "sub-4722",
+   "sub-4727",
+   "sub-4737",
+   "sub-4791",
+   "sub-4795",
+   "sub-4800",
+   "sub-4841",
+   "sub-4868",
+   "sub-4876"
+  ],
+  "draw": {
+   "sub-2740": {
+    "decade": 50,
+    "draw_rank": 1,
+    "decade_pool": 70
+   },
+   "sub-2561": {
+    "decade": 50,
+    "draw_rank": 2,
+    "decade_pool": 70
+   },
+   "sub-178": {
+    "decade": 50,
+    "draw_rank": 3,
+    "decade_pool": 70
+   },
+   "sub-4795": {
+    "decade": 50,
+    "draw_rank": 4,
+    "decade_pool": 70
+   },
+   "sub-784": {
+    "decade": 50,
+    "draw_rank": 5,
+    "decade_pool": 70
+   },
+   "sub-3531": {
+    "decade": 50,
+    "draw_rank": 6,
+    "decade_pool": 70
+   },
+   "sub-1875": {
+    "decade": 50,
+    "draw_rank": 7,
+    "decade_pool": 70
+   },
+   "sub-4104": {
+    "decade": 50,
+    "draw_rank": 8,
+    "decade_pool": 70
+   },
+   "sub-3911": {
+    "decade": 50,
+    "draw_rank": 9,
+    "decade_pool": 70
+   },
+   "sub-4791": {
+    "decade": 50,
+    "draw_rank": 10,
+    "decade_pool": 70
+   },
+   "sub-965": {
+    "decade": 50,
+    "draw_rank": 11,
+    "decade_pool": 70
+   },
+   "sub-941": {
+    "decade": 50,
+    "draw_rank": 12,
+    "decade_pool": 70
+   },
+   "sub-4737": {
+    "decade": 50,
+    "draw_rank": 13,
+    "decade_pool": 70
+   },
+   "sub-4722": {
+    "decade": 50,
+    "draw_rank": 14,
+    "decade_pool": 70
+   },
+   "sub-4129": {
+    "decade": 50,
+    "draw_rank": 15,
+    "decade_pool": 70
+   },
+   "sub-1220": {
+    "decade": 50,
+    "draw_rank": 16,
+    "decade_pool": 70
+   },
+   "sub-4800": {
+    "decade": 50,
+    "draw_rank": 17,
+    "decade_pool": 70
+   },
+   "sub-801": {
+    "decade": 50,
+    "draw_rank": 18,
+    "decade_pool": 70
+   },
+   "sub-3999": {
+    "decade": 50,
+    "draw_rank": 19,
+    "decade_pool": 70
+   },
+   "sub-208": {
+    "decade": 50,
+    "draw_rank": 20,
+    "decade_pool": 70
+   },
+   "sub-829": {
+    "decade": 50,
+    "draw_rank": 21,
+    "decade_pool": 70
+   },
+   "sub-3446": {
+    "decade": 50,
+    "draw_rank": 22,
+    "decade_pool": 70
+   },
+   "sub-465": {
+    "decade": 50,
+    "draw_rank": 23,
+    "decade_pool": 70
+   },
+   "sub-940": {
+    "decade": 50,
+    "draw_rank": 24,
+    "decade_pool": 70
+   },
+   "sub-1003": {
+    "decade": 50,
+    "draw_rank": 25,
+    "decade_pool": 70
+   },
+   "sub-2790": {
+    "decade": 60,
+    "draw_rank": 1,
+    "decade_pool": 73
+   },
+   "sub-3653": {
+    "decade": 60,
+    "draw_rank": 2,
+    "decade_pool": 73
+   },
+   "sub-2872": {
+    "decade": 60,
+    "draw_rank": 3,
+    "decade_pool": 73
+   },
+   "sub-831": {
+    "decade": 60,
+    "draw_rank": 4,
+    "decade_pool": 73
+   },
+   "sub-3727": {
+    "decade": 60,
+    "draw_rank": 5,
+    "decade_pool": 73
+   },
+   "sub-2893": {
+    "decade": 60,
+    "draw_rank": 6,
+    "decade_pool": 73
+   },
+   "sub-2748": {
+    "decade": 60,
+    "draw_rank": 7,
+    "decade_pool": 73
+   },
+   "sub-595": {
+    "decade": 60,
+    "draw_rank": 8,
+    "decade_pool": 73
+   },
+   "sub-609": {
+    "decade": 60,
+    "draw_rank": 9,
+    "decade_pool": 73
+   },
+   "sub-4727": {
+    "decade": 60,
+    "draw_rank": 10,
+    "decade_pool": 73
+   },
+   "sub-2852": {
+    "decade": 60,
+    "draw_rank": 11,
+    "decade_pool": 73
+   },
+   "sub-4301": {
+    "decade": 60,
+    "draw_rank": 12,
+    "decade_pool": 73
+   },
+   "sub-1136": {
+    "decade": 60,
+    "draw_rank": 13,
+    "decade_pool": 73
+   },
+   "sub-4030": {
+    "decade": 60,
+    "draw_rank": 14,
+    "decade_pool": 73
+   },
+   "sub-680": {
+    "decade": 60,
+    "draw_rank": 15,
+    "decade_pool": 73
+   },
+   "sub-1093": {
+    "decade": 60,
+    "draw_rank": 16,
+    "decade_pool": 73
+   },
+   "sub-3102": {
+    "decade": 60,
+    "draw_rank": 17,
+    "decade_pool": 73
+   },
+   "sub-4868": {
+    "decade": 60,
+    "draw_rank": 18,
+    "decade_pool": 73
+   },
+   "sub-3608": {
+    "decade": 60,
+    "draw_rank": 19,
+    "decade_pool": 73
+   },
+   "sub-4841": {
+    "decade": 60,
+    "draw_rank": 20,
+    "decade_pool": 73
+   },
+   "sub-2940": {
+    "decade": 60,
+    "draw_rank": 21,
+    "decade_pool": 73
+   },
+   "sub-4876": {
+    "decade": 60,
+    "draw_rank": 22,
+    "decade_pool": 73
+   },
+   "sub-4660": {
+    "decade": 60,
+    "draw_rank": 23,
+    "decade_pool": 73
+   },
+   "sub-3693": {
+    "decade": 60,
+    "draw_rank": 24,
+    "decade_pool": 73
+   },
+   "sub-361": {
+    "decade": 60,
+    "draw_rank": 25,
+    "decade_pool": 73
+   },
+   "sub-349": {
+    "decade": 70,
+    "draw_rank": 1,
+    "decade_pool": 81
+   },
+   "sub-2231": {
+    "decade": 70,
+    "draw_rank": 2,
+    "decade_pool": 81
+   },
+   "sub-4615": {
+    "decade": 70,
+    "draw_rank": 3,
+    "decade_pool": 81
+   },
+   "sub-4288": {
+    "decade": 70,
+    "draw_rank": 4,
+    "decade_pool": 81
+   },
+   "sub-2133": {
+    "decade": 70,
+    "draw_rank": 5,
+    "decade_pool": 81
+   },
+   "sub-3457": {
+    "decade": 70,
+    "draw_rank": 6,
+    "decade_pool": 81
+   },
+   "sub-833": {
+    "decade": 70,
+    "draw_rank": 7,
+    "decade_pool": 81
+   },
+   "sub-3242": {
+    "decade": 70,
+    "draw_rank": 8,
+    "decade_pool": 81
+   },
+   "sub-3086": {
+    "decade": 70,
+    "draw_rank": 9,
+    "decade_pool": 81
+   },
+   "sub-1007": {
+    "decade": 70,
+    "draw_rank": 10,
+    "decade_pool": 81
+   },
+   "sub-3846": {
+    "decade": 70,
+    "draw_rank": 11,
+    "decade_pool": 81
+   },
+   "sub-1200": {
+    "decade": 70,
+    "draw_rank": 12,
+    "decade_pool": 81
+   },
+   "sub-3946": {
+    "decade": 70,
+    "draw_rank": 13,
+    "decade_pool": 81
+   },
+   "sub-1613": {
+    "decade": 70,
+    "draw_rank": 14,
+    "decade_pool": 81
+   },
+   "sub-3126": {
+    "decade": 70,
+    "draw_rank": 15,
+    "decade_pool": 81
+   },
+   "sub-890": {
+    "decade": 70,
+    "draw_rank": 16,
+    "decade_pool": 81
+   },
+   "sub-376": {
+    "decade": 70,
+    "draw_rank": 17,
+    "decade_pool": 81
+   },
+   "sub-4169": {
+    "decade": 70,
+    "draw_rank": 18,
+    "decade_pool": 81
+   },
+   "sub-3306": {
+    "decade": 70,
+    "draw_rank": 19,
+    "decade_pool": 81
+   },
+   "sub-4629": {
+    "decade": 70,
+    "draw_rank": 20,
+    "decade_pool": 81
+   },
+   "sub-4329": {
+    "decade": 70,
+    "draw_rank": 21,
+    "decade_pool": 81
+   },
+   "sub-3328": {
+    "decade": 70,
+    "draw_rank": 22,
+    "decade_pool": 81
+   },
+   "sub-4581": {
+    "decade": 70,
+    "draw_rank": 23,
+    "decade_pool": 81
+   },
+   "sub-1139": {
+    "decade": 70,
+    "draw_rank": 24,
+    "decade_pool": 81
+   },
+   "sub-4398": {
+    "decade": 70,
+    "draw_rank": 25,
+    "decade_pool": 81
+   },
+   "sub-2054": {
+    "decade": 80,
+    "draw_rank": 1,
+    "decade_pool": 51
+   },
+   "sub-1863": {
+    "decade": 80,
+    "draw_rank": 2,
+    "decade_pool": 51
+   },
+   "sub-1868": {
+    "decade": 80,
+    "draw_rank": 3,
+    "decade_pool": 51
+   },
+   "sub-2043": {
+    "decade": 80,
+    "draw_rank": 4,
+    "decade_pool": 51
+   },
+   "sub-4575": {
+    "decade": 80,
+    "draw_rank": 5,
+    "decade_pool": 51
+   },
+   "sub-1886": {
+    "decade": 80,
+    "draw_rank": 6,
+    "decade_pool": 51
+   },
+   "sub-953": {
+    "decade": 80,
+    "draw_rank": 7,
+    "decade_pool": 51
+   },
+   "sub-1600": {
+    "decade": 80,
+    "draw_rank": 8,
+    "decade_pool": 51
+   },
+   "sub-1178": {
+    "decade": 80,
+    "draw_rank": 9,
+    "decade_pool": 51
+   },
+   "sub-1045": {
+    "decade": 80,
+    "draw_rank": 10,
+    "decade_pool": 51
+   },
+   "sub-3212": {
+    "decade": 80,
+    "draw_rank": 11,
+    "decade_pool": 51
+   },
+   "sub-3005": {
+    "decade": 80,
+    "draw_rank": 12,
+    "decade_pool": 51
+   },
+   "sub-408": {
+    "decade": 80,
+    "draw_rank": 13,
+    "decade_pool": 51
+   },
+   "sub-4539": {
+    "decade": 80,
+    "draw_rank": 14,
+    "decade_pool": 51
+   },
+   "sub-935": {
+    "decade": 80,
+    "draw_rank": 15,
+    "decade_pool": 51
+   },
+   "sub-1531": {
+    "decade": 80,
+    "draw_rank": 16,
+    "decade_pool": 51
+   },
+   "sub-865": {
+    "decade": 80,
+    "draw_rank": 17,
+    "decade_pool": 51
+   },
+   "sub-3211": {
+    "decade": 80,
+    "draw_rank": 18,
+    "decade_pool": 51
+   },
+   "sub-1043": {
+    "decade": 80,
+    "draw_rank": 19,
+    "decade_pool": 51
+   },
+   "sub-1882": {
+    "decade": 80,
+    "draw_rank": 20,
+    "decade_pool": 51
+   },
+   "sub-1866": {
+    "decade": 80,
+    "draw_rank": 21,
+    "decade_pool": 51
+   },
+   "sub-1891": {
+    "decade": 80,
+    "draw_rank": 22,
+    "decade_pool": 51
+   },
+   "sub-2012": {
+    "decade": 80,
+    "draw_rank": 23,
+    "decade_pool": 51
+   },
+   "sub-2034": {
+    "decade": 80,
+    "draw_rank": 24,
+    "decade_pool": 51
+   },
+   "sub-4328": {
+    "decade": 80,
+    "draw_rank": 25,
+    "decade_pool": 51
+   }
+  },
+  "reduced_75": {
+   "rule": "draw ranks 1-19 (50s, 60s, 70s) and 1-18 (80s)",
+   "ids": [
+    "sub-178",
+    "sub-349",
+    "sub-376",
+    "sub-408",
+    "sub-595",
+    "sub-609",
+    "sub-680",
+    "sub-784",
+    "sub-801",
+    "sub-831",
+    "sub-833",
+    "sub-865",
+    "sub-890",
+    "sub-935",
+    "sub-941",
+    "sub-953",
+    "sub-965",
+    "sub-1007",
+    "sub-1045",
+    "sub-1093",
+    "sub-1136",
+    "sub-1178",
+    "sub-1200",
+    "sub-1220",
+    "sub-1531",
+    "sub-1600",
+    "sub-1613",
+    "sub-1863",
+    "sub-1868",
+    "sub-1875",
+    "sub-1886",
+    "sub-2043",
+    "sub-2054",
+    "sub-2133",
+    "sub-2231",
+    "sub-2561",
+    "sub-2740",
+    "sub-2748",
+    "sub-2790",
+    "sub-2852",
+    "sub-2872",
+    "sub-2893",
+    "sub-3005",
+    "sub-3086",
+    "sub-3102",
+    "sub-3126",
+    "sub-3211",
+    "sub-3212",
+    "sub-3242",
+    "sub-3306",
+    "sub-3457",
+    "sub-3531",
+    "sub-3608",
+    "sub-3653",
+    "sub-3727",
+    "sub-3846",
+    "sub-3911",
+    "sub-3946",
+    "sub-3999",
+    "sub-4030",
+    "sub-4104",
+    "sub-4129",
+    "sub-4169",
+    "sub-4288",
+    "sub-4301",
+    "sub-4539",
+    "sub-4575",
+    "sub-4615",
+    "sub-4722",
+    "sub-4727",
+    "sub-4737",
+    "sub-4791",
+    "sub-4795",
+    "sub-4800",
+    "sub-4868"
+   ]
+  }
+ },
+ "C1_native_thickness": {
+  "source": "MSLesSeg info_dataset/patient_scanners_info/patient_scanners_info_FLAIR.csv",
+  "source_sha256": "958ca1e9a5858fc36ed9795b3ef7f91123824012f485738dd484b38221e93ede",
+  "ljubljana": "0.8 mm (3D FLAIR 0.47 x 0.47 x 0.8 mm)",
+  "mm": {
+   "mslesseg_P10_T1": 3.0,
+   "mslesseg_P10_T2": 3.0,
+   "mslesseg_P11_T1": 3.0,
+   "mslesseg_P11_T2": null,
+   "mslesseg_P12_T1": 3.0,
+   "mslesseg_P12_T2": 3.0,
+   "mslesseg_P12_T3": 3.0,
+   "mslesseg_P12_T4": 3.0,
+   "mslesseg_P13_T1": 3.0,
+   "mslesseg_P13_T2": 3.0,
+   "mslesseg_P14_T1": 3.0,
+   "mslesseg_P14_T2": 3.0,
+   "mslesseg_P14_T3": null,
+   "mslesseg_P14_T4": null,
+   "mslesseg_P15_T1": 3.0,
+   "mslesseg_P16_T1": 5.0,
+   "mslesseg_P17_T1": 3.0,
+   "mslesseg_P18_T1": 3.0,
+   "mslesseg_P19_T1": 3.0,
+   "mslesseg_P19_T2": 3.0,
+   "mslesseg_P19_T3": 3.0,
+   "mslesseg_P19_T4": 3.0,
+   "mslesseg_P1_T1": 2.3,
+   "mslesseg_P1_T2": 3.0,
+   "mslesseg_P1_T3": 3.0,
+   "mslesseg_P20_T1": 3.0,
+   "mslesseg_P20_T2": 3.0,
+   "mslesseg_P20_T3": 3.0,
+   "mslesseg_P21_T1": 3.0,
+   "mslesseg_P22_T1": 3.0,
+   "mslesseg_P22_T2": 5.0,
+   "mslesseg_P23_T1": 2.3,
+   "mslesseg_P24_T1": 4.0,
+   "mslesseg_P25_T1": 4.0,
+   "mslesseg_P26_T1": 2.3,
+   "mslesseg_P27_T1": null,
+   "mslesseg_P28_T1": 3.0,
+   "mslesseg_P28_T2": 5.0,
+   "mslesseg_P29_T1": 5.0,
+   "mslesseg_P2_T1": 3.0,
+   "mslesseg_P2_T2": 3.0,
+   "mslesseg_P2_T3": 3.0,
+   "mslesseg_P2_T4": null,
+   "mslesseg_P30_T1": 3.0,
+   "mslesseg_P31_T1": 2.3,
+   "mslesseg_P31_T2": 2.3,
+   "mslesseg_P32_T1": 2.0,
+   "mslesseg_P33_T1": 2.3,
+   "mslesseg_P33_T2": 2.3,
+   "mslesseg_P34_T1": 2.3,
+   "mslesseg_P35_T1": 2.3,
+   "mslesseg_P36_T1": 2.3,
+   "mslesseg_P37_T1": 2.0,
+   "mslesseg_P38_T1": 2.0,
+   "mslesseg_P39_T1": 2.0,
+   "mslesseg_P3_T1": 2.3,
+   "mslesseg_P3_T2": 3.0,
+   "mslesseg_P3_T3": 3.0,
+   "mslesseg_P3_T4": 3.0,
+   "mslesseg_P40_T1": 2.3,
+   "mslesseg_P41_T1": 2.0,
+   "mslesseg_P42_T1": 2.3,
+   "mslesseg_P43_T1": 2.3,
+   "mslesseg_P44_T1": 2.3,
+   "mslesseg_P45_T1": 2.3,
+   "mslesseg_P46_T1": 2.3,
+   "mslesseg_P47_T1": 2.0,
+   "mslesseg_P48_T1": 2.3,
+   "mslesseg_P49_T1": 5.0,
+   "mslesseg_P49_T2": 3.0,
+   "mslesseg_P4_T1": 3.0,
+   "mslesseg_P4_T2": 3.0,
+   "mslesseg_P4_T3": 3.0,
+   "mslesseg_P50_T1": 2.0,
+   "mslesseg_P50_T2": 2.0,
+   "mslesseg_P51_T1": 2.3,
+   "mslesseg_P51_T2": 3.0,
+   "mslesseg_P52_T1": 2.0,
+   "mslesseg_P52_T2": 4.0,
+   "mslesseg_P53_T1": 2.0,
+   "mslesseg_P53_T2": 2.0,
+   "mslesseg_P54": 3.0,
+   "mslesseg_P55": 2.0,
+   "mslesseg_P56": 4.0,
+   "mslesseg_P57": 2.3,
+   "mslesseg_P58": 3.0,
+   "mslesseg_P59": 5.0,
+   "mslesseg_P5_T1": 3.0,
+   "mslesseg_P5_T2": 3.0,
+   "mslesseg_P60": 5.0,
+   "mslesseg_P61": 3.0,
+   "mslesseg_P62": 2.0,
+   "mslesseg_P63": 2.3,
+   "mslesseg_P64": 2.3,
+   "mslesseg_P65": 2.0,
+   "mslesseg_P66": 2.3,
+   "mslesseg_P67": 4.0,
+   "mslesseg_P68": 4.0,
+   "mslesseg_P69": 2.0,
+   "mslesseg_P6_T1": 3.0,
+   "mslesseg_P6_T2": 3.0,
+   "mslesseg_P6_T3": 3.0,
+   "mslesseg_P70": 4.0,
+   "mslesseg_P71": 2.0,
+   "mslesseg_P72": 5.0,
+   "mslesseg_P73": 2.3,
+   "mslesseg_P74": 2.0,
+   "mslesseg_P75": 2.0,
+   "mslesseg_P7_T1": 2.3,
+   "mslesseg_P7_T2": 3.0,
+   "mslesseg_P8_T1": 3.0,
+   "mslesseg_P8_T2": 3.0,
+   "mslesseg_P9_T1": 3.0,
+   "mslesseg_P9_T2": 3.0,
+   "mslesseg_P9_T3": 3.0,
+   "openms_patient01": 0.8,
+   "openms_patient02": 0.8,
+   "openms_patient03": 0.8,
+   "openms_patient04": 0.8,
+   "openms_patient05": 0.8,
+   "openms_patient06": 0.8,
+   "openms_patient07": 0.8,
+   "openms_patient08": 0.8,
+   "openms_patient09": 0.8,
+   "openms_patient10": 0.8,
+   "openms_patient11": 0.8,
+   "openms_patient12": 0.8,
+   "openms_patient13": 0.8,
+   "openms_patient14": 0.8,
+   "openms_patient15": 0.8,
+   "openms_patient16": 0.8,
+   "openms_patient17": 0.8,
+   "openms_patient18": 0.8,
+   "openms_patient19": 0.8,
+   "openms_patient20": 0.8,
+   "openms_patient21": 0.8,
+   "openms_patient22": 0.8,
+   "openms_patient23": 0.8,
+   "openms_patient24": 0.8,
+   "openms_patient25": 0.8,
+   "openms_patient26": 0.8,
+   "openms_patient27": 0.8,
+   "openms_patient28": 0.8,
+   "openms_patient29": 0.8,
+   "openms_patient30": 0.8
+  },
+  "stratum": {
+   "mslesseg_P10_T1": "3mm",
+   "mslesseg_P10_T2": "3mm",
+   "mslesseg_P11_T1": "3mm",
+   "mslesseg_P11_T2": "unknown",
+   "mslesseg_P12_T1": "3mm",
+   "mslesseg_P12_T2": "3mm",
+   "mslesseg_P12_T3": "3mm",
+   "mslesseg_P12_T4": "3mm",
+   "mslesseg_P13_T1": "3mm",
+   "mslesseg_P13_T2": "3mm",
+   "mslesseg_P14_T1": "3mm",
+   "mslesseg_P14_T2": "3mm",
+   "mslesseg_P14_T3": "unknown",
+   "mslesseg_P14_T4": "unknown",
+   "mslesseg_P15_T1": "3mm",
+   "mslesseg_P16_T1": "4-5mm",
+   "mslesseg_P17_T1": "3mm",
+   "mslesseg_P18_T1": "3mm",
+   "mslesseg_P19_T1": "3mm",
+   "mslesseg_P19_T2": "3mm",
+   "mslesseg_P19_T3": "3mm",
+   "mslesseg_P19_T4": "3mm",
+   "mslesseg_P1_T1": "<=2.3mm",
+   "mslesseg_P1_T2": "3mm",
+   "mslesseg_P1_T3": "3mm",
+   "mslesseg_P20_T1": "3mm",
+   "mslesseg_P20_T2": "3mm",
+   "mslesseg_P20_T3": "3mm",
+   "mslesseg_P21_T1": "3mm",
+   "mslesseg_P22_T1": "3mm",
+   "mslesseg_P22_T2": "4-5mm",
+   "mslesseg_P23_T1": "<=2.3mm",
+   "mslesseg_P24_T1": "4-5mm",
+   "mslesseg_P25_T1": "4-5mm",
+   "mslesseg_P26_T1": "<=2.3mm",
+   "mslesseg_P27_T1": "unknown",
+   "mslesseg_P28_T1": "3mm",
+   "mslesseg_P28_T2": "4-5mm",
+   "mslesseg_P29_T1": "4-5mm",
+   "mslesseg_P2_T1": "3mm",
+   "mslesseg_P2_T2": "3mm",
+   "mslesseg_P2_T3": "3mm",
+   "mslesseg_P2_T4": "unknown",
+   "mslesseg_P30_T1": "3mm",
+   "mslesseg_P31_T1": "<=2.3mm",
+   "mslesseg_P31_T2": "<=2.3mm",
+   "mslesseg_P32_T1": "<=2.3mm",
+   "mslesseg_P33_T1": "<=2.3mm",
+   "mslesseg_P33_T2": "<=2.3mm",
+   "mslesseg_P34_T1": "<=2.3mm",
+   "mslesseg_P35_T1": "<=2.3mm",
+   "mslesseg_P36_T1": "<=2.3mm",
+   "mslesseg_P37_T1": "<=2.3mm",
+   "mslesseg_P38_T1": "<=2.3mm",
+   "mslesseg_P39_T1": "<=2.3mm",
+   "mslesseg_P3_T1": "<=2.3mm",
+   "mslesseg_P3_T2": "3mm",
+   "mslesseg_P3_T3": "3mm",
+   "mslesseg_P3_T4": "3mm",
+   "mslesseg_P40_T1": "<=2.3mm",
+   "mslesseg_P41_T1": "<=2.3mm",
+   "mslesseg_P42_T1": "<=2.3mm",
+   "mslesseg_P43_T1": "<=2.3mm",
+   "mslesseg_P44_T1": "<=2.3mm",
+   "mslesseg_P45_T1": "<=2.3mm",
+   "mslesseg_P46_T1": "<=2.3mm",
+   "mslesseg_P47_T1": "<=2.3mm",
+   "mslesseg_P48_T1": "<=2.3mm",
+   "mslesseg_P49_T1": "4-5mm",
+   "mslesseg_P49_T2": "3mm",
+   "mslesseg_P4_T1": "3mm",
+   "mslesseg_P4_T2": "3mm",
+   "mslesseg_P4_T3": "3mm",
+   "mslesseg_P50_T1": "<=2.3mm",
+   "mslesseg_P50_T2": "<=2.3mm",
+   "mslesseg_P51_T1": "<=2.3mm",
+   "mslesseg_P51_T2": "3mm",
+   "mslesseg_P52_T1": "<=2.3mm",
+   "mslesseg_P52_T2": "4-5mm",
+   "mslesseg_P53_T1": "<=2.3mm",
+   "mslesseg_P53_T2": "<=2.3mm",
+   "mslesseg_P54": "3mm",
+   "mslesseg_P55": "<=2.3mm",
+   "mslesseg_P56": "4-5mm",
+   "mslesseg_P57": "<=2.3mm",
+   "mslesseg_P58": "3mm",
+   "mslesseg_P59": "4-5mm",
+   "mslesseg_P5_T1": "3mm",
+   "mslesseg_P5_T2": "3mm",
+   "mslesseg_P60": "4-5mm",
+   "mslesseg_P61": "3mm",
+   "mslesseg_P62": "<=2.3mm",
+   "mslesseg_P63": "<=2.3mm",
+   "mslesseg_P64": "<=2.3mm",
+   "mslesseg_P65": "<=2.3mm",
+   "mslesseg_P66": "<=2.3mm",
+   "mslesseg_P67": "4-5mm",
+   "mslesseg_P68": "4-5mm",
+   "mslesseg_P69": "<=2.3mm",
+   "mslesseg_P6_T1": "3mm",
+   "mslesseg_P6_T2": "3mm",
+   "mslesseg_P6_T3": "3mm",
+   "mslesseg_P70": "4-5mm",
+   "mslesseg_P71": "<=2.3mm",
+   "mslesseg_P72": "4-5mm",
+   "mslesseg_P73": "<=2.3mm",
+   "mslesseg_P74": "<=2.3mm",
+   "mslesseg_P75": "<=2.3mm",
+   "mslesseg_P7_T1": "<=2.3mm",
+   "mslesseg_P7_T2": "3mm",
+   "mslesseg_P8_T1": "3mm",
+   "mslesseg_P8_T2": "3mm",
+   "mslesseg_P9_T1": "3mm",
+   "mslesseg_P9_T2": "3mm",
+   "mslesseg_P9_T3": "3mm",
+   "openms_patient01": "<=2.3mm",
+   "openms_patient02": "<=2.3mm",
+   "openms_patient03": "<=2.3mm",
+   "openms_patient04": "<=2.3mm",
+   "openms_patient05": "<=2.3mm",
+   "openms_patient06": "<=2.3mm",
+   "openms_patient07": "<=2.3mm",
+   "openms_patient08": "<=2.3mm",
+   "openms_patient09": "<=2.3mm",
+   "openms_patient10": "<=2.3mm",
+   "openms_patient11": "<=2.3mm",
+   "openms_patient12": "<=2.3mm",
+   "openms_patient13": "<=2.3mm",
+   "openms_patient14": "<=2.3mm",
+   "openms_patient15": "<=2.3mm",
+   "openms_patient16": "<=2.3mm",
+   "openms_patient17": "<=2.3mm",
+   "openms_patient18": "<=2.3mm",
+   "openms_patient19": "<=2.3mm",
+   "openms_patient20": "<=2.3mm",
+   "openms_patient21": "<=2.3mm",
+   "openms_patient22": "<=2.3mm",
+   "openms_patient23": "<=2.3mm",
+   "openms_patient24": "<=2.3mm",
+   "openms_patient25": "<=2.3mm",
+   "openms_patient26": "<=2.3mm",
+   "openms_patient27": "<=2.3mm",
+   "openms_patient28": "<=2.3mm",
+   "openms_patient29": "<=2.3mm",
+   "openms_patient30": "<=2.3mm"
+  }
+ },
+ "C1_samseg_subset": {
+  "rule": "the 10 Ljubljana-clean scans + 40 FLAMeS-clean MSLesSeg scans stratified by native thickness {'<=2.3mm': 15, '3mm': 18, '4-5mm': 5, 'unknown': 2}, RandomState(20261109).permutation per stratum in that order over sorted ids",
+  "seed": 20261109,
+  "ids": [
+   "mslesseg_P10_T1",
+   "mslesseg_P10_T2",
+   "mslesseg_P11_T2",
+   "mslesseg_P12_T4",
+   "mslesseg_P14_T1",
+   "mslesseg_P14_T2",
+   "mslesseg_P16_T1",
+   "mslesseg_P17_T1",
+   "mslesseg_P19_T1",
+   "mslesseg_P19_T2",
+   "mslesseg_P1_T2",
+   "mslesseg_P20_T2",
+   "mslesseg_P20_T3",
+   "mslesseg_P22_T2",
+   "mslesseg_P24_T1",
+   "mslesseg_P27_T1",
+   "mslesseg_P29_T1",
+   "mslesseg_P2_T1",
+   "mslesseg_P31_T1",
+   "mslesseg_P35_T1",
+   "mslesseg_P36_T1",
+   "mslesseg_P38_T1",
+   "mslesseg_P39_T1",
+   "mslesseg_P3_T4",
+   "mslesseg_P41_T1",
+   "mslesseg_P49_T2",
+   "mslesseg_P4_T1",
+   "mslesseg_P4_T2",
+   "mslesseg_P51_T1",
+   "mslesseg_P52_T1",
+   "mslesseg_P52_T2",
+   "mslesseg_P62",
+   "mslesseg_P65",
+   "mslesseg_P66",
+   "mslesseg_P6_T1",
+   "mslesseg_P6_T2",
+   "mslesseg_P73",
+   "mslesseg_P74",
+   "mslesseg_P75",
+   "mslesseg_P7_T1",
+   "openms_patient16",
+   "openms_patient17",
+   "openms_patient18",
+   "openms_patient19",
+   "openms_patient20",
+   "openms_patient26",
+   "openms_patient27",
+   "openms_patient28",
+   "openms_patient29",
+   "openms_patient30"
+  ]
+ },
+ "pilot": {
+  "A_wmh2017": [
+   "wmh_utrecht_1"
+  ],
+  "B_dlbs": [
+   "sub-178"
+  ],
+  "C1_ms": [
+   "mslesseg_P10_T1_th7"
+  ],
+  "C2_sibbms": [
+   "sub-001_th7"
+  ],
+  "note": "one input per data type, every tool; lowest id of each rule; structural check (G3) only"
+ }
 }

@@ -8,6 +8,10 @@ run on WMH 2017, on DLBS, or on any simulated thickness (section 12). Later chan
 date, reason and what had been seen; the git history is the audit trail. The rules of
 `PREREG-healthy-controls.md` (commit 1e62f5c) apply wherever this file does not say otherwise.
 
+**Amendment 1 (2026-11-09, section 15, before any VM launch):** Spot VMs, hard cap **45 USD**, DLBS sample of
+100, SAMSEG on a 50-scan subset in part C1, C2 at 7 mm only. Where sections 1–13 and section 15 differ,
+section 15 rules.
+
 > **Resumen en español sencillo.** Añadimos cuatro piezas al artículo 1, todas con datos públicos y el
 > crédito gratuito de Google. **(A)** 170 personas mayores de clínicas de memoria con lesiones de la
 > sustancia blanca de origen vascular (el "imitador" más común de la esclerosis múltiple), con lesiones
@@ -520,10 +524,116 @@ also carries `--project=mstool-research`.
 
 ## 14. Deviations log
 
-*(empty at registration)*
+*(empty at registration, commit effa3a9)*
 
 | Date | Entry | Rule changed? | Seen before? |
 |---|---|---|---|
+| 2026-11-09 | **Amendment 1 (section 15): budget.** Spot VMs, hard cap 45 USD, DLBS stratified sample of 100 (B2 dropped), SAMSEG on a pre-listed 50-scan subset in part C1, C2 at 7 mm only, WMH-SynthSeg run on the 110 WMH test subjects only, new reduction order, one-input-per-data-type pilot. Registered and pushed before any VM of the addendum (pilot included) was launched. | yes (sections 2.1, 2.2, 6.2, 6.3, 6.5, 9, 13) | nothing beyond section 12: no tool had run on any new input |
+
+## 15. Amendment 1 — budget (2026-11-09, before any VM launch; pre-analysis)
+
+**Why.** The owner had been told this addendum would cost about 10–20 USD; the projection of section 9
+(81–100 USD) uses too much of the remaining free credit, and the billing account is a paid account, so a
+hard cap is mandatory. No output of any tool exists for any new input (the only cloud job so far is the data
+mirror of section 2), so this is a pre-analysis amendment. Everything not changed here stays as registered.
+
+### 15.1 Provisioning
+
+- **All VMs are Spot (pre-emptible)**, self-deleting as before (`--max-run-duration`, termination action
+  DELETE, in-VM guard, exit trap). Every driver is resumable per case (an output already in the bucket is
+  never recomputed). **Interruptions are recorded**: each VM carries a shutdown script that writes
+  `gs://mstool-research-data/mimics/interruptions/<vm>-<unix time>.txt` with the metadata server's
+  `preempted` flag; a pre-empted VM may be relaunched with identical settings **only while the cap of 15.3
+  is not exceeded** (no relaunch beyond the cap).
+- **Machine family C2D** (AMD EPYC Milan, the processor generation of the healthy arm's N2D machines; quota
+  32 vCPUs): `c2d-highmem-4` (32 GB) for WMH-SynthSeg and for the pilot, `c2d-standard-4` (16 GB) otherwise.
+  If C2D Spot capacity is exhausted in every us-central1 zone, the N2D machine of the same memory is used and
+  recorded. The machine of every output is in its run manifest; tool settings and inputs are identical.
+- Spot list prices (catalog 2026-11-09, boot disk included): c2d-standard-4 + 50 GB **0.09003 USD/h**, + 75 GB
+  0.09346; c2d-highmem-4 + 75 GB **0.12248**, + 130 GB 0.13002 (pilot).
+
+### 15.2 Analysis sets (frozen in `research/paper_1/mimics/analysis_sets.json` by `freeze_amendment_sets.py`)
+
+- **A (WMH 2017): unchanged, 170 subjects** for every arm except **WMH-SynthSeg, which is run only on the 110
+  test subjects** (its 60 contaminated training cells are not produced at all; the "reported apart" clause of
+  section 2.1 is dropped). Families A-1 and A-2 are unchanged (WMH-SynthSeg comparisons on the 110).
+- **B1 (DLBS): a stratified random sample of 100** of the 275 B1 participants: **25 per decade** (50–59,
+  60–69, 70–79, 80–89; pools 70 / 73 / 81 / 51). Within each decade the ids are sorted by participant number
+  and drawn with one `numpy.random.RandomState(20261109)` stream, decades in ascending order
+  (`rng.permutation(n)[:25]`). The 100 ids, each one's decade and draw rank are in `B1_sample`.
+  **B2 is dropped.** Families B-a and B-b keep their 5 tests each, on n = 100; the replication contrast and
+  age analyses use the 100 (25 per decade). Reduction (iii) "DLBS 75" = draw ranks 1–19 in the 50s, 60s and
+  70s and 1–18 in the 80s (`B1_sample.reduced_75`, 75 ids).
+- **C1 (controlled thickness, MS):** FLAMeS (both arms), LST-AI, MindGlide and WMH-SynthSeg at 3, 5 and 7 mm on
+  all 145 scans (FLAMeS comparisons on the 125 FLAMeS-clean, LST-AI 144), exactly as registered. **SAMSEG runs
+  only on a pre-listed subset of 50 scans, at 1 mm and at 3, 5 and 7 mm**: all 10 Ljubljana-clean scans (the
+  only truly thin acquisitions) + 40 FLAMeS-clean MSLesSeg scans stratified by native slice thickness in
+  proportion to 43 / 52 / 15 / 5 (≤ 2.3 mm: 15, 3 mm: 18, 4–5 mm: 5, unknown: 2), drawn with
+  `RandomState(20261109).permutation` per stratum in that order over sorted ids (`C1_samseg_subset`; native
+  thickness per scan from the dataset CSV, SHA-256 in `C1_native_thickness`). SAMSEG's C-1 test and C-2
+  contrast use these 50 (FLAMeS-clean by construction). The native-thickness stratification of section 6.3 is
+  kept for every arm.
+- **C2 (SibBMS thickened): 7 mm only** (100 controls, every arm). Family C-3 is unchanged (it compared 7 mm with
+  1 mm); the 3- and 5-mm descriptive rows for C2 are dropped.
+- **D:** unchanged rules; validation on DLBS uses the 100 sample (D-1 on n = 100; transfer reading unchanged),
+  on C1 the thicknesses actually run.
+- **Precision now:** n = 100 → exact 95 % CI half-width ≈ ±10 points near 50 % and ±8 near 20 %; 5 % on 100 →
+  1.6–11.3 %. SAMSEG ΔF1 on 50 scans ≈ ±0.03.
+
+### 15.3 Cap, projection and budget rule (replaces section 9.2–9.4)
+
+- **Hard cap: 45 USD** for the whole addendum = list price of everything that runs, Spot (mirror 0.009 USD,
+  pilot, preparation, tool VMs, registration and evaluation VM).
+- **Layout** (quotas: 4 external addresses, 250 GB SSD): two "nn" VMs (c2d-standard-4, 50 GB) do the HD-BET
+  preparation of their block (A on `mimics-nn-a`, B on `mimics-nn-b`) and then FLAMeS 5 folds, LST-AI and
+  MindGlide on their share of the inputs; two "fs" VMs do WMH-SynthSeg then SAMSEG (`mimics-fs-a`,
+  c2d-highmem-4 75 GB) and SAMSEG (`mimics-fs-b`, c2d-standard-4 75 GB), processing C2 and C1 first and A and
+  B only after the preparation of those blocks is complete (a completion marker per block). Work is split to
+  equalise projected hours; the split never changes an output.
+- **Projection before the pilot** (`plan_mimics.py`, ledger seconds on N2D, conservative for C2D):
+
+| Variant | VM-h | CPU-h | USD central – high | wall clock (high) |
+|---|---|---|---|---|
+| full amendment-1 plan | 270 | 1,074 | **27.3 – 33.9** | ≤ 86 h |
+| (i) drop C2 | 233 | 928 | 23.6 – 29.3 | ≤ 76 h |
+| (i) + (ii) C1 at {3, 7} mm | 195 | 775 | 19.9 – 24.7 | ≤ 62 h |
+| (i) + (ii) + (iii) DLBS 75 | 184 | 730 | 18.8 – 23.3 | ≤ 59 h |
+
+  (high = measured seconds × 1.25 + 0.35 h set-up per VM, + 0.6 USD for the registration/evaluation VM.)
+- **Rule after the pilot:** the pilot's mean seconds per step (per data type where they differ) replace the
+  ledger values and the spend so far is added; if the HIGH projection exceeds 45 USD, reduce **in this order
+  until it fits: (i) drop C2** (family C-3 → "not run", p = 1 in the strictest reading); **(ii) C1 at {3, 7}
+  mm only** (the 5-mm rows are not produced; C-1 and C-2 use 7 mm and are unaffected); **(iii) DLBS sample 75**.
+  If nothing fits: stop (owner decision). The full runs are launched only if the selected projection is
+  ≤ 45 USD.
+- **Guards:** each VM's in-VM guard and `--max-run-duration` are set so that, if every VM ran to its guard, the
+  total spend would still be ≤ 45 USD (`plan_mimics.guards`). VMs self-delete; nothing is relaunched beyond the cap.
+
+### 15.4 Pilot (replaces section 9.3)
+
+One Spot VM (`mimics-pilot`, c2d-highmem-4, 130 GB): (1) writes **all** simulated inputs of C1 (145 × 3 + the
+SAMSEG subset's 50 1-mm copies) and C2 (100 × 7 mm) with their SHA-256 manifest and completion markers — the
+simulated inputs are therefore frozen before any tool sees them; (2) HD-BET for its A and B inputs; (3) every
+tool on one input per data type: `wmh_utrecht_1` (test), DLBS `sub-178` (lowest participant number of the
+sample's recruitment cohort 1), `mslesseg_P10_T1` at 7 mm (in the SAMSEG subset) and SibBMS `sub-001` at 7 mm.
+Pass = every output present, on the input grid, binary where required, SHA-256 equal to its manifest (G3,
+`check_structure.py`, prints PASS/FAIL only); timings and peak memory recorded. Pilot outputs stay in the
+analysis. If DLBS SAMSEG peaks above 13 GB in the pilot, block B's SAMSEG is routed to the 32-GB VM.
+
+### 15.5 What is printed before the frozen evaluation
+
+Driver logs carry timings, memory and grid-transform kinds only; the toolbench drivers run with
+`--log-outcomes 0` (no lesion-voxel counts, unlike the healthy arm's pilot), and no one reads the values of
+any output before the evaluation code is committed and run once (section 11 steps 7–8). The structural check
+reads files and prints PASS/FAIL. The MNI registration QC (gate GR) is computed and written before any
+outcome, as registered.
+
+### 15.6 Sections superseded
+
+2.2 (B1 → the 100 sample; B2 dropped), 2.1 (WMH-SynthSeg cells on the 60 training subjects not produced),
+6.2 (B2 analyses), 6.3 (SAMSEG subset; C2 at 7 mm), 6.5 (precision), 9.1–9.4 (provisioning, projection,
+pilot, budget rule; the stop rules of 9.5 stand with "110 USD" read as "45 USD"), 13 (files: + 
+`freeze_amendment_sets.py`, the amended `plan_mimics.py`, and the execution code of step 2).
 
 ## References
 
