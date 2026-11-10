@@ -29,7 +29,7 @@ from app.main import app
 from app.models.schemas import LabelInfo
 from app.security import get_current_active_user
 from tests.unit.test_capa014_report_provider_payload import (  # noqa: F401  (fixture)
-    MARK, RADIOLOGIST, TYPED, _Patients, _Provider, _marked, _measurements, _post, _record, route,
+    MARK, RADIOLOGIST, TYPED, _Patients, _Provider, _marked, _measurements, _post, _record, route, route_text,
 )
 from tests.unit.test_prb003_dis_requires_confirmed_segmentation import (
     PID, _Storage, _seed, _service,
@@ -45,7 +45,22 @@ def _fold(text):
 
 
 def _lesion_table_lines(prompt):
-    return [line for line in prompt.splitlines() if re.match(r"\s*(?:#|\d+) \|", line)]
+    """The lesion table the model receives. Verified report (REQ-FUNC-116, DRAFT): the rows of the record's
+    `lesion_table` (was: the "#|..." lines of the retired prompt), one text line per row, columns joined by " | "."""
+    if "```json\n" not in prompt:
+        return [line for line in prompt.splitlines() if re.match(r"\s*(?:#|\d+) \|", line)]
+    record = json.loads(prompt.split("```json\n", 1)[1].split("\n```", 1)[0])
+    les = record.get("lesions") or {}
+    head = " | ".join(les.get("lesion_table_columns") or [])
+    return [head] + [" | ".join("" if v is None else str(v) for v in row) for row in les.get("lesion_table") or []]
+
+
+def _magnims_measurements():
+    """`_measurements()` whose regions are all MAGNIMS regions (what an evaluated DIS implies, REQ-SAFE-038)."""
+    f = _measurements()
+    del f["lesion_analysis"]["regions"]["Black Hole (T1)"]
+    f["lesion_analysis"]["lesions"][2]["region"] = "Deep White Matter"
+    return f
 
 
 # ─────────────────────────────────────────── R1: unconfirmed regions are not "unlisted labels"
@@ -57,18 +72,24 @@ def test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_not
     prompt = route.provider.prompt()
     assert "[unlisted label" not in prompt, [ln for ln in prompt.splitlines() if "unlisted" in ln]
     assert "not confirmed" not in " ".join(_lesion_table_lines(prompt)), _lesion_table_lines(prompt)
-    assert re.search(r"Lesion regions: not confirmed by a radiologist", prompt)
+    # verified report (REQ-FUNC-116, DRAFT): the fixed line is the code-written one, in the report language
+    from app.services import verified_report
+    assert verified_report.T[language]["reg_none"] in prompt
+    assert "region" not in _lesion_table_lines(prompt)[0]            # no region column
     body = r.json()
     assert body["app_notes"] == [] and "[unlisted label" not in body["content"]
 
 
 @pytest.mark.unit
 def test_rc064_release_r1_confirmed_regions_are_still_sent(route):
-    r = _post(route, _measurements())               # the default DIS block is evaluated: regions confirmed
+    """(Verified report, DRAFT: an evaluated DIS with MAGNIMS regions — the default `_measurements()` also carries a
+    "Black Hole (T1)" region, which an evaluated DIS excludes, REQ-SAFE-038; the record then gives no regions.)"""
+    r = _post(route, _magnims_measurements())        # the default DIS block is evaluated: regions confirmed
     assert r.status_code == 200, r.text
     prompt = route.provider.prompt()
     assert "Lesion regions: not confirmed" not in prompt
-    assert any("Periventricular" in line for line in _lesion_table_lines(prompt))
+    assert any("Periventricular" in line for line in _lesion_table_lines(prompt)[1:])
+    assert "Lesions per MAGNIMS region: periventricular: 1;" in prompt
 
 
 # ─────────────────────────────────────────── R2: zero-width characters do not hide a DIS statement
@@ -77,9 +98,12 @@ PROBE = (f"Lesions in periventricular and juxta{ZWSP}cortical regions, consisten
 
 @pytest.mark.unit
 @pytest.mark.parametrize("language", ["en", "es", "de"])
-def test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement(route, language):
+def test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement(route_text, language):
+    """(Verified report, DRAFT: the route layer, `route_text` — through the real service the probe is withheld by the
+    claim check, RC-103; see test_rc103_* / test_rc070_n3_*.)"""
+    route = route_text
     typed = f"Outside report: dissem{ZWJ}ination in space met."
-    route.provider.text = f"## FINDINGS\nTwo lesions.\n\n{PROBE}\n"
+    route.text_state.text = f"## FINDINGS\nTwo lesions.\n\n{PROBE}\n"
     r = _post(route, {**_measurements(), "dis_assessment": NOT_EVALUATED, "clinical_indication": typed},
               language=language)
     assert r.status_code == 200, r.text
@@ -111,23 +135,25 @@ DIS_BLOCKS = {
 @pytest.mark.unit
 @pytest.mark.parametrize("name", list(DIS_BLOCKS))
 def test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template(route, name):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT): the decisions are the route's notice, the regions in
+    the record, the record's DIS block and the code-written DIS line (the system prompt is one fixed text now)."""
     from app.services import dis_review_gate as gate
-    from app.services.brain_report_service import REPORT_TEMPLATES, dis_not_evaluated_template
+    from app.services import verified_report
     block = DIS_BLOCKS[name]
     expected = name in ("evaluated_met", "evaluated_not_met")
     assert gate.is_evaluated(block) is expected
-    r = _post(route, {**_measurements(), "dis_assessment": block}, template="ms_comprehensive")
+    r = _post(route, {**_magnims_measurements(), "dis_assessment": block}, template="ms_comprehensive")
     assert r.status_code == 200, r.text
     sent, ai_text = route.provider.sent(), r.json()["ai_text"]
+    prompt = sent["messages"][0]["content"]
     decisions = {
         "route notice": "Dissemination in space: not evaluated" not in ai_text,
-        "route regions": "# | Region |" in sent["messages"][0]["content"],
-        "findings prompt": "DIS Assessment: NOT EVALUATED" not in sent["messages"][0]["content"],
-        "template": sent["system"] == REPORT_TEMPLATES["ms_comprehensive"],
+        "route regions": '"regions":{"confirmed":true' in prompt,
+        "findings prompt": '"dis":{"status":"evaluated"' in prompt,
+        "code-written report": "the brain criterion is" in prompt,
     }
     assert set(decisions.values()) == {expected}, decisions
-    if not expected:
-        assert sent["system"] == dis_not_evaluated_template(REPORT_TEMPLATES["ms_comprehensive"])
+    assert sent["system"] == verified_report.SYSTEM_PROMPT
 
 
 # ─────────────────────────────────────────── R4: the fully real path (reviewer's probe)
@@ -144,7 +170,7 @@ def real_path(monkeypatch):
     from app.services.brain_report_service import BrainReportService
 
     svc = _service()
-    provider = _Provider("## FINDINGS\nTwo lesions.")
+    provider = _Provider("Two lesions were marked.")   # verified report (DRAFT): a findings comment that passes RC-103
     authorized = []
 
     async def _authorize_segmentation(segmentation_id, user):
@@ -201,11 +227,13 @@ def test_rc064_release_r4_markers_and_identifiers_never_reach_the_provider_on_th
     # by design and named for the clinician in the application's note only; the SERVER's table adds none.
     notes = json.dumps(body["app_notes"])
     assert "[unlisted label" not in rows and "not confirmed" not in notes
+    # verified report (REQ-FUNC-116, DRAFT): the states are in the record and the code-written report
     if confirmed:
-        assert "DIS Assessment: MET" in prompt                      # the server's real DIS state reached the model
+        assert '"dis":{"status":"evaluated"' in prompt              # the server's real DIS state reached the model
+        assert "the brain criterion is" in prompt
         assert "Periventricular" in rows
     else:
-        assert "DIS Assessment: NOT EVALUATED" in prompt
+        assert '"dis":{"status":"not evaluated"' in prompt
         assert "Lesion regions: not confirmed by a radiologist" in prompt
         assert "renamed" not in notes and "renamed" not in prompt   # the server's renamed label is withheld
 

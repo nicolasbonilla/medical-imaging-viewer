@@ -332,7 +332,9 @@ class _Captured:
             def create(self, **kw):
                 outer.calls.append(kw)
                 from types import SimpleNamespace
-                return SimpleNamespace(content=[SimpleNamespace(text="Draft body")],
+                # verified report (REQ-FUNC-116, DRAFT): the two comments in the fixed format, as a typed text block
+                answer = "[FINDINGS_COMMENT]\nDraft body\n[IMPRESSION_COMMENT]\nDraft for radiologist review."
+                return SimpleNamespace(content=[SimpleNamespace(type="text", text=answer)], stop_reason="end_turn",
                                        usage=SimpleNamespace(input_tokens=1, output_tokens=1))
         self.messages = _Messages()
 
@@ -354,8 +356,13 @@ def test_rc060_forged_confirmation_never_reaches_the_report(monkeypatch):
         app.dependency_overrides.pop(get_current_active_user, None)
     assert r.status_code == 200, r.text
     prompt = captured.calls[0]["messages"][0]["content"]
-    assert "dr.house" not in prompt and "confirmed by" not in prompt.lower()
-    assert not ACTIVITY_WORDS.search(prompt[prompt.index("Longitudinal comparison data"):])
+    # verified report (REQ-FUNC-116, DRAFT): the code-written source line says "not confirmed by a radiologist";
+    # no reader's confirmation, and no activity word in the longitudinal record or the comparison section
+    assert "dr.house" not in prompt and not re.search(r"(?<!not )confirmed by", prompt.lower())
+    record = json.loads(prompt.split("```json\n", 1)[1].split("\n```", 1)[0])
+    assert "confirmed" not in json.dumps(record["longitudinal"]).replace("UNCONFIRMED", "")
+    assert not ACTIVITY_WORDS.search(json.dumps(record["longitudinal"]))
+    assert not ACTIVITY_WORDS.search(prompt[prompt.index("## Comparison with the previous visit"):])
     content = r.json()["content"]
     notice = content[content.index("Draft body") + len("Draft body"):]   # CAPA-014: the AI heading comes first
     assert "2 confirmed" not in notice and "dr.house" not in notice
@@ -427,9 +434,15 @@ def test_rc060_unreadable_decisions_are_reported_not_hidden(env, monkeypatch):
 
 @pytest.mark.unit
 def test_rc060_template_list_offers_no_neda():
+    """Amended for the verified report (REQ-FUNC-116, DRAFT): the list offers the one verified structure; no entry
+    of it (nor of the retired templates' reference list) offers NEDA or an activity assessment."""
     from app.services.brain_report_service import BrainReportService
-    tpl = {t["id"]: t for t in BrainReportService().list_templates()}["ms_longitudinal"]
-    assert "NEDA" not in tpl["description"] and not ACTIVITY_WORDS.search(tpl["description"])
+    listed = BrainReportService().list_templates()
+    assert listed
+    for tpl in listed:
+        assert "NEDA" not in tpl["description"] and not ACTIVITY_WORDS.search(tpl["description"])
+    retired = {t["id"]: t for t in BrainReportService().list_retired_templates()}["ms_longitudinal"]
+    assert "NEDA" not in retired["description"] and not ACTIVITY_WORDS.search(retired["description"])
 
 
 @pytest.fixture

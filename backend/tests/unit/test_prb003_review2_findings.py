@@ -298,14 +298,30 @@ def test_rc070_n3_the_not_evaluated_sentence_itself_is_kept_unchanged():
 
 
 @pytest.mark.unit
-def test_rc070_n3_the_draft_states_how_many_statements_were_replaced(e2e):
+def test_rc070_n3_the_draft_states_how_many_statements_were_replaced(e2e, monkeypatch):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT): (1) through the real service such a text never reaches
+    the route — its comments fail the claim check and are withheld (RC-103); (2) the route's own backstop (RC-070)
+    still replaces and counts what any service would return, tested as a layer of its own with a stand-in service."""
+    import app.api.routes.ai_report as ai_report
+    from app.services.brain_report_service import REPORT_DISCLAIMERS
     client, svc, provider, _ = e2e
     _seed(svc)
-    provider.text = ("## FINDINGS\nTwo lesions; findings satisfy the criteria for dissemination in **space**.\n\n"
-                     "| Region | Present |\n|---|---|\n| Periventricular | ✓ Present |\n")
+    hostile = ("## FINDINGS\nTwo lesions; findings satisfy the criteria for dissemination in **space**.\n\n"
+               "| Region | Present |\n|---|---|\n| Periventricular | ✓ Present |\n")
+    provider.text = hostile
     r = _report(client)
     assert r.status_code == 200, r.text[:300]
     content = r.json()["content"]
+    assert "**space**" not in content and "| Periventricular |" not in content
+    assert r.json()["verification"]["interpretive_text"] == "withheld" and len(provider.calls) == 3
+
+    class _Svc:
+        async def generate_report(self, **kw):
+            return {"report_id": "r", "content": REPORT_DISCLAIMERS["en"] + "\n\n" + hostile,
+                    "template_type": kw["template_type"], "language": kw["language"], "processing_time_ms": 1}
+
+    monkeypatch.setattr(ai_report, "get_report_service", lambda: _Svc())
+    content = _report(client).json()["content"]
     assert "**space**" not in content and "| Periventricular |" not in content
     assert "2 statement(s)" in content
 

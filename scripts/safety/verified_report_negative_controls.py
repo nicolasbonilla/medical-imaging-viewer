@@ -1,0 +1,322 @@
+"""Negative controls for the verified AI report (RC-102 .. RC-106; REQ-FUNC-116, REQ-SAFE-048..051) — PENDING owner
+approval.
+
+  RC-102  facts written by code (MAGNIMS counting, "not computed" never 0, regions only when confirmed, DIS only when
+          evaluated, candidate wording, no technique section, the route's backstop never edits a code-written line)
+  RC-103  every answer checked (frozen claim check v2, format rules, RC-070 backstop), at most two regenerations, then
+          withheld with a note; the regeneration request checked for identifiers (RC-065)
+  RC-104  every attempt and the outcome in the audit log (prompt SHA-256, model id, verdict, rule ids, latency)
+  RC-105  the kill switch
+  RC-106  the model allow-list and retirement, fixed parameters, failures / refusals / timeouts give the measurements only
+
+Each mutation re-introduces ONE defect (or removes one sub-control) in the real source, one at a time, IN A THROWAWAY
+DETACHED WORKTREE of the commit under test (created under the system temporary folder and removed afterwards; only
+worktrees named with PREFIX are ever touched), so an interrupted run never leaves a mutation in a checkout. Backend
+only: no frontend, no node_modules. The script:
+  - refuses to start when a file it mutates, a test it runs or this script has uncommitted changes;
+  - asserts every anchor occurs exactly once in the LF text, writes the mutation with the file's own line endings,
+    restores the exact original bytes after each mutation, at exit and on a signal, and checks the restore;
+  - runs the bound tests with no cloud credential (PRB-002): a credentials file and a gcloud configuration folder that
+    do not exist, the offline project id, no model-provider key;
+  - checks the baseline passes first and records the failing test names per mutation.
+
+Run from the repository root with the backend's Python (it needs the backend requirements):
+    <backend python> scripts/safety/verified_report_negative_controls.py
+The backend Python is taken from MSTOOL_BACKEND_PYTHON, else backend/venv of this checkout or of the main checkout.
+Output: docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json
+"""
+import atexit
+import datetime
+import hashlib
+import json
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+os.chdir(REPO)
+OUT = "docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json"
+PREFIX = "verified-report-safety-run-"
+
+
+def _git(*args, cwd=REPO, check=True):
+    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=check)
+
+
+def _backend_python():
+    explicit = os.environ.get("MSTOOL_BACKEND_PYTHON")
+    if explicit and os.path.exists(explicit):
+        return explicit
+    common = _git("rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
+    for root in (REPO, os.path.dirname(common)):
+        for rel in (("backend", "venv", "Scripts", "python.exe"), ("backend", "venv", "bin", "python")):
+            candidate = os.path.join(root, *rel)
+            if os.path.exists(candidate):
+                return candidate
+    return sys.executable
+
+
+PY = _backend_python()
+TESTS = [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+]
+
+VR = "backend/app/services/verified_report.py"
+BRS = "backend/app/services/brain_report_service.py"
+LEX = "backend/app/services/report_claim_lexicon.py"
+CFG = "backend/app/core/config.py"
+AUD = "backend/app/core/logging/audit.py"
+
+M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
+    # ── RC-102: the facts are written by code ──
+    "F1_range_from_21": ([(VR, "    if n < 20:\n        return t[\"count_exact\"]", "    if n < 21:\n        return t[\"count_exact\"]")],
+                         "20 lesions reported as an exact count, not as the MAGNIMS 2021 range"),
+    "F2_not_computed_as_zero": ([(VR, "    if v is None or v != int(v) or v < 0:\n        return None\n",
+                                  "    if v is None or v != int(v) or v < 0:\n        return 0\n")],
+                                "a count that was not computed is written 0"),
+    "F3_regions_without_confirmation": ([(VR, "    regions_ok = bool(evaluated and la.get(", "    regions_ok = bool(la is not None and la.get(")],
+                                        "lesions per region reported for a segmentation no radiologist confirmed"),
+    "F4_dis_without_the_gate": ([(VR, "    evaluated = gate.is_evaluated(dis_block) and _count(",
+                                  "    evaluated = isinstance(dis_block, dict) and _count(")],
+                                "a DIS result reported from a block the gate did not mark evaluated"),
+    "F5_candidates_called_lesions": ([(VR, '        "lng_ok": "The software proposed {new} new and {enl} enlarging unconfirmed change candidates ({res} resolved, "',
+                                       '        "lng_ok": "The software found {new} new and {enl} enlarging lesions ({res} resolved, "')],
+                                     "change candidates written as new and enlarging lesions"),
+    "F6_technique_section_asked_again": ([(VR, "[IMPRESSION_COMMENT]: one or two sentences summarising, without any diagnosis.\n",
+                                           "[IMPRESSION_COMMENT]: one or two sentences summarising, without any diagnosis.\n"
+                                           "[TECHNIQUE]: describe the MRI technique, or state the standard MS protocol.\n")],
+                                         "the model is asked for a technique section again (the retired template's defect)"),
+    "F7_own_not_evaluated_sentence": ([(VR, "        dis_s = _dis_not_evaluated_line(lang)\n",
+                                        "        dis_s = \"Dissemination in space: not evaluated (no radiologist confirmed it).\" if lang == \"en\" else _dis_not_evaluated_line(lang)\n")],
+                                      "a code-written DIS line the route's backstop replaces (and counts as the model's)"),
+    "F8_t1_next_to_spinal_cord": ([(VR, '        "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|brain volumetry",',
+                                    '        "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|spinal cord imaging|brain volumetry",')],
+                                  "a limitation sentence the route's backstop reads as a statement on DIS"),
+    "F9_first_request_not_checked": ([(BRS, "            assert_prompt_carries_no_identifier(sent_text, identifiers)\n", "            pass\n")],
+                                     "the first request is sent without the identifier check (RC-065)"),
+    # ── RC-103: every answer is checked ──
+    "C1_claim_check_not_run": ([(VR, "    res = V.verify(assembled, None, view)\n", "    res = {\"elements\": []}\n")],
+                               "the frozen claim check does not run on the answer"),
+    "C2_digits_allowed": ([(VR, '    if re.search(r"\\d", re.sub(r"\\{[a-z_]+\\}", "", fc + " " + ic)):\n', "    if False:\n")],
+                          "digits allowed in the comments"),
+    "C3_headings_allowed": ([(VR, '    if re.search(r"^\\s*#", fc + "\\n" + ic, re.M):\n', "    if False:\n")],
+                            "headings allowed in the comments (a section of the model's own)"),
+    "C4_unknown_placeholder_allowed": ([(VR, "        if ph not in vals:\n", "        if False:\n")],
+                                       "a placeholder the record does not have is left in the report"),
+    "C5_rc070_backstop_not_in_the_loop": ([(VR, '    if view["dis"]["status"] != "evaluated":\n        from app.services import dis_review_gate as gate\n',
+                                            '    if False:\n        from app.services import dis_review_gate as gate\n')],
+                                          "a DIS statement the frozen rules miss passes the loop"),
+    "C6_no_regeneration": ([(VR, "MAX_REGENERATIONS = 2 ", "MAX_REGENERATIONS = 0 ")], "no regeneration: blocked after one answer"),
+    "C7_more_regenerations": ([(VR, "MAX_REGENERATIONS = 2 ", "MAX_REGENERATIONS = 5 ")], "more than two regenerations"),
+    "C8_failing_answer_delivered": ([(VR, "        if not fails:\n            return FlowResult(", "        if not fails or attempt == max_regenerations:\n            return FlowResult(")],
+                                    "the last failing answer is delivered instead of withheld"),
+    "C9_no_withheld_note": ([(VR, '    return FlowResult(text=assemble(view, lang, "", "") + "\\n\\n" + note, outcome=outcome,',
+                              '    return FlowResult(text=assemble(view, lang, "", ""), outcome=outcome,')],
+                            "the report without comments does not say why"),
+    "C10_refusal_read_as_text": ([(VR, '        if reply.stop_reason == "refusal":\n', "        if False:\n")],
+                                 "a refusal is treated as an answer and regenerated"),
+    "C11_feedback_not_checked": ([(VR, "            tripwire(feedback)\n", "            pass\n")],
+                                 "a regeneration request is sent without the identifier check (RC-065)"),
+    "C12_truncation_not_flagged": ([(VR, '        if reply.stop_reason == "max_tokens":\n', "        if False:\n")],
+                                   "a cut-off answer is accepted"),
+    "C13_lexicon_drift": ([(LEX, "    r\"\\b(?:consistent with|typical of|", "    r\"\\b(?:typical of|")],
+                          "the ported rules drift from the frozen benchmark rules (\"consistent with MS\" passes)"),
+    # ── RC-104: the audit ──
+    "A1_attempts_not_audited": ([(BRS, "        self._emit(AuditEventType.CLINICAL_AI_REPORT_ATTEMPT, outcome, details, AuditSeverity.LOW)\n", "        pass\n")],
+                                "the model attempts are not in the audit log"),
+    "A2_outcome_not_audited": ([(BRS, "        audit.outcome(result, model_id if reason is None else None)\n", "        pass\n")],
+                               "the outcome of the report is not in the audit log"),
+    "A3_hash_not_of_the_request": ([(VR, '"prompt_sha256": prompt_sha256(request),', '"prompt_sha256": prompt_sha256(request_meta),')],
+                                   "the recorded hash is not that of the request sent"),
+    "A4_audit_keys_dropped": ([(AUD, '    "flow", "attempt", "model_id", "model_answered", "prompt_sha256", "verdict", "rule_ids", "latency_ms",\n',
+                                "    \"flow\", \"attempt\",\n")],
+                              "the audit record silently drops the model id, hash, verdict, rule ids and latency"),
+    "A5_rule_ids_carry_answer_text": ([(VR, "        return sorted({f\"E3.{'section' if k.startswith('section:') else k}\" for k in kind.split(\"+\")})\n",
+                                        "        return sorted({f\"E3.{k}\" for k in kind.split(\"+\")})\n")],
+                                      "a rule id carries words of the answer (a section name) into the audit log"),
+    # ── RC-105: the kill switch ──
+    "K1_kill_switch_ignored": ([(BRS, '        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:\n', "        if False:\n")],
+                               "REPORT_LLM_ENABLED=false still calls the model"),
+    "K2_kill_switch_setting_removed": ([(CFG, "    REPORT_LLM_ENABLED: bool = Field(default=True)\n", "")],
+                                       "the environment cannot switch the model off"),
+    # ── RC-106: the model ──
+    "M1_allow_list_bypassed": ([(BRS, "        if not report_model_allowed(model_id):\n            return verified_report.REASON_MODEL_NOT_ALLOWED\n",
+                                 "        if model_id is None:\n            return verified_report.REASON_MODEL_NOT_ALLOWED\n")],
+                               "any configured model id is called"),
+    "M2_retiring_default_back": ([(CFG, '    CLAUDE_MODEL: str = Field(default="claude-sonnet-5-5")\n',
+                                   '    CLAUDE_MODEL: str = Field(default="claude-sonnet-4-5-20250929")\n')],
+                                 "the default model is the one retiring on 2026-11-30 (the defect as found)"),
+    "M3_retirement_date_ignored": ([(BRS, "    return retires is None or (today or date.today()) < date.fromisoformat(retires)\n", "    return True\n")],
+                                   "an allow-listed model past its retirement date is still called"),
+    "M4_sampling_parameter_sent": ([(BRS, "                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))",
+                                     "                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)), temperature=0.0)")],
+                                   "a sampling parameter is sent (400 on the current models)"),
+    "M5_answer_read_by_position": ([(BRS, '    text = "".join(_block_field(b, "text") or "" for b in blocks\n                   if _block_field(b, "type") == "text" and isinstance(_block_field(b, "text"), str))\n',
+                                     '    text = (_block_field(blocks[0], "text") or "") if blocks else ""\n')],
+                                   "the first block is read as the answer (a thinking block, as content[0].text did)"),
+    "M6_provider_failure_propagates": ([(BRS, "            except Exception as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is\n",
+                                         "            except ValueError as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is\n")],
+                                       "a provider failure fails the report instead of giving the measurements only"),
+    "M7_no_time_budget": ([(VR, "        if remaining <= 0:\n", "        if False:\n")], "the 25 s budget of a report is not enforced"),
+    "M8_long_call_timeout": ([(BRS, "timeout=max(1.0, float(timeout_s)))", "timeout=600.0)")],
+                             "one call may wait ten minutes (the SDK default)"),
+    "M9_404_not_recognised": ([(BRS, '    if getattr(exc, "status_code", None) == 404 or name == "NotFoundError":\n', "    if False:\n")],
+                              "a model the provider no longer serves is reported as a generic error"),
+}
+
+
+def offline_env():
+    """PRB-002: backend tests never reach a real cloud service or the model provider."""
+    env = dict(os.environ)
+    empty = tempfile.mkdtemp(prefix="verified-report-no-gcloud-")
+    env.update({"GOOGLE_APPLICATION_CREDENTIALS": os.path.join(empty, "no-such-credentials.json"),
+                "CLOUDSDK_CONFIG": empty, "GOOGLE_CLOUD_PROJECT": "mstool-offline-tests"})
+    for name in ("ANTHROPIC_API_KEY", "FIRESTORE_EMULATOR_HOST", "PYTHONPATH"):
+        env.pop(name, None)
+    return env
+
+
+def run_tests():
+    r = subprocess.run([PY, "-m", "pytest", *TESTS, "-q", "-p", "no:cacheprovider", "-p", "no:randomly", "-o",
+                        "log_cli=false"], cwd="backend", capture_output=True, text=True, encoding="utf-8",
+                       errors="replace", env=offline_env(), timeout=1800)
+
+    def count(word):
+        m = re.search(rf"(\d+) {word}", r.stdout)
+        return int(m.group(1)) if m else 0
+
+    return {"exit": r.returncode, "failed": count("failed"), "passed": count("passed"), "errors": count("error"),
+            "skipped": count("skipped"),
+            "failing_tests": sorted(set(re.findall(r"(?:FAILED|ERROR) \S+::(\S+)", r.stdout)))[:60]}
+
+
+def sha(text):
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def require_committed(paths):
+    dirty = _git("status", "--porcelain", "--", *paths).stdout
+    if dirty.strip():
+        raise SystemExit(f"uncommitted changes in {dirty.split()}: commit them first (the run uses the commit)")
+
+
+def clean_stale():
+    listing = _git("worktree", "list", "--porcelain").stdout
+    paths = [ln.split(" ", 1)[1].strip() for ln in listing.splitlines() if ln.startswith("worktree ")]
+    stale = [p for p in paths if os.path.basename(os.path.normpath(p)).startswith(PREFIX)]
+    for p in stale:
+        _git("worktree", "remove", "--force", p, check=False)
+        shutil.rmtree(p, ignore_errors=True)
+    _git("worktree", "prune", check=False)
+    return stale
+
+
+def main():
+    files = sorted({e[0] for edits, _w in M.values() for e in edits})
+    tests = [f"backend/{t}" for t in TESTS]
+    require_committed(files + tests + [os.path.relpath(__file__, REPO).replace(os.sep, "/")])
+    stale = clean_stale()
+    commit = _git("rev-parse", "HEAD").stdout.strip()
+    wt = os.path.join(tempfile.gettempdir(), f"{PREFIX}{os.getpid()}-{int(time.time())}")
+    _git("worktree", "add", "--detach", wt, commit)
+    try:
+        os.chdir(wt)
+        res = run_in_worktree(files)
+    finally:
+        os.chdir(REPO)
+        _git("worktree", "remove", "--force", wt, check=False)
+        shutil.rmtree(wt, ignore_errors=True)
+        _git("worktree", "prune", check=False)
+    res["worktree"] = {"run_in": "throwaway detached worktree of the commit, removed after the run", "commit": commit,
+                       "stale_worktrees_removed_first": stale, "python": PY}
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    with open(OUT, "w", encoding="utf-8") as fh:
+        json.dump(res, fh, indent=2, ensure_ascii=False)
+    print("restored", res["restored"]["passed"], "passed /", res["restored"]["failed"], "failed | detected",
+          res["summary"]["detected"], "of", res["summary"]["mutations"], "| undetected:", res["summary"]["undetected"])
+    return 1 if res["summary"]["undetected"] or res["restored"]["failed"] or res["restored"]["errors"] else 0
+
+
+def run_in_worktree(files):
+    here = os.getcwd()
+    raw = {p: open(p, "rb").read() for p in files}
+    text = {p: b.decode("utf-8").replace("\r\n", "\n") for p, b in raw.items()}
+    eol = {p: "\r\n" if b"\r\n" in b else "\n" for p, b in raw.items()}
+    for name, (edits, _w) in M.items():
+        for path, anchor, _r in edits:
+            c = text[path].count(anchor)
+            assert c == 1, f"{name}: anchor occurs {c}x in {path}, expected 1"
+
+    def restore():
+        for p, b in raw.items():
+            with open(os.path.join(here, p), "wb") as fh:
+                fh.write(b)
+
+    def on_signal(signum, _frame):
+        restore()
+        raise SystemExit(f"interrupted by signal {signum}; sources restored")
+
+    atexit.register(restore)
+    handlers = {}
+    for sig in ("SIGINT", "SIGTERM", "SIGBREAK", "SIGHUP"):
+        if hasattr(signal, sig):
+            handlers[sig] = signal.signal(getattr(signal, sig), on_signal)
+    try:
+        res = {"executed": datetime.datetime.now().isoformat(timespec="seconds"),
+               "method": "in a throwaway detached worktree of the commit; one mutation at a time; each anchor asserted "
+                         "to occur exactly once (LF text, written back with the file's own line endings); the bound "
+                         "backend tests with no cloud credential (PRB-002); original bytes restored after each "
+                         "mutation, at exit and on a signal, and checked at the end; the baseline must pass first",
+               "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+               "source_sha256": {p: sha(text[p]) for p in files},
+               "test_sha256": {t: sha(open(os.path.join("backend", t), encoding="utf-8").read().replace("\r\n", "\n"))
+                               for t in TESTS},
+               "tests": TESTS, "baseline": run_tests(), "mutations": {}}
+        base = res["baseline"]
+        if base["failed"] or base["errors"] or not base["passed"]:
+            raise SystemExit(f"the baseline must pass before the mutations mean anything: {base}")
+        print("baseline ok", base["passed"], "passed", flush=True)
+        for name, (edits, what) in M.items():
+            touched = {}
+            for path, anchor, repl in edits:
+                touched[path] = touched.get(path, text[path]).replace(anchor, repl, 1)
+            for path, mutated in touched.items():
+                assert mutated != text[path], name
+                with open(path, "w", encoding="utf-8", newline=eol[path]) as fh:
+                    fh.write(mutated)
+            out = run_tests()
+            out.update({"reintroduces": what, "files": sorted(touched),
+                        "executed": datetime.datetime.now().isoformat(timespec="seconds"),
+                        "detected": bool(out["failed"] or out["errors"])})
+            res["mutations"][name] = out
+            for path in touched:
+                with open(path, "wb") as fh:
+                    fh.write(raw[path])
+            print(f"{name:40s} detected={out['detected']} {out['failed']} failed / {out['errors']} errors / "
+                  f"{out['passed']} passed", flush=True)
+    finally:
+        restore()
+        atexit.unregister(restore)
+        for sig, h in handlers.items():
+            signal.signal(getattr(signal, sig), h)
+    for p in files:
+        assert open(p, "rb").read() == raw[p], p
+    res["restored"] = run_tests()
+    undetected = sorted(n for n, v in res["mutations"].items() if not v["detected"])
+    res["summary"] = {"mutations": len(res["mutations"]), "detected": len(res["mutations"]) - len(undetected),
+                      "undetected": undetected}
+    return res
+
+
+if __name__ == "__main__":
+    sys.exit(main())

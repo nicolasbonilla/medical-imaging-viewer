@@ -1,6 +1,18 @@
 """
 Brain Report Generation Service using Claude API.
 
+VERIFIED REPORT (REQ-FUNC-116, REQ-SAFE-048..051; RC-102..RC-106; HAZ-003, HAZ-013, HAZ-016, HAZ-017 — DRAFT,
+PENDING owner approval). `generate_report` no longer asks the model to write the report. It runs the fixed flow of
+`verified_report` (benchmark arm A3, `research/agents-benchmark` @ f3c1976): code writes every number and status from
+the device's measurements; the model writes only two short comments; every answer passes the frozen claim check
+(`report_claim_verifier`) or is regenerated (at most twice) and finally withheld; every attempt goes to the audit log.
+The model is one of `REPORT_MODELS` (default `claude-sonnet-5-5`; the former `claude-sonnet-4-5-20250929` retires on
+2026-11-30 and is refused); `REPORT_LLM_ENABLED=false` switches the model off (measurements-only report).
+The templates below (`REPORT_TEMPLATES`, `_build_findings_prompt`, `dis_not_evaluated_template`) are RETIRED from the
+report path: nothing sends them to a model any more. They are kept unchanged as the reference of the design the
+benchmark measured (arm A0) and because approved RC-064 / RC-070 evidence tests them; their removal is proposed as a
+follow-up once the owner approves this change.
+
 Generates structured radiology reports for brain MRI studies
 focused on Multiple Sclerosis evaluation following international standards:
 - MAGNIMS-CMSC-NAIMS 2021 consensus guidelines
@@ -8,14 +20,16 @@ focused on Multiple Sclerosis evaluation following international standards:
 - 2017 McDonald diagnostic criteria
 - ACR Practice Parameter for Communication
 
-Templates: general, ms_activity, ms_lesion_burden, ms_longitudinal.
+Templates: general, ms_activity, ms_lesion_burden, ms_longitudinal (RETIRED from the report path, see above).
 
 Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
 - Measurements only. The prompt is built from a structured payload (`report_payload_guard`): the
   device's measurements, labels from the device's fixed vocabulary (any other label as a numbered
   placeholder), sex (M/F) and a 5-year age band. No free-text or user-typed field is sent; the
   clinician's text is added to the draft by the route after the model returns. The system prompt is a
-  fixed template.
+  fixed template. *(Verified report, DRAFT: the model receives the measurement record built from that payload —
+  without sex and age band — and the code-written report; the system prompt is `verified_report.SYSTEM_PROMPT`;
+  the check below runs on the first request and on every regeneration request.)*
 - Before the call, a detection-only check of the final prompt (the patient's own identifiers from
   the patient record, and generic identifier patterns) refuses to send on any finding; without the
   patient's record nothing is sent (fail closed).
@@ -24,14 +38,18 @@ Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
 @module services.brain_report_service
 """
 
+import asyncio
+import copy
 import re
 import time
 import uuid
+from datetime import date
 from functools import lru_cache
 from typing import Optional, List, Dict, Any
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.services import verified_report
 from app.services.report_payload_guard import (
     UNLISTED,
     PatientIdentifiers,
@@ -44,6 +62,112 @@ from app.services.report_payload_guard import (
 )
 
 logger = get_logger(__name__)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RC-106 (REQ-SAFE-051; HAZ-017, HAZ-013) — DRAFT, PENDING owner approval.
+# The models this version may call for the two comments, each with the request parameters it is called with
+# (the configurations pre-registered for the benchmark, PREREG.md §4: thinking off, effort low). The SDK pinned in
+# requirements.txt (anthropic 0.44.0) predates `thinking` and `output_config`, so they are sent as extra body fields.
+# Any other id — the retiring `claude-sonnet-4-5-20250929` (2026-11-30) included — is refused: the report is
+# delivered with the measurements only and the reason. Changing the model is a change of this table (change control,
+# SOUP-001), never only an environment variable.
+# ─────────────────────────────────────────────────────────────────────────────
+DEFAULT_REPORT_MODEL = "claude-sonnet-5-5"
+REPORT_MODELS: Dict[str, Dict[str, Any]] = {
+    "claude-sonnet-5-5": {"params": {"thinking": {"type": "between_tools"}, "output_config": {"effort": "low"}},
+                          "retires_on": None, "soup": "SOUP-BE-029"},
+    "claude-haiku-5-5": {"params": {"thinking": {"type": "disabled"}, "output_config": {"effort": "low"}},
+                         "retires_on": None, "soup": "SOUP-BE-030"},
+}
+# Ids known to be retired or retiring (Claude API dates); named so that a configuration with one is reported as such.
+RETIRED_OR_RETIRING_MODELS: Dict[str, str] = {
+    "claude-sonnet-4-5-20250929": "2026-11-30", "claude-sonnet-4-5": "2026-11-30",
+    "claude-sonnet-4-20250514": "2026-06-15", "claude-3-7-sonnet-20250219": "2026-02-19",
+    "claude-3-5-sonnet-20241022": "2025-10-28", "claude-3-5-sonnet-20240620": "2025-10-28",
+}
+
+
+def report_model_allowed(model_id: Any, today: Optional[date] = None) -> bool:
+    """RC-106: True only for an id of REPORT_MODELS whose retirement date (if any) is still ahead."""
+    entry = REPORT_MODELS.get(model_id) if isinstance(model_id, str) else None
+    if entry is None or model_id in RETIRED_OR_RETIRING_MODELS:
+        return False
+    retires = entry.get("retires_on")
+    return retires is None or (today or date.today()) < date.fromisoformat(retires)
+
+
+def _failure_reason(exc: BaseException) -> str:
+    """RC-106: the audit-safe reason of a provider failure (404 = the model is no longer served)."""
+    name = type(exc).__name__
+    if getattr(exc, "status_code", None) == 404 or name == "NotFoundError":
+        return verified_report.REASON_MODEL_UNAVAILABLE
+    if "Timeout" in name:
+        return verified_report.REASON_TIMEOUT
+    return verified_report.REASON_PROVIDER
+
+
+def _block_field(block: Any, name: str) -> Any:
+    return block.get(name) if isinstance(block, dict) else getattr(block, name, None)
+
+
+def reply_of(message: Any) -> "verified_report.ModelReply":
+    """The model's answer, read by block TYPE: only `text` blocks count (a thinking or other block — which the pinned
+    SDK returns as an unvalidated object — is never read as the answer, unlike `content[0].text`)."""
+    blocks = getattr(message, "content", None) or []
+    text = "".join(_block_field(b, "text") or "" for b in blocks
+                   if _block_field(b, "type") == "text" and isinstance(_block_field(b, "text"), str))
+    usage = getattr(message, "usage", None)
+
+    def tokens(name):
+        value = getattr(usage, name, 0) if usage is not None else 0
+        return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+    stop = getattr(message, "stop_reason", None)
+    model = getattr(message, "model", None)
+    return verified_report.ModelReply(text=text, stop_reason=stop if isinstance(stop, str) else None,
+                                      model=model if isinstance(model, str) else None,
+                                      input_tokens=tokens("input_tokens"), output_tokens=tokens("output_tokens"))
+
+
+class _ReportAudit:
+    """RC-104 (REQ-SAFE-050): every attempt and the outcome of each report in the server audit log (stdout + the
+    durable store, CAPA-015) — codes, counts, the prompt's SHA-256; never the prompt, the record or the answer."""
+
+    def __init__(self, report_id: str, actor: Any, segmentation_id: Optional[str], template_type: str, language: str):
+        self.report_id, self.actor, self.segmentation_id = report_id, actor, segmentation_id
+        self.template_type, self.language = template_type, language
+
+    def _emit(self, event_type, outcome, details, severity):
+        from app.core.logging.audit import emit_audit
+        role = getattr(self.actor, "role", None)
+        emit_audit(event_type, outcome, user_id=getattr(self.actor, "id", None),
+                   username=getattr(self.actor, "username", None), role=role, resource_type="report",
+                   resource_ids={"report_id": self.report_id,
+                                 **({"segmentation_id": self.segmentation_id} if self.segmentation_id else {})},
+                   details={"template_type": self.template_type, "language": self.language,
+                            "flow": verified_report.FLOW_CODE, **details},
+                   severity=severity)
+
+    def attempt(self, record: Dict[str, Any]) -> None:
+        from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
+        outcome = AuditOutcome.SUCCESS if record.get("verdict") == "pass" else AuditOutcome.FAILURE
+        details = {k: record.get(k) for k in ("attempt", "model_id", "model_answered", "prompt_sha256", "verdict",
+                                              "rule_ids", "latency_ms", "stop_reason", "input_tokens",
+                                              "output_tokens", "error") if record.get(k) is not None}
+        self._emit(AuditEventType.CLINICAL_AI_REPORT_ATTEMPT, outcome, details, AuditSeverity.LOW)
+
+    def outcome(self, result: "verified_report.FlowResult", model_id: Optional[str]) -> None:
+        from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
+        withheld = result.interpretive == "withheld" or (result.reason not in (None, verified_report.REASON_OFF,
+                                                                                verified_report.REASON_NOTHING_TO_COMMENT))
+        details = {"report_outcome": result.outcome, "interpretive_text": result.interpretive,
+                   "attempts": len(result.attempts), "model_id": model_id, "model_answered": result.model_answered,
+                   "llm_reason": result.reason}
+        self._emit(AuditEventType.CLINICAL_AI_REPORT_VERIFICATION,
+                   AuditOutcome.PARTIAL if withheld else AuditOutcome.SUCCESS,
+                   {k: v for k, v in details.items() if v is not None},
+                   AuditSeverity.MEDIUM if withheld else AuditSeverity.LOW)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # RC-006 — risk control for HAZ-003 (AI report hallucination, severity S5).
@@ -231,7 +355,11 @@ _FORMAT_INSTRUCTIONS = (
     "reporting system, not from you.\n"
 )
 
-# Report templates — system prompts for Claude (MS-focused, MAGNIMS/RSNA compliant)
+# Report templates — system prompts for Claude (MS-focused, MAGNIMS/RSNA compliant).
+# RETIRED from the report path (REQ-FUNC-116, DRAFT): never sent to a model any more. On public data this design
+# (benchmark arm A0) produced an unsupported element in every draft — the TECHNIQUE section below ("or state standard
+# MS protocol") invites invented acquisition details. Kept unchanged as the measured reference and for the approved
+# tests of RC-064 / RC-070; `generate_report` only uses the keys, to validate and record `template_type`.
 REPORT_TEMPLATES: Dict[str, str] = {
     "general": (
         "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
@@ -542,6 +670,15 @@ REPORT_TEMPLATES: Dict[str, str] = {
 }
 
 
+def _review_source(findings: Any) -> Optional[str]:
+    """The segmentation source code of the server's DIS state (`ai_draft`, `automatic_tool`, `origin_not_recorded`),
+    set by the report route from the stored segmentation; anything else: None (fixed "not confirmed" text)."""
+    block = findings.get("dis_assessment") if isinstance(findings, dict) else None
+    review = block.get("segmentation_review") if isinstance(block, dict) else None
+    source = review.get("source") if isinstance(review, dict) else None
+    return source if source in ("ai_draft", "automatic_tool", "origin_not_recorded") else None
+
+
 def _lesions(count: Any) -> str:
     """'1 lesion', '2 lesions' (release 2026-10-25, film capture: the prompt said "Deep White Matter: 1 lesions" and
     the model copied it into the report). Text only; any value other than exactly one keeps the plural."""
@@ -576,7 +713,8 @@ class BrainReportService:
                     "Set the environment variable to enable report generation."
                 )
             import anthropic
-            self._client = anthropic.Anthropic(api_key=api_key)
+            # RC-106: one SDK retry at most; the flow's own 25 s budget bounds every call (REQ-SAFE-019)
+            self._client = anthropic.Anthropic(api_key=api_key, max_retries=1)
         return self._client
 
     def _build_findings_prompt(
@@ -789,6 +927,39 @@ class BrainReportService:
 
         return "\n".join(parts)
 
+    def _interpretive_text_gate(self, model_id: Any, view: Dict[str, Any]) -> Optional[str]:
+        """Why the comments are not requested (a REASON_* code), or None. RC-105: the kill switch; RC-106: the model
+        allow-list and retirement; no key: not configured; nothing measured: nothing to comment on."""
+        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:
+            return verified_report.REASON_OFF
+        if not report_model_allowed(model_id):
+            return verified_report.REASON_MODEL_NOT_ALLOWED
+        if not verified_report.has_something_to_comment(view):
+            return verified_report.REASON_NOTHING_TO_COMMENT
+        try:
+            self._get_client()          # no ANTHROPIC_API_KEY: RuntimeError (nothing is sent)
+        except RuntimeError:
+            return verified_report.REASON_NOT_CONFIGURED
+        return None
+
+    def _model_call(self, model_id: str) -> "verified_report.Call":
+        """One provider call of the flow (RC-106): fixed parameters of the allow-list, the remaining time budget as
+        timeout, the blocking SDK call off the event loop; any failure becomes a ProviderFailure (audit-safe)."""
+        params = REPORT_MODELS[model_id]["params"]
+        max_tokens = int(self._settings.CLAUDE_MAX_TOKENS)
+
+        async def call(system: str, messages: List[Dict[str, str]], timeout_s: float) -> verified_report.ModelReply:
+            try:
+                client = self._get_client()
+                message = await asyncio.to_thread(
+                    client.messages.create, model=model_id, max_tokens=max_tokens, system=system, messages=messages,
+                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))
+            except Exception as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is
+                raise verified_report.ProviderFailure(_failure_reason(e), type(e).__name__) from e
+            return reply_of(message)
+
+        return call
+
     async def generate_report(
         self,
         template_type: str = "general",
@@ -796,22 +967,30 @@ class BrainReportService:
         volumetry: Optional[Dict[str, Any]] = None,
         language: str = "en",
         identifiers: Optional[PatientIdentifiers] = None,
+        audit_actor: Any = None,
+        segmentation_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Generate a structured brain MRI report.
+        Generate the verified draft of a brain MRI report (REQ-FUNC-116; DRAFT, PENDING owner approval).
+
+        Code writes every number and status from the structured payload (RC-064, RC-102); the model writes two
+        comments that pass the frozen claim check or are withheld (RC-103); every attempt is audited (RC-104).
 
         Args:
-            template_type: Report template (general, ms_activity, ms_lesion_burden)
-            findings: Clinical findings dict (only the structured payload is sent, CAPA-014)
-            volumetry: Volumetry results dict (optional)
+            template_type: kept for compatibility (recorded); every template gives the same verified structure
+            findings: Clinical findings dict (only the structured payload is used, CAPA-014)
+            volumetry: Volumetry results dict (optional; total brain and intracranial volume are reported)
             language: Report language (en, es, de)
             identifiers: The patient's own identifiers, from the patient record (required, for the check)
+            audit_actor: the authenticated user, for the audit records (RC-104)
+            segmentation_id: the report's segmentation, for the audit records
 
         Returns:
-            Dict with report_id, content, template_type, language, processing_time_ms
+            Dict with report_id, content, template_type, language, processing_time_ms, model, tokens_used,
+            verification (flow, outcome, interpretive_text, reason, attempts, rules_failed_last_attempt)
 
         Raises:
-            ProviderGuardError: no identifiers, or the check found one in the prompt — nothing was sent
+            ProviderGuardError: no identifiers, or the check found one in the first request — nothing was sent
         """
         start_time = time.time()
         report_id = str(uuid.uuid4())
@@ -819,7 +998,7 @@ class BrainReportService:
         if findings is None:
             findings = {}
 
-        # Validate template
+        # Validate template (recorded only: the verified structure is the same for every template)
         if template_type not in REPORT_TEMPLATES:
             template_type = "general"
 
@@ -828,83 +1007,80 @@ class BrainReportService:
         if not isinstance(identifiers, PatientIdentifiers):
             raise PatientRecordUnavailable("the patient's identifiers were not supplied")
 
-        system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
-        # RC-064: structured payload only — measurements, fixed labels, sex, age band; no free text.
+        # RC-064: structured payload only — measurements, fixed labels; no free text.
         payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)
-        # PRB-003 (RC-070; review of PR #68, finding 4): no DIS instruction in the template unless DIS was
-        # evaluated on a classified, radiologist-confirmed segmentation (state set by the report route).
-        # Release 2026-10-25 integration (PR #67 + PR #68): the variant is chosen on the DIS block the model
-        # actually receives (the RC-064 payload), so the template and the findings prompt always agree; the
-        # system prompt is one of the fixed template variants (RC-064 amended, PENDING owner approval).
-        from app.services import dis_review_gate as gate   # the one "evaluated" rule (release 2026-10-25, item 3)
-        dis_block = payload.findings.get("dis_assessment")
-        if not gate.is_evaluated(dis_block):
-            system_prompt = dis_not_evaluated_template(system_prompt)
-        user_prompt = self._build_findings_prompt(payload.findings, payload.volumetry, language)
-        # RC-065: detection-only tripwire on the final prompt; refuses to send on any finding.
-        assert_prompt_carries_no_identifier(user_prompt, identifiers)
+        lang = verified_report.language_of(language)
+        # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
+        view = verified_report.build_view(payload.findings, payload.volumetry, lang,
+                                          review_source=_review_source(findings))
         # RC-066: record that the check ran and what was withheld (counts) — never the payload.
         logger.info(
             "[Report] Structured payload checked before the model provider call",
             extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},
         )
 
+        model_id = getattr(self._settings, "CLAUDE_MODEL", None)
+        audit = _ReportAudit(report_id, audit_actor, segmentation_id, template_type, lang)
+        reason = self._interpretive_text_gate(model_id, view)
+        sent_text = ""
+        if reason is not None:
+            if reason == verified_report.REASON_MODEL_NOT_ALLOWED:
+                logger.error("[Report] The configured model is not allowed (retired, retiring or not validated); "
+                             "measurements-only report", extra={"report_id": report_id, "model": str(model_id)[:64]})
+            result = verified_report.measurements_only(view, lang, reason)
+        else:
+            sent_text = verified_report.first_user_message(view, lang)
+            # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
+            assert_prompt_carries_no_identifier(sent_text, identifiers)
+            result = await verified_report.run_flow(
+                view, lang, self._model_call(model_id),
+                request_meta={"model": model_id, "max_tokens": int(self._settings.CLAUDE_MAX_TOKENS),
+                              "params": REPORT_MODELS[model_id]["params"]},
+                # RC-065 on every regeneration request too: a finding stops the flow (comments withheld)
+                tripwire=lambda text: assert_prompt_carries_no_identifier(text, identifiers),
+                on_attempt=audit.attempt)
+        audit.outcome(result, model_id if reason is None else None)
+
+        # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that no generated report can leave this
+        # service without it — regardless of what the model produced. See _apply_disclaimer.
+        content = _apply_disclaimer(result.text, language)
+        processing_time_ms = int((time.time() - start_time) * 1000)
         logger.info(
-            f"[Report] Generating {template_type} report in {language}",
-            extra={"report_id": report_id},
+            f"[Report] Verified draft {result.outcome} in {processing_time_ms}ms",
+            extra={"report_id": report_id, "report_outcome": result.outcome, "attempts": len(result.attempts),
+                   "tokens_in": result.input_tokens, "tokens_out": result.output_tokens},
         )
-
-        try:
-            client = self._get_client()
-            # Use higher token limit for comprehensive reports with per-lesion data
-            max_tokens = self._settings.CLAUDE_MAX_TOKENS
-            if template_type == "ms_comprehensive":
-                max_tokens = min(max(max_tokens, 8192), 16384)
-            message = client.messages.create(
-                model=self._settings.CLAUDE_MODEL,
-                max_tokens=max_tokens,
-                system=system_prompt,
-                messages=[
-                    {"role": "user", "content": user_prompt},
-                ],
-            )
-
-            # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that
-            # no generated report can leave this service without it — regardless
-            # of what the model produced. See _apply_disclaimer.
-            content = _apply_disclaimer(message.content[0].text, language)
-            processing_time_ms = int((time.time() - start_time) * 1000)
-
-            logger.info(
-                f"[Report] Generated successfully in {processing_time_ms}ms",
-                extra={
-                    "report_id": report_id,
-                    "tokens_in": message.usage.input_tokens,
-                    "tokens_out": message.usage.output_tokens,
-                },
-            )
-
-            return {
-                "report_id": report_id,
-                "content": content,
-                "template_type": template_type,
-                "language": language,
-                "processing_time_ms": processing_time_ms,
-                "model": self._settings.CLAUDE_MODEL,
-                "tokens_used": {
-                    "input": message.usage.input_tokens,
-                    "output": message.usage.output_tokens,
-                },
-                # CAPA-014: placeholder -> label as written, for the clinician's draft only (never sent)
-                "unlisted_labels": payload.unlisted,
-            }
-
-        except Exception as e:
-            logger.error(f"[Report] Generation failed: {e}")
-            raise
+        asked = bool(result.attempts)
+        return {
+            "report_id": report_id,
+            "content": content,
+            "template_type": template_type,
+            "language": language,
+            "processing_time_ms": processing_time_ms,
+            "model": (result.model_answered or model_id) if asked else None,
+            "tokens_used": {"input": result.input_tokens, "output": result.output_tokens} if asked else None,
+            "verification": result.summary(),
+            # CAPA-014: placeholder -> label as written, for the clinician's draft only (never sent). Verified report:
+            # only the placeholders the request to the provider actually carried (none when nothing was sent), so
+            # the application note "sent as numbered placeholders" stays true.
+            "unlisted_labels": {ph: name for ph, name in payload.unlisted.items() if ph in sent_text},
+        }
 
     def list_templates(self) -> List[Dict[str, str]]:
-        """List available report templates."""
+        """The report the server writes (REQ-FUNC-116, DRAFT): one verified structure. The former templates' ids are
+        still accepted by the route (recorded); each gives this structure."""
+        return [{
+            "id": "general",
+            "name": "Verified measurement report",
+            "description": (
+                "Every number and status is written by the software from the measurements (MAGNIMS 2021 counting; "
+                "dissemination in space only when a radiologist confirmed the segmentation). The AI adds two short "
+                "comments that pass an automatic check against the measurements, or are withheld. Not a diagnosis."
+            ),
+        }]
+
+    def list_retired_templates(self) -> List[Dict[str, str]]:
+        """The templates of the retired free-text design (benchmark arm A0), for reference only."""
         templates = [
             {
                 "id": "general",
@@ -1013,6 +1189,15 @@ def _fixed_prompt_word_lists() -> tuple:
     for findings, volumetry in _synthetic_payloads():
         for language in ("en", "es", "de"):
             texts.append(builder._build_findings_prompt(findings, volumetry, language))
+    # Verified report (DRAFT, RC-065 extended): the device's own text of its user messages — the first message (the
+    # measurement record and the code-written report, in every branch and language) and the fixed parts of a
+    # regeneration request. The model's own words quoted in a regeneration request are NOT device words.
+    for findings, volumetry, source in verified_report.synthetic_payloads():
+        for language in verified_report.LANGUAGES:
+            view = verified_report.build_view(findings, volumetry, language, review_source=source)
+            texts.append(verified_report.first_user_message(view, language))
+    texts.append(verified_report.REGENERATION_PREFIX + verified_report.REGENERATION_SUFFIX)
+    texts.extend(verified_report.FIXED_FEEDBACK_TEXTS)
     return tuple(tuple(words_of(text)) for text in texts)
 
 

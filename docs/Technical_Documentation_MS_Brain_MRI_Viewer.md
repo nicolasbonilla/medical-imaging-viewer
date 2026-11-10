@@ -729,22 +729,38 @@ IF W_m != W_i AND H_m == W_i AND W_m == H_i:
 
 ### 12.1 Architecture
 
-The report generation system integrates with the Claude API (Anthropic SDK v0.44.0). Only a structured payload is sent (CAPA-014, RC-064/RC-065):
+The report generation system integrates with the Claude API (Anthropic SDK v0.44.0). Only a structured payload is sent (CAPA-014, RC-064/RC-065).
+
+*Verified report (REQ-FUNC-116, REQ-SAFE-048..051; RC-102..RC-106 — DRAFT, PENDING owner approval; branch
+`feat/report-agent-verified`).* The draft is no longer written by the model. Code writes every number and status
+from the structured payload; the model writes two short comments; each answer passes a deterministic claim check
+(the frozen in-loop rules of the agents benchmark, arm A3) or is regenerated, at most twice, and is otherwise
+withheld (the report then carries the measurements only and a fixed note). Every attempt is in the audit log
+(prompt SHA-256, model id, verdict, rule ids, latency). `REPORT_LLM_ENABLED=false` switches the comments off.
 
 ```
-Measurements  -->  Structured payload  -->  Prompt Assembly  -->  Identifier check
-                                                      |
-Report Template  ---------------------------------->  |
-                                                      v
-                                              Claude API Call
-                                              (claude-sonnet-4-5-20250929,
-                                               settings CLAUDE_MODEL)
+Measurements --> Structured payload --> Measurement record + code-written report --> Identifier check
                                                       |
                                                       v
-                                              Structured Report
+                                              Claude API Call: two comments only
+                                              (claude-sonnet-5-5,
+                                               settings CLAUDE_MODEL, allow-list REPORT_MODELS)
+                                                      |
+                                                      v
+                                      Claim check (format, frozen rules v2, DIS backstop)
+                                        pass -> comments inserted | fail -> regenerate (<= 2)
+                                                      |            | still failing -> withheld
+                                                      v
+                                              Verified report draft
 ```
+
+The former model `claude-sonnet-4-5-20250929` retires on 2026-11-30 and is refused by the allow-list.
 
 ### 12.2 Report Templates
+
+*(Retired from the report path by the verified report — DRAFT: every template id gives the same verified structure:
+Findings, Comparison with the previous visit (pairs only), Impression, Limitations. The table below describes the
+retired free-text design.)*
 
 | Template | Max Tokens | Clinical Focus |
 |----------|-----------|---------------|
@@ -756,10 +772,11 @@ Report Template  ---------------------------------->  |
 ### 12.3 Data Sent to the AI Service (CAPA-014)
 
 **Transmitted to Claude:**
-- 5-year age band, sex (M/F)
-- Numerical findings (lesion counts, volumes, regions)
-- DIS assessment results
-- Longitudinal change statistics
+- 5-year age band, sex (M/F) *(verified report, DRAFT: no longer sent)*
+- Numerical findings (lesion counts, volumes, regions) *(verified report: regions only when a radiologist confirmed
+  them, and only the MAGNIMS region names; total brain and intracranial volume, no structure-level volumetry)*
+- DIS assessment results *(only when evaluated; otherwise the fixed "not evaluated" state)*
+- Longitudinal change statistics *(as unconfirmed change candidates, or the abstention)*
 
 Labels only from the device's fixed vocabulary (MAGNIMS regions, structures, size classes, the label
 names the application ships). Any other label is sent as a numbered placeholder ("[unlisted label 2]");

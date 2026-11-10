@@ -148,6 +148,11 @@ def _fold(text):
 
 
 class _Provider:
+    """The model provider, faked. Verified report (REQ-FUNC-116, DRAFT — amended with it): the model answers the two
+    comments in the fixed format; `text` is its findings comment (it reaches the draft only if it passes the claim
+    check, RC-103), and the answer is a typed text block (the service reads blocks by type)."""
+    IMPRESSION = "Draft for radiologist review."
+
     def __init__(self, text="Draft body"):
         self.calls = []
         self.text = text
@@ -156,7 +161,9 @@ class _Provider:
         class _Messages:
             def create(self, **kw):
                 outer.calls.append(kw)
-                return SimpleNamespace(content=[SimpleNamespace(text=outer.text)],
+                answer = f"[FINDINGS_COMMENT]\n{outer.text}\n[IMPRESSION_COMMENT]\n{outer.IMPRESSION}"
+                return SimpleNamespace(content=[SimpleNamespace(type="text", text=answer)], stop_reason="end_turn",
+                                       model="claude-sonnet-5-5",
                                        usage=SimpleNamespace(input_tokens=1, output_tokens=1))
         self.messages = _Messages()
 
@@ -248,6 +255,46 @@ def _post(route, findings, volumetry=None, template="general", language="en", se
     return route.client.post("/api/v1/ai/report/generate", json=body)
 
 
+def _record_sent(route):
+    """Verified report (REQ-FUNC-116, DRAFT): the measurement record of the first request, as the model received it."""
+    prompt = route.provider.prompt()
+    return json.loads(prompt.split("```json\n", 1)[1].split("\n```", 1)[0])
+
+
+def _keys(value):
+    """Every key of a JSON-like value, at any depth."""
+    if isinstance(value, dict):
+        return set(value) | {k for v in value.values() for k in _keys(v)}
+    if isinstance(value, list):
+        return {k for v in value for k in _keys(v)}
+    return set()
+
+
+DEMOGRAPHIC_KEYS = {"patient_age", "age", "age_band", "patient_sex", "sex", "gender"}
+
+
+@pytest.fixture
+def route_text(route, monkeypatch):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT): the ROUTE's own handling of whatever text the report
+    service returns (RC-066 R1, the last check of the third review) is tested as a layer of its own. Through the real
+    service most of these hostile texts never reach the route — the claim check (RC-103) withholds them — so the text
+    is handed to the route by a stand-in service; the route code under test is unchanged."""
+    import app.api.routes.ai_report as ai_report
+    from app.services.brain_report_service import REPORT_DISCLAIMERS
+    state = SimpleNamespace(text="Draft body", unlisted={})
+
+    class _Svc:
+        async def generate_report(self, **kw):
+            lang = kw.get("language") or "en"
+            return {"report_id": "r", "content": REPORT_DISCLAIMERS[lang] + "\n\n" + state.text,
+                    "template_type": kw.get("template_type", "general"), "language": lang, "processing_time_ms": 1,
+                    "unlisted_labels": dict(state.unlisted)}
+
+    monkeypatch.setattr(ai_report, "get_report_service", lambda: _Svc())
+    route.text_state = state
+    return route
+
+
 # ============================================================================= RC-064
 @pytest.mark.unit
 def test_rc064_no_free_text_or_unlisted_label_reaches_the_provider(route):
@@ -275,18 +322,27 @@ def test_rc064_the_clinicians_typed_text_is_never_sent(route):
 
 @pytest.mark.unit
 def test_rc064_measurements_and_device_labels_are_sent_unchanged(route):
-    from app.services.brain_report_service import BrainReportService
+    """Amended for the verified report (REQ-FUNC-116, DRAFT): the measurements reach the model unchanged, as the
+    record the code builds from the RC-064 payload (was: the lines of the retired prompt builder). Structure-level
+    volumetry (names, percentiles, abnormality flags) is no longer sent; total brain and intracranial volume are."""
+    from app.services import verified_report
+    from app.services.report_payload_guard import provider_payload
     findings = _measurements()
     r = _post(route, findings, VOLUMETRY)
     assert r.status_code == 200, r.text
+    sent = _record_sent(route)
+    payload = provider_payload(findings, VOLUMETRY)
+    assert sent == json.loads(json.dumps(verified_report.build_view(payload.findings, payload.volumetry, "en")))
+    les = sent["lesions"]
+    assert (les["total_count"], les["total_volume_mm3"], les["total_volume_ml"]) == (3, 1234.5, 1.2345)
+    assert les["size_distribution"] == {"small": 1, "medium": 1, "large": 1}
+    assert sent["brain_volumetry"]["total_brain_volume_ml"] == 1100.0
+    assert sent["brain_volumetry"]["intracranial_volume_ml"] == 1450.0
     prompt = route.provider.prompt()
-    reference = BrainReportService()._build_findings_prompt(findings, VOLUMETRY, "en")
-    for line in reference.splitlines():
-        if not line.startswith(("Patient age", "Patient sex")):
-            assert line in prompt, line
-    for label in ("Periventricular", "Deep White Matter", "Black Hole (T1)", "Left Cerebral White Matter",
-                  "Brain Stem", "small", "medium", "large", "atrophy"):
+    for label in ("small", "medium", "large", "Periventricular"):
         assert label in prompt, label
+    for not_sent in ("Left Cerebral White Matter", "Brain Stem", "atrophy", "percentile"):
+        assert not_sent not in prompt, not_sent
 
 
 @pytest.mark.unit
@@ -294,13 +350,13 @@ def test_rc064_measurements_and_device_labels_are_sent_unchanged(route):
                                       (90, "90 or older"), (93, "90 or older"), (104.5, "90 or older"),
                                       ("52", "50-54")])
 def test_rc064_age_is_sent_as_a_five_year_band(route, age, band):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT; name kept, the CAPA-014 records cite it): the age is
+    no longer sent at all — not even its 5-year band (the two comments do not need it)."""
     r = _post(route, {**_measurements(), "patient_age": age})
     assert r.status_code == 200, r.text
     prompt = route.provider.prompt()
-    assert f"Patient age band: {band} (years)" in prompt
-    exact = str(int(float(age)))
-    if exact not in band:
-        assert not re.search(rf"(?<![\d-]){exact}(?![\d-])", prompt.split("Patient sex")[0].split("age band:")[1])
+    assert band not in prompt and not DEMOGRAPHIC_KEYS & _keys(_record_sent(route))
+    assert "Patient age" not in prompt
 
 
 @pytest.mark.unit
@@ -315,27 +371,25 @@ def test_rc064_an_age_that_is_not_a_number_is_not_sent(route, age):
 @pytest.mark.parametrize("sex,line", [("M", "Patient sex: Male"), ("F", "Patient sex: Female"), ("other", None),
                                       ("female", None), ("X", None)])
 def test_rc064_sex_is_sent_only_as_m_or_f(route, sex, line):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT; name kept): the sex is no longer sent at all."""
     r = _post(route, {**_measurements(), "patient_sex": sex})
     assert r.status_code == 200, r.text
     prompt = route.provider.prompt()
-    if line:
-        assert line in prompt
-    else:
-        assert "Patient sex" not in prompt
+    assert "Patient sex" not in prompt and "Male" not in prompt and "Female" not in prompt
+    assert not DEMOGRAPHIC_KEYS & _keys(_record_sent(route))
 
 
 @pytest.mark.unit
 def test_rc064_system_prompt_is_the_fixed_template(route):
-    """RC-064 (f), amended 2026-10-25 at the release integration with PR #68 (PENDING owner approval): the system
-    prompt is ONE OF THE FIXED TEMPLATE VARIANTS — the template as written when the DIS block the model receives is
-    evaluated, otherwise the same template with its DIS and per-region instructions replaced (PRB-003, RC-070). Both
-    variants are fixed text: nothing of the request (typed text, measurements) is in the system prompt. (Name kept:
-    the CAPA-014 records cite it.)"""
-    from app.services.brain_report_service import REPORT_TEMPLATES, dis_not_evaluated_template
+    """RC-064 (f), amended for the verified report (REQ-FUNC-116, DRAFT, PENDING owner approval; was: one of the
+    fixed template variants, PR #68): the system prompt is ONE fixed text, `verified_report.SYSTEM_PROMPT`, for every
+    template id and every DIS state. Nothing of the request (typed text, measurements) is in it. (Name kept: the
+    CAPA-014 records cite it.)"""
+    from app.services import verified_report
+    from app.services.brain_report_service import REPORT_TEMPLATES
     not_evaluated = {"evaluation_status": "not_evaluated"}
     for template in REPORT_TEMPLATES:
-        for dis, expected in ((None, REPORT_TEMPLATES[template]),
-                              (not_evaluated, dis_not_evaluated_template(REPORT_TEMPLATES[template]))):
+        for dis in (None, not_evaluated):
             route.provider.calls.clear()
             findings = {**_measurements(), **TYPED}
             if dis is not None:
@@ -343,9 +397,10 @@ def test_rc064_system_prompt_is_the_fixed_template(route):
             r = _post(route, findings, template=template)
             assert r.status_code == 200, r.text
             system = route.provider.sent()["system"]
-            assert system == expected, f"{template}: not the fixed variant for this DIS state"
+            assert system == verified_report.SYSTEM_PROMPT, f"{template}: not the fixed system prompt"
             assert not any(text in system for text in TYPED.values())
             assert "MRN-2025-0042" not in system and "1234.5" not in system
+            assert "TECHNIQUE" not in system and "CLINICAL INDICATION" not in system
 
 
 @pytest.mark.unit
@@ -514,15 +569,23 @@ def test_rc065_tripwire_runs_in_linear_time(kind):
 
 @pytest.mark.unit
 def test_rc065_a_leak_through_a_label_is_stopped_before_the_provider(route, monkeypatch):
-    """Defence in depth: if the vocabulary check failed, the tripwire still stops the call."""
+    """Defence in depth: if the vocabulary check failed, the label still never reaches the provider. Amended for the
+    verified report (REQ-FUNC-116, DRAFT): the record carries only the device's own region names (RC-102), so a label
+    the vocabulary check let through has no path to the request; and were one to appear in the request, the tripwire
+    still refuses it (checked on the request itself)."""
     import app.services.report_payload_guard as guard
+    from app.services.brain_report_service import assert_prompt_carries_no_identifier
+    from app.services.report_payload_guard import IdentifierInPrompt
     monkeypatch.setattr(guard, "vocabulary_label", lambda value: value if isinstance(value, str) else None)
     findings = _measurements()
+    del findings["lesion_analysis"]["regions"]["Black Hole (T1)"]          # MAGNIMS regions only: a region column
     findings["lesion_analysis"]["lesions"][0]["region"] = "Juan Pérez"
+    findings["dis_assessment"]["region_details"]["Juan Pérez"] = {"present": True}
     r = _post(route, findings)
-    assert r.status_code == 503, r.text
-    assert "nothing was sent" in r.text.lower() and "juan" not in r.text.lower()
-    assert route.provider.calls == [] and route.created == []
+    assert r.status_code == 200, r.text
+    assert "juan" not in _fold(route.provider.sent_text())
+    with pytest.raises(IdentifierInPrompt):
+        assert_prompt_carries_no_identifier(route.provider.prompt() + "\nJuan Pérez", _ids())
 
 
 @pytest.mark.unit
@@ -638,8 +701,14 @@ def test_rc066_the_typed_text_is_added_to_the_draft_locally(route, language, hea
 
 @pytest.mark.unit
 def test_rc066_the_model_is_told_the_entry_is_added_by_the_application(route):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT; name kept): the model is given no TECHNIQUE or CLINICAL
+    INDICATION section to fill, so it needs no instruction about the clinician's entry and receives none; the record
+    states that the clinical indication is not available to the analysis."""
     assert _post(route, {**_measurements(), **TYPED}).status_code == 200
-    assert "added to the draft by the application" in route.provider.prompt()
+    sent = route.provider.prompt() + route.provider.sent()["system"]
+    assert "added to the draft by the application" not in sent and "clinician's entry" not in sent.lower()
+    assert "TECHNIQUE" not in sent and "CLINICAL INDICATION" not in sent
+    assert "clinical indication" in _record_sent(route)["not_available"]
 
 
 class _Records(logging.Handler):
@@ -753,9 +822,11 @@ def _outside(content, spans):
 
 @pytest.mark.unit
 @pytest.mark.parametrize("language", ["en", "es", "de"])
-def test_n1_typed_text_is_quoted_closed_and_the_ai_text_has_its_own_heading(route, language):
+def test_n1_typed_text_is_quoted_closed_and_the_ai_text_has_its_own_heading(route_text, language):
+    """(Verified report, DRAFT: the service's text is handed to the route directly — see `route_text`.)"""
     from app.services.brain_report_service import REPORT_DISCLAIMERS
-    route.provider.text = MODEL_NO_HEADING
+    route = route_text
+    route.text_state.text = MODEL_NO_HEADING
     r = _post(route, {**_measurements(), "clinical_indication": EVIL, "technique": "3T", "additional_observations": "obs"},
               language=language)
     assert r.status_code == 200, r.text
@@ -810,6 +881,9 @@ def test_n2_every_label_name_the_app_ships_is_in_the_vocabulary():
 
 @pytest.mark.unit
 def test_n2_the_default_preset_labels_are_sent(route):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT; name kept): lesion labels that are not MAGNIMS regions
+    (the default preset) are not reported per region — the record says the regions were not computed — and no
+    placeholder is sent; the lesions are still counted."""
     findings = _measurements()
     findings["lesion_analysis"]["regions"] = {
         "MS Lesion (Active)": {"lesion_count": 1, "total_volume_mm3": 5.0, "total_volume_ml": 0.005},
@@ -818,12 +892,18 @@ def test_n2_the_default_preset_labels_are_sent(route):
     assert _post(route, findings).status_code == 200
     prompt = route.provider.prompt()
     for label in ("MS Lesion (Active)", "MS Lesion (Chronic)", "T2/FLAIR Hyperintensity"):
-        assert f"- {label}:" in prompt, label
+        assert label not in prompt, label
     assert "[unlisted label" not in prompt
+    sent = _record_sent(route)
+    assert sent["regions"]["confirmed"] is False and sent["lesions"]["total_count"] == 3
+    assert "Lesions per MAGNIMS region: not computed." in prompt
 
 
 @pytest.mark.unit
 def test_n2_an_unlisted_label_keeps_one_number_and_is_named_only_in_the_draft(route):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT; name kept): an unlisted label never reaches the
+    provider, not even as a numbered placeholder (the record carries only the device's region names), so the draft
+    carries no application note saying that placeholders were sent."""
     findings = _measurements()
     la = findings["lesion_analysis"]
     la["regions"] = {"My A": {"lesion_count": 1, "total_volume_mm3": 5.0, "total_volume_ml": 0.005},
@@ -833,28 +913,30 @@ def test_n2_an_unlisted_label_keeps_one_number_and_is_named_only_in_the_draft(ro
     la["lesions"][1]["region"] = "My A"
     r = _post(route, findings)
     assert r.status_code == 200, r.text
-    prompt = route.provider.prompt()
-    assert "- [unlisted label 1]:" in prompt and "- [unlisted label 2]:" in prompt and "- Periventricular:" in prompt
-    rows = [l for l in prompt.splitlines() if l.strip().startswith(("1 |", "2 |"))]
-    assert "| [unlisted label 2] |" in rows[0] and "| [unlisted label 1] |" in rows[1], rows
-    assert "My A" not in prompt and "My B" not in prompt and "(3)" not in prompt
-    content = r.json()["content"]
-    spans, bodies = _fenced(content)
-    assert any("[unlisted label 1] = My A" in b and "[unlisted label 2] = My B" in b for b in bodies), bodies
-    assert "My A" not in _outside(content, spans)
+    sent = route.provider.sent_text()
+    assert "My A" not in sent and "My B" not in sent and "[unlisted label" not in sent
+    assert r.json()["app_notes"] == []
+    assert "My A" not in r.json()["content"]
 
 
 # N3: a value that is not a number is reported as not available, never as 0.
 @pytest.mark.unit
 def test_n3_a_value_that_is_not_a_number_is_not_available_never_zero(route):
+    """Amended for the verified report (REQ-FUNC-116, REQ-SAFE-049, DRAFT): "not computed", never 0 — in the record
+    (null) and in the code-written report the model receives (and the reader gets)."""
     findings = _measurements()
     findings["lesion_analysis"].update({"total_count": "2", "total_burden_mm3": "10.0"})
     del findings["lesion_analysis"]["total_burden_ml"]
-    assert _post(route, findings).status_code == 200
+    r = _post(route, findings)
+    assert r.status_code == 200
     prompt = route.provider.prompt()
-    assert "Total lesions: not available" in prompt
-    assert "Total burden: not available mm³ (not available mL)" in prompt
-    assert "Total lesions: 0" not in prompt and "Total burden: 0" not in prompt
+    sent = _record_sent(route)["lesions"]
+    assert sent["total_count"] is None and sent["total_volume_mm3"] is None and sent["total_volume_ml"] is None
+    assert "Lesion count: not computed." in prompt and "Total lesion volume: not computed." in prompt
+    content = r.json()["content"]
+    assert "Lesion count: not computed." in content
+    for zero in ("Lesions marked: 0", "Total lesion volume: 0", ": 0 mL"):
+        assert zero not in prompt and zero not in content
 
 
 # N4: implausible values (dates, record numbers, phones put into number fields) refuse the request.
@@ -906,11 +988,14 @@ def test_n5_exempt_words_are_those_of_the_user_prompt_only():
 # N6: the instruction about the clinician's entry only when something was typed.
 @pytest.mark.unit
 def test_n6_the_instruction_is_sent_only_when_something_was_typed(route):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT; name kept): the request is the same whether or not the
+    clinician typed something — the model is never told about the entry (it has no section that could need it)."""
     assert _post(route, _measurements()).status_code == 200
-    assert "added to the draft by the application" not in route.provider.prompt()
+    untyped = route.provider.prompt()
+    assert "added to the draft by the application" not in untyped
     route.provider.calls.clear()
     assert _post(route, {**_measurements(), "technique": "3T"}).status_code == 200
-    assert "added to the draft by the application" in route.provider.prompt()
+    assert route.provider.prompt() == untyped
 
 
 # N8: all-digit record numbers do not collide with measurement numbers.
@@ -978,10 +1063,14 @@ def test_rc064_dis_missing_or_not_evaluated_is_never_not_met(route, dis):
     assert provider_payload({"dis_assessment": dis}, None).findings["dis_assessment"] == {
         "evaluation_status": "not_evaluated"}
     assert _post(route, {**_measurements(), "dis_assessment": dis}).status_code == 200
+    # Amended for the verified report (REQ-FUNC-116, DRAFT): the record's DIS block and the code-written line
+    from app.services.dis_review_gate import NOT_EVALUATED_LINE
     prompt = route.provider.prompt()
-    assert "DIS Assessment: NOT EVALUATED" in prompt
-    assert "NOT MET" not in prompt and "DIS Assessment: MET" not in prompt
-    assert "PRESENT" not in prompt and "2/5 regions" not in prompt
+    sent = _record_sent(route)
+    assert sent["dis"]["status"] == "not evaluated" and set(sent["dis"]) == {"status", "reason"}
+    assert NOT_EVALUATED_LINE["en"] in prompt
+    assert "not met" not in prompt.lower() and "brain criterion" not in prompt
+    assert "region_presence" not in prompt and "2/5" not in prompt
 
 
 @pytest.mark.unit
@@ -1019,8 +1108,11 @@ BIDI_CHARS = "\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
 
 
 @pytest.mark.unit
-def test_r1_the_model_cannot_imitate_the_clinician_entry_or_the_app_note(route):
-    route.provider.text = HOSTILE_MODEL
+def test_r1_the_model_cannot_imitate_the_clinician_entry_or_the_app_note(route_text):
+    """(Verified report, DRAFT: the route layer, `route_text`; through the real service this text is withheld — the
+    comments may not carry headings, RC-103.)"""
+    route = route_text
+    route.text_state.text = HOSTILE_MODEL
     r = _post(route, {**_measurements(), "clinical_indication": "real typed text"})
     assert r.status_code == 200, r.text
     content = r.json()["content"]
@@ -1036,14 +1128,16 @@ def test_r1_the_model_cannot_imitate_the_clinician_entry_or_the_app_note(route):
 
 
 @pytest.mark.unit
-def test_r1_clinician_entry_and_app_notes_are_separate_response_fields(route):
+def test_r1_clinician_entry_and_app_notes_are_separate_response_fields(route_text):
     """Final check of the review: the boxes come from response fields that the viewer renders outside the Markdown
     renderer, so nothing the model writes can produce them; the single text (copy, export) is assembled from the
     fields with the fixed headings and the quoting."""
     from app.services.brain_report_service import REPORT_DISCLAIMERS
+    route = route_text            # verified report (DRAFT): the route layer; the service names the placeholder
+    route.text_state.unlisted = {"[unlisted label 1]": "My A"}
     findings = _measurements()
     findings["lesion_analysis"]["regions"]["My A"] = {"lesion_count": 1, "total_volume_mm3": 5.0, "total_volume_ml": 0.005}
-    route.provider.text = "Model text."
+    route.text_state.text = "Model text."
     body = _post(route, {**findings, "technique": "3T"}).json()
     assert body["disclaimer"] == REPORT_DISCLAIMERS["en"]
     entry = body["clinician_entry"]
@@ -1062,8 +1156,9 @@ def test_r1_clinician_entry_and_app_notes_are_separate_response_fields(route):
 
 
 @pytest.mark.unit
-def test_r1_bidi_controls_are_removed_from_typed_text_and_model_text(route):
-    route.provider.text = "Model \u202etext\u202c and \u2066iso\u2069."
+def test_r1_bidi_controls_are_removed_from_typed_text_and_model_text(route_text):
+    route = route_text            # verified report (DRAFT): the route layer
+    route.text_state.text = "Model \u202etext\u202c and \u2066iso\u2069."
     r = _post(route, {**_measurements(), "technique": "3T \u202eTFARD\u202c \u2067x\u2069"})
     content = r.json()["content"]
     assert not any(c in content for c in BIDI_CHARS)
@@ -1091,14 +1186,15 @@ def test_r3_unbounded_or_ambiguous_values_do_not_refuse_the_report(route):
            "burden_delta_percent": 1199900.0, "status_counts": {"new": 20}}
     r = _post(route, {**_measurements(), "longitudinal": lng})
     assert r.status_code == 200, r.text
-    assert "Burden delta: not available" in route.provider.prompt()
+    # verified report (DRAFT): no change figure from candidates that were not all computed; never the raw percentage
+    assert "1199900" not in route.provider.prompt() and _record_sent(route)["longitudinal"]["abstained"] is True
     route.provider.calls.clear()
     zones = {"total_brain_voxels": 23_400_000, "zones": {"Periventricular": {"voxel_count": 2_000_000, "percentage": 8.5}}}
     assert _post(route, {**_measurements(), "zone_stats": zones}).status_code == 200      # 0.4 mm isotropic
     route.provider.calls.clear()
     r = _post(route, {**_measurements(), "anomalies": [{"type": "Lesion", "confidence": 87}]})
     assert r.status_code == 200, r.text
-    assert "confidence" not in route.provider.prompt().split("Detected anomalies:")[1].split("\n")[1]
+    assert "confidence" not in route.provider.prompt() and "anomal" not in route.provider.prompt()   # not sent
 
 
 # R2: the patient's own record number, birth date or phone number in a number field is refused, checked
@@ -1139,7 +1235,9 @@ def test_r3_a_rounding_error_at_a_range_edge_does_not_refuse_the_report(route):
         {"structure_name": "Left Thalamus", "volume_ml": 7.1, "is_abnormal": True, "normative_percentile": 100.00000001}]}
     r = _post(route, _measurements(), volumetry)
     assert r.status_code == 200, r.text
-    assert "(100th percentile)" in route.provider.prompt()
+    # verified report (DRAFT): structure-level percentiles are not sent; the total brain volume is
+    assert "percentile" not in route.provider.prompt()
+    assert _record_sent(route)["brain_volumetry"]["total_brain_volume_ml"] == 1100.0
 
 
 # ============================================================================= final check (fourth review)
@@ -1183,15 +1281,17 @@ LEGITIMATE = ["## CLINICAL INDICATION\nClinician's entry (see the top of this dr
 
 @pytest.mark.unit
 @pytest.mark.parametrize("text", LEGITIMATE, ids=["see_entry", "ai_draft_bold", "code_block"])
-def test_r1_legitimate_model_text_is_not_altered(route, text):
-    route.provider.text = text
+def test_r1_legitimate_model_text_is_not_altered(route_text, text):
+    route = route_text            # verified report (DRAFT): the route layer
+    route.text_state.text = text
     body = _post(route, {**_measurements(), "clinical_indication": "real typed text"}).json()
     assert body["ai_text"] == text
 
 
 @pytest.mark.unit
-def test_r1_every_format_character_is_removed_from_the_model_text(route):
-    route.provider.text = "Soft\u00adhyphen, zero\u200bwidth, joiner\u200d, BOM\ufeff and \u202ebidi\u202c."
+def test_r1_every_format_character_is_removed_from_the_model_text(route_text):
+    route = route_text            # verified report (DRAFT): the route layer
+    route.text_state.text = "Soft\u00adhyphen, zero\u200bwidth, joiner\u200d, BOM\ufeff and \u202ebidi\u202c."
     body = _post(route, _measurements()).json()
     assert body["ai_text"] == "Softhyphen, zero width, joiner, BOM and bidi."
 
@@ -1220,8 +1320,9 @@ def test_not_available_is_printed_without_a_percent_sign(route):
     findings["zone_stats"]["zones"]["Periventricular"]["percentage"] = "8.5"
     assert _post(route, findings).status_code == 200
     prompt = route.provider.prompt()
-    assert "Burden delta: not available\n" in prompt and "voxels (not available)" in prompt
-    assert "not available%" not in prompt
+    # verified report (DRAFT): a value that is not available is null in the record and "not computed" in the text
+    assert "not available%" not in prompt and "not available" not in json.dumps(_record_sent(route))
+    assert "voxels" not in prompt                                    # zone statistics are not sent
 
 
 # ============================================================================= last check of the third review
@@ -1252,8 +1353,9 @@ def _heading_lines(text):
 
 
 @pytest.mark.unit
-def test_last_copied_text_neutralises_reserved_heading_imitations(route):
-    route.provider.text = IMITATION
+def test_last_copied_text_neutralises_reserved_heading_imitations(route_text):
+    route = route_text            # verified report (DRAFT): the route layer
+    route.text_state.text = IMITATION
     body = _post(route, {**_measurements(), "clinical_indication": "real typed text"}).json()
     assert body["ai_text"] == IMITATION                                   # the viewer's field is unchanged
     ai_part = body["content"].split("### AI draft (from measurements only)", 1)[1]
@@ -1268,8 +1370,9 @@ def test_last_copied_text_neutralises_reserved_heading_imitations(route):
 
 # 2. A zero-width space becomes a space (words stay apart); soft hyphens and the other format characters go.
 @pytest.mark.unit
-def test_last_a_zero_width_space_keeps_words_apart(route):
-    route.provider.text = "Periven\u00adtricular lesions; zero\u200bwidth inside a word."
+def test_last_a_zero_width_space_keeps_words_apart(route_text):
+    route = route_text            # verified report (DRAFT): the route layer
+    route.text_state.text = "Periven\u00adtricular lesions; zero\u200bwidth inside a word."
     body = _post(route, _measurements()).json()
     assert body["ai_text"] == "Periventricular lesions; zero width inside a word."
 

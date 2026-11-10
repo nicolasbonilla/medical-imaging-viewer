@@ -548,6 +548,10 @@ class ReportResponse(BaseModel):
     ai_draft_heading: Optional[str] = None
     app_notes: List[AppNote] = []
     ai_text: Optional[str] = None
+    # REQ-FUNC-116 / RC-103 (DRAFT, PENDING owner approval): how the verified draft was obtained — flow, outcome
+    # (passed_0/1/2, blocked, not_requested), whether the AI comments are in it (delivered / withheld /
+    # not_requested) and why not, the number of attempts and the rule ids that failed last. Codes only.
+    verification: Optional[Dict[str, Any]] = None
 
 
 class ReportTemplateInfo(BaseModel):
@@ -576,7 +580,9 @@ def get_report_service():
     response_model=ReportResponse,
     summary="Generate brain MRI report",
     description="Generate a DRAFT structured brain MRI report from measurements computed by "
-                "the device, using the Claude API, for physician review. Templates: general, "
+                "the device, for physician review. Verified report (REQ-FUNC-116, DRAFT): every number "
+                "and status is written by code; the Claude API writes two short comments that pass an "
+                "automatic check against the measurements or are withheld (`verification`). Templates: general, "
                 "ms_activity, ms_lesion_burden, ms_comprehensive, ms_longitudinal; languages "
                 "en, es, de. Only the measurements, labels of the device's vocabulary, sex and a "
                 "5-year age band are sent to the model provider; the typed text is added to the "
@@ -666,6 +672,9 @@ async def generate_report(
             volumetry=request.volumetry,
             language=request.language,
             identifiers=identifiers,
+            # RC-104 (DRAFT): who asked and for which segmentation, for the audit record of every model attempt
+            audit_actor=current_user,
+            segmentation_id=request.segmentation_id,
         )
         # Release 2026-10-25 (integration review of PR #69, item 2): CAPA-014's format-character rule (zero-width
         # space -> space, every other format character removed) is applied to the MODEL's text before the DIS check,

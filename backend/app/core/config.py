@@ -248,8 +248,15 @@ class Settings(BaseSettings):
 
     # Claude API Configuration (for report generation)
     ANTHROPIC_API_KEY: str = Field(default="", description="Anthropic API key for Claude")
-    CLAUDE_MODEL: str = Field(default="claude-sonnet-4-5-20250929")
+    # REQ-SAFE-051 / RC-106 (DRAFT, PENDING owner approval): the model of the verified report's two comments. Only
+    # an id of brain_report_service.REPORT_MODELS is called (claude-sonnet-5-5, claude-haiku-5-5); any other id —
+    # the former default claude-sonnet-4-5-20250929, retiring on 2026-11-30, included — gives a measurements-only
+    # report with the reason stated. Production does not set CLAUDE_MODEL, so this default is what it calls.
+    CLAUDE_MODEL: str = Field(default="claude-sonnet-5-5")
     CLAUDE_MAX_TOKENS: int = Field(default=4096, ge=256, le=16384)
+    # REQ-SAFE-051 / RC-105 (DRAFT): the kill switch of the AI comments. false (REPORT_LLM_ENABLED=false): no model
+    # is called; every report is the code-written measurements with the note "interpretive text not requested".
+    REPORT_LLM_ENABLED: bool = Field(default=True)
 
     # WebAuthn / Passkeys Configuration
     WEBAUTHN_RP_ID: str = Field(default="brain-mri-476110.web.app", description="Relying Party ID (domain)")

@@ -329,7 +329,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                   '     "brain_report_service.py _build_findings_prompt strips PHI; only age/sex/findings sent", ""),\n'
                                   '    ("RC-007b", "HAZ-003", "Withdrawn 2026-07-18; replaced by RC-064, RC-065 and RC-066 (CAPA-014)",\n')],
                                 "the record generator writes the withdrawn RC-007 statement again"),
-    "C4_stale_model_name": ([(TECHDOC, "                                              (claude-sonnet-4-5-20250929,\n",
+    # verified report (DRAFT, 2026-11-10): the documentation names the new default model; same defect re-introduced
+    "C4_stale_model_name": ([(TECHDOC, "                                              (claude-sonnet-5-5,\n",
                               "                                              (claude-3-5-sonnet,\n")],
                             "the technical documentation names a model the device does not use"),
     "U1_note_not_shown": ([(PANEL, "                {t('report.deidentificationNote')}\n", "                {''}\n")],
