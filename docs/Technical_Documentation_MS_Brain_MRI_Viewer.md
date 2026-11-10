@@ -760,7 +760,9 @@ The former model `claude-sonnet-4-5-20250929` retires on 2026-11-30 and is refus
 
 *(Retired from the report path by the verified report — DRAFT: every template id gives the same verified structure:
 Findings, Comparison with the previous visit (pairs only), Impression, Limitations. The table below describes the
-retired free-text design.)*
+retired free-text design. Third independent review of PR #78, T5: the retired templates are no longer in the shipped
+code — archived, NOT SHIPPED, in `docs/archive/retired_report_prompt.py`; the ids stay accepted (`TEMPLATE_IDS`).
+The report viewer names the model only when a model wrote text in the draft and shows the verification state.)*
 
 | Template | Max Tokens | Clinical Focus |
 |----------|-----------|---------------|
