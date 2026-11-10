@@ -20,7 +20,14 @@ B. v2 reads a line in bold, or in capitals of up to 60 characters, as a heading 
    not allowed in the comments: `heading_lines` names every line v2 would read as a heading (the answer check fails
    it, FMT.heading), and the rules above read every line, headings included.
 
-The rules read text only (no measurement record): what they add does not depend on the measurements.
+K. (found by the agent-platform work, PR #79) v2 reads a statement on dissemination in space only from past
+   participles and a few negations: "The findings fulfil dissemination in space.", "do not fulfil", "may meet",
+   "erfullen ... nicht" passed it. Here a sentence of the comments that names dissemination in space and uses a
+   criterion word (fulfil, meet, satisfy, support, cumplir, satisfacer, erfullen ...) is refused when DIS was not
+   evaluated (any polarity, hedged too; only the "not evaluated" wording itself is allowed), and refused when DIS was
+   evaluated and it contradicts the record (affirmed or hedged against "not met", denied against "met").
+
+Rules A and B read text only; rule K also reads the record's DIS state.
 
 @module services.report_claim_strict
 """
@@ -125,9 +132,64 @@ def sentence_elements(sentence: str) -> List[Dict[str, Any]]:
     return out
 
 
-def comment_elements(text: str) -> List[Dict[str, Any]]:
-    """The stricter rules on every sentence of every line of the model's text."""
-    return [e for s in comment_sentences(text) for e in sentence_elements(s)]
+# ─────────────────────────────────────────── K: statements on dissemination in space (found by PR #79)
+# v2's DIS_POS / DIS_NEG know past participles ("met", "fulfilled", "erfullt") and a few negations; present-tense,
+# negated and hedged wording ("the findings fulfil DIS", "do not fulfil", "may meet", "erfullen ... nicht") passed.
+DIS_NAMED = re.compile(r"\b(?:dissemination in space|dis|diseminacion en (?:el )?espacio|diseminacion espacial|"
+                       r"raumlich\w* dissemination|dissemination im raum|disseminierung im raum)\b")
+# criterion words only — not words that usually describe the lesions or the review ("present", "confirmed")
+DIS_CRITERION = re.compile(
+    r"\b(?:fulfil\w*|fulfill\w*|meet(?:s|ing)?|met|satisf\w*|support\w*|demonstrat\w*|establish\w*|consistent with|"
+    r"cumpl\w*|satisfac\w*|satisfech\w*|apoy\w*|respald\w*|demostr\w*|establec\w*|compatible|erfull\w*|gegeben|"
+    r"nachgewiesen|unterstutz\w*|vereinbar)\b")
+DETAIL_DIS_NOT_EVALUATED = "dissemination in space was not evaluated: a statement on it is not allowed"
+DETAIL_DIS_STATUS = "the statement on dissemination in space contradicts the record"
+KIND_DIS_NOT_EVALUATED = "strict_dis_not_evaluated"     # rule id E2.strict_dis_not_evaluated
+KIND_DIS_STATUS = "strict_dis_status"                   # rule id E2.strict_dis_status
+FIXED_DETAIL_TEXTS = FIXED_DETAIL_TEXTS + (DETAIL_DIS_NOT_EVALUATED, DETAIL_DIS_STATUS)
+
+
+def _negated_claim(fold: str, m: "re.Match[str]") -> bool:
+    """A criterion word is denied when a negation governs it (just before it, same clause) or follows it in the same
+    clause (German puts "nicht" after the verb: "erfullt die raumliche Dissemination nicht")."""
+    if governed_by_negation(fold, m):
+        return True
+    after = fold[m.end():]
+    cut = CLAUSE_BREAK.search(after)
+    return bool(L.NEGATION.search(after[:cut.start()] if cut else after))
+
+
+def dis_elements(sentence: str, view: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """K: a sentence of the comments that names dissemination in space and states something about it.
+
+    DIS not evaluated: any such statement — affirmed, denied or hedged — is refused; only the "not evaluated" wording
+    itself is allowed (rule 3 of the instructions). DIS evaluated: a statement that contradicts the record is
+    refused — an affirmed or hedged one against "not met", a denied one against "met"."""
+    if not isinstance(view, dict):
+        return []
+    fold = L.fold(sentence)
+    if not DIS_NAMED.search(fold):
+        return []
+    dis = view.get("dis") or {}
+    if dis.get("status") != "evaluated":
+        rest = L.NOT_EVALUATED.sub(" ", fold)
+        hits = [m.group(0) for m in DIS_CRITERION.finditer(rest)]
+        hits += [m.group(0) for m in L.DIS_POS.finditer(rest)] + [m.group(0) for m in L.DIS_NEG.finditer(rest)]
+        if hits:
+            return [{"cls": "E2", "kind": KIND_DIS_NOT_EVALUATED, "unit": sentence[:200],
+                     "detail": f"{DETAIL_DIS_NOT_EVALUATED}: {sorted(set(hits))[:4]}"}]
+        return []
+    met = bool(dis.get("dis_met_brain"))
+    wrong = [m.group(0) for m in DIS_CRITERION.finditer(fold) if _negated_claim(fold, m) == met]
+    if wrong:
+        return [{"cls": "E2", "kind": KIND_DIS_STATUS, "unit": sentence[:200],
+                 "detail": f"{DETAIL_DIS_STATUS} (met={met}): {sorted(set(wrong))[:4]}"}]
+    return []
+
+
+def comment_elements(text: str, view: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    """The stricter rules on every sentence of every line of the model's text (with the record: also K)."""
+    return [e for s in comment_sentences(text) for e in sentence_elements(s) + dis_elements(s, view)]
 
 
 def heading_lines(text: str) -> List[str]:
@@ -141,7 +203,7 @@ def heading_lines(text: str) -> List[str]:
 def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dict[str, Any]:
     """The frozen v2 result with the stricter elements of every sentence of `authored` added (never removed)."""
     res = V.verify(authored, delivered, view)
-    extra = comment_elements(authored)
+    extra = comment_elements(authored, view)
     if extra:
         res["elements"] = list(res["elements"]) + extra
         res["n_elements"] = len(res["elements"])

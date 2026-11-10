@@ -104,7 +104,7 @@ def main(argv=None):
                             fc, ic = fc.replace("{" + k + "}", v), ic.replace("{" + k + "}", v)
                         if S.heading_lines(fc) or S.heading_lines(ic):
                             strict.append({"kind": "heading", "unit": (S.heading_lines(fc) + S.heading_lines(ic))[0]})
-                        strict += S.comment_elements(fc) + S.comment_elements(ic)
+                        strict += S.comment_elements(fc, view) + S.comment_elements(ic, view)   # A, B and K (the record's DIS state)
                     product_fails = bool(v2) or bool(strict)
                     if bool(v2) and not product_fails:
                         superset_violations += 1

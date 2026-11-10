@@ -73,6 +73,7 @@ TESTS = [
     "tests/unit/test_brain_report_service.py",
     "tests/unit/test_verified_report_review1.py",       # independent review of PR #78, R1-R10
     "tests/unit/test_verified_report_review2.py",       # second independent review of PR #78, A-J
+    "tests/unit/test_verified_report_review2_dis.py",   # item K (found by PR #79): DIS wording
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -174,7 +175,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "C15_headings_only_hash": ([(VR, "    if S.heading_lines(fc) or S.heading_lines(ic):\n",
                                  '    if re.search(r"^\\s*#", fc + "\\n" + ic, re.M):\n')],
                                "B: a bold or capital comment line is read as a heading and checked for nothing"),
-    "C16_strict_rules_not_run": ([(VR, "    for e in list(res[\"elements\"]) + S.comment_elements(fc) + S.comment_elements(ic):\n",
+    "C16_strict_rules_not_run": ([(VR, "    for e in list(res[\"elements\"]) + S.comment_elements(fc, view) + S.comment_elements(ic, view):\n",
                                    "    for e in list(res[\"elements\"]):\n")],
                                  "A: only the frozen v2 rules run on the answer"),
     "C17_negation_anywhere_before": ([(STR, '    words = _clause_before(fold, m.start()).split()\n    return bool(L.NEGATION.search(" ".join(words[-GOVERNING_WORDS:])))\n',
@@ -191,7 +192,13 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "C21_negated_activity_exempt": ([(STR, "    act = [m for m in _hits(fold, L.L3)\n",
                                       "    act = [m for m in _hits(fold, L.L3) if not governed_by_negation(fold, m)\n")],
                                     "A: a denied activity statement (\"no disease activity\") passes"),
-    "C22_regenerations_not_validated": ([(VR, "    if isinstance(max_regenerations, bool) or not isinstance(max_regenerations, int) \\\n"
+    "C23_dis_statements_not_read": ([(STR, "    if not isinstance(view, dict):\n        return []\n    fold = L.fold(sentence)\n",
+                                      "    if True:\n        return []\n    fold = L.fold(sentence)\n")],
+                                    "K: a present-tense, negated or hedged statement on DIS passes (\"the findings fulfil DIS\")"),
+    "C24_negation_after_the_verb_ignored": ([(STR, "    return bool(L.NEGATION.search(after[:cut.start()] if cut else after))\n",
+                                              "    return False\n")],
+                                            "K: a German denial after the verb (\"erfullt ... nicht\") read as an affirmation"),
+    "C22_regenerations_not_validated": ([(VR,"    if isinstance(max_regenerations, bool) or not isinstance(max_regenerations, int) \\\n"
                                               "            or not 0 <= max_regenerations <= MAX_REGENERATIONS:\n", "    if False:\n")],
                                         "I: any number of regenerations is accepted"),
     # ── RC-104: the audit ──
@@ -346,7 +353,23 @@ def clean_stale():
     return stale
 
 
+def _arg(name):
+    return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else None
+
+
 def main():
+    global OUT
+    only = _arg("--only")       # comma-separated mutation names: a partial round (its own record, --out)
+    if only:
+        wanted = [n.strip() for n in only.split(",") if n.strip()]
+        unknown = [n for n in wanted if n not in M]
+        if unknown:
+            raise SystemExit(f"unknown mutations: {unknown}")
+        for name in [n for n in M if n not in wanted]:
+            del M[name]
+        if not _arg("--out"):
+            raise SystemExit("a partial round (--only) needs its own record: --out <path>")
+    OUT = _arg("--out") or OUT
     files = sorted({e[0] for edits, _w in M.values() for e in edits})
     tests = [f"backend/{t}" for t in TESTS]
     require_committed(files + tests + [os.path.relpath(__file__, REPO).replace(os.sep, "/")])

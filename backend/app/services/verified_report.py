@@ -822,7 +822,7 @@ def check(view: Dict[str, Any], lang: str, text: str) -> Tuple[Optional[str], Li
     res = V.verify(assembled, None, view)
     # second review of PR #78, A: the frozen v2 elements, all kept, plus the stricter rules on every sentence of
     # every line of the model's two comments (report_claim_strict: only adds, never removes)
-    for e in list(res["elements"]) + S.comment_elements(fc) + S.comment_elements(ic):
+    for e in list(res["elements"]) + S.comment_elements(fc, view) + S.comment_elements(ic, view):
         for rule in _rule_ids(e):
             fails.append({"rule": rule, "message": f"{e['detail']} (in: \"{e['unit']}\")"})
     if view["dis"]["status"] != "evaluated":
