@@ -40,7 +40,7 @@ from dataclasses import dataclass
 from typing import Any, FrozenSet, Mapping, Optional, Tuple
 
 from app.agent_platform.hashing import sha256_text
-from app.agent_platform.registry import Decision, RefusalCode, ToolEntry, is_id_like
+from app.agent_platform.registry import RESOURCE_KINDS, Decision, RefusalCode, ToolEntry
 from app.mcp._backend import assistant_view
 
 QUOTE = "quote"
@@ -141,12 +141,14 @@ def _escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def quote_untrusted(text: Any, source: str, *, max_chars: int = DEFAULT_MAX_CHARS) -> QuotedData:
-    """The only form in which untrusted text may be placed in a model's input (RC-113)."""
+def quote_untrusted(text: Any, source: str, *, max_chars: int = DEFAULT_MAX_CHARS,
+                    flags: Optional[Tuple[str, ...]] = None) -> QuotedData:
+    """The only form in which untrusted text may be placed in a model's input (RC-113). ``flags``: the alarm
+    already computed for this text by the caller (it is not run twice)."""
     raw = text if isinstance(text, str) else ("" if text is None else str(text))
     digest = sha256_text(raw)
     src = source if isinstance(source, str) and re.fullmatch(r"[a-z_]{1,40}", source) else "unknown"
-    flags = detect_instructions(raw)
+    flags = detect_instructions(raw) if flags is None else tuple(flags)
     if SOURCE_POLICY.get(src) != QUOTE:
         block = f"<untrusted_data source=\"{src}\" withheld=\"true\" sha256=\"{digest[:12]}\"></untrusted_data>"
         return QuotedData(block, digest, src, True, False, flags)
@@ -217,80 +219,90 @@ class RunScope:
         return isinstance(value, str) and (value in self.resource_ids or value == self.study_key)
 
 
-# Second review of PR #79, finding 3: storage locations name data outside any study scope; a dict KEY shaped
-# like a resource id (no whitespace and a separator, all digits, or a long letter-and-digit token) names a
-# resource as much as a value does.
+# Third review of PR #79, findings 1-2: "id-ness" is decided by VALUES and declared keys, never by the shape of
+# a key name (total_burden_mm3, T2-FLAIR, region_id or zone_id are not resource ids).
+# - RESOURCE_ID: the resource ids the app creates — UUIDs (segmentations, studies, series, instances, patients:
+#   segmentation_service, study_service_firestore, patient_service_firestore), DICOM UIDs, and prefixed ids
+#   (seg-/file-/study-/... followed by a capital or digit; the test fixtures and older records). Every such
+#   token in any string or dict key must belong to the run's study, unless the whole string does (a file id is
+#   a storage object path that embeds the patient and study UUIDs).
+# - RESOURCE_KEYS: keys whose values ARE resource ids whatever they look like (strings, numbers, lists); a tool
+#   may declare more (``result_resource_keys``, from its real output schema).
+# - ACTOR keys (created_by, reviewed_by_id, user_id, ...) name people, not study resources: not scope-checked.
+# - Location keys (*_path, *_uri, *_url) must hold an in-scope id as a whole; a storage location (gs://, s3://,
+#   storage URLs) anywhere refuses the value.
 STORAGE_LOCATION = re.compile(r"(?i)\b(?:gs|s3|file|ftp)://|https?://storage\.(?:googleapis|cloud\.google)\.com/")
-_ID_SHAPED = re.compile(r"^(?=\S+$)(?:.*[-:/.@].*|(?=.*\d)(?=.*[A-Za-z])[A-Za-z0-9_]{16,})$")
+RESOURCE_ID = re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
+                         r"|\b(?:1\.2|2\.25)(?:\.\d+){3,}\b"
+                         r"|\b(?:seg|file|study|series|patient|instance)-[A-Z0-9][A-Za-z0-9_-]*")
+RESOURCE_KEYS = frozenset({"segmentation_id", "file_id", "study_id", "patient_id", "series_id", "instance_id",
+                           "baseline_id", "followup_id", "longitudinal_baseline_id", "segmentation_ids", "file_ids",
+                           "study_ids", "series_ids", "patient_ids", "study_instance_uid", "series_instance_uid",
+                           "sop_instance_uid"})
+_ACTOR_KEY = re.compile(r"(?:^|_)(?:by|by_id|user_id|owner_id|reviewer_id|author_id|uploader_id|actor_id)$")
+_LOCATION_KEY = re.compile(r"(?i)(?:path|uri|url)$")
 
 
-def _foreign_key(key: str, scope: RunScope, numeric_keys: Optional[Tuple[str, ...]]) -> bool:
-    """A dict key that names a resource outside the scope. An all-digit key is a lesion or label number only
-    where numbers are not resources (arguments) or the tool declared lesion/label numbers (results)."""
-    if scope.allows(key):
-        return False
-    if key.isdigit():
-        return numeric_keys is not None and not numeric_keys
-    return bool(_ID_SHAPED.match(key))
+def _ids_in_scope(text: str, scope: RunScope) -> bool:
+    return scope.allows(text) or all(scope.allows(t) for t in RESOURCE_ID.findall(text))
 
 
-def _check_ids(value: Any, scope: RunScope, invalid: RefusalCode, numbers_are_ids: bool) -> Optional[RefusalCode]:
-    """The value of an id-like key: every string in it (alone or in a list, at any depth) must be in scope; in a
-    tool RESULT a number must be in scope too unless the tool declared the key as a lesion or label number;
-    dicts are walked by the caller; empty means none."""
+def _resource_value(value: Any, scope: RunScope, invalid: RefusalCode) -> Optional[RefusalCode]:
+    """The value of a resource key: the whole value (string, number, each list item) must be in scope."""
     if value is None or value == "" or isinstance(value, bool) or isinstance(value, Mapping):
         return None
     if isinstance(value, (int, float)):
         if isinstance(value, float) and not math.isfinite(value):
             return invalid
-        return RefusalCode.OUT_OF_SCOPE_RESOURCE if numbers_are_ids and not scope.allows(str(value)) else None
+        return None if scope.allows(str(value)) else RefusalCode.OUT_OF_SCOPE_RESOURCE
     if isinstance(value, str):
         return None if scope.allows(value) else RefusalCode.OUT_OF_SCOPE_RESOURCE
     if isinstance(value, list):
         for item in value:
             if isinstance(item, (Mapping, list)):
                 continue                                  # walked by _scope_walk
-            bad = _check_ids(item, scope, invalid, numbers_are_ids)
+            bad = _resource_value(item, scope, invalid)
             if bad:
                 return bad
         return None
     return invalid                                        # sets, bytes, objects: not plain JSON
 
 
-def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode, locations: bool,
-                exempt: Tuple[str, ...] = (), numeric_keys: Optional[Tuple[str, ...]] = None,
-                flags: Optional[list] = None) -> Optional[RefusalCode]:
-    """Review of PR #79, findings 4 and 5, and second review, finding 3: walk the WHOLE value. Every id-like key
-    (id, ids, *_id, *_ids, *path / *uri / *url) at any depth and in any list must hold only in-scope ids; a key
-    shaped like a resource id must itself be in scope; a storage location anywhere refuses the value.
-    ``numeric_keys`` None: numbers name no resource (arguments); a tuple: numbers under id-like keys are
-    resources unless the key is listed (results)."""
+def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode, resource_keys: FrozenSet[str],
+                exempt: Tuple[str, ...] = (), flags: Optional[list] = None,
+                skip_ids: bool = False) -> Optional[RefusalCode]:
+    """Walk the WHOLE value once (RC-113, RC-114): JSON shape, storage locations, resource ids by value and by
+    declared key, and the injection alarm for every string (collected in ``flags``)."""
     if depth > MAX_RESULT_DEPTH:
         return invalid
-    kw = dict(invalid=invalid, locations=locations, exempt=exempt, numeric_keys=numeric_keys, flags=flags)
     if isinstance(value, Mapping):
         for k, v in value.items():
             if not isinstance(k, str):
                 return invalid
-            if _foreign_key(k, scope, numeric_keys):
-                return RefusalCode.OUT_OF_SCOPE_RESOURCE
-            if is_id_like(k, locations=locations) and k not in exempt:
-                numbers_are_ids = numeric_keys is not None and k not in numeric_keys
-                bad = _check_ids(v, scope, invalid, numbers_are_ids)
-                if bad:
-                    return bad
-            bad = _scope_walk(v, depth + 1, scope, **kw)
+            child_skip = skip_ids or k in exempt or bool(_ACTOR_KEY.search(k))
+            if not child_skip:
+                if not _ids_in_scope(k, scope):
+                    return RefusalCode.OUT_OF_SCOPE_RESOURCE
+                if k in resource_keys or _LOCATION_KEY.search(k):
+                    bad = _resource_value(v, scope, invalid)
+                    if bad:
+                        return bad
+            bad = _scope_walk(v, depth + 1, scope, invalid=invalid, resource_keys=resource_keys, exempt=exempt,
+                              flags=flags, skip_ids=child_skip)
             if bad:
                 return bad
         return None
     if isinstance(value, list):
         for v in value:
-            bad = _scope_walk(v, depth + 1, scope, **kw)
+            bad = _scope_walk(v, depth + 1, scope, invalid=invalid, resource_keys=resource_keys, exempt=exempt,
+                              flags=flags, skip_ids=skip_ids)
             if bad:
                 return bad
         return None
     if isinstance(value, str):
         if STORAGE_LOCATION.search(value):
+            return RefusalCode.OUT_OF_SCOPE_RESOURCE
+        if not skip_ids and not _ids_in_scope(value, scope):
             return RefusalCode.OUT_OF_SCOPE_RESOURCE
         if flags is not None:
             for f in detect_instructions(value):
@@ -334,7 +346,9 @@ def check_tool_arguments(tool: ToolEntry, arguments: Any, scope: RunScope) -> De
     the tool's declared schema: no undeclared key, every value of its declared kind, every required id given."""
     if not isinstance(arguments, Mapping):
         return Decision.refuse(RefusalCode.TOOL_ARGUMENTS_INVALID)
-    bad = _scope_walk(arguments, 0, scope, invalid=RefusalCode.TOOL_ARGUMENTS_INVALID, locations=True)
+    declared_ids = frozenset(name for name, kind in tool.arguments if kind in RESOURCE_KINDS)
+    bad = _scope_walk(arguments, 0, scope, invalid=RefusalCode.TOOL_ARGUMENTS_INVALID,
+                      resource_keys=RESOURCE_KEYS | declared_ids)
     if bad:
         return Decision.refuse(bad)
     declared = dict(tool.arguments)
@@ -360,20 +374,21 @@ class ToolResultCheck:
 
 
 def validate_tool_result(result: Any, *, tool: ToolEntry, scope: RunScope, max_bytes: int) -> ToolResultCheck:
-    """Validate, clean and quote one tool result before a model sees it (RC-113, RC-114). A foreign id under
-    any id-like key at any depth (except the tool's declared ``result_exempt_keys``) refuses the WHOLE result."""
+    """Validate, clean and quote one tool result before a model sees it (RC-113, RC-114). A foreign resource id
+    anywhere — by value, as a key, under a resource or location key — or a storage location refuses the WHOLE
+    result. Third review of PR #79, finding 9: one walk (with the alarm once per string), one serialisation."""
     flags: list = []
-    bad = _scope_walk(result, 0, scope, invalid=RefusalCode.TOOL_RESULT_INVALID, locations=True,
-                      exempt=tool.result_exempt_keys, numeric_keys=tool.result_numeric_keys, flags=flags)
+    bad = _scope_walk(result, 0, scope, invalid=RefusalCode.TOOL_RESULT_INVALID,
+                      resource_keys=RESOURCE_KEYS | frozenset(tool.result_resource_keys),
+                      exempt=tool.result_exempt_keys, flags=flags)
     if bad:
         return ToolResultCheck(False, bad)
+    cleaned = assistant_view(result)       # the MCP client's own rule: no identifier, no unconfirmed activity flag
     try:
-        serialized = json.dumps(result, allow_nan=False, sort_keys=True, ensure_ascii=False)
+        text = json.dumps(cleaned, allow_nan=False, sort_keys=True, ensure_ascii=False)
     except (TypeError, ValueError):
         return ToolResultCheck(False, RefusalCode.TOOL_RESULT_INVALID)
-    if len(serialized.encode("utf-8")) > max_bytes:
+    if len(text.encode("utf-8")) > max_bytes:
         return ToolResultCheck(False, RefusalCode.TOOL_RESULT_INVALID)
-    cleaned = assistant_view(result)       # the MCP client's own rule: no identifier, no unconfirmed activity flag
-    text = json.dumps(cleaned, allow_nan=False, sort_keys=True, ensure_ascii=False)
-    quoted = quote_untrusted(text, "tool_output", max_chars=max(max_bytes, 1))
-    return ToolResultCheck(True, "ok", cleaned, quoted.block, tuple(flags), sha256_text(serialized))
+    quoted = quote_untrusted(text, "tool_output", max_chars=max(max_bytes, 1), flags=tuple(flags))
+    return ToolResultCheck(True, "ok", cleaned, quoted.block, tuple(flags), sha256_text(text))

@@ -53,7 +53,8 @@ def test_rc119_record_is_machine_readable_and_bound_by_hash():
     again = P.ProvenanceDocument.from_dict(data)
     assert again.text() == DRAFT and P.verify_document(again, DRAFT)
     data["segments"][1]["text"] = data["segments"][1]["text"].replace("7 lesions", "9 lesions")
-    assert not P.verify_document(P.ProvenanceDocument.from_dict(data), DRAFT)
+    with pytest.raises(ValueError):                 # amended by the third review: refused when loaded
+        P.ProvenanceDocument.from_dict(data)
 
 
 def test_rc119_a_unit_altered_without_its_hash_does_not_verify():
@@ -61,7 +62,9 @@ def test_rc119_a_unit_altered_without_its_hash_does_not_verify():
     text, so only the per-unit SHA-256 can show that a model unit was changed after it was marked."""
     data = mark().to_dict()
     data["segments"][1]["text"] = data["segments"][1]["text"].replace("7 lesions", "9 lesions")
-    altered = P.ProvenanceDocument.from_dict(data)
+    with pytest.raises(ValueError):                 # amended by the third review: refused when loaded
+        P.ProvenanceDocument.from_dict(data)
+    altered = P.ProvenanceDocument(tuple(P.Segment(**s) for s in data["segments"]))   # built around from_dict
     assert altered.text() != DRAFT
     assert not P.verify_document(altered, altered.text())
 

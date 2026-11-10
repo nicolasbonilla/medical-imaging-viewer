@@ -406,9 +406,10 @@ def link_signoff(tracer: Tracer, *, run_trace_id: str, run_span_id: str, signoff
     """Record the radiologist's sign-off as a span LINKED to the agent run (a new trace: the sign-off happens
     later, in another request). The reader and the sign-off record appear only as keyed hashes; the signed
     text only as its SHA-256 (the same value the sign-off record binds)."""
-    from app.agent_platform.registry import pseudonymise
+    from app.agent_platform.registry import pseudonymise, reader_key
     attrs = {"mstool.operation.name": "signoff", "mstool.signoff.record_key": pseudonymise(signoff_record_id),
-             "mstool.signoff.reader_key": pseudonymise(reader_id), "mstool.signoff.content_sha256": content_sha256}
+             "mstool.signoff.reader_key": reader_key(reader_id),          # the same key as the oversight record
+             "mstool.signoff.content_sha256": content_sha256}
     with tracer.span("mstool.signoff", "INTERNAL", attrs, links=[(run_trace_id, run_span_id)], new_trace=True) as h:
         out = {"signoff_trace_id": h.trace_id, "signoff_span_id": h.span_id, "run_trace_id": run_trace_id}
     if audit is not None:

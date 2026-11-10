@@ -34,7 +34,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from app.agent_platform.hashing import sha256_text
 from app.agent_platform.provenance import split_units
-from app.agent_platform.registry import pseudonymise
+from app.agent_platform.registry import draft_key as _registry_draft_key
+from app.agent_platform.registry import reader_key as _registry_reader_key
 
 SCHEMA = "mstool.oversight/1"
 MIN_REVIEW_SECONDS = 30
@@ -42,12 +43,9 @@ RECORD_KEYS = frozenset({"schema", "reader_key", "agent_id", "draft_key", "day",
                          "edit_chars", "edit_ratio", "sentences_total", "sentences_changed", "seconds_to_sign"})
 
 
-def reader_key(reader_id: str) -> str:
-    return pseudonymise(f"reader:{reader_id}")
-
-
-def draft_key(draft_id: str) -> str:
-    return pseudonymise(f"draft:{draft_id}")
+# The ONE pseudonym of a reader and of a draft, shared with the sign-off span (third review of PR #79, finding 6).
+reader_key = _registry_reader_key
+draft_key = _registry_draft_key
 
 
 @dataclass(frozen=True)

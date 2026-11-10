@@ -224,6 +224,11 @@ jobs:
         run: |
           export CLOUDSDK_CONFIG="$(mktemp -d)"
           python -m pytest tests/agent_platform/ -v --tb=short -o log_cli=false
+      # Third review of PR #79, finding 5: a model retirement is reported here as a warning only; the
+      # scheduled job agent-model-retirement.yml fails on it, and the registry refuses the model at call time.
+      - name: Agent model retirement (warning only)
+        continue-on-error: true
+        run: python -m app.agent_platform.cards --retirement
       - name: Upload the eval report
         if: always()
         uses: actions/upload-artifact@v4

@@ -11,9 +11,10 @@
     "Model facts read 2026-11-10 from Anthropic's model pages (deprecations: claude-sonnet-4-5-20250929 retires",
     "2026-11-30). Prices are USD per million tokens; re-check them at every re-validation.",
     "Review of PR #79 (2026-11-10): every tool declares its arguments (kind per argument; id-like arguments are resource kinds) — a call with an undeclared or mistyped argument is refused; result_exempt_keys names id-like result keys that are not resources (e.g. a new report id). Switches: an agent runs only when MSTOOL_AGENTS_SWITCH AND its own MSTOOL_AGENT_SWITCH__<ID> read 'on'.",
-    "Second review of PR #79 (2026-11-10): result_numeric_keys names the id-like result keys whose NUMBERS are lesion or label numbers (the lesion table's 'id', 'label_id'); any other number, any id-shaped dict key, any *_path / *_uri / *_url value and any storage location in a result must belong to the run's study. The list is to be confirmed against the real responses at integration (Integration_Plan P-4)."
+    "Second review of PR #79 (2026-11-10), superseded by the third review: result ids are no longer decided by key names.",
+    "Third review of PR #79 (2026-11-10): a resource id is recognised by its VALUE (UUIDs, DICOM UIDs, prefixed test ids) or by a resource key (segmentation_id, file_id, study_id, ... and the tool's result_resource_keys, taken from the real output schemas: 'id' of compare_longitudinal and list_segmentations); lesion, label, region and zone numbers are not resources; actor keys (created_by, ...) are not scope-checked. Contract tests feed the real outputs of every tool through the check (tests/agent_platform/test_review3.py)."
   ],
-  "registry_version": "2026-11-10.3",
+  "registry_version": "2026-11-10.4",
   "status": "DRAFT, PENDING owner approval",
   "models": {
     "claude-sonnet-4-5-20250929": {
@@ -45,45 +46,21 @@
       "server": "ms-clinical-mcp",
       "arguments": {
         "segmentation_id": "resource_id"
-      },
-      "result_numeric_keys": [
-        "id",
-        "label_id",
-        "lesion_id",
-        "baseline_lesion_id",
-        "followup_lesion_id",
-        "match_id"
-      ]
+      }
     },
     "summarize_dis_items": {
       "access": "read",
       "server": "ms-clinical-mcp",
       "arguments": {
         "segmentation_id": "resource_id"
-      },
-      "result_numeric_keys": [
-        "id",
-        "label_id",
-        "lesion_id",
-        "baseline_lesion_id",
-        "followup_lesion_id",
-        "match_id"
-      ]
+      }
     },
     "analyze_lesions": {
       "access": "read",
       "server": "ms-clinical-mcp",
       "arguments": {
         "segmentation_id": "resource_id"
-      },
-      "result_numeric_keys": [
-        "id",
-        "label_id",
-        "lesion_id",
-        "baseline_lesion_id",
-        "followup_lesion_id",
-        "match_id"
-      ]
+      }
     },
     "compare_longitudinal": {
       "access": "compute",
@@ -92,13 +69,8 @@
         "baseline_id": "resource_id",
         "followup_id": "resource_id"
       },
-      "result_numeric_keys": [
-        "id",
-        "label_id",
-        "lesion_id",
-        "baseline_lesion_id",
-        "followup_lesion_id",
-        "match_id"
+      "result_resource_keys": [
+        "id"
       ]
     },
     "generate_ms_report": {
@@ -112,14 +84,6 @@
       },
       "result_exempt_keys": [
         "report_id"
-      ],
-      "result_numeric_keys": [
-        "id",
-        "label_id",
-        "lesion_id",
-        "baseline_lesion_id",
-        "followup_lesion_id",
-        "match_id"
       ]
     },
     "get_image_metadata": {
@@ -153,7 +117,10 @@
       "server": "imaging-mcp",
       "arguments": {
         "file_id": "resource_id"
-      }
+      },
+      "result_resource_keys": [
+        "id"
+      ]
     },
     "get_matplotlib_visualization": {
       "access": "read",

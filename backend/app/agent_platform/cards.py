@@ -269,7 +269,45 @@ def write_card(agent_id: str) -> None:
                                    newline="\n")
 
 
-def main(argv: List[str]) -> int:  # pragma: no cover — maintainer tool
+RETIREMENT_WARNING_DAYS = 30
+
+
+def retirement_problems(today, agents: tuple = ("report-drafter", "ms-clinical-assistant")) -> List[str]:
+    """Cards whose model has retired on ``today`` (an injected date: third review of PR #79, finding 5). The
+    wall-clock check runs in its own scheduled job (.github/workflows/agent-model-retirement.yml), so a model
+    retirement never turns unrelated pull requests red; at call time the registry refuses the retired model."""
+    from datetime import date as _date
+    problems = []
+    for agent_id in agents:
+        model = load_card(agent_id).get("model") or {}
+        if model.get("retires_on") and today >= _date.fromisoformat(model["retires_on"]):
+            problems.append(f"{agent_id}: model {model['id']} retired on {model['retires_on']}; the platform refuses it "
+                            "— run the re-validation protocol for a successor (RVP-AGT-001, D-AGT-1)")
+    return problems
+
+
+def retirement_warnings(today, agents: tuple = ("report-drafter", "ms-clinical-assistant")) -> List[str]:
+    from datetime import date as _date
+    out = []
+    for agent_id in agents:
+        model = load_card(agent_id).get("model") or {}
+        if model.get("retires_on"):
+            days = (_date.fromisoformat(model["retires_on"]) - today).days
+            if 0 < days <= RETIREMENT_WARNING_DAYS:
+                out.append(f"{agent_id}: model {model['id']} retires on {model['retires_on']} ({days} days)")
+    return out
+
+
+def main(argv: List[str]) -> int:  # pragma: no cover — maintainer tool and the scheduled retirement job
+    if argv == ["--retirement"]:
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).date()
+        for w in retirement_warnings(today):
+            print(f"::warning::{w}")
+        problems = retirement_problems(today)
+        for p in problems:
+            print(f"::error::{p}")
+        return 1 if problems else 0
     if len(argv) == 2 and argv[0] in ("--write", "--check"):
         if argv[0] == "--write":
             write_card(argv[1])

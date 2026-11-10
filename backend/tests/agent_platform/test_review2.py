@@ -113,7 +113,7 @@ def test_rc119_review2_abbreviations_do_not_split(text, n):
     {"seg-OTHER": {"lesions": 3}},
     {"by_segmentation": {"seg-OTHER": 1}},
     {"segmentation_id": 12345},
-    {"lesions": [{"id": 4}]},
+    {"lesions": [{"id": "seg-OTHER"}]},                      # amended by the third review: by VALUE, not by key
     {"mask_path": "/data/seg-1.nii.gz"},
     {"note": "stored at gs://bucket/patients/other.nii.gz"},
     {"download_url": "https://storage.googleapis.com/bucket/other.nii.gz"},
@@ -125,8 +125,7 @@ def test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result(
 
 
 def test_rc114_review2_declared_lesion_numbers_in_scope_keys_and_labels_pass():
-    tool = R.ToolEntry(name="analyze_lesions", access="read", arguments=(("segmentation_id", "resource_id"),),
-                       result_numeric_keys=("id", "label_id"))
+    tool = R.ToolEntry(name="analyze_lesions", access="read", arguments=(("segmentation_id", "resource_id"),))
     ok = U.validate_tool_result({"seg-1": {"lesions": [{"id": 4, "label_id": 1}]}, "Deep White Matter": 2,
                                  "Cortical / Juxtacortical": 1, "image_uri": "seg-1"}, tool=tool, scope=SCOPE,
                                 max_bytes=10_000)
@@ -139,10 +138,13 @@ def test_rc114_review2_storage_locations_in_arguments_are_refused():
     assert not d.allowed and d.code == RefusalCode.OUT_OF_SCOPE_RESOURCE
 
 
-def test_rc114_review2_production_registry_declares_lesion_numbers_of_the_read_tools():
+def test_rc114_review2_production_registry_declares_the_result_resource_keys_of_the_real_schemas():
+    """Amended by the third review (findings 1-2): numbers under lesion, label, region or zone keys are not
+    resources at all; what a tool declares instead is which result keys DO hold resource ids (its real schema)."""
     tools = H.production_data()["tools"]
-    for name in ("analyze_lesions", "summarize_dis_items", "get_region_classification", "compare_longitudinal"):
-        assert "id" in tools[name].get("result_numeric_keys", []), name
+    assert all("result_numeric_keys" not in t for t in tools.values())
+    assert tools["compare_longitudinal"]["result_resource_keys"] == ["id"]
+    assert tools["list_segmentations"]["result_resource_keys"] == ["id"]
 
 
 # ================================================================== 4. malformed provider response

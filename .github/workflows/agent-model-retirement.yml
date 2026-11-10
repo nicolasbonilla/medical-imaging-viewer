@@ -1,0 +1,26 @@
+name: Agent model retirement check (RC-117)
+
+# Third review of PR #79, finding 5 (DRAFT, PENDING owner approval): the wall-clock check that an agent's model
+# has not retired runs HERE, daily and on demand — never inside the pull-request checks, so a provider's
+# retirement date cannot turn unrelated pull requests red. It warns 30 days ahead and fails from the retirement
+# date. At call time the agent registry refuses a retired model whatever this job says (fail closed).
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  retirement:
+    name: Agent model retirement (RVP-AGT-001, D-AGT-1)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Retirement of the models in the agent cards
+        run: python -m app.agent_platform.cards --retirement

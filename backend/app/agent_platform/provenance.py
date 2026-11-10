@@ -85,7 +85,22 @@ class ProvenanceDocument:
     def from_dict(cls, data: Mapping[str, Any]) -> "ProvenanceDocument":
         if data.get("schema") != SCHEMA:
             raise ValueError("unknown provenance schema")
-        return cls(tuple(Segment(**s) for s in data["segments"]))
+        segments = tuple(Segment(**s) for s in data["segments"])
+        for s in segments:                                  # third review of PR #79, finding 7
+            if not segment_is_valid(s):
+                raise ValueError("a provenance segment is not valid (author, kind, text or hash)")
+        return cls(segments)
+
+
+KINDS = frozenset({"heading", "sentence", "list_item", "table_row", "blank"})
+
+
+def segment_is_valid(s: Segment) -> bool:
+    """Every field of a unit has its type and an allowed value; its hash binds its text."""
+    optional = (s.agent_id, s.model_id, s.trace_id, s.verifier)
+    return (s.author in AUTHORS and s.kind in KINDS and isinstance(s.text, str) and isinstance(s.trailing, str)
+            and isinstance(s.sha256, str) and s.sha256 == _sha(s.text) and isinstance(s.edited_from_model, bool)
+            and all(v is None or isinstance(v, str) for v in optional) and not s.trailing.strip())
 
 
 def split_units(text: str) -> List[Tuple[str, str, str]]:
@@ -173,8 +188,7 @@ def mark_model_text(text: str, *, agent_id: str, model_id: str, trace_id: Option
 
 def verify_document(doc: ProvenanceDocument, text: str) -> bool:
     """The record is the text: same characters, and every unit's hash matches."""
-    return doc.text() == text and all(s.sha256 == _sha(s.text) for s in doc.segments) \
-        and all(s.author in AUTHORS for s in doc.segments)
+    return doc.text() == text and all(segment_is_valid(s) for s in doc.segments)
 
 
 def reconcile(original: ProvenanceDocument, edited_text: str) -> ProvenanceDocument:
@@ -239,10 +253,13 @@ def render_text(doc: ProvenanceDocument) -> str:
 
 
 def render_html(doc: ProvenanceDocument) -> str:
-    """HTML for the UI: one span per unit with its author (and model) as data attributes; all text escaped."""
+    """HTML for the UI: one span per unit with its author (and model) as data attributes. Third review of PR #79,
+    finding 7: an invalid record is refused (verify_document) and EVERY interpolated value is escaped."""
+    if not verify_document(doc, doc.text()):
+        raise ValueError("refusing to render a provenance record that does not verify")
     out = []
     for s in doc.segments:
-        attrs = f'data-author="{s.author}"'
+        attrs = f'data-author="{html.escape(s.author, quote=True)}"'
         if s.author == "model":
             attrs = (f'class="mstool-ai-text" {attrs} data-model="{html.escape(s.model_id or "", quote=True)}" '
                      f'data-agent="{html.escape(s.agent_id or "", quote=True)}"')

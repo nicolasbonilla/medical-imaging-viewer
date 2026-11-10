@@ -53,7 +53,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence, Tuple
 
 from app.agent_platform import provenance as prov
-from app.agent_platform.registry import FAILURE_CODES, AgentRegistry, RefusalCode, pseudonymise
+from app.agent_platform.registry import FAILURE_CODES, AgentRegistry, RefusalCode, audit_actor, pseudonymise
 from app.agent_platform.tracing import Tracer
 from app.agent_platform.untrusted import (UNTRUSTED_DATA_RULE, RunScope, check_tool_arguments, quote_untrusted,
                                           validate_tool_result)
@@ -146,6 +146,18 @@ def audit_outcome(status: str) -> str:
     return "failure" if status == "failed" else "denied"
 
 
+VERDICTS = frozenset({"pass", "withheld", "blocked"})
+
+
+def verdict_is_valid(verdict: Any) -> bool:
+    """Third review of PR #79, finding 8: a Verdict is used only when every field has its type; otherwise the run
+    fails closed (verifier_failed, audited) instead of raising outside any guard."""
+    return (isinstance(verdict, Verdict) and verdict.verdict in VERDICTS and isinstance(verdict.delivered_text, str)
+            and isinstance(verdict.withheld_count, int) and not isinstance(verdict.withheld_count, bool)
+            and verdict.withheld_count >= 0 and isinstance(verdict.verifier_name, str) and bool(verdict.verifier_name)
+            and isinstance(verdict.reasons, tuple))
+
+
 def response_is_malformed(response: Any) -> bool:
     """Second review of PR #79, finding 4: the provider's answer must have the expected shape before any field of
     it is used; anything else is a non-delivery (``model_response_invalid``), never an exception."""
@@ -207,6 +219,12 @@ class AgentRuntime:
 
     # -------------------------------------------------------------- the run
     async def _arun(self, agent_id: str, kwargs: Dict[str, Any], blocking_model: bool) -> RunResult:
+        # Third review of PR #79, finding 4: every audit record of the run names the authenticated actor passed
+        # by the caller (``actor=AuditActor(...)``, with the request) — or the platform's system actor.
+        with audit_actor(kwargs.get("actor")):
+            return await self._arun_as_actor(agent_id, kwargs, blocking_model)
+
+    async def _arun_as_actor(self, agent_id: str, kwargs: Dict[str, Any], blocking_model: bool) -> RunResult:
         model_client = kwargs.get("model_client")
         scope: RunScope = kwargs["scope"]
         reg = self.registry
@@ -266,7 +284,7 @@ class AgentRuntime:
             return res
 
         unknown = set(kwargs) - {"model_client", "scope", "system", "user_content", "untrusted", "model_id",
-                                 "overrides", "trace_id", "audit_request_id", "output_budget"}
+                                 "overrides", "trace_id", "audit_request_id", "output_budget", "actor"}
         d = reg.check_agent(agent_id, trace_id=tid)
         if not d.allowed:
             return stop("refused", d.code, audit=False)          # the registry audited it
@@ -408,14 +426,13 @@ class AgentRuntime:
                     verdict = await self._off_loop(self.verifier, blocking_model, final_text,
                                                    {"agent_id": agent_id, "model_id": model_id, "scope": scope,
                                                     "user_content": user_content})
-                    ok = isinstance(verdict, Verdict)
+                    ok = verdict_is_valid(verdict)              # third review of PR #79, finding 8
                 except Exception as exc:  # noqa: BLE001 — a verifier that fails withholds
                     vs.fail(type(exc).__name__)
                     verdict, ok = None, False
                 if ok:
                     vs.set("mstool.verifier.name", verdict.verifier_name)
-                    vs.set("mstool.verifier.verdict", verdict.verdict if verdict.verdict in ("pass", "withheld",
-                                                                                              "blocked") else "blocked")
+                    vs.set("mstool.verifier.verdict", verdict.verdict)
                     vs.set("mstool.verifier.withheld_count", verdict.withheld_count)
                     vs.rename(f"verify {verdict.verifier_name}")
                 else:

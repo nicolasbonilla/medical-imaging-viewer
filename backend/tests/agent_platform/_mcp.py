@@ -6,54 +6,17 @@ module is loaded under a private name (never as app.mcp.*), so nothing else in t
 ``FakeBackend`` replaces the module's ``api_get`` / ``api_post_compute`` with an offline store of two
 patients and records every request, to prove which ids a run asked the backend for.
 """
-import importlib.util
-import sys
-import types
 from pathlib import Path
+
+from app.agent_platform.cards import StubFastMCP, load_with_stub_fastmcp  # noqa: F401 — one stub, one loader
 
 MCP_DIR = Path(__file__).resolve().parents[2] / "app" / "mcp"
 
 
-class StubFastMCP:
-    def __init__(self, name, description=None, instructions=None, **kwargs):
-        self.name = name
-        self.description = description
-        self.instructions = instructions
-        self.tools = {}
-        self.resources = {}
-
-    def tool(self, *args, **kwargs):
-        def deco(fn):
-            self.tools[fn.__name__] = fn
-            return fn
-        return deco
-
-    def resource(self, uri, *args, **kwargs):
-        def deco(fn):
-            self.resources[uri] = fn
-            return fn
-        return deco
-
-    def run(self, *args, **kwargs):
-        raise RuntimeError("MCP servers never run inside the tests")
-
-
 def load_mcp_module(name: str):
-    """Import backend/app/mcp/<name>.py with the stub FastMCP; returns the module."""
-    stub = types.ModuleType("fastmcp")
-    stub.FastMCP = StubFastMCP
-    saved = sys.modules.get("fastmcp")
-    sys.modules["fastmcp"] = stub
-    try:
-        spec = importlib.util.spec_from_file_location(f"mstool_agent_tests_{name}", MCP_DIR / f"{name}.py")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-    finally:
-        if saved is None:
-            sys.modules.pop("fastmcp", None)
-        else:
-            sys.modules["fastmcp"] = saved
-    return module
+    """Import backend/app/mcp/<name>.py with the card's stub FastMCP (third review of PR #79, finding 10: the
+    card and the evals load the SAME server surface through ONE loader)."""
+    return load_with_stub_fastmcp(MCP_DIR / f"{name}.py", f"mstool_agent_tests_{name}")
 
 
 STUDY = {"seg-A": {"file": "file-A", "lesions": 7, "volume_ml": 3.1},

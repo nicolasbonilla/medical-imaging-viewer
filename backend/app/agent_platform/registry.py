@@ -32,6 +32,8 @@ only component that calls a model or a tool. The rules:
 
 from __future__ import annotations
 
+import contextlib
+import contextvars
 import math
 import os
 import re
@@ -193,7 +195,7 @@ class ToolEntry:
     access: str
     arguments: Tuple[Tuple[str, str], ...] = ()          # (argument, kind), as declared in the registry
     result_exempt_keys: Tuple[str, ...] = ()             # id-like result keys that name no resource (e.g. report_id)
-    result_numeric_keys: Tuple[str, ...] = ()            # id-like result keys whose NUMBERS are lesion/label numbers
+    result_resource_keys: Tuple[str, ...] = ()           # result keys whose values ARE resource ids (real schema)
 
     @property
     def scope_arguments(self) -> Tuple[str, ...]:
@@ -360,25 +362,70 @@ def pseudonymise(value: Optional[str]) -> Optional[str]:
         return "sha256:" + sha256_text(str(value))[:16]
 
 
+def reader_key(reader_id: str) -> str:
+    """The ONE pseudonym of a reader (third review of PR #79, finding 6): oversight records and the sign-off span
+    use it, so the two join."""
+    return pseudonymise(f"reader:{reader_id}")
+
+
+def draft_key(draft_id: str) -> str:
+    return pseudonymise(f"draft:{draft_id}")
+
+
+# Third review of PR #79, finding 4: who an agent run acts for. The server audit log keeps every record of an
+# authenticated actor durably and budgets only ANONYMOUS records (CAPA-015, review m9: 30 per 60 s per source);
+# an agent event sent without an actor was anonymous and could be dropped under load. The runtime now sets the
+# authenticated clinician (and the request) for the run; a run without a user (a job) acts as SYSTEM_ACTOR, a
+# fixed service identity, so a Class C agent record is never anonymous and never budgeted away.
+@dataclass(frozen=True)
+class AuditActor:
+    user_id: str
+    username: Optional[str] = None
+    role: Optional[str] = None
+    request: Any = None
+
+
+SYSTEM_ACTOR = AuditActor(user_id="system:agent-platform", username=None, role="system")
+_ACTOR: "contextvars.ContextVar[Optional[AuditActor]]" = contextvars.ContextVar("mstool_agent_actor", default=None)
+
+
+@contextlib.contextmanager
+def audit_actor(actor: Optional[AuditActor]):
+    """The actor every audit record of the enclosed run names (the run's context; worker threads inherit it)."""
+    token = _ACTOR.set(actor if isinstance(actor, AuditActor) and actor.user_id else SYSTEM_ACTOR)
+    try:
+        yield
+    finally:
+        _ACTOR.reset(token)
+
+
+def current_actor() -> AuditActor:
+    return _ACTOR.get() or SYSTEM_ACTOR
+
+
 def default_audit_sink(event: Dict[str, Any]) -> None:
-    """Forward an agent-platform event to the server audit log (CAPA-015 trail). Never raises."""
+    """Forward an agent-platform event to the server audit log (CAPA-015 trail) as the run's actor. Never raises."""
     try:
         from app.core.logging.audit import AuditEventType, AuditOutcome, emit_audit
         outcome = {"denied": AuditOutcome.DENIED, "success": AuditOutcome.SUCCESS}.get(
             event.get("outcome"), AuditOutcome.FAILURE)
         ids = {k: event[k] for k in ("agent_id", "model_id", "tool", "trace_id", "study_key") if event.get(k)}
-        emit_audit(AuditEventType.CLINICAL_AI_RUN, outcome, reason=f"agent.{event.get('code', 'unknown')}"[:64],
-                   resource_type="agent_run", resource_ids=ids)
+        actor = current_actor()
+        emit_audit(AuditEventType.CLINICAL_AI_RUN, outcome, request=actor.request, user_id=actor.user_id,
+                   username=actor.username, role=actor.role,
+                   reason=f"agent.{event.get('code', 'unknown')}"[:64], resource_type="agent_run", resource_ids=ids)
     except Exception:  # noqa: BLE001 — auditing never breaks the caller
         pass
 
 
 _UNSET = object()
+_MALFORMED = object()          # an id that was given but is not a string (e.g. None as an agent id)
 
 
 def _safe_id(value: Any, pattern: re.Pattern) -> Optional[str]:
-    """The id when well formed (matched whole: a trailing newline is not accepted), else "invalid"."""
-    if value is _UNSET:
+    """The id when well formed (matched whole: a trailing newline is not accepted); "invalid" when malformed;
+    absent (None) when not applicable — a run that never chose a model has no model id, not an invalid one."""
+    if value is _UNSET or value is None:
         return None
     return value if isinstance(value, str) and pattern.fullmatch(value) else "invalid"
 
@@ -464,12 +511,12 @@ class AgentRegistry:
                 err(f"tool {name}: id-like arguments {bad_ids} must be declared as resource kinds")
                 continue
             exempt = t.get("result_exempt_keys") or []
-            numeric = t.get("result_numeric_keys") or []
-            if not all(isinstance(x, list) and all(isinstance(k, str) for k in x) for x in (exempt, numeric)):
-                err(f"tool {name}: result_exempt_keys and result_numeric_keys must be lists of keys")
+            resource = t.get("result_resource_keys") or []
+            if not all(isinstance(x, list) and all(isinstance(k, str) for k in x) for x in (exempt, resource)):
+                err(f"tool {name}: result_exempt_keys and result_resource_keys must be lists of keys")
                 continue
             self._tools[name] = ToolEntry(name=name, access=t["access"], arguments=tuple(sorted(args.items())),
-                                          result_exempt_keys=tuple(exempt), result_numeric_keys=tuple(numeric))
+                                          result_exempt_keys=tuple(exempt), result_resource_keys=tuple(resource))
         for aid, a in data["agents"].items():
             if not isinstance(aid, str) or not _AGENT_ID.fullmatch(aid):
                 err(f"agent id not well formed: {aid!r}")
@@ -565,11 +612,12 @@ class AgentRegistry:
     # -------------------------------------------------------------- checks
     def check_agent(self, agent_id: Any, *, trace_id: Optional[str] = None) -> Decision:
         """Known, approved and switched on — the switch is read now, at every call (RC-111)."""
+        shown = _MALFORMED if agent_id is None else agent_id      # a missing agent id is audited as "invalid"
         if not self.valid:
-            return self._refuse(RefusalCode.REGISTRY_INVALID, agent_id=agent_id, trace_id=trace_id)
+            return self._refuse(RefusalCode.REGISTRY_INVALID, agent_id=shown, trace_id=trace_id)
         spec = self.agent(agent_id) if isinstance(agent_id, str) and _AGENT_ID.fullmatch(agent_id) else None
         if spec is None:
-            return self._refuse(RefusalCode.UNKNOWN_AGENT, agent_id=agent_id, trace_id=trace_id)
+            return self._refuse(RefusalCode.UNKNOWN_AGENT, agent_id=shown, trace_id=trace_id)
         if spec.approval_status != "approved":
             return self._refuse(RefusalCode.AGENT_NOT_APPROVED, agent_id=agent_id, trace_id=trace_id)
         try:

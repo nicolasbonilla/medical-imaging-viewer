@@ -7,8 +7,7 @@ card's model retires. Negative controls: scripts/safety/agent_platform_negative_
 """
 import os
 import re
-import warnings
-from datetime import date, datetime, timezone
+from datetime import date
 
 import pytest
 
@@ -101,17 +100,13 @@ def test_rc117_mcp_sdk_as_installed_matches_the_card():
         "(T-5 of the re-validation protocol): record the observed values in the card, or pin mcp.")
 
 
-def test_rc117_no_agent_runs_on_a_retired_model():
-    today = datetime.now(timezone.utc).date()
-    for agent_id in AGENTS:
-        model = C.load_card(agent_id).get("model") or {}
-        if model.get("retires_on"):
-            retires = date.fromisoformat(model["retires_on"])
-            assert today < retires, (
-                f"{agent_id}: model {model['id']} retired on {retires}. The platform refuses it (fail closed); run "
-                "the re-validation protocol for a successor (Agent_Revalidation_Protocol.md, D-AGT-1).")
-            if (retires - today).days <= 30:
-                warnings.warn(f"{agent_id}: model {model['id']} retires on {retires} ({(retires - today).days} days)")
+def test_rc117_retirement_check_with_a_frozen_date():
+    """Amended after the third review of PR #79 (finding 5): the date is INJECTED. The wall-clock check is the
+    scheduled job .github/workflows/agent-model-retirement.yml; at call time the registry refuses the model."""
+    frozen = date(2026, 11, 10)
+    assert C.retirement_problems(today=frozen) == []
+    assert any("claude-sonnet-4-5-20250929" in w for w in C.retirement_warnings(today=frozen))
+    assert C.retirement_problems(today=date(2026, 11, 30))
 
 
 _SECRET = re.compile(r"sk-ant-[A-Za-z0-9_-]{10,}|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|"

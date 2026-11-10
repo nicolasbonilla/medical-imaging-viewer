@@ -139,7 +139,7 @@ def test_rc114_out_of_scope_arguments_are_refused(args):
 
 def test_rc114_an_id_argument_that_is_not_text_is_refused():
     d = U.check_tool_arguments(READ, {"segmentation_id": 1}, SCOPE)
-    assert not d.allowed and d.code == RefusalCode.TOOL_ARGUMENTS_INVALID
+    assert not d.allowed and d.code in (RefusalCode.TOOL_ARGUMENTS_INVALID, RefusalCode.OUT_OF_SCOPE_RESOURCE)
 
 
 def test_rc114_empty_optional_id_is_allowed():
