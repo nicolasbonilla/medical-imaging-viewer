@@ -833,6 +833,25 @@ All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/agent_platform/` (
 | HAZ-023 | S4 / P2 | ALARP *(proposed)* | `mcp` unpinned and fastmcp 2.3.0 with published advisories (P-7); report model retires 2026-11-30 (D-AGT-1) |
 | HAZ-024 | S4 / P2 | ALARP *(proposed)* | no UI shows the marks or the metrics yet (P-8); thresholds (MIN_REVIEW_SECONDS = 30 s) unvalidated |
 
+### B.5 Independent adversarial review of PR #79 (2026-11-10) — DRAFT, PENDING owner approval
+
+Ten findings, each fixed with a failing-first test (`backend/tests/agent_platform/test_review1.py`, committed at `183479d` and red in CI before the fixes at `f4ddaa0`) and, where it is a risk control, a negative control (mutations V1–V12 and the re-anchored R8, R9, R11, U5–U7, X2, X5, X7, X8, O2):
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| 1 | Output cut at `max_tokens` was delivered; the per-template budget (16 384 for the comprehensive template) was never used | RC-110, RC-115 | only `end_turn` / `stop_sequence` (text) or `tool_use` (tool calls) are accepted; truncation → `output_truncated`, any other stop → `model_stop_unexpected`, nothing delivered, no tool of that answer runs; the budget is chosen by name among the registry's `max_tokens*` budgets |
+| 2 | The global switch failed OPEN on `OFF`, `false`, `0` or trailing whitespace | RC-111 | an agent is on only when the global AND its own switch read `on` (trimmed, any case); everything else is off |
+| 3 | Check-then-record race: N concurrent runs could pass a cap up to N times | RC-112 | worst case reserved atomically at authorization, settled after the call; 24 concurrent threads → exactly 11 calls fit a cap of 11. **Limit:** the ledger is per instance; the persistent ledger (P-5) must give a transactional reserve over both totals, reservation expiry and idempotent settle; until then N instances mean N × the cap |
+| 4 | Result scope looked only at fixed key names | RC-114 | every `id`, `ids`, `*_id`, `*_ids` at any depth and in any list; declared `result_exempt_keys` only |
+| 5 | Argument scope covered top-level declared or `*_id` keys only | RC-114 | per-tool argument schema in `agents.json` (bound to the real MCP signatures); undeclared or mistyped arguments refused; every id-like value anywhere, incl. `*path`/`*uri`/`*url`, scope-checked |
+| 6 | Tracer kept every span forever | RC-116 (availability) | bounded buffer of 1 000; the file exporter keeps nothing in memory |
+| 7 | A regenerated draft kept the old hash; its sign-off was a mismatch | RC-120 | the latest shown version counts; seconds from its showing |
+| 8 | Model and tool failures audited as denials | RC-110 | failures → `failure`, refusals → `denied`; a verifier that raises → `verifier_failed` |
+| 9 | A thread pool and an event loop per async tool call, blocking an async caller | (robustness) | `await arun(...)` awaits tools in the caller's loop; a sync model client runs in a worker thread; `run()` refuses inside a running loop |
+| 10 | Five SHA-256 helpers with different `None` rules; alarms could be dropped on an early return | RC-113, RC-116 | one helper (`hashing.py`: `None` hashes as empty text); alarms, executed tools and warnings set in the single `stop()` |
+
+**Correction of an earlier figure:** the first negative-control round of this addendum had **61** mutations (60 detected; 61 after the test added for P4), not 62 as first written in the PR description.
+
 **Open items (owner):** D-AGT-1 migrate the report model before 2026-11-30 through RVP-AGT-001; D-AGT-2 acceptance thresholds of RVP-AGT-001; D-AGT-3 cost caps and limits in `agents.json`; D-AGT-4 approve (or not) each agent entry; D-AGT-5 trace export destination; D-AGT-6 the fast-sign-off threshold.
 
 *End of Risk Management File*

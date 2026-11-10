@@ -27,6 +27,12 @@
   {"controls": ["RC-117"], "tests_file": "backend/tests/agent_platform/test_cards.py",
    "tests_first_commit": "6721832", "tests_first_ci": "run 42901365003: failure — test_rc117_mcp_sdk_as_installed_matches_the_card reported the unpinned MCP SDK resolved by CI (mcp 1.12.4, protocol 2025-06-18) against the card's UNRECORDED values: the control detecting a real, unrecorded SOUP fact",
    "implementation_result": "card updated with the observed values in a later commit"},
+  {"controls": ["RC-110", "RC-111", "RC-112", "RC-113", "RC-114", "RC-115", "RC-116", "RC-120"],
+   "tests_file": "backend/tests/agent_platform/test_review1.py",
+   "what": "the 10 findings of the independent adversarial review of PR #79",
+   "tests_first_commit": "183479d", "tests_first_ci": "run 42907247945: failure (collection error against 8a727a3: the controls did not exist)",
+   "implementation_commit": "f4ddaa0", "implementation_ci": "run 42908609723: success",
+   "implementation_result": "63 review tests pass; whole offline suite 390 passed, 2 skipped by design"},
   {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
    "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
  ]
