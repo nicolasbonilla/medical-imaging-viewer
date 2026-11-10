@@ -173,16 +173,25 @@ def test_rc112_tool_call_limit_counts_parallel_calls(runtime, calls):
 
 def test_rc112_cost_is_charged_and_the_study_cap_stops_the_run(registry, mem, ledger):
     rt = RT.AgentRuntime(registry, T.Tracer(mem))
-    big = lambda req: text("Long.", tin=19_000, tout=1_000)        # ~0.072 USD per call at 3/15
-    for _ in range(6):
-        res = rt.run("test-agent", model_client=ScriptedModel([big]), model_id="model-current", scope=SCOPE,
-                     system="s", user_content="u" * 100)
-        assert res.status == "delivered", res
+    big = lambda req: text("Long.", tin=19_000, tout=1_000)        # 0.072 USD charged per call at 3/15
+    results = [rt.run("test-agent", model_client=ScriptedModel([big]), model_id="model-current", scope=SCOPE,
+                      system="s", user_content="u" * 100) for _ in range(9)]
+    # 6 x 0.072 = 0.432; the 7th is authorized (0.432 + its ~0.015 worst case <= 0.50) and charged 0.072
+    assert [r.status for r in results[:7]] == ["delivered"] * 7
+    assert results[7].status == "refused" and results[7].code == RefusalCode.STUDY_COST_CAP
+    assert results[8].code == RefusalCode.STUDY_COST_CAP
     study, _day = ledger.totals("test-agent", "study-1", FIXED_NOW.date().isoformat())
-    assert study > 0.4
-    res = rt.run("test-agent", model_client=ScriptedModel([big]), model_id="model-current", scope=SCOPE,
-                 system="s", user_content="u" * 50_000)
-    assert res.status == "refused" and res.code in (RefusalCode.STUDY_COST_CAP, RefusalCode.LIMIT_EXCEEDED)
+    assert study == pytest.approx(7 * 0.072)
+    # another study of the same agent is not blocked
+    other = RunScope(study_key="study-2", resource_ids=frozenset({"seg-9"}))
+    assert rt.run("test-agent", model_client=ScriptedModel([big]), model_id="model-current", scope=other,
+                  system="s", user_content="u").status == "delivered"
+
+
+def test_rc112_oversized_input_is_refused_before_the_call(runtime):
+    model = ScriptedModel([text("x")])
+    res = run(runtime, model, user_content="u" * 50_000)          # ~25 000 estimated tokens > 20 000 limit
+    assert res.status == "refused" and res.code == RefusalCode.LIMIT_EXCEEDED and model.requests == []
 
 
 def test_rc112_impossible_usage_is_charged_at_the_worst_case(registry, mem, ledger):
