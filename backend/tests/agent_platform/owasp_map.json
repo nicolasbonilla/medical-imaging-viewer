@@ -52,7 +52,9 @@
     "test_redteam.py::test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend",
     "test_redteam.py::test_rc110_asi03_an_agent_cannot_use_another_agents_tools",
     "test_registry.py::test_rc110_tool_of_another_agent_is_refused",
-    "test_redteam.py::test_rc115_environment_cannot_override_the_model_or_the_switch"
+    "test_redteam.py::test_rc115_environment_cannot_override_the_model_or_the_switch",
+    "test_review1.py::test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped",
+    "test_review1.py::test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it"
    ],
    "note": "per-agent identity = registry id; per-agent service credentials are integration step P-4 (the MCP servers act with the clinician's own token, CAPA-008)"
   },
@@ -112,7 +114,8 @@
    "tests": [
     "test_redteam.py::test_rc112_asi08_llm10_endless_tool_loop_ends_with_nothing_delivered",
     "test_runtime.py::test_rc113_failing_tool_ends_the_run_without_a_draft",
-    "test_runtime.py::test_rc110_verifier_that_raises_means_nothing_is_delivered"
+    "test_runtime.py::test_rc110_verifier_that_raises_means_nothing_is_delivered",
+    "test_review1.py::test_rc110_review1_output_not_ended_normally_is_never_delivered"
    ]
   },
   "ASI09": {
@@ -139,7 +142,8 @@
     "test_redteam.py::test_rc111_asi10_switching_an_agent_off_stops_it_mid_run",
     "test_redteam.py::test_rc110_asi10_unregistered_agent_identity_is_refused",
     "test_redteam.py::test_rc115_asi10_lookalike_alias_or_unvalidated_model_is_refused",
-    "test_redteam.py::test_rc115_registry_entries_cannot_be_changed_while_running"
+    "test_redteam.py::test_rc115_registry_entries_cannot_be_changed_while_running",
+    "test_review1.py::test_rc111_review1_switches_fail_closed_on_anything_but_on"
    ]
   },
   "LLM01": {
@@ -203,7 +207,8 @@
    "tests": [
     "test_provenance_oversight.py::test_rc119_html_renderer_escapes_and_tags",
     "test_redteam.py::test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model",
-    "test_runtime.py::test_rc110_verifier_withholding_means_nothing_is_delivered"
+    "test_runtime.py::test_rc110_verifier_withholding_means_nothing_is_delivered",
+    "test_review1.py::test_rc110_review1_tool_calls_cut_at_the_token_limit_never_run"
    ]
   },
   "LLM06": {
@@ -260,7 +265,8 @@
     "test_redteam.py::test_rc112_llm10_parallel_tool_call_flood_is_cut_at_the_limit",
     "test_redteam.py::test_rc112_llm10_oversized_untrusted_text_is_capped_and_oversized_input_refused",
     "test_redteam.py::test_rc112_llm10_daily_cost_cap_holds_across_studies",
-    "test_registry.py::test_rc112_study_cap_refuses_the_call_that_would_pass_it"
+    "test_registry.py::test_rc112_study_cap_refuses_the_call_that_would_pass_it",
+    "test_review1.py::test_rc112_review1_concurrent_runs_cannot_pass_the_cap_together"
    ]
   }
  }

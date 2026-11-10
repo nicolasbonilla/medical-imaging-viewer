@@ -31,7 +31,6 @@ so the platform does not ask it to:
 
 from __future__ import annotations
 
-import hashlib
 import json
 import math
 import re
@@ -39,7 +38,8 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any, FrozenSet, Mapping, Optional, Tuple
 
-from app.agent_platform.registry import Decision, RefusalCode, ToolEntry
+from app.agent_platform.hashing import sha256_text
+from app.agent_platform.registry import Decision, RefusalCode, ToolEntry, is_id_like
 
 QUOTE = "quote"
 WITHHOLD = "withhold"
@@ -56,13 +56,7 @@ SOURCE_POLICY = {
 DEFAULT_MAX_CHARS = 4000
 MAX_RESULT_DEPTH = 20
 
-# Keys whose string values name a resource; every one must be in the run's scope (RC-114).
-SCOPE_KEYS = frozenset({"segmentation_id", "file_id", "study_id", "patient_id", "series_id", "baseline_id",
-                        "followup_id", "longitudinal_baseline_id", "report_id", "image_id", "instance_id"})
-
-
-def sha256_text(text: str) -> str:
-    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
+MAX_STRING_ARGUMENT = 2000
 
 
 def _strip_invisible(text: str) -> str:
@@ -221,24 +215,104 @@ class RunScope:
         return isinstance(value, str) and (value in self.resource_ids or value == self.study_key)
 
 
-def _is_scoped_name(name: Any) -> bool:
-    return isinstance(name, str) and (name in SCOPE_KEYS or name.endswith("_id"))
+def _check_ids(value: Any, scope: RunScope, invalid: RefusalCode) -> Optional[RefusalCode]:
+    """The value of an id-like key: every string in it (alone or in a list, at any depth) must be in scope.
+    Numbers name no resource here (e.g. a lesion number); dicts are walked by the caller; empty means none."""
+    if value is None or value == "" or isinstance(value, (bool, int)) or isinstance(value, Mapping):
+        return None
+    if isinstance(value, float):
+        return None if math.isfinite(value) else invalid
+    if isinstance(value, str):
+        return None if scope.allows(value) else RefusalCode.OUT_OF_SCOPE_RESOURCE
+    if isinstance(value, list):
+        for item in value:
+            if isinstance(item, (Mapping, list)):
+                continue                                  # walked by _scope_walk
+            bad = _check_ids(item, scope, invalid)
+            if bad:
+                return bad
+        return None
+    return invalid                                        # sets, bytes, objects: not plain JSON
+
+
+def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode, locations: bool,
+                exempt: Tuple[str, ...] = (), flags: Optional[list] = None) -> Optional[RefusalCode]:
+    """Review of PR #79, findings 4 and 5: walk the WHOLE value; every id-like key (id, ids, *_id, *_ids and,
+    for arguments, *path / *uri / *url) at any depth, in any list, must hold only in-scope ids."""
+    if depth > MAX_RESULT_DEPTH:
+        return invalid
+    if isinstance(value, Mapping):
+        for k, v in value.items():
+            if not isinstance(k, str):
+                return invalid
+            if is_id_like(k, locations=locations) and k not in exempt:
+                bad = _check_ids(v, scope, invalid)
+                if bad:
+                    return bad
+            bad = _scope_walk(v, depth + 1, scope, invalid=invalid, locations=locations, exempt=exempt, flags=flags)
+            if bad:
+                return bad
+        return None
+    if isinstance(value, list):
+        for v in value:
+            bad = _scope_walk(v, depth + 1, scope, invalid=invalid, locations=locations, exempt=exempt, flags=flags)
+            if bad:
+                return bad
+        return None
+    if isinstance(value, str):
+        if flags is not None:
+            for f in detect_instructions(value):
+                if f not in flags:
+                    flags.append(f)
+        return None
+    if value is None or isinstance(value, bool) or isinstance(value, int):
+        return None
+    if isinstance(value, float):
+        return None if math.isfinite(value) else invalid
+    return invalid                                        # bytes, sets, objects: not plain JSON
+
+
+def _kind_ok(kind: str, value: Any) -> bool:
+    if kind == "resource_id":
+        return isinstance(value, str) and value != ""
+    if kind == "optional_resource_id":
+        return value is None or isinstance(value, str)
+    if kind == "resource_ids":
+        return isinstance(value, list) and all(isinstance(v, str) and v for v in value)
+    if value is None:
+        return True                                       # every other declared argument may be left empty
+    if kind == "string":
+        return isinstance(value, str) and len(value) <= MAX_STRING_ARGUMENT
+    if kind == "integer":
+        return isinstance(value, int) and not isinstance(value, bool)
+    if kind == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    if kind == "boolean":
+        return isinstance(value, bool)
+    if kind == "object":
+        return isinstance(value, Mapping)
+    if kind == "array":
+        return isinstance(value, list)
+    return False
 
 
 def check_tool_arguments(tool: ToolEntry, arguments: Any, scope: RunScope) -> Decision:
-    """Every declared or id-like argument must name a resource of the run's study (RC-114)."""
+    """RC-114 (review of PR #79, finding 5): (1) every id-like value anywhere in the arguments — top level,
+    nested, in lists, plurals, path / uri / url — names a resource of the run's study; (2) the arguments match
+    the tool's declared schema: no undeclared key, every value of its declared kind, every required id given."""
     if not isinstance(arguments, Mapping):
-        return Decision.refuse(RefusalCode.OUT_OF_SCOPE_RESOURCE)
-    primary = tool.scope_arguments[0] if tool.scope_arguments else None
+        return Decision.refuse(RefusalCode.TOOL_ARGUMENTS_INVALID)
+    bad = _scope_walk(arguments, 0, scope, invalid=RefusalCode.TOOL_ARGUMENTS_INVALID, locations=True)
+    if bad:
+        return Decision.refuse(bad)
+    declared = dict(tool.arguments)
     for name, value in arguments.items():
-        if not (name in tool.scope_arguments or _is_scoped_name(name)):
-            continue
-        if name != primary and name in tool.scope_arguments and (value == "" or value is None):
-            continue                          # an optional, empty secondary id (e.g. no longitudinal baseline)
-        if not scope.allows(value):
-            return Decision.refuse(RefusalCode.OUT_OF_SCOPE_RESOURCE)
-    if primary is not None and primary not in arguments:
-        return Decision.refuse(RefusalCode.OUT_OF_SCOPE_RESOURCE)
+        kind = declared.get(name)
+        if kind is None or not _kind_ok(kind, value):
+            return Decision.refuse(RefusalCode.TOOL_ARGUMENTS_INVALID)
+    for name, kind in declared.items():
+        if kind == "resource_id" and name not in arguments:
+            return Decision.refuse(RefusalCode.TOOL_ARGUMENTS_INVALID)
     return Decision.ok()
 
 
@@ -253,41 +327,12 @@ class ToolResultCheck:
     sha256: str = ""
 
 
-def _walk(value: Any, depth: int, scope: RunScope, flags: list) -> Optional[RefusalCode]:
-    if depth > MAX_RESULT_DEPTH:
-        return RefusalCode.TOOL_RESULT_INVALID
-    if isinstance(value, Mapping):
-        for k, v in value.items():
-            if not isinstance(k, str):
-                return RefusalCode.TOOL_RESULT_INVALID
-            if k in SCOPE_KEYS and isinstance(v, str) and v and not scope.allows(v):
-                return RefusalCode.OUT_OF_SCOPE_RESOURCE
-            bad = _walk(v, depth + 1, scope, flags)
-            if bad:
-                return bad
-        return None
-    if isinstance(value, list):
-        for v in value:
-            bad = _walk(v, depth + 1, scope, flags)
-            if bad:
-                return bad
-        return None
-    if isinstance(value, str):
-        for f in detect_instructions(value):
-            if f not in flags:
-                flags.append(f)
-        return None
-    if value is None or isinstance(value, bool) or isinstance(value, int):
-        return None
-    if isinstance(value, float):
-        return None if math.isfinite(value) else RefusalCode.TOOL_RESULT_INVALID
-    return RefusalCode.TOOL_RESULT_INVALID        # bytes, sets, objects: not plain JSON
-
-
 def validate_tool_result(result: Any, *, tool: ToolEntry, scope: RunScope, max_bytes: int) -> ToolResultCheck:
-    """Validate, clean and quote one tool result before a model sees it (RC-113, RC-114)."""
+    """Validate, clean and quote one tool result before a model sees it (RC-113, RC-114). A foreign id under
+    any id-like key at any depth (except the tool's declared ``result_exempt_keys``) refuses the WHOLE result."""
     flags: list = []
-    bad = _walk(result, 0, scope, flags)
+    bad = _scope_walk(result, 0, scope, invalid=RefusalCode.TOOL_RESULT_INVALID, locations=False,
+                      exempt=tool.result_exempt_keys, flags=flags)
     if bad:
         return ToolResultCheck(False, bad)
     try:

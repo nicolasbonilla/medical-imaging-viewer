@@ -24,11 +24,12 @@ pass^k for reliability, several trials per task):
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+
+from app.agent_platform.hashing import file_sha256  # noqa: F401 — the one file-hash rule, re-exported
 
 SCHEMA = "mstool.agent-evals/1"
 SUITES = frozenset({"regression", "redteam", "capability"})
@@ -78,11 +79,6 @@ class CaseResult:
 def pass_hat_k(passes: Sequence[bool]) -> bool:
     """True only when there is at least one trial and every trial passed."""
     return len(passes) > 0 and all(p is True for p in passes)
-
-
-def file_sha256(path: Path) -> str:
-    """SHA-256 of a text file with LF line endings (so a Windows checkout hashes like CI)."""
-    return hashlib.sha256(Path(path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def load_case_file(path: Path) -> Tuple[Dict[str, Any], List[EvalCase]]:

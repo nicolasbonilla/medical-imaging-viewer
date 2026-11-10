@@ -20,7 +20,10 @@ only component that calls a model or a tool. The rules:
   ``RETIREMENT_WARNING_DAYS`` of that date the decision carries a warning.
 - The kill switch is read again at every check; a switch store that raises means OFF.
 - A model call is refused when its worst-case cost (input tokens + the full output allowance) would take
-  the agent past its cap for the study or for the UTC day. An unpriced model cannot be bounded: refused.
+  the agent past its cap for the study or for the UTC day. The worst case is RESERVED atomically when the
+  call is authorized and settled with the actual cost afterwards, so calls in flight count (CostLedger).
+  An unpriced model cannot be bounded: refused.
+- Tools declare their arguments (kind per argument); id-like arguments must be resource kinds.
 - Every refusal is sent to the audit sink with a fixed code, never with free text or patient data; the
   study key is pseudonymised with the audit log's keyed hash first.
 
@@ -33,6 +36,7 @@ import math
 import os
 import re
 import threading
+import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from enum import Enum
@@ -83,6 +87,10 @@ class RefusalCode(str, Enum):
     MODEL_CALL_FAILED = "model_call_failed"
     VERIFIER_WITHHELD = "verifier_withheld"
     VERIFIER_MISSING = "verifier_missing"
+    VERIFIER_FAILED = "verifier_failed"
+    OUTPUT_TRUNCATED = "output_truncated"
+    MODEL_STOP_UNEXPECTED = "model_stop_unexpected"
+    TOOL_ARGUMENTS_INVALID = "tool_arguments_invalid"
 
     def __str__(self) -> str:  # so f-strings and json.dumps(str(code)) give the bare code
         return self.value
@@ -115,7 +123,16 @@ REASONS: Dict[RefusalCode, str] = {
     RefusalCode.MODEL_CALL_FAILED: "the model call failed",
     RefusalCode.VERIFIER_WITHHELD: "the verifier withheld the output",
     RefusalCode.VERIFIER_MISSING: "the agent requires a verifier and none was supplied",
+    RefusalCode.VERIFIER_FAILED: "the verifier failed; nothing is delivered",
+    RefusalCode.OUTPUT_TRUNCATED: "the model's output was cut at a token limit; nothing is delivered",
+    RefusalCode.MODEL_STOP_UNEXPECTED: "the model stopped for a reason other than a normal end; nothing is delivered",
+    RefusalCode.TOOL_ARGUMENTS_INVALID: "the tool call does not match the tool's declared arguments",
 }
+
+# Codes of a run that FAILED (the model, a tool or the verifier did not work) as opposed to one the platform
+# REFUSED: failures are audited as failures, refusals as denials (review of PR #79, finding 8).
+FAILURE_CODES = frozenset({RefusalCode.MODEL_CALL_FAILED, RefusalCode.TOOL_FAILED, RefusalCode.VERIFIER_FAILED,
+                           RefusalCode.OUTPUT_TRUNCATED, RefusalCode.MODEL_STOP_UNEXPECTED})
 
 
 @dataclass(frozen=True)
@@ -124,10 +141,11 @@ class Decision:
     code: str
     reason: str
     warnings: Tuple[str, ...] = ()
+    reservation: Optional[str] = None      # a model-call authorization reserves its worst-case cost
 
     @staticmethod
-    def ok(warnings: Iterable[str] = ()) -> "Decision":
-        return Decision(True, "ok", "allowed", tuple(warnings))
+    def ok(warnings: Iterable[str] = (), reservation: Optional[str] = None) -> "Decision":
+        return Decision(True, "ok", "allowed", tuple(warnings), reservation)
 
     @staticmethod
     def refuse(code: RefusalCode) -> "Decision":
@@ -145,11 +163,36 @@ class ModelEntry:
     price_output_per_mtok: Optional[float]
 
 
+# Argument kinds a tool may declare (review of PR #79, finding 5). Resource kinds are scope-checked; every
+# other kind is type-checked; nested ``object`` / ``array`` values are walked and any id-like key in them is
+# scope-checked too.
+RESOURCE_KINDS = frozenset({"resource_id", "optional_resource_id", "resource_ids"})
+ARGUMENT_KINDS = RESOURCE_KINDS | frozenset({"string", "integer", "number", "boolean", "object", "array"})
+
+
+def is_id_like(name: Any, *, locations: bool = True) -> bool:
+    """A key that names a resource: id, ids, *_id, *_ids and, unless ``locations`` is False, *path / *uri / *url."""
+    if not isinstance(name, str):
+        return False
+    n = name.lower()
+    if n in ("id", "ids") or n.endswith("_id") or n.endswith("_ids"):
+        return True
+    return locations and (n.endswith("path") or n.endswith("uri") or n.endswith("url"))
+
+
 @dataclass(frozen=True)
 class ToolEntry:
     name: str
     access: str
-    scope_arguments: Tuple[str, ...] = ()
+    arguments: Tuple[Tuple[str, str], ...] = ()          # (argument, kind), as declared in the registry
+    result_exempt_keys: Tuple[str, ...] = ()             # id-like result keys that name no resource (e.g. report_id)
+
+    @property
+    def scope_arguments(self) -> Tuple[str, ...]:
+        return tuple(name for name, kind in self.arguments if kind in RESOURCE_KINDS)
+
+    def kind(self, argument: str) -> Optional[str]:
+        return dict(self.arguments).get(argument)
 
 
 @dataclass(frozen=True)
@@ -182,18 +225,24 @@ class KillSwitches(Protocol):
 class EnvKillSwitches:
     """Kill switches read from the environment at EVERY call (Cloud Run: a new revision changes them).
 
-    ``MSTOOL_AGENT_SWITCH__<AGENT_ID>`` (id upper-cased, ``-`` -> ``_``) must be exactly ``on``; anything
-    else, or absent, is off. ``MSTOOL_AGENTS_SWITCH=off`` turns every agent off.
+    FAIL CLOSED (review of PR #79, finding 2): an agent is on only when BOTH the global switch
+    ``MSTOOL_AGENTS_SWITCH`` and its own ``MSTOOL_AGENT_SWITCH__<AGENT_ID>`` (id upper-cased, ``-`` -> ``_``)
+    read ``on`` once surrounding whitespace is removed and case is ignored. Absent, empty, ``off``, ``OFF``,
+    ``false``, ``0``, ``yes``, ``true``, ``1`` or anything else is OFF.
     """
+
+    GLOBAL = "MSTOOL_AGENTS_SWITCH"
 
     @staticmethod
     def variable(agent_id: str) -> str:
         return "MSTOOL_AGENT_SWITCH__" + agent_id.upper().replace("-", "_")
 
+    @staticmethod
+    def _on(value: Optional[str]) -> bool:
+        return isinstance(value, str) and value.strip().lower() == "on"
+
     def is_on(self, agent_id: str) -> bool:
-        if os.environ.get("MSTOOL_AGENTS_SWITCH", "") == "off":
-            return False
-        return os.environ.get(self.variable(agent_id), "") == "on"
+        return self._on(os.environ.get(self.GLOBAL)) and self._on(os.environ.get(self.variable(agent_id)))
 
 
 class InMemoryKillSwitches:
@@ -216,28 +265,68 @@ class InMemoryKillSwitches:
 
 # ------------------------------------------------------------------ cost ledger
 class CostLedger(Protocol):
+    """Spend per (agent, study) and per (agent, UTC day), reserved and settled.
+
+    Review of PR #79, finding 3: a model call RESERVES its worst-case cost before it is made, in one atomic
+    check-and-add against both caps, and is SETTLED with its actual cost afterwards; calls in flight
+    therefore count against the caps. A persistent, multi-instance ledger (Integration_Plan.md, P-5) must
+    provide the same contract: (1) ``reserve`` as one transaction that reads both totals (settled plus
+    reserved), compares them with the caps and writes the reservation — e.g. a Firestore transaction over
+    one document per (agent, study) and one per (agent, day); (2) a reservation expiry, so the worst case
+    of an instance that died mid-call stays charged until it is reconciled, never silently freed; (3) an
+    idempotent ``settle`` keyed by the reservation id. Until then the in-memory ledger bounds ONE
+    instance: with N Cloud Run instances the effective cap is N times the configured cap."""
+
     def totals(self, agent_id: str, study_key: str, day: str) -> Tuple[float, float]: ...
+
+    def reserve(self, agent_id: str, study_key: str, day: str, usd: float, study_cap: float,
+                day_cap: float) -> Tuple[Optional[str], Optional["RefusalCode"]]: ...
+
+    def settle(self, reservation_id: str, usd: Optional[float]) -> None: ...
 
     def add(self, agent_id: str, study_key: str, day: str, usd: float) -> None: ...
 
 
 class InMemoryCostLedger:
-    """Spend per (agent, study) and per (agent, UTC day). Per instance and lost on restart: the durable
-    ledger is integration work (Integration_Plan.md, step P-5); until then the caps bound one instance."""
+    """The CostLedger contract in memory, for one instance (lost on restart)."""
 
     def __init__(self):
         self._study: Dict[Tuple[str, str], float] = {}
         self._day: Dict[Tuple[str, str], float] = {}
+        self._reservations: Dict[str, Tuple[str, str, str, float]] = {}
         self._lock = threading.Lock()
 
     def totals(self, agent_id: str, study_key: str, day: str) -> Tuple[float, float]:
         with self._lock:
             return self._study.get((agent_id, study_key), 0.0), self._day.get((agent_id, day), 0.0)
 
+    def _apply(self, agent_id: str, study_key: str, day: str, usd: float) -> None:
+        self._study[(agent_id, study_key)] = self._study.get((agent_id, study_key), 0.0) + usd
+        self._day[(agent_id, day)] = self._day.get((agent_id, day), 0.0) + usd
+
     def add(self, agent_id: str, study_key: str, day: str, usd: float) -> None:
         with self._lock:
-            self._study[(agent_id, study_key)] = self._study.get((agent_id, study_key), 0.0) + usd
-            self._day[(agent_id, day)] = self._day.get((agent_id, day), 0.0) + usd
+            self._apply(agent_id, study_key, day, usd)
+
+    def reserve(self, agent_id, study_key, day, usd, study_cap, day_cap):
+        with self._lock:                                   # check and add in ONE critical section
+            if self._study.get((agent_id, study_key), 0.0) + usd > study_cap + 1e-12:
+                return None, RefusalCode.STUDY_COST_CAP
+            if self._day.get((agent_id, day), 0.0) + usd > day_cap + 1e-12:
+                return None, RefusalCode.DAY_COST_CAP
+            rid = uuid.uuid4().hex
+            self._reservations[rid] = (agent_id, study_key, day, usd)
+            self._apply(agent_id, study_key, day, usd)
+            return rid, None
+
+    def settle(self, reservation_id: str, usd: Optional[float]) -> None:
+        with self._lock:
+            entry = self._reservations.pop(reservation_id, None)
+            if entry is None:
+                raise ValueError("unknown or already settled reservation")
+            agent_id, study_key, day, reserved = entry
+            if usd is not None:                            # None: the actual cost is unknown, the worst case stays
+                self._apply(agent_id, study_key, day, usd - reserved)
 
 
 # ------------------------------------------------------------------ audit
@@ -254,8 +343,8 @@ def pseudonymise(value: Optional[str]) -> Optional[str]:
         from app.core.logging.audit import keyed_hash
         return "hmac:" + keyed_hash(str(value))
     except Exception:  # pragma: no cover — the audit module always imports in the backend
-        import hashlib
-        return "sha256:" + hashlib.sha256(str(value).encode("utf-8")).hexdigest()[:16]
+        from app.agent_platform.hashing import sha256_text
+        return "sha256:" + sha256_text(str(value))[:16]
 
 
 def default_audit_sink(event: Dict[str, Any]) -> None:
@@ -352,11 +441,21 @@ class AgentRegistry:
             if t.get("access") not in TOOL_ACCESS:
                 err(f"tool {name}: access must be one of {sorted(TOOL_ACCESS)}")
                 continue
-            scope = t.get("scope_arguments") or []
-            if not isinstance(scope, list) or not all(isinstance(s, str) for s in scope):
-                err(f"tool {name}: scope_arguments must be a list of argument names")
+            args = t.get("arguments")
+            if not isinstance(args, Mapping) or not all(isinstance(k, str) and v in ARGUMENT_KINDS
+                                                         for k, v in args.items()):
+                err(f"tool {name}: arguments must map each argument to one of {sorted(ARGUMENT_KINDS)}")
                 continue
-            self._tools[name] = ToolEntry(name=name, access=t["access"], scope_arguments=tuple(scope))
+            bad_ids = [k for k, v in args.items() if is_id_like(k) and v not in RESOURCE_KINDS]
+            if bad_ids:
+                err(f"tool {name}: id-like arguments {bad_ids} must be declared as resource kinds")
+                continue
+            exempt = t.get("result_exempt_keys") or []
+            if not isinstance(exempt, list) or not all(isinstance(k, str) for k in exempt):
+                err(f"tool {name}: result_exempt_keys must be a list of keys")
+                continue
+            self._tools[name] = ToolEntry(name=name, access=t["access"], arguments=tuple(sorted(args.items())),
+                                          result_exempt_keys=tuple(exempt))
         for aid, a in data["agents"].items():
             if not isinstance(aid, str) or not _AGENT_ID.fullmatch(aid):
                 err(f"agent id not well formed: {aid!r}")
@@ -529,12 +628,19 @@ class AgentRegistry:
         estimate = self.estimate_cost_usd(model_id, input_tokens, max_output_tokens)
         if estimate is None:
             return self._refuse(RefusalCode.COST_UNKNOWN, **ctx)
-        study_spent, day_spent = self._ledger.totals(agent_id, study_key, self.today().isoformat())
-        if study_spent + estimate > spec.cost_cap_per_study_usd + 1e-12:
-            return self._refuse(RefusalCode.STUDY_COST_CAP, **ctx)
-        if day_spent + estimate > spec.cost_cap_per_day_usd + 1e-12:
-            return self._refuse(RefusalCode.DAY_COST_CAP, **ctx)
-        return d
+        # Review of PR #79, finding 3: reserve the worst case atomically (no check-then-record race).
+        reservation, code = self._ledger.reserve(agent_id, study_key, self.today().isoformat(), estimate,
+                                                 spec.cost_cap_per_study_usd, spec.cost_cap_per_day_usd)
+        if reservation is None:
+            return self._refuse(code or RefusalCode.STUDY_COST_CAP, **ctx)
+        return Decision.ok(d.warnings, reservation)
+
+    def settle(self, reservation: str, usd: Optional[float]) -> None:
+        """Charge a reserved call its actual cost (``None``: unknown, the reserved worst case stays charged)."""
+        if usd is not None and (not isinstance(usd, (int, float)) or isinstance(usd, bool) or not math.isfinite(usd)
+                                or usd < 0):
+            usd = None
+        self._ledger.settle(reservation, None if usd is None else float(usd))
 
     def record_cost(self, agent_id: str, study_key: str, usd: float) -> None:
         if not isinstance(usd, (int, float)) or isinstance(usd, bool) or not math.isfinite(usd) or usd < 0:

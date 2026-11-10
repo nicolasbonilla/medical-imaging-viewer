@@ -31,8 +31,9 @@ INJECTIONS = {
 }
 
 SCOPE = U.RunScope(study_key="study-1", resource_ids=frozenset({"seg-1", "seg-0", "file-1"}))
-READ = ToolEntry(name="read_measurements", access="read", scope_arguments=("segmentation_id",))
-COMPARE = ToolEntry(name="compare_visits", access="compute", scope_arguments=("baseline_id", "followup_id"))
+READ = ToolEntry(name="read_measurements", access="read", arguments=(("segmentation_id", "resource_id"),))
+COMPARE = ToolEntry(name="compare_visits", access="compute",
+                    arguments=(("baseline_id", "resource_id"), ("followup_id", "resource_id")))
 
 
 # ------------------------------------------------------------------ RC-113 quoting
@@ -128,7 +129,6 @@ def test_rc114_in_scope_arguments_are_allowed():
     {"segmentation_id": "seg-1 "},
     {"segmentation_id": "SEG-1"},
     {"segmentation_id": ["seg-1", "seg-2"]},
-    {"segmentation_id": 1},
     {"segmentation_id": "seg-1", "file_id": "file-OTHER"},          # undeclared id argument, foreign
     {"segmentation_id": "seg-1", "patient_id": "p-2"},               # any *_id argument is scoped
 ])
@@ -137,9 +137,14 @@ def test_rc114_out_of_scope_arguments_are_refused(args):
     assert not d.allowed and d.code == RefusalCode.OUT_OF_SCOPE_RESOURCE
 
 
+def test_rc114_an_id_argument_that_is_not_text_is_refused():
+    d = U.check_tool_arguments(READ, {"segmentation_id": 1}, SCOPE)
+    assert not d.allowed and d.code == RefusalCode.TOOL_ARGUMENTS_INVALID
+
+
 def test_rc114_empty_optional_id_is_allowed():
     tool = ToolEntry(name="generate_ms_report", access="compute",
-                     scope_arguments=("segmentation_id", "longitudinal_baseline_id"))
+                     arguments=(("segmentation_id", "resource_id"), ("longitudinal_baseline_id", "optional_resource_id")))
     assert U.check_tool_arguments(tool, {"segmentation_id": "seg-1", "longitudinal_baseline_id": ""}, SCOPE).allowed
 
 

@@ -26,11 +26,12 @@ Rules:
 from __future__ import annotations
 
 import difflib
-import hashlib
 import html
 import re
 from dataclasses import asdict, dataclass, replace
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+
+from app.agent_platform.hashing import sha256_text as _sha
 
 SCHEMA = "mstool.ai-provenance/1"
 AUTHORS = ("software", "model", "clinician")
@@ -41,10 +42,6 @@ _LIST = re.compile(r"\s*([-*+]\s|\d{1,3}[.)]\s)")
 _TABLE = re.compile(r"\s*\|")
 _SENT_SPLIT = re.compile(r"(?<=[.!?;])(\s+)(?=\S)")
 _PREFIX = re.compile(r"^(\s*(?:#{1,6}\s+|[-*+]\s+|\d{1,3}[.)]\s+|\|\s*)?)")
-
-
-def _sha(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)

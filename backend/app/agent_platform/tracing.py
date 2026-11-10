@@ -37,8 +37,8 @@ owner's data-processing decision first).
 
 from __future__ import annotations
 
+import collections
 import contextvars
-import hashlib
 import json
 import math
 import os
@@ -48,7 +48,9 @@ import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Deque, Dict, Iterator, List, Optional, Sequence, Tuple
+
+from app.agent_platform.hashing import sha256_text
 
 SEMCONV_VERSION = "1.37.0"
 SEMCONV_SCHEMA_URL = "https://opentelemetry.io/schemas/1.37.0"
@@ -141,10 +143,13 @@ ALLOWED_ATTRIBUTES: Dict[str, Callable[[Any], bool]] = {
 }
 
 
-def content_sha256(text: Any) -> str:
-    """SHA-256 of the UTF-8 text (the only form in which content enters a span)."""
-    raw = text if isinstance(text, str) else json.dumps(text, sort_keys=True, ensure_ascii=False, default=str)
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+# The only form in which content enters a span: the platform's one SHA-256 helper (hashing.py).
+content_sha256 = sha256_text
+
+# Review of PR #79, finding 6: finished spans kept in memory are a bounded buffer (most recent first out),
+# and an exporter that writes elsewhere (a file) keeps nothing in memory.
+FINISHED_BUFFER = 1000
+IN_MEMORY_EXPORTER_LIMIT = 100_000
 
 
 def _new_trace_id() -> str:
@@ -190,12 +195,12 @@ class NoopExporter:
 
 
 class InMemoryExporter:
-    """Keeps finished spans in memory (tests; the eval report)."""
+    """Keeps finished spans in memory (tests; the eval report), at most ``limit`` (oldest dropped first)."""
 
     retains = True
 
-    def __init__(self):
-        self.spans: List[Span] = []
+    def __init__(self, limit: int = IN_MEMORY_EXPORTER_LIMIT):
+        self.spans: Deque[Span] = collections.deque(maxlen=limit)
         self._lock = threading.Lock()
 
     def export(self, span: Span) -> None:
@@ -204,9 +209,10 @@ class InMemoryExporter:
 
 
 class OtlpJsonFileExporter:
-    """Appends each span as one OTLP/JSON line to a local file (off unless both settings are given)."""
+    """Appends each span as one OTLP/JSON line to a local file (off unless both settings are given); keeps no
+    span in memory."""
 
-    retains = True
+    retains = False
 
     def __init__(self, path: str):
         self.path = path
@@ -301,6 +307,13 @@ class SpanHandle:
             return False
         return self.set(key, content_sha256(content))
 
+    def rename(self, name: str) -> bool:
+        """Rename the span (e.g. ``verify <verifier>`` once the verifier is known); ids and codes only."""
+        if isinstance(name, str) and re.fullmatch(r"[A-Za-z0-9_.:/-]{1,64}( [A-Za-z0-9_.:/-]{1,128})?", name):
+            self._span.name = name
+            return True
+        return False
+
     def fail(self, error_type: str) -> None:
         self._span.status = "error"
         self.set("error.type", error_type)
@@ -318,7 +331,7 @@ class Tracer:
     def __init__(self, exporter=None, *, clock_ns: Callable[[], int] = time.time_ns):
         self.exporter = exporter if exporter is not None else exporter_from_env()
         self.clock_ns = clock_ns
-        self.finished: List[Span] = []
+        self.finished: Deque[Span] = collections.deque(maxlen=FINISHED_BUFFER)
 
     @contextmanager
     def span(self, name: str, kind: str, attributes: Optional[Dict[str, Any]] = None, *,

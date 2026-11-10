@@ -26,9 +26,9 @@ def make_registry_data(**overrides):
                                "use_status": "in_use"},
         },
         "tools": {
-            "read_measurements": {"access": "read", "scope_arguments": ["segmentation_id"]},
-            "compare_visits": {"access": "compute", "scope_arguments": ["baseline_id", "followup_id"]},
-            "write_annotation": {"access": "write", "scope_arguments": ["segmentation_id"]},
+            "read_measurements": {"access": "read", "arguments": {"segmentation_id": "resource_id"}},
+            "compare_visits": {"access": "compute", "arguments": {"baseline_id": "resource_id", "followup_id": "resource_id"}},
+            "write_annotation": {"access": "write", "arguments": {"segmentation_id": "resource_id", "note": "string"}},
         },
         "agents": {
             "test-agent": {

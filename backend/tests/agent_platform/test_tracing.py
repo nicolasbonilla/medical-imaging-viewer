@@ -151,7 +151,7 @@ def test_rc116_noop_exporter_keeps_nothing():
     tracer = T.Tracer(T.NoopExporter())
     with tracer.agent_span("test-agent", provider="anthropic"):
         pass
-    assert tracer.finished == []
+    assert len(tracer.finished) == 0
 
 
 # ------------------------------------------------------------------ links

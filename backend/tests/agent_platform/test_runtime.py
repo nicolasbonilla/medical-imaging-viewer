@@ -291,7 +291,7 @@ def test_rc110_verifier_that_raises_means_nothing_is_delivered(registry, mem):
     rt = RT.AgentRuntime(registry, T.Tracer(mem), verifier=verifier)
     res = rt.run("test-agent", model_client=ScriptedModel([text("Seven lesions.")]), model_id="model-current",
                  scope=SCOPE, system="s", user_content="u")
-    assert res.status == "withheld" and res.text is None
+    assert res.status == "failed" and res.code == RefusalCode.VERIFIER_FAILED and res.text is None
 
 
 def test_rc110_delivered_text_is_the_verifier_text(registry, mem):

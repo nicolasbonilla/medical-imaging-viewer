@@ -10,7 +10,8 @@ What is recorded, per draft and reader, when the reader signs:
   and that count over the length of the shown text;
 - ``sentences_total`` / ``sentences_changed``: units of the shown text (provenance.split_units) changed or
   removed, plus units added;
-- ``seconds_to_sign``: from the FIRST time the draft was shown to that reader.
+- ``seconds_to_sign``: from the time the signed version was shown to that reader (a regenerated draft
+  restarts the clock; the same version shown again does not).
 
 No text, no patient, study or segmentation id is kept: the draft and the reader are named by the audit
 log's keyed hash, and the text is held only as its SHA-256 between "shown" and "signed" (to refuse a
@@ -25,13 +26,13 @@ hospital's figures drift are integration steps (Integration_Plan.md, P-8).
 from __future__ import annotations
 
 import difflib
-import hashlib
 import statistics
 import threading
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
+from app.agent_platform.hashing import sha256_text
 from app.agent_platform.provenance import split_units
 from app.agent_platform.registry import pseudonymise
 
@@ -47,10 +48,6 @@ def reader_key(reader_id: str) -> str:
 
 def draft_key(draft_id: str) -> str:
     return pseudonymise(f"draft:{draft_id}")
-
-
-def _sha(text: str) -> str:
-    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -99,10 +96,15 @@ class OversightRecorder:
         self._lock = threading.Lock()
 
     def shown(self, draft_id: str, reader_id: str, agent_id: str, draft_text: str) -> None:
+        """Review of PR #79, finding 7: the LATEST version shown is the one a sign-off must match. A new text
+        under the same draft id (a regenerated draft) replaces the pending one and restarts the clock; the
+        same text shown again keeps the time it was first shown."""
         key = (draft_key(draft_id), reader_key(reader_id))
+        digest = sha256_text(draft_text)
         with self._lock:
-            self._pending.setdefault(key, {"agent_id": agent_id, "shown_at": self._clock(),
-                                           "draft_sha256": _sha(draft_text)})
+            current = self._pending.get(key)
+            if current is None or current["draft_sha256"] != digest:
+                self._pending[key] = {"agent_id": agent_id, "shown_at": self._clock(), "draft_sha256": digest}
 
     def pending_records(self) -> List[Dict[str, Any]]:
         with self._lock:
@@ -114,7 +116,7 @@ class OversightRecorder:
         key = (draft_key(draft_id), reader_key(reader_id))
         with self._lock:
             pending = self._pending.get(key)
-            if pending is None or pending["draft_sha256"] != _sha(shown_text):
+            if pending is None or pending["draft_sha256"] != sha256_text(shown_text):
                 self.mismatches += 1
                 return None
             del self._pending[key]

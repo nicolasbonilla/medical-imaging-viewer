@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import ast
 import asyncio
-import hashlib
 import importlib.util
 import inspect
 import json
@@ -36,14 +35,12 @@ import types
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from app.agent_platform.hashing import sha256_text
+
 CARD_SCHEMA = "mstool.agent-card/1"
 CARDS_DIR = Path(__file__).with_name("cards")
 BACKEND = Path(__file__).resolve().parents[2]
 REPO = BACKEND.parent
-
-
-def sha256_text(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 # ------------------------------------------------------------------ MCP modules without fastmcp

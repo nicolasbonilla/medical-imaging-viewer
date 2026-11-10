@@ -161,16 +161,19 @@ def test_rc111_unreadable_switch_is_off(switches, ledger, audit_events):
     assert not d.allowed and d.code == R.RefusalCode.SWITCH_UNREADABLE
 
 
-def test_rc111_environment_switch_is_off_unless_exactly_on(monkeypatch):
+def test_rc111_environment_switch_is_off_unless_on(monkeypatch):
+    """Amended after the review of PR #79 (finding 2): 'on' is compared after trimming and ignoring case, and the
+    global switch must be on as well; every other value is off (test_review1.py covers the full table)."""
     sw = R.EnvKillSwitches()
+    monkeypatch.setenv("MSTOOL_AGENTS_SWITCH", "on")
     monkeypatch.delenv("MSTOOL_AGENT_SWITCH__TEST_AGENT", raising=False)
     assert not sw.is_on("test-agent")                                   # absent: off
-    for value in ("ON", "true", "1", "yes", " on", "on "):
+    for value in ("true", "1", "yes", "", "off", "onn"):
         monkeypatch.setenv("MSTOOL_AGENT_SWITCH__TEST_AGENT", value)
         assert not sw.is_on("test-agent"), value
     monkeypatch.setenv("MSTOOL_AGENT_SWITCH__TEST_AGENT", "on")
     assert sw.is_on("test-agent")
-    monkeypatch.setenv("MSTOOL_AGENTS_SWITCH", "off")                    # the master switch wins
+    monkeypatch.setenv("MSTOOL_AGENTS_SWITCH", "off")                    # the global switch wins
     assert not sw.is_on("test-agent")
 
 
@@ -226,7 +229,7 @@ def test_rc112_study_cap_refuses_the_call_that_would_pass_it(registry, audit_eve
         d = registry.authorize_model_call("test-agent", "model-current", study_key="s1",
                                           input_tokens=10_000, max_output_tokens=1_000)
         assert d.allowed, d
-        registry.record_cost("test-agent", "s1", 0.045)
+        registry.settle(d.reservation, 0.045)
     d = registry.authorize_model_call("test-agent", "model-current", study_key="s1",
                                       input_tokens=10_000, max_output_tokens=1_000)
     assert not d.allowed and d.code == R.RefusalCode.STUDY_COST_CAP
