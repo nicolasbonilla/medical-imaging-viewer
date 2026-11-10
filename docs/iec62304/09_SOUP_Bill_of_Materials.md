@@ -81,6 +81,17 @@
 
 *SOUP anomalies are reviewed monthly using npm audit, pip-audit, and NVD database queries.*
 
+## 5b. Agent platform SOUP rows (DRAFT, PENDING owner approval)
+
+*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79). DRAFT, PENDING owner approval. The agent platform (`backend/app/agent_platform/`) adds **no** third-party package: it uses the Python standard library only. The rows below record SOUP the agents already depend on, as observed on 2026-11-10, with their machine-readable cards in `backend/app/agent_platform/cards/`.*
+
+| SOUP ID | Name | Version | Manufacturer | License | Safety Class | Purpose | Known Anomalies |
+|---------|------|---------|-------------|---------|-------------|---------|----------------|
+| SOUP-AI-001 | Claude Sonnet 4.5 (remote model, `claude-sonnet-4-5-20250929`), Anthropic API, `anthropic-version: 2023-06-01`, via SOUP-BE-011 | snapshot 20250929 | Anthropic | Commercial terms of service (no licence to the weights) | **C** *(proposed)* | Drafts the report text from measurements only (RC-064); card `report-drafter.json` | **Deprecated; retires 2026-11-30** (Anthropic deprecations page, read 2026-11-10). Unsupported content without a check: 452/452 drafts in the agents benchmark for the models tested so far (Claude not yet measured). Retention / data-processing terms pending (CAPA-014 D-3) |
+| SOUP-AI-002 | MCP Python SDK (`mcp`), transitive dependency of SOUP-BE-014 FastMCP | **1.12.4 as resolved in CI on 2026-11-10 — NOT pinned** (`mcp>=1.8.0,<2.0.0` from fastmcp 2.3.0) | Model Context Protocol project | MIT | A *(as SOUP-BE-014)* | Protocol layer of the STDIO assistant servers; speaks MCP revision **2025-06-18** (`LATEST_PROTOCOL_VERSION`), older than the 2025-11-25 and 2026-07-28 revisions | Unpinned: a new install may resolve another version (detected by `test_cards.py`). SOUP-BE-014 FastMCP 2.3.0 has published security advisories fixed in later releases (PyPI, read 2026-11-10): review pending (Integration_Plan P-7) |
+| — (test tool, not SOUP) | agents-benchmark deterministic verifier v3 (`backend/tests/agent_platform/graders/report_verifier_v3/`) | research/agents-benchmark @ f3c1976, SHA-256 bound | in-house | — | — | Code-based grader of the offline eval harness only; never shipped in the application | One measured miss kept as a capability case ("fulfil dissemination in space" not flagged) |
+| — (standard, not SOUP) | OpenTelemetry GenAI semantic conventions | **v1.37.0** (pinned) | OpenTelemetry | Apache-2.0 (specification) | — | Names and kinds of the agent spans (`tracing.py`); no OpenTelemetry package is used | Development stability; later moved to the semantic-conventions-genai repository without a release |
+
 ## 6. CycloneDX Software Bill of Materials
 
 A machine-readable SBOM in CycloneDX 1.5 format is maintained at `docs/iec62304/SBOM_CycloneDX.json`.

@@ -1,0 +1,33 @@
+{
+ "record": "AGENT-PLATFORM failing-first evidence",
+ "status": "DRAFT, PENDING owner approval",
+ "date": "2026-11-10",
+ "branch": "feat/agent-platform (draft PR #79)",
+ "method": "Each control's tests were committed and pushed BEFORE its implementation. CI (GitHub Actions, workflow 'CI — IEC 62304 Class C Verification Pipeline', job 'Agent Platform') ran each commit; a tests-first commit fails, the implementation commit that follows passes. Locally, each tests-first file was also run before the module existed (collection error: module not found). Anyone can reproduce by checking out the listed commit and running python -m pytest tests/agent_platform/<file>.",
+ "pairs": [
+  {"controls": ["RC-110", "RC-111", "RC-112", "RC-115"], "tests_file": "backend/tests/agent_platform/test_registry.py",
+   "tests_first_commit": "1749470", "tests_first_ci": "not run (pushed before the PR was opened); local run: 1 error during collection (app.agent_platform.registry missing)",
+   "implementation_commit": "753b005", "implementation_result": "58 passed locally; first local run found 2 real defects (trailing newline accepted by re.match; None id not marked invalid), fixed before the commit"},
+  {"controls": ["RC-113", "RC-114"], "tests_file": "backend/tests/agent_platform/test_untrusted.py",
+   "tests_first_commit": "889b0d6", "tests_first_ci": "run 42897127108: failure",
+   "implementation_commit": "d120de7", "implementation_ci": "run 42897363492: success",
+   "implementation_result": "first local run found 1 real defect (a soft hyphen glued two words past the alarm), fixed before the commit"},
+  {"controls": ["RC-116"], "tests_file": "backend/tests/agent_platform/test_tracing.py",
+   "tests_first_commit": "e14b1fe", "tests_first_ci": "run 42897541630: failure",
+   "implementation_commit": "19d698f", "implementation_ci": "run 42897781476: success"},
+  {"controls": ["RC-119", "RC-120"], "tests_file": "backend/tests/agent_platform/test_provenance_oversight.py",
+   "tests_first_commit": "11beef0", "tests_first_ci": "run 42898024495: failure",
+   "implementation_commit": "2bcd84a", "implementation_ci": "run 42898341271: success"},
+  {"controls": ["RC-110", "RC-111", "RC-112", "RC-113", "RC-114", "RC-115", "RC-116"], "tests_file": "backend/tests/agent_platform/test_runtime.py",
+   "tests_first_commit": "0ee06a3", "tests_first_ci": "run 42898575553: failure",
+   "implementation_commit": "c9f5058", "implementation_ci": "run 42898908567: success"},
+  {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_agent_evals.py",
+   "tests_first_commit": "646e330 (harness and cases in one commit)", "tests_first_ci": "run 42900177719: success",
+   "implementation_result": "first local run failed 2 tests: the eval-only reference gate withheld a supported 'dissemination in space is met' sentence (benchmark injection detector P5 and healthy-control list applied to every record); gate corrected to the benchmark's own semantics before the commit"},
+  {"controls": ["RC-117"], "tests_file": "backend/tests/agent_platform/test_cards.py",
+   "tests_first_commit": "6721832", "tests_first_ci": "run 42901365003: failure — test_rc117_mcp_sdk_as_installed_matches_the_card reported the unpinned MCP SDK resolved by CI (mcp 1.12.4, protocol 2025-06-18) against the card's UNRECORDED values: the control detecting a real, unrecorded SOUP fact",
+   "implementation_result": "card updated with the observed values in a later commit"},
+  {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
+   "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
+ ]
+}

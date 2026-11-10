@@ -779,6 +779,62 @@ empty-coefficient asset scored every lesion as a constant; non-integer powers we
 truncated) — both now fail closed with regression tests. The scorer is NOT wired to the guarantee
 and must not be until the above holds.
 
+## Addendum B — Agent platform core hazards (DRAFT, PENDING owner approval)
+
+*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79), not merged, not deployed. DRAFT, PENDING owner approval: severities, probabilities and acceptability below are PROPOSALS; nothing is approved until N. G. Bonilla Vargas records it. Ids HAZ-020..HAZ-024 and RC-110..RC-120 leave a gap after PR #78 (HAZ-017, RC-102..RC-106); if they are taken when this merges, they are renumbered. Requirements: SRS Addendum B (REQ-AGT-001..008). The controls exist as a tested library; they act on a live agent only after the integration steps (`docs/iec62304/agent_platform/Integration_Plan.md`).*
+
+**Threat sources used:** OWASP Top 10 for Agentic Applications (released 2025-12-09) and OWASP LLM Top 10 (2025), item by item in `backend/tests/agent_platform/owasp_map.json`; the agents-benchmark results (research/agents-benchmark @ f3c1976: without a check, Gemini and Gemma drafts carried unsupported content in 452/452; with the A3 check, 0/452 after the gate); `research_notes/Vanguardia de los agentes MSTool/ingenieria_regulacion_agentes.md` §Q6.
+
+### B.1 Hazards
+
+| HAZ ID | Hazard (module) | Hazardous situation | Cause | Harm | Severity (proposed) |
+|---|---|---|---|---|---|
+| HAZ-020 | An agent acts outside its approved scope (`agent_platform/registry.py`, `runtime.py`) | A draft from an unapproved, switched-off, retired or not re-validated model, or after a write tool changed a record, reaches the radiologist; or calls run without bound | No identity, approval or allow-list per agent; a model id read from the environment; a kill switch read once; no cost or step bound | Misleading draft signed, a clinical record changed by an AI, loss of service when the provider budget is exhausted → delayed or wrong diagnosis | S4 (Serious) |
+| HAZ-021 | Instructions injected through study data or tool outputs (`untrusted.py`, `runtime.py`, `backend/app/mcp/`) | The model follows text hidden in a DICOM tag, NIfTI description, file name, prior report or tool output: states criteria met, invents findings, calls a write tool or reads another patient | A model cannot reliably tell data from instructions; the read-only MCP tools read any record the clinician may read (the backend authorizes per clinician, not per study) | Misleading report (as HAZ-003), another patient's data disclosed to the provider | S5 (Catastrophic), as HAZ-003 |
+| HAZ-022 | Patient data in traces or telemetry (`tracing.py`) | Prompts, outputs, identifiers or exception text with identifiers stored in spans and sent to a tracing backend | Content capture on; free-text attributes; exporter on by default | Special-category data disclosed to a third party (as HAZ-016) | S3 (Moderate), as HAZ-016 |
+| HAZ-023 | Unrecorded change of model, prompt or platform (`cards.py`, `evals.py`) | A changed template, a model swap or retirement, an SDK or MCP protocol drift changes the drafts without any check | Templates and model ids not bound to a record; no eval in CI; unpinned transitive SDK (found: `mcp` resolved to 1.12.4, protocol 2025-06-18, not pinned) | Regression of a safety property (unsupported claims, missed abstention) reaches clinicians | S4 (Serious) |
+| HAZ-024 | AI-written text not told apart, unreviewed sign-off (`provenance.py`, `oversight.py`) | The radiologist signs model text as their own, or signs drafts unread; nobody notices the pattern | No per-sentence marking in the signed report; no measurement of acceptance without edits and time to sign | Automation bias: a model error signed into the record → delayed or wrong diagnosis | S4 (Serious) |
+
+### B.2 Risk estimation before control (proposed)
+
+| HAZ ID | Severity | Probability (pre-control) | Risk Level (pre-control) |
+|---|---|---|---|
+| HAZ-020 | S4 | P3 (Occasional) | UNACCEPTABLE *(proposed)* |
+| HAZ-021 | S5 | P4 (Probable) — CAISI and the medical injection studies cited in the research notes report successful hijacks of every frontier model tested | UNACCEPTABLE *(proposed)* |
+| HAZ-022 | S3 | P4 (Probable) — vendor tracing captures content by default | UNACCEPTABLE *(proposed)* |
+| HAZ-023 | S4 | P4 (Probable) — the report model retires on 2026-11-30 | UNACCEPTABLE *(proposed)* |
+| HAZ-024 | S4 | P3 (Occasional) | UNACCEPTABLE *(proposed)* |
+
+### B.3 Risk control measures
+
+All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/agent_platform/` (CI job `agent-platform`, offline, no key) and the negative controls of `scripts/safety/agent_platform_negative_controls.py` (record `docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json`).
+
+| HAZ ID | Risk control | Type | Requirement | Implementation | Verification |
+|---|---|---|---|---|---|
+| HAZ-020 | RC-110: fail-closed authorization — registered, owner-approved agents only; exact model ids with use status and retirement date; tools read or compute only (a registry that allows a write tool refuses everything); a required verifier must be present; any refusal, failure, exhausted budget or withholding verdict delivers nothing; every refusal audited with a fixed code and a pseudonymised study key | Inherent safety (design) + protective | REQ-AGT-001 | `registry.py`, `runtime.py`, `agents.json` (every entry pending) | `test_registry.py`, `test_runtime.py`, `test_redteam.py`; R1, R2, R5–R7, R12–R14, X2, X6, X7 |
+| HAZ-020 | RC-111: per-agent kill switch read again before every model call, tool call and delivery; unreadable = off; the environment switch must be exactly `on` | Protective | REQ-AGT-001 | `registry.py` (`check_agent`, `EnvKillSwitches`), `runtime.py` | `test_registry.py`, `test_runtime.py`, `test_redteam.py`; R3, R4, R11, X1 |
+| HAZ-020 | RC-112: bounds — worst-case cost (input estimate at 1 token / 2 bytes + the full output allowance) against the caps per study and per UTC day, charged after every call (impossible usage at the worst case); steps, tool calls, input and tool-result size limits; untrusted text capped | Protective | REQ-AGT-001 | `registry.py`, `runtime.py`, `untrusted.py` | R8, R9, U4, X8–X10 |
+| HAZ-021 | RC-113: untrusted content as data — file names, clinician text, unknown sources withheld; study text and tool output quoted, escaped, cleaned and capped; identifier DICOM tags never read; tool results plain bounded JSON without direct identifiers; the detector is an alarm only | Protective | REQ-AGT-008 | `untrusted.py`, `runtime.py` | `test_untrusted.py`, `test_redteam.py` (real pydicom / nibabel files); U1–U3, U8–U10, X11, X12 |
+| HAZ-021 | RC-114: per-run study scope — every id argument (declared or `*_id`) and every id in a tool result must belong to the run's study, or the call / result is refused before the backend or the model | Protective | REQ-AGT-008 | `untrusted.py` (`RunScope`, `check_tool_arguments`, `validate_tool_result`), `runtime.py` | `test_redteam.py` (real MCP tools: the bare tool reads another patient; through the platform it is refused before the backend is asked); U5–U7, X3 |
+| HAZ-020, HAZ-023 | RC-115: exact model identity and fixed settings — no alias, prefix or look-alike; the provider's answer must name the model requested; caller overrides refused; environment model variables ignored; registry entries immutable | Protective | REQ-AGT-001 | `registry.py`, `runtime.py` | R10, X4, X5, X14 |
+| HAZ-022 | RC-116: tracing allow-list after OTel GenAI v1.37.0; content only as SHA-256; exception class only; export off by default; request trace id adopted; sign-off linked with keyed hashes | Protective | REQ-AGT-002 | `tracing.py` | `test_tracing.py`, `test_redteam.py`; T1–T7 |
+| HAZ-023 | RC-117: model and prompt card per agent, bound in CI to every rendered template, model id, API version, parameters, SDK pins, resolved MCP SDK, and the retirement date | Protective (detection) | REQ-AGT-005 | `cards.py`, `cards/*.json` | `test_cards.py`; C1–C4 |
+| HAZ-023 | RC-118: offline eval and red-team gate in CI — pass^k (k = 3, replayed twice) at 100 % for regression and red team; frozen cases and grader; OWASP map checked both ways | Protective (detection) | REQ-AGT-003, REQ-AGT-004 | `evals.py`, `tests/agent_platform/eval_cases/`, `owasp_map.json`, CI job `agent-platform` | `test_agent_evals.py`, `test_owasp_map.py`; E1–E4 |
+| HAZ-024 | RC-119: per-unit AI provenance in the signed report and the UI | Information for safety | REQ-AGT-006 | `provenance.py`, `runtime.py` | `test_provenance_oversight.py`, `test_redteam.py`; P1–P5, X13 |
+| HAZ-024 | RC-120: oversight metrics per reader (unedited acceptance, edit size, time to sign; fast unedited sign-offs) without patient data | Protective (detection) | REQ-AGT-007 | `oversight.py` | `test_provenance_oversight.py`; O1–O3 |
+
+### B.4 Residual risk (proposed) and limits
+
+| HAZ ID | Proposed residual | Acceptable? | Limits that keep it open |
+|---|---|---|---|
+| HAZ-020 | S4 / P2 | ALARP *(proposed)* | cost ledger per instance only (P-5); approval and switches not yet wired to a live agent (P-1, P-3) |
+| HAZ-021 | S5 / P1 | ALARP *(proposed)* | what a hijacked model still writes is caught only by the claim verifier (PR #78; the eval uses the benchmark verifier v3, which misses "fulfil dissemination in space" — capability case); the MCP servers do not yet route through the platform (P-4) |
+| HAZ-022 | S3 / P1 | ACCEPTABLE *(proposed)* | no network exporter in this release; any export destination needs the data-processing decision (P-6, CAPA-014 D-3) |
+| HAZ-023 | S4 / P2 | ALARP *(proposed)* | `mcp` unpinned and fastmcp 2.3.0 with published advisories (P-7); report model retires 2026-11-30 (D-AGT-1) |
+| HAZ-024 | S4 / P2 | ALARP *(proposed)* | no UI shows the marks or the metrics yet (P-8); thresholds (MIN_REVIEW_SECONDS = 30 s) unvalidated |
+
+**Open items (owner):** D-AGT-1 migrate the report model before 2026-11-30 through RVP-AGT-001; D-AGT-2 acceptance thresholds of RVP-AGT-001; D-AGT-3 cost caps and limits in `agents.json`; D-AGT-4 approve (or not) each agent entry; D-AGT-5 trace export destination; D-AGT-6 the fast-sign-off threshold.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

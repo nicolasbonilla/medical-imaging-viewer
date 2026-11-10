@@ -2,7 +2,7 @@
  "schema": "mstool.agent-card/1",
  "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-002)",
  "agent_id": "ms-clinical-assistant",
- "card_version": "2026-11-10.1",
+ "card_version": "2026-11-10.2",
  "model": {
   "id": null,
   "control": "client",
@@ -21,9 +21,10 @@
   "framework": "fastmcp==2.3.0 (pinned in backend/requirements.txt)",
   "mcp_sdk_requirement": "mcp>=1.8.0,<2.0.0, a dependency of fastmcp 2.3.0 that requirements.txt does NOT pin: the MCP SDK, and with it the protocol revision spoken, is whatever pip resolves at install time",
   "observed": {
-   "mcp_sdk_version": "UNRECORDED",
-   "latest_protocol_version": "UNRECORDED",
-   "where": "the CI job agent-platform (backend/requirements.txt install on ubuntu-latest)"
+   "mcp_sdk_version": "1.12.4",
+   "latest_protocol_version": "2025-06-18",
+   "where": "the CI job agent-platform (backend/requirements.txt install on ubuntu-latest), GitHub Actions run 42901365003, 2026-11-10",
+   "meaning": "the MCP revision the servers implement is 2025-06-18, older than the 2025-11-25 and 2026-07-28 revisions; it is whatever pip resolves until mcp is pinned (Integration_Plan P-7)"
   },
   "advisories": "PyPI lists security advisories for fastmcp 2.3.0 fixed in later releases (read 2026-11-10); SOUP review pending (integration step P-7)",
   "spec_compared_with": "MCP specification revisions 2025-11-25 and 2026-07-28 (research_notes, Vanguardia de los agentes MSTool, Q2); per-request user authorization of the 2026-07-28 revision is not implemented: the servers use the clinician's own token (CAPA-008)"
@@ -130,6 +131,12 @@
    "date": "2026-11-10",
    "card_version": "2026-11-10.1",
    "what": "baseline card of the MCP servers on main (d5d4726)",
+   "approved_by": null
+  },
+  {
+   "date": "2026-11-10",
+   "card_version": "2026-11-10.2",
+   "what": "recorded the MCP SDK resolved by the CI install (mcp 1.12.4, protocol 2025-06-18), reported by test_rc117_mcp_sdk_as_installed_matches_the_card in run 42901365003",
    "approved_by": null
   }
  ]

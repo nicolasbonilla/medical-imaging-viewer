@@ -448,4 +448,21 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 
 ---
 
+## Addendum — Agent platform core (DRAFT, PENDING owner approval)
+
+*Branch `feat/agent-platform` (draft PR #79), 2026-11-10. SRS and RMF Addendum B. Tests in `backend/tests/agent_platform/` (CI job `agent-platform`); negative controls `scripts/safety/agent_platform_negative_controls.py`.*
+
+| Requirement | Hazard | Risk control | Design (`backend/app/agent_platform/`) | Tests |
+|---|---|---|---|---|
+| REQ-AGT-001 | HAZ-020 | RC-110, RC-111, RC-112, RC-115 | `registry.py`, `agents.json`, `runtime.py` | `test_registry.py`, `test_runtime.py`, `test_redteam.py` |
+| REQ-AGT-002 | HAZ-022 | RC-116 | `tracing.py` | `test_tracing.py`, `test_runtime.py`, `test_redteam.py` |
+| REQ-AGT-003 | HAZ-023 | RC-118 | `evals.py`, `tests/agent_platform/eval_cases/` | `test_agent_evals.py` |
+| REQ-AGT-004 | HAZ-021, HAZ-020 | RC-113, RC-114, RC-110, RC-112, RC-115, RC-118 | `owasp_map.json` | `test_redteam.py`, `test_owasp_map.py` |
+| REQ-AGT-005 | HAZ-023 | RC-117 | `cards.py`, `cards/*.json`, RVP-AGT-001 | `test_cards.py` |
+| REQ-AGT-006 | HAZ-024 | RC-119 | `provenance.py`, `runtime.py` | `test_provenance_oversight.py`, `test_redteam.py` |
+| REQ-AGT-007 | HAZ-024 | RC-120 | `oversight.py` | `test_provenance_oversight.py` |
+| REQ-AGT-008 | HAZ-021 | RC-113, RC-114 | `untrusted.py`, `runtime.py` | `test_untrusted.py`, `test_redteam.py` |
+
+---
+
 *This matrix must be updated with each requirement change, design change, or new test.*
