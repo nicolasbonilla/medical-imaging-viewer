@@ -21,7 +21,8 @@ only: no frontend, no node_modules. The script:
   - checks the baseline passes first and records the failing test names per mutation.
 
 Run from the repository root with the backend's Python (it needs the backend requirements):
-    <backend python> scripts/safety/verified_report_negative_controls.py
+    <backend python> scripts/safety/verified_report_negative_controls.py           # in a throwaway worktree
+    <backend python> scripts/safety/verified_report_negative_controls.py --here    # only in a disposable checkout
 The backend Python is taken from MSTOOL_BACKEND_PYTHON, else backend/venv of this checkout or of the main checkout.
 Output: docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json
 """
@@ -225,8 +226,16 @@ def main():
     files = sorted({e[0] for edits, _w in M.values() for e in edits})
     tests = [f"backend/{t}" for t in TESTS]
     require_committed(files + tests + [os.path.relpath(__file__, REPO).replace(os.sep, "/")])
-    stale = clean_stale()
     commit = _git("rev-parse", "HEAD").stdout.strip()
+    if "--here" in sys.argv:
+        # In a checkout that is itself disposable (an isolated agent worktree): mutate here, restore byte for byte,
+        # and refuse to finish unless the mutated files are unchanged against the commit afterwards.
+        res = run_in_worktree(files)
+        require_committed(files)
+        res["worktree"] = {"run_in": "the current checkout (--here: an isolated, disposable worktree), clean before "
+                                     "and after for every mutated file", "commit": commit, "python": PY}
+        return _write(res)
+    stale = clean_stale()
     wt = os.path.join(tempfile.gettempdir(), f"{PREFIX}{os.getpid()}-{int(time.time())}")
     _git("worktree", "add", "--detach", wt, commit)
     try:
@@ -239,6 +248,10 @@ def main():
         _git("worktree", "prune", check=False)
     res["worktree"] = {"run_in": "throwaway detached worktree of the commit, removed after the run", "commit": commit,
                        "stale_worktrees_removed_first": stale, "python": PY}
+    return _write(res)
+
+
+def _write(res):
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(res, fh, indent=2, ensure_ascii=False)
