@@ -1,0 +1,267 @@
+{
+ "schema": "mstool.agent-redteam-map/1",
+ "status": "DRAFT, PENDING owner approval (REQ-AGT-004)",
+ "sources": {
+  "owasp_agentic_2026": "OWASP Top 10 for Agentic Applications (labelled 2026, released 2025-12-09): https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/ ; entry titles as used on OWASP's own pages (release post 2025-12-09; GenAI and Agentic AI Exploit Roundup Q3 2026). The PDF itself was not read.",
+  "owasp_llm_2025": "OWASP Top 10 for LLM Applications 2025: https://genai.owasp.org/llm-top-10/",
+  "threat_model": "the model is fully hijacked; every test asserts a guard outside the model"
+ },
+ "items": {
+  "ASI01": {
+   "title": "Agent Goal Hijack",
+   "status": "tested",
+   "controls": [
+    "RC-113",
+    "RC-110",
+    "RC-115"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc113_asi01_llm01_injection_in_dicom_tags_cannot_steer_the_report",
+    "test_redteam.py::test_rc113_asi01_llm01_injection_in_nifti_description_cannot_close_its_block",
+    "test_redteam.py::test_rc113_asi01_llm02_file_name_never_reaches_the_model",
+    "test_redteam.py::test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+    "test_agent_evals.py::test_rc118_case",
+    "test_redteam.py::test_rc115_tool_output_cannot_change_settings_or_switch_off_the_verifier"
+   ]
+  },
+  "ASI02": {
+   "title": "Tool Misuse and Exploitation",
+   "status": "tested",
+   "controls": [
+    "RC-110",
+    "RC-113",
+    "RC-114"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs",
+    "test_redteam.py::test_rc110_asi02_mcp_client_refuses_a_write_post_before_sending",
+    "test_redteam.py::test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model",
+    "test_redteam.py::test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write"
+   ]
+  },
+  "ASI03": {
+   "title": "Identity and Privilege Abuse",
+   "status": "tested",
+   "controls": [
+    "RC-110",
+    "RC-114",
+    "RC-115"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc114_asi03_bare_mcp_tool_reads_any_record_the_clinician_may_read",
+    "test_redteam.py::test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend",
+    "test_redteam.py::test_rc110_asi03_an_agent_cannot_use_another_agents_tools",
+    "test_registry.py::test_rc110_tool_of_another_agent_is_refused",
+    "test_redteam.py::test_rc115_environment_cannot_override_the_model_or_the_switch"
+   ],
+   "note": "per-agent identity = registry id; per-agent service credentials are integration step P-4 (the MCP servers act with the clinician's own token, CAPA-008)"
+  },
+  "ASI04": {
+   "title": "Agentic Supply Chain Vulnerabilities",
+   "status": "tested",
+   "controls": [
+    "RC-117",
+    "RC-115"
+   ],
+   "tests": [
+    "test_cards.py::test_rc117_card_is_current_with_the_code_and_the_registry",
+    "test_cards.py::test_rc117_mcp_sdk_as_installed_matches_the_card",
+    "test_redteam.py::test_rc115_asi04_llm03_answer_from_another_model_is_discarded"
+   ],
+   "note": "fastmcp 2.3.0 has published advisories and the MCP SDK is not pinned: recorded in the card, open as P-7"
+  },
+  "ASI05": {
+   "title": "Unexpected Code Execution",
+   "status": "tested",
+   "controls": [
+    "RC-110"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc110_asi05_platform_has_no_code_execution_path"
+   ]
+  },
+  "ASI06": {
+   "title": "Memory and Context Poisoning",
+   "status": "tested",
+   "controls": [
+    "RC-113"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc113_asi06_no_memory_carries_poison_from_one_run_to_the_next",
+    "test_redteam.py::test_rc113_asi06_llm01_prior_report_injection_is_withheld"
+   ]
+  },
+  "ASI07": {
+   "title": "Insecure Inter-Agent Communication",
+   "status": "tested",
+   "controls": [
+    "RC-113"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc113_asi07_message_claiming_to_come_from_another_agent_is_only_data"
+   ],
+   "note": "the platform has no agent-to-agent channel; a message that claims to come from another agent is untrusted data"
+  },
+  "ASI08": {
+   "title": "Cascading Failures",
+   "status": "tested",
+   "controls": [
+    "RC-112",
+    "RC-111"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc112_asi08_llm10_endless_tool_loop_ends_with_nothing_delivered",
+    "test_runtime.py::test_rc113_failing_tool_ends_the_run_without_a_draft",
+    "test_runtime.py::test_rc110_verifier_that_raises_means_nothing_is_delivered"
+   ]
+  },
+  "ASI09": {
+   "title": "Human-Agent Trust Exploitation",
+   "status": "tested",
+   "controls": [
+    "RC-119",
+    "RC-120"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc119_asi09_a_claimed_human_review_is_still_marked_as_ai",
+    "test_provenance_oversight.py::test_rc120_aggregate_per_reader"
+   ]
+  },
+  "ASI10": {
+   "title": "Rogue Agents",
+   "status": "tested",
+   "controls": [
+    "RC-111",
+    "RC-110",
+    "RC-115"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc111_asi10_switching_an_agent_off_stops_it_mid_run",
+    "test_redteam.py::test_rc110_asi10_unregistered_agent_identity_is_refused",
+    "test_redteam.py::test_rc115_asi10_lookalike_alias_or_unvalidated_model_is_refused",
+    "test_redteam.py::test_rc115_registry_entries_cannot_be_changed_while_running"
+   ]
+  },
+  "LLM01": {
+   "title": "Prompt Injection",
+   "status": "tested",
+   "controls": [
+    "RC-113"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc113_asi01_llm01_injection_in_dicom_tags_cannot_steer_the_report",
+    "test_redteam.py::test_rc113_asi01_llm01_injection_in_nifti_description_cannot_close_its_block",
+    "test_redteam.py::test_rc113_asi06_llm01_prior_report_injection_is_withheld",
+    "test_untrusted.py::test_rc113_injected_text_is_quoted_and_cannot_close_its_block"
+   ]
+  },
+  "LLM02": {
+   "title": "Sensitive Information Disclosure",
+   "status": "tested",
+   "controls": [
+    "RC-113",
+    "RC-116"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc113_llm02_identifiers_in_a_tool_response_are_removed_before_the_model",
+    "test_redteam.py::test_rc113_asi01_llm02_file_name_never_reaches_the_model",
+    "test_redteam.py::test_rc116_llm02_no_identifier_from_any_source_reaches_a_span"
+   ]
+  },
+  "LLM03": {
+   "title": "Supply Chain",
+   "status": "tested",
+   "controls": [
+    "RC-117",
+    "RC-115"
+   ],
+   "tests": [
+    "test_cards.py::test_rc117_card_is_current_with_the_code_and_the_registry",
+    "test_redteam.py::test_rc115_llm03_report_model_is_refused_from_its_retirement_date",
+    "test_redteam.py::test_rc115_asi04_llm03_answer_from_another_model_is_discarded"
+   ]
+  },
+  "LLM04": {
+   "title": "Data and Model Poisoning",
+   "status": "tested",
+   "controls": [
+    "RC-118",
+    "RC-117"
+   ],
+   "tests": [
+    "test_agent_evals.py::test_rc118_case_files_and_grader_are_frozen"
+   ],
+   "note": "no model is trained or fine-tuned by MSTool; what could be poisoned is the frozen eval data and grader, bound by SHA-256"
+  },
+  "LLM05": {
+   "title": "Improper Output Handling",
+   "status": "tested",
+   "controls": [
+    "RC-119",
+    "RC-113"
+   ],
+   "tests": [
+    "test_provenance_oversight.py::test_rc119_html_renderer_escapes_and_tags",
+    "test_redteam.py::test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model",
+    "test_runtime.py::test_rc110_verifier_withholding_means_nothing_is_delivered"
+   ]
+  },
+  "LLM06": {
+   "title": "Excessive Agency",
+   "status": "tested",
+   "controls": [
+    "RC-110"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs",
+    "test_registry.py::test_rc110_registry_that_lists_a_write_tool_for_an_agent_refuses_everything"
+   ]
+  },
+  "LLM07": {
+   "title": "System Prompt Leakage",
+   "status": "tested",
+   "controls": [
+    "RC-117"
+   ],
+   "tests": [
+    "test_cards.py::test_rc117_llm07_prompt_templates_hold_no_secret_or_contact_data"
+   ]
+  },
+  "LLM08": {
+   "title": "Vector and Embedding Weaknesses",
+   "status": "tested",
+   "controls": [
+    "RC-110"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc110_llm08_platform_has_no_retrieval_or_embedding_store"
+   ],
+   "note": "no retrieval or embedding store exists; the test keeps it that way until one is designed and risk-assessed"
+  },
+  "LLM09": {
+   "title": "Misinformation",
+   "status": "tested",
+   "controls": [
+    "RC-118",
+    "RC-110"
+   ],
+   "tests": [
+    "test_agent_evals.py::test_rc118_report_and_gate",
+    "test_runtime.py::test_rc110_verifier_withholding_means_nothing_is_delivered"
+   ]
+  },
+  "LLM10": {
+   "title": "Unbounded Consumption",
+   "status": "tested",
+   "controls": [
+    "RC-112"
+   ],
+   "tests": [
+    "test_redteam.py::test_rc112_llm10_parallel_tool_call_flood_is_cut_at_the_limit",
+    "test_redteam.py::test_rc112_llm10_oversized_untrusted_text_is_capped_and_oversized_input_refused",
+    "test_redteam.py::test_rc112_llm10_daily_cost_cap_holds_across_studies",
+    "test_registry.py::test_rc112_study_cap_refuses_the_call_that_would_pass_it"
+   ]
+  }
+ }
+}
