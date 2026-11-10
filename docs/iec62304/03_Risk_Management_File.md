@@ -867,7 +867,26 @@ Ten more findings, each with a failing-first test (`backend/tests/agent_platform
 | 9 | The assistant card hashed tool docstrings only | RC-117 | full tool definition (name, description, parameters with kind/annotation/default, signature); a new parameter or default fails the check |
 | 10 | Mutations were written into the real checkout (a hard kill could leave sabotaged code) | RC-118 | mutations run in a throwaway copy outside the repository; the script has no import side effect; a CI test fails if any mutation is present in the tracked sources |
 
-**Limit kept open:** `result_numeric_keys` of the MCP read tools (`id`, `label_id`, lesion ids) is set from the lesion-analysis service code; it is to be confirmed against real responses when the servers adopt the platform (Integration_Plan P-4). Until then a real response with another numeric id is refused (fail closed, availability cost only).
+**Limit kept open:** `result_numeric_keys` of the MCP read tools (`id`, `label_id`, lesion ids) is set from the lesion-analysis service code; it is to be confirmed against real responses when the servers adopt the platform (Integration_Plan P-4). Until then a real response with another numeric id is refused (fail closed, availability cost only). *(Superseded by B.7: the third review found this key-name rule too strict; `result_numeric_keys` is removed.)*
+
+### B.7 Third independent adversarial review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+
+Main finding: the scope control (RC-114) had become **too strict** and refused legitimate results — a real region classification (`region_id`, `zone_id`) and a real lesion analysis (`total_burden_mm3`) were refused whole. An over-strict control is a hazard of its own (the assistant becomes unusable, and pressure grows to switch it off). Failing-first tests at `116588a` (CI run 42921874922 red: 37 of 52 new tests, and 11 existing eval and red-team tests failed once the offline backend returned the REAL output shapes); fixes at `03d8eab` (CI run 42922844815 green); mutations Y1–Y8 and the re-anchored ones.
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| 1 | `region_id` / `zone_id` refused; the evals' fake backend did not return real shapes | RC-114 | the real outputs of the services (lesion analysis, region classification, longitudinal comparison) and realistic imaging outputs drive contract tests for every tool and the evals' backend |
+| 2 | Ordinary keys (`total_burden_mm3`, `T2-FLAIR`) taken for foreign ids | RC-114 | a resource id is recognised by its VALUE (UUIDs, DICOM UIDs, prefixed test ids, in any string or key) or by a resource key (defaults plus the tool's `result_resource_keys` from its real schema); actor keys (`created_by`, …) are not scope-checked |
+| 3 | Pre-model refusals audited with model `invalid` | RC-110 | a missing model is absent from the record |
+| 4 | Agent audit records anonymous → budgeted (30 per 60 s per source) and lost under load | RC-110 | the run carries the authenticated actor (or a fixed system actor); 100 runs → nothing suppressed |
+| 5 | A wall-clock date check would turn every PR red from 2026-11-30 | RC-117 | date injected in the tests; daily scheduled job + warning step; the registry still refuses the retired model at call time |
+| 6 | Oversight and sign-off hashed the reader differently | RC-116, RC-120 | one `reader_key` |
+| 7 | `render_html` interpolated the author unescaped; `from_dict` did not validate | RC-119 | every value escaped; `from_dict` and `render_html` refuse an invalid record |
+| 8 | A Verdict of wrong field types raised unaudited | RC-110 | validated; `verifier_failed`, audited |
+| 9 | Alarm run twice, double serialisation | RC-113 (efficiency) | one walk, one serialisation; 200 KB < 2 s |
+| 10 | Two copies of the MCP stub loader | RC-117, RC-118 | the tests use the card's loader |
+
+**Limit kept open:** the resource-id patterns (UUID, DICOM UID, prefixed ids) and the resource keys are those of the code and the synthetic contract outputs; ids of another shape (for example a Firestore auto-id) under an ordinary key would not be recognised. The scope builder of the integration (P-4) must put every id of the study in the scope, and the contract tests must be re-run on recorded production responses before the assistant is switched on.
 
 **Correction of an earlier figure:** the first negative-control round of this addendum had **61** mutations (60 detected; 61 after the test added for P4), not 62 as first written in the PR description.
 

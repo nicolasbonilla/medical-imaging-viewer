@@ -39,6 +39,12 @@
    "tests_first_commit": "7f692d8", "tests_first_ci": "run 42914972541: failure (43 of 45 failed against 8475800)",
    "implementation_commit": "65b6555", "implementation_ci": "run 42916263102: success",
    "implementation_result": "45 review-2 tests pass; whole offline suite 435 passed, 2 skipped by design; CAPA-008 (39) and CAPA-013 (52) tests pass with the shared rule"},
+  {"controls": ["RC-110", "RC-113", "RC-114", "RC-116", "RC-117", "RC-119", "RC-120"],
+   "tests_file": "backend/tests/agent_platform/test_review3.py (+ _contract.py real output shapes)",
+   "what": "the 10 findings of the third independent adversarial review of PR #79 (scope too strict)",
+   "tests_first_commit": "116588a", "tests_first_ci": "run 42921874922: failure (37 of 52 new tests; 11 existing eval and red-team tests failed on the real output shapes)",
+   "implementation_commit": "03d8eab", "implementation_ci": "run 42922844815: success",
+   "implementation_result": "52 review-3 tests pass; whole offline suite 487 passed, 2 skipped by design"},
   {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
    "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
  ]
