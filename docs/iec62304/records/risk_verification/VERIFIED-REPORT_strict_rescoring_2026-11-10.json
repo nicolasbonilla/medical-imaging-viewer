@@ -3,7 +3,7 @@
   "purpose": "second independent review of PR #78 (items A, B): offline re-scoring of the benchmark's existing A3 drafts with the product's stricter claim check (no model called)",
   "benchmark_code": "research/agents_benchmark at f3c1976 (A3.check with the frozen verifier v2)",
   "product_rules": "backend/app/services/report_claim_strict.py",
-  "product_rules_sha256": "9b316aac7a7c94e0b6e0d69e80d2e53497dbc8d186e6a57e50aab8996711cdad",
+  "product_rules_sha256": "f3b8ccdf7db6256f4a040761dd3539761a40a8c740e4b43d6f71dd36452f0a4c",
   "runs": "data/cohorts/agents-benchmark/runs (local copy of gs://mstool-research-data/agents-benchmark/runs), read in place; selection = the benchmark's own rule (last successful result per job; pilot records and failed jobs excluded)",
   "models_with_drafts": [
     "gemini",
@@ -14,7 +14,7 @@
   "recorded_vs_recomputed_v2_note": "verdicts (pass / fail) agree for every answer; where the lists differ they hold the same failures in another order (the benchmark's placeholder check iterates a set, so the order of its messages varies between runs; see 'recomputation_counts')",
   "superset_violations": 0,
   "recomputation_counts": {
-    "recomputed_v2_same_failures_other_order": 130
+    "recomputed_v2_same_failures_other_order": 129
   },
   "reading": "now_flagged = a delivered draft whose passing answer the product check flags; with the last allowed answer (passed_2) it would now be blocked for certain, otherwise the loop would ask again and the new answer is unknown offline: blocked after the change lies between the lower and the upper bound.",
   "summary_per_model_and_language": [

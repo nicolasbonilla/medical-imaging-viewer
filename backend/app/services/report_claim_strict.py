@@ -138,15 +138,35 @@ def sentence_elements(sentence: str) -> List[Dict[str, Any]]:
 DIS_NAMED = re.compile(r"\b(?:dissemination in space|dis|diseminacion en (?:el )?espacio|diseminacion espacial|"
                        r"raumlich\w* dissemination|dissemination im raum|disseminierung im raum)\b")
 # criterion words only — not words that usually describe the lesions or the review ("present", "confirmed")
+# (verbs and participles only: the nouns "fulfilment", "cumplimiento", "Erfullung" name the criterion, they state
+# nothing — "evaluating the fulfilment of DIS")
 DIS_CRITERION = re.compile(
-    r"\b(?:fulfil\w*|fulfill\w*|meet(?:s|ing)?|met|satisf\w*|support\w*|demonstrat\w*|establish\w*|consistent with|"
-    r"cumpl\w*|satisfac\w*|satisfech\w*|apoy\w*|respald\w*|demostr\w*|establec\w*|compatible|erfull\w*|gegeben|"
-    r"nachgewiesen|unterstutz\w*|vereinbar)\b")
+    r"\b(?:fulfil(?!l?ment)\w*|fulfill(?!ment)\w*|meet(?:s|ing)?|met|satisf(?!action)\w*|support\w*|demonstrat\w*|"
+    r"establish\w*|consistent with|cumpl(?!imiento)\w*|satisfac(?!cion)\w*|satisfech\w*|apoy\w*|respald\w*|"
+    r"demostr\w*|establec\w*|compatible|erfull(?!ung)\w*|gegeben|nachgewiesen|unterstutz\w*|vereinbar)\b")
 DETAIL_DIS_NOT_EVALUATED = "dissemination in space was not evaluated: a statement on it is not allowed"
 DETAIL_DIS_STATUS = "the statement on dissemination in space contradicts the record"
 KIND_DIS_NOT_EVALUATED = "strict_dis_not_evaluated"     # rule id E2.strict_dis_not_evaluated
 KIND_DIS_STATUS = "strict_dis_status"                   # rule id E2.strict_dis_status
 FIXED_DETAIL_TEXTS = FIXED_DETAIL_TEXTS + (DETAIL_DIS_NOT_EVALUATED, DETAIL_DIS_STATUS)
+
+
+DIS_WORDS_APART = 4
+
+
+def _criteria_on_dis(fold: str) -> List["re.Match[str]"]:
+    """Criterion words that speak of dissemination in space: in the same clause as its name and at most four words
+    from it ("the findings fulfil DIS", "DIS is not met", "erfullt die raumliche Dissemination") — not a verb of
+    another part of the sentence ("the scan demonstrates seven lesions, with DIS not evaluated")."""
+    out = []
+    for d in DIS_NAMED.finditer(fold):
+        for m in DIS_CRITERION.finditer(fold):
+            between = fold[m.end():d.start()] if m.end() <= d.start() else fold[d.end():m.start()]
+            if m.start() < d.end() and m.end() > d.start():
+                between = ""
+            if not CLAUSE_BREAK.search(between) and len(between.split()) <= DIS_WORDS_APART and m not in out:
+                out.append(m)
+    return out
 
 
 def _negated_claim(fold: str, m: "re.Match[str]") -> bool:
@@ -172,15 +192,14 @@ def dis_elements(sentence: str, view: Optional[Dict[str, Any]]) -> List[Dict[str
         return []
     dis = view.get("dis") or {}
     if dis.get("status") != "evaluated":
-        rest = L.NOT_EVALUATED.sub(" ", fold)
-        hits = [m.group(0) for m in DIS_CRITERION.finditer(rest)]
-        hits += [m.group(0) for m in L.DIS_POS.finditer(rest)] + [m.group(0) for m in L.DIS_NEG.finditer(rest)]
+        rest = L.NOT_EVALUATED.sub(lambda x: " " * len(x.group(0)), fold)    # same length: positions kept
+        hits = [m.group(0) for m in _criteria_on_dis(rest)]
         if hits:
             return [{"cls": "E2", "kind": KIND_DIS_NOT_EVALUATED, "unit": sentence[:200],
                      "detail": f"{DETAIL_DIS_NOT_EVALUATED}: {sorted(set(hits))[:4]}"}]
         return []
     met = bool(dis.get("dis_met_brain"))
-    wrong = [m.group(0) for m in DIS_CRITERION.finditer(fold) if _negated_claim(fold, m) == met]
+    wrong = [m.group(0) for m in _criteria_on_dis(fold) if _negated_claim(fold, m) == met]
     if wrong:
         return [{"cls": "E2", "kind": KIND_DIS_STATUS, "unit": sentence[:200],
                  "detail": f"{DETAIL_DIS_STATUS} (met={met}): {sorted(set(wrong))[:4]}"}]

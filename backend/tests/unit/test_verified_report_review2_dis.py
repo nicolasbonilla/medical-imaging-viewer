@@ -100,6 +100,22 @@ def test_rc103_k_the_code_written_not_evaluated_sentence_still_passes(lang):
     assert fails == [], fails
 
 
+@pytest.mark.parametrize("lang,sentence,status", [
+    # sentences of the benchmark's own drafts (re-scoring): a verb of another part of the sentence, or a noun
+    ("en", "The scan demonstrates 26 unconfirmed lesions, with dissemination in space not evaluated.", None),
+    ("en", "There is 1 lesion present, and dissemination in space was not evaluated.", None),
+    ("en", "The scan demonstrates 4 unconfirmed small lesions with no assessment of dissemination in space provided.",
+     None),
+    ("es", "Las lesiones se localizan en dos regiones, evaluándose el cumplimiento de la diseminación en el espacio "
+           "en la segmentación confirmada.", False),
+])
+def test_rc103_k_a_verb_of_another_part_of_the_sentence_is_not_a_dis_statement(lang, sentence, status):
+    """Added with the correction (precision of rule K, from the offline re-scoring of the benchmark drafts)."""
+    from app.services import report_claim_strict as S
+    view = _view(None if status is None else _evaluated(status), lang)
+    assert S.dis_elements(sentence, view) == []
+
+
 @pytest.mark.parametrize("lang,sentence,met", [
     ("en", "The brain criterion for dissemination in space is met.", True),
     ("en", "Dissemination in space is not met in the brain.", False),
