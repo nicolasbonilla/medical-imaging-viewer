@@ -1,0 +1,104 @@
+{
+  "$comment": [
+    "MSTool agent registry (REQ-AGT-001; RC-110, RC-111, RC-112, RC-115; HAZ-020).",
+    "STATUS: DRAFT, PENDING owner approval. Every agent below is 'pending' or 'planned': the platform refuses to run",
+    "any of them until N. G. Bonilla Vargas records 'approved' himself (approval.status, approval.ref).",
+    "model use_status is a FACT, not an approval: 'in_use' = what the app calls today; 'candidate' = not re-validated",
+    "(docs/iec62304/agent_platform/Agent_Revalidation_Protocol.md); 'withdrawn' = never called.",
+    "Tool access: 'read' and 'compute' (computes and returns, stores nothing) may be allowed; 'write' tools are listed",
+    "only so that a request for one is refused by name, and a registry that allows one does not validate.",
+    "Cost caps and limits are DRAFT values for the owner to decide (Integration_Plan.md, decision D-AGT-3).",
+    "Model facts read 2026-11-10 from Anthropic's model pages (deprecations: claude-sonnet-4-5-20250929 retires",
+    "2026-11-30). Prices are USD per million tokens; re-check them at every re-validation."
+  ],
+  "registry_version": "2026-11-10.1",
+  "status": "DRAFT, PENDING owner approval",
+  "models": {
+    "claude-sonnet-4-5-20250929": {
+      "provider": "anthropic",
+      "api_version": "2023-06-01",
+      "retires_on": "2026-11-30",
+      "use_status": "in_use",
+      "price_usd_per_mtok": {"input": 3.0, "output": 15.0},
+      "note": "the report model on main (config.py CLAUDE_MODEL default); deprecated, retires 2026-11-30"
+    },
+    "claude-sonnet-5-5": {
+      "provider": "anthropic",
+      "api_version": "2023-06-01",
+      "retires_on": null,
+      "use_status": "candidate",
+      "price_usd_per_mtok": {"input": 2.0, "output": 10.0},
+      "note": "current Sonnet; candidate successor, NOT re-validated: refused until the protocol is run and the owner signs"
+    }
+  },
+  "tools": {
+    "get_region_classification": {"access": "read", "server": "ms-clinical-mcp", "scope_arguments": ["segmentation_id"]},
+    "summarize_dis_items": {"access": "read", "server": "ms-clinical-mcp", "scope_arguments": ["segmentation_id"]},
+    "analyze_lesions": {"access": "read", "server": "ms-clinical-mcp", "scope_arguments": ["segmentation_id"]},
+    "compare_longitudinal": {"access": "compute", "server": "ms-clinical-mcp", "scope_arguments": ["baseline_id", "followup_id"]},
+    "generate_ms_report": {"access": "compute", "server": "ms-clinical-mcp", "scope_arguments": ["segmentation_id", "longitudinal_baseline_id"]},
+    "get_image_metadata": {"access": "read", "server": "imaging-mcp", "scope_arguments": ["file_id"]},
+    "get_slice_image": {"access": "read", "server": "imaging-mcp", "scope_arguments": ["file_id"]},
+    "process_image": {"access": "read", "server": "imaging-mcp", "scope_arguments": ["file_id"]},
+    "list_segmentations": {"access": "read", "server": "imaging-mcp", "scope_arguments": ["file_id"]},
+    "get_matplotlib_visualization": {"access": "read", "server": "imaging-mcp", "scope_arguments": ["file_id"]},
+    "annotate_cvs_prl": {"access": "write", "server": "retired (CAPA-008)", "scope_arguments": ["segmentation_id"]},
+    "classify_lesions_magnims": {"access": "write", "server": "retired (CAPA-008)", "scope_arguments": ["segmentation_id"]},
+    "import_dicom_to_viewer": {"access": "write", "server": "retired (CAPA-008)", "scope_arguments": []},
+    "save_segmentation": {"access": "write", "server": "application only", "scope_arguments": ["segmentation_id"]},
+    "sign_report": {"access": "write", "server": "application only (radiologist)", "scope_arguments": ["segmentation_id"]}
+  },
+  "agents": {
+    "report-drafter": {
+      "purpose": "Draft the comment sentences of the brain MRI report from the device's measurements, for radiologist review (function 1 of the agents plan; PR #78 turns it into the verified report)",
+      "approval": {"status": "pending", "ref": "agent-platform PR: entry to be approved by the owner"},
+      "model_control": "server",
+      "allowed_models": ["claude-sonnet-4-5-20250929"],
+      "allowed_tools": [],
+      "requires_verifier": true,
+      "cost_cap_usd": {"per_study": 1.0, "per_day": 25.0},
+      "limits": {"max_steps": 3, "max_tool_calls": 1, "max_tool_result_bytes": 1, "max_input_tokens": 40000, "max_output_tokens": 16384},
+      "parameters": {"max_tokens": 4096, "max_tokens_comprehensive": 16384}
+    },
+    "ms-clinical-assistant": {
+      "purpose": "Read-only assistant over the MCP servers (STDIO, run by the clinician in Claude Desktop / Claude Code): reads stored measurements, compares visits, drafts from measurements",
+      "approval": {"status": "pending", "ref": "agent-platform PR: entry to be approved by the owner"},
+      "model_control": "client",
+      "allowed_models": [],
+      "allowed_tools": ["get_region_classification", "summarize_dis_items", "analyze_lesions", "compare_longitudinal", "generate_ms_report", "get_image_metadata", "get_slice_image", "process_image", "list_segmentations", "get_matplotlib_visualization"],
+      "cost_cap_usd": {"per_study": 0.0, "per_day": 0.0},
+      "limits": {"max_steps": 12, "max_tool_calls": 20, "max_tool_result_bytes": 200000, "max_input_tokens": 1, "max_output_tokens": 1},
+      "parameters": {}
+    },
+    "quality-gate": {
+      "purpose": "Single quality gate at study opening and visit comparison (function 2; deterministic, no model)",
+      "approval": {"status": "planned", "ref": "agents plan, December 2026"},
+      "model_control": "none",
+      "allowed_models": [],
+      "allowed_tools": [],
+      "cost_cap_usd": {"per_study": 0.0, "per_day": 0.0},
+      "limits": {"max_steps": 1, "max_tool_calls": 1, "max_tool_result_bytes": 1, "max_input_tokens": 1, "max_output_tokens": 1},
+      "parameters": {}
+    },
+    "second-look": {
+      "purpose": "Rank the AI's lesions for 'review first'; never deletes anything (function 3; research now, app in January)",
+      "approval": {"status": "planned", "ref": "agents plan, January 2027"},
+      "model_control": "none",
+      "allowed_models": [],
+      "allowed_tools": [],
+      "cost_cap_usd": {"per_study": 0.0, "per_day": 0.0},
+      "limits": {"max_steps": 1, "max_tool_calls": 1, "max_tool_result_bytes": 1, "max_input_tokens": 1, "max_output_tokens": 1},
+      "parameters": {}
+    },
+    "study-questions": {
+      "purpose": "Guided questions to the study answered by the program with citations (function 5); free conversation stays in research until it passes the red-team suite",
+      "approval": {"status": "planned", "ref": "agents plan, February 2027"},
+      "model_control": "server",
+      "allowed_models": [],
+      "allowed_tools": [],
+      "cost_cap_usd": {"per_study": 0.0, "per_day": 0.0},
+      "limits": {"max_steps": 1, "max_tool_calls": 1, "max_tool_result_bytes": 1, "max_input_tokens": 1, "max_output_tokens": 1},
+      "parameters": {}
+    }
+  }
+}

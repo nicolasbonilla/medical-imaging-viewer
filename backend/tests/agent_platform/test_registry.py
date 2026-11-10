@@ -5,7 +5,7 @@ Negative controls: scripts/safety/agent_platform_negative_controls.py (mutations
 
 What is bound here:
 - RC-110: an unknown agent, model or tool, an agent not approved by the owner, a write tool, a model not
-  approved for use or past its retirement date is refused, and every refusal is audited with its code;
+  in use (a candidate) or past its retirement date is refused, and every refusal is audited with its code;
   a registry that does not validate refuses everything.
 - RC-111: the per-agent kill switch is read again at EVERY call, and a switch that cannot be read is off.
 - RC-112: a model call is refused when its worst-case cost would pass the agent's cap for the study or
@@ -180,9 +180,9 @@ def test_rc110_model_not_allowed_for_the_agent_is_refused(registry):
     assert not d.allowed and d.code == R.RefusalCode.MODEL_NOT_ALLOWED
 
 
-def test_rc110_model_not_approved_for_use_is_refused(registry):
+def test_rc110_candidate_model_not_in_use_is_refused(registry):
     d = registry.check_model("test-agent", "model-unapproved")
-    assert not d.allowed and d.code == R.RefusalCode.MODEL_NOT_APPROVED
+    assert not d.allowed and d.code == R.RefusalCode.MODEL_NOT_IN_USE
 
 
 def test_rc110_retired_model_is_refused_on_and_after_its_date(switches, ledger, audit_events):
