@@ -27,15 +27,18 @@ Propuesta de cambio en GitHub: https://github.com/nicolasbonilla/medical-imaging
 ## Lo que usted revisa y firma
 
 - [ ] **Requisitos** (documento 02): nuevos REQ-FUNC-116 y REQ-SAFE-048, 049, 050 y 051; cambios en REQ-FUNC-060,
-      061 y 063 y en REQ-SEC-021.
+      061 y 063 y en REQ-SEC-021. Tras la segunda revisión: cambios en REQ-SAFE-048 (comprobación más estricta), REQ-FUNC-116, REQ-SAFE-049 y 051, y propuestas en REQ-SEC-021 y 022.
 - [ ] **Riesgos** (documento 03): peligro nuevo HAZ-017 (el modelo de IA es un componente de terceros que se retira);
       nuevas causas de HAZ-003 (apartado 3.11); controles nuevos RC-102 a RC-106; cambios en RC-064, RC-065 y RC-070.
 - [ ] **Componentes de terceros** (documento 09): SOUP-BE-029 (Claude Sonnet 5.5) y SOUP-BE-030 (Claude Haiku 5.5);
       nota en SOUP-BE-011.
 - [ ] **Matriz de trazabilidad** (documento 05) y **manifiesto de pruebas** de los controles.
-- [ ] **Pruebas** (después de la revisión independiente): 2757 pruebas unitarias del servidor pasan (19 omitidas: 18 casos que no aplican y la del cliente de Anthropic, que sí pasa con la versión fijada en otra corrida); 112 de seguridad pasan; integración: 25 pasan y 1 falla porque en este ordenador falta el paquete `webauthn` (no tiene que ver con este cambio). Todo sin conexión a la nube ni a la IA.
-- [ ] **Controles negativos:** 49 de 49 defectos introducidos a propósito, uno a uno, fueron detectados (registro VERIFIED-REPORT_negative_controls_review1_2026-11-10.json). La primera ronda, antes de la revisión, detectó 38 de 38 (se conserva su registro).
+- [ ] **Pruebas** (después de las dos revisiones independientes): 2899 pruebas unitarias del servidor pasan (25 omitidas porque no aplican); 112 de seguridad pasan; integración: 26 pasan. Todo sin conexión a la nube ni a la IA, una prueba detrás de otra para no cargar el portátil.
+- [ ] **Controles negativos** (defectos introducidos a propósito, uno a uno): 67 de 67 detectados después de la segunda revisión; y 12 de 12 en la parte de la comprobación más estricta, repetida sobre el código final con el punto K. Se conservan los registros de las rondas anteriores (38 de 38 y 49 de 49).
 - [ ] **Revisión independiente del código (10 puntos):** los 10 están corregidos. Para cada uno escribí primero una prueba que fallaba con el código revisado (15 de 15 fallaban) y después la corrección. Resumen: un informe con solo la diseminación ya no se rompe; una llamada a la IA ya no puede pasar de los 25 segundos; las medidas que el informe no usa ahora se nombran en el texto en vez de desaparecer; un recuento por región sin calcular ya no sale como 0; con 20 lesiones o más el comentario usa el rango de MAGNIMS; el informe ya no puede decir «sin confirmar» si la aplicación dice «confirmado»; las peticiones rechazadas también quedan en el registro de auditoría; se quitó un filtro que nunca actuaba; un solo mecanismo decide qué modelo se puede usar; los valores infinitos cuentan como «no calculado».
+- [ ] **Segunda revisión independiente (10 puntos más uno):** todos corregidos; antes escribí pruebas que fallaban con el código revisado (51 de 60). Lo más importante: la comprobación de los comentarios de la IA es ahora **más estricta que la del estudio** y nunca más permisiva (lo comprueba una prueba con más de mil frases trampa). Una negación en otra parte de la frase ya no tapa un diagnóstico («esto no es un diagnóstico, pero el patrón es compatible con esclerosis múltiple» ahora se rechaza), y las líneas en negrita o en mayúsculas ya no se saltan la comprobación. Además: un valor raro en un dato que el informe no usa ya no bloquea el informe; las cuatro regiones MAGNIMS se cuentan aunque haya otras etiquetas; «diseminación no evaluada» sale una sola vez; ya no se envía a la IA la tabla de lesiones una a una.
+- [ ] **Punto K** (lo encontró el trabajo de la plataforma de agentes): frases como «los hallazgos **cumplen** la diseminación en el espacio», en presente, negadas o con «podría». Si la diseminación no se evaluó, la aplicación ya las rechazaba; si se evaluó, una frase que contradecía el resultado pasaba (16 de 70 pruebas fallaban). Corregido.
+- [ ] **Efecto medido sin gastar nada** (sin llamar a ninguna IA): repasé los 1204 borradores del estudio con la comprobación nueva. Solo 1 de 1181 borradores entregados quedaría marcado (una frase de aviso con la palabra «diagnóstico»; la IA tendría que reescribirla). Ninguno quedaría bloqueado con seguridad. Cero cerebros sanos afectados.
 
 ## Decisiones que solo usted puede tomar
 
@@ -62,4 +65,5 @@ Propuesta de cambio en GitHub: https://github.com/nicolasbonilla/medical-imaging
 - La pantalla del informe aún no muestra el estado de la comprobación; la nota está dentro del texto.
 - No actualicé la versión del cliente de Anthropic (0.44.0); los dos parámetros nuevos se envían de otra forma, ya
   probada sin conexión.
+- No repetí las rondas completas de defectos de CAPA-014 (94) y PRB-003 (119): son muy pesadas e incluyen la pantalla. Actualicé sus puntos de anclaje para que sigan encontrando su sitio; 4 de PRB-003 ya estaban rotos antes de este cambio (G2, R10, F5, WF2). Lo que cambié en RC-064, RC-065 y RC-070 lo cubren defectos nuevos de la ronda del informe verificado.
 - No escribí ninguna aprobación a su nombre: donde dice «PENDING owner approval», la aprobación la pone usted.
