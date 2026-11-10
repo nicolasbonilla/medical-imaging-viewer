@@ -36,27 +36,15 @@ def _findings(dwm_count, pv_count, n_lesions, tp1, tp2, confirmed=True):
     }
 
 
-def _prompt(findings):
-    builder = brs.BrainReportService.__new__(brs.BrainReportService)
-    return builder._build_findings_prompt(findings, None, "en")
-
-
-def test_release_plural_a_count_of_one_is_singular_in_the_findings_prompt():
-    prompt = _prompt(_findings(dwm_count=1, pv_count=1, n_lesions=1, tp1=1, tp2=1))
-    assert f"    - {_DWM}: 1 lesion, " in prompt
-    assert f"    - {_PV}: 1 lesion, " in prompt
-    assert "Individual lesion data (1 lesion):" in prompt
-    assert "(1 lesion)" in prompt.split("TP1 burden:")[1].splitlines()[0]
-    assert "(1 lesion)" in prompt.split("TP2 burden:")[1].splitlines()[0]
-    assert not re.search(r"\b1 lesions\b", prompt)
-
-
-@pytest.mark.parametrize("count", [0, 2, 17])
-def test_release_plural_any_other_count_is_plural_in_the_findings_prompt(count):
-    prompt = _prompt(_findings(dwm_count=count, pv_count=count, n_lesions=max(count, 2), tp1=count, tp2=count))
-    assert f"    - {_DWM}: {count} lesions, " in prompt
-    assert f"Individual lesion data ({max(count, 2)} lesions):" in prompt
-    assert f"({count} lesions)" in prompt.split("TP1 burden:")[1].splitlines()[0]
+# Third review of PR #78 (T5, DRAFT): the two tests of the retired findings prompt's own wording ("1 lesion" /
+# "N lesions") were archived with it (docs/archive/retired_report_prompt.py). The verified report writes counts in
+# fixed "label: number" lines ("Lesions marked: 1", "periventricular: 1"), with no counted noun after a number.
+def test_release_plural_the_verified_report_puts_no_counted_noun_after_a_number():
+    from app.services import verified_report as VR
+    for count in (0, 1, 2, 17):
+        view = VR.build_view({"lesion_analysis": {"total_count": count}}, None, "en")
+        report = VR.assemble(view, "en", "", "")
+        assert not re.search(r"\b1 lesions\b", report) and f"Lesions marked: {count} " in report
 
 
 @pytest.mark.parametrize("confirmed", [True, False])

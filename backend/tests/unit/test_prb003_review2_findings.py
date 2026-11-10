@@ -336,8 +336,13 @@ REGION_REQUESTS = ("### Periventricular", "### Cortical / Juxtacortical", "### I
 @pytest.mark.parametrize("template", ["general", "ms_activity", "ms_lesion_burden", "ms_comprehensive",
                                       "ms_longitudinal"])
 def test_rc070_n4_no_template_asks_for_regions_without_an_evaluated_dis(template):
-    from app.services.brain_report_service import REPORT_TEMPLATES, dis_not_evaluated_template
-    text = dis_not_evaluated_template(REPORT_TEMPLATES[template])
+    """Amended for the third review of PR #78 (T5, DRAFT): the retired templates were archived outside the shipped code; the control is checked on what the device uses now (one verified structure for every template id): the system prompt and the first request of a DIS that was not evaluated, for every template id."""
+    from app.services import verified_report as VR
+    from app.services.report_payload_guard import provider_payload
+    p = provider_payload({"lesion_analysis": {"total_count": 3, "regions": {"Periventricular": {"lesion_count": 3}}},
+                          "dis_assessment": {"evaluation_status": "not_evaluated"}}, None)
+    view = VR.build_view(p.findings, p.volumetry, "en")
+    text = VR.SYSTEM_PROMPT + "\n" + VR.first_user_message(view, "en")
     print(f"\n===== {template} (DIS not evaluated) =====\n{text}")
     left = [p for p in REGION_REQUESTS if p in text]
     assert not left, f"{template} still asks for regions: {left}"

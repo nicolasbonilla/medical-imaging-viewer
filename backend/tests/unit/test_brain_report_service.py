@@ -81,16 +81,16 @@ class TestBrainReportService:
         assert "general" in ids
 
     def test_list_templates_contains_all_documented_types(self):
-        """Verified report (DRAFT): the list offers the one verified structure; the retired templates' ids are kept
-        in the reference list (and still accepted by the route, test_invalid_template_falls_back_to_general)."""
+        """Verified report (DRAFT): the list offers the one verified structure; the former templates' ids are still
+        accepted by the route (TEMPLATE_IDS; test_invalid_template_falls_back_to_general). Amended for the third review of PR #78 (T5, DRAFT): the retired templates were archived outside the shipped code (docs/archive/retired_report_prompt.py)."""
+        from app.services.brain_report_service import TEMPLATE_IDS
         assert [t["id"] for t in self.service.list_templates()] == ["general"]
-        retired = [t["id"] for t in self.service.list_retired_templates()]
         for expected_id in ["general", "ms_activity", "ms_lesion_burden", "ms_longitudinal", "ms_comprehensive"]:
-            assert expected_id in retired, f"Template '{expected_id}' missing from list_retired_templates()"
+            assert expected_id in TEMPLATE_IDS, f"Template id '{expected_id}' no longer accepted"
 
     def test_list_templates_have_required_fields(self):
         """Each template entry has id, name, and description."""
-        for t in self.service.list_templates() + self.service.list_retired_templates():
+        for t in self.service.list_templates():
             assert isinstance(t["id"], str) and isinstance(t["name"], str) and isinstance(t["description"], str)
             assert len(t["name"]) > 0 and len(t["description"]) > 0
 
@@ -118,8 +118,9 @@ class TestBrainReportService:
 
     def test_get_client_caches_instance(self):
         """Once created, the same client instance is reused."""
+        # (Amended for the third review of PR #78 (T5, DRAFT): the retired templates were archived outside the shipped code (docs/archive/retired_report_prompt.py); and T3: the service's client is the SDK's async client)
         mock_module = MagicMock()
-        mock_module.Anthropic.return_value = MagicMock()
+        mock_module.AsyncAnthropic.return_value = MagicMock()
         self.service._settings.ANTHROPIC_API_KEY = "valid-key"
         self.service._client = None
 
@@ -127,7 +128,7 @@ class TestBrainReportService:
             client1 = self.service._get_client()
             client2 = self.service._get_client()
             assert client1 is client2
-            mock_module.Anthropic.assert_called_once()
+            mock_module.AsyncAnthropic.assert_called_once()
 
     # =========================================================================
     # Report generation — success path (verified report)
@@ -197,8 +198,8 @@ class TestBrainReportService:
         """Verified report (DRAFT): every template id, with or without an evaluated DIS, sends the ONE fixed system
         prompt of the verified flow (was: the template, or its not-evaluated variant)."""
         from app.services import verified_report
-        from app.services.brain_report_service import REPORT_TEMPLATES
-        for template_type in REPORT_TEMPLATES:
+        from app.services.brain_report_service import TEMPLATE_IDS      # (third review, T5: was REPORT_TEMPLATES)
+        for template_type in TEMPLATE_IDS:
             for dis in ({"evaluation_status": "not_evaluated"},
                         {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 2}):
                 mock_client = _client(_answer())
@@ -250,154 +251,9 @@ class TestBrainReportService:
         assert user_msg.startswith(f"Write the draft in {name}.")
 
     # =========================================================================
-    # Findings prompt construction (what may be sent: test_capa014_report_provider_payload.py)
+    # Findings prompt construction: the retired prompt builder and its ten tests were archived with it (Amended for the third review of PR #78 (T5, DRAFT): the retired templates were archived outside the shipped code (docs/archive/retired_report_prompt.py);
+    # the request sent now is tested in test_rc102_verified_report_flow.py and test_capa014_report_provider_payload.py)
     # =========================================================================
-
-    def test_build_findings_prompt_clinical_indication(self):
-        """CAPA-014 (RC-064): the clinical indication is free text and is never sent (was: included);
-        the route adds it to the draft after the model returns. The model is told so only when something
-        was typed (CAPA-014 second review, N6)."""
-        from app.services.report_payload_guard import provider_payload
-        payload = provider_payload({"clinical_indication": "Known MS, annual follow-up"}, None)
-        prompt = self.service._build_findings_prompt(payload.findings, language="en")
-        assert "Known MS, annual follow-up" not in prompt
-        assert "added to the draft by the application" in prompt
-
-    def test_build_findings_prompt_patient_age(self):
-        """CAPA-014 (RC-064): the age reaches the prompt as the 5-year band of the structured
-        payload (was: the exact age)."""
-        prompt = self.service._build_findings_prompt(
-            {"patient_age": "40-44"}, language="en"
-        )
-        assert "Patient age band: 40-44 (years)" in prompt
-
-    def test_build_findings_prompt_patient_sex(self):
-        """Patient sex is included with readable label."""
-        prompt_m = self.service._build_findings_prompt({"patient_sex": "M"}, language="en")
-        prompt_f = self.service._build_findings_prompt({"patient_sex": "F"}, language="en")
-        assert "Male" in prompt_m
-        assert "Female" in prompt_f
-
-    def test_build_findings_prompt_no_phi(self):
-        """Prompt does NOT include patient name, DOB, MRN, or other PHI."""
-        findings = {
-            "clinical_indication": "MS follow-up",
-            "patient_age": 45,
-            "patient_sex": "F",
-            "technique": "3T MRI with contrast",
-        }
-        prompt = self.service._build_findings_prompt(findings, language="en")
-        # Should not contain PHI fields
-        assert "patient_name" not in prompt.lower()
-        assert "mrn" not in prompt.lower()
-        assert "date_of_birth" not in prompt.lower()
-        assert "ssn" not in prompt.lower()
-
-    def test_build_findings_prompt_empty_findings(self):
-        """Empty findings dict produces minimal but valid prompt."""
-        prompt = self.service._build_findings_prompt({}, language="en")
-        assert isinstance(prompt, str)
-        assert len(prompt) > 0
-        assert "English" in prompt
-
-    def test_build_findings_prompt_anomalies(self):
-        """Anomaly findings are included in the prompt."""
-        findings = {
-            "anomalies": [
-                {"type": "lesion", "location": "periventricular", "confidence": 0.95,
-                 "volume_mm3": 125.5},
-            ]
-        }
-        prompt = self.service._build_findings_prompt(findings, language="en")
-        assert "lesion" in prompt
-        assert "periventricular" in prompt
-        assert "95%" in prompt
-        assert "125.5" in prompt
-
-    def test_build_findings_prompt_volumetry_data(self):
-        """Volumetry data is included in the prompt."""
-        volumetry = {
-            "total_brain_volume_ml": 1200.5,
-            "intracranial_volume_ml": 1450.0,
-            "structures": [
-                {
-                    "structure_name": "Left Hippocampus",
-                    "volume_ml": 2.1,
-                    "is_abnormal": True,
-                    "abnormality_type": "atrophy",
-                    "normative_percentile": 3.5,
-                },
-            ],
-        }
-        prompt = self.service._build_findings_prompt({}, volumetry=volumetry, language="en")
-        assert "1200.5" in prompt
-        assert "1450.0" in prompt
-        assert "Left Hippocampus" in prompt
-        assert "atrophy" in prompt
-
-    def test_build_findings_prompt_lesion_analysis(self):
-        """Lesion analysis data from Phase 10 is included in the prompt."""
-        findings = {
-            "lesion_analysis": {
-                "total_count": 12,
-                "total_burden_mm3": 1500.0,
-                "total_burden_ml": 1.5,
-                "regions": {
-                    "Periventricular": {"lesion_count": 5, "total_volume_mm3": 800.0,
-                                        "total_volume_ml": 0.8},
-                },
-                "size_distribution": {"small": 8, "medium": 3, "large": 1},
-            }
-        }
-        prompt = self.service._build_findings_prompt(findings, language="en")
-        assert "Total lesions: 12" in prompt
-        assert "Periventricular" in prompt
-
-    def test_build_findings_prompt_dis_assessment(self):
-        """DIS assessment data is included in the prompt — for a block the server EVALUATED on a confirmed
-        segmentation (PRB-003, RC-070: any other block is reported as NOT EVALUATED; see
-        test_prb003_dis_requires_confirmed_segmentation.py)."""
-        findings = {
-            "dis_assessment": {
-                "evaluation_status": "evaluated",
-                "dis_met": True,
-                "regions_with_lesions": 3,
-                "total_dis_regions": 4,
-                "region_details": {
-                    "Periventricular": {"present": True},
-                    "Cortical": {"present": True},
-                    "Infratentorial": {"present": True},
-                    "Deep WM": {"present": False},
-                },
-            }
-        }
-        prompt = self.service._build_findings_prompt(findings, language="en")
-        assert "DIS Assessment: MET" in prompt
-        assert "3/4" in prompt
-
-    def test_build_findings_prompt_longitudinal(self):
-        """Longitudinal comparison data is included in the prompt."""
-        findings = {
-            "longitudinal": {
-                "burden_tp1_ml": 1.2,
-                "burden_tp2_ml": 1.5,
-                "total_lesions_tp1": 10,
-                "total_lesions_tp2": 13,
-                "burden_delta_percent": 25.0,
-                "status_counts": {
-                    "new": 3, "enlarged": 1, "resolved": 0, "shrunk": 1, "stable": 9,
-                },
-            }
-        }
-        prompt = self.service._build_findings_prompt(findings, language="en")
-        # Longitudinal results are UNCONFIRMED change candidates (CAPA-013, RC-060; was
-        # "candidate, registration unverified"), with a NOTE telling the generator not to report
-        # them as new/enlarging lesions, classify the disease course from them or use them for DIT.
-        assert "New-lesion candidates (unconfirmed): 3" in prompt
-        assert "Enlarging candidates (unconfirmed): 1" in prompt
-        assert "UNCONFIRMED CHANGE CANDIDATES" in prompt
-        assert "Radiologist decisions on these candidates are recorded in the application" in prompt
-        assert "25.0%" in prompt
 
     # =========================================================================
     # Error handling (verified report: the measurements are delivered without the comments)
@@ -439,32 +295,6 @@ class TestBrainReportService:
         mock_client.messages.create.assert_not_called()
 
     # =========================================================================
-    # REPORT_TEMPLATES integrity
+    # REPORT_TEMPLATES integrity: the retired templates and their four tests were archived with them (Amended for the third review of PR #78 (T5, DRAFT): the retired templates were archived outside the shipped code (docs/archive/retired_report_prompt.py); the one
+    # system prompt sent now is tested in test_rc102_verified_report_flow.py)
     # =========================================================================
-
-    def test_all_templates_are_non_empty_strings(self):
-        """Every template in REPORT_TEMPLATES is a non-empty string."""
-        from app.services.brain_report_service import REPORT_TEMPLATES
-        for key, prompt in REPORT_TEMPLATES.items():
-            assert isinstance(prompt, str), f"Template '{key}' is not a string"
-            assert len(prompt) > 100, f"Template '{key}' is suspiciously short ({len(prompt)} chars)"
-
-    def test_all_templates_contain_format_instructions(self):
-        """Every template includes the shared FORMAT_INSTRUCTIONS block."""
-        from app.services.brain_report_service import REPORT_TEMPLATES
-        for key, prompt in REPORT_TEMPLATES.items():
-            assert "OUTPUT FORMAT RULES" in prompt, \
-                f"Template '{key}' missing FORMAT_INSTRUCTIONS"
-
-    def test_all_templates_have_impression_section(self):
-        """Every template instructs Claude to include an IMPRESSION section."""
-        from app.services.brain_report_service import REPORT_TEMPLATES
-        for key, prompt in REPORT_TEMPLATES.items():
-            assert "IMPRESSION" in prompt, \
-                f"Template '{key}' missing IMPRESSION section directive"
-
-    def test_templates_prohibit_phi(self):
-        """FORMAT_INSTRUCTIONS block prohibits patient demographics."""
-        from app.services.brain_report_service import _FORMAT_INSTRUCTIONS
-        assert "DO NOT" in _FORMAT_INSTRUCTIONS
-        assert "patient demographics" in _FORMAT_INSTRUCTIONS.lower()

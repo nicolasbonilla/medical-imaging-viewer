@@ -409,6 +409,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                        "a correction of a small component is shown as a numbered lesion (m-1)"),
 }
 
+# Third independent review of PR #78 (T5, DRAFT, PENDING owner approval): these mutations targeted the retired report
+# templates and findings-prompt builder, archived outside the shipped code (docs/archive/retired_report_prompt.py).
+# They are kept by name, not run; the controls they exercised are verified on the verified report by
+# scripts/safety/verified_report_negative_controls.py.
+RETIRED_WITH_THE_TEMPLATES = {name: M.pop(name)[1] for name in ("R4_prompt_states_met_for_an_unevaluated_block", "R5_prompt_lets_the_model_derive_dis", "R10_template_still_asks_for_dis", "W22_region_sections_kept", "W23_region_columns_kept")}
+
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
 EXPECTED_UNDETECTED = {}
 

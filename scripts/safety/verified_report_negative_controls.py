@@ -74,6 +74,7 @@ TESTS = [
     "tests/unit/test_verified_report_review1.py",       # independent review of PR #78, R1-R10
     "tests/unit/test_verified_report_review2.py",       # second independent review of PR #78, A-J
     "tests/unit/test_verified_report_review2_dis.py",   # item K (found by PR #79): DIS wording
+    "tests/unit/test_verified_report_review3.py",       # third independent review of PR #78, T1-T6
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -126,7 +127,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "R6: a confirmed mask reported as not confirmed (the report contradicts the gate)"),
     "F14_placeholder_in_record_sent": ([(BRS, '                if UNLISTED.rstrip("]") in sent_text:\n', "                if False:\n")],
                                        "R8: a label of the request in the record is sent instead of refused"),
-    "F15_number_reader_accepts_inf": ([(VR, "    from app.services.report_payload_guard import _number\n    return _number(x)\n",
+    "F15_number_reader_accepts_inf": ([(VR, "    return finite_number(x)\n",
                                         "    return None if isinstance(x, bool) or not isinstance(x, (int, float)) or x != x else x\n")],
                                       "R10: an infinite value is read as a number (and a count of it crashes)"),
     # ── second independent review of PR #78 (A-J) ──
@@ -230,8 +231,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                  "the default model is the one retiring on 2026-11-30 (the defect as found)"),
     "M3_retirement_date_ignored": ([(BRS, "    return retires is None or (today or date.today()) < date.fromisoformat(retires)\n", "    return True\n")],
                                    "an allow-listed model past its retirement date is still called"),
-    "M4_sampling_parameter_sent": ([(BRS, "                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))",
-                                     "                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)), temperature=0.0)")],
+    "M4_sampling_parameter_sent": ([(BRS, "                              extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))",
+                                     "                              extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)), temperature=0.0)")],
                                    "a sampling parameter is sent (400 on the current models)"),
     "M5_answer_read_by_position": ([(BRS, '    text = "".join(_block_field(b, "text") or "" for b in blocks\n                   if _block_field(b, "type") == "text" and isinstance(_block_field(b, "text"), str))\n',
                                      '    text = (_block_field(blocks[0], "text") or "") if blocks else ""\n')],
@@ -244,15 +245,38 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                              "one call may wait ten minutes (the SDK default)"),
     "M9_404_not_recognised": ([(BRS, '    if getattr(exc, "status_code", None) == 404 or name == "NotFoundError":\n', "    if False:\n")],
                               "a model the provider no longer serves is reported as a generic error"),
-    "M10_sdk_retry_back": ([(BRS, "            self._client = anthropic.Anthropic(api_key=api_key, max_retries=0)\n",
-                             "            self._client = anthropic.Anthropic(api_key=api_key, max_retries=1)\n")],
+    "M10_sdk_retry_back": ([(BRS, "            self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)\n",
+                             "            self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=1)\n")],
                            "R2: the SDK retries with a fresh full timeout (about twice the 25 s budget)"),
-    "M11_wait_not_bounded": ([(BRS, "                message = await asyncio.wait_for(asyncio.to_thread(\n", "                message = await (asyncio.to_thread(\n"),
-                              (BRS, "timeout=max(1.0, float(timeout_s))), timeout=float(timeout_s))", "timeout=max(1.0, float(timeout_s))))")],
+    "M11_wait_not_bounded": ([(BRS, "                    message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))\n",
+                               "                    message = await create(**kwargs)\n")],
                              "R2: the wait for the provider is not bounded by the remaining budget"),
     "M12_retired_table_decides": ([(BRS, "    if entry is None:\n        return False\n    retires = entry.get(\"retires_on\")\n",
                                     "    if entry is None or model_id in RETIRED_OR_RETIRING_MODELS:\n        return False\n    retires = entry.get(\"retires_on\")\n")],
                                   "R9: a second allow mechanism (the retired table) next to the allow-list and its retirement date"),
+    # ── third independent review of PR #78 (T1, T2, T3) ──
+    "F20_volume_needs_both_units": ([(VR, "    elif ml_text is not None:\n        volume = t[\"volume_ml\"].format(ml=ml_text)\n",
+                                      "    elif False:\n        volume = t[\"volume_ml\"].format(ml=ml_text)\n")],
+                                    "T1: a volume in mL only is written \"not computed\" while its placeholder is filled"),
+    "F21_placeholders_by_their_own_rule": ([(VR, "    return stated_values(view, lang)\n\n\ndef stated_values(",
+                                             "    vals = stated_values(view, lang)\n"
+                                             "    les = view[\"lesions\"]\n"
+                                             "    if les.get(\"total_count\") is not None and \"total_count\" not in vals:\n"
+                                             "        vals[\"total_count\"] = str(les[\"total_count\"])\n"
+                                             "    if les.get(\"total_volume_mm3\") is not None and \"total_volume_ml\" not in vals:\n"
+                                             "        vals[\"total_volume_ml\"] = _loc(_num(les[\"total_volume_mm3\"] / 1000.0, 2), lang)\n"
+                                             "    return vals\n\n\ndef stated_values(")],
+                                           "T1: a placeholder filled by a rule of its own (a value the report's line does not state)"),
+    "A7_withheld_reported_as_not_requested": ([(VR, "    return OUTCOME_WITHHELD if asked else NOT_REQUESTED\n",
+                                                "    return NOT_REQUESTED\n")],
+                                              "T2: a draft the AI was asked for and did not deliver is recorded as not requested"),
+    "M13_sync_client_back": ([(BRS, "            self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)\n",
+                               "            self._client = anthropic.Anthropic(api_key=api_key, max_retries=0)\n")],
+                             "T3: the blocking client again (a request outlives the time budget in a worker thread)"),
+    "M14_request_not_cancelled": ([(BRS, "                    message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))\n",
+                                    "                    message = await asyncio.wait_for(asyncio.shield(create(**kwargs)), "
+                                    "timeout=float(timeout_s))\n")],
+                                  "T3: the deadline ends the wait but the request keeps running (not cancelled)"),
     # ── RC-064: only what is rendered is sent and validated (second review, C, D, H) ──
     "P1_unrendered_fields_validated": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers)\n",
                                          "            payload = provider_payload(findings, volumetry, identifiers)\n")],
@@ -266,10 +290,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                     "change candidates of a visit pair, the total brain and intracranial volume, sex and a 5-year age \"")],
                                   "H: the API description says sex and an age band are sent"),
     # ── RC-065: the device's own words, and the first request checked as sent (second review, G, J) ──
-    "T1_retired_words_back": ([(BRS, "    texts: List[str] = []\n", "    texts: List[str] = [UNLISTED, \"Structure Label\"]\n"),
-                               (BRS, "    texts.append(verified_report.REGENERATION_PREFIX + verified_report.REGENERATION_SUFFIX)\n",
-                                "    texts.append(verified_report.REGENERATION_PREFIX + verified_report.REGENERATION_SUFFIX)\n"
-                                "    texts.append(BrainReportService.__new__(BrainReportService)._build_findings_prompt({}, None, \"en\"))\n")],
+    "T1_retired_words_back": ([(BRS, "    texts: List[str] = []\n", "    texts: List[str] = [UNLISTED, \"Structure Label\"]\n")],
                               "G: the retired templates' words widen the RC-065 vocabulary again"),
     "T2_first_message_built_twice": ([(BRS, "                    first_message=sent_text)", "                    first_message=None)")],
                                      "J: the first request is built a second time after the identifier check"),

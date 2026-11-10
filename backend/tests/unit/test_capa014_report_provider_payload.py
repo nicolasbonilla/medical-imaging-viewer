@@ -386,9 +386,9 @@ def test_rc064_system_prompt_is_the_fixed_template(route):
     template id and every DIS state. Nothing of the request (typed text, measurements) is in it. (Name kept: the
     CAPA-014 records cite it.)"""
     from app.services import verified_report
-    from app.services.brain_report_service import REPORT_TEMPLATES
+    from app.services.brain_report_service import TEMPLATE_IDS     # (third review of PR #78, T5)
     not_evaluated = {"evaluation_status": "not_evaluated"}
-    for template in REPORT_TEMPLATES:
+    for template in TEMPLATE_IDS:
         for dis in (None, not_evaluated):
             route.provider.calls.clear()
             findings = {**_measurements(), **TYPED}
@@ -418,8 +418,8 @@ def test_rc064_the_payload_itself_holds_only_known_fields_and_no_marker():
 
 @pytest.mark.unit
 def test_rc064_the_prompt_builder_prints_no_free_text_even_when_called_directly():
-    from app.services.brain_report_service import BrainReportService
-    prompt = BrainReportService()._build_findings_prompt(
+    """Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report)."""
+    prompt = _verified_prompt(
         {"clinical_indication": "ZQX-1", "technique": "ZQX-2", "additional_observations": "ZQX-3"}, None, "en")
     assert MARK not in prompt.casefold()
 
@@ -1029,8 +1029,7 @@ def test_n6_the_instruction_is_sent_only_when_something_was_typed(route):
 
 # N8: all-digit record numbers do not collide with measurement numbers.
 def _legit_review_prompt():
-    from app.services.brain_report_service import BrainReportService
-    from app.services.report_payload_guard import provider_payload
+    # (Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report).)
     from app.services.lesion_analysis_service import MAGNIMS_REGIONS
     regions = list(MAGNIMS_REGIONS.values())
     lesions = [{"id": i + 1, "region": regions[i % len(regions)], "volume_mm3": 12.5 * (i + 1), "volume_ml": 0.0125 * (i + 1),
@@ -1043,8 +1042,7 @@ def _legit_review_prompt():
                         "zones": {r: {"voxel_count": 123456, "percentage": 12.3} for r in regions[:4]}},
          "dis_assessment": {"dis_met": True, "regions_with_lesions": 3, "total_dis_regions": 5, "has_active_lesions": True,
                             "active_voxels": 1234567, "has_black_holes": True, "black_hole_voxels": 567}}
-    p = provider_payload(f, VOLUMETRY)
-    return BrainReportService()._build_findings_prompt(p.findings, p.volumetry, "en")
+    return _verified_prompt(f, VOLUMETRY)
 
 
 @pytest.mark.unit
@@ -1058,9 +1056,11 @@ def test_n8_all_digit_record_numbers_do_not_refuse_legitimate_measurements(mrn):
 def test_n8_what_remains_a_whole_number_equal_to_the_record_number_still_refuses():
     # "Total classified brain voxels: 1456789" — a bare number equal to the record number cannot be told
     # from it; the check refuses (fail closed). Documented in CAPA-014 §8.
+    # (Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report): the verified request no longer carries the voxel count of the zone statistics, so the bare number
+    # is appended to it — the tripwire itself is what this test checks.)
     from app.services.report_payload_guard import IdentifierInPrompt
     with pytest.raises(IdentifierInPrompt, match="record_number"):
-        _guard(_legit_review_prompt(), _ids(mrn="1456789"))
+        _guard(_legit_review_prompt() + "\nTotal classified brain voxels: 1456789", _ids(mrn="1456789"))
 
 
 # N9: no generator can write the withdrawn RC-007 statement again; the model name is the configured one.
@@ -1104,22 +1104,25 @@ def test_rc064_dis_missing_or_not_evaluated_is_never_not_met(route, dis):
 
 @pytest.mark.unit
 def test_rc064_dis_evaluated_state_is_kept_and_reported():
-    from app.services.brain_report_service import BrainReportService
+    """Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report)."""
+    from app.services.dis_review_gate import NOT_EVALUATED_LINE
     from app.services.report_payload_guard import provider_payload
     dis = {"evaluation_status": "evaluated", "dis_met": False, "regions_with_lesions": 1, "total_dis_regions": 5}
     payload = provider_payload({"dis_assessment": dis}, None)
     assert payload.findings["dis_assessment"]["evaluation_status"] == "evaluated"
-    prompt = BrainReportService()._build_findings_prompt(payload.findings, None, "en")
-    assert "DIS Assessment: NOT MET (1/5 regions)" in prompt and "NOT EVALUATED" not in prompt
+    prompt = _verified_prompt({"dis_assessment": dis}, None)
+    assert "lesions in 1 of the 3 regions evaluable on brain MRI; the brain criterion is not met" in prompt
+    assert NOT_EVALUATED_LINE["en"] not in prompt
     legacy = provider_payload({"dis_assessment": {"dis_met": True, "regions_with_lesions": 3, "total_dis_regions": 5}},
                               None)
     assert "evaluation_status" not in legacy.findings["dis_assessment"]          # no state is invented
     # Release 2026-10-25 integration with PR #68 (merge note 1 of #67: #68's rule wins): a block WITHOUT the
     # "evaluated" state is printed NOT EVALUATED — never MET / NOT MET (was "MET (3/5 regions)" on #67 alone).
-    legacy_prompt = BrainReportService()._build_findings_prompt(legacy.findings, None, "en")
-    assert "DIS Assessment: NOT EVALUATED" in legacy_prompt
-    assert "DIS Assessment: MET" not in legacy_prompt and "NOT MET" not in legacy_prompt
-    assert "3/5 regions" not in legacy_prompt
+    legacy_prompt = _verified_prompt({"dis_assessment": {"dis_met": True, "regions_with_lesions": 3,
+                                                         "total_dis_regions": 5}}, None)
+    assert NOT_EVALUATED_LINE["en"] in legacy_prompt
+    assert "brain criterion" not in legacy_prompt and "not met" not in legacy_prompt.lower()
+    assert "3 of the" not in legacy_prompt
 
 
 # ============================================================================= third independent review

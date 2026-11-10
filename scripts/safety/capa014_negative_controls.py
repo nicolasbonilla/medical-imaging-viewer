@@ -362,6 +362,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "the typed fields accept more than the draft shows, without a counter of the limit"),
 }
 
+# Third independent review of PR #78 (T5, DRAFT, PENDING owner approval): these mutations targeted the retired report
+# templates and findings-prompt builder, archived outside the shipped code (docs/archive/retired_report_prompt.py).
+# They are kept by name, not run; the controls they exercised are verified on the verified report by
+# scripts/safety/verified_report_negative_controls.py.
+RETIRED_WITH_THE_TEMPLATES = {name: M.pop(name)[1] for name in ("P2_builder_prints_free_text", "P6_any_sex_sent", "P17_builder_prints_not_evaluated_as_not_met", "P22_synthetic_dis_without_state", "P23_synthetic_dis_without_absent_region", "M3_model_not_told", "M8_instruction_always_sent")}
+
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
 EXPECTED_UNDETECTED = {}
 

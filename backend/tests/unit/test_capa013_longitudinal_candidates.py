@@ -36,6 +36,17 @@ PATIENT = "11111111-1111-1111-1111-111111111111"
 SHAPE = (12, 24, 24)
 ACTIVITY_WORDS = re.compile(r"activ|aktiv", re.IGNORECASE)   # en / es / de
 
+
+def _verified_request(findings, volumetry=None, language="en"):
+    """The first request the device sends now (third review of PR #78, T5): the verified report's record and
+    code-written report, built from the part of the payload the report writes."""
+    from app.services import verified_report as VR
+    from app.services.report_payload_guard import provider_payload
+    f, v, not_included = VR.rendered_request(findings, volumetry)
+    p = provider_payload(f, v)
+    view = VR.build_view(p.findings, p.volumetry, language, not_included=not_included)
+    return VR.first_user_message(view, language)
+
 ACQ = {
     "manufacturer": "SIEMENS",
     "manufacturer_model_name": "Prisma",
@@ -249,34 +260,30 @@ def test_rc060_a_decision_for_a_candidate_that_does_not_exist_counts_for_nothing
 
 @pytest.mark.unit
 def test_rc060_report_prompt_has_no_activity_wording_from_unconfirmed_candidates(env):
-    from app.services.brain_report_service import BrainReportService, REPORT_TEMPLATES
+    """Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report)."""
+    from app.services import verified_report as VR
     client, *_ = env
-    prompt = BrainReportService()._build_findings_prompt({"longitudinal": _compare(client)}, language="en")
-    block = prompt[prompt.index("Longitudinal comparison data"):]
-    assert not ACTIVITY_WORDS.search(block), block
-    assert "unconfirmed" in block.lower()
-    tpl = REPORT_TEMPLATES["ms_longitudinal"]
-    assert "**Active**: new enhancing or new/enlarging T2 lesions since prior" not in tpl
-    assert "Activity classification (active/not active)" not in tpl
-    assert "evidence of ongoing inflammatory activity" not in tpl
-    assert "NEDA-3" not in tpl
+    prompt = _verified_request({"longitudinal": _compare(client)})
+    assert not ACTIVITY_WORDS.search(prompt), prompt
+    assert "unconfirmed" in prompt.lower()
+    for text in ("**Active**", "Activity classification (active/not active)", "ongoing inflammatory activity", "NEDA"):
+        assert text not in VR.SYSTEM_PROMPT and text not in prompt
 
 
 @pytest.mark.unit
 def test_rc060_report_prompt_never_states_a_reader_confirmation_from_its_input(env):
     """A report request is client data: a reader confirmation in it cannot be verified, so the
     prompt never states one — not even when the block is genuine (review of PR #63, blocker 1)."""
-    from app.services.brain_report_service import BrainReportService
+    # (Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report).)
     client, *_ = env
     res = _compare(client)
     assert _review(client, res, "confirmed").status_code == 200
     genuine = _compare(client)
     assert "reader_confirmed_activity" in genuine
-    prompt = BrainReportService()._build_findings_prompt({"longitudinal": genuine}, language="en")
-    block = prompt[prompt.index("Longitudinal comparison data"):]
-    assert "dr_rev" not in block and "confirmed by" not in block.lower()
-    assert not ACTIVITY_WORDS.search(block)
-    assert "recorded in the application" in block
+    prompt = _verified_request({"longitudinal": genuine})
+    assert "dr_rev" not in prompt and "reader_" not in prompt and '"confirmed_by":' not in prompt
+    assert not ACTIVITY_WORDS.search(prompt)
+    assert "to be reviewed one by one by a radiologist; they are not findings" in prompt
 
 
 FORGED = {
@@ -437,12 +444,12 @@ def test_rc060_template_list_offers_no_neda():
     """Amended for the verified report (REQ-FUNC-116, DRAFT): the list offers the one verified structure; no entry
     of it (nor of the retired templates' reference list) offers NEDA or an activity assessment."""
     from app.services.brain_report_service import BrainReportService
+    # (Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report): no retired list any more.)
     listed = BrainReportService().list_templates()
     assert listed
     for tpl in listed:
         assert "NEDA" not in tpl["description"] and not ACTIVITY_WORDS.search(tpl["description"])
-    retired = {t["id"]: t for t in BrainReportService().list_retired_templates()}["ms_longitudinal"]
-    assert "NEDA" not in retired["description"] and not ACTIVITY_WORDS.search(retired["description"])
+    assert not hasattr(BrainReportService, "list_retired_templates")
 
 
 @pytest.fixture
@@ -705,14 +712,14 @@ def test_rc062_comparison_abstains_without_counts(env, change):
 
 @pytest.mark.unit
 def test_rc062_report_prompt_for_an_abstained_comparison_has_no_counts(env):
-    from app.services.brain_report_service import BrainReportService
+    """Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report)."""
     client, seg, acquisitions, _state = env
     acquisitions[seg.entries["s2"]["metadata"].file_id] = None
-    prompt = BrainReportService()._build_findings_prompt({"longitudinal": _compare(client)}, language="en")
-    block = prompt[prompt.index("Longitudinal comparison data"):]
-    assert "candidates (unconfirmed)" not in block and "count" not in block.lower()
-    assert "burden" not in block.lower() and " mL" not in block and "lesions)" not in block
-    assert "NOT computed" in block
+    prompt = _verified_request({"longitudinal": _compare(client)})
+    record = prompt.split("```json\n", 1)[1].split("\n```", 1)[0]
+    assert '"longitudinal":{"abstained":true' in record and '"candidates"' not in record
+    assert "visit_1" not in record and "burden" not in record and "proposed" not in prompt
+    assert "the change must be assessed visually" in prompt
 
 
 @pytest.mark.unit

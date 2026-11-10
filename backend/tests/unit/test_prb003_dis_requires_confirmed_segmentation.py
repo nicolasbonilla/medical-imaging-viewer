@@ -517,8 +517,13 @@ def test_rc071_the_confirmation_cannot_be_sent_by_the_client_on_create(client_fo
 
 # ---------------------------------------------------- RC-070 / RC-072: the AI report (HAZ-003, HAZ-008)
 def _prompt(findings, language="en"):
-    from app.services.brain_report_service import BrainReportService
-    return BrainReportService.__new__(BrainReportService)._build_findings_prompt(findings, language=language)
+    # (Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report).)
+    from app.services import verified_report as VR
+    from app.services.report_payload_guard import provider_payload
+    f, v, not_included = VR.rendered_request(findings, None)
+    p = provider_payload(f, v)
+    return VR.first_user_message(VR.build_view(p.findings, p.volumetry, language, not_included=not_included),
+                                 language)
 
 
 @pytest.mark.unit
@@ -529,18 +534,21 @@ def _prompt(findings, language="en"):
     {"segmentation_id": "s"},                                                # a block without any flag
 ], ids=["legacy-met", "not-evaluated", "no-flag"])
 def test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated(block):
+    from app.services.dis_review_gate import NOT_EVALUATED_LINE
     prompt = _prompt({"dis_assessment": block})
-    assert "DIS Assessment: MET" not in prompt and "NOT MET" not in prompt
-    assert "NOT EVALUATED" in prompt
+    assert "brain criterion" not in prompt and "not met" not in prompt.lower() and '"dis_met_brain"' not in prompt
+    assert NOT_EVALUATED_LINE["en"] in prompt and '"status":"not evaluated"' in prompt
     assert "requires clinician review of the segmentation" in prompt
 
 
 @pytest.mark.unit
 def test_rc070_report_prompt_with_lesions_and_no_evaluated_dis_forbids_deriving_dis():
+    from app.services import verified_report as VR
+    from app.services.dis_review_gate import NOT_EVALUATED_LINE
     prompt = _prompt({"lesion_analysis": {"total_count": 3, "regions": {
         "Periventricular": {"lesion_count": 2, "total_volume_mm3": 30.0, "total_volume_ml": 0.03}}}})
-    assert "NOT EVALUATED" in prompt
-    assert "Do NOT state or imply dissemination in space" in prompt
+    assert NOT_EVALUATED_LINE["en"] in prompt and "periventricular" not in prompt.lower()
+    assert "write that dissemination in space was not evaluated and say nothing else about it" in " ".join(VR.SYSTEM_PROMPT.split())
 
 
 @pytest.mark.unit
@@ -548,7 +556,8 @@ def test_rc070_report_prompt_states_the_result_of_an_evaluated_assessment():
     prompt = _prompt({"dis_assessment": {"evaluation_status": "evaluated", "dis_met": True,
                                          "regions_with_lesions": 2, "total_dis_regions": 5,
                                          "region_details": {"Periventricular": {"present": True}}}})
-    assert "DIS Assessment: MET" in prompt and "NOT EVALUATED" not in prompt
+    from app.services.dis_review_gate import NOT_EVALUATED_LINE
+    assert "the brain criterion is met" in prompt and NOT_EVALUATED_LINE["en"] not in prompt
 
 
 class _CapturingReport:
