@@ -184,6 +184,54 @@ jobs:
           echo "::warning::tests/security/ is known broken — see CAPA-003. This step does not gate the build."
           python -m pytest tests/security/ -v --tb=short -k "not requires_gcs and not requires_firestore"
 
+  # REQ-AGT-003 / REQ-AGT-004 / REQ-AGT-005 (DRAFT, PENDING owner approval; RC-117, RC-118): the agent
+  # platform's own gate. Runs on every PR: the registry and runtime controls, the offline eval harness
+  # (frozen cases, recorded model outputs, pass^k), the OWASP-mapped red-team suite and the model and
+  # prompt card check. OFFLINE BY CONSTRUCTION: no model key exists in this job, the credentials path
+  # points at a missing file, and tests/agent_platform/conftest.py refuses every non-loopback socket,
+  # so a test that tried to reach a provider fails instead of spending money or sending data.
+  agent-platform:
+    name: Agent Platform — evals pass^k, red team, model card (REQ-AGT)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      ENVIRONMENT: testing
+      DEBUG: "false"
+      JWT_SECRET_KEY: test-secret-key-minimum-32-characters-required-for-security
+      ENCRYPTION_MASTER_KEY: test-encryption-key-32-chars-min
+      GCS_BUCKET_NAME: test-bucket
+      GOOGLE_CLOUD_PROJECT: mstool-offline-tests
+      GOOGLE_APPLICATION_CREDENTIALS: /nonexistent/no-credentials.json
+      AGENT_EVAL_REPORT: agent-eval-report.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: No model key reaches this job
+        run: |
+          if [ -n "${ANTHROPIC_API_KEY:-}" ]; then echo "::error::ANTHROPIC_API_KEY must not be set"; exit 1; fi
+      - name: Agent platform suites (offline)
+        run: |
+          export CLOUDSDK_CONFIG="$(mktemp -d)"
+          python -m pytest tests/agent_platform/ -v --tb=short -o log_cli=false
+      - name: Upload the eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-eval-report
+          path: backend/agent-eval-report.json
+          if-no-files-found: ignore
+
   security-audit:
     name: SOUP Vulnerability Scan (IEC 81001-5-1 Clause 5.3.12)
     runs-on: ubuntu-latest
