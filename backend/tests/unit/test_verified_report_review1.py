@@ -182,10 +182,17 @@ def test_rc102_r6_the_report_never_contradicts_the_gate():
 # ── R7
 @pytest.fixture
 def sink():
+    # anonymous records are budgeted per source (CAPA-015 m9); the report route always has an authenticated user,
+    # so these tests pass one (USER) and start from a fresh budget
+    from app.core.logging.audit import reset_audit_budget
+    reset_audit_budget()
     memory = DurableAuditSink(None, backend="memory")
     previous = set_durable_audit_sink(memory)
     yield memory
     set_durable_audit_sink(previous)
+
+
+USER = SimpleNamespace(id="reader-r7", username="reader-r7", role="radiologist")
 
 
 def _outcomes(sink):
@@ -198,9 +205,11 @@ def test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited(sink, mon
     client = _Client()
     with pytest.raises(ProviderGuardError):
         _generate(_service(client), {"lesion_analysis": {"total_count": 7, "total_burden_mm3": 10.0,
-                                                         "total_burden_ml": 0.01}}, segmentation_id="seg-r7")
+                                                         "total_burden_ml": 0.01}}, segmentation_id="seg-r7",
+                  audit_actor=USER)
     assert client.calls == []
     (outcome,) = _outcomes(sink)
+    assert outcome["actor_user_id"] == "reader-r7"
     assert outcome["details"]["report_outcome"] == "not_sent" and outcome["outcome"] == "denied"
     assert outcome["details"]["llm_reason"] == "identifier_in_request"
     assert outcome["resource_ids"]["segmentation_id"] == "seg-r7"
@@ -208,7 +217,7 @@ def test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited(sink, mon
 
 def test_rc104_r7_a_request_refused_for_an_implausible_measurement_is_audited(sink):
     with pytest.raises(ProviderGuardError):
-        _generate(_service(_Client()), {"lesion_analysis": {"total_count": 20240304}})
+        _generate(_service(_Client()), {"lesion_analysis": {"total_count": 20240304}}, audit_actor=USER)
     (outcome,) = _outcomes(sink)
     assert (outcome["details"]["report_outcome"], outcome["details"]["llm_reason"]) == \
         ("not_sent", "implausible_measurement")
