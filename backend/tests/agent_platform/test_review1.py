@@ -183,8 +183,10 @@ def test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it(result):
 
 
 def test_rc114_review1_declared_result_keys_and_integer_ids_are_not_resources():
+    # amended by the second review (finding 3): a number under an id-like key is a resource unless the tool
+    # declares the key as a lesion or label number
     tool = R.ToolEntry(name="generate_ms_report", access="compute", arguments=(("segmentation_id", "resource_id"),),
-                       result_exempt_keys=("report_id",))
+                       result_exempt_keys=("report_id",), result_numeric_keys=("lesion_id",))
     ok = U.validate_tool_result({"report_id": "r-new-1", "lesions": [{"lesion_id": 3}], "segmentation_id": "seg-1"},
                                 tool=tool, scope=SCOPE, max_bytes=10_000)
     assert ok.ok, ok

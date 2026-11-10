@@ -91,6 +91,9 @@ class RefusalCode(str, Enum):
     OUTPUT_TRUNCATED = "output_truncated"
     MODEL_STOP_UNEXPECTED = "model_stop_unexpected"
     TOOL_ARGUMENTS_INVALID = "tool_arguments_invalid"
+    MODEL_RESPONSE_INVALID = "model_response_invalid"
+    MODEL_OUTPUT_EMPTY = "model_output_empty"
+    RUN_CANCELLED = "run_cancelled"
 
     def __str__(self) -> str:  # so f-strings and json.dumps(str(code)) give the bare code
         return self.value
@@ -127,12 +130,16 @@ REASONS: Dict[RefusalCode, str] = {
     RefusalCode.OUTPUT_TRUNCATED: "the model's output was cut at a token limit; nothing is delivered",
     RefusalCode.MODEL_STOP_UNEXPECTED: "the model stopped for a reason other than a normal end; nothing is delivered",
     RefusalCode.TOOL_ARGUMENTS_INVALID: "the tool call does not match the tool's declared arguments",
+    RefusalCode.MODEL_RESPONSE_INVALID: "the provider's response does not have the expected shape; nothing is delivered",
+    RefusalCode.MODEL_OUTPUT_EMPTY: "the model returned no text; nothing is delivered",
+    RefusalCode.RUN_CANCELLED: "the run was cancelled; nothing is delivered",
 }
 
 # Codes of a run that FAILED (the model, a tool or the verifier did not work) as opposed to one the platform
 # REFUSED: failures are audited as failures, refusals as denials (review of PR #79, finding 8).
 FAILURE_CODES = frozenset({RefusalCode.MODEL_CALL_FAILED, RefusalCode.TOOL_FAILED, RefusalCode.VERIFIER_FAILED,
-                           RefusalCode.OUTPUT_TRUNCATED, RefusalCode.MODEL_STOP_UNEXPECTED})
+                           RefusalCode.OUTPUT_TRUNCATED, RefusalCode.MODEL_STOP_UNEXPECTED,
+                           RefusalCode.MODEL_RESPONSE_INVALID, RefusalCode.MODEL_OUTPUT_EMPTY})
 
 
 @dataclass(frozen=True)
@@ -186,6 +193,7 @@ class ToolEntry:
     access: str
     arguments: Tuple[Tuple[str, str], ...] = ()          # (argument, kind), as declared in the registry
     result_exempt_keys: Tuple[str, ...] = ()             # id-like result keys that name no resource (e.g. report_id)
+    result_numeric_keys: Tuple[str, ...] = ()            # id-like result keys whose NUMBERS are lesion/label numbers
 
     @property
     def scope_arguments(self) -> Tuple[str, ...]:
@@ -319,6 +327,11 @@ class InMemoryCostLedger:
             self._apply(agent_id, study_key, day, usd)
             return rid, None
 
+    def open_reservations(self) -> int:
+        """Reservations not yet settled (a run that ended, failed or was cancelled leaves none)."""
+        with self._lock:
+            return len(self._reservations)
+
     def settle(self, reservation_id: str, usd: Optional[float]) -> None:
         with self._lock:
             entry = self._reservations.pop(reservation_id, None)
@@ -451,11 +464,12 @@ class AgentRegistry:
                 err(f"tool {name}: id-like arguments {bad_ids} must be declared as resource kinds")
                 continue
             exempt = t.get("result_exempt_keys") or []
-            if not isinstance(exempt, list) or not all(isinstance(k, str) for k in exempt):
-                err(f"tool {name}: result_exempt_keys must be a list of keys")
+            numeric = t.get("result_numeric_keys") or []
+            if not all(isinstance(x, list) and all(isinstance(k, str) for k in x) for x in (exempt, numeric)):
+                err(f"tool {name}: result_exempt_keys and result_numeric_keys must be lists of keys")
                 continue
             self._tools[name] = ToolEntry(name=name, access=t["access"], arguments=tuple(sorted(args.items())),
-                                          result_exempt_keys=tuple(exempt))
+                                          result_exempt_keys=tuple(exempt), result_numeric_keys=tuple(numeric))
         for aid, a in data["agents"].items():
             if not isinstance(aid, str) or not _AGENT_ID.fullmatch(aid):
                 err(f"agent id not well formed: {aid!r}")

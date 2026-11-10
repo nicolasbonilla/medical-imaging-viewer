@@ -36,9 +36,18 @@ from app.agent_platform.hashing import sha256_text as _sha
 SCHEMA = "mstool.ai-provenance/1"
 AUTHORS = ("software", "model", "clinician")
 TEXT_MARK = "[AI]"
+TEXT_MARK_EDITED = "[AI, edited]"       # a unit the model wrote and the clinician then changed
+
+# Words after which a full stop does not end a sentence (English, Spanish, German report language).
+ABBREVIATIONS = frozenset({
+    "e.g.", "i.e.", "approx.", "aprox.", "ca.", "cf.", "vs.", "etc.", "dr.", "dra.", "drs.", "prof.", "fig.", "figs.",
+    "no.", "nr.", "núm.", "sr.", "sra.", "st.", "max.", "min.", "bzw.", "ggf.", "evtl.", "vgl.", "usw.", "inkl.",
+    "zzgl.", "sog.", "resp.", "incl.", "ref.", "vol.", "pág.", "p.ej.", "z.b.", "u.a.", "d.h.",
+})
+ABBREVIATION_PAIRS = (("z.", "b."), ("p.", "ej."), ("u.", "a."), ("d.", "h."))
 
 _HEADING = re.compile(r"\s*(#{1,6}\s|\*\*[^*]{1,80}\*\*\s*:?\s*$)")
-_LIST = re.compile(r"\s*([-*+]\s|\d{1,3}[.)]\s)")
+_LIST = re.compile(r"\s*([-*+]\s+|\d{1,3}[.)]\s+)")
 _TABLE = re.compile(r"\s*\|")
 _SENT_SPLIT = re.compile(r"(?<=[.!?;])(\s+)(?=\S)")
 _PREFIX = re.compile(r"^(\s*(?:#{1,6}\s+|[-*+]\s+|\d{1,3}[.)]\s+|\|\s*)?)")
@@ -98,14 +107,43 @@ def split_units(text: str) -> List[Tuple[str, str, str]]:
         if _TABLE.match(content):
             units.append(["table_row", content, eol])
             continue
-        parts = _SENT_SPLIT.split(content)
-        first_kind = "list_item" if _LIST.match(content) else "sentence"
-        for k in range(0, len(parts), 2):
-            body = parts[k]
-            ws = parts[k + 1] if k + 1 < len(parts) else ""
+        marker = _LIST.match(content)
+        first_kind = "list_item" if marker else "sentence"
+        head = content[:marker.end()] if marker else ""
+        sentences = split_sentences(content[len(head):])
+        sentences[0][0] = head + sentences[0][0]             # the list marker stays on its item
+        for k, (body, ws) in enumerate(sentences):
             units.append([first_kind if k == 0 else "sentence", body, ws])
         units[-1][2] += eol
     return [tuple(u) for u in units]
+
+
+def _no_split_after(before: str, after: str) -> bool:
+    """True when the punctuation that ends ``before`` belongs to an abbreviation, not to a sentence end."""
+    low = before.lower()
+    word = low.rsplit(None, 1)[-1] if low.split() else low
+    if word in ABBREVIATIONS:
+        return True
+    for first, second in ABBREVIATION_PAIRS:            # "z. B.", "p. ej.", "u. a.", "d. h."
+        if word == first and after.lower().startswith(second):
+            return True
+        if word == second and low.endswith(first + " " + second):
+            return True
+    return False
+
+
+def split_sentences(text: str) -> List[List[str]]:
+    """[[sentence, trailing whitespace], ...] — split after . ! ? ; followed by whitespace, except after a
+    defined abbreviation (second review of PR #79, finding 2). ''.join(s + ws) == text."""
+    out: List[List[str]] = []
+    start = 0
+    for m in _SENT_SPLIT.finditer(text):
+        if _no_split_after(text[start:m.start()], text[m.end():]):
+            continue
+        out.append([text[start:m.start()], m.group(1)])
+        start = m.end()
+    out.append([text[start:], ""])
+    return out
 
 
 def compose(parts: Sequence[Tuple[str, str, Mapping[str, Any]]]) -> ProvenanceDocument:
@@ -167,22 +205,34 @@ def _legend(doc: ProvenanceDocument) -> str:
     models = sorted({s.model_id for s in doc.model_segments() if s.model_id})
     agents = sorted({s.agent_id for s in doc.model_segments() if s.agent_id})
     verifiers = sorted({s.verifier for s in doc.model_segments() if s.verifier})
+    edited = any(s.edited_from_model for s in doc.segments)
+    edited_note = (f" Units tagged {TEXT_MARK_EDITED} were written by an AI model and then changed by the clinician."
+                   if edited else "")
     if not models:
+        if edited:
+            return "Legend: no unit is as the AI model wrote it." + edited_note
         return "Legend: no part of this text was written by an AI model."
     checked = f", checked by {', '.join(verifiers)}" if verifiers else ", not checked by a verifier"
     return (f"Legend: the tagged units were written by AI model {', '.join(models)} (agent {', '.join(agents)})"
-            f"{checked}; every other unit was computed by the software or written by the clinician.")
+            f"{checked}; every other unit was computed by the software or written by the clinician.{edited_note}")
+
+
+def _marked(unit: str, mark: str) -> str:
+    m = _PREFIX.match(unit)
+    cut = m.end() if m else 0
+    return unit[:cut] + mark + " " + unit[cut:]
 
 
 def render_text(doc: ProvenanceDocument) -> str:
-    """Plain text for the signed report: TEXT_MARK before each model unit, then the legend."""
+    """Plain text for the signed report: TEXT_MARK before each model unit, TEXT_MARK_EDITED before each unit the
+    clinician changed from model text (second review of PR #79, finding 7), then the legend."""
     out = []
     for s in doc.segments:
         unit = s.text
         if s.author == "model" and unit.strip():
-            m = _PREFIX.match(unit)
-            cut = m.end() if m else 0
-            unit = unit[:cut] + TEXT_MARK + " " + unit[cut:]
+            unit = _marked(unit, TEXT_MARK)
+        elif s.edited_from_model and unit.strip():
+            unit = _marked(unit, TEXT_MARK_EDITED)
         out.append(unit + s.trailing)
     body = "".join(out).rstrip("\n")
     return body + "\n\n" + _legend(doc)
@@ -197,6 +247,6 @@ def render_html(doc: ProvenanceDocument) -> str:
             attrs = (f'class="mstool-ai-text" {attrs} data-model="{html.escape(s.model_id or "", quote=True)}" '
                      f'data-agent="{html.escape(s.agent_id or "", quote=True)}"')
         elif s.edited_from_model:
-            attrs += ' data-edited-from-model="true"'
+            attrs = f'class="mstool-ai-edited" {attrs} data-edited-from-model="true"'
         out.append(f"<span {attrs}>{html.escape(s.text, quote=True)}</span>{html.escape(s.trailing)}")
     return "".join(out) + f'\n<p class="mstool-ai-legend">{html.escape(_legend(doc))}</p>'

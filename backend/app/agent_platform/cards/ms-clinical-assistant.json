@@ -2,7 +2,7 @@
  "schema": "mstool.agent-card/1",
  "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-002)",
  "agent_id": "ms-clinical-assistant",
- "card_version": "2026-11-10.2",
+ "card_version": "2026-11-10.3",
  "model": {
   "id": null,
   "control": "client",
@@ -45,29 +45,29 @@
    "chars": 470,
    "source": "backend/app/mcp/imaging_server.py"
   },
-  "mcp.imaging_server.tool[get_image_metadata].description": {
-   "sha256": "edac9f657cb0502fc90b2727622d722ef824fd36867d4ef0959f3f16259c1803",
-   "chars": 314,
+  "mcp.imaging_server.tool[get_image_metadata].definition": {
+   "sha256": "a1214172c2323ad8fb7f12fb9f3ae584e2a2493d2c7bc4bc9c2264900d2710a6",
+   "chars": 571,
    "source": "backend/app/mcp/imaging_server.py"
   },
-  "mcp.imaging_server.tool[get_matplotlib_visualization].description": {
-   "sha256": "c2b432c37bf6fbffc07746d2929d7e1719d06cede0f9b184a33ff2107e170788",
-   "chars": 366,
+  "mcp.imaging_server.tool[get_matplotlib_visualization].definition": {
+   "sha256": "ea1bc48a60b01f32b9168e2f4f59d8f2f255e0d839550948b8e9be2765d68214",
+   "chars": 1240,
    "source": "backend/app/mcp/imaging_server.py"
   },
-  "mcp.imaging_server.tool[get_slice_image].description": {
-   "sha256": "fa29d0a5d5731a52a5ce6951172d86a9534033faf3e8603eb37223fbc4f7ecc9",
-   "chars": 383,
+  "mcp.imaging_server.tool[get_slice_image].definition": {
+   "sha256": "7a51b7d9615c04cfb8f42bc114bd93ff2922b0b750e701bf2fa73b8319963b7a",
+   "chars": 1235,
    "source": "backend/app/mcp/imaging_server.py"
   },
-  "mcp.imaging_server.tool[list_segmentations].description": {
-   "sha256": "8caf8e7f7a3fdb32244a124fccf44b4cf72a299395200e0f0c4ea3d16942b274",
-   "chars": 163,
+  "mcp.imaging_server.tool[list_segmentations].definition": {
+   "sha256": "2d9d8305f96e2d313188e6b4a832abddb678be547adc88dbf70062654e3d33ec",
+   "chars": 418,
    "source": "backend/app/mcp/imaging_server.py"
   },
-  "mcp.imaging_server.tool[process_image].description": {
-   "sha256": "463c6075ce050dd107c35bcd0d1e2a2d06be7f760b06276bdbd4212c08bcc88d",
-   "chars": 254,
+  "mcp.imaging_server.tool[process_image].definition": {
+   "sha256": "eef4d59b6afa866928350c72ba557363a0c15d34309279ed8a49da9cfef4f114",
+   "chars": 636,
    "source": "backend/app/mcp/imaging_server.py"
   },
   "mcp.ms_clinical_server.description": {
@@ -90,29 +90,29 @@
    "chars": 1932,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
-  "mcp.ms_clinical_server.tool[analyze_lesions].description": {
-   "sha256": "ca8889a7acad32f4f1288c515f56c06663d5cf22b00e298d5ca4224c5a4b152a",
-   "chars": 308,
+  "mcp.ms_clinical_server.tool[analyze_lesions].definition": {
+   "sha256": "46bcd5d1d45a3a4ac9c15e1295be8f3eeca9f2c0e111caec988b42d5eca32c92",
+   "chars": 575,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
-  "mcp.ms_clinical_server.tool[compare_longitudinal].description": {
-   "sha256": "66954e877be7db86533d7be308957867928c20b29fa75448724c87ae214173f9",
-   "chars": 885,
+  "mcp.ms_clinical_server.tool[compare_longitudinal].definition": {
+   "sha256": "82c83047946e1c2e5e4f931a241e44ded8298c35796f66483a5bbcf65d2cb21b",
+   "chars": 1293,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
-  "mcp.ms_clinical_server.tool[generate_ms_report].description": {
-   "sha256": "5122358f76c8dc40deb7362db02400097e2853ba1a2fb8f6f9659749692f9fbc",
-   "chars": 709,
+  "mcp.ms_clinical_server.tool[generate_ms_report].definition": {
+   "sha256": "96f9e2aedfb1ac5300cc00096ae7406baf5c89f5f888853503dc19196bddada8",
+   "chars": 1451,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
-  "mcp.ms_clinical_server.tool[get_region_classification].description": {
-   "sha256": "34e70aba72def3680dd9870e2d1f42890eb8959043f366e0a99bf7c909cfffad",
-   "chars": 881,
+  "mcp.ms_clinical_server.tool[get_region_classification].definition": {
+   "sha256": "43baf9b075d8c0b6bfb793f1aed4b3b281f753e8ec6155bcbcc7d936d48b01c4",
+   "chars": 1181,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
-  "mcp.ms_clinical_server.tool[summarize_dis_items].description": {
-   "sha256": "23af964eeea75167f4895d82a5e549bcabee705cc8d24a7d79d2c51561859587",
-   "chars": 1031,
+  "mcp.ms_clinical_server.tool[summarize_dis_items].definition": {
+   "sha256": "b644acabbfb5bf86f87f47dd0ef0b431353a74b04995f5fe26e3a2a46a586271",
+   "chars": 1331,
    "source": "backend/app/mcp/ms_clinical_server.py"
   }
  },
@@ -137,6 +137,12 @@
    "date": "2026-11-10",
    "card_version": "2026-11-10.2",
    "what": "recorded the MCP SDK resolved by the CI install (mcp 1.12.4, protocol 2025-06-18), reported by test_rc117_mcp_sdk_as_installed_matches_the_card in run 42901365003",
+   "approved_by": null
+  },
+  {
+   "date": "2026-11-10",
+   "card_version": "2026-11-10.3",
+   "what": "second review of PR #79, finding 9: each tool is bound by its FULL definition (name, description, parameters with kind, annotation and default, signature) instead of its docstring only",
    "approved_by": null
   }
  ]

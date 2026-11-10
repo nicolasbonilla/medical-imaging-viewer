@@ -84,6 +84,14 @@ def drop_unconfirmed_activity_flags(value):
     return value
 
 
+def assistant_view(value):
+    """What any AI assistant or agent may receive from the backend: the value without direct identifiers
+    (CAPA-008) and without activity flags computed from unconfirmed candidates (CAPA-013, RC-060). The ONE
+    rule shared by this MCP client and the agent platform (app/agent_platform/untrusted.py; second review of
+    PR #79, finding 1)."""
+    return drop_unconfirmed_activity_flags(drop_direct_identifiers(value))
+
+
 def _api_base() -> str:
     return os.environ.get("API_BASE_URL", "http://localhost:8000")
 
@@ -107,7 +115,7 @@ async def api_get(path: str, params: Optional[dict] = None, timeout: float = 60.
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.get(f"{_api_base()}/api/v1{path}", params=params, headers=_headers())
         response.raise_for_status()
-        return drop_unconfirmed_activity_flags(drop_direct_identifiers(response.json()))
+        return assistant_view(response.json())
 
 
 async def api_post_compute(path: str, json_data: Optional[dict] = None, timeout: float = 120.0) -> dict:
@@ -117,4 +125,4 @@ async def api_post_compute(path: str, json_data: Optional[dict] = None, timeout:
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(f"{_api_base()}/api/v1{path}", json=json_data, headers=_headers())
         response.raise_for_status()
-        return drop_unconfirmed_activity_flags(drop_direct_identifiers(response.json()))
+        return assistant_view(response.json())

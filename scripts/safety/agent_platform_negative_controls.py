@@ -1,37 +1,50 @@
 """Negative controls for the agent platform (RC-110 .. RC-120) — reproducible evidence.
 
-DRAFT, PENDING owner approval. Each mutation re-introduces ONE defect a control exists to prevent, in the
-real source, one at a time; the script asserts the anchor occurs exactly once (the sabotage really was
-applied), runs the agent-platform suites, records the failing test names and restores the originals.
-A mutation that no test detects is listed under "undetected" and makes the script exit non-zero.
+DRAFT, PENDING owner approval. Each mutation re-introduces ONE defect a control exists to prevent, one at a time;
+the script asserts the anchor occurs exactly once (the sabotage really was applied), runs the agent-platform
+suites, records the failing test names and restores the file. A mutation that no test detects is listed under
+"undetected" and makes the script exit non-zero.
+
+Second review of PR #79, finding 10: the mutations are NEVER written into the real checkout. Each round copies
+what the suites need (backend/app, backend/tests, pytest.ini, requirements.txt, the agent-platform documents and
+this script) into a throwaway directory under the system temp folder, mutates and tests THERE, and deletes it at
+the end. A hard kill (power loss, blue screen) can at worst leave a sabotaged temp copy outside the repository.
+``tests/agent_platform/test_review2.py`` (CI) fails if any mutation is ever found in the tracked sources.
+Loading this module has no side effect (no chdir, no write).
 
 Light load by design: one pytest process at a time, only tests/agent_platform/, no credentials.
-Run from the repository root (offline environment variables are set here):
-    backend/venv/Scripts/python scripts/safety/agent_platform_negative_controls.py
+    backend/venv/Scripts/python scripts/safety/agent_platform_negative_controls.py             # full round
+    backend/venv/Scripts/python scripts/safety/agent_platform_negative_controls.py --only A,B "reason"
 Output: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json
-NEVER run this while anything else edits the files it mutates (it restores a snapshot).
 """
+import contextlib
 import datetime
 import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-os.chdir(ROOT)
-PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
+REPO = Path(__file__).resolve().parents[2]
+ROOT = str(REPO)
+PY = str(REPO / "backend" / "venv" / "Scripts" / "python.exe")
 if not os.path.exists(PY):
     PY = os.environ.get("AGENT_NC_PYTHON", sys.executable)
-OUT = "docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json"
+OUT = REPO / "docs" / "iec62304" / "records" / "risk_verification" / "AGENT-PLATFORM_negative_controls_2026-11-10.json"
 TESTS = ["tests/agent_platform/"]
+COPY = ("backend/app", "backend/tests", "backend/pytest.ini", "backend/requirements.txt",
+        "docs/iec62304/agent_platform", "scripts/safety/agent_platform_negative_controls.py")
 
 P = "backend/app/agent_platform/"
 REG, UNT, TRC, RUN = P + "registry.py", P + "untrusted.py", P + "tracing.py", P + "runtime.py"
 PRV, OVS, CRD, EVL = P + "provenance.py", P + "oversight.py", P + "cards.py", P + "evals.py"
 GRADER = "backend/tests/agent_platform/graders/report_verifier_v3/verifier.py"
+MCPB = "backend/app/mcp/_backend.py"
+NCS = "scripts/safety/agent_platform_negative_controls.py"
 
 M = {  # name: (file, anchor, replacement, control, what it re-introduces)
     # ---------------------------------------------------------------- registry
@@ -84,7 +97,8 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
     "U7_ids_not_compared_with_scope": (UNT, "        return None if scope.allows(value) else RefusalCode.OUT_OF_SCOPE_RESOURCE\n",
                                        "        return None\n", "RC-114",
                                        "ids in tool calls and results are not compared with the run's study"),
-    "U8_identifiers_kept": (UNT, "    cleaned = drop_direct_identifiers(result)\n", "    cleaned = result\n", "RC-113",
+    "U8_identifiers_kept": (UNT, "    cleaned = assistant_view(result)       # the MCP client's own rule: no identifier, no unconfirmed activity flag\n",
+                            "    cleaned = result\n", "RC-113",
                             "identifiers in tool results reach the model"),
     "U9_result_size_unbounded": (UNT, '    if len(serialized.encode("utf-8")) > max_bytes:\n', "    if False:\n", "RC-113",
                                  "a tool result of any size reaches the model"),
@@ -207,7 +221,7 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
     "V7_plural_ids_not_checked": (UNT, "        for item in value:\n            if isinstance(item, (Mapping, list)):\n",
                                   "        for item in []:\n            if isinstance(item, (Mapping, list)):\n", "RC-114",
                                   "ids in a list (*_ids, ids) are not scope-checked"),
-    "V8_nested_values_not_walked": (UNT, "            bad = _scope_walk(v, depth + 1, scope, invalid=invalid, locations=locations, exempt=exempt, flags=flags)\n"
+    "V8_nested_values_not_walked": (UNT, "            bad = _scope_walk(v, depth + 1, scope, **kw)\n"
                                          "            if bad:\n                return bad\n        return None\n    if isinstance(value, list):\n",
                                     "            bad = None\n            if bad:\n                return bad\n        return None\n    if isinstance(value, list):\n",
                                     "RC-114", "ids nested in objects are not scope-checked"),
@@ -221,10 +235,89 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                 '            if audit and code != "ok":\n',
                            "            res.executed_tools, res.warnings = tuple(executed), tuple(warnings)\n"
                            '            if audit and code != "ok":\n', "RC-113", "early returns drop the injection alarms"),
+    # ---------------------------------------------------------------- second independent review of PR #79
+    "W1_activity_flags_reach_the_model": (MCPB, "    return drop_unconfirmed_activity_flags(drop_direct_identifiers(value))\n",
+                                          "    return drop_direct_identifiers(value)\n", "RC-113",
+                                          "activity flags computed from unconfirmed candidates reach a model (CAPA-013)"),
+    "W2_list_marker_split_off": (PRV, '        head = content[:marker.end()] if marker else ""\n', '        head = ""\n', "RC-119",
+                                 "a list marker is split from its item and tagged on its own"),
+    "W3_abbreviations_split": (PRV, "        if _no_split_after(text[start:m.start()], text[m.end():]):\n            continue\n",
+                               "        if False:\n            continue\n", "RC-119", "a sentence is split after an abbreviation"),
+    "W4_foreign_id_keys_ignored": (UNT, "            if _foreign_key(k, scope, numeric_keys):\n", "            if False:\n",
+                                   "RC-114", "another resource used as a dict key passes"),
+    "W5_numeric_ids_ignored": (UNT, "                numbers_are_ids = numeric_keys is not None and k not in numeric_keys\n",
+                               "                numbers_are_ids = False\n", "RC-114", "a numeric id of another resource passes"),
+    "W6_storage_locations_ignored": (UNT, "        if STORAGE_LOCATION.search(value):\n            return RefusalCode.OUT_OF_SCOPE_RESOURCE\n",
+                                     "", "RC-114", "a storage location (gs://, s3://) passes"),
+    "W7_result_locations_ignored": (UNT, "    bad = _scope_walk(result, 0, scope, invalid=RefusalCode.TOOL_RESULT_INVALID, locations=True,\n",
+                                    "    bad = _scope_walk(result, 0, scope, invalid=RefusalCode.TOOL_RESULT_INVALID, locations=False,\n",
+                                    "RC-114", "*_path / *_uri / *_url values in a result are not checked"),
+    "W8_malformed_response_used": (RUN, "                if response_is_malformed(response):\n", "                if False:\n", "RC-110",
+                                   "a malformed provider response is used (and escapes the audit)"),
+    "W9_cancel_leaks_reservation": (RUN, "                except asyncio.CancelledError:\n                    reg.settle(d.reservation, None)             # never leaked: the worst case stays charged\n",
+                                    "                except asyncio.CancelledError:\n", "RC-112",
+                                    "a cancelled call leaves its reservation open"),
+    "W10_cancel_not_audited": (RUN, '            reg.audit("cancelled", RefusalCode.RUN_CANCELLED, event="agent.run", agent_id=agent_id,\n'
+                                    '                      study_key=scope.study_key, trace_id=trace.get("id"))\n',
+                               "", "RC-110", "a cancelled run leaves no audit record"),
+    "W11_edited_marker_lost": (PRV, "        elif s.edited_from_model and unit.strip():\n            unit = _marked(unit, TEXT_MARK_EDITED)\n",
+                               "", "RC-119", "a model sentence the clinician edited loses its AI marker"),
+    "W12_empty_output_delivered": (RUN, '        if not (final_text or "").strip():                      # second review of PR #79, finding 8\n'
+                                        '            return stop("failed", RefusalCode.MODEL_OUTPUT_EMPTY)\n',
+                                   "", "RC-110", "an empty model output is delivered as a success"),
+    "W13_card_hashes_docstrings_only": (CRD, '            out[f"mcp.{server}.tool[{name}].definition"] = tool_definition(name, fn)\n',
+                                        '            out[f"mcp.{server}.tool[{name}].definition"] = json.dumps({"name": name, "description": (fn.__doc__ or "").strip()})\n',
+                                        "RC-117", "a tool's parameters and signature are not bound by the card"),
+    "W14_mutations_written_into_the_checkout": (NCS, '    (work / path).write_text(mutated, encoding="utf-8", newline=eol)\n',
+                                                '    (REPO / path).write_text(mutated, encoding="utf-8", newline=eol)\n', "RC-118",
+                                                "the negative-control script writes its mutations into the repository"),
 }
 
 
-def run():
+def _text(path):
+    raw = (REPO / path).read_bytes()                                   # the real checkout is only READ
+    return raw, raw.decode("utf-8").replace("\r\n", "\n"), ("\r\n" if b"\r\n" in raw else "\n")
+
+
+@contextlib.contextmanager
+def work_copy():
+    """A throwaway copy of what the suites need, outside the repository; removed afterwards."""
+    work = Path(tempfile.mkdtemp(prefix="mstool-agent-nc-")).resolve()
+    if work == REPO or REPO in work.parents:
+        raise SystemExit("the throwaway copy must be outside the repository")
+    try:
+        for rel in COPY:
+            src, dst = REPO / rel, work / rel
+            if src.is_dir():
+                shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache"))
+            else:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+        yield work
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def apply_mutation(work, name):
+    """Write the mutated file into the throwaway copy ``work`` — never into the checkout."""
+    path, anchor, repl, _control, _what = M[name]
+    work = Path(work).resolve()
+    if work == REPO or REPO in work.parents:
+        raise SystemExit("refusing to mutate inside the repository")
+    _raw, text, eol = _text(path)
+    count = text.count(anchor)
+    assert count == 1, f"{name}: anchor occurs {count}x in {path}, expected 1"
+    mutated = text.replace(anchor, repl, 1)
+    assert mutated != text, name
+    (work / path).write_text(mutated, encoding="utf-8", newline=eol)
+
+
+def restore(work, name):
+    path = M[name][0]
+    (Path(work) / path).write_bytes((REPO / path).read_bytes())
+
+
+def run(work):
     env = dict(os.environ)
     for k in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_MODEL"):
         env.pop(k, None)
@@ -232,7 +325,8 @@ def run():
                 "CLOUDSDK_CONFIG": tempfile.mkdtemp(prefix="mstool-nc-gcloud-"),
                 "GOOGLE_CLOUD_PROJECT": "mstool-offline-tests"})
     r = subprocess.run([PY, "-m", "pytest", *TESTS, "-q", "-p", "no:cacheprovider", "-o", "log_cli=false", "-W", "ignore"],
-                       cwd="backend", capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
+                       cwd=str(Path(work) / "backend"), capture_output=True, text=True, encoding="utf-8",
+                       errors="replace", env=env)
     f = re.search(r"(\d+) failed", r.stdout)
     p = re.search(r"(\d+) passed", r.stdout)
     e = re.search(r"(\d+) error", r.stdout)
@@ -241,32 +335,31 @@ def run():
             "failing_tests": sorted(set(re.findall(r"(?:FAILED|ERROR) \S+::(\S+)", r.stdout)))[:40]}
 
 
+def _round(names):
+    files = sorted({M[n][0] for n in names})
+    out = {"executed": datetime.datetime.now().isoformat(timespec="seconds"), "mutations": {},
+           "method": "one mutation at a time in a throwaway copy outside the repository; anchors asserted unique",
+           "source_sha256": {p: hashlib.sha256(_text(p)[1].encode("utf-8")).hexdigest() for p in files}}
+    with work_copy() as work:
+        for name in names:
+            apply_mutation(work, name)
+            result = run(work)
+            path, _a, _r, control, what = M[name]
+            result.update({"control": control, "reintroduces": what, "applied": True})
+            out["mutations"][name] = result
+            restore(work, name)
+            print(f"{name:40s} {control}  {result['failed']} failed / {result['errors']} errors / "
+                  f"{result['passed']} passed", flush=True)
+        out["restored"] = run(work)
+    return out
+
+
 def rerun(names, reason):
-    """Re-run only the named mutations (after a test was added for one the full round missed) and append the
-    result to the existing record, keeping the first round as it was."""
+    """Run the named mutations and APPEND the round to the record, keeping the earlier rounds as they were."""
     res = json.load(open(OUT, encoding="utf-8"))
-    superseded = sorted(n for n in res["mutations"] if n not in M)     # anchors replaced after a code change
-    sub = {n: M[n] for n in names}
-    files = sorted({v[0] for v in sub.values()})
-    raw = {p: open(p, "rb").read() for p in files}
-    text = {p: b.decode("utf-8").replace("\r\n", "\n") for p, b in raw.items()}
-    eol = {p: "\r\n" if b"\r\n" in b else "\n" for p, b in raw.items()}
-    entry = {"executed": datetime.datetime.now().isoformat(timespec="seconds"), "reason": reason, "mutations": {},
-             "superseded": superseded,
-             "source_sha256": {p: hashlib.sha256(text[p].encode("utf-8")).hexdigest() for p in files}}
-    try:
-        for name, (path, anchor, repl, control, what) in sub.items():
-            assert text[path].count(anchor) == 1, name
-            open(path, "w", encoding="utf-8", newline=eol[path]).write(text[path].replace(anchor, repl, 1))
-            out = run()
-            out.update({"control": control, "reintroduces": what, "applied": True})
-            entry["mutations"][name] = out
-            open(path, "wb").write(raw[path])
-            print(f"{name:40s} {control}  {out['failed']} failed / {out['errors']} errors / {out['passed']} passed", flush=True)
-    finally:
-        for p, b in raw.items():
-            open(p, "wb").write(b)
-    entry["restored"] = run()
+    entry = _round(names)
+    entry["reason"] = reason
+    entry["superseded"] = sorted(n for n in res["mutations"] if n not in M)
     res.setdefault("reruns", []).append(entry)
     latest = {n: v for n, v in res["mutations"].items() if n in M}
     for e in res["reruns"]:
@@ -274,11 +367,11 @@ def rerun(names, reason):
     never_run = sorted(set(M) - set(latest))
     if never_run:
         raise SystemExit(f"mutations never run: {never_run}")
-    res["undetected_first_round"] = res.get("undetected_first_round", res["undetected"])
     res["undetected"] = sorted(n for n, v in latest.items() if v["failed"] == 0 and v["errors"] == 0)
-    res["summary"] = {"mutations": len(M), "detected": len(M) - len(res["undetected"]),
-                      "detected_first_round": len(M) - len(res["undetected_first_round"]),
-                      "controls": sorted({v[3] for v in M.values()})}
+    res.setdefault("summary", {})["latest_round"] = {
+        "executed": entry["executed"], "mutations": len(entry["mutations"]),
+        "detected": sum(1 for v in entry["mutations"].values() if v["failed"] or v["errors"]),
+        "restored_passed": entry["restored"]["passed"], "restored_failed": entry["restored"]["failed"]}
     json.dump(res, open(OUT, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     print("restored", entry["restored"]["passed"], "passed /", entry["restored"]["failed"], "failed | undetected:",
           res["undetected"])
@@ -288,33 +381,9 @@ def rerun(names, reason):
 def main():
     if len(sys.argv) >= 3 and sys.argv[1] == "--only":
         return rerun(sys.argv[2].split(","), " ".join(sys.argv[3:]) or "re-run")
-    files = sorted({v[0] for v in M.values()})
-    raw = {p: open(p, "rb").read() for p in files}                       # exact bytes, restored at the end
-    text = {p: b.decode("utf-8").replace("\r\n", "\n") for p, b in raw.items()}
-    eol = {p: "\r\n" if b"\r\n" in b else "\n" for p, b in raw.items()}   # keep each file's line endings
-    for name, (path, anchor, _r, _c, _w) in M.items():
-        c = text[path].count(anchor)
-        assert c == 1, f"{name}: anchor occurs {c}x in {path}, expected 1"
-    res = {"executed": datetime.datetime.now().isoformat(timespec="seconds"),
-           "status": "DRAFT, PENDING owner approval",
-           "method": "one mutation at a time; each anchor asserted to occur exactly once; tests/agent_platform/ only",
-           "hash_basis": "sha256 of the UTF-8 text with LF line endings",
-           "source_sha256": {p: hashlib.sha256(text[p].encode("utf-8")).hexdigest() for p in files},
-           "tests": TESTS, "mutations": {}}
-    try:
-        for name, (path, anchor, repl, control, what) in M.items():
-            mutated = text[path].replace(anchor, repl, 1)
-            assert mutated != text[path], name
-            open(path, "w", encoding="utf-8", newline=eol[path]).write(mutated)
-            out = run()
-            out.update({"control": control, "reintroduces": what, "applied": True})
-            res["mutations"][name] = out
-            open(path, "wb").write(raw[path])
-            print(f"{name:40s} {control}  {out['failed']} failed / {out['errors']} errors / {out['passed']} passed", flush=True)
-    finally:
-        for p, b in raw.items():
-            open(p, "wb").write(b)
-    res["restored"] = run()
+    res = _round(list(M))
+    res.update({"status": "DRAFT, PENDING owner approval", "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+                "tests": TESTS})
     res["undetected"] = sorted(n for n, v in res["mutations"].items() if v["failed"] == 0 and v["errors"] == 0)
     res["summary"] = {"mutations": len(M), "detected": len(M) - len(res["undetected"]),
                       "controls": sorted({v[3] for v in M.values()})}

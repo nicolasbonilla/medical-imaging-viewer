@@ -54,7 +54,8 @@
     "test_registry.py::test_rc110_tool_of_another_agent_is_refused",
     "test_redteam.py::test_rc115_environment_cannot_override_the_model_or_the_switch",
     "test_review1.py::test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped",
-    "test_review1.py::test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it"
+    "test_review1.py::test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it",
+    "test_review2.py::test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result"
    ],
    "note": "per-agent identity = registry id; per-agent service credentials are integration step P-4 (the MCP servers act with the clinician's own token, CAPA-008)"
   },
@@ -68,7 +69,8 @@
    "tests": [
     "test_cards.py::test_rc117_card_is_current_with_the_code_and_the_registry",
     "test_cards.py::test_rc117_mcp_sdk_as_installed_matches_the_card",
-    "test_redteam.py::test_rc115_asi04_llm03_answer_from_another_model_is_discarded"
+    "test_redteam.py::test_rc115_asi04_llm03_answer_from_another_model_is_discarded",
+    "test_review2.py::test_rc117_review2_a_tool_signature_change_fails_the_card_check"
    ],
    "note": "fastmcp 2.3.0 has published advisories and the MCP SDK is not pinned: recorded in the card, open as P-7"
   },
@@ -115,7 +117,8 @@
     "test_redteam.py::test_rc112_asi08_llm10_endless_tool_loop_ends_with_nothing_delivered",
     "test_runtime.py::test_rc113_failing_tool_ends_the_run_without_a_draft",
     "test_runtime.py::test_rc110_verifier_that_raises_means_nothing_is_delivered",
-    "test_review1.py::test_rc110_review1_output_not_ended_normally_is_never_delivered"
+    "test_review1.py::test_rc110_review1_output_not_ended_normally_is_never_delivered",
+    "test_review2.py::test_rc112_review2_cancelled_model_call_settles_and_is_audited"
    ]
   },
   "ASI09": {
@@ -127,7 +130,8 @@
    ],
    "tests": [
     "test_redteam.py::test_rc119_asi09_a_claimed_human_review_is_still_marked_as_ai",
-    "test_provenance_oversight.py::test_rc120_aggregate_per_reader"
+    "test_provenance_oversight.py::test_rc120_aggregate_per_reader",
+    "test_review2.py::test_rc119_review2_edited_model_sentence_keeps_a_distinct_marker"
    ]
   },
   "ASI10": {
@@ -208,7 +212,8 @@
     "test_provenance_oversight.py::test_rc119_html_renderer_escapes_and_tags",
     "test_redteam.py::test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model",
     "test_runtime.py::test_rc110_verifier_withholding_means_nothing_is_delivered",
-    "test_review1.py::test_rc110_review1_tool_calls_cut_at_the_token_limit_never_run"
+    "test_review1.py::test_rc110_review1_tool_calls_cut_at_the_token_limit_never_run",
+    "test_review2.py::test_rc110_review2_malformed_provider_response_is_an_audited_non_delivery"
    ]
   },
   "LLM06": {
@@ -252,7 +257,8 @@
    ],
    "tests": [
     "test_agent_evals.py::test_rc118_report_and_gate",
-    "test_runtime.py::test_rc110_verifier_withholding_means_nothing_is_delivered"
+    "test_runtime.py::test_rc110_verifier_withholding_means_nothing_is_delivered",
+    "test_review2.py::test_rc113_review2_unconfirmed_activity_flags_never_reach_the_model"
    ]
   },
   "LLM10": {

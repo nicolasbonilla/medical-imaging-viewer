@@ -117,6 +117,26 @@ def report_drafter_templates() -> Dict[str, str]:
     return out
 
 
+def _annotation(value: Any) -> Optional[str]:
+    if value is inspect.Parameter.empty:
+        return None
+    return value if isinstance(value, str) else getattr(value, "__name__", None) or repr(value)
+
+
+def tool_definition(name: str, fn: Callable) -> str:
+    """Second review of PR #79, finding 9: the FULL tool definition a client model receives — name, description,
+    every parameter (name, kind, annotation, default) and the signature — as canonical JSON. The input schema
+    FastMCP sends is derived from exactly these; adding, removing, retyping or re-defaulting a parameter changes
+    the hash."""
+    sig = inspect.signature(fn)
+    params = [{"name": p.name, "kind": p.kind.name, "annotation": _annotation(p.annotation),
+               "default": None if p.default is inspect.Parameter.empty else repr(p.default),
+               "required": p.default is inspect.Parameter.empty} for p in sig.parameters.values()]
+    return json.dumps({"name": name, "description": (fn.__doc__ or "").strip(), "parameters": params,
+                       "returns": _annotation(sig.return_annotation), "signature": f"{name}{sig}"},
+                      sort_keys=True, ensure_ascii=False)
+
+
 def ms_clinical_assistant_templates() -> Dict[str, str]:
     out = {}
     for server in ("ms_clinical_server", "imaging_server"):
@@ -132,7 +152,7 @@ def ms_clinical_assistant_templates() -> Dict[str, str]:
                 value = asyncio.run(_await(value))
             out[f"mcp.{server}.resource[{uri}]"] = value if isinstance(value, str) else json.dumps(value, sort_keys=True)
         for name, fn in sorted(mcp.tools.items()):
-            out[f"mcp.{server}.tool[{name}].description"] = (fn.__doc__ or "").strip()
+            out[f"mcp.{server}.tool[{name}].definition"] = tool_definition(name, fn)
     out.update(_platform_templates())
     return out
 

@@ -146,6 +146,21 @@ def audit_outcome(status: str) -> str:
     return "failure" if status == "failed" else "denied"
 
 
+def response_is_malformed(response: Any) -> bool:
+    """Second review of PR #79, finding 4: the provider's answer must have the expected shape before any field of
+    it is used; anything else is a non-delivery (``model_response_invalid``), never an exception."""
+    if not isinstance(response, ModelResponse) or not isinstance(response.model_id, str):
+        return True
+    if response.text is not None and not isinstance(response.text, str):
+        return True
+    if response.stop_reason is not None and not isinstance(response.stop_reason, str):
+        return True
+    if not isinstance(response.tool_calls, (tuple, list)):
+        return True
+    return any(not isinstance(c, ToolCall) or not isinstance(c.call_id, str) or not isinstance(c.name, str)
+               or not isinstance(c.arguments, Mapping) for c in response.tool_calls)
+
+
 class AgentRuntime:
     def __init__(self, registry: AgentRegistry, tracer: Tracer, *, tools: Optional[Mapping[str, Callable]] = None,
                  verifier: Optional[Verifier] = None):
@@ -177,28 +192,54 @@ class AgentRuntime:
             return model_client.complete(request)
         return await asyncio.to_thread(model_client.complete, request)
 
+    @staticmethod
+    async def _off_loop(fn: Callable, blocking: bool, *args, **kwargs) -> Any:
+        """Second review of PR #79, finding 6: in ``arun`` a sync tool or verifier runs in a worker thread so the
+        caller's loop stays responsive; a coroutine function is awaited in the loop; in ``run`` (a private loop)
+        everything is called directly. A result that is awaitable is awaited in the loop."""
+        if blocking or inspect.iscoroutinefunction(fn):
+            out = fn(*args, **kwargs)
+        else:
+            out = await asyncio.to_thread(fn, *args, **kwargs)
+        if inspect.isawaitable(out):
+            out = await out
+        return out
+
     # -------------------------------------------------------------- the run
     async def _arun(self, agent_id: str, kwargs: Dict[str, Any], blocking_model: bool) -> RunResult:
         model_client = kwargs.get("model_client")
         scope: RunScope = kwargs["scope"]
         reg = self.registry
         provider = getattr(model_client, "provider", "unknown") or "unknown"
-        with self.tracer.agent_span(agent_id, provider=provider, trace_id=kwargs.get("trace_id"),
-                                    audit_request_id=kwargs.get("audit_request_id"), registry_version=reg.version,
-                                    study_key=pseudonymise(scope.study_key)) as span:
-            result = await self._loop(span, agent_id, model_client, scope, kwargs, blocking_model)
-            result.trace_id, result.span_id = span.trace_id, span.span_id
-            span.set("mstool.run.status", result.status)
-            span.set("mstool.run.steps", result.steps)
-            span.set("mstool.run.tool_calls", result.tool_calls)
-            span.set("mstool.cost.usd", round(result.cost_usd, 6))
-            span.set("mstool.untrusted.alarm_count", len(result.alarms))
-            if result.code != "ok":
-                span.set("mstool.refusal.code", str(result.code))
+        trace = {}
+        try:
+            with self.tracer.agent_span(agent_id, provider=provider, trace_id=kwargs.get("trace_id"),
+                                        audit_request_id=kwargs.get("audit_request_id"), registry_version=reg.version,
+                                        study_key=pseudonymise(scope.study_key)) as span:
+                trace["id"] = span.trace_id
+                result = await self._loop(span, agent_id, model_client, scope, kwargs, blocking_model)
+                self._finish_span(span, result)
+        except asyncio.CancelledError:
+            # Second review of PR #79, finding 5: the reservation was settled where the cancellation hit (model
+            # call) or was never made; the audit trail records the cancelled run; the cancellation propagates.
+            reg.audit("cancelled", RefusalCode.RUN_CANCELLED, event="agent.run", agent_id=agent_id,
+                      study_key=scope.study_key, trace_id=trace.get("id"))
+            raise
         reg.audit(audit_outcome(result.status), result.code, event="agent.run", agent_id=agent_id,
                   model_id=result.model_id if result.model_id else None, study_key=scope.study_key,
                   trace_id=result.trace_id)
         return result
+
+    @staticmethod
+    def _finish_span(span, result: RunResult) -> None:
+        result.trace_id, result.span_id = span.trace_id, span.span_id
+        span.set("mstool.run.status", result.status)
+        span.set("mstool.run.steps", result.steps)
+        span.set("mstool.run.tool_calls", result.tool_calls)
+        span.set("mstool.cost.usd", round(result.cost_usd, 6))
+        span.set("mstool.untrusted.alarm_count", len(result.alarms))
+        if result.code != "ok":
+            span.set("mstool.refusal.code", str(result.code))
 
     async def _loop(self, span, agent_id, model_client, scope, kwargs, blocking_model) -> RunResult:
         reg = self.registry
@@ -276,11 +317,19 @@ class AgentRuntime:
                 chat.set_content_hash("input", {"system": system, "messages": messages})
                 try:
                     response = await self._call_model(model_client, request, blocking_model)
+                except asyncio.CancelledError:
+                    reg.settle(d.reservation, None)             # never leaked: the worst case stays charged
+                    raise
                 except Exception as exc:  # noqa: BLE001 — any provider failure: no draft
                     chat.fail(type(exc).__name__)
                     reg.settle(d.reservation, None)             # the provider may have charged: worst case kept
                     res.cost_usd += worst
                     return stop("failed", RefusalCode.MODEL_CALL_FAILED)
+                if response_is_malformed(response):
+                    reg.settle(d.reservation, None)
+                    res.cost_usd += worst
+                    chat.set("mstool.refusal.code", str(RefusalCode.MODEL_RESPONSE_INVALID))
+                    return stop("failed", RefusalCode.MODEL_RESPONSE_INVALID)
                 usage_ok = _valid_count(response.input_tokens) and _valid_count(response.output_tokens)
                 cost = (reg.estimate_cost_usd(model_id, response.input_tokens, response.output_tokens) if usage_ok
                         else None)
@@ -333,9 +382,7 @@ class AgentRuntime:
                         ts.set("mstool.refusal.code", str(RefusalCode.UNKNOWN_TOOL))
                         return stop("refused", RefusalCode.UNKNOWN_TOOL)
                     try:
-                        raw = fn(**dict(call.arguments))
-                        if inspect.isawaitable(raw):
-                            raw = await raw                     # in the caller's loop: no thread, no new loop
+                        raw = await self._off_loop(fn, blocking_model, **dict(call.arguments))
                     except Exception as exc:  # noqa: BLE001 — a failing tool: no draft
                         ts.fail(type(exc).__name__)
                         return stop("failed", RefusalCode.TOOL_FAILED)
@@ -351,13 +398,16 @@ class AgentRuntime:
         else:
             return stop("abstained", RefusalCode.STEP_LIMIT)
 
+        if not (final_text or "").strip():                      # second review of PR #79, finding 8
+            return stop("failed", RefusalCode.MODEL_OUTPUT_EMPTY)
         delivered = final_text
         verifier_name = None
         if self.verifier is not None:
             with self.tracer.verify_span("verifier", verdict="not_run") as vs:
                 try:
-                    verdict = self.verifier(final_text, {"agent_id": agent_id, "model_id": model_id, "scope": scope,
-                                                         "user_content": user_content})
+                    verdict = await self._off_loop(self.verifier, blocking_model, final_text,
+                                                   {"agent_id": agent_id, "model_id": model_id, "scope": scope,
+                                                    "user_content": user_content})
                     ok = isinstance(verdict, Verdict)
                 except Exception as exc:  # noqa: BLE001 — a verifier that fails withholds
                     vs.fail(type(exc).__name__)

@@ -346,14 +346,15 @@ def test_rc118_review2_loading_the_script_changes_nothing():
 
 
 def test_rc118_review2_no_mutation_is_left_in_the_tracked_sources():
+    """The CI guard: every mutation's original code (its anchor) is present exactly once, and where a mutation
+    INSERTS text around its anchor, the inserted text is absent — so no mutation can be left in a commit."""
     nc = _nc()
     for name, (path, anchor, replacement, _c, _w) in nc.M.items():
         text = (REPO / path).read_text(encoding="utf-8").replace("\r\n", "\n")
         assert text.count(anchor) == 1, f"{name}: the original code is missing from {path} — a mutation was left in it"
-        if replacement and replacement not in text.replace(anchor, ""):
-            continue
-        assert not replacement or replacement in anchor or text.count(replacement) == text.replace(
-            anchor, "").count(replacement), name
+        if anchor in replacement:
+            inserted = [part for part in replacement.split(anchor) if part.strip()]
+            assert not any(part in text for part in inserted), f"{name}: its inserted code is present in {path}"
 
 
 def test_rc118_review2_mutations_are_applied_in_a_throwaway_copy():
