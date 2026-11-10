@@ -125,8 +125,9 @@ def test_rc102_regions_only_when_a_radiologist_confirmed_them():
 
 @pytest.mark.parametrize("lang", VR.LANGUAGES)
 def test_rc102_dissemination_in_space_only_when_evaluated(lang):
-    for dis in (NOT_EVAL, None, {"evaluation_status": "evaluated", "regions_with_lesions": 2},
-                {**EVALUATED, "regions_with_lesions": "two"}):
+    # (review of PR #78, R6: an evaluated block whose count of regions was not computed is EVALUATED — the gate's
+    # state — with the count "not computed"; tested in test_verified_report_review1.py)
+    for dis in (NOT_EVAL, None, {"evaluation_status": "evaluated", "regions_with_lesions": 2}):
         findings = {"lesion_analysis": _la(7, confirmed=False)}
         if dis is not None:
             findings["dis_assessment"] = dis

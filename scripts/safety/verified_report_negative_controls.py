@@ -24,7 +24,8 @@ Run from the repository root with the backend's Python (it needs the backend req
     <backend python> scripts/safety/verified_report_negative_controls.py           # in a throwaway worktree
     <backend python> scripts/safety/verified_report_negative_controls.py --here    # only in a disposable checkout
 The backend Python is taken from MSTOOL_BACKEND_PYTHON, else backend/venv of this checkout or of the main checkout.
-Output: docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json
+Output: docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_review1_2026-11-10.json
+(the first round, before the independent review of PR #78: ..._negative_controls_2026-11-10.json, kept)
 """
 import atexit
 import datetime
@@ -41,7 +42,7 @@ import time
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.chdir(REPO)
-OUT = "docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json"
+OUT = "docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_review1_2026-11-10.json"   # first round: _2026-11-10.json (kept)
 PREFIX = "verified-report-safety-run-"
 
 
@@ -70,6 +71,7 @@ TESTS = [
     "tests/unit/test_rc104_verified_report_audit.py",
     "tests/unit/test_rc105_rc106_report_model_controls.py",
     "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",       # independent review of PR #78, R1-R10
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -85,11 +87,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F2_not_computed_as_zero": ([(VR, "    if v is None or v != int(v) or v < 0:\n        return None\n",
                                   "    if v is None or v != int(v) or v < 0:\n        return 0\n")],
                                 "a count that was not computed is written 0"),
-    "F3_regions_without_confirmation": ([(VR, "    regions_ok = bool(evaluated and la.get(", "    regions_ok = bool(la is not None and la.get(")],
+    "F3_regions_without_confirmation": ([(VR, '    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in \\\n',
+                                          '    if la is not None and la.get("regions_confirmed") is not False and regs_in \\\n')],
                                         "lesions per region reported for a segmentation no radiologist confirmed"),
-    "F4_dis_without_the_gate": ([(VR, "    evaluated = gate.is_evaluated(dis_block) and _count(",
-                                  "    evaluated = isinstance(dis_block, dict) and _count(")],
-                                "a DIS result reported from a block the gate did not mark evaluated"),
+    "F4_dis_without_the_gate": ([(VR, "    evaluated = gate.is_evaluated(dis_block)\n",
+                                  "    evaluated = isinstance(dis_block, dict) and dis_block.get(\"evaluation_status\") == \"evaluated\"\n")],
+                                "a DIS result reported from a block the gate did not mark evaluated (no yes/no conclusion)"),
     "F5_candidates_called_lesions": ([(VR, '        "lng_ok": "The software proposed {new} new and {enl} enlarging unconfirmed change candidates ({res} resolved, "',
                                        '        "lng_ok": "The software found {new} new and {enl} enlarging lesions ({res} resolved, "')],
                                      "change candidates written as new and enlarging lesions"),
@@ -103,8 +106,25 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F8_t1_next_to_spinal_cord": ([(VR, '        "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|brain volumetry",',
                                     '        "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|spinal cord imaging|brain volumetry",')],
                                   "a limitation sentence the route's backstop reads as a statement on DIS"),
-    "F9_first_request_not_checked": ([(BRS, "            assert_prompt_carries_no_identifier(sent_text, identifiers)\n", "            pass\n")],
+    "F9_first_request_not_checked": ([(BRS, "                assert_prompt_carries_no_identifier(sent_text, identifiers)\n", "                pass\n")],
                                      "the first request is sent without the identifier check (RC-065)"),
+    # ── independent review of PR #78 (R1-R10) ──
+    "F10_dis_only_crashes": ([(VR, '    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in \\\n',
+                               '    if evaluated and la.get("regions_confirmed") is not False and regs_in \\\n')],
+                             "R1: a DIS-only request (no lesion analysis) crashes the report (HTTP 500)"),
+    "F11_not_included_dropped": ([(VR, '    if view.get("not_included"):\n        lim.append(', '    if False:\n        lim.append(')],
+                                 "R3: measurements the verified report does not use are dropped silently"),
+    "F12_region_not_computed_as_zero": ([(VR, '(_count(regs_in[r].get("lesion_count")) if isinstance(regs_in[r], dict) else None)',
+                                          '(_count(regs_in[r].get("lesion_count")) or 0 if isinstance(regs_in[r], dict) else 0)')],
+                                        "R4: a region count that was not computed is written 0"),
+    "F13_stricter_dis_rule_back": ([(VR, "    evaluated = gate.is_evaluated(dis_block)\n",
+                                     "    evaluated = gate.is_evaluated(dis_block) and _count(dis_block.get(\"regions_with_lesions\")) is not None\n")],
+                                   "R6: a confirmed mask reported as not confirmed (the report contradicts the gate)"),
+    "F14_placeholder_in_record_sent": ([(BRS, '                if UNLISTED.rstrip("]") in sent_text:\n', "                if False:\n")],
+                                       "R8: a label of the request in the record is sent instead of refused"),
+    "F15_number_reader_accepts_inf": ([(VR, "    from app.services.report_payload_guard import _number\n    return _number(x)\n",
+                                        "    return None if isinstance(x, bool) or not isinstance(x, (int, float)) or x != x else x\n")],
+                                      "R10: an infinite value is read as a number (and a count of it crashes)"),
     # ── RC-103: every answer is checked ──
     "C1_claim_check_not_run": ([(VR, "    res = V.verify(assembled, None, view)\n", "    res = {\"elements\": []}\n")],
                                "the frozen claim check does not run on the answer"),
@@ -132,6 +152,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "a cut-off answer is accepted"),
     "C13_lexicon_drift": ([(LEX, "    r\"\\b(?:consistent with|typical of|", "    r\"\\b(?:typical of|")],
                           "the ported rules drift from the frozen benchmark rules (\"consistent with MS\" passes)"),
+    "C14_exact_count_placeholder": ([(VR, '        vals["total_count"] = str(n) if n < 20 else les["count_category"]\n',
+                                      '        vals["total_count"] = str(n)\n')],
+                                    "R5: the {total_count} placeholder gives the exact count from 20 lesions (MAGNIMS 2021: the range)"),
     # ── RC-104: the audit ──
     "A1_attempts_not_audited": ([(BRS, "        self._emit(AuditEventType.CLINICAL_AI_REPORT_ATTEMPT, outcome, details, AuditSeverity.LOW)\n", "        pass\n")],
                                 "the model attempts are not in the audit log"),
@@ -145,6 +168,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "A5_rule_ids_carry_answer_text": ([(VR, "        return sorted({f\"E3.{'section' if k.startswith('section:') else k}\" for k in kind.split(\"+\")})\n",
                                         "        return sorted({f\"E3.{k}\" for k in kind.split(\"+\")})\n")],
                                       "a rule id carries words of the answer (a section name) into the audit log"),
+    "A6_refusal_not_audited": ([(BRS, "            audit.not_sent(e)\n            raise\n", "            raise\n")],
+                               "R7: a draft refused by a privacy check (or failed) before any model call leaves no audit record"),
     # ── RC-105: the kill switch ──
     "K1_kill_switch_ignored": ([(BRS, '        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:\n', "        if False:\n")],
                                "REPORT_LLM_ENABLED=false still calls the model"),
@@ -173,6 +198,15 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                              "one call may wait ten minutes (the SDK default)"),
     "M9_404_not_recognised": ([(BRS, '    if getattr(exc, "status_code", None) == 404 or name == "NotFoundError":\n', "    if False:\n")],
                               "a model the provider no longer serves is reported as a generic error"),
+    "M10_sdk_retry_back": ([(BRS, "            self._client = anthropic.Anthropic(api_key=api_key, max_retries=0)\n",
+                             "            self._client = anthropic.Anthropic(api_key=api_key, max_retries=1)\n")],
+                           "R2: the SDK retries with a fresh full timeout (about twice the 25 s budget)"),
+    "M11_wait_not_bounded": ([(BRS, "                message = await asyncio.wait_for(asyncio.to_thread(\n", "                message = await (asyncio.to_thread(\n"),
+                              (BRS, "timeout=max(1.0, float(timeout_s))), timeout=float(timeout_s))", "timeout=max(1.0, float(timeout_s))))")],
+                             "R2: the wait for the provider is not bounded by the remaining budget"),
+    "M12_retired_table_decides": ([(BRS, "    if entry is None:\n        return False\n    retires = entry.get(\"retires_on\")\n",
+                                    "    if entry is None or model_id in RETIRED_OR_RETIRING_MODELS:\n        return False\n    retires = entry.get(\"retires_on\")\n")],
+                                  "R9: a second allow mechanism (the retired table) next to the allow-list and its retirement date"),
 }
 
 

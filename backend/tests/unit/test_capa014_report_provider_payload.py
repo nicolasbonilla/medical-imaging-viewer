@@ -1194,7 +1194,8 @@ def test_r3_unbounded_or_ambiguous_values_do_not_refuse_the_report(route):
     route.provider.calls.clear()
     r = _post(route, {**_measurements(), "anomalies": [{"type": "Lesion", "confidence": 87}]})
     assert r.status_code == 200, r.text
-    assert "confidence" not in route.provider.prompt() and "anomal" not in route.provider.prompt()   # not sent
+    # not sent (review of PR #78, R3: only named as supplied but not included in the verified draft)
+    assert "confidence" not in route.provider.prompt() and "anomalies" in _record_sent(route)["not_included"]
 
 
 # R2: the patient's own record number, birth date or phone number in a number field is refused, checked

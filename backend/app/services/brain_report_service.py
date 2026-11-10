@@ -52,8 +52,11 @@ from app.core.logging import get_logger
 from app.services import verified_report
 from app.services.report_payload_guard import (
     UNLISTED,
+    IdentifierInPrompt,
+    ImplausibleMeasurement,
     PatientIdentifiers,
     PatientRecordUnavailable,
+    ProviderGuardError,
     assert_no_identifiers,
     label_vocabulary,
     percent_text,
@@ -80,7 +83,8 @@ REPORT_MODELS: Dict[str, Dict[str, Any]] = {
     "claude-haiku-5-5": {"params": {"thinking": {"type": "disabled"}, "output_config": {"effort": "low"}},
                          "retires_on": None, "soup": "SOUP-BE-030"},
 }
-# Ids known to be retired or retiring (Claude API dates); named so that a configuration with one is reported as such.
+# Ids known to be retired or retiring (Claude API dates). FOR THE LOG MESSAGE ONLY (review of PR #78, R9): what may be
+# called is decided by REPORT_MODELS and its `retires_on` alone — one mechanism.
 RETIRED_OR_RETIRING_MODELS: Dict[str, str] = {
     "claude-sonnet-4-5-20250929": "2026-11-30", "claude-sonnet-4-5": "2026-11-30",
     "claude-sonnet-4-20250514": "2026-06-15", "claude-3-7-sonnet-20250219": "2026-02-19",
@@ -91,10 +95,26 @@ RETIRED_OR_RETIRING_MODELS: Dict[str, str] = {
 def report_model_allowed(model_id: Any, today: Optional[date] = None) -> bool:
     """RC-106: True only for an id of REPORT_MODELS whose retirement date (if any) is still ahead."""
     entry = REPORT_MODELS.get(model_id) if isinstance(model_id, str) else None
-    if entry is None or model_id in RETIRED_OR_RETIRING_MODELS:
+    if entry is None:
         return False
     retires = entry.get("retires_on")
     return retires is None or (today or date.today()) < date.fromisoformat(retires)
+
+
+class LabelInRecord(ProviderGuardError):
+    """Review of PR #78, R8: a numbered placeholder of an unlisted label reached the measurement record — the record
+    carries only code-chosen strings by design, so this cannot happen; if it does, nothing is sent (fail closed)."""
+
+
+def _refusal_code(exc: BaseException) -> str:
+    """RC-104: the audit-safe reason of a request refused before any model call (review of PR #78, R7)."""
+    for cls, code in ((PatientRecordUnavailable, "patient_record_unavailable"),
+                      (IdentifierInPrompt, "identifier_in_request"),
+                      (ImplausibleMeasurement, "implausible_measurement"),
+                      (LabelInRecord, "label_in_request")):
+        if isinstance(exc, cls):
+            return code
+    return "privacy_check_refused"
 
 
 def _failure_reason(exc: BaseException) -> str:
@@ -168,6 +188,18 @@ class _ReportAudit:
                    AuditOutcome.PARTIAL if withheld else AuditOutcome.SUCCESS,
                    {k: v for k, v in details.items() if v is not None},
                    AuditSeverity.MEDIUM if withheld else AuditSeverity.LOW)
+
+    def not_sent(self, exc: BaseException) -> None:
+        """Review of PR #78, R7: a draft that ends before any model call — a privacy check refused it (denied) or it
+        failed (failure) — is audited too; the reason is a code, never the message."""
+        from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
+        refused = isinstance(exc, ProviderGuardError)
+        details = {"report_outcome": "not_sent" if refused else "error", "interpretive_text": "not_sent",
+                   "attempts": 0, "llm_reason": _refusal_code(exc) if refused else None,
+                   "error": None if refused else type(exc).__name__}
+        self._emit(AuditEventType.CLINICAL_AI_REPORT_VERIFICATION,
+                   AuditOutcome.DENIED if refused else AuditOutcome.FAILURE,
+                   {k: v for k, v in details.items() if v is not None}, AuditSeverity.MEDIUM)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # RC-006 — risk control for HAZ-003 (AI report hallucination, severity S5).
@@ -713,8 +745,9 @@ class BrainReportService:
                     "Set the environment variable to enable report generation."
                 )
             import anthropic
-            # RC-106: one SDK retry at most; the flow's own 25 s budget bounds every call (REQ-SAFE-019)
-            self._client = anthropic.Anthropic(api_key=api_key, max_retries=1)
+            # RC-106: no SDK retry (review of PR #78, R2: a retry got a fresh full timeout, about twice the budget);
+            # the flow's own regeneration and its 25 s budget for all calls of a draft are the only repetition
+            self._client = anthropic.Anthropic(api_key=api_key, max_retries=0)
         return self._client
 
     def _build_findings_prompt(
@@ -951,9 +984,11 @@ class BrainReportService:
         async def call(system: str, messages: List[Dict[str, str]], timeout_s: float) -> verified_report.ModelReply:
             try:
                 client = self._get_client()
-                message = await asyncio.to_thread(
+                # the remaining budget bounds the wait itself (R2), whatever the SDK does with its own timeout; a
+                # call still running in its thread afterwards is ignored (its answer is never read)
+                message = await asyncio.wait_for(asyncio.to_thread(
                     client.messages.create, model=model_id, max_tokens=max_tokens, system=system, messages=messages,
-                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))
+                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s))), timeout=float(timeout_s))
             except Exception as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is
                 raise verified_report.ProviderFailure(_failure_reason(e), type(e).__name__) from e
             return reply_of(message)
@@ -1002,43 +1037,55 @@ class BrainReportService:
         if template_type not in REPORT_TEMPLATES:
             template_type = "general"
 
-        # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check
-        # against, so no request is sent.
-        if not isinstance(identifiers, PatientIdentifiers):
-            raise PatientRecordUnavailable("the patient's identifiers were not supplied")
-
-        # RC-064: structured payload only — measurements, fixed labels; no free text.
-        payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)
         lang = verified_report.language_of(language)
-        # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
-        view = verified_report.build_view(payload.findings, payload.volumetry, lang,
-                                          review_source=_review_source(findings))
-        # RC-066: record that the check ran and what was withheld (counts) — never the payload.
-        logger.info(
-            "[Report] Structured payload checked before the model provider call",
-            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},
-        )
-
         model_id = getattr(self._settings, "CLAUDE_MODEL", None)
+        # RC-104: every outcome is audited — also a request refused before any model call (review of PR #78, R7)
         audit = _ReportAudit(report_id, audit_actor, segmentation_id, template_type, lang)
-        reason = self._interpretive_text_gate(model_id, view)
-        sent_text = ""
-        if reason is not None:
-            if reason == verified_report.REASON_MODEL_NOT_ALLOWED:
-                logger.error("[Report] The configured model is not allowed (retired, retiring or not validated); "
-                             "measurements-only report", extra={"report_id": report_id, "model": str(model_id)[:64]})
-            result = verified_report.measurements_only(view, lang, reason)
-        else:
-            sent_text = verified_report.first_user_message(view, lang)
-            # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
-            assert_prompt_carries_no_identifier(sent_text, identifiers)
-            result = await verified_report.run_flow(
-                view, lang, self._model_call(model_id),
-                request_meta={"model": model_id, "max_tokens": int(self._settings.CLAUDE_MAX_TOKENS),
-                              "params": REPORT_MODELS[model_id]["params"]},
-                # RC-065 on every regeneration request too: a finding stops the flow (comments withheld)
-                tripwire=lambda text: assert_prompt_carries_no_identifier(text, identifiers),
-                on_attempt=audit.attempt)
+        try:
+            # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check
+            # against, so no request is sent.
+            if not isinstance(identifiers, PatientIdentifiers):
+                raise PatientRecordUnavailable("the patient's identifiers were not supplied")
+
+            # RC-064: structured payload only — measurements, fixed labels; no free text.
+            payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)
+            # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
+            view = verified_report.build_view(payload.findings, payload.volumetry, lang,
+                                              review_source=_review_source(findings))
+            # RC-066: record that the check ran and what was withheld (counts) — never the payload.
+            logger.info(
+                "[Report] Structured payload checked before the model provider call",
+                extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},
+            )
+
+            reason = self._interpretive_text_gate(model_id, view)
+            if reason is not None:
+                if reason == verified_report.REASON_MODEL_NOT_ALLOWED:
+                    retired = RETIRED_OR_RETIRING_MODELS.get(model_id) if isinstance(model_id, str) else None
+                    logger.error("[Report] The configured model is not allowed (" +
+                                 (f"retired or retiring on {retired}" if retired else "not validated or retired") +
+                                 "); measurements-only report",
+                                 extra={"report_id": report_id, "model": str(model_id)[:64]})
+                result = verified_report.measurements_only(view, lang, reason)
+            else:
+                sent_text = verified_report.first_user_message(view, lang)
+                # R8: the record carries only code-chosen strings; a placeholder of a request label in it would
+                # mean a label of the request reached the model — nothing is sent (fail closed)
+                if UNLISTED.rstrip("]") in sent_text:
+                    raise LabelInRecord("a label of the request reached the measurement record")
+                # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
+                assert_prompt_carries_no_identifier(sent_text, identifiers)
+                result = await verified_report.run_flow(
+                    view, lang, self._model_call(model_id),
+                    request_meta={"model": model_id, "max_tokens": int(self._settings.CLAUDE_MAX_TOKENS),
+                                  "params": REPORT_MODELS[model_id]["params"]},
+                    # RC-065 on every regeneration request too: a finding stops the flow (comments withheld)
+                    tripwire=lambda text: assert_prompt_carries_no_identifier(text, identifiers),
+                    on_attempt=audit.attempt,
+                    deadline_s=verified_report.LLM_DEADLINE_S)   # read at call time (REQ-SAFE-019)
+        except Exception as e:  # noqa: BLE001 — audited, then raised as before (the route answers 503 / 500)
+            audit.not_sent(e)
+            raise
         audit.outcome(result, model_id if reason is None else None)
 
         # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that no generated report can leave this
@@ -1059,11 +1106,12 @@ class BrainReportService:
             "processing_time_ms": processing_time_ms,
             "model": (result.model_answered or model_id) if asked else None,
             "tokens_used": {"input": result.input_tokens, "output": result.output_tokens} if asked else None,
-            "verification": result.summary(),
-            # CAPA-014: placeholder -> label as written, for the clinician's draft only (never sent). Verified report:
-            # only the placeholders the request to the provider actually carried (none when nothing was sent), so
-            # the application note "sent as numbered placeholders" stays true.
-            "unlisted_labels": {ph: name for ph, name in payload.unlisted.items() if ph in sent_text},
+            # R3: what the verified report does not include is named, never dropped silently
+            "verification": {**result.summary(), "not_included": list(view.get("not_included") or [])},
+            # CAPA-014: placeholder -> label as written, for the clinician's draft only. Verified report (review of
+            # PR #78, R8): the record never carries a placeholder (a request would be refused above), so there is no
+            # placeholder to name and no application note "sent as numbered placeholders".
+            "unlisted_labels": {},
         }
 
     def list_templates(self) -> List[Dict[str, str]]:

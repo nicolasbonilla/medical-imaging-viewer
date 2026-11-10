@@ -489,9 +489,13 @@ class ReportGenerateRequest(BaseModel):
         default_factory=dict,
         description="Clinical findings. Keys: clinical_indication, technique, patient_age, "
                     "patient_sex, segmentation_labels, anomalies, additional_observations, "
-                    "lesion_analysis, dis_assessment, longitudinal, zone_stats. Only measurements, "
-                    "labels of the device's vocabulary, sex and a 5-year age band are sent to the AI "
-                    "service; the typed text fields are added to the draft here, never sent (CAPA-014).",
+                    "lesion_analysis, dis_assessment, longitudinal, zone_stats. Verified report (REQ-FUNC-116, "
+                    "DRAFT): the draft is built from lesion_analysis, dis_assessment, longitudinal and the total "
+                    "brain and intracranial volume of `volumetry`; zone_stats, segmentation_labels, anomalies and "
+                    "the structure volumes of `volumetry` are accepted but not included in the verified draft — "
+                    "the draft names them as not included (and `verification.not_included` lists them). Only "
+                    "measurements reach the AI service (no sex, no age band); the typed text fields are added to "
+                    "the draft here, never sent (CAPA-014).",
     )
     volumetry: Optional[Dict[str, Any]] = Field(
         None,
@@ -582,7 +586,9 @@ def get_report_service():
     description="Generate a DRAFT structured brain MRI report from measurements computed by "
                 "the device, for physician review. Verified report (REQ-FUNC-116, DRAFT): every number "
                 "and status is written by code; the Claude API writes two short comments that pass an "
-                "automatic check against the measurements or are withheld (`verification`). Templates: general, "
+                "automatic check against the measurements or are withheld (`verification`); zone statistics, "
+                "segmentation labels, anomalies and structure volumes are accepted but not included in the verified "
+                "draft, which names them (`verification.not_included`). Templates: general, "
                 "ms_activity, ms_lesion_burden, ms_comprehensive, ms_longitudinal; languages "
                 "en, es, de. Only the measurements, labels of the device's vocabulary, sex and a "
                 "5-year age band are sent to the model provider; the typed text is added to the "

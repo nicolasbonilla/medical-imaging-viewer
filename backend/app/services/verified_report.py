@@ -226,8 +226,13 @@ T: Dict[str, Dict[str, str]] = {
         "reg_nc": "Lesions per MAGNIMS region: not computed.",
         "dis_ev": "Dissemination in space (brain MRI): lesions in {k} of the {e} regions evaluable on brain MRI; the "
                   "brain criterion is {met}.",
+        "dis_ev_nc": "Dissemination in space (brain MRI): the brain criterion is {met} (evaluated on the confirmed "
+                     "segmentation); the number of regions with lesions was not computed.",
         "met": "met", "notmet": "not met",
         "dis_ext": "Spinal cord and optic nerve: not assessed.",
+        "not_included": "Supplied but not included in this verified draft: {items}.",
+        "ni_zone_statistics": "MAGNIMS zone statistics", "ni_segmentation_labels": "segmentation labels",
+        "ni_anomalies": "anomaly detections", "ni_structure_volumes": "structure volumes of the volumetry",
         "vol_brain": "Brain volumetry (computed by the software, no comparison with normative values): total brain "
                      "volume: {tbv}; intracranial volume: {icv}.",
         "ml": "{x} mL", "nc": "not computed",
@@ -266,8 +271,13 @@ T: Dict[str, Dict[str, str]] = {
         "reg_nc": "Lesiones por región MAGNIMS: no calculadas.",
         "dis_ev": "Diseminación en el espacio (RM cerebral): lesiones en {k} de las {e} regiones evaluables en la RM "
                   "cerebral; el criterio cerebral {met}.",
+        "dis_ev_nc": "Diseminación en el espacio (RM cerebral): el criterio cerebral {met} (evaluada en la segmentación "
+                     "confirmada); el número de regiones con lesiones no se calculó.",
         "met": "se cumple", "notmet": "no se cumple",
         "dis_ext": "Médula espinal y nervio óptico: no evaluados.",
+        "not_included": "Aportado pero no incluido en este borrador verificado: {items}.",
+        "ni_zone_statistics": "estadísticas de zonas MAGNIMS", "ni_segmentation_labels": "etiquetas de segmentación",
+        "ni_anomalies": "detecciones de anomalías", "ni_structure_volumes": "volúmenes de estructuras de la volumetría",
         "vol_brain": "Volumetría cerebral (calculada por el programa, sin comparación con valores normativos): volumen "
                      "cerebral total: {tbv}; volumen intracraneal: {icv}.",
         "ml": "{x} ml", "nc": "no calculado",
@@ -304,8 +314,13 @@ T: Dict[str, Dict[str, str]] = {
         "reg_nc": "Läsionen je MAGNIMS-Region: nicht berechnet.",
         "dis_ev": "Räumliche Dissemination (Hirn-MRT): Läsionen in {k} der {e} im Hirn-MRT beurteilbaren Regionen; das "
                   "Hirnkriterium ist {met}.",
+        "dis_ev_nc": "Räumliche Dissemination (Hirn-MRT): das Hirnkriterium ist {met} (an der bestätigten Segmentierung "
+                     "beurteilt); die Zahl der Regionen mit Läsionen wurde nicht berechnet.",
         "met": "erfüllt", "notmet": "nicht erfüllt",
         "dis_ext": "Rückenmark und Sehnerv: nicht beurteilt.",
+        "not_included": "Übermittelt, aber nicht in diesen geprüften Entwurf aufgenommen: {items}.",
+        "ni_zone_statistics": "MAGNIMS-Zonenstatistik", "ni_segmentation_labels": "Segmentierungsbezeichnungen",
+        "ni_anomalies": "Anomalieerkennungen", "ni_structure_volumes": "Strukturvolumina der Volumetrie",
         "vol_brain": "Hirnvolumetrie (von der Software berechnet, ohne Vergleich mit Normwerten): Gesamthirnvolumen: "
                      "{tbv}; intrakranielles Volumen: {icv}.",
         "ml": "{x} ml", "nc": "nicht berechnet",
@@ -335,12 +350,10 @@ NOT_AVAILABLE = ("clinical indication", "contrast-enhanced imaging", "T1-weighte
 
 
 def _value(x: Any) -> Optional[float]:
-    """A number of the RC-064 payload, or None ("not available" there, never 0 here)."""
-    if isinstance(x, bool) or not isinstance(x, (int, float)):
-        return None
-    if isinstance(x, float) and x != x:
-        return None
-    return x
+    """A number of the RC-064 payload, or None ("not available" there, never 0 here). The guard's own reader (review
+    of PR #78, R10): booleans, non-numbers, NaN and ±inf are not numbers."""
+    from app.services.report_payload_guard import _number
+    return _number(x)
 
 
 def _count(x: Any) -> Optional[int]:
@@ -383,14 +396,22 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
     lang = language_of(language)
     f = findings_payload if isinstance(findings_payload, dict) else {}
     dis_block = f.get("dis_assessment")
-    # evaluated by the one gate rule (RC-070) AND carrying its region count; anything else is "not evaluated"
-    evaluated = gate.is_evaluated(dis_block) and _count(dis_block.get("regions_with_lesions")) is not None
+    # the ONE gate rule (RC-070), the route's own: the report never contradicts the app's state (review of PR #78, R6;
+    # a count of regions that was not computed is written "not computed", it does not turn the state around)
+    evaluated = gate.is_evaluated(dis_block)
     la = f.get("lesion_analysis") if isinstance(f.get("lesion_analysis"), dict) else None
-    # regions only when DIS was evaluated (a radiologist confirmed them) AND every region is a MAGNIMS region: the
-    # record then carries only the device's own region names, never a label of the request (RC-064, inherent safety)
+    # regions only when DIS was evaluated (a radiologist confirmed them), a lesion analysis is there (R1: the route
+    # accepts a DIS-only request) AND every region is a MAGNIMS region: the record then carries only the device's own
+    # region names, never a label of the request (RC-064, inherent safety)
     regs_in = la.get("regions") if la is not None and isinstance(la.get("regions"), dict) else {}
-    regions_ok = bool(evaluated and la.get("regions_confirmed") is not False and regs_in
-                      and set(regs_in) <= set(REGION_ORDER))
+    region_counts: Dict[str, Optional[int]] = {}
+    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in \
+            and set(regs_in) <= set(REGION_ORDER):
+        # a region absent from the analysis has no lesion (0); a region present whose count was not computed makes
+        # the whole breakdown "not computed" — never 0 (R4)
+        region_counts = {r: (_count(regs_in[r].get("lesion_count")) if isinstance(regs_in[r], dict) else None)
+                         if r in regs_in else 0 for r in REGION_ORDER}
+    regions_ok = bool(region_counts) and all(v is not None for v in region_counts.values())
 
     view: Dict[str, Any] = {"report_language": lang}
     if evaluated:
@@ -427,27 +448,31 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
             "lesion_table": rows,
         }
     if regions_ok:
-        view["regions"] = {"confirmed": True,
-                           "lesion_counts": {r: (_count((regs_in.get(r) or {}).get("lesion_count")) or 0)
-                                             for r in REGION_ORDER},
-                           "volumes_ml": {r: (_value((regs_in.get(r) or {}).get("total_volume_ml")) or 0.0)
-                                          for r in REGION_ORDER}}
+        def region_volume(r):
+            if r not in regs_in:
+                return 0.0                                                  # no lesion in that region
+            return _value(regs_in[r].get("total_volume_ml"))               # None when not computed, never 0
+        view["regions"] = {"confirmed": True, "lesion_counts": dict(region_counts),
+                           "volumes_ml": {r: region_volume(r) for r in REGION_ORDER}}
     elif evaluated:
         view["regions"] = {"confirmed": False, "computed": False, "note": "Lesions per MAGNIMS region not computed."}
     else:
         view["regions"] = {"confirmed": False, "note": "Regions not confirmed by a radiologist; not given."}
 
-    k = _count(dis_block.get("regions_with_lesions")) if evaluated else None
     if evaluated:
         details = dis_block.get("region_details") if isinstance(dis_block.get("region_details"), dict) else {}
         view["dis"] = {"status": "evaluated", "dis_met_brain": dis_block.get("dis_met") is True,
-                       "brain_regions_with_lesions": k, "brain_regions_evaluable": len(DIS_BRAIN_REGIONS),
+                       "brain_regions_evaluable": len(DIS_BRAIN_REGIONS),
                        "total_topographies": DIS_TOTAL_REGIONS,
                        # the device's DIS regions only (never a label of the request); no citation string: its words
                        # (e.g. "McDonald", a surname) would become exempt words of the RC-065 check
                        "region_presence": {name: details[name].get("present") is True for name in REGION_ORDER[:3]
                                            if isinstance(details.get(name), dict)},
                        "spinal_cord": "not assessed", "optic_nerve": "not assessed"}
+        k = _count(dis_block.get("regions_with_lesions"))
+        if k is not None:
+            # absent when not computed (R6): the frozen check then refuses any count of regions (it compares with -1)
+            view["dis"]["brain_regions_with_lesions"] = k
     else:
         view["dis"] = {"status": "not evaluated",
                        "reason": "No radiologist has confirmed the lesions and their MAGNIMS regions; dissemination "
@@ -493,6 +518,15 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
     else:
         view["brain_volumetry"] = None
         view["not_available"] = list(NOT_AVAILABLE)
+    # Review of PR #78, R3: measurements the route accepts but the verified report does not use are listed — in the
+    # record and in a code-written limitation line — never dropped silently.
+    not_included = [code for code, present in (
+        ("zone_statistics", bool(f.get("zone_stats"))),
+        ("segmentation_labels", bool(f.get("segmentation_labels"))),
+        ("anomalies", bool(f.get("anomalies"))),
+        ("structure_volumes", bool((vol or {}).get("structures")))) if present]
+    if not_included:
+        view["not_included"] = not_included
     return view
 
 
@@ -544,8 +578,9 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
                                        icv=vol_text(bv.get("intracranial_volume_ml"))))
     dis = view["dis"]
     if dis["status"] == "evaluated":
-        dis_s = t["dis_ev"].format(k=dis["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"],
-                                   met=t["met"] if dis["dis_met_brain"] else t["notmet"])
+        met = t["met"] if dis["dis_met_brain"] else t["notmet"]
+        dis_s = (t["dis_ev"].format(k=dis["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"], met=met)
+                 if "brain_regions_with_lesions" in dis else t["dis_ev_nc"].format(met=met))
         f += [dis_s, t["dis_ext"]]
     else:
         dis_s = _dis_not_evaluated_line(lang)
@@ -569,7 +604,10 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     items = t["lim_items"].split("|")
     if bv:
         items = items[:-1]
-    lim = [t["lim"].format(items=", ".join(items)), t["lim_cord"], t["lim_diag"]]
+    lim = [t["lim"].format(items=", ".join(items)), t["lim_cord"]]
+    if view.get("not_included"):
+        lim.append(t["not_included"].format(items=", ".join(t["ni_" + k] for k in view["not_included"])))
+    lim.append(t["lim_diag"])
     return f, comp, imp, lim
 
 
@@ -581,13 +619,15 @@ def placeholder_values(view: Dict[str, Any], lang: str) -> Dict[str, str]:
     les, lng, dis = view["lesions"], view.get("longitudinal") or {}, view["dis"]
     vals: Dict[str, str] = {}
     if les.get("total_count") is not None:
-        vals["total_count"] = str(les["total_count"])
+        # MAGNIMS 2021 (review of PR #78, R5): the exact count below 20, the range from 20 — as the code-written line
+        n = les["total_count"]
+        vals["total_count"] = str(n) if n < 20 else les["count_category"]
     if les.get("total_volume_ml") is not None:
         vals["total_volume_ml"] = _loc(_num(les["total_volume_ml"], 2), lang)
     cc = lng.get("candidates") if not lng.get("abstained") else None
     if cc:
         vals["new_candidates"], vals["enlarging_candidates"] = str(cc["new"]), str(cc["enlarged"])
-    if dis.get("status") == "evaluated":
+    if dis.get("status") == "evaluated" and "brain_regions_with_lesions" in dis:
         vals["brain_regions_with_lesions"] = str(dis["brain_regions_with_lesions"])
     return vals
 
@@ -854,6 +894,14 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
     yield {"lesion_analysis": la(7, regions), "dis_assessment": {**evaluated, "dis_met": False,
                                                                  "regions_with_lesions": 1}}, None, None
     yield {"lesion_analysis": la(7, {"Lesion": regions["Periventricular"]}), "dis_assessment": evaluated}, None, None
+    # review of PR #78: DIS evaluated without a lesion analysis (R1); a count of regions not computed (R6); a region
+    # count not computed (R4); measurements accepted but not included (R3)
+    yield {"dis_assessment": evaluated}, None, None
+    yield {"lesion_analysis": la(7, regions), "dis_assessment": {**evaluated, "regions_with_lesions": NA}}, None, None
+    yield {"lesion_analysis": la(7, {**regions, "Periventricular": {"lesion_count": NA}}),
+           "dis_assessment": {**evaluated, "dis_met": False}}, None, None
+    yield {"lesion_analysis": la(7, confirmed=False), "zone_stats": {"total_brain_voxels": 1}, "segmentation_labels": ["x"],
+           "anomalies": [{"type": "x"}]}, {**vol, "structures": [{"structure_name": "x", "volume_ml": 1.0}]}, "ai_draft"
     yield {"lesion_analysis": {"total_count": NA, "total_burden_mm3": NA, "total_burden_ml": NA,
                                "size_distribution": {"small": NA, "medium": NA, "large": NA}}}, \
         {"total_brain_volume_ml": NA, "intracranial_volume_ml": 1400.0}, "ai_draft"
