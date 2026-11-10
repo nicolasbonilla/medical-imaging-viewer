@@ -1,7 +1,7 @@
 # Lista del dueño — informe de IA con comprobación automática (10-11-2026)
 
 **Estado:** borrador para su revisión y firma. No se ha unido a la copia principal ni se ha publicado nada.
-Propuesta de cambio en GitHub: {PR_LINK}
+Propuesta de cambio en GitHub: https://github.com/nicolasbonilla/medical-imaging-viewer/pull/78 (borrador)
 
 ## Qué cambia para el médico
 
