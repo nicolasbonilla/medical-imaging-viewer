@@ -1071,6 +1071,12 @@
     }
   },
   "reportViewer": {
+    "verification": {
+      "delivered": "AI comments checked against the measurements",
+      "withheldCheck": "Interpretive text withheld by the check: measurements only",
+      "withheldUnavailable": "Interpretive text not available from the AI service: measurements only",
+      "notRequested": "Measurements only: no AI comments were requested"
+    },
     "title": "Medical Report",
     "print": "Print",
     "close": "Close",

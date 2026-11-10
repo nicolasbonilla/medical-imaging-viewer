@@ -1077,6 +1077,12 @@
     }
   },
   "reportViewer": {
+    "verification": {
+      "delivered": "Comentarios de la IA comprobados frente a las mediciones",
+      "withheldCheck": "Texto interpretativo retenido por la comprobación: solo mediciones",
+      "withheldUnavailable": "Texto interpretativo no disponible en el servicio de IA: solo mediciones",
+      "notRequested": "Solo mediciones: no se pidieron comentarios a la IA"
+    },
     "title": "Informe Médico",
     "print": "Imprimir",
     "close": "Cerrar",

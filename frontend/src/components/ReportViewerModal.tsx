@@ -21,7 +21,7 @@ import { Printer, Copy, Check, X } from 'lucide-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ReportResponse } from '@/types';
-import type { ReportAppNote, ReportClinicianEntry } from '@/types/ai';
+import type { ReportAppNote, ReportClinicianEntry, ReportVerification } from '@/types/ai';
 import { formatDate as formatLocalizedDate } from '@/utils/formatDate';
 
 /** How the Markdown of a draft is shown (the AI text, the fixed disclaimer, and drafts without parts). */
@@ -144,6 +144,20 @@ function AppNoteBox({ note }: { note: ReportAppNote }) {
   );
 }
 
+/** The i18n key of the verification state (third review of PR #78, item 4): the checked comments are in the draft;
+ *  withheld by the check (or the privacy check of a regeneration); not obtained from the AI service after it was
+ *  asked; or measurements only, nothing asked. */
+function verificationStateKey(v: ReportVerification | null): string | null {
+  if (!v) return null;
+  if (v.interpretive_text === 'delivered') return 'reportViewer.verification.delivered';
+  if (v.interpretive_text === 'withheld') {
+    return v.reason === 'failed_check' || v.reason === 'feedback_identifier_check'
+      ? 'reportViewer.verification.withheldCheck'
+      : 'reportViewer.verification.withheldUnavailable';
+  }
+  return 'reportViewer.verification.notRequested';
+}
+
 interface ReportViewerModalProps {
   report: ReportResponse;
   isOpen: boolean;
@@ -173,6 +187,10 @@ export function ReportViewerModal({
   const [copied, setCopied] = useState(false);
   // CAPA-014: a draft with parts — the entry and the notes come as fields, only the AI text is Markdown.
   const structured = typeof report.ai_text === 'string';
+  // Verified report (REQ-FUNC-116; third review of PR #78, item 4): who wrote what, from the `verification` codes.
+  const verification = report.verification ?? null;
+  const modelWroteText = Boolean(report.model) && (verification ? verification.interpretive_text === 'delivered' : true);
+  const verificationKey = verificationStateKey(verification);
 
   // Escape key handler
   useEffect(() => {
@@ -368,7 +386,14 @@ export function ReportViewerModal({
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-between text-[10px] text-gray-400 pt-3 border-t border-gray-300 font-sans gap-y-1">
-                    <span>{t('reportViewer.model')}: {report.model || 'Claude'}</span>
+                    {/* Third review of PR #78 (item 4, DRAFT): the model is named only when a model wrote text in the
+                        draft — never a default name for a measurements-only draft. */}
+                    {modelWroteText && (
+                      <span data-testid="report-model">{t('reportViewer.model')}: {report.model}</span>
+                    )}
+                    {verificationKey && (
+                      <span data-testid="report-verification-state">{t(verificationKey)}</span>
+                    )}
                     <span>{t('reportViewer.processingTime')}: {report.processing_time_ms}ms</span>
                     {report.tokens_used && (
                       <span>{t('reportViewer.tokens')}: {report.tokens_used.input} in / {report.tokens_used.output} out</span>

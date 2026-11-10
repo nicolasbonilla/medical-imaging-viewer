@@ -1064,6 +1064,12 @@
     }
   },
   "reportViewer": {
+    "verification": {
+      "delivered": "KI-Kommentare gegen die Messwerte geprüft",
+      "withheldCheck": "Interpretierender Text von der Prüfung zurückgehalten: nur Messwerte",
+      "withheldUnavailable": "Interpretierender Text vom KI-Dienst nicht verfügbar: nur Messwerte",
+      "notRequested": "Nur Messwerte: keine KI-Kommentare angefordert"
+    },
     "title": "Medizinischer Bericht",
     "print": "Drucken",
     "close": "Schließen",
