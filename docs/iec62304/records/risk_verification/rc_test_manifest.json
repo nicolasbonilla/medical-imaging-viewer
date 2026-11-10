@@ -726,6 +726,7 @@
       "note": "Proposed by RMF-OBS-001 as CAPA-008 CA-8.13; implemented by CAPA-013 (CA-13.6). Images uploaded as NIfTI carry no acquisition record, so their comparisons abstain (CAPA-013 D-3, PA-13.3). The Firestore lookup and the PACS import field are verified by unit and source tests only. Owner approval PENDING."
     },
     "RC-064": {
+      "amendment_proposed_2026_11_10": "Amendment proposed 2026-11-10 for the verified report (DRAFT, PENDING owner approval): the request carries the measurement record built from the payload and the code-written report; only MAGNIMS region names and size classes, no sex or age band, one fixed system prompt. Tests amended in tests/unit/test_capa014_report_provider_payload.py (each marked); new evidence in tests/unit/test_rc102_verified_report_flow.py.",
       "description": "AI report draft, inherent safety by design: the request to the model provider is built only from a structured payload - measurements as numbers ('not available', never 0, for a value that is not a number; a number outside the physical range of its field refuses the request, 503, nothing sent), labels of the device's fixed vocabulary and of the application's label presets (others -> '[unlisted label N]', one number per label, named for the clinician in the draft only), a DIS block with its evaluation state kept (not evaluated, unknown or without a yes/no conclusion -> 'not evaluated' only, never 'NOT MET'; coordination with PR #68), sex M/F, a 5-year age band ('90 or older' from 90); no free-text or user-typed field (only a flag that something was typed) and no unknown field; the system prompt one of the fixed template variants (as written, or with its DIS and per-region instructions replaced when DIS was not evaluated - PRB-003, RC-070; chosen on the DIS block of the payload; amended 2026-10-25 at the release integration, N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)); the clinician's typed text is added to the draft by the route after the model returns and is never sent; a whole number equal to the patient's own record number, phone number or birth date (as digits, checked against the patient record) refuses the request in any number field; exceptions to the physical ranges: a burden change without a physical bound is 'not available', a confidence outside 0-1 is left out, voxel counts go up to 2^31, a rounding error at an edge is accepted (third review); 'not available' printed without a unit sign (final check)",
       "hazard": "HAZ-016",
       "status": "implemented",
@@ -741,6 +742,7 @@
       "note": "Implements CAPA-001 CA-4 by design rather than by removal: no free text leaves the application. The first version (regex scrubbing of free text, PR #67 before the review) was removed. Owner approval PENDING. Integration review of PR #69 (2026-10-28): regions a radiologist did not confirm (PRB-003) are not sent as labels - no region in the lesion rows, a fixed 'regions not confirmed' line instead of a numbered placeholder."
     },
     "RC-065": {
+      "amendment_proposed_2026_11_10": "Amendment proposed 2026-11-10 (DRAFT, PENDING owner approval): the check runs on the first request and on every regeneration request; a finding on a regeneration request withholds the comments (RC-103); the device's own words include the code-written report and record in en, es, de.",
       "description": "AI report draft fails closed: segmentation required (400) and authorized (404, RC-036 rule), patient record readable and complete (503), service refuses without identifiers; a detection-only tripwire on the final prompt (NFKC, format characters removed, look-alikes and accents mapped) refuses to send (503) on the patient's own name (alone, written together, German spellings, pairs of the device's own words), record number (letters and digits: up to 3 separators; all-digit and the digits of a prefixed number: as a whole number, not inside a decimal number or before a unit), birth date (numeric, month-name, Roman; partial after a birth word), phone (with/without country code and trunk 0), e-mail, contact, city, street, and on generic e-mail, dated text, phone-like/long/ID-like numbers and titled names; never edits text; never fires on the device's own words alone (words the user prompt can contain, not the system templates) or on two of them in the device's order; capped at 400000 characters; linear time; the panel and the assistant's report tool send the segmentation",
       "hazard": "HAZ-016",
       "status": "implemented",
@@ -816,6 +818,7 @@
       "note": "jsdom only, no real browser. The existing 15-minute inactivity log-off still discards unsaved work (unchanged; decision D-5). Wording in es/de awaits review. Owner approval PENDING."
     },
     "RC-070": {
+      "amendment_proposed_2026_11_10": "Amendment proposed 2026-11-10 (DRAFT, PENDING owner approval): in the verified report the backstop also runs inside the loop on the model's comments, as a failure (RC-103); the route's backstop is unchanged; tests amended in test_prb003_review1/2, test_release_2026_10_25_integration and _review_fixes (each marked).",
       "description": "Dissemination in space evaluated and shown only on a segmentation whose labels are the MAGNIMS regions assigned by the region classification to its current lesions (classified lesion footprint recorded), confirmed by a radiologist for its current mask and label scheme (AI draft: also its own RC-047 review); otherwise the explicit 'not evaluated' state with its reason and no met / not met, region presence or topography count - on every path: DIS route and cache (one snapshot), classify-regions, metadata responses, viewer (stale replies dropped, error boundary), AI report (bound to its own segmentation, re-derived on the server, no region and no DIS instruction to the model without an evaluated DIS, model DIS lines replaced, fixed notice, unevaluated-only request refused), AI assistant; regions of unconfirmed segmentations caveated 'not a DIS assessment'",
       "hazard": "HAZ-008, HAZ-005, HAZ-003",
       "status": "implemented",
@@ -1162,6 +1165,70 @@
       "requirement": "REQ-SAFE-047",
       "change": "PRB-031 (L2) (next safety round; DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74); branch fix/next-safety-round; not merged, not deployed)",
       "negative_control": "Executed 2026-10-31 by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree of 5cc88b9 (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): 14 of 14 mutations for this control detected (O1, O2, O3, O4, O5, O6, O7, O8, L1, L2, D1, L3, L5, L4); whole run 62 of 62. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (sources of main @ ca600c2)."
+    },
+    "RC-102": {
+      "description": "Verified AI report: every number, status and mandatory item written by code from the device's measurements (MAGNIMS 2021 count, volumes, size distribution, regions only when confirmed, DIS only when evaluated, unconfirmed change candidates or the abstention, 'not computed' never 0, no technique / clinical-indication / recommendation section); the model receives a record of code-chosen strings and numbers only and writes two comments; the route's RC-070 backstop never edits a code-written line",
+      "hazard": "HAZ-003, HAZ-016",
+      "status": "implemented",
+      "implementation": "backend/app/services/verified_report.py (build_view, skeleton, assemble, first_user_message); backend/app/services/brain_report_service.py (generate_report)",
+      "tests": [
+        "tests/unit/test_rc102_verified_report_flow.py"
+      ],
+      "requirement": "REQ-FUNC-116, REQ-SAFE-049",
+      "change": "Verified AI report (DRAFT, PENDING owner approval; branch feat/report-agent-verified; not merged, not deployed); design: the pre-registered agents benchmark's arm A3 (research/agents-benchmark, PREREG 9a0cc58, results f3c1976)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/verified_report_negative_controls.py at 6c4d2e5 (record docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json; the current checkout (--here: an isolated, disposable worktree), clean before and after for every mutated file): 9 of 9 mutations for this control detected (F1_range_from_21, F2_not_computed_as_zero, F3_regions_without_confirmation, F4_dis_without_the_gate, F5_candidates_called_lesions, F6_technique_section_asked_again, F7_own_not_evaluated_sentence, F8_t1_next_to_spinal_cord, F9_first_request_not_checked); whole run 38 of 38.",
+      "note": "LIMIT: the code-written wording (en, es, de) has not been read by a radiologist."
+    },
+    "RC-103": {
+      "description": "Every answer of the model checked before anything of it reaches the draft: format rules, the benchmark's frozen in-loop claim check (verifier v2, byte-exact port, sha256 tested) on the assembled report, and the RC-070 backstop on the comments when DIS was not evaluated; at most two regenerations; then the comments are withheld and the draft is the code-written measurements with a fixed note; a refusal gives the same; regeneration requests pass the RC-065 check",
+      "hazard": "HAZ-003",
+      "status": "implemented",
+      "implementation": "backend/app/services/verified_report.py (check, run_flow, measurements_only); backend/app/services/report_claim_verifier.py; backend/app/services/report_claim_lexicon.py",
+      "tests": [
+        "tests/unit/test_rc103_report_claim_verifier.py",
+        "tests/unit/test_rc103_verified_report_loop.py"
+      ],
+      "requirement": "REQ-SAFE-048",
+      "change": "Verified AI report (DRAFT, PENDING owner approval; branch feat/report-agent-verified; not merged, not deployed); design: the pre-registered agents benchmark's arm A3 (research/agents-benchmark, PREREG 9a0cc58, results f3c1976)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/verified_report_negative_controls.py at 6c4d2e5 (record docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json; the current checkout (--here: an isolated, disposable worktree), clean before and after for every mutated file): 13 of 13 mutations for this control detected (C1_claim_check_not_run, C2_digits_allowed, C3_headings_allowed, C4_unknown_placeholder_allowed, C5_rc070_backstop_not_in_the_loop, C6_no_regeneration, C7_more_regenerations, C8_failing_answer_delivered, C9_no_withheld_note, C10_refusal_read_as_text, C11_feedback_not_checked, C12_truncation_not_flagged, C13_lexicon_drift); whole run 38 of 38.",
+      "note": "Benchmark (arm A3): 0 of 452 unsupported, 0 % omissions; withheld 0.9 % (Gemini 3.1 Flash-Lite), 0 % (Gemma 4 E4B), 15 of 100 in Spanish/German (Gemma). LIMITS: rules, not understanding; the verifier is also the benchmark's endpoint; not measured with Claude Sonnet 5.5."
+    },
+    "RC-104": {
+      "description": "Every model attempt and the outcome of each AI draft in the audit trail (report and segmentation ids, user, model requested and answered, SHA-256 of the exact request, verdict, fixed rule ids, latency, tokens; outcome, comments delivered or why not) — never the prompt, the record, the answer or a typed text",
+      "hazard": "HAZ-003, HAZ-016",
+      "status": "implemented",
+      "implementation": "backend/app/services/brain_report_service.py (_ReportAudit); backend/app/services/verified_report.py (prompt_sha256); backend/app/core/logging/audit.py (CLINICAL_AI_REPORT_ATTEMPT, CLINICAL_AI_REPORT_VERIFICATION, DETAIL_KEYS)",
+      "tests": [
+        "tests/unit/test_rc104_verified_report_audit.py"
+      ],
+      "requirement": "REQ-SAFE-050",
+      "change": "Verified AI report (DRAFT, PENDING owner approval; branch feat/report-agent-verified; not merged, not deployed); design: the pre-registered agents benchmark's arm A3 (research/agents-benchmark, PREREG 9a0cc58, results f3c1976)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/verified_report_negative_controls.py at 6c4d2e5 (record docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json; the current checkout (--here: an isolated, disposable worktree), clean before and after for every mutated file): 5 of 5 mutations for this control detected (A1_attempts_not_audited, A2_outcome_not_audited, A3_hash_not_of_the_request, A4_audit_keys_dropped, A5_rule_ids_carry_answer_text); whole run 38 of 38."
+    },
+    "RC-105": {
+      "description": "Kill switch of the AI comments: REPORT_LLM_ENABLED=false calls no model (no client created); every draft is the code-written measurements with the 'not requested' note",
+      "hazard": "HAZ-003, HAZ-017",
+      "status": "implemented",
+      "implementation": "backend/app/core/config.py (REPORT_LLM_ENABLED); backend/app/services/brain_report_service.py (_interpretive_text_gate)",
+      "tests": [
+        "tests/unit/test_rc105_rc106_report_model_controls.py"
+      ],
+      "requirement": "REQ-SAFE-051 (a)",
+      "change": "Verified AI report (DRAFT, PENDING owner approval; branch feat/report-agent-verified; not merged, not deployed); design: the pre-registered agents benchmark's arm A3 (research/agents-benchmark, PREREG 9a0cc58, results f3c1976)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/verified_report_negative_controls.py at 6c4d2e5 (record docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json; the current checkout (--here: an isolated, disposable worktree), clean before and after for every mutated file): 2 of 2 mutations for this control detected (K1_kill_switch_ignored, K2_kill_switch_setting_removed); whole run 38 of 38."
+    },
+    "RC-106": {
+      "description": "The model of the comments: only the allow-list of the released software (claude-sonnet-5-5 default, claude-haiku-5-5) with fixed parameters (thinking off, effort low; no sampling parameter); the retiring claude-sonnet-4-5-20250929 and any other id, or an allowed id past its recorded retirement date, refused with the measurements-only draft; provider error, 404, refusal or the 25 s budget give the measurements-only draft; the answer read by block type",
+      "hazard": "HAZ-017, HAZ-013",
+      "status": "implemented",
+      "implementation": "backend/app/services/brain_report_service.py (REPORT_MODELS, RETIRED_OR_RETIRING_MODELS, report_model_allowed, _model_call, reply_of, _failure_reason); backend/app/services/verified_report.py (run_flow time budget); backend/app/core/config.py (CLAUDE_MODEL default)",
+      "tests": [
+        "tests/unit/test_rc105_rc106_report_model_controls.py"
+      ],
+      "requirement": "REQ-SAFE-051 (b)-(e)",
+      "change": "Verified AI report (DRAFT, PENDING owner approval; branch feat/report-agent-verified; not merged, not deployed); design: the pre-registered agents benchmark's arm A3 (research/agents-benchmark, PREREG 9a0cc58, results f3c1976)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/verified_report_negative_controls.py at 6c4d2e5 (record docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_2026-11-10.json; the current checkout (--here: an isolated, disposable worktree), clean before and after for every mutated file): 9 of 9 mutations for this control detected (M1_allow_list_bypassed, M2_retiring_default_back, M3_retirement_date_ignored, M4_sampling_parameter_sent, M5_answer_read_by_position, M6_provider_failure_propagates, M7_no_time_budget, M8_long_call_timeout, M9_404_not_recognised); whole run 38 of 38.",
+      "note": "The pinned-SDK test (anthropic 0.44.0 on a local fake transport) runs where the SDK is installed (CI installs requirements.txt). LIMIT: the retirement table is maintained by hand at each SOUP review."
     }
   },
   "unverified_controls_note": [
