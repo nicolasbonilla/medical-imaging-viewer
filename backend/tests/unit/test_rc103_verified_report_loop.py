@@ -117,10 +117,11 @@ def test_rc103_the_invented_technique_section_of_the_retired_template_is_refused
 
 def test_rc103_the_rc070_backstop_catches_what_the_frozen_rules_miss():
     """A DIS statement the frozen v2 rules do not recognise is still refused by the app's own backstop (a failure,
-    never an edit)."""
+    never an edit). Amended for the second review of PR #78 (item A, DRAFT): the product's stricter rules now flag the
+    naming of MS too (E4.strict_diagnostic); the backstop still catches the statement on its own."""
     text = answer("Lesions lie in typical MS locations.")
     assert not any(e["cls"] == "E2" for e in V.verify(VR.check(UNCONFIRMED, "en", text)[0], None, UNCONFIRMED)["elements"])
-    assert rules(UNCONFIRMED, text) == {"RC070.dis_statement"}
+    assert rules(UNCONFIRMED, text) == {"RC070.dis_statement", "E4.strict_diagnostic"}
 
 
 @pytest.mark.parametrize("comment", [

@@ -23,7 +23,10 @@ The flow (RC-102):
      ([FINDINGS_COMMENT], [IMPRESSION_COMMENT]); it may not write a digit (placeholders are filled in by code).
      The clinician's typed text is never part of the record (RC-064): the route adds it to the draft afterwards.
   3. Every answer is checked (RC-103): the format rules of A3, the benchmark's frozen in-loop claim check
-     (`report_claim_verifier`, a byte-exact port of verifier v2) on the assembled report, and — when DIS was not
+     (`report_claim_verifier`, a byte-exact port of verifier v2) on the assembled report, the product's stricter
+     rules on every line of the two comments (`report_claim_strict`: a diagnostic or activity statement in either
+     polarity, a treatment phrase no negation governs, any heading line — second review of PR #78, A and B; they only
+     add to v2), and — when DIS was not
      evaluated — the app's own RC-070 DIS backstop on the comments, as a failure (never an edit). On a failure the
      model is told what failed and asked again, at most twice; if the third answer still fails, the comments are
      withheld and the report is delivered with the measurements only and a fixed note.
@@ -57,6 +60,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, Iterator, List, Optional, Tuple
 
+from app.services import report_claim_strict as S
 from app.services import report_claim_verifier as V
 
 FLOW_ID = "verified-report-1 (fixed flow + frozen claim check v2, benchmark arm A3 at f3c1976)"
@@ -76,7 +80,7 @@ SECTIONS = {
 }
 
 # Outcome codes (audit `report_outcome`, response `verification.outcome`).
-PASSED = ("passed_0", "passed_1", "passed_2")
+PASSED = tuple(f"passed_{k}" for k in range(MAX_REGENERATIONS + 1))   # named from the attempt number (review 2, I)
 BLOCKED = "blocked"
 NOT_REQUESTED = "not_requested"
 
@@ -671,7 +675,7 @@ FIXED_FEEDBACK_TEXTS = (
     "change statement although the pair abstained", "new/enlarging stated without candidate wording",
     "'no new lesions' while the record has new candidates", "statement on the record cannot support",
     "technique clinical contrast spinal_cord optic_nerve section", "forbidden wording", "in table, record", "in:",
-)
+) + S.FIXED_DETAIL_TEXTS
 
 
 def regeneration_message(failures: List[Dict[str, str]]) -> str:
@@ -708,11 +712,15 @@ def check(view: Dict[str, Any], lang: str, text: str) -> Tuple[Optional[str], Li
                       "message": "Digits are not allowed in the comments; use a placeholder or no number."})
     for k, v in vals.items():
         fc, ic = fc.replace("{" + k + "}", v), ic.replace("{" + k + "}", v)
-    if re.search(r"^\s*#", fc + "\n" + ic, re.M):
+    # second review of PR #78, B: a line the frozen check would read as a heading (markdown, bold-only, capitals)
+    # is checked for nothing there — no heading is allowed in a comment
+    if S.heading_lines(fc) or S.heading_lines(ic):
         fails.append({"rule": "FMT.heading", "message": "Headings are not allowed in the comments."})
     assembled = assemble(view, lang, fc, ic)
     res = V.verify(assembled, None, view)
-    for e in res["elements"]:
+    # second review of PR #78, A: the frozen v2 elements, all kept, plus the stricter rules on every sentence of
+    # every line of the model's two comments (report_claim_strict: only adds, never removes)
+    for e in list(res["elements"]) + S.comment_elements(fc) + S.comment_elements(ic):
         for rule in _rule_ids(e):
             fails.append({"rule": rule, "message": f"{e['detail']} (in: \"{e['unit']}\")"})
     if view["dis"]["status"] != "evaluated":
@@ -794,13 +802,21 @@ Call = Callable[[str, List[Dict[str, str]], float], Awaitable[ModelReply]]
 async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_meta: Dict[str, Any],
                    tripwire: Callable[[str], None], on_attempt: Callable[[Dict[str, Any]], None],
                    max_regenerations: int = MAX_REGENERATIONS, deadline_s: float = LLM_DEADLINE_S,
-                   clock: Callable[[], float] = time.monotonic) -> FlowResult:
+                   clock: Callable[[], float] = time.monotonic, first_message: Optional[str] = None) -> FlowResult:
     """Ask the model for the two comments; check every answer; at most `max_regenerations` regenerations; then
     withhold. The first message passed the RC-065 check in the caller; `tripwire(text)` checks each regeneration
     request and raises when it finds an identifier (the comments are then withheld). `on_attempt` records each
     attempt (audit). A provider failure, a refusal or the end of the time budget withholds the comments too."""
+    # second review of PR #78, I: the number of regenerations is validated before anything is sent (the
+    # pre-registered bound is 2; a bool, a fraction or a negative number is not a number of regenerations)
+    if isinstance(max_regenerations, bool) or not isinstance(max_regenerations, int) \
+            or not 0 <= max_regenerations <= MAX_REGENERATIONS:
+        raise ValueError(f"max_regenerations must be a whole number from 0 to {MAX_REGENERATIONS}")
     lang = language_of(language)
-    messages: List[Dict[str, str]] = [{"role": "user", "content": first_user_message(view, lang)}]
+    # second review, J: the first message is built ONCE by the caller, checked by the RC-065 tripwire and passed in;
+    # what is sent is exactly what was checked
+    first = first_message if first_message is not None else first_user_message(view, lang)
+    messages: List[Dict[str, str]] = [{"role": "user", "content": first}]
     attempts: List[Dict[str, Any]] = []
     tokens = [0, 0]
     answered = None
@@ -845,7 +861,7 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
         attempts.append(record)
         on_attempt(record)
         if not fails:
-            return FlowResult(text=assembled, outcome=PASSED[attempt], interpretive="delivered", attempts=attempts,
+            return FlowResult(text=assembled, outcome=f"passed_{attempt}", interpretive="delivered", attempts=attempts,
                               model_answered=answered, input_tokens=tokens[0], output_tokens=tokens[1])
         if attempt == max_regenerations:
             break
