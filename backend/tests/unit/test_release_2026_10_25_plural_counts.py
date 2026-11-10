@@ -63,9 +63,22 @@ def test_release_plural_any_other_count_is_plural_in_the_findings_prompt(count):
 @pytest.mark.parametrize("count,n_lesions", [(1, 1), (1, 3), (2, 1), (2, 3)])
 def test_release_plural_both_forms_stay_in_the_devices_own_words(count, n_lesions, confirmed):
     """RC-065 tripwire: the counted noun, singular or plural, is among the device's own words and word pairs (pairs
-    across two optional blocks, e.g. ("ml", "individual") without a size distribution, are not the point here)."""
-    words = words_of(_prompt(_findings(dwm_count=count, pv_count=count, n_lesions=n_lesions, tp1=count, tp2=count,
-                                       confirmed=confirmed)))
+    across two optional blocks, e.g. ("ml", "individual") without a size distribution, are not the point here).
+
+    Amended for the second review of PR #78 (G, DRAFT): the device's own words are those of the text it sends NOW —
+    the verified report's first request — so that request is the one checked here (the retired findings prompt above
+    is no longer sent, and its words are no longer exempt)."""
+    from app.services import verified_report as VR
+    from app.services.report_payload_guard import provider_payload
+    findings = _findings(dwm_count=count, pv_count=count, n_lesions=n_lesions, tp1=count, tp2=count,
+                         confirmed=confirmed)
+    if confirmed:
+        findings["dis_assessment"] = {"evaluation_status": "evaluated", "dis_met": count > 1,
+                                      "regions_with_lesions": count, "total_dis_regions": 5}
+    f, v, not_included = VR.rendered_request(findings, None)
+    p = provider_payload(f, v)
+    view = VR.build_view(p.findings, p.volumetry, "en", not_included=not_included)
+    words = words_of(VR.first_user_message(view, "en"))
     assert set(words) <= brs.fixed_prompt_words()
     counted = {p for p in zip(words, words[1:]) if {"lesion", "lesions"} & set(p)}
     assert counted and counted <= brs.fixed_prompt_pairs()
