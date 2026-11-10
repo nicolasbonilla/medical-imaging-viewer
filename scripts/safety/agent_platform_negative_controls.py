@@ -50,15 +50,15 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                     "        if False:\n", "RC-110", "any registered model may be used by any agent"),
     "R7_candidate_model_used": (REG, '        if entry.use_status != "in_use":\n', "        if False:\n", "RC-110",
                                 "a candidate (not re-validated) model is called"),
-    "R8_study_cap_ignored": (REG, "        if study_spent + estimate > spec.cost_cap_per_study_usd + 1e-12:\n",
-                             "        if False:\n", "RC-112", "no cost cap per study"),
-    "R9_day_cap_ignored": (REG, "        if day_spent + estimate > spec.cost_cap_per_day_usd + 1e-12:\n", "        if False:\n",
-                           "RC-112", "no cost cap per day"),
+    "R8_study_cap_ignored": (REG, "            if self._study.get((agent_id, study_key), 0.0) + usd > study_cap + 1e-12:\n",
+                             "            if False:\n", "RC-112", "no cost cap per study"),
+    "R9_day_cap_ignored": (REG, "            if self._day.get((agent_id, day), 0.0) + usd > day_cap + 1e-12:\n",
+                           "            if False:\n", "RC-112", "no cost cap per day"),
     "R10_fuzzy_model_id": (REG, "        entry = self.model(model_id) if isinstance(model_id, str) and _MODEL_ID.fullmatch(model_id) else None\n",
                            "        entry = self.model(model_id.strip().lower()) if isinstance(model_id, str) else None\n",
                            "RC-115", "a look-alike or padded model id is accepted"),
-    "R11_env_switch_lenient": (REG, '        return os.environ.get(self.variable(agent_id), "") == "on"\n',
-                               '        return os.environ.get(self.variable(agent_id), "").strip().lower() in ("on", "true", "1")\n',
+    "R11_env_switch_lenient": (REG, '        return isinstance(value, str) and value.strip().lower() == "on"\n',
+                               '        return isinstance(value, str) and value.strip().lower() in ("on", "true", "1")\n',
                                "RC-111", "the environment switch accepts values other than exactly 'on'"),
     "R12_invalid_registry_used": (REG, "        self.valid = not self.errors\n", "        self.valid = True\n", "RC-110",
                                   "a registry that does not validate is used"),
@@ -76,13 +76,14 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                 "direction and zero-width characters reach the model"),
     "U4_no_length_cap": (UNT, "    truncated = len(clean) > max_chars\n", "    truncated = False\n", "RC-112",
                          "untrusted text of any length reaches the model"),
-    "U5_argument_scope_off": (UNT, "        if not scope.allows(value):\n            return Decision.refuse(RefusalCode.OUT_OF_SCOPE_RESOURCE)\n",
-                              "        pass\n", "RC-114", "a tool call may name another patient's record"),
-    "U6_only_declared_ids_scoped": (UNT, "        if not (name in tool.scope_arguments or _is_scoped_name(name)):\n",
-                                    "        if name not in tool.scope_arguments:\n", "RC-114",
-                                    "an undeclared *_id argument escapes the scope check"),
-    "U7_result_scope_off": (UNT, "            if k in SCOPE_KEYS and isinstance(v, str) and v and not scope.allows(v):\n",
-                            "            if False:\n", "RC-114", "a tool result carrying another study is passed on"),
+    "U5_argument_scope_off": (UNT, "    bad = _scope_walk(arguments, 0, scope, invalid=RefusalCode.TOOL_ARGUMENTS_INVALID, locations=True)\n",
+                              "    bad = None\n", "RC-114", "a tool call may name another patient's record"),
+    "U6_undeclared_arguments_accepted": (UNT, "        if kind is None or not _kind_ok(kind, value):\n",
+                                         "        if kind is not None and not _kind_ok(kind, value):\n", "RC-114",
+                                         "a tool call may carry arguments its schema does not declare"),
+    "U7_ids_not_compared_with_scope": (UNT, "        return None if scope.allows(value) else RefusalCode.OUT_OF_SCOPE_RESOURCE\n",
+                                       "        return None\n", "RC-114",
+                                       "ids in tool calls and results are not compared with the run's study"),
     "U8_identifiers_kept": (UNT, "    cleaned = drop_direct_identifiers(result)\n", "    cleaned = result\n", "RC-113",
                             "identifiers in tool results reach the model"),
     "U9_result_size_unbounded": (UNT, '    if len(serialized.encode("utf-8")) > max_bytes:\n', "    if False:\n", "RC-113",
@@ -113,20 +114,21 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                           '        if not d.allowed:\n            return stop("refused", d.code, audit=False)\n',
                                      "", "RC-111", "text is delivered after the agent was switched off"),
     "X2_continue_after_refused_tool": (RUN, '                    if not d.allowed:\n                        ts.set("mstool.refusal.code", str(d.code))\n'
-                                            '                        res.alarms = tuple(alarms)\n                        return stop("refused", d.code, audit=False)\n',
+                                            '                        return stop("refused", d.code, audit=False)\n',
                                        "                    if not d.allowed:\n                        continue\n", "RC-110",
                                        "the run continues after a refused (e.g. write) tool call"),
     "X3_no_argument_scope_in_run": (RUN, "                    d = check_tool_arguments(entry, call.arguments, scope)\n",
                                     "                    d = Decision.ok()\n", "RC-114", "the run does not check tool arguments"),
     "X4_identity_not_checked": (RUN, "                if response.model_id != model_id:\n", "                if False:\n", "RC-115",
                                 "an answer from another model is delivered"),
-    "X5_overrides_honoured": (RUN, "        if overrides:\n", "        if False:\n", "RC-115",
+    "X5_overrides_honoured": (RUN, "        if overrides or unknown:\n", "        if False:\n", "RC-115",
                               "a caller can change registry parameters"),
     "X6_verifier_optional": (RUN, "        if spec.requires_verifier and self.verifier is None:\n", "        if False:\n", "RC-110",
                              "an agent that requires a verifier runs without one"),
-    "X7_withheld_delivered": (RUN, '            if not ok or verdict.verdict != "pass" or not (verdict.delivered_text or "").strip():\n',
-                              "            if not ok:\n", "RC-110", "a draft the verifier withheld is delivered"),
-    "X8_cost_not_charged": (RUN, "                reg.record_cost(agent_id, scope.study_key, cost)\n", "                pass\n", "RC-112",
+    "X7_withheld_delivered": (RUN, '            if verdict.verdict != "pass" or not (verdict.delivered_text or "").strip():\n',
+                              "            if False:\n", "RC-110", "a draft the verifier withheld is delivered"),
+    "X8_cost_not_charged": (RUN, "                reg.settle(d.reservation, cost)                 # None: impossible usage, the worst case stays\n",
+                            "                reg.settle(d.reservation, 0.0)\n", "RC-112",
                             "calls are not charged against the caps"),
     "X9_no_step_limit": (RUN, "        for step in range(1, spec.max_steps + 1):\n", "        for step in range(1, 1000):\n", "RC-112",
                          "a run is not bounded in steps"),
@@ -158,7 +160,7 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                           "the signed report does not name the model"),
     "O1_acceptance_always_true": (OVS, "            accepted_unedited=shown_text == final_text,", "            accepted_unedited=True,",
                                   "RC-120", "edited sign-offs are counted as unedited"),
-    "O2_shown_text_not_checked": (OVS, '            if pending is None or pending["draft_sha256"] != _sha(shown_text):\n',
+    "O2_shown_text_not_checked": (OVS, '            if pending is None or pending["draft_sha256"] != sha256_text(shown_text):\n',
                                   "            if pending is None:\n", "RC-120",
                                   "a sign-off of a different text than shown is counted"),
     "O3_reader_not_pseudonymised": (OVS, '    return pseudonymise(f"reader:{reader_id}")\n', '    return f"reader:{reader_id}"\n',
@@ -183,6 +185,42 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                           "a case with fewer than k recorded variants is accepted"),
     "E4_grader_weakened": (GRADER, "CONSTANTS = (0.0, 1.0,", "CONSTANTS = (0.0, 1.0, 12.4, 31.3,", "RC-118",
                            "the grader accepts invented numbers"),
+    # ---------------------------------------------------------------- independent review of PR #79 (findings 1-10)
+    "V1_truncated_output_delivered": (RUN, "                if response.stop_reason not in expected_end:\n",
+                                      "                if False:\n", "RC-110",
+                                      "an answer cut at max_tokens or stopped abnormally is delivered"),
+    "V2_truncated_tool_calls_run": (RUN, "                expected_end = TOOL_END if calls else TEXT_END\n",
+                                    "                expected_end = (TOOL_END | TRUNCATED) if calls else TEXT_END\n", "RC-110",
+                                    "tool calls of a truncated answer run"),
+    "V3_output_budget_ignored": (RUN, "        max_tokens = spec.parameter(budget_name) if isinstance(budget_name, str) and \\\n",
+                                 "        max_tokens = spec.parameter(BUDGET_PREFIX) if isinstance(budget_name, str) and \\\n",
+                                 "RC-115", "the per-template output budget of the registry is ignored"),
+    "V4_global_switch_ignored": (REG, "        return self._on(os.environ.get(self.GLOBAL)) and self._on(os.environ.get(self.variable(agent_id)))\n",
+                                 "        return self._on(os.environ.get(self.variable(agent_id)))\n", "RC-111",
+                                 "the global switch does not stop the agents"),
+    "V5_in_flight_calls_not_reserved": (REG, "            self._apply(agent_id, study_key, day, usd)\n            return rid, None\n",
+                                        "            return rid, None\n", "RC-112",
+                                        "calls in flight do not count against the caps (check-then-record race)"),
+    "V6_settle_charges_nothing": (REG, "                self._apply(agent_id, study_key, day, usd - reserved)\n",
+                                  "                self._apply(agent_id, study_key, day, -reserved)\n", "RC-112",
+                                  "a settled call is charged nothing"),
+    "V7_plural_ids_not_checked": (UNT, "        for item in value:\n            if isinstance(item, (Mapping, list)):\n",
+                                  "        for item in []:\n            if isinstance(item, (Mapping, list)):\n", "RC-114",
+                                  "ids in a list (*_ids, ids) are not scope-checked"),
+    "V8_nested_values_not_walked": (UNT, "            bad = _scope_walk(v, depth + 1, scope, invalid=invalid, locations=locations, exempt=exempt, flags=flags)\n"
+                                         "            if bad:\n                return bad\n        return None\n    if isinstance(value, list):\n",
+                                    "            bad = None\n            if bad:\n                return bad\n        return None\n    if isinstance(value, list):\n",
+                                    "RC-114", "ids nested in objects are not scope-checked"),
+    "V9_path_uri_not_checked": (UNT, "invalid=RefusalCode.TOOL_ARGUMENTS_INVALID, locations=True)", "invalid=RefusalCode.TOOL_ARGUMENTS_INVALID, locations=False)",
+                                "RC-114", "path / uri / url arguments are not scope-checked"),
+    "V10_first_version_kept": (OVS, '            if current is None or current["draft_sha256"] != digest:\n', "            if current is None:\n",
+                               "RC-120", "a regenerated draft keeps the old version, its sign-off is not counted"),
+    "V11_failures_audited_as_denials": (RUN, '    return "failure" if status == "failed" else "denied"\n', '    return "denied"\n', "RC-110",
+                                        "model, tool and verifier failures are audited as denials"),
+    "V12_alarms_dropped": (RUN, "            res.alarms, res.executed_tools, res.warnings = tuple(alarms), tuple(executed), tuple(warnings)\n"
+                                '            if audit and code != "ok":\n',
+                           "            res.executed_tools, res.warnings = tuple(executed), tuple(warnings)\n"
+                           '            if audit and code != "ok":\n', "RC-113", "early returns drop the injection alarms"),
 }
 
 
@@ -207,12 +245,15 @@ def rerun(names, reason):
     """Re-run only the named mutations (after a test was added for one the full round missed) and append the
     result to the existing record, keeping the first round as it was."""
     res = json.load(open(OUT, encoding="utf-8"))
+    superseded = sorted(n for n in res["mutations"] if n not in M)     # anchors replaced after a code change
     sub = {n: M[n] for n in names}
     files = sorted({v[0] for v in sub.values()})
     raw = {p: open(p, "rb").read() for p in files}
     text = {p: b.decode("utf-8").replace("\r\n", "\n") for p, b in raw.items()}
     eol = {p: "\r\n" if b"\r\n" in b else "\n" for p, b in raw.items()}
-    entry = {"executed": datetime.datetime.now().isoformat(timespec="seconds"), "reason": reason, "mutations": {}}
+    entry = {"executed": datetime.datetime.now().isoformat(timespec="seconds"), "reason": reason, "mutations": {},
+             "superseded": superseded,
+             "source_sha256": {p: hashlib.sha256(text[p].encode("utf-8")).hexdigest() for p in files}}
     try:
         for name, (path, anchor, repl, control, what) in sub.items():
             assert text[path].count(anchor) == 1, name
@@ -227,9 +268,12 @@ def rerun(names, reason):
             open(p, "wb").write(b)
     entry["restored"] = run()
     res.setdefault("reruns", []).append(entry)
-    latest = dict(res["mutations"])
+    latest = {n: v for n, v in res["mutations"].items() if n in M}
     for e in res["reruns"]:
-        latest.update(e["mutations"])
+        latest.update({n: v for n, v in e["mutations"].items() if n in M})
+    never_run = sorted(set(M) - set(latest))
+    if never_run:
+        raise SystemExit(f"mutations never run: {never_run}")
     res["undetected_first_round"] = res.get("undetected_first_round", res["undetected"])
     res["undetected"] = sorted(n for n, v in latest.items() if v["failed"] == 0 and v["errors"] == 0)
     res["summary"] = {"mutations": len(M), "detected": len(M) - len(res["undetected"]),

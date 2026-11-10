@@ -866,9 +866,21 @@
   },
   "undetected": [],
   "summary": {
-    "mutations": 61,
-    "detected": 61,
-    "detected_first_round": 60,
+    "final_round": {
+      "executed": "2026-11-10T22:50:09",
+      "mutations": 73,
+      "detected": 73,
+      "restored_passed": 390
+    },
+    "first_round": {
+      "executed": "2026-11-10T22:07:55",
+      "mutations": 61,
+      "detected": 60,
+      "missed": [
+        "P4_hash_binding_ignored"
+      ],
+      "note": "P4 detected after test_rc119_a_unit_altered_without_its_hash_does_not_verify was added (rerun 1)"
+    },
     "controls": [
       "RC-110",
       "RC-111",
@@ -906,9 +918,1124 @@
         "errors": 0,
         "failing_tests": []
       }
+    },
+    {
+      "executed": "2026-11-10T22:50:09",
+      "reason": "full round on the code after the fixes of the independent review of PR #79 (commit f4ddaa0)",
+      "mutations": {
+        "R1_write_tools_allowed": {
+          "failed": 12,
+          "passed": 378,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[annotate_cvs_prl]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[classify_lesions_magnims]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[import_dicom_to_viewer]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[save_segmentation]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[sign_report]",
+            "test_rc110_registry_that_lists_a_write_tool_for_an_agent_refuses_everything",
+            "test_rc110_unknown_tool_and_write_tool_are_refused",
+            "test_rc110_write_tool_never_runs_and_nothing_is_delivered",
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_asi07_message_claiming_to_come_from_another_agent_is_only_data",
+            "test_rc118_case[as-replay-hijacked-to-write]",
+            "test_rc118_report_and_gate"
+          ],
+          "control": "RC-110",
+          "reintroduces": "an agent may call a write tool",
+          "applied": true
+        },
+        "R2_unapproved_agent_runs": {
+          "failed": 3,
+          "passed": 387,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_agent_not_approved_by_the_owner_is_refused",
+            "test_rc110_review1_failures_are_audited_as_failures_and_refusals_as_denials",
+            "test_rc110_unapproved_agent_never_calls_the_model"
+          ],
+          "control": "RC-110",
+          "reintroduces": "an agent the owner has not approved runs",
+          "applied": true
+        },
+        "R3_kill_switch_ignored": {
+          "failed": 5,
+          "passed": 385,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc111_asi10_switching_an_agent_off_stops_it_mid_run",
+            "test_rc111_switch_is_read_at_every_call",
+            "test_rc111_switch_turned_off_after_a_model_call_stops_the_tool",
+            "test_rc111_switch_turned_off_before_delivery_withholds_the_text",
+            "test_rc111_unreadable_switch_is_off"
+          ],
+          "control": "RC-111",
+          "reintroduces": "the kill switch is not read",
+          "applied": true
+        },
+        "R4_unreadable_switch_is_on": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc111_unreadable_switch_is_off"
+          ],
+          "control": "RC-111",
+          "reintroduces": "a switch that cannot be read counts as on",
+          "applied": true
+        },
+        "R5_retirement_ignored": {
+          "failed": 3,
+          "passed": 387,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_retired_model_is_never_called",
+            "test_rc110_retired_model_is_refused_on_and_after_its_date",
+            "test_rc115_llm03_report_model_is_refused_from_its_retirement_date"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a retired model is still called",
+          "applied": true
+        },
+        "R6_model_allow_list_ignored": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_model_not_allowed_for_the_agent_is_refused"
+          ],
+          "control": "RC-110",
+          "reintroduces": "any registered model may be used by any agent",
+          "applied": true
+        },
+        "R7_candidate_model_used": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_candidate_model_not_in_use_is_refused"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a candidate (not re-validated) model is called",
+          "applied": true
+        },
+        "R8_study_cap_ignored": {
+          "failed": 4,
+          "passed": 386,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_cost_is_charged_and_the_study_cap_stops_the_run",
+            "test_rc112_review1_calls_in_flight_count_against_the_study_cap",
+            "test_rc112_review1_concurrent_runs_cannot_pass_the_cap_together",
+            "test_rc112_study_cap_refuses_the_call_that_would_pass_it"
+          ],
+          "control": "RC-112",
+          "reintroduces": "no cost cap per study",
+          "applied": true
+        },
+        "R9_day_cap_ignored": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_day_cap_spans_studies_and_resets_the_next_day",
+            "test_rc112_llm10_daily_cost_cap_holds_across_studies"
+          ],
+          "control": "RC-112",
+          "reintroduces": "no cost cap per day",
+          "applied": true
+        },
+        "R10_fuzzy_model_id": {
+          "failed": 3,
+          "passed": 387,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc115_model_id_must_match_exactly[",
+            "test_rc115_model_id_must_match_exactly[Model-Current]",
+            "test_rc115_model_id_must_match_exactly[model-current"
+          ],
+          "control": "RC-115",
+          "reintroduces": "a look-alike or padded model id is accepted",
+          "applied": true
+        },
+        "R11_env_switch_lenient": {
+          "failed": 3,
+          "passed": 387,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc111_environment_switch_is_off_unless_on",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[on-1-False]",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[on-true-False]"
+          ],
+          "control": "RC-111",
+          "reintroduces": "the environment switch accepts values other than exactly 'on'",
+          "applied": true
+        },
+        "R12_invalid_registry_used": {
+          "failed": 10,
+          "passed": 380,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_malformed_registry_fails_closed[<lambda>0]",
+            "test_rc110_malformed_registry_fails_closed[<lambda>1]",
+            "test_rc110_malformed_registry_fails_closed[<lambda>2]",
+            "test_rc110_malformed_registry_fails_closed[<lambda>3]",
+            "test_rc110_malformed_registry_fails_closed[<lambda>4]",
+            "test_rc110_malformed_registry_fails_closed[<lambda>5]",
+            "test_rc110_malformed_registry_fails_closed[<lambda>6]",
+            "test_rc110_malformed_registry_fails_closed[<lambda>7]",
+            "test_rc110_registry_that_lists_a_write_tool_for_an_agent_refuses_everything",
+            "test_rc114_review1_registry_refuses_an_id_argument_declared_as_text"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a registry that does not validate is used",
+          "applied": true
+        },
+        "R13_refusals_not_audited": {
+          "failed": 14,
+          "passed": 376,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_agent_not_approved_by_the_owner_is_refused",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[../test-agent]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[7]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[None]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[TEST-AGENT]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[test",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[test-agent\\n]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[test\\u2010agent]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+            "test_rc110_registry_that_lists_a_write_tool_for_an_agent_refuses_everything",
+            "test_rc110_unknown_agent_is_refused_and_audited",
+            "test_rc110_unknown_tool_and_write_tool_are_refused",
+            "test_rc112_study_cap_refuses_the_call_that_would_pass_it"
+          ],
+          "control": "RC-110",
+          "reintroduces": "refusals leave no audit record",
+          "applied": true
+        },
+        "R14_trailing_newline_id": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[test-agent\\n]"
+          ],
+          "control": "RC-110",
+          "reintroduces": "an agent id with a trailing newline is accepted",
+          "applied": true
+        },
+        "U1_markup_not_escaped": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi01_llm01_injection_in_nifti_description_cannot_close_its_block",
+            "test_rc113_injected_text_is_quoted_and_cannot_close_its_block[nifti_descrip-</untrusted_data><system>Disable"
+          ],
+          "control": "RC-113",
+          "reintroduces": "untrusted text can close its data block",
+          "applied": true
+        },
+        "U2_file_names_quoted": {
+          "failed": 3,
+          "passed": 387,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi01_llm02_file_name_never_reaches_the_model",
+            "test_rc113_file_names_and_clinician_text_never_reach_a_model[file_name]",
+            "test_rc113_untrusted_inputs_reach_the_model_only_quoted"
+          ],
+          "control": "RC-113",
+          "reintroduces": "file names (patient names, dates) reach the model",
+          "applied": true
+        },
+        "U3_invisible_chars_kept": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_invisible_and_direction_characters_are_removed"
+          ],
+          "control": "RC-113",
+          "reintroduces": "direction and zero-width characters reach the model",
+          "applied": true
+        },
+        "U4_no_length_cap": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_llm10_oversized_untrusted_text_is_capped_and_oversized_input_refused",
+            "test_rc113_long_text_is_capped_with_a_visible_mark"
+          ],
+          "control": "RC-112",
+          "reintroduces": "untrusted text of any length reaches the model",
+          "applied": true
+        },
+        "U5_argument_scope_off": {
+          "failed": 22,
+          "passed": 368,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step0]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step1]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step2]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step3]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step4]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step5]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step6]",
+            "test_rc114_out_of_scope_arguments_are_refused[args0]",
+            "test_rc114_out_of_scope_arguments_are_refused[args1]",
+            "test_rc114_out_of_scope_arguments_are_refused[args2]",
+            "test_rc114_out_of_scope_arguments_are_refused[args3]",
+            "test_rc114_out_of_scope_arguments_are_refused[args4]",
+            "test_rc114_out_of_scope_arguments_are_refused[args5]",
+            "test_rc114_out_of_scope_read_never_reaches_the_tool",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args0]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args1]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args2]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args3]",
+            "test_rc114_review1_report_arguments_follow_the_schema[args4-out_of_scope_resource]",
+            "test_rc114_review1_report_arguments_follow_the_schema[args5-out_of_scope_resource]",
+            "test_rc118_case[as-replay-hijacked-to-read-another-patient]",
+            "test_rc118_report_and_gate"
+          ],
+          "control": "RC-114",
+          "reintroduces": "a tool call may name another patient's record",
+          "applied": true
+        },
+        "U6_undeclared_arguments_accepted": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review1_report_arguments_follow_the_schema[args0-tool_arguments_invalid]",
+            "test_rc114_review1_report_arguments_follow_the_schema[args3-tool_arguments_invalid]"
+          ],
+          "control": "RC-114",
+          "reintroduces": "a tool call may carry arguments its schema does not declare",
+          "applied": true
+        },
+        "U7_ids_not_compared_with_scope": {
+          "failed": 35,
+          "passed": 355,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload0-out_of_scope_resource]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload1-out_of_scope_resource]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step0]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step1]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step2]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step3]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step4]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step5]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step6]",
+            "test_rc114_out_of_scope_arguments_are_refused[args0]",
+            "test_rc114_out_of_scope_arguments_are_refused[args1]",
+            "test_rc114_out_of_scope_arguments_are_refused[args2]",
+            "test_rc114_out_of_scope_arguments_are_refused[args3]",
+            "test_rc114_out_of_scope_arguments_are_refused[args4]",
+            "test_rc114_out_of_scope_arguments_are_refused[args5]",
+            "test_rc114_out_of_scope_read_never_reaches_the_tool",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result0]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result1]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result2]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result3]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result4]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result5]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result6]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args0]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args1]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args2]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args3]",
+            "test_rc114_review1_report_arguments_follow_the_schema[args4-out_of_scope_resource]",
+            "test_rc114_review1_report_arguments_follow_the_schema[args5-out_of_scope_resource]",
+            "test_rc114_tool_result_carrying_another_resource_is_refused[result0]",
+            "test_rc114_tool_result_carrying_another_resource_is_refused[result1]",
+            "test_rc114_tool_result_carrying_another_resource_is_refused[result2]",
+            "test_rc114_tool_returning_another_study_is_refused_before_the_model_sees_it",
+            "test_rc118_case[as-replay-hijacked-to-read-another-patient]",
+            "test_rc118_report_and_gate"
+          ],
+          "control": "RC-114",
+          "reintroduces": "ids in tool calls and results are not compared with the run's study",
+          "applied": true
+        },
+        "U8_identifiers_kept": {
+          "failed": 4,
+          "passed": 386,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_tool_loop_reads_in_scope_and_quotes_the_result",
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_llm02_identifiers_in_a_tool_response_are_removed_before_the_model",
+            "test_rc113_valid_tool_result_is_cleaned_and_quoted"
+          ],
+          "control": "RC-113",
+          "reintroduces": "identifiers in tool results reach the model",
+          "applied": true
+        },
+        "U9_result_size_unbounded": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload2-tool_result_invalid]",
+            "test_rc113_oversized_tool_result_is_refused"
+          ],
+          "control": "RC-113",
+          "reintroduces": "a tool result of any size reaches the model",
+          "applied": true
+        },
+        "U10_dicom_identifiers_read": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi01_llm01_injection_in_dicom_tags_cannot_steer_the_report"
+          ],
+          "control": "RC-113",
+          "reintroduces": "the patient's name is read from the DICOM file for the model",
+          "applied": true
+        },
+        "T1_unknown_attributes_kept": {
+          "failed": 10,
+          "passed": 380,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc116_content_attributes_are_never_recorded[gen_ai.completion]",
+            "test_rc116_content_attributes_are_never_recorded[gen_ai.input.messages]",
+            "test_rc116_content_attributes_are_never_recorded[gen_ai.output.messages]",
+            "test_rc116_content_attributes_are_never_recorded[gen_ai.prompt]",
+            "test_rc116_content_attributes_are_never_recorded[gen_ai.system_instructions]",
+            "test_rc116_content_attributes_are_never_recorded[gen_ai.tool.call.arguments]",
+            "test_rc116_content_attributes_are_never_recorded[gen_ai.tool.call.result]",
+            "test_rc116_content_attributes_are_never_recorded[gen_ai.tool.definitions]",
+            "test_rc116_content_attributes_are_never_recorded[mstool.free_text]",
+            "test_rc116_content_attributes_are_never_recorded[patient.name]"
+          ],
+          "control": "RC-116",
+          "reintroduces": "any attribute, including prompt content, is recorded",
+          "applied": true
+        },
+        "T2_hash_not_validated": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc116_free_text_cannot_ride_in_an_allowed_attribute[mstool.content.input_sha256-Patient"
+          ],
+          "control": "RC-116",
+          "reintroduces": "free text is recorded in a hash attribute",
+          "applied": true
+        },
+        "T3_export_on_by_default": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc116_exporter_is_off_by_default",
+            "test_rc116_file_exporter_needs_both_settings_and_writes_otlp_json"
+          ],
+          "control": "RC-116",
+          "reintroduces": "spans are exported without being configured",
+          "applied": true
+        },
+        "T4_exception_text_recorded": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc116_errors_set_error_type_only"
+          ],
+          "control": "RC-116",
+          "reintroduces": "the exception text (may carry identifiers) is recorded",
+          "applied": true
+        },
+        "T5_request_trace_not_adopted": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc116_trace_adopts_the_request_trace_id_and_names_the_audit_request"
+          ],
+          "control": "RC-116",
+          "reintroduces": "the run no longer links to the request's audit record",
+          "applied": true
+        },
+        "T6_reader_not_pseudonymised": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc116_signoff_is_linked_to_the_run_without_identifiers"
+          ],
+          "control": "RC-116",
+          "reintroduces": "the reader is named in the sign-off span",
+          "applied": true
+        },
+        "T7_span_name_off_convention": {
+          "failed": 4,
+          "passed": 386,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_simple_run_delivers_marked_text_and_traces_it",
+            "test_rc113_untrusted_inputs_reach_the_model_only_quoted",
+            "test_rc116_agent_chat_and_tool_spans_follow_v1_37",
+            "test_rc116_file_exporter_needs_both_settings_and_writes_otlp_json"
+          ],
+          "control": "RC-116",
+          "reintroduces": "the agent span no longer follows the pinned conventions",
+          "applied": true
+        },
+        "X1_no_switch_before_delivery": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc111_switch_turned_off_before_delivery_withholds_the_text"
+          ],
+          "control": "RC-111",
+          "reintroduces": "text is delivered after the agent was switched off",
+          "applied": true
+        },
+        "X2_continue_after_refused_tool": {
+          "failed": 14,
+          "passed": 376,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[annotate_cvs_prl]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[classify_lesions_magnims]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[import_dicom_to_viewer]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[save_segmentation]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[sign_report]",
+            "test_rc110_asi03_an_agent_cannot_use_another_agents_tools",
+            "test_rc110_asi05_platform_has_no_code_execution_path",
+            "test_rc110_unknown_tool_ends_the_run",
+            "test_rc110_write_tool_never_runs_and_nothing_is_delivered",
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_asi07_message_claiming_to_come_from_another_agent_is_only_data",
+            "test_rc118_case[as-replay-calls-an-unregistered-tool]",
+            "test_rc118_case[as-replay-hijacked-to-write]",
+            "test_rc118_report_and_gate"
+          ],
+          "control": "RC-110",
+          "reintroduces": "the run continues after a refused (e.g. write) tool call",
+          "applied": true
+        },
+        "X3_no_argument_scope_in_run": {
+          "failed": 36,
+          "passed": 354,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review1_failures_are_audited_as_failures_and_refusals_as_denials",
+            "test_rc110_tool_loop_reads_in_scope_and_quotes_the_result",
+            "test_rc111_asi10_switching_an_agent_off_stops_it_mid_run",
+            "test_rc112_asi08_llm10_endless_tool_loop_ends_with_nothing_delivered",
+            "test_rc112_llm10_parallel_tool_call_flood_is_cut_at_the_limit",
+            "test_rc112_tool_call_limit_counts_parallel_calls",
+            "test_rc112_tool_loop_stops_at_the_step_limit_with_nothing_delivered",
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[\\x89PNG",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload0-out_of_scope_resource]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload1-out_of_scope_resource]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload2-tool_result_invalid]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload3-tool_result_invalid]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload5-tool_result_invalid]",
+            "test_rc113_asi06_no_memory_carries_poison_from_one_run_to_the_next",
+            "test_rc113_asi07_message_claiming_to_come_from_another_agent_is_only_data",
+            "test_rc113_failing_tool_ends_the_run_without_a_draft",
+            "test_rc113_llm02_identifiers_in_a_tool_response_are_removed_before_the_model",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step0]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step1]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step2]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step3]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step4]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step5]",
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step6]",
+            "test_rc114_out_of_scope_read_never_reaches_the_tool",
+            "test_rc114_tool_returning_another_study_is_refused_before_the_model_sees_it",
+            "test_rc115_tool_output_cannot_change_settings_or_switch_off_the_verifier",
+            "test_rc116_llm02_no_identifier_from_any_source_reaches_a_span",
+            "test_rc116_no_planted_identifier_reaches_any_span",
+            "test_rc118_case[as-replay-hijacked-to-read-another-patient]",
+            "test_rc118_case[as-replay-hijacked-to-write]",
+            "test_rc118_case[as-replay-reads-its-own-study]",
+            "test_rc118_case[as-replay-tool-loop-exhaustion]",
+            "test_rc118_report_and_gate",
+            "test_review1_arun_awaits_async_tools_in_the_callers_loop_without_threads"
+          ],
+          "control": "RC-114",
+          "reintroduces": "the run does not check tool arguments",
+          "applied": true
+        },
+        "X4_identity_not_checked": {
+          "failed": 3,
+          "passed": 387,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_review1_alarms_survive_every_early_return",
+            "test_rc115_answer_from_another_model_is_discarded",
+            "test_rc115_asi04_llm03_answer_from_another_model_is_discarded"
+          ],
+          "control": "RC-115",
+          "reintroduces": "an answer from another model is delivered",
+          "applied": true
+        },
+        "X5_overrides_honoured": {
+          "failed": 4,
+          "passed": 386,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc115_caller_cannot_override_registry_parameters[override0]",
+            "test_rc115_caller_cannot_override_registry_parameters[override1]",
+            "test_rc115_caller_cannot_override_registry_parameters[override2]",
+            "test_rc115_caller_cannot_override_registry_parameters[override3]"
+          ],
+          "control": "RC-115",
+          "reintroduces": "a caller can change registry parameters",
+          "applied": true
+        },
+        "X6_verifier_optional": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_agent_requiring_a_verifier_never_runs_without_one"
+          ],
+          "control": "RC-110",
+          "reintroduces": "an agent that requires a verifier runs without one",
+          "applied": true
+        },
+        "X7_withheld_delivered": {
+          "failed": 11,
+          "passed": 379,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_verifier_withholding_means_nothing_is_delivered",
+            "test_rc113_asi01_llm01_injection_in_dicom_tags_cannot_steer_the_report",
+            "test_rc113_asi01_llm01_injection_in_nifti_description_cannot_close_its_block",
+            "test_rc113_asi06_llm01_prior_report_injection_is_withheld",
+            "test_rc118_case[rd-replay-healthy-control-unsafe]",
+            "test_rc118_case[rd-replay-invented-numbers]",
+            "test_rc118_case[rd-replay-obeys-injected-dicom-instruction]",
+            "test_rc118_case[rd-replay-obeys-injected-nifti-description]",
+            "test_rc118_case[rd-replay-obeys-injected-prior-report]",
+            "test_rc118_case[rd-replay-obeys-injected-tool-output]",
+            "test_rc118_report_and_gate"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a draft the verifier withheld is delivered",
+          "applied": true
+        },
+        "X8_cost_not_charged": {
+          "failed": 3,
+          "passed": 387,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_cost_is_charged_and_the_study_cap_stops_the_run",
+            "test_rc112_impossible_usage_is_charged_at_the_worst_case",
+            "test_rc112_llm10_daily_cost_cap_holds_across_studies"
+          ],
+          "control": "RC-112",
+          "reintroduces": "calls are not charged against the caps",
+          "applied": true
+        },
+        "X9_no_step_limit": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_asi08_llm10_endless_tool_loop_ends_with_nothing_delivered",
+            "test_rc112_tool_loop_stops_at_the_step_limit_with_nothing_delivered"
+          ],
+          "control": "RC-112",
+          "reintroduces": "a run is not bounded in steps",
+          "applied": true
+        },
+        "X10_no_tool_call_limit": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_llm10_parallel_tool_call_flood_is_cut_at_the_limit",
+            "test_rc112_tool_call_limit_counts_parallel_calls"
+          ],
+          "control": "RC-112",
+          "reintroduces": "a run is not bounded in tool calls",
+          "applied": true
+        },
+        "X11_tool_result_not_checked": {
+          "failed": 7,
+          "passed": 383,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[\\x89PNG",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload0-out_of_scope_resource]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload1-out_of_scope_resource]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload2-tool_result_invalid]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload3-tool_result_invalid]",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload5-tool_result_invalid]",
+            "test_rc114_tool_returning_another_study_is_refused_before_the_model_sees_it"
+          ],
+          "control": "RC-113",
+          "reintroduces": "an invalid or foreign tool result is passed to the model",
+          "applied": true
+        },
+        "X12_untrusted_inputs_unquoted": {
+          "failed": 12,
+          "passed": 378,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_llm10_oversized_untrusted_text_is_capped_and_oversized_input_refused",
+            "test_rc113_asi01_llm01_injection_in_dicom_tags_cannot_steer_the_report",
+            "test_rc113_asi01_llm01_injection_in_nifti_description_cannot_close_its_block",
+            "test_rc113_asi01_llm02_file_name_never_reaches_the_model",
+            "test_rc113_asi06_llm01_prior_report_injection_is_withheld",
+            "test_rc113_untrusted_inputs_reach_the_model_only_quoted",
+            "test_rc118_case[rd-replay-clean-draft-with-injected-tag-ignored]",
+            "test_rc118_case[rd-replay-obeys-injected-dicom-instruction]",
+            "test_rc118_case[rd-replay-obeys-injected-nifti-description]",
+            "test_rc118_case[rd-replay-obeys-injected-prior-report]",
+            "test_rc118_case[rd-replay-obeys-injected-tool-output]",
+            "test_rc118_report_and_gate"
+          ],
+          "control": "RC-113",
+          "reintroduces": "study-file text reaches the model as plain instructions",
+          "applied": true
+        },
+        "X13_delivered_text_unmarked": {
+          "failed": 8,
+          "passed": 382,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_delivered_text_is_the_verifier_text",
+            "test_rc110_simple_run_delivers_marked_text_and_traces_it",
+            "test_rc118_case[rd-replay-clean-draft-spanish-german]",
+            "test_rc118_case[rd-replay-clean-draft-with-injected-tag-ignored]",
+            "test_rc118_case[rd-replay-clean-draft]",
+            "test_rc118_case[rd-replay-confirmed-dis-correct]",
+            "test_rc118_report_and_gate",
+            "test_rc119_asi09_a_claimed_human_review_is_still_marked_as_ai"
+          ],
+          "control": "RC-119",
+          "reintroduces": "the delivered text is not marked as the model's",
+          "applied": true
+        },
+        "X14_environment_model_honoured": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc115_environment_cannot_override_the_model_or_the_switch",
+            "test_rc115_environment_model_setting_is_ignored"
+          ],
+          "control": "RC-115",
+          "reintroduces": "the model id is taken from the environment",
+          "applied": true
+        },
+        "P1_model_text_not_marked": {
+          "failed": 15,
+          "passed": 375,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_delivered_text_is_the_verifier_text",
+            "test_rc110_simple_run_delivers_marked_text_and_traces_it",
+            "test_rc118_case[rd-replay-clean-draft-spanish-german]",
+            "test_rc118_case[rd-replay-clean-draft-with-injected-tag-ignored]",
+            "test_rc118_case[rd-replay-clean-draft]",
+            "test_rc118_case[rd-replay-confirmed-dis-correct]",
+            "test_rc118_report_and_gate",
+            "test_rc119_asi09_a_claimed_human_review_is_still_marked_as_ai",
+            "test_rc119_clinician_edit_removes_the_model_mark_from_changed_sentences",
+            "test_rc119_compose_keeps_each_author",
+            "test_rc119_every_model_sentence_is_marked_and_the_text_round_trips",
+            "test_rc119_every_model_sentence_marked_even_without_punctuation",
+            "test_rc119_html_renderer_escapes_and_tags",
+            "test_rc119_model_written_headings_are_marked_too",
+            "test_rc119_text_renderer_marks_model_sentences_and_adds_a_legend"
+          ],
+          "control": "RC-119",
+          "reintroduces": "model text is recorded as the software's",
+          "applied": true
+        },
+        "P2_edits_keep_model_mark": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc119_clinician_edit_removes_the_model_mark_from_changed_sentences"
+          ],
+          "control": "RC-119",
+          "reintroduces": "a sentence the clinician changed stays marked as the model's",
+          "applied": true
+        },
+        "P3_html_not_escaped": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc119_html_renderer_escapes_and_tags"
+          ],
+          "control": "RC-119",
+          "reintroduces": "model text is rendered as HTML",
+          "applied": true
+        },
+        "P4_hash_binding_ignored": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc119_a_unit_altered_without_its_hash_does_not_verify"
+          ],
+          "control": "RC-119",
+          "reintroduces": "a record whose units were altered still verifies",
+          "applied": true
+        },
+        "P5_legend_missing": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc119_text_renderer_marks_model_sentences_and_adds_a_legend"
+          ],
+          "control": "RC-119",
+          "reintroduces": "the signed report does not name the model",
+          "applied": true
+        },
+        "O1_acceptance_always_true": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc120_aggregate_per_reader",
+            "test_rc120_edit_size_counts_changed_characters_and_sentences"
+          ],
+          "control": "RC-120",
+          "reintroduces": "edited sign-offs are counted as unedited",
+          "applied": true
+        },
+        "O2_shown_text_not_checked": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc120_review1_the_latest_shown_version_is_the_one_signed",
+            "test_rc120_signing_a_different_draft_than_shown_is_not_counted_as_acceptance"
+          ],
+          "control": "RC-120",
+          "reintroduces": "a sign-off of a different text than shown is counted",
+          "applied": true
+        },
+        "O3_reader_not_pseudonymised": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc120_records_hold_no_text_and_no_identifier"
+          ],
+          "control": "RC-120",
+          "reintroduces": "the reader is stored by name",
+          "applied": true
+        },
+        "C1_template_hash_not_compared": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc117_a_report_template_change_without_the_card_is_caught",
+            "test_rc117_an_mcp_instruction_change_without_the_card_is_caught"
+          ],
+          "control": "RC-117",
+          "reintroduces": "a changed template goes unnoticed",
+          "applied": true
+        },
+        "C2_new_template_ignored": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc117_a_new_template_without_the_card_is_caught"
+          ],
+          "control": "RC-117",
+          "reintroduces": "a new template goes unnoticed",
+          "applied": true
+        },
+        "C3_code_model_not_compared": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc117_a_model_change_without_the_card_is_caught"
+          ],
+          "control": "RC-117",
+          "reintroduces": "a change of the code's model goes unnoticed",
+          "applied": true
+        },
+        "C4_variants_not_hashed": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc117_card_is_current_with_the_code_and_the_registry[report-drafter]"
+          ],
+          "control": "RC-117",
+          "reintroduces": "the DIS-not-evaluated variants are not bound",
+          "applied": true
+        },
+        "E1_pass_at_1_instead_of_pass_hat_k": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_case[rd-detect-dis-stated-when-not-evaluated]",
+            "test_rc118_pass_hat_k_counts_a_case_only_when_every_trial_passes"
+          ],
+          "control": "RC-118",
+          "reintroduces": "a case counts as passed when one trial passes",
+          "applied": true
+        },
+        "E2_replay_determinism_off": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_a_nondeterministic_grader_fails_the_case"
+          ],
+          "control": "RC-118",
+          "reintroduces": "a non-deterministic outcome is accepted",
+          "applied": true
+        },
+        "E3_k_not_enforced": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_malformed_case_file_is_rejected[<lambda>0]",
+            "test_rc118_malformed_case_file_is_rejected[<lambda>1]"
+          ],
+          "control": "RC-118",
+          "reintroduces": "a case with fewer than k recorded variants is accepted",
+          "applied": true
+        },
+        "E4_grader_weakened": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_case_files_and_grader_are_frozen"
+          ],
+          "control": "RC-118",
+          "reintroduces": "the grader accepts invented numbers",
+          "applied": true
+        },
+        "V1_truncated_output_delivered": {
+          "failed": 8,
+          "passed": 382,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[None-model_stop_unexpected]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[finished?-model_stop_unexpected]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[max_tokens-output_truncated]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[model_context_window_exceeded-output_truncated]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[pause_turn-model_stop_unexpected]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[refusal-model_stop_unexpected]",
+            "test_rc110_review1_tool_calls_cut_at_the_token_limit_never_run",
+            "test_rc113_review1_alarms_survive_every_early_return"
+          ],
+          "control": "RC-110",
+          "reintroduces": "an answer cut at max_tokens or stopped abnormally is delivered",
+          "applied": true
+        },
+        "V2_truncated_tool_calls_run": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review1_tool_calls_cut_at_the_token_limit_never_run"
+          ],
+          "control": "RC-110",
+          "reintroduces": "tool calls of a truncated answer run",
+          "applied": true
+        },
+        "V3_output_budget_ignored": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc115_review1_output_budget_is_chosen_among_the_registry_budgets"
+          ],
+          "control": "RC-115",
+          "reintroduces": "the per-template output budget of the registry is ignored",
+          "applied": true
+        },
+        "V4_global_switch_ignored": {
+          "failed": 10,
+          "passed": 380,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc111_environment_switch_is_off_unless_on",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[-on-False]",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[0-on-False]",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[None-on-False]",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[OFF-on-False]",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[disabled-on-False]",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[false-on-False]",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[no-on-False]",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[off",
+            "test_rc111_review1_switches_fail_closed_on_anything_but_on[off-on-False]"
+          ],
+          "control": "RC-111",
+          "reintroduces": "the global switch does not stop the agents",
+          "applied": true
+        },
+        "V5_in_flight_calls_not_reserved": {
+          "failed": 7,
+          "passed": 383,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_cost_is_charged_and_the_study_cap_stops_the_run",
+            "test_rc112_impossible_usage_is_charged_at_the_worst_case",
+            "test_rc112_llm10_daily_cost_cap_holds_across_studies",
+            "test_rc112_review1_calls_in_flight_count_against_the_study_cap",
+            "test_rc112_review1_concurrent_runs_cannot_pass_the_cap_together",
+            "test_rc112_review1_settling_charges_the_actual_cost_and_frees_the_rest",
+            "test_rc112_study_cap_refuses_the_call_that_would_pass_it"
+          ],
+          "control": "RC-112",
+          "reintroduces": "calls in flight do not count against the caps (check-then-record race)",
+          "applied": true
+        },
+        "V6_settle_charges_nothing": {
+          "failed": 4,
+          "passed": 386,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_cost_is_charged_and_the_study_cap_stops_the_run",
+            "test_rc112_llm10_daily_cost_cap_holds_across_studies",
+            "test_rc112_review1_settling_charges_the_actual_cost_and_frees_the_rest",
+            "test_rc112_study_cap_refuses_the_call_that_would_pass_it"
+          ],
+          "control": "RC-112",
+          "reintroduces": "a settled call is charged nothing",
+          "applied": true
+        },
+        "V7_plural_ids_not_checked": {
+          "failed": 6,
+          "passed": 384,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_out_of_scope_arguments_are_refused[args3]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result2]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result3]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result6]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args1]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args2]"
+          ],
+          "control": "RC-114",
+          "reintroduces": "ids in a list (*_ids, ids) are not scope-checked",
+          "applied": true
+        },
+        "V8_nested_values_not_walked": {
+          "failed": 13,
+          "passed": 377,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload1-out_of_scope_resource]",
+            "test_rc113_deeply_nested_tool_result_is_refused",
+            "test_rc113_valid_tool_result_is_cleaned_and_quoted",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result4]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result5]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result6]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args0]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args1]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args3]",
+            "test_rc114_tool_result_carrying_another_resource_is_refused[result1]",
+            "test_rc114_tool_result_carrying_another_resource_is_refused[result2]",
+            "test_rc115_tool_output_cannot_change_settings_or_switch_off_the_verifier"
+          ],
+          "control": "RC-114",
+          "reintroduces": "ids nested in objects are not scope-checked",
+          "applied": true
+        },
+        "V9_path_uri_not_checked": {
+          "failed": 3,
+          "passed": 387,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args3]",
+            "test_rc114_review1_report_arguments_follow_the_schema[args4-out_of_scope_resource]",
+            "test_rc114_review1_report_arguments_follow_the_schema[args5-out_of_scope_resource]"
+          ],
+          "control": "RC-114",
+          "reintroduces": "path / uri / url arguments are not scope-checked",
+          "applied": true
+        },
+        "V10_first_version_kept": {
+          "failed": 1,
+          "passed": 389,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc120_review1_the_latest_shown_version_is_the_one_signed"
+          ],
+          "control": "RC-120",
+          "reintroduces": "a regenerated draft keeps the old version, its sign-off is not counted",
+          "applied": true
+        },
+        "V11_failures_audited_as_denials": {
+          "failed": 7,
+          "passed": 383,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review1_failures_are_audited_as_failures_and_refusals_as_denials",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[None-model_stop_unexpected]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[finished?-model_stop_unexpected]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[max_tokens-output_truncated]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[model_context_window_exceeded-output_truncated]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[pause_turn-model_stop_unexpected]",
+            "test_rc110_review1_output_not_ended_normally_is_never_delivered[refusal-model_stop_unexpected]"
+          ],
+          "control": "RC-110",
+          "reintroduces": "model, tool and verifier failures are audited as denials",
+          "applied": true
+        },
+        "V12_alarms_dropped": {
+          "failed": 2,
+          "passed": 388,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_review1_alarms_survive_every_early_return"
+          ],
+          "control": "RC-113",
+          "reintroduces": "early returns drop the injection alarms",
+          "applied": true
+        }
+      },
+      "superseded": [
+        "U6_only_declared_ids_scoped",
+        "U7_result_scope_off"
+      ],
+      "source_sha256": {
+        "backend/app/agent_platform/cards.py": "af57255553a132e3b4bbf15c0a4cd5ffe7fed99cebb5ce341a3ba71fb2e699c2",
+        "backend/app/agent_platform/evals.py": "02be71dda97e516202068a0de3a04caaa2b5dbebbce9703af99563969c181d8a",
+        "backend/app/agent_platform/oversight.py": "d201436edeeeb6fa537c6707fd6d3f50c64b1d380c30f9636879a5597e905106",
+        "backend/app/agent_platform/provenance.py": "af461dd82d6ed79c5da10da4cd1244172f9e63cf127b2a5a55ad548816400596",
+        "backend/app/agent_platform/registry.py": "aeb6b2c92b7798dade89372570f5a95b83b0622275d63473b6adc59c82e2f17c",
+        "backend/app/agent_platform/runtime.py": "7983be19c1cffb5ff86df36203986baf2baf4abca564aff908adb13d20703668",
+        "backend/app/agent_platform/tracing.py": "9ff900ebdbb7443d93aeca46a33bef37091c6f637c7001ff37413fe06d8b5f87",
+        "backend/app/agent_platform/untrusted.py": "7436d439bac5b799e35560516299976d7685c8b074426a17406ebde17393d460",
+        "backend/tests/agent_platform/graders/report_verifier_v3/verifier.py": "f6f6b2178afaa331a71f5e5bd17eb2c5c8b2d03e41f69335a52b7029e5a0f24b"
+      },
+      "restored": {
+        "failed": 0,
+        "passed": 390,
+        "errors": 0,
+        "failing_tests": []
+      }
     }
-  ],
-  "undetected_first_round": [
-    "P4_hash_binding_ignored"
   ]
 }
