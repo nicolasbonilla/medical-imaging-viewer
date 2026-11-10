@@ -33,15 +33,17 @@ def test_rc119_every_model_sentence_is_marked_and_the_text_round_trips():
     doc = mark()
     assert doc.text() == DRAFT
     model = [s for s in doc.segments if s.author == "model"]
-    assert len(model) == 3 and all(s.model_id == "claude-sonnet-4-5-20250929" for s in model)
+    assert len(model) == 4 and all(s.model_id == "claude-sonnet-4-5-20250929" for s in model)
     assert all(s.agent_id == "report-drafter" and s.trace_id for s in model)
     assert P.verify_document(doc, DRAFT)
 
 
-def test_rc119_headings_are_marked_as_software_layout():
+def test_rc119_model_written_headings_are_marked_too():
+    """A heading the model wrote can carry a claim ("## Diagnosis: MS"): over-marking is safe, under-marking
+    is the hazard."""
     doc = mark()
     heading = doc.segments[0]
-    assert heading.text.strip() == "## Comment" and heading.author == "software"
+    assert heading.text.strip() == "## Comment" and heading.author == "model" and heading.kind == "heading"
 
 
 def test_rc119_record_is_machine_readable_and_bound_by_hash():
@@ -84,7 +86,7 @@ def test_rc119_clinician_edit_removes_the_model_mark_from_changed_sentences():
 
 def test_rc119_text_renderer_marks_model_sentences_and_adds_a_legend():
     rendered = P.render_text(mark())
-    assert rendered.count(P.TEXT_MARK) == 3
+    assert rendered.count(P.TEXT_MARK) == 4
     assert "written by" in rendered.splitlines()[-1] and "claude-sonnet-4-5-20250929" in rendered
 
 
