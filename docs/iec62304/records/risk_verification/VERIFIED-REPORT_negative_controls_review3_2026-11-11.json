@@ -1,0 +1,340 @@
+{
+  "executed": "2026-11-11T00:22:59",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/brain_report_service.py": "6f111d9d0e05dc721b308103da128cf90038575f5aeddfe9476bdfe0af0b1ba4",
+    "backend/app/services/verified_report.py": "1e0111dbfdab68ce26593b6ea583926463b34d7ec70bc52df0a6ea9f9b203cf4"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "268cdf5b86727544a8000dddbdcf2c6b28fb95cb7019de7a2603f1a62cfb1570",
+    "tests/unit/test_rc103_verified_report_loop.py": "fbffbf9d30288f307c5935884cb622ed491df03f82143789b3eac90c89033956",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "59de8ebc4499d276e07c2a437280133a9a9a3e76c07b9944a458c17bbae5b27c",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "9aed9d2dc841725a27ae9112ff1dc1036e12a797d55a8e0580d4f7d6b5ad233e",
+    "tests/unit/test_verified_report_review1.py": "bfa849d29167fefba8f5703e7eb94cae0012fb5638a95359f8e46e05f3c6b7d8",
+    "tests/unit/test_verified_report_review2.py": "77c20d31c1185733971b49a8d2379b5488a76e3be26c2dba1ce53717388dcd36",
+    "tests/unit/test_verified_report_review2_dis.py": "7e4c81735d17344205384715200d593007e201260ad5494495b9f179396d17ef",
+    "tests/unit/test_verified_report_review3.py": "aa1edea2f06d3d3d5f099d508d9a6b694d724f13a300a49bc245a959faa53c4d"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 512,
+    "errors": 0,
+    "skipped": 26,
+    "failing_tests": []
+  },
+  "mutations": {
+    "F15_number_reader_accepts_inf": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 511,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc102_r10_an_infinite_value_is_not_computed"
+      ],
+      "reintroduces": "R10: an infinite value is read as a number (and a count of it crashes)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T00:25:08",
+      "detected": true
+    },
+    "A6_refusal_not_audited": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 510,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited",
+        "test_rc104_r7_a_request_refused_for_an_implausible_measurement_is_audited"
+      ],
+      "reintroduces": "R7: a draft refused by a privacy check (or failed) before any model call leaves no audit record",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:26:12",
+      "detected": true
+    },
+    "M4_sampling_parameter_sent": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 509,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_non_comprehensive_uses_default_tokens",
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-haiku-5-5-params1]",
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-sonnet-5-5-params0]"
+      ],
+      "reintroduces": "a sampling parameter is sent (400 on the current models)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:27:16",
+      "detected": true
+    },
+    "M5_answer_read_by_position": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 511,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc106_the_answer_is_read_by_block_type"
+      ],
+      "reintroduces": "the first block is read as the answer (a thinking block, as content[0].text did)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:28:19",
+      "detected": true
+    },
+    "M6_provider_failure_propagates": {
+      "exit": 1,
+      "failed": 7,
+      "passed": 505,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_generate_report_api_error_gives_the_measurements_only",
+        "test_rc104_t2_the_audit_and_the_response_say_withheld_with_the_reason",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error0-model_unavailable]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error1-timeout]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error2-provider_error]",
+        "test_rc106_r2_one_draft_never_waits_beyond_its_time_budget",
+        "test_rc106_t3_the_provider_call_is_awaited_and_cancelled_at_the_deadline"
+      ],
+      "reintroduces": "a provider failure fails the report instead of giving the measurements only",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:29:24",
+      "detected": true
+    },
+    "M7_no_time_budget": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 510,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc104_t2_nothing_sent_is_still_not_requested",
+        "test_rc106_all_calls_of_one_report_share_the_time_budget"
+      ],
+      "reintroduces": "the 25 s budget of a report is not enforced",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T00:30:28",
+      "detected": true
+    },
+    "M8_long_call_timeout": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 510,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-haiku-5-5-params1]",
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-sonnet-5-5-params0]"
+      ],
+      "reintroduces": "one call may wait ten minutes (the SDK default)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:31:32",
+      "detected": true
+    },
+    "M10_sdk_retry_back": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 510,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc106_r2_the_client_makes_no_retry_of_its_own",
+        "test_rc106_t3_the_service_builds_the_async_client_without_retries"
+      ],
+      "reintroduces": "R2: the SDK retries with a fresh full timeout (about twice the 25 s budget)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:32:36",
+      "detected": true
+    },
+    "M11_wait_not_bounded": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 511,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc106_t3_the_provider_call_is_awaited_and_cancelled_at_the_deadline"
+      ],
+      "reintroduces": "R2: the wait for the provider is not bounded by the remaining budget",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:33:44",
+      "detected": true
+    },
+    "F20_volume_needs_both_units": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 510,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc102_t1_a_volume_in_ml_only_is_written_and_only_then_offered_as_a_placeholder",
+        "test_rc102_t1_property_a_placeholder_is_available_exactly_when_its_line_states_the_value"
+      ],
+      "reintroduces": "T1: a volume in mL only is written \"not computed\" while its placeholder is filled",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T00:34:44",
+      "detected": true
+    },
+    "F21_placeholders_by_their_own_rule": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 510,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc102_t1_a_volume_in_ml_only_is_written_and_only_then_offered_as_a_placeholder",
+        "test_rc102_t1_property_a_placeholder_is_available_exactly_when_its_line_states_the_value"
+      ],
+      "reintroduces": "T1: a placeholder filled by a rule of its own (a value the report's line does not state)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T00:35:45",
+      "detected": true
+    },
+    "A7_withheld_reported_as_not_requested": {
+      "exit": 1,
+      "failed": 7,
+      "passed": 505,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[provider_after_an_attempt]",
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[provider_first]",
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[refusal_after_an_attempt]",
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[refusal_first]",
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[timeout_after_an_attempt]",
+        "test_rc104_t2_the_audit_and_the_response_say_withheld_with_the_reason",
+        "test_rc106_t3_the_provider_call_is_awaited_and_cancelled_at_the_deadline"
+      ],
+      "reintroduces": "T2: a draft the AI was asked for and did not deliver is recorded as not requested",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T00:36:43",
+      "detected": true
+    },
+    "M13_sync_client_back": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 509,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_get_client_caches_instance",
+        "test_rc106_r2_the_client_makes_no_retry_of_its_own",
+        "test_rc106_t3_the_service_builds_the_async_client_without_retries"
+      ],
+      "reintroduces": "T3: the blocking client again (a request outlives the time budget in a worker thread)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:37:40",
+      "detected": true
+    },
+    "M14_request_not_cancelled": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 511,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc106_t3_the_provider_call_is_awaited_and_cancelled_at_the_deadline"
+      ],
+      "reintroduces": "T3: the deadline ends the wait but the request keeps running (not cancelled)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:38:35",
+      "detected": true
+    },
+    "T1_retired_words_back": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 511,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc065_g_the_device_vocabulary_is_built_only_from_the_text_sent_now"
+      ],
+      "reintroduces": "G: the retired templates' words widen the RC-065 vocabulary again",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:39:32",
+      "detected": true
+    },
+    "T2_first_message_built_twice": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 511,
+      "errors": 0,
+      "skipped": 26,
+      "failing_tests": [
+        "test_rc065_j_the_first_message_is_built_once_and_is_exactly_what_was_checked"
+      ],
+      "reintroduces": "J: the first request is built a second time after the identifier check",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T00:40:27",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 512,
+    "errors": 0,
+    "skipped": 26,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 16,
+    "detected": 16,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "4b8f617c6fbb77fdc2c3e63d1d58fe1488183f78",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}
