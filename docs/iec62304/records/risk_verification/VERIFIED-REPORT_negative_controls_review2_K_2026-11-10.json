@@ -1,9 +1,9 @@
 {
-  "executed": "2026-11-10T22:57:52",
+  "executed": "2026-11-10T23:27:43",
   "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
   "hash_basis": "sha256 of the UTF-8 text with LF line endings",
   "source_sha256": {
-    "backend/app/services/report_claim_strict.py": "ccff849b5dcea7ea91e1411e97fcec07fbfda9928076497794383528f2ba3f70",
+    "backend/app/services/report_claim_strict.py": "f3b8ccdf7db6256f4a040761dd3539761a40a8c740e4b43d6f71dd36452f0a4c",
     "backend/app/services/verified_report.py": "cf81b8f507a7aade56fc639b55643976fb2e24c17ab2fee962105af911175ffb"
   },
   "test_sha256": {
@@ -15,7 +15,7 @@
     "tests/unit/test_brain_report_service.py": "6a706244fadc9b93406a7b5d33c17bafb2f26054b814861ce240146eb17de8d6",
     "tests/unit/test_verified_report_review1.py": "051f3c702b8f997013ba964b567ba19f8288d71d190e912e550aad249ecaf240",
     "tests/unit/test_verified_report_review2.py": "77c20d31c1185733971b49a8d2379b5488a76e3be26c2dba1ce53717388dcd36",
-    "tests/unit/test_verified_report_review2_dis.py": "eddf696b2f56845a2c7b7da258162a787a6ec53ffa6cb4abafdfe4b333624476"
+    "tests/unit/test_verified_report_review2_dis.py": "7e4c81735d17344205384715200d593007e201260ad5494495b9f179396d17ef"
   },
   "tests": [
     "tests/unit/test_rc102_verified_report_flow.py",
@@ -31,7 +31,7 @@
   "baseline": {
     "exit": 0,
     "failed": 0,
-    "passed": 496,
+    "passed": 500,
     "errors": 0,
     "skipped": 25,
     "failing_tests": []
@@ -40,7 +40,7 @@
     "C1_claim_check_not_run": {
       "exit": 1,
       "failed": 16,
-      "passed": 480,
+      "passed": 484,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -65,13 +65,13 @@
       "files": [
         "backend/app/services/verified_report.py"
       ],
-      "executed": "2026-11-10T22:59:31",
+      "executed": "2026-11-10T23:29:00",
       "detected": true
     },
     "C3_headings_allowed": {
       "exit": 1,
       "failed": 6,
-      "passed": 490,
+      "passed": 494,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -86,13 +86,13 @@
       "files": [
         "backend/app/services/verified_report.py"
       ],
-      "executed": "2026-11-10T23:00:38",
+      "executed": "2026-11-10T23:30:03",
       "detected": true
     },
     "C5_rc070_backstop_not_in_the_loop": {
       "exit": 1,
       "failed": 2,
-      "passed": 494,
+      "passed": 498,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -103,13 +103,13 @@
       "files": [
         "backend/app/services/verified_report.py"
       ],
-      "executed": "2026-11-10T23:01:48",
+      "executed": "2026-11-10T23:31:05",
       "detected": true
     },
     "C15_headings_only_hash": {
       "exit": 1,
       "failed": 5,
-      "passed": 491,
+      "passed": 495,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -123,13 +123,13 @@
       "files": [
         "backend/app/services/verified_report.py"
       ],
-      "executed": "2026-11-10T23:03:25",
+      "executed": "2026-11-10T23:32:07",
       "detected": true
     },
     "C16_strict_rules_not_run": {
       "exit": 1,
       "failed": 43,
-      "passed": 453,
+      "passed": 457,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -171,13 +171,13 @@
       "files": [
         "backend/app/services/verified_report.py"
       ],
-      "executed": "2026-11-10T23:04:08",
+      "executed": "2026-11-10T23:32:22",
       "detected": true
     },
     "C17_negation_anywhere_before": {
       "exit": 1,
       "failed": 8,
-      "passed": 488,
+      "passed": 492,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -194,13 +194,13 @@
       "files": [
         "backend/app/services/report_claim_strict.py"
       ],
-      "executed": "2026-11-10T23:04:57",
+      "executed": "2026-11-10T23:32:42",
       "detected": true
     },
     "C18_negation_window_unbounded": {
       "exit": 1,
       "failed": 4,
-      "passed": 492,
+      "passed": 496,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -213,13 +213,13 @@
       "files": [
         "backend/app/services/report_claim_strict.py"
       ],
-      "executed": "2026-11-10T23:06:40",
+      "executed": "2026-11-10T23:33:08",
       "detected": true
     },
     "C19_negated_diagnosis_exempt": {
       "exit": 1,
       "failed": 2,
-      "passed": 494,
+      "passed": 498,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -230,13 +230,13 @@
       "files": [
         "backend/app/services/report_claim_strict.py"
       ],
-      "executed": "2026-11-10T23:08:33",
+      "executed": "2026-11-10T23:34:11",
       "detected": true
     },
     "C20_disclaimer_found_anywhere": {
       "exit": 1,
       "failed": 8,
-      "passed": 488,
+      "passed": 492,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -253,13 +253,13 @@
       "files": [
         "backend/app/services/report_claim_strict.py"
       ],
-      "executed": "2026-11-10T23:09:20",
+      "executed": "2026-11-10T23:34:25",
       "detected": true
     },
     "C21_negated_activity_exempt": {
       "exit": 1,
       "failed": 1,
-      "passed": 495,
+      "passed": 499,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -269,13 +269,13 @@
       "files": [
         "backend/app/services/report_claim_strict.py"
       ],
-      "executed": "2026-11-10T23:11:37",
+      "executed": "2026-11-10T23:35:27",
       "detected": true
     },
     "C23_dis_statements_not_read": {
       "exit": 1,
       "failed": 16,
-      "passed": 480,
+      "passed": 484,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -292,13 +292,13 @@
       "files": [
         "backend/app/services/report_claim_strict.py"
       ],
-      "executed": "2026-11-10T23:13:36",
+      "executed": "2026-11-10T23:36:32",
       "detected": true
     },
     "C24_negation_after_the_verb_ignored": {
       "exit": 1,
       "failed": 1,
-      "passed": 495,
+      "passed": 499,
       "errors": 0,
       "skipped": 25,
       "failing_tests": [
@@ -308,14 +308,14 @@
       "files": [
         "backend/app/services/report_claim_strict.py"
       ],
-      "executed": "2026-11-10T23:15:05",
+      "executed": "2026-11-10T23:37:37",
       "detected": true
     }
   },
   "restored": {
     "exit": 0,
     "failed": 0,
-    "passed": 496,
+    "passed": 500,
     "errors": 0,
     "skipped": 25,
     "failing_tests": []
@@ -327,7 +327,7 @@
   },
   "worktree": {
     "run_in": "the current checkout (--here: an isolated, disposable worktree), clean before and after for every mutated file",
-    "commit": "dc158b64230875d1f4b85ffe2242c46cabf95af9",
+    "commit": "fdf8a367dcab224b71b61f1ed46afc28df245a24",
     "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
   }
 }
