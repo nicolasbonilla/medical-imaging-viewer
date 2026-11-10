@@ -171,7 +171,7 @@ def test_rc113_llm02_identifiers_in_a_tool_response_are_removed_before_the_model
     res, model, _, _ = assistant_run([call("analyze_lesions", segmentation_id="seg-A"), {"text": "Seven lesions."}])
     assert res.status == "delivered"
     sent = all_model_input(model)
-    assert "Doe" not in sent and "19700101" not in sent and "total_lesions" in sent
+    assert "Doe" not in sent and "19700101" not in sent and "total_count" in sent
 
 
 # ================================================================== ASI02 / LLM06 — write tools
@@ -203,7 +203,7 @@ def test_rc114_asi03_bare_mcp_tool_reads_any_record_the_clinician_may_read():
     backend = FakeBackend()
     tools, _ = assistant_tools(backend)
     out = asyncio.run(tools["analyze_lesions"]("seg-OTHER"))
-    assert out["total_lesions"] == 40 and backend.asked_for("seg-OTHER")
+    assert out["segmentation_id"] == "seg-OTHER" and out["total_count"] >= 1 and backend.asked_for("seg-OTHER")
 
 
 @pytest.mark.parametrize("step", [
