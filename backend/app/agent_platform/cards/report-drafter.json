@@ -1,0 +1,118 @@
+{
+ "schema": "mstool.agent-card/1",
+ "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-001)",
+ "agent_id": "report-drafter",
+ "card_version": "2026-11-10.1",
+ "model": {
+  "id": "claude-sonnet-4-5-20250929",
+  "provider": "anthropic",
+  "platform": "Anthropic API (api.anthropic.com), first party",
+  "api_version": "2023-06-01",
+  "retires_on": "2026-11-30",
+  "id_source": "backend/app/core/config.py Settings.CLAUDE_MODEL default; on main an environment variable can override it (integration step P-2 routes every call through the registry, which refuses any other id)",
+  "facts_read": "2026-11-10, Anthropic model overview and deprecations pages (claude-sonnet-4-5-20250929: deprecated, retires 2026-11-30; current Sonnet claude-sonnet-5-5)",
+  "data_processing": "provider receives measurements, fixed labels, sex and a 5-year age band only (RC-064); data-processing agreement and retention decision pending (CAPA-014 D-3)"
+ },
+ "sdk_pins": {
+  "anthropic": "0.44.0"
+ },
+ "parameters": {
+  "max_tokens": 4096,
+  "max_tokens_comprehensive": 16384,
+  "sampling": "provider defaults: temperature, top_p and top_k are not sent",
+  "thinking": "not sent",
+  "tools": "none",
+  "system_prompt": "one of the fixed templates below, as written or with its DIS and per-region instructions replaced (dis_not_evaluated_template)"
+ },
+ "mcp": null,
+ "prompt_templates": {
+  "agent_platform.untrusted.UNTRUSTED_DATA_RULE": {
+   "sha256": "b0655b49777c0a75962cc6c9fd63edcfa36e7a67d6884fc7f08ff34a0e025300",
+   "chars": 200,
+   "source": "backend/app/agent_platform/untrusted.py"
+  },
+  "brain_report_service.CLINICIAN_TEXT_INSTRUCTION": {
+   "sha256": "831ba2f8907f9d466bc021b2326c9bc3dfdb4b5982d96a9a18c01034048048fb",
+   "chars": 243,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.DIS_NOT_EVALUATED_PROMPT": {
+   "sha256": "2fb517119cdc4f1f50acb43b42536fcb9be257df1a1ba116ac41f9949cfc16ef",
+   "chars": 665,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.REGIONS_NOT_CONFIRMED_LINE": {
+   "sha256": "a046323f5c298a898cf23b370dd800e9e5daa57440a9f453dc0901903feac2e2",
+   "chars": 116,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.REPORT_TEMPLATES[general]": {
+   "sha256": "8da998a87237abd360377b529a2ed9fd8d2cfe49a9f26097db528468a7030adb",
+   "chars": 4821,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.REPORT_TEMPLATES[ms_activity]": {
+   "sha256": "5cc058bcc55022d0b9cc8800a98c2304f6e245ee55d5bb1d5cbf352faff118dd",
+   "chars": 4468,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.REPORT_TEMPLATES[ms_comprehensive]": {
+   "sha256": "2e26862dcfd29d2beca22a24c6c843649c3fbd218bdd8a8d6289aa59cb034291",
+   "chars": 6988,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.REPORT_TEMPLATES[ms_lesion_burden]": {
+   "sha256": "6f2a313b77b4afc5b12031bc4daa21b901b014729f91a567e3dc0ff6a50da66b",
+   "chars": 4822,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.REPORT_TEMPLATES[ms_longitudinal]": {
+   "sha256": "de1a18944b364a8b034f167c0c34f50ba561a6b074fe38eab43ec4eeb26d9039",
+   "chars": 5378,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.dis_not_evaluated_template(REPORT_TEMPLATES[general])": {
+   "sha256": "23e5bc17cabb74514b0e83bcbb6e830ccb5279e9c4105aa6f143879bc276e2d2",
+   "chars": 4709,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.dis_not_evaluated_template(REPORT_TEMPLATES[ms_activity])": {
+   "sha256": "8164b4f33a258b2d7e3e93454987e9690733f270170a10b284aea369468b24b2",
+   "chars": 4187,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.dis_not_evaluated_template(REPORT_TEMPLATES[ms_comprehensive])": {
+   "sha256": "b79fa82c4e4473387297e5a01c8c5a4de8755f973f8f59ec0884d5217f6111d3",
+   "chars": 6539,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.dis_not_evaluated_template(REPORT_TEMPLATES[ms_lesion_burden])": {
+   "sha256": "291888b15726855f31d59527f62df8d568c91ab4b379615a9436845052cf7b54",
+   "chars": 4836,
+   "source": "backend/app/services/brain_report_service.py"
+  },
+  "brain_report_service.dis_not_evaluated_template(REPORT_TEMPLATES[ms_longitudinal])": {
+   "sha256": "05e2997c623863d926c56b68b5852a099fb0dc24821bf531d9dd1269113ccd47",
+   "chars": 5483,
+   "source": "backend/app/services/brain_report_service.py"
+  }
+ },
+ "evals": {
+  "case_file": "backend/tests/agent_platform/eval_cases/report-drafter.json",
+  "harness": "backend/tests/agent_platform/test_agent_evals.py",
+  "result_at_card_version": "regression and red-team suites pass^3 = 100 % (offline, recorded outputs); capability suite: 1 measured verifier miss kept visible"
+ },
+ "revalidation": {
+  "protocol": "docs/iec62304/agent_platform/Agent_Revalidation_Protocol.md",
+  "last_run": null,
+  "note": "baseline card; the protocol has not yet been run for a change"
+ },
+ "changes": [
+  {
+   "date": "2026-11-10",
+   "card_version": "2026-11-10.1",
+   "what": "baseline card of the report path on main (brain_report_service.py at d5d4726)",
+   "approved_by": null
+  }
+ ]
+}

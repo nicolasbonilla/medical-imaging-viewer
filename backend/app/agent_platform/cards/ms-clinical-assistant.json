@@ -1,0 +1,136 @@
+{
+ "schema": "mstool.agent-card/1",
+ "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-002)",
+ "agent_id": "ms-clinical-assistant",
+ "card_version": "2026-11-10.1",
+ "model": {
+  "id": null,
+  "control": "client",
+  "note": "The model is chosen by the clinician's MCP client (Claude Desktop / Claude Code), not by MSTool: it is neither pinned nor recorded by the device. What MSTool controls is the servers' instructions, tool descriptions and tools, recorded below."
+ },
+ "sdk_pins": {
+  "fastmcp": "2.3.0"
+ },
+ "parameters": {},
+ "mcp": {
+  "servers": [
+   "ms-clinical-mcp (backend/app/mcp/ms_clinical_server.py)",
+   "imaging-mcp (backend/app/mcp/imaging_server.py)"
+  ],
+  "transport": "stdio only (run_all.py); no HTTP transport",
+  "framework": "fastmcp==2.3.0 (pinned in backend/requirements.txt)",
+  "mcp_sdk_requirement": "mcp>=1.8.0,<2.0.0, a dependency of fastmcp 2.3.0 that requirements.txt does NOT pin: the MCP SDK, and with it the protocol revision spoken, is whatever pip resolves at install time",
+  "observed": {
+   "mcp_sdk_version": "UNRECORDED",
+   "latest_protocol_version": "UNRECORDED",
+   "where": "the CI job agent-platform (backend/requirements.txt install on ubuntu-latest)"
+  },
+  "advisories": "PyPI lists security advisories for fastmcp 2.3.0 fixed in later releases (read 2026-11-10); SOUP review pending (integration step P-7)",
+  "spec_compared_with": "MCP specification revisions 2025-11-25 and 2026-07-28 (research_notes, Vanguardia de los agentes MSTool, Q2); per-request user authorization of the 2026-07-28 revision is not implemented: the servers use the clinician's own token (CAPA-008)"
+ },
+ "prompt_templates": {
+  "agent_platform.untrusted.UNTRUSTED_DATA_RULE": {
+   "sha256": "b0655b49777c0a75962cc6c9fd63edcfa36e7a67d6884fc7f08ff34a0e025300",
+   "chars": 200,
+   "source": "backend/app/agent_platform/untrusted.py"
+  },
+  "mcp.imaging_server.description": {
+   "sha256": "ef85b2bb664acc4595ded40280a70e3d06b683d236886d9d7c6dae236870243a",
+   "chars": 102,
+   "source": "backend/app/mcp/imaging_server.py"
+  },
+  "mcp.imaging_server.resource[imaging://supported-formats]": {
+   "sha256": "47f7328d93383014552a690d2950562ec2108464f797223d6484157d22cc6577",
+   "chars": 470,
+   "source": "backend/app/mcp/imaging_server.py"
+  },
+  "mcp.imaging_server.tool[get_image_metadata].description": {
+   "sha256": "edac9f657cb0502fc90b2727622d722ef824fd36867d4ef0959f3f16259c1803",
+   "chars": 314,
+   "source": "backend/app/mcp/imaging_server.py"
+  },
+  "mcp.imaging_server.tool[get_matplotlib_visualization].description": {
+   "sha256": "c2b432c37bf6fbffc07746d2929d7e1719d06cede0f9b184a33ff2107e170788",
+   "chars": 366,
+   "source": "backend/app/mcp/imaging_server.py"
+  },
+  "mcp.imaging_server.tool[get_slice_image].description": {
+   "sha256": "fa29d0a5d5731a52a5ce6951172d86a9534033faf3e8603eb37223fbc4f7ecc9",
+   "chars": 383,
+   "source": "backend/app/mcp/imaging_server.py"
+  },
+  "mcp.imaging_server.tool[list_segmentations].description": {
+   "sha256": "8caf8e7f7a3fdb32244a124fccf44b4cf72a299395200e0f0c4ea3d16942b274",
+   "chars": 163,
+   "source": "backend/app/mcp/imaging_server.py"
+  },
+  "mcp.imaging_server.tool[process_image].description": {
+   "sha256": "463c6075ce050dd107c35bcd0d1e2a2d06be7f760b06276bdbd4212c08bcc88d",
+   "chars": 254,
+   "source": "backend/app/mcp/imaging_server.py"
+  },
+  "mcp.ms_clinical_server.description": {
+   "sha256": "1752c84cfb897285029ba7cec056559e5eb2789afb6be4013b3aab10d7058eda",
+   "chars": 230,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  },
+  "mcp.ms_clinical_server.instructions": {
+   "sha256": "d1004aa3e0c8557fdf7caddd3e4b6b79c02fcbf97dc8007115b8eb750f7aba7c",
+   "chars": 2825,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  },
+  "mcp.ms_clinical_server.resource[prompts://ms-longitudinal-workflow]": {
+   "sha256": "df189124bbf45a9eca0e67d8e0acac21326a34f9cd03ec8c7a2db71c658bf700",
+   "chars": 1290,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  },
+  "mcp.ms_clinical_server.resource[prompts://ms-review-workflow]": {
+   "sha256": "12f7bc891a8cddf35a434d7f41707842e5f2d5f48b440887c2fbf082a7b1efae",
+   "chars": 1932,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  },
+  "mcp.ms_clinical_server.tool[analyze_lesions].description": {
+   "sha256": "ca8889a7acad32f4f1288c515f56c06663d5cf22b00e298d5ca4224c5a4b152a",
+   "chars": 308,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  },
+  "mcp.ms_clinical_server.tool[compare_longitudinal].description": {
+   "sha256": "66954e877be7db86533d7be308957867928c20b29fa75448724c87ae214173f9",
+   "chars": 885,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  },
+  "mcp.ms_clinical_server.tool[generate_ms_report].description": {
+   "sha256": "5122358f76c8dc40deb7362db02400097e2853ba1a2fb8f6f9659749692f9fbc",
+   "chars": 709,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  },
+  "mcp.ms_clinical_server.tool[get_region_classification].description": {
+   "sha256": "34e70aba72def3680dd9870e2d1f42890eb8959043f366e0a99bf7c909cfffad",
+   "chars": 881,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  },
+  "mcp.ms_clinical_server.tool[summarize_dis_items].description": {
+   "sha256": "23af964eeea75167f4895d82a5e549bcabee705cc8d24a7d79d2c51561859587",
+   "chars": 1031,
+   "source": "backend/app/mcp/ms_clinical_server.py"
+  }
+ },
+ "evals": {
+  "case_file": "backend/tests/agent_platform/eval_cases/ms-clinical-assistant.json",
+  "harness": "backend/tests/agent_platform/test_agent_evals.py",
+  "result_at_card_version": "regression and red-team suites pass^3 = 100 % (offline, recorded tool-call transcripts against the real tool functions)"
+ },
+ "revalidation": {
+  "protocol": "docs/iec62304/agent_platform/Agent_Revalidation_Protocol.md",
+  "last_run": null,
+  "note": "baseline card; the protocol has not yet been run for a change"
+ },
+ "changes": [
+  {
+   "date": "2026-11-10",
+   "card_version": "2026-11-10.1",
+   "what": "baseline card of the MCP servers on main (d5d4726)",
+   "approved_by": null
+  }
+ ]
+}
