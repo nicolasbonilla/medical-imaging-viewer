@@ -281,7 +281,34 @@ def offline_env():
                 "CLOUDSDK_CONFIG": empty, "GOOGLE_CLOUD_PROJECT": "mstool-offline-tests"})
     for name in ("ANTHROPIC_API_KEY", "FIRESTORE_EMULATOR_HOST", "PYTHONPATH"):
         env.pop(name, None)
+    # lighter on the owner's disk: no byte-code files written for each mutated source
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
     return env
+
+
+def _progress_path(key):
+    """Results of the mutations already run on these very sources and tests (so a run cut by a crash resumes, never
+    restarts); keyed by their hashes, not by the commit, so a later commit of documents does not matter."""
+    return os.path.join(tempfile.gettempdir(), f"verified-report-nc-progress-{key}.json")
+
+
+def _load_progress(key, source_sha, test_sha):
+    try:
+        with open(_progress_path(key), encoding="utf-8") as fh:
+            p = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    # only results of the very same sources and tests are kept
+    if p.get("source_sha256") != source_sha or p.get("test_sha256") != test_sha:
+        return {}
+    return p
+
+
+def _save_progress(key, res):
+    tmp = _progress_path(key) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump({k: res[k] for k in ("source_sha256", "test_sha256", "baseline", "mutations", "executed")}, fh)
+    os.replace(tmp, _progress_path(key))
 
 
 def run_tests():
@@ -327,7 +354,7 @@ def main():
     if "--here" in sys.argv:
         # In a checkout that is itself disposable (an isolated agent worktree): mutate here, restore byte for byte,
         # and refuse to finish unless the mutated files are unchanged against the commit afterwards.
-        res = run_in_worktree(files)
+        res = run_in_worktree(files, commit)
         require_committed(files)
         res["worktree"] = {"run_in": "the current checkout (--here: an isolated, disposable worktree), clean before "
                                      "and after for every mutated file", "commit": commit, "python": PY}
@@ -337,7 +364,7 @@ def main():
     _git("worktree", "add", "--detach", wt, commit)
     try:
         os.chdir(wt)
-        res = run_in_worktree(files)
+        res = run_in_worktree(files, commit)
     finally:
         os.chdir(REPO)
         _git("worktree", "remove", "--force", wt, check=False)
@@ -357,7 +384,7 @@ def _write(res):
     return 1 if res["summary"]["undetected"] or res["restored"]["failed"] or res["restored"]["errors"] else 0
 
 
-def run_in_worktree(files):
+def run_in_worktree(files, commit):
     here = os.getcwd()
     raw = {p: open(p, "rb").read() for p in files}
     text = {p: b.decode("utf-8").replace("\r\n", "\n") for p, b in raw.items()}
@@ -382,21 +409,34 @@ def run_in_worktree(files):
         if hasattr(signal, sig):
             handlers[sig] = signal.signal(getattr(signal, sig), on_signal)
     try:
-        res = {"executed": datetime.datetime.now().isoformat(timespec="seconds"),
-               "method": "in a throwaway detached worktree of the commit; one mutation at a time; each anchor asserted "
-                         "to occur exactly once (LF text, written back with the file's own line endings); the bound "
-                         "backend tests with no cloud credential (PRB-002); original bytes restored after each "
-                         "mutation, at exit and on a signal, and checked at the end; the baseline must pass first",
+        source_sha = {p: sha(text[p]) for p in files}
+        test_sha = {t: sha(open(os.path.join("backend", t), encoding="utf-8").read().replace("\r\n", "\n"))
+                    for t in TESTS}
+        key = sha(json.dumps([source_sha, test_sha], sort_keys=True))[:16]
+        previous = _load_progress(key, source_sha, test_sha)
+        res = {"executed": previous.get("executed") or datetime.datetime.now().isoformat(timespec="seconds"),
+               "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back "
+                         "with the file's own line endings); the bound backend tests with no cloud credential "
+                         "(PRB-002), run one after the other, never in parallel; original bytes restored after each "
+                         "mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a "
+                         "run cut by a crash resumes from the results already recorded for the same commit, sources "
+                         "and tests",
                "hash_basis": "sha256 of the UTF-8 text with LF line endings",
-               "source_sha256": {p: sha(text[p]) for p in files},
-               "test_sha256": {t: sha(open(os.path.join("backend", t), encoding="utf-8").read().replace("\r\n", "\n"))
-                               for t in TESTS},
-               "tests": TESTS, "baseline": run_tests(), "mutations": {}}
+               "source_sha256": source_sha, "test_sha256": test_sha,
+               "tests": TESTS, "baseline": previous.get("baseline") or run_tests(),
+               "mutations": dict(previous.get("mutations") or {})}
+        if previous:
+            res["resumed"] = {"from": _progress_path(key), "mutations_kept": sorted(res["mutations"]),
+                              "at": datetime.datetime.now().isoformat(timespec="seconds")}
         base = res["baseline"]
         if base["failed"] or base["errors"] or not base["passed"]:
             raise SystemExit(f"the baseline must pass before the mutations mean anything: {base}")
-        print("baseline ok", base["passed"], "passed", flush=True)
+        print("baseline ok", base["passed"], "passed", "(resumed: %d kept)" % len(res["mutations"]) if previous else "",
+              flush=True)
+        _save_progress(key, res)
         for name, (edits, what) in M.items():
+            if name in res["mutations"]:
+                continue
             touched = {}
             for path, anchor, repl in edits:
                 touched[path] = touched.get(path, text[path]).replace(anchor, repl, 1)
@@ -412,6 +452,7 @@ def run_in_worktree(files):
             for path in touched:
                 with open(path, "wb") as fh:
                     fh.write(raw[path])
+            _save_progress(key, res)
             print(f"{name:40s} detected={out['detected']} {out['failed']} failed / {out['errors']} errors / "
                   f"{out['passed']} passed", flush=True)
     finally:

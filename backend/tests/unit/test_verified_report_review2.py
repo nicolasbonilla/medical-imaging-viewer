@@ -234,10 +234,21 @@ def test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_the_ported_c
 
 
 @pytest.mark.parametrize("findings", [NOT_EVALUATED_VIEW, EVALUATED_VIEW], ids=["dis_not_evaluated", "dis_evaluated"])
-def test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments(findings):
+def test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments(findings, monkeypatch):
     """The same property on the answer check (the loop's own check), on generated adversarial comments: a negation
     or condition clause, a contrastive join, a forbidden phrase — in five layouts (plain, bold, capitals, list, quote),
-    in the findings and in the impression comment. v2 flags must be kept; every adversarial answer must fail."""
+    in the findings and in the impression comment. v2 flags must be kept; every adversarial answer must fail.
+    (The frozen v2 result of one assembled report is computed once and shared by both checks — a pure function of
+    its text and record — so the test costs half the time; every case is still checked.)"""
+    frozen, cache = V.verify, {}
+
+    def verify_once(authored, delivered, view):
+        key = (authored, delivered, VR.record_json(view))
+        if key not in cache:
+            cache[key] = frozen(authored, delivered, view)
+        return cache[key]
+
+    monkeypatch.setattr(V, "verify", verify_once)
     n = 0
     for lang, sentence in adversarial_sentences():
         view = _view(findings, lang=lang)
