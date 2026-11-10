@@ -37,7 +37,7 @@ if not os.path.exists(PY):
 OUT = REPO / "docs" / "iec62304" / "records" / "risk_verification" / "AGENT-PLATFORM_negative_controls_2026-11-10.json"
 TESTS = ["tests/agent_platform/"]
 COPY = ("backend/app", "backend/tests", "backend/pytest.ini", "backend/requirements.txt",
-        "docs/iec62304/agent_platform", "scripts/safety/agent_platform_negative_controls.py")
+        "docs/iec62304/agent_platform", "scripts/safety/agent_platform_negative_controls.py", ".github/workflows")
 
 P = "backend/app/agent_platform/"
 REG, UNT, TRC, RUN = P + "registry.py", P + "untrusted.py", P + "tracing.py", P + "runtime.py"
@@ -367,6 +367,11 @@ def _round(names):
            "method": "one mutation at a time in a throwaway copy outside the repository; anchors asserted unique",
            "source_sha256": {p: hashlib.sha256(_text(p)[1].encode("utf-8")).hexdigest() for p in files}}
     with work_copy() as work:
+        # A mutation counts as detected only against a CLEAN baseline: the unmutated copy must pass first (found
+        # when a test reading .github/ failed in a copy that lacked it, adding one failure to every mutation).
+        out["baseline"] = run(work)
+        if out["baseline"]["failed"] or out["baseline"]["errors"]:
+            raise SystemExit(f"the unmutated copy is not clean: {out['baseline']['failing_tests']}")
         for name in names:
             apply_mutation(work, name)
             result = run(work)
