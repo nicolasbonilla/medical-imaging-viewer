@@ -68,6 +68,9 @@ from typing import Any, Awaitable, Callable, Dict, Iterator, List, Optional, Tup
 
 from app.services import report_claim_strict as S
 from app.services import report_claim_verifier as V
+# third review of PR #78, T6: the one shared reader of a measurement value, imported here (not inside functions)
+from app.services.report_payload_guard import FREE_TEXT_FIELDS, finite_number
+from app.services.report_payload_guard import NOT_AVAILABLE as PAYLOAD_NOT_AVAILABLE
 
 FLOW_ID = "verified-report-1 (fixed flow + frozen claim check v2, benchmark arm A3 at f3c1976)"
 FLOW_CODE = "verified-report-1"  # the audit-safe code of FLOW_ID
@@ -88,6 +91,9 @@ SECTIONS = {
 # Outcome codes (audit `report_outcome`, response `verification.outcome`).
 PASSED = tuple(f"passed_{k}" for k in range(MAX_REGENERATIONS + 1))   # named from the attempt number (review 2, I)
 BLOCKED = "blocked"
+# third review of PR #78, T2: the AI was asked, and gave no usable answer (timeout, provider failure, refusal) — the
+# comments are withheld; "not_requested" is only for a draft for which nothing was sent
+OUTCOME_WITHHELD = "withheld"
 NOT_REQUESTED = "not_requested"
 
 # Why the comments are not in the report (audit `llm_reason`, response `verification.reason`).
@@ -227,6 +233,7 @@ T: Dict[str, Dict[str, str]] = {
         "count_range": "Lesions marked: {cat} lesions (MAGNIMS 2021 range; {n} connected components).",
         "count_nc": "Lesion count: not computed.",
         "volume": "Total lesion volume: {ml} mL ({mm3} mm³).",
+        "volume_ml": "Total lesion volume: {ml} mL.", "volume_mm3": "Total lesion volume: {mm3} mm³.",
         "volume_nc": "Total lesion volume: not computed.",
         "size": "Size distribution: {s} small (<100 mm³), {m} medium (100-1000 mm³), {l} large (>1000 mm³).",
         "size_nc": "Size distribution: not computed.",
@@ -273,6 +280,7 @@ T: Dict[str, Dict[str, str]] = {
         "count_range": "Lesiones marcadas: {cat} lesiones (rango MAGNIMS 2021; {n} componentes conectados).",
         "count_nc": "Recuento de lesiones: no calculado.",
         "volume": "Volumen lesional total: {ml} ml ({mm3} mm³).",
+        "volume_ml": "Volumen lesional total: {ml} ml.", "volume_mm3": "Volumen lesional total: {mm3} mm³.",
         "volume_nc": "Volumen lesional total: no calculado.",
         "size": "Distribución por tamaño: {s} pequeñas (<100 mm³), {m} medianas (100-1000 mm³), {l} grandes (>1000 mm³).",
         "size_nc": "Distribución por tamaño: no calculada.",
@@ -317,6 +325,7 @@ T: Dict[str, Dict[str, str]] = {
         "count_range": "Markierte Läsionen: {cat} Läsionen (MAGNIMS-2021-Bereich; {n} zusammenhängende Komponenten).",
         "count_nc": "Läsionsanzahl: nicht berechnet.",
         "volume": "Gesamtläsionsvolumen: {ml} ml ({mm3} mm³).",
+        "volume_ml": "Gesamtläsionsvolumen: {ml} ml.", "volume_mm3": "Gesamtläsionsvolumen: {mm3} mm³.",
         "volume_nc": "Gesamtläsionsvolumen: nicht berechnet.",
         "size": "Größenverteilung: {s} klein (<100 mm³), {m} mittel (100-1000 mm³), {l} groß (>1000 mm³).",
         "size_nc": "Größenverteilung: nicht berechnet.",
@@ -364,9 +373,8 @@ NOT_AVAILABLE = ("clinical indication", "contrast-enhanced imaging", "T1-weighte
 
 def _value(x: Any) -> Optional[float]:
     """A number of the RC-064 payload, or None ("not available" there, never 0 here). The guard's own reader (review
-    of PR #78, R10): booleans, non-numbers, NaN and ±inf are not numbers."""
-    from app.services.report_payload_guard import _number
-    return _number(x)
+    of PR #78, R10; public since the third review, T6): booleans, non-numbers, NaN and ±inf are not numbers."""
+    return finite_number(x)
 
 
 def _count(x: Any) -> Optional[int]:
@@ -584,8 +592,7 @@ _RENDERED_VOLUMES = ("total_brain_volume_ml", "intracranial_volume_ml")
 
 def renderable_volumetry(volumetry: Any) -> bool:
     """True when the volumetry carries a brain volume the report writes (total brain or intracranial)."""
-    from app.services.report_payload_guard import _number
-    return isinstance(volumetry, dict) and any(_number(volumetry.get(k)) is not None for k in _RENDERED_VOLUMES)
+    return isinstance(volumetry, dict) and any(finite_number(volumetry.get(k)) is not None for k in _RENDERED_VOLUMES)
 
 
 def renderable(findings: Any, volumetry: Any) -> bool:
@@ -602,7 +609,6 @@ def rendered_request(findings: Any, volumetry: Any) -> Tuple[Dict[str, Any], Opt
     only — a bad value in a field the report never uses no longer refuses the whole report; that field is named
     "supplied but not included" instead. The typed free-text fields are kept (the projection only flags them, the
     text is never sent); no per-lesion rows (J), no region volumes, no DIS voxel counts, no sex or age."""
-    from app.services.report_payload_guard import FREE_TEXT_FIELDS
     f = findings if isinstance(findings, dict) else {}
     out: Dict[str, Any] = {k: f[k] for k in FREE_TEXT_FIELDS if k in f}
     la = f.get("lesion_analysis")
@@ -653,9 +659,20 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
         src = t["src_conf"]
     else:
         src = t[view["segmentation"].get("source_code", "src_unc")]
-    ml, mm3 = les.get("total_volume_ml"), les.get("total_volume_mm3")
-    volume = (t["volume"].format(ml=_loc(_num(ml, 2), lang), mm3=_loc(_num(mm3, 0), lang))
-              if ml is not None and mm3 is not None else t["volume_nc"])
+    # third review of PR #78, T1: the volume line states every volume the record has (mL, mm³, or both) — the same
+    # values the placeholders are filled with (stated_values: ONE availability rule)
+    stated = stated_values(view, lang)
+    ml_text = stated.get("total_volume_ml")
+    mm3 = les.get("total_volume_mm3")
+    mm3_text = _loc(_num(mm3, 0), lang) if mm3 is not None else None
+    if ml_text is not None and mm3_text is not None:
+        volume = t["volume"].format(ml=ml_text, mm3=mm3_text)
+    elif ml_text is not None:
+        volume = t["volume_ml"].format(ml=ml_text)
+    elif mm3_text is not None:
+        volume = t["volume_mm3"].format(mm3=mm3_text)
+    else:
+        volume = t["volume_nc"]
     sd = les.get("size_distribution")
     size = (t["size"].format(s=sd["small"], m=sd["medium"], l=sd["large"])
             if sd and all(sd.get(k) is not None for k in ("small", "medium", "large")) else t["size_nc"])
@@ -682,8 +699,8 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     dis = view["dis"]
     if dis["status"] == "evaluated":
         met = t["met"] if dis["dis_met_brain"] else t["notmet"]
-        dis_s = (t["dis_ev"].format(k=dis["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"], met=met)
-                 if "brain_regions_with_lesions" in dis else t["dis_ev_nc"].format(met=met))
+        dis_s = (t["dis_ev"].format(k=stated["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"], met=met)
+                 if "brain_regions_with_lesions" in stated else t["dis_ev_nc"].format(met=met))
         f += [dis_s, t["dis_ext"]]
     else:
         dis_s = _dis_not_evaluated_line(lang)
@@ -695,8 +712,8 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
             comp = [t["lng_nc"] if lng.get("reason") == "change candidates not computed" else t["lng_ab"]]
         else:
             cc = lng["candidates"]
-            comp = [t["lng_ok"].format(new=cc["new"], enl=cc["enlarged"], res=cc["resolved"], shr=cc["shrunk"],
-                                       sta=cc["stable"])]
+            comp = [t["lng_ok"].format(new=stated["new_candidates"], enl=stated["enlarging_candidates"],
+                                       res=cc["resolved"], shr=cc["shrunk"], sta=cc["stable"])]
             v1, v2 = lng["visit_1"]["total_volume_ml"], lng["visit_2"]["total_volume_ml"]
             if v1 is not None and v2 is not None and lng.get("burden_change_percent") is not None:
                 comp.append(t["lng_vol"].format(v1=_loc(_num(v1, 2), lang), v2=_loc(_num(v2, 2), lang),
@@ -721,7 +738,15 @@ PLACEHOLDERS = ("total_count", "total_volume_ml", "new_candidates", "enlarging_c
 
 
 def placeholder_values(view: Dict[str, Any], lang: str) -> Dict[str, str]:
-    """Values the code fills in for the model's placeholders (only those the record has)."""
+    """Values the code fills in for the model's placeholders: exactly the values the code-written report states
+    (third review of PR #78, T1 — one availability rule, `stated_values`)."""
+    return stated_values(view, lang)
+
+
+def stated_values(view: Dict[str, Any], lang: str) -> Dict[str, str]:
+    """ONE availability rule for every value a placeholder can carry (third review of PR #78, T1): the value as the
+    code-written line states it, and only when that line states it. `skeleton` writes its lines from these values, and
+    the placeholders are filled from them — a placeholder is never available when its line says "not computed"."""
     les, lng, dis = view["lesions"], view.get("longitudinal") or {}, view["dis"]
     vals: Dict[str, str] = {}
     if les.get("total_count") is not None:
@@ -865,7 +890,7 @@ class ProviderFailure(Exception):
 @dataclass
 class FlowResult:
     text: str                                    # the report body (no disclaimer): code-written + checked comments
-    outcome: str                                 # passed_0 / passed_1 / passed_2 / blocked / not_requested
+    outcome: str                                 # passed_0 / passed_1 / passed_2 / blocked / withheld / not_requested
     interpretive: str                            # delivered / withheld / not_requested
     reason: Optional[str] = None                 # why the comments are not there (REASON_*), else None
     attempts: List[Dict[str, Any]] = field(default_factory=list)
@@ -885,11 +910,18 @@ def measurements_only(view: Dict[str, Any], language: str, reason: str, attempts
     """The code-written report without comments, with the fixed note of `reason` (RC-103, RC-105, RC-106)."""
     lang = language_of(language)
     note = WITHHELD[lang][_NOTE_OF_REASON[reason]]
-    withheld = outcome == BLOCKED or reason == REASON_FEEDBACK_PRIVACY
+    withheld = outcome in (BLOCKED, OUTCOME_WITHHELD) or reason == REASON_FEEDBACK_PRIVACY
     return FlowResult(text=assemble(view, lang, "", "") + "\n\n" + note, outcome=outcome,
                       interpretive="withheld" if withheld else "not_requested", reason=reason,
                       attempts=list(attempts or []), model_answered=model_answered,
                       input_tokens=tokens[0], output_tokens=tokens[1])
+
+
+def _after_asking(attempts: List[Dict[str, Any]]) -> str:
+    """Third review of PR #78, T2 (RC-104): once a request has gone to the AI service, a draft without its comments
+    is "withheld" (the reason and the attempts say why), never "not_requested"."""
+    asked = any(a.get("verdict") != "not_sent" for a in attempts)
+    return OUTCOME_WITHHELD if asked else NOT_REQUESTED
 
 
 def prompt_sha256(request: Dict[str, Any]) -> str:
@@ -932,8 +964,8 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
             record.update({"verdict": "not_sent", "rule_ids": [], "latency_ms": 0, "error": REASON_TIMEOUT})
             attempts.append(record)
             on_attempt(record)
-            return measurements_only(view, lang, REASON_TIMEOUT, attempts, tokens=tuple(tokens),
-                                     model_answered=answered)
+            return measurements_only(view, lang, REASON_TIMEOUT, attempts, outcome=_after_asking(attempts),
+                                     tokens=tuple(tokens), model_answered=answered)
         t0 = clock()
         try:
             reply = await call(SYSTEM_PROMPT, copy.deepcopy(messages), remaining)
@@ -942,7 +974,8 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
                            "error": e.error})
             attempts.append(record)
             on_attempt(record)
-            return measurements_only(view, lang, e.reason, attempts, tokens=tuple(tokens), model_answered=answered)
+            return measurements_only(view, lang, e.reason, attempts, outcome=_after_asking(attempts),
+                                     tokens=tuple(tokens), model_answered=answered)
         latency = int((clock() - t0) * 1000)
         tokens[0] += int(reply.input_tokens or 0)
         tokens[1] += int(reply.output_tokens or 0)
@@ -953,7 +986,8 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
             record.update({"verdict": "refusal", "rule_ids": []})
             attempts.append(record)
             on_attempt(record)
-            return measurements_only(view, lang, REASON_REFUSAL, attempts, tokens=tuple(tokens), model_answered=answered)
+            return measurements_only(view, lang, REASON_REFUSAL, attempts, outcome=_after_asking(attempts),
+                                     tokens=tuple(tokens), model_answered=answered)
         assembled, fails = check(view, lang, reply.text)
         if reply.stop_reason == "max_tokens":
             fails = [{"rule": "FMT.truncated", "message": "The answer was cut off; write both comments in full, "
@@ -985,7 +1019,7 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
     each MAGNIMS range, not computed, confirmed regions, DIS met / not met / not evaluated, pairs computed /
     abstained / not computed, brain volumes or not). Used for the device's own words of the RC-065 check — and,
     since the second review of PR #78 (G), ONLY these: every branch of the text the device sends must be here."""
-    from app.services.report_payload_guard import NOT_AVAILABLE as NA
+    NA = PAYLOAD_NOT_AVAILABLE
 
     def la(n, regions=None, confirmed=True):
         out = {"total_count": n, "total_burden_mm3": 3132.0, "total_burden_ml": 3.132,
@@ -1026,6 +1060,9 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
            "dis_assessment": {**evaluated, "dis_met": False}}, None, None
     yield {"lesion_analysis": la(7, confirmed=False), "zone_stats": {"total_brain_voxels": 1}, "segmentation_labels": ["x"],
            "anomalies": [{"type": "x"}]}, {**vol, "structures": [{"structure_name": "x", "volume_ml": 1.0}]}, "ai_draft"
+    # third review of PR #78, T1: a volume in mL only, and in mm³ only (each line states what the record has)
+    yield {"lesion_analysis": {"total_count": 7, "total_burden_mm3": NA, "total_burden_ml": 3.132}}, None, "ai_draft"
+    yield {"lesion_analysis": {"total_count": 7, "total_burden_mm3": 3132.0, "total_burden_ml": NA}}, None, "ai_draft"
     yield {"lesion_analysis": {"total_count": NA, "total_burden_mm3": NA, "total_burden_ml": NA,
                                "size_distribution": {"small": NA, "medium": NA, "large": NA}}}, \
         {"total_brain_volume_ml": NA, "intracranial_volume_ml": 1400.0}, "ai_draft"

@@ -99,6 +99,7 @@ def test_rc106_r2_one_draft_never_waits_beyond_its_time_budget(monkeypatch):
 
 
 def test_rc106_r2_the_client_makes_no_retry_of_its_own(monkeypatch):
+    """Amended for the third review of PR #78 (T3, DRAFT): the service's client is the SDK's async client."""
     import sys
     from unittest.mock import MagicMock
     module = MagicMock()
@@ -106,7 +107,7 @@ def test_rc106_r2_the_client_makes_no_retry_of_its_own(monkeypatch):
     svc = BRS.BrainReportService()
     svc._settings = SimpleNamespace(ANTHROPIC_API_KEY="test-not-a-key")
     svc._get_client()
-    assert module.Anthropic.call_args.kwargs["max_retries"] == 0
+    assert module.AsyncAnthropic.call_args.kwargs["max_retries"] == 0
 
 
 # ── R3

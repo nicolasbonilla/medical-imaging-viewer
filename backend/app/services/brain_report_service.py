@@ -40,6 +40,7 @@ Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
 
 import asyncio
 import copy
+import inspect
 import re
 import time
 import uuid
@@ -747,8 +748,10 @@ class BrainReportService:
                 )
             import anthropic
             # RC-106: no SDK retry (review of PR #78, R2: a retry got a fresh full timeout, about twice the budget);
-            # the flow's own regeneration and its 25 s budget for all calls of a draft are the only repetition
-            self._client = anthropic.Anthropic(api_key=api_key, max_retries=0)
+            # the flow's own regeneration and its 25 s budget for all calls of a draft are the only repetition.
+            # Third review, T3: the ASYNC client (anthropic==0.44.0 has it) — awaited on the event loop, so the end
+            # of the budget cancels the HTTP request itself; no worker thread is left running.
+            self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)
         return self._client
 
     def _build_findings_prompt(
@@ -978,18 +981,26 @@ class BrainReportService:
 
     def _model_call(self, model_id: str) -> "verified_report.Call":
         """One provider call of the flow (RC-106): fixed parameters of the allow-list, the remaining time budget as
-        timeout, the blocking SDK call off the event loop; any failure becomes a ProviderFailure (audit-safe)."""
+        timeout; any failure becomes a ProviderFailure (audit-safe).
+
+        Third review of PR #78, T3: the service's client is the SDK's async client; its request is awaited under the
+        remaining budget, so at the deadline the request itself is cancelled (no thread, no request left running).
+        A synchronous client — only the offline test doubles have one — is waited for in a worker thread under the
+        same bound."""
         params = REPORT_MODELS[model_id]["params"]
         max_tokens = int(self._settings.CLAUDE_MAX_TOKENS)
 
         async def call(system: str, messages: List[Dict[str, str]], timeout_s: float) -> verified_report.ModelReply:
             try:
                 client = self._get_client()
-                # the remaining budget bounds the wait itself (R2), whatever the SDK does with its own timeout; a
-                # call still running in its thread afterwards is ignored (its answer is never read)
-                message = await asyncio.wait_for(asyncio.to_thread(
-                    client.messages.create, model=model_id, max_tokens=max_tokens, system=system, messages=messages,
-                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s))), timeout=float(timeout_s))
+                create = client.messages.create
+                kwargs = dict(model=model_id, max_tokens=max_tokens, system=system, messages=messages,
+                              extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))
+                if inspect.iscoroutinefunction(inspect.unwrap(create)):
+                    # the remaining budget bounds the request itself (R2, T3): wait_for cancels it at the deadline
+                    message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))
+                else:
+                    message = await asyncio.wait_for(asyncio.to_thread(create, **kwargs), timeout=float(timeout_s))
             except Exception as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is
                 raise verified_report.ProviderFailure(_failure_reason(e), type(e).__name__) from e
             return reply_of(message)

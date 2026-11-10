@@ -150,12 +150,17 @@ def vocabulary_label(value: Any) -> Optional[str]:
     return label_vocabulary().get(text.casefold())
 
 
-def _number(value: Any) -> Optional[float]:
+def finite_number(value: Any) -> Optional[float]:
+    """The one reader of a measurement value, shared by the payload and the verified report (third review of PR #78,
+    T6): an int or a finite float; a bool, a non-number, NaN or ±inf is not a number (None)."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
     if isinstance(value, float) and not math.isfinite(value):
         return None
     return value
+
+
+_number = finite_number      # the guard's own name for it
 
 
 def age_band(value: Any) -> Optional[str]:
