@@ -800,7 +800,7 @@ and must not be until the above holds.
 | HAZ ID | Severity | Probability (pre-control) | Risk Level (pre-control) |
 |---|---|---|---|
 | HAZ-020 | S4 | P3 (Occasional) | UNACCEPTABLE *(proposed)* |
-| HAZ-021 | S5 | P4 (Probable) — CAISI and the medical injection studies cited in the research notes report successful hijacks of every frontier model tested | UNACCEPTABLE *(proposed)* |
+| HAZ-021 | S5 | P4 (Probable) — NIST CAISI's agent-hijacking evaluations reportedly found at least one successful hijack against each of 13 frontier models (secondary source, research notes Q3), and the peer-reviewed medical injection studies cited there succeeded against the models they tested | UNACCEPTABLE *(proposed)* |
 | HAZ-022 | S3 | P4 (Probable) — vendor tracing captures content by default | UNACCEPTABLE *(proposed)* |
 | HAZ-023 | S4 | P4 (Probable) — the report model retires on 2026-11-30 | UNACCEPTABLE *(proposed)* |
 | HAZ-024 | S4 | P3 (Occasional) | UNACCEPTABLE *(proposed)* |

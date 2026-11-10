@@ -26,7 +26,7 @@
   ],
   "manifest_version": 1,
   "capa_reference": "CAPA-001, CAPA-002, CAPA-004, CAPA-005, CAPA-006, CAPA-007, CAPA-010, CAPA-011, CAPA-013, CAPA-014, CAPA-015, CAPA-016",
-  "last_updated": "2026-10-31",
+  "last_updated": "2026-11-10",
   "controls": {
     "RC-006": {
       "description": "AI-generated report carries a mandatory physician-review disclaimer",
@@ -1162,6 +1162,165 @@
       "requirement": "REQ-SAFE-047",
       "change": "PRB-031 (L2) (next safety round; DRAFT, N. G. Bonilla Vargas — approved 2026-10-31 (PR #74); branch fix/next-safety-round; not merged, not deployed)",
       "negative_control": "Executed 2026-10-31 by scripts/safety/prb028_031_negative_controls.py in a throwaway worktree of 5cc88b9 (record docs/iec62304/records/risk_verification/PRB-028-031_negative_controls_2026-10-31.json): 14 of 14 mutations for this control detected (O1, O2, O3, O4, O5, O6, O7, O8, L1, L2, D1, L3, L5, L4); whole run 62 of 62. Failing-first record: docs/iec62304/records/risk_verification/PRB-028-031_tests_on_base_2026-10-31.json (sources of main @ ca600c2)."
+    },
+    "RC-110": {
+      "description": "Fail-closed agent authorization: registered, owner-approved agents only; exact model ids with use status and retirement date; read/compute tools only (a registry allowing a write tool refuses everything); a required verifier must be present; any refusal, failure, exhausted budget or withholding verdict delivers nothing; refusals audited with fixed codes",
+      "hazard": "HAZ-020",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/registry.py; runtime.py; agents.json",
+      "tests": [
+        "tests/agent_platform/test_registry.py",
+        "tests/agent_platform/test_runtime.py",
+        "tests/agent_platform/test_redteam.py"
+      ],
+      "requirement": "REQ-AGT-001",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 11 of 11 mutations detected (R12_invalid_registry_used, R13_refusals_not_audited, R14_trailing_newline_id, R1_write_tools_allowed, R2_unapproved_agent_runs, R5_retirement_ignored, R6_model_allow_list_ignored, R7_candidate_model_used, X2_continue_after_refused_tool, X6_verifier_optional, X7_withheld_delivered). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-111": {
+      "description": "Per-agent kill switch read again before every model call, tool call and delivery; unreadable = off; the environment switch must be exactly 'on'",
+      "hazard": "HAZ-020",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/registry.py (check_agent, EnvKillSwitches); runtime.py",
+      "tests": [
+        "tests/agent_platform/test_registry.py",
+        "tests/agent_platform/test_runtime.py",
+        "tests/agent_platform/test_redteam.py"
+      ],
+      "requirement": "REQ-AGT-001",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 4 of 4 mutations detected (R11_env_switch_lenient, R3_kill_switch_ignored, R4_unreadable_switch_is_on, X1_no_switch_before_delivery). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-112": {
+      "description": "Worst-case cost caps per study and per UTC day, charged after every call; step, tool-call, input and tool-result size limits; untrusted text capped",
+      "hazard": "HAZ-020",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/registry.py; runtime.py; untrusted.py",
+      "tests": [
+        "tests/agent_platform/test_registry.py",
+        "tests/agent_platform/test_runtime.py",
+        "tests/agent_platform/test_redteam.py"
+      ],
+      "requirement": "REQ-AGT-001",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 6 of 6 mutations detected (R8_study_cap_ignored, R9_day_cap_ignored, U4_no_length_cap, X10_no_tool_call_limit, X8_cost_not_charged, X9_no_step_limit). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-113": {
+      "description": "Untrusted content as data: file names, clinician text and unknown sources withheld; DICOM/NIfTI/prior-report/tool text quoted, escaped, cleaned, capped; identifier DICOM tags never read; tool results plain bounded JSON without direct identifiers",
+      "hazard": "HAZ-021",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/untrusted.py; runtime.py",
+      "tests": [
+        "tests/agent_platform/test_untrusted.py",
+        "tests/agent_platform/test_runtime.py",
+        "tests/agent_platform/test_redteam.py"
+      ],
+      "requirement": "REQ-AGT-008",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 8 of 8 mutations detected (U10_dicom_identifiers_read, U1_markup_not_escaped, U2_file_names_quoted, U3_invisible_chars_kept, U8_identifiers_kept, U9_result_size_unbounded, X11_tool_result_not_checked, X12_untrusted_inputs_unquoted). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-114": {
+      "description": "Per-run study scope: every id argument (declared or *_id) and every id in a tool result must belong to the run's study, else refused before the backend or the model",
+      "hazard": "HAZ-021",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/untrusted.py (RunScope, check_tool_arguments, validate_tool_result); runtime.py",
+      "tests": [
+        "tests/agent_platform/test_untrusted.py",
+        "tests/agent_platform/test_runtime.py",
+        "tests/agent_platform/test_redteam.py"
+      ],
+      "requirement": "REQ-AGT-008",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 4 of 4 mutations detected (U5_argument_scope_off, U6_only_declared_ids_scoped, U7_result_scope_off, X3_no_argument_scope_in_run). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-115": {
+      "description": "Exact model identity and fixed settings: no alias/prefix/look-alike; the provider's answer must name the model requested; caller overrides refused; environment model variables ignored; registry entries immutable",
+      "hazard": "HAZ-020, HAZ-023",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/registry.py; runtime.py",
+      "tests": [
+        "tests/agent_platform/test_registry.py",
+        "tests/agent_platform/test_runtime.py",
+        "tests/agent_platform/test_redteam.py"
+      ],
+      "requirement": "REQ-AGT-001",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 4 of 4 mutations detected (R10_fuzzy_model_id, X14_environment_model_honoured, X4_identity_not_checked, X5_overrides_honoured). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-116": {
+      "description": "Tracing after OpenTelemetry GenAI semantic conventions v1.37.0 with an attribute allow-list; content only as SHA-256; exception class only; export off by default; request trace id adopted; sign-off linked with keyed hashes",
+      "hazard": "HAZ-022",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/tracing.py",
+      "tests": [
+        "tests/agent_platform/test_tracing.py",
+        "tests/agent_platform/test_runtime.py",
+        "tests/agent_platform/test_redteam.py"
+      ],
+      "requirement": "REQ-AGT-002",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 7 of 7 mutations detected (T1_unknown_attributes_kept, T2_hash_not_validated, T3_export_on_by_default, T4_exception_text_recorded, T5_request_trace_not_adopted, T6_reader_not_pseudonymised, T7_span_name_off_convention). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-117": {
+      "description": "Model and prompt card per agent bound in CI to every rendered template, model id, API version, parameters, SDK pins, the MCP SDK as installed and the model's retirement date",
+      "hazard": "HAZ-023",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/cards.py; cards/*.json",
+      "tests": [
+        "tests/agent_platform/test_cards.py"
+      ],
+      "requirement": "REQ-AGT-005",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 4 of 4 mutations detected (C1_template_hash_not_compared, C2_new_template_ignored, C3_code_model_not_compared, C4_variants_not_hashed). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-118": {
+      "description": "Offline eval and red-team gate in CI: pass^k (k = 3, replayed twice) at 100 % for regression and red team; frozen cases and grader by SHA-256; OWASP map checked both ways",
+      "hazard": "HAZ-023",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/evals.py; backend/tests/agent_platform/eval_cases/; owasp_map.json; CI job agent-platform",
+      "tests": [
+        "tests/agent_platform/test_agent_evals.py",
+        "tests/agent_platform/test_owasp_map.py"
+      ],
+      "requirement": "REQ-AGT-003, REQ-AGT-004",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 4 of 4 mutations detected (E1_pass_at_1_instead_of_pass_hat_k, E2_replay_determinism_off, E3_k_not_enforced, E4_grader_weakened). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-119": {
+      "description": "Per-unit AI provenance (model, agent, trace, verifier) bound by SHA-256 for the signed report and the UI; clinician edits remove the mark",
+      "hazard": "HAZ-024",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/provenance.py; runtime.py",
+      "tests": [
+        "tests/agent_platform/test_provenance_oversight.py",
+        "tests/agent_platform/test_redteam.py"
+      ],
+      "requirement": "REQ-AGT-006",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 6 of 6 mutations detected (P1_model_text_not_marked, P2_edits_keep_model_mark, P3_html_not_escaped, P4_hash_binding_ignored, P5_legend_missing, X13_delivered_text_unmarked). First round 5 of 6: P4_hash_binding_ignored undetected; a test was added for it and the re-run detects it (record 'reruns'). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-120": {
+      "description": "Oversight metrics per reader (unedited acceptance, edit size, time to sign, fast unedited sign-offs) with pseudonymous keys and numbers only",
+      "hazard": "HAZ-024",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/oversight.py",
+      "tests": [
+        "tests/agent_platform/test_provenance_oversight.py"
+      ],
+      "requirement": "REQ-AGT-007",
+      "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
+      "negative_control": "Executed 2026-11-10 by scripts/safety/agent_platform_negative_controls.py: 3 of 3 mutations detected (O1_acceptance_always_true, O2_shown_text_not_checked, O3_reader_not_pseudonymised). Restored suite 327 passed / 0 failed. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     }
   },
   "unverified_controls_note": [

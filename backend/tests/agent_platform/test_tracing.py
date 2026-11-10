@@ -184,6 +184,8 @@ def test_rc116_signoff_is_linked_to_the_run_without_identifiers(tracer, mem):
     assert span.name == "mstool.signoff"
     assert span.links == [(run.trace_id, run.span_id)]
     assert span.attributes["mstool.signoff.content_sha256"] == T.content_sha256("signed text")
+    assert span.attributes["mstool.signoff.reader_key"].startswith("hmac:")
+    assert span.attributes["mstool.signoff.record_key"].startswith("hmac:")
     dumped = json.dumps(T.to_otlp_json(mem.spans)) + json.dumps(events)
     assert "Jane" not in dumped and "house" not in dumped
     assert events and events[-1]["trace_id"] == run.trace_id and events[-1]["event"] == "agent.signoff_linked"

@@ -56,6 +56,16 @@ def test_rc119_record_is_machine_readable_and_bound_by_hash():
     assert not P.verify_document(P.ProvenanceDocument.from_dict(data), DRAFT)
 
 
+def test_rc119_a_unit_altered_without_its_hash_does_not_verify():
+    """Negative control P4 (first round, undetected): record and report text altered TOGETHER still agree on the
+    text, so only the per-unit SHA-256 can show that a model unit was changed after it was marked."""
+    data = mark().to_dict()
+    data["segments"][1]["text"] = data["segments"][1]["text"].replace("7 lesions", "9 lesions")
+    altered = P.ProvenanceDocument.from_dict(data)
+    assert altered.text() != DRAFT
+    assert not P.verify_document(altered, altered.text())
+
+
 def test_rc119_compose_keeps_each_author():
     doc = P.compose([("software", "Lesions: 7 (3.1 mL).\n", {}),
                      ("model", "The lesions are small. They are ovoid.", {"agent_id": "report-drafter",
