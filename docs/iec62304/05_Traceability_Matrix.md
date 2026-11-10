@@ -24,7 +24,7 @@
 | 1.15 (draft) | 2026-10-28 | Development Team | PRB-020..PRB-026: REQ-SEC-030..034, REQ-FUNC-110/111, REQ-UI-010/011, REQ-REG-010/011 → RC-080..RC-088 → UT-PRB020, UT-PRB021, UI-PRB020, UI-PRB025, UI-PRB026 (section added below). *Amended after the review of PR #70: REQ-SEC-035 → RC-089 (PRB-027); review test rows.* Versions 1.10–1.13 are held by open PRs and release PR #69; 1.14 is left for the concurrent display-findings work | *N. G. Bonilla Vargas — approved 2026-10-30 (PR #70)* |
 | 1.16 (draft) | 2026-10-30 | Development Team | Merge of `main` @ `cc7b692` (PR #70, PRB-020..PRB-027, version 1.15 approved by the owner on 2026-10-30) into `release/owner-signoff-2026-10-30` (`records/releases/RELEASE-2026-10-30_integration_notes.md` §7). Both sides kept: the traceability of both; #70's rows and approval entries unchanged. This branch's draft versions keep the numbers its records cite (1.10–1.14, below #70's 1.15); this merged document is 1.16. No requirement, hazard, cause, estimate or control text changed by the merge. | **DRAFT — N. G. Bonilla Vargas — approved 2026-10-30 (PR #72)** |
 | 1.17 (draft) | 2026-10-31 | Development Team | Next safety round (PRB-028..PRB-031): REQ-SAFE-044 → RC-090, REQ-SAFE-045 → RC-091, REQ-SAFE-046 → RC-092, REQ-SAFE-047 → RC-093 (addendum below). | **DRAFT — N. G. Bonilla Vargas — approved 2026-10-31 (PR #74)** |
-| 1.18 (draft) | 2026-11-10 | Development Team | Verified AI report: REQ-FUNC-116 → RC-102, RC-103 → UT-RC102, UT-RC103; REQ-SAFE-048 → RC-103 → UT-RC103-V, UT-RC103; REQ-SAFE-049 → RC-102 → UT-RC102; REQ-SAFE-050 → RC-104 → UT-RC104; REQ-SAFE-051 → RC-105, RC-106 → UT-RC105-106, UT-BRS; REQ-FUNC-060/061/063, REQ-SEC-021 amended → the amended UT-CAPA014, UT-PRB003-R1/R2, UT-REL-20261025, UT-REL-20261025-R, UT-CAPA013 (addendum below) | **DRAFT, PENDING owner approval** |
+| 1.18 (draft) | 2026-11-10 | Development Team | Verified AI report: REQ-FUNC-116 → RC-102, RC-103 → UT-RC102, UT-RC103; REQ-SAFE-048 → RC-103 → UT-RC103-V, UT-RC103; REQ-SAFE-049 → RC-102 → UT-RC102; REQ-SAFE-050 → RC-104 → UT-RC104; REQ-SAFE-051 → RC-105, RC-106 → UT-RC105-106, UT-BRS; REQ-FUNC-060/061/063, REQ-SEC-021 amended → the amended UT-CAPA014, UT-PRB003-R1/R2, UT-REL-20261025, UT-REL-20261025-R, UT-CAPA013 (addendum below) *Amended after the independent review of PR #78 (R1-R10, 2026-11-10) — DRAFT, PENDING owner approval: UT-REV78 added.* | **DRAFT, PENDING owner approval** |
 
 ---
 
@@ -303,7 +303,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | REQ-FUNC-116 (verified structure; two comments) | RC-102, RC-103 | `verified_report.py`, `brain_report_service.py` (`generate_report`), `ai_report.py` (`verification`) | UT-RC102, UT-RC103 |
 | REQ-SAFE-048 (every answer checked; ≤ 2 regenerations; withheld) | RC-103 | `verified_report.py` (`check`, `run_flow`), `report_claim_verifier.py`, `report_claim_lexicon.py` (byte-exact ports, sha256 tested) | UT-RC103-V, UT-RC103 |
 | REQ-SAFE-049 (mandatory items by code; not computed, never 0) | RC-102 | `verified_report.py` (`build_view`, `skeleton`) | UT-RC102 |
-| REQ-SAFE-050 (every attempt audited) | RC-104 | `brain_report_service.py` (`_ReportAudit`), `audit.py` | UT-RC104 |
+| REQ-SAFE-050 (every attempt and every outcome audited, refusals included) | RC-104 | `brain_report_service.py` (`_ReportAudit`), `audit.py` | UT-RC104 |
 | REQ-SAFE-051 (kill switch; model allow-list and retirement; failures; 25 s; by block type) | RC-105, RC-106 | `config.py`, `brain_report_service.py` (`REPORT_MODELS`, `report_model_allowed`, `_model_call`, `reply_of`) | UT-RC105-106, UT-BRS |
 | REQ-SEC-021 (b)-(f) amended | RC-064, RC-065 (amended) | `verified_report.py` (record of code-chosen strings), `brain_report_service.py` (check on the first and every regeneration request; device words extended) | UT-CAPA014 (amended), UT-RC102 |
 
@@ -442,6 +442,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | `test_rc103_verified_report_loop.py` (draft) | UT-RC103 | REQ-SAFE-048 (RC-103; HAZ-003; added 2026-11-10; the check, regenerate and withhold loop) |
 | `test_rc104_verified_report_audit.py` (draft) | UT-RC104 | REQ-SAFE-050 (RC-104; HAZ-003, HAZ-016; added 2026-11-10; the audit records of the attempts) |
 | `test_rc105_rc106_report_model_controls.py` (draft) | UT-RC105-106 | REQ-SAFE-051 (RC-105, RC-106; HAZ-017, HAZ-013; added 2026-11-10; kill switch, model allow-list, failures, the pinned SDK offline) |
+| `test_verified_report_review1.py` (draft) | UT-REV78 | REQ-FUNC-116, REQ-SAFE-049/050/051 (RC-102, RC-103, RC-104, RC-106; independent review of PR #78, R1-R10; failing first on d68b222) |
 | `test_brain_report_service.py` (amended 2026-11-10, draft) | UT-BRS | REQ-FUNC-060/061/116, REQ-SAFE-051 (RC-106) |
 | `test_prb006_mask_display_range.py` (draft) | UT-PRB006 | REQ-SAFE-042 (RC-074, HAZ-001/007; added 2026-10-28, PRB-006) |
 | `test_prb010_region_label_colours.py` (draft) | UT-PRB010-BE | REQ-SAFE-043 (RC-076, HAZ-005; added 2026-10-28, PRB-010) |

@@ -1,0 +1,1038 @@
+{
+  "executed": "2026-11-10T17:51:32",
+  "method": "in a throwaway detached worktree of the commit; one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002); original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/core/config.py": "a9371986e4aa82cfde8190c51790cf770832ff153025d01e76c037bc940d014d",
+    "backend/app/core/logging/audit.py": "cee466f7d7fde1494628e418156d06e6df4bbcf6aa68beaf2402b12873254d86",
+    "backend/app/services/brain_report_service.py": "035be008bd7576f6bf8c729984fbe8f8833bc92e0ff6d50e2a77e26c04da600e",
+    "backend/app/services/report_claim_lexicon.py": "8e22dbf7ef4ea0003dce415d5041ef8240686d989bafe0c24b6c0b1fd1c4eb8b",
+    "backend/app/services/verified_report.py": "e2218d3d97b6bb3ab04b296122e30b8bc3f2f4c6a115b9476fea3f4b979a2dca"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "fa48d550a25f32c89b9d9a19a269e1eacf11266eefe72a001bee61a2b06e980e",
+    "tests/unit/test_rc103_verified_report_loop.py": "e8bba640cb6d8e1b645a898073c0d9c7842f3c4568fdc296e512ce5f63e934ce",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "59de8ebc4499d276e07c2a437280133a9a9a3e76c07b9944a458c17bbae5b27c",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "6a706244fadc9b93406a7b5d33c17bafb2f26054b814861ce240146eb17de8d6",
+    "tests/unit/test_verified_report_review1.py": "2095879ef9748f370ae0cc3fc2bd8a8ce4a46d923fe69bf6dd0ffaab1d9c9fd0"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 360,
+    "errors": 0,
+    "skipped": 19,
+    "failing_tests": []
+  },
+  "mutations": {
+    "F1_range_from_21": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_lesion_count_follows_magnims_2021[20-Lesions"
+      ],
+      "reintroduces": "20 lesions reported as an exact count, not as the MAGNIMS 2021 range",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:51:59",
+      "detected": true
+    },
+    "F2_not_computed_as_zero": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 355,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_a_value_not_computed_is_written_not_computed_never_zero",
+        "test_rc102_longitudinal_results_only_as_unconfirmed_candidates_or_the_abstention",
+        "test_rc102_r10_an_infinite_value_is_not_computed",
+        "test_rc102_r4_a_region_count_not_computed_is_never_written_0",
+        "test_rc102_r6_the_report_never_contradicts_the_gate"
+      ],
+      "reintroduces": "a count that was not computed is written 0",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:52:14",
+      "detected": true
+    },
+    "F3_regions_without_confirmation": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 355,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_regions_only_when_a_radiologist_confirmed_them",
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block0]",
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block1]",
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block2]",
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block3]"
+      ],
+      "reintroduces": "lesions per region reported for a segmentation no radiologist confirmed",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:52:29",
+      "detected": true
+    },
+    "F4_dis_without_the_gate": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block1]"
+      ],
+      "reintroduces": "a DIS result reported from a block the gate did not mark evaluated (no yes/no conclusion)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:52:44",
+      "detected": true
+    },
+    "F5_candidates_called_lesions": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 355,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_longitudinal_results_only_as_unconfirmed_candidates_or_the_abstention",
+        "test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch[case28-en]",
+        "test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch[case29-en]",
+        "test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch[case32-en]",
+        "test_rc103_candidates_must_be_called_candidates"
+      ],
+      "reintroduces": "change candidates written as new and enlarging lesions",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:52:58",
+      "detected": true
+    },
+    "F6_technique_section_asked_again": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_no_technique_and_no_clinical_indication_section"
+      ],
+      "reintroduces": "the model is asked for a technique section again (the retired template's defect)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:53:12",
+      "detected": true
+    },
+    "F7_own_not_evaluated_sentence": {
+      "exit": 1,
+      "failed": 34,
+      "passed": 326,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_dissemination_in_space_only_when_evaluated[en]",
+        "test_rc102_r3_measurements_not_in_the_verified_report_are_listed_never_dropped[en]",
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block0]",
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block1]",
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block2]",
+        "test_rc102_the_record_builder_applies_the_dis_gate_itself[block3]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case0-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case1-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case10-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case11-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case12-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case13-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case14-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case15-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case16-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case17-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case18-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case19-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case2-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case26-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case27-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case28-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case29-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case3-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case30-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case31-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case32-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case33-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case4-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case5-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case6-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case7-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case8-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case9-en]"
+      ],
+      "reintroduces": "a code-written DIS line the route's backstop replaces (and counts as the model's)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:53:26",
+      "detected": true
+    },
+    "F8_t1_next_to_spinal_cord": {
+      "exit": 1,
+      "failed": 29,
+      "passed": 331,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_r3_measurements_not_in_the_verified_report_are_listed_never_dropped[en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case0-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case1-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case10-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case11-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case12-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case13-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case14-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case15-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case16-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case17-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case18-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case19-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case2-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case26-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case27-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case28-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case29-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case3-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case30-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case31-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case32-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case33-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case4-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case5-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case6-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case7-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case8-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case9-en]"
+      ],
+      "reintroduces": "a limitation sentence the route's backstop reads as a statement on DIS",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:53:41",
+      "detected": true
+    },
+    "F9_first_request_not_checked": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 358,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_the_first_request_is_checked_for_identifiers",
+        "test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited"
+      ],
+      "reintroduces": "the first request is sent without the identifier check (RC-065)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T17:53:55",
+      "detected": true
+    },
+    "F10_dis_only_crashes": {
+      "exit": 1,
+      "failed": 36,
+      "passed": 327,
+      "errors": 0,
+      "skipped": 16,
+      "failing_tests": [
+        "test_each_template_uses_correct_system_prompt",
+        "test_generate_report_api_error_gives_the_measurements_only",
+        "test_generate_report_includes_model_name",
+        "test_generate_report_returns_token_usage",
+        "test_generate_report_success",
+        "test_invalid_template_falls_back_to_general",
+        "test_language_prompt[de-German]",
+        "test_language_prompt[en-English]",
+        "test_language_prompt[es-Spanish]",
+        "test_language_prompt[xx-English]",
+        "test_ms_comprehensive_uses_higher_token_limit",
+        "test_non_comprehensive_uses_default_tokens",
+        "test_rc102_no_free_text_reaches_the_llm_in_any_attempt",
+        "test_rc102_no_technique_and_no_clinical_indication_section",
+        "test_rc102_r1_dis_evaluated_without_lesion_analysis_gives_a_report",
+        "test_rc102_r8_a_placeholder_in_the_record_stops_the_request",
+        "test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch[case23-de]",
+        "test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch[case23-en]",
+        "test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch[case23-es]",
+        "test_rc102_the_delivered_report_is_the_code_written_report_with_the_checked_comments",
+        "test_rc102_the_first_request_is_checked_for_identifiers",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case23-de]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case23-en]",
+        "test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged[case23-es]",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency",
+        "test_rc104_no_prompt_record_answer_or_typed_text_in_the_audit",
+        "test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited",
+        "test_rc104_the_outcome_is_audited",
+        "test_rc104_the_prompt_hash_is_the_sha256_of_the_exact_request",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error0-model_unavailable]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error1-timeout]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error2-provider_error]",
+        "test_rc106_a_refusal_gives_the_measurements_only",
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-haiku-5-5-params1]",
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-sonnet-5-5-params0]",
+        "test_rc106_r2_one_draft_never_waits_beyond_its_time_budget"
+      ],
+      "reintroduces": "R1: a DIS-only request (no lesion analysis) crashes the report (HTTP 500)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:54:10",
+      "detected": true
+    },
+    "F11_not_included_dropped": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 357,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_r3_measurements_not_in_the_verified_report_are_listed_never_dropped[de]",
+        "test_rc102_r3_measurements_not_in_the_verified_report_are_listed_never_dropped[en]",
+        "test_rc102_r3_measurements_not_in_the_verified_report_are_listed_never_dropped[es]"
+      ],
+      "reintroduces": "R3: measurements the verified report does not use are dropped silently",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:54:24",
+      "detected": true
+    },
+    "F12_region_not_computed_as_zero": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_r4_a_region_count_not_computed_is_never_written_0"
+      ],
+      "reintroduces": "R4: a region count that was not computed is written 0",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:54:37",
+      "detected": true
+    },
+    "F13_stricter_dis_rule_back": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 362,
+      "errors": 0,
+      "skipped": 16,
+      "failing_tests": [
+        "test_rc102_r6_the_report_never_contradicts_the_gate"
+      ],
+      "reintroduces": "R6: a confirmed mask reported as not confirmed (the report contradicts the gate)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:54:51",
+      "detected": true
+    },
+    "F14_placeholder_in_record_sent": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_r8_a_placeholder_in_the_record_stops_the_request"
+      ],
+      "reintroduces": "R8: a label of the request in the record is sent instead of refused",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T17:55:04",
+      "detected": true
+    },
+    "F15_number_reader_accepts_inf": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_r10_an_infinite_value_is_not_computed"
+      ],
+      "reintroduces": "R10: an infinite value is read as a number (and a count of it crashes)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:55:17",
+      "detected": true
+    },
+    "C1_claim_check_not_run": {
+      "exit": 1,
+      "failed": 17,
+      "passed": 343,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_no_free_text_reaches_the_llm_in_any_attempt",
+        "test_rc103_a3_regenerates_then_blocks",
+        "test_rc103_a_healthy_control_never_gets_diagnostic_wording",
+        "test_rc103_candidates_must_be_called_candidates",
+        "test_rc103_rule_ids_are_a_fixed_vocabulary",
+        "test_rc103_spanish_and_german[de-Die",
+        "test_rc103_spanish_and_german[es-La",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Dissemination",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Findings",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Most",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[No",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Starting",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Technique:",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[The",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[These",
+        "test_rc103_the_invented_technique_section_of_the_retired_template_is_refused",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency"
+      ],
+      "reintroduces": "the frozen claim check does not run on the answer",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:55:30",
+      "detected": true
+    },
+    "C2_digits_allowed": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 354,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc103_a3_rejects_digits_and_bad_format",
+        "test_rc103_the_assembled_report_is_checked_not_only_the_comments",
+        "test_rc103_the_invented_technique_section_of_the_retired_template_is_refused",
+        "test_rc103_the_privacy_check_stops_a_regeneration_request",
+        "test_rc103_the_regeneration_request_lists_what_failed_in_the_benchmark_wording",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency"
+      ],
+      "reintroduces": "digits allowed in the comments",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:55:45",
+      "detected": true
+    },
+    "C3_headings_allowed": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[##"
+      ],
+      "reintroduces": "headings allowed in the comments (a section of the model's own)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:56:01",
+      "detected": true
+    },
+    "C4_unknown_placeholder_allowed": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 357,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_r6_the_report_never_contradicts_the_gate",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Small",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Ten"
+      ],
+      "reintroduces": "a placeholder the record does not have is left in the report",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:56:16",
+      "detected": true
+    },
+    "C5_rc070_backstop_not_in_the_loop": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 357,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc103_a_healthy_control_never_gets_diagnostic_wording",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Lesions",
+        "test_rc103_the_rc070_backstop_catches_what_the_frozen_rules_miss"
+      ],
+      "reintroduces": "a DIS statement the frozen rules miss passes the loop",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:56:32",
+      "detected": true
+    },
+    "C6_no_regeneration": {
+      "exit": 1,
+      "failed": 10,
+      "passed": 350,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_no_free_text_reaches_the_llm_in_any_attempt",
+        "test_rc103_a3_regenerates_then_blocks",
+        "test_rc103_a3_rejects_digits_and_bad_format",
+        "test_rc103_at_most_two_regenerations",
+        "test_rc103_the_privacy_check_stops_a_regeneration_request",
+        "test_rc103_the_regeneration_request_lists_what_failed_in_the_benchmark_wording",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency",
+        "test_rc104_no_prompt_record_answer_or_typed_text_in_the_audit",
+        "test_rc104_the_outcome_is_audited",
+        "test_rc106_all_calls_of_one_report_share_the_time_budget"
+      ],
+      "reintroduces": "no regeneration: blocked after one answer",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:56:45",
+      "detected": true
+    },
+    "C7_more_regenerations": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 356,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_no_free_text_reaches_the_llm_in_any_attempt",
+        "test_rc103_a3_regenerates_then_blocks",
+        "test_rc103_at_most_two_regenerations",
+        "test_rc104_the_outcome_is_audited"
+      ],
+      "reintroduces": "more than two regenerations",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:57:00",
+      "detected": true
+    },
+    "C8_failing_answer_delivered": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 354,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_no_free_text_reaches_the_llm_in_any_attempt",
+        "test_rc103_a3_regenerates_then_blocks",
+        "test_rc103_a_healthy_control_never_gets_diagnostic_wording",
+        "test_rc103_a_truncated_answer_is_regenerated",
+        "test_rc103_at_most_two_regenerations",
+        "test_rc104_the_outcome_is_audited"
+      ],
+      "reintroduces": "the last failing answer is delivered instead of withheld",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:57:13",
+      "detected": true
+    },
+    "C9_no_withheld_note": {
+      "exit": 1,
+      "failed": 16,
+      "passed": 344,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_generate_report_api_error_gives_the_measurements_only",
+        "test_rc103_a3_regenerates_then_blocks",
+        "test_rc103_the_privacy_check_stops_a_regeneration_request",
+        "test_rc105_the_kill_switch_calls_no_model[de]",
+        "test_rc105_the_kill_switch_calls_no_model[en]",
+        "test_rc105_the_kill_switch_calls_no_model[es]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error0-model_unavailable]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error1-timeout]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error2-provider_error]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[None]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[claude-3-5-sonnet-20241022]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[claude-opus-5-5]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[claude-sonnet-4-5-20250929]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[claude-sonnet-4-5]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[gpt-4o]"
+      ],
+      "reintroduces": "the report without comments does not say why",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:57:28",
+      "detected": true
+    },
+    "C10_refusal_read_as_text": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_a_refusal_gives_the_measurements_only"
+      ],
+      "reintroduces": "a refusal is treated as an answer and regenerated",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:57:42",
+      "detected": true
+    },
+    "C11_feedback_not_checked": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc103_the_privacy_check_stops_a_regeneration_request"
+      ],
+      "reintroduces": "a regeneration request is sent without the identifier check (RC-065)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:57:55",
+      "detected": true
+    },
+    "C12_truncation_not_flagged": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc103_a_truncated_answer_is_regenerated"
+      ],
+      "reintroduces": "a cut-off answer is accepted",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:58:11",
+      "detected": true
+    },
+    "C13_lexicon_drift": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 356,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc103_lexicon[Findings",
+        "test_rc103_port_is_byte_identical_to_the_frozen_benchmark_rules[report_claim_lexicon.py]",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Findings",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency"
+      ],
+      "reintroduces": "the ported rules drift from the frozen benchmark rules (\"consistent with MS\" passes)",
+      "files": [
+        "backend/app/services/report_claim_lexicon.py"
+      ],
+      "executed": "2026-11-10T17:58:25",
+      "detected": true
+    },
+    "C14_exact_count_placeholder": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc102_r5_the_total_count_placeholder_follows_magnims_from_20_lesions"
+      ],
+      "reintroduces": "R5: the {total_count} placeholder gives the exact count from 20 lesions (MAGNIMS 2021: the range)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:58:39",
+      "detected": true
+    },
+    "A1_attempts_not_audited": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 357,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency",
+        "test_rc104_no_prompt_record_answer_or_typed_text_in_the_audit",
+        "test_rc104_the_prompt_hash_is_the_sha256_of_the_exact_request"
+      ],
+      "reintroduces": "the model attempts are not in the audit log",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T17:58:52",
+      "detected": true
+    },
+    "A2_outcome_not_audited": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 357,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc104_a_report_without_model_call_is_audited_with_its_reason",
+        "test_rc104_no_prompt_record_answer_or_typed_text_in_the_audit",
+        "test_rc104_the_outcome_is_audited"
+      ],
+      "reintroduces": "the outcome of the report is not in the audit log",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T17:59:05",
+      "detected": true
+    },
+    "A3_hash_not_of_the_request": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 358,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency",
+        "test_rc104_the_prompt_hash_is_the_sha256_of_the_exact_request"
+      ],
+      "reintroduces": "the recorded hash is not that of the request sent",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:59:19",
+      "detected": true
+    },
+    "A4_audit_keys_dropped": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 357,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency",
+        "test_rc104_the_audit_allow_list_keeps_codes_and_drops_free_text",
+        "test_rc104_the_prompt_hash_is_the_sha256_of_the_exact_request"
+      ],
+      "reintroduces": "the audit record silently drops the model id, hash, verdict, rule ids and latency",
+      "files": [
+        "backend/app/core/logging/audit.py"
+      ],
+      "executed": "2026-11-10T17:59:34",
+      "detected": true
+    },
+    "A5_rule_ids_carry_answer_text": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc103_rule_ids_are_a_fixed_vocabulary"
+      ],
+      "reintroduces": "a rule id carries words of the answer (a section name) into the audit log",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T17:59:48",
+      "detected": true
+    },
+    "A6_refusal_not_audited": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 358,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited",
+        "test_rc104_r7_a_request_refused_for_an_implausible_measurement_is_audited"
+      ],
+      "reintroduces": "R7: a draft refused by a privacy check (or failed) before any model call leaves no audit record",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:00:03",
+      "detected": true
+    },
+    "K1_kill_switch_ignored": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 355,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc104_a_report_without_model_call_is_audited_with_its_reason",
+        "test_rc105_the_kill_switch_calls_no_model[de]",
+        "test_rc105_the_kill_switch_calls_no_model[en]",
+        "test_rc105_the_kill_switch_calls_no_model[es]",
+        "test_rc105_the_kill_switch_works_without_a_provider_key"
+      ],
+      "reintroduces": "REPORT_LLM_ENABLED=false still calls the model",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:00:18",
+      "detected": true
+    },
+    "K2_kill_switch_setting_removed": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc105_the_kill_switch_is_an_environment_setting"
+      ],
+      "reintroduces": "the environment cannot switch the model off",
+      "files": [
+        "backend/app/core/config.py"
+      ],
+      "executed": "2026-11-10T18:00:34",
+      "detected": true
+    },
+    "M1_allow_list_bypassed": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 354,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[claude-3-5-sonnet-20241022]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[claude-opus-5-5]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[claude-sonnet-4-5-20250929]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[claude-sonnet-4-5]",
+        "test_rc106_a_retiring_retired_or_unlisted_model_is_refused[gpt-4o]"
+      ],
+      "reintroduces": "any configured model id is called",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:00:52",
+      "detected": true
+    },
+    "M2_retiring_default_back": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_the_default_model_is_current_and_allowed_never_the_retiring_one"
+      ],
+      "reintroduces": "the default model is the one retiring on 2026-11-30 (the defect as found)",
+      "files": [
+        "backend/app/core/config.py"
+      ],
+      "executed": "2026-11-10T18:01:08",
+      "detected": true
+    },
+    "M3_retirement_date_ignored": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_an_allowed_model_past_its_retirement_date_is_refused"
+      ],
+      "reintroduces": "an allow-listed model past its retirement date is still called",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:01:22",
+      "detected": true
+    },
+    "M4_sampling_parameter_sent": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 357,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_non_comprehensive_uses_default_tokens",
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-haiku-5-5-params1]",
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-sonnet-5-5-params0]"
+      ],
+      "reintroduces": "a sampling parameter is sent (400 on the current models)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:01:38",
+      "detected": true
+    },
+    "M5_answer_read_by_position": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_the_answer_is_read_by_block_type"
+      ],
+      "reintroduces": "the first block is read as the answer (a thinking block, as content[0].text did)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:01:54",
+      "detected": true
+    },
+    "M6_provider_failure_propagates": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 355,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_generate_report_api_error_gives_the_measurements_only",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error0-model_unavailable]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error1-timeout]",
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error2-provider_error]",
+        "test_rc106_r2_one_draft_never_waits_beyond_its_time_budget"
+      ],
+      "reintroduces": "a provider failure fails the report instead of giving the measurements only",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:02:11",
+      "detected": true
+    },
+    "M7_no_time_budget": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_all_calls_of_one_report_share_the_time_budget"
+      ],
+      "reintroduces": "the 25 s budget of a report is not enforced",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T18:02:27",
+      "detected": true
+    },
+    "M8_long_call_timeout": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 358,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-haiku-5-5-params1]",
+        "test_rc106_each_allowed_model_is_called_with_its_fixed_parameters[claude-sonnet-5-5-params0]"
+      ],
+      "reintroduces": "one call may wait ten minutes (the SDK default)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:02:44",
+      "detected": true
+    },
+    "M9_404_not_recognised": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_a_provider_failure_gives_the_measurements_only[error0-model_unavailable]"
+      ],
+      "reintroduces": "a model the provider no longer serves is reported as a generic error",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:03:01",
+      "detected": true
+    },
+    "M10_sdk_retry_back": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 358,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_r2_one_draft_never_waits_beyond_its_time_budget",
+        "test_rc106_r2_the_client_makes_no_retry_of_its_own"
+      ],
+      "reintroduces": "R2: the SDK retries with a fresh full timeout (about twice the 25 s budget)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:03:18",
+      "detected": true
+    },
+    "M11_wait_not_bounded": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_r2_one_draft_never_waits_beyond_its_time_budget"
+      ],
+      "reintroduces": "R2: the wait for the provider is not bounded by the remaining budget",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:03:49",
+      "detected": true
+    },
+    "M12_retired_table_decides": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 359,
+      "errors": 0,
+      "skipped": 19,
+      "failing_tests": [
+        "test_rc106_r9_the_allow_list_and_its_retirement_date_alone_decide"
+      ],
+      "reintroduces": "R9: a second allow mechanism (the retired table) next to the allow-list and its retirement date",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-10T18:04:04",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 360,
+    "errors": 0,
+    "skipped": 19,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 49,
+    "detected": 49,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "the current checkout (--here: an isolated, disposable worktree), clean before and after for every mutated file",
+    "commit": "dc589947b8027360476f02308e2d84c084951651",
+    "python": "C:\\Users\\Nicolas\\medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}
