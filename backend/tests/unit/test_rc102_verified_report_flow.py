@@ -141,6 +141,20 @@ def test_rc102_dissemination_in_space_only_when_evaluated(lang):
     assert VR.T[lang]["dis_ev"].format(k=1, e=3, met=VR.T[lang]["notmet"]) in report
 
 
+@pytest.mark.parametrize("block", [
+    {"evaluation_status": "not_evaluated", "dis_met": True, "regions_with_lesions": 2},
+    {"evaluation_status": "evaluated", "regions_with_lesions": 2},                    # no yes/no conclusion
+    {"evaluation_status": "pending", "dis_met": True, "regions_with_lesions": 2},
+    {"dis_met": True, "regions_with_lesions": 2},                                     # no state
+])
+def test_rc102_the_record_builder_applies_the_dis_gate_itself(block):
+    """Defence in depth: the RC-064 payload already reduces these blocks to "not evaluated"; the record builder applies
+    the one gate rule (RC-070) on its own too, whatever block it is given."""
+    view = VR.build_view({"lesion_analysis": _la(7, REGIONS), "dis_assessment": block}, None, "en")
+    assert view["dis"] == {"status": "not evaluated", "reason": view["dis"]["reason"]}
+    assert view["regions"]["confirmed"] is False and NOT_EVALUATED_LINE["en"] in VR.assemble(view, "en", "", "")
+
+
 def test_rc102_longitudinal_results_only_as_unconfirmed_candidates_or_the_abstention():
     pair = {"burden_tp1_ml": 1.2, "burden_tp2_ml": 1.5, "total_lesions_tp1": 10, "total_lesions_tp2": 13,
             "burden_delta_percent": 25.0, "status_counts": {"new": 3, "enlarged": 1, "resolved": 0, "shrunk": 1,
