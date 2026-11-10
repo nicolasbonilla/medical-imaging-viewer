@@ -850,6 +850,25 @@ Ten findings, each fixed with a failing-first test (`backend/tests/agent_platfor
 | 9 | A thread pool and an event loop per async tool call, blocking an async caller | (robustness) | `await arun(...)` awaits tools in the caller's loop; a sync model client runs in a worker thread; `run()` refuses inside a running loop |
 | 10 | Five SHA-256 helpers with different `None` rules; alarms could be dropped on an early return | RC-113, RC-116 | one helper (`hashing.py`: `None` hashes as empty text); alarms, executed tools and warnings set in the single `stop()` |
 
+### B.6 Second independent adversarial review of PR #79 (2026-11-10) — DRAFT, PENDING owner approval
+
+Ten more findings, each with a failing-first test (`backend/tests/agent_platform/test_review2.py`, committed at `7f692d8`, red in CI run 42914972541) fixed at `65b6555` (CI run 42916263102 green), and a negative control per risk control (mutations W1–W14):
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| 1 | Activity flags from unconfirmed candidates (`activity_candidate`, `dit_candidate`, `enlarging_count`, `new_clinically_significant_count`) reached a model on the platform path | RC-113 (with CAPA-013 RC-060, HAZ-007) | one shared rule `app.mcp._backend.assistant_view` for the MCP client and the platform |
+| 2 | List markers ("1. ") and abbreviations ("e.g.", "approx.") split units; "[AI]" landed before the list number | RC-119 | marker kept on its item; defined English/Spanish/German abbreviation list does not split |
+| 3 | Result scope missed foreign ids used as dict keys, numeric ids, `*_path`/`*_uri`/`*_url` values and storage locations | RC-114 | id-shaped keys, numbers under id-like keys (unless declared lesion/label numbers, `result_numeric_keys`), location values and `gs://`/`s3://`/storage URLs anywhere refuse the whole result |
+| 4 | A malformed provider response raised and escaped `stop()` and the audit | RC-110 | shape validated first; `model_response_invalid`, settled, audited as failure |
+| 5 | Cancellation skipped the settlement and the audit | RC-112, RC-110 | reservation settled (worst case kept), audit record `run_cancelled` (outcome cancelled), cancellation re-raised |
+| 6 | In `arun`, sync tools and the verifier ran on the event loop | (robustness) | worker thread; loop responsiveness tested |
+| 7 | An edited model sentence lost its AI marker in the signed text | RC-119 (HAZ-024) | `[AI, edited]` in the text, `mstool-ai-edited` in HTML, legend line |
+| 8 | Empty output delivered as success when no verifier | RC-110 | `model_output_empty`, audited failure |
+| 9 | The assistant card hashed tool docstrings only | RC-117 | full tool definition (name, description, parameters with kind/annotation/default, signature); a new parameter or default fails the check |
+| 10 | Mutations were written into the real checkout (a hard kill could leave sabotaged code) | RC-118 | mutations run in a throwaway copy outside the repository; the script has no import side effect; a CI test fails if any mutation is present in the tracked sources |
+
+**Limit kept open:** `result_numeric_keys` of the MCP read tools (`id`, `label_id`, lesion ids) is set from the lesion-analysis service code; it is to be confirmed against real responses when the servers adopt the platform (Integration_Plan P-4). Until then a real response with another numeric id is refused (fail closed, availability cost only).
+
 **Correction of an earlier figure:** the first negative-control round of this addendum had **61** mutations (60 detected; 61 after the test added for P4), not 62 as first written in the PR description.
 
 **Open items (owner):** D-AGT-1 migrate the report model before 2026-11-30 through RVP-AGT-001; D-AGT-2 acceptance thresholds of RVP-AGT-001; D-AGT-3 cost caps and limits in `agents.json`; D-AGT-4 approve (or not) each agent entry; D-AGT-5 trace export destination; D-AGT-6 the fast-sign-off threshold.
