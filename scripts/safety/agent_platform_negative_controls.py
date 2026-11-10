@@ -313,8 +313,10 @@ def apply_mutation(work, name):
 
 
 def restore(work, name):
-    path = M[name][0]
-    (Path(work) / path).write_bytes((REPO / path).read_bytes())
+    """Put back EVERY file any mutation targets, not only this mutation's: a mutated test or script may itself
+    have changed another file of the copy (found when W14's test left the copy's registry.py mutated)."""
+    for path in sorted({m[0] for m in M.values()}):
+        (Path(work) / path).write_bytes((REPO / path).read_bytes())
 
 
 def run(work):
