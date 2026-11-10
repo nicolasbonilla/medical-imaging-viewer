@@ -515,13 +515,24 @@ def _guard(text, ids):
     assert_prompt_carries_no_identifier(text, ids)
 
 
+def _verified_prompt(findings, volumetry, language="en"):
+    """The first request the device sends now (the verified report's record and code-written report)."""
+    from app.services import verified_report as VR
+    from app.services.report_payload_guard import provider_payload
+    f, v, not_included = VR.rendered_request(findings, volumetry)
+    p = provider_payload(f, v)
+    view = VR.build_view(p.findings, p.volumetry, language, not_included=not_included)
+    return VR.first_user_message(view, language)
+
+
 @pytest.mark.unit
 @pytest.mark.parametrize("record,leak", LEAKS, ids=[l for _, l in LEAKS])
 def test_rc065_tripwire_refuses_each_leak_form(record, leak):
-    from app.services.brain_report_service import BrainReportService
+    """Amended for the second review of PR #78 (G, DRAFT): the legitimate text is the request the device sends now
+    (the verified report's first message); the retired prompt's words are no longer the device's words."""
     from app.services.report_payload_guard import IdentifierInPrompt
     ids = _ids(**record)
-    legit = BrainReportService()._build_findings_prompt(_measurements(), VOLUMETRY, "en")
+    legit = _verified_prompt(_measurements(), VOLUMETRY)
     _guard(legit, ids)                                       # the legitimate prompt passes
     with pytest.raises(IdentifierInPrompt) as exc:
         _guard(legit + "\n  " + leak + "\n", ids)
@@ -738,7 +749,10 @@ def test_rc066_logs_say_the_check_ran_with_counts_never_the_payload(route):
     ran = [rec for rec in handler.records if getattr(rec, "privacy_check", None) == "passed"]
     assert len(ran) == 1, [rec.getMessage() for rec in handler.records]
     withheld = ran[0].withheld
-    assert withheld["free_text_fields"] == 3 and withheld["unlisted_labels"] >= 8 and withheld["unknown_fields"] >= 3
+    # (amended for the second review of PR #78, C, DRAFT: only the fields the verified report renders are projected —
+    # the labels of the fields it does not include are never read; those fields are counted as not included)
+    assert withheld["free_text_fields"] == 3 and withheld["unlisted_labels"] >= 2 and withheld["unknown_fields"] >= 3
+    assert withheld["not_included_fields"] >= 3
     everything = _fold(" ".join(rec.getMessage() + " " + json.dumps(rec.__dict__, default=str)
                                 for rec in handler.records))
     assert MARK not in everything
@@ -940,10 +954,13 @@ def test_n3_a_value_that_is_not_a_number_is_not_available_never_zero(route):
 
 
 # N4: implausible values (dates, record numbers, phones put into number fields) refuse the request.
-IMPLAUSIBLE = [("lesion_analysis.lesions.0.centroid.z", 20250042), ("lesion_analysis.total_count", 20240304),
-               ("lesion_analysis.total_burden_mm3", 19751109), ("dis_assessment.active_voxels", 3_000_000_000),
-               ("lesion_analysis.regions.Periventricular.lesion_count", -1), ("zone_stats.zones.Periventricular.percentage", 150),
-               ("lesion_analysis.lesions.0.volume_ml", 99999)]
+# Amended for the second review of PR #78 (C, DRAFT): only in the fields the verified report renders or sends; in a
+# field it does not use (per-lesion rows, DIS voxel counts, zone statistics) the value is neither sent nor checked
+# and blocks nothing (test_n4_an_implausible_value_in_a_field_never_sent_blocks_nothing).
+IMPLAUSIBLE = [("lesion_analysis.total_count", 20240304), ("lesion_analysis.total_burden_mm3", 19751109),
+               ("lesion_analysis.regions.Periventricular.lesion_count", -1)]
+NOT_SENT_IMPLAUSIBLE = [("lesion_analysis.lesions.0.centroid.z", 20250042), ("dis_assessment.active_voxels", 3_000_000_000),
+                        ("zone_stats.zones.Periventricular.percentage", 150), ("lesion_analysis.lesions.0.volume_ml", 99999)]
 
 
 def _set(findings, path, value):
@@ -966,6 +983,16 @@ def test_n4_an_implausible_value_refuses_the_request(route, path, value):
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("path,value", NOT_SENT_IMPLAUSIBLE, ids=[f"{p}={v}" for p, v in NOT_SENT_IMPLAUSIBLE])
+def test_n4_an_implausible_value_in_a_field_never_sent_blocks_nothing(route, path, value):
+    findings = _measurements()
+    _set(findings, path, value)
+    r = _post(route, findings)
+    assert r.status_code == 200, r.text
+    assert str(value) not in route.provider.sent_text()
+
+
+@pytest.mark.unit
 def test_n4_normal_values_at_the_edges_are_accepted(route):
     findings = _measurements()
     findings["zone_stats"]["total_brain_voxels"] = 12_000_000          # 0.5 mm isotropic
@@ -977,11 +1004,13 @@ def test_n4_normal_values_at_the_edges_are_accepted(route):
 # N5: only words that can appear in the user prompt are exempt — not the system templates.
 @pytest.mark.unit
 def test_n5_exempt_words_are_those_of_the_user_prompt_only():
+    """Amended for the second review of PR #78 (G, DRAFT): the user prompt is the verified report's request now —
+    "do" was a word of the retired prompt only and is no longer exempt."""
     from app.services.brain_report_service import fixed_prompt_words
     words = fixed_prompt_words()
-    for template_only in ("filippi", "will", "pons", "dawson", "mcdonald"):
+    for template_only in ("filippi", "will", "pons", "dawson", "mcdonald", "do"):
         assert template_only not in words, template_only
-    for prompt_word in ("periventricular", "white", "matter", "do", "unconfirmed"):
+    for prompt_word in ("periventricular", "white", "matter", "unconfirmed"):
         assert prompt_word in words, prompt_word
 
 
@@ -1200,16 +1229,26 @@ def test_r3_unbounded_or_ambiguous_values_do_not_refuse_the_report(route):
 
 # R2: the patient's own record number, birth date or phone number in a number field is refused, checked
 # directly against the patient's record (the tripwire does not see "1234567 voxels").
-PATIENT_NUMBERS = [("dis_assessment.active_voxels", 1234567), ("lesion_analysis.lesions.0.volume_mm3", 1234567.0),
-                   ("zone_stats.zones.Periventricular.voxel_count", 1234567), ("zone_stats.total_brain_voxels", 19751109),
-                   ("zone_stats.total_brain_voxels", 9111975), ("lesion_analysis.lesions.0.id", 612345678)]
+# Amended for the second review of PR #78 (C, DRAFT): in the fields the verified report sends; a field it never sends
+# (DIS voxel counts, per-lesion rows, zone statistics) is not read, so its number never reaches the provider.
+PATIENT_NUMBERS = [("lesion_analysis.total_burden_mm3", 1234567.0),     # the record number
+                   ("lesion_analysis.total_burden_mm3", 1191975.0)]     # the birth date (11/9/1975), in range
+# (a count holding a patient number is outside its plausible range and refused by N4 already)
+NOT_SENT_PATIENT_NUMBERS = [("dis_assessment.active_voxels", 1234567), ("lesion_analysis.lesions.0.volume_mm3", 1234567.0),
+                            ("zone_stats.zones.Periventricular.voxel_count", 1234567),
+                            ("zone_stats.total_brain_voxels", 19751109), ("zone_stats.total_brain_voxels", 9111975),
+                            ("lesion_analysis.lesions.0.id", 612345678)]
+
+
+def _patient_numbers_record(route):
+    route.patients.record = _record(mrn="1234567", birth_date=date(1975, 11, 9), phone_mobile="+34 612 345 678",
+                                    insurance_policy_number=None)
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize("path,value", PATIENT_NUMBERS, ids=[f"{p}={v}" for p, v in PATIENT_NUMBERS])
 def test_r2_the_patients_own_numbers_in_a_number_field_refuse(route, path, value):
-    route.patients.record = _record(mrn="1234567", birth_date=date(1975, 11, 9), phone_mobile="+34 612 345 678",
-                                    insurance_policy_number=None)
+    _patient_numbers_record(route)
     findings = _measurements()
     _set(findings, path, value)
     r = _post(route, findings)
@@ -1218,13 +1257,30 @@ def test_r2_the_patients_own_numbers_in_a_number_field_refuse(route, path, value
     assert route.provider.calls == [] and route.created == []
 
 
+@pytest.mark.unit
+@pytest.mark.parametrize("path,value", NOT_SENT_PATIENT_NUMBERS, ids=[f"{p}={v}" for p, v in NOT_SENT_PATIENT_NUMBERS])
+def test_r2_the_patients_own_numbers_in_a_field_never_sent_never_reach_the_provider(route, path, value):
+    _patient_numbers_record(route)
+    findings = _measurements()
+    _set(findings, path, value)
+    r = _post(route, findings)
+    assert r.status_code == 200, r.text
+    sent = route.provider.sent_text()
+    assert str(int(value)) not in sent and "1234567" not in sent
+
+
 # M2: the made-up reports from which the exempt words are derived include an evaluated DIS with an absent region,
 # so "present", "absent" and "holes" stay exempt also once only an evaluated DIS is printed (PR #68).
 @pytest.mark.unit
 def test_m2_exempt_words_keep_the_dis_words():
-    from app.services.brain_report_service import _synthetic_payloads, fixed_prompt_words
-    assert {"present", "absent", "holes"} <= fixed_prompt_words()
-    dis = [f["dis_assessment"] for f, _v in _synthetic_payloads() if isinstance(f.get("dis_assessment"), dict)]
+    """Amended for the second review of PR #78 (G, DRAFT): the exempt words are those of the request sent now. The
+    verified record states region presence as true / false, so "present", "absent" and "holes" are no longer sent
+    and no longer exempt; the made-up records still include an evaluated DIS with an absent region."""
+    from app.services import verified_report as VR
+    from app.services.brain_report_service import fixed_prompt_words
+    assert not {"present", "absent", "holes"} & fixed_prompt_words()
+    assert {"presence", "true", "false"} <= fixed_prompt_words()
+    dis = [f["dis_assessment"] for f, _v, _s in VR.synthetic_payloads() if isinstance(f.get("dis_assessment"), dict)]
     assert any(d.get("evaluation_status") == "evaluated"
                and any(r.get("present") is False for r in d.get("region_details", {}).values()) for d in dis)
 

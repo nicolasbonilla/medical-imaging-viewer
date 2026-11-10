@@ -137,6 +137,8 @@ def test_rc102_r3_the_api_says_which_measurements_are_not_included():
 
 # ── R4
 def test_rc102_r4_a_region_count_not_computed_is_never_written_0():
+    """Amended for the second review of PR #78 (E, DRAFT): the region not computed is "not computed" on its own; the
+    regions that were computed keep their counts (they are never called "not computed")."""
     regions = {"Periventricular": {"lesion_count": "x", "total_volume_mm3": 1.0, "total_volume_ml": 0.001},
                "Juxtacortical": {"lesion_count": 2, "total_volume_mm3": 1.0, "total_volume_ml": 0.001},
                "Infratentorial": {"lesion_count": 1, "total_volume_mm3": 1.0, "total_volume_ml": 0.001},
@@ -145,7 +147,7 @@ def test_rc102_r4_a_region_count_not_computed_is_never_written_0():
                                       "size_distribution": {"small": 4, "medium": 2, "large": 1},
                                       "regions": regions}, "dis_assessment": EVALUATED})
     report = VR.assemble(view, "en", "", "")
-    assert "periventricular: 0" not in report and "Lesions per MAGNIMS region: not computed." in report
+    assert "periventricular: 0" not in report and "periventricular: not computed; juxtacortical: 2" in report
     assert 0.0 not in V.Pools(view).counts
     assert not V.verify(report, None, view)["primary"]
 

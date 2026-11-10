@@ -110,17 +110,23 @@ def test_rc102_a_value_not_computed_is_written_not_computed_never_zero():
 
 
 def test_rc102_regions_only_when_a_radiologist_confirmed_them():
+    """Amended for the second review of PR #78 (E, J; DRAFT): there is no per-lesion table any more (J), so the region
+    column of an unconfirmed segmentation is checked in the whole record; another label next to the four MAGNIMS
+    regions is counted apart and no longer turns the four regions into "not computed" (E)."""
     unconfirmed = _view({"lesion_analysis": _la(7, REGIONS), "dis_assessment": NOT_EVAL})
     report = VR.assemble(unconfirmed, "en", "", "")
     assert "Lesion regions: not confirmed by a radiologist; not given." in report
-    assert "periventricular" not in report.lower() and "region" not in unconfirmed["lesions"]["lesion_table_columns"]
+    assert "periventricular" not in report.lower() and "periventricular" not in VR.record_json(unconfirmed).lower()
     confirmed = _view({"lesion_analysis": _la(7, REGIONS), "dis_assessment": EVALUATED})
     report = VR.assemble(confirmed, "en", "", "")
     assert ("Lesions per MAGNIMS region: periventricular: 3; juxtacortical: 2; infratentorial: 0; "
             "deep white matter: 2.") in report
     other_labels = _view({"lesion_analysis": _la(7, {**REGIONS, "Black Hole (T1)": REGIONS["Juxtacortical"]}),
                           "dis_assessment": EVALUATED})
-    assert "Lesions per MAGNIMS region: not computed." in VR.assemble(other_labels, "en", "", "")
+    report = VR.assemble(other_labels, "en", "", "")
+    assert ("Lesions per MAGNIMS region: periventricular: 3; juxtacortical: 2; infratentorial: 0; "
+            "deep white matter: 2.") in report
+    assert VR.T["en"]["reg_other"].format(n=2) in report and "Black Hole" not in report
 
 
 @pytest.mark.parametrize("lang", VR.LANGUAGES)

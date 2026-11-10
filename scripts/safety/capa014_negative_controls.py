@@ -100,8 +100,8 @@ def skip_generic(*names):
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-064: structured payload only ──
-    "P1_payload_bypassed": ([(BRS, "        payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)\n",
-                              "        payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, "
+    "P1_payload_bypassed": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers)\n",
+                              "            payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, "
                               "\"unlisted\": {}})()\n")],
                             "the request's findings go to the prompt builder as received"),
     "P2_builder_prints_free_text": ([(BRS, "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n",
@@ -126,7 +126,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                           "the exact age sent instead of the 5-year band"),
     "P8_no_90_or_older": ([(G, '    if years >= 90:\n        return "90 or older"\n', "")],
                           "ages of 90 and over sent in 5-year bands (93 -> 90-94)"),
-    "P9_payload_in_system_prompt": ([(BRS, "                system=system_prompt,\n", "                system=system_prompt + user_prompt,\n")],
+    "P9_payload_in_system_prompt": ([(BRS, "max_tokens=max_tokens, system=system, messages=messages,", "max_tokens=max_tokens, system=system + str(messages), messages=messages,")],
                                     "the system prompt no longer the fixed template"),
     # second independent review (N2, N3, N4)
     "P10_app_label_names_missing": ([(G, "    labels |= set(_EXTRA_LABELS) | set(APP_LABEL_NAMES)\n", "    labels |= set(_EXTRA_LABELS)\n")],
@@ -179,7 +179,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                                 '    return f"{value:.1f}%"\n')],
                                               "'not available%' in the prompt"),
     # ── RC-065: detection-only tripwire and fail closed ──
-    "T1_tripwire_removed": ([(BRS, "        assert_prompt_carries_no_identifier(user_prompt, identifiers)\n", "")],
+    "T1_tripwire_removed": ([(BRS, "                assert_prompt_carries_no_identifier(sent_text, identifiers)\n", "")],
                             "no check of the final prompt"),
     "T2_name_check_removed": ([(G, "            if s in unique or (len(s) >= 4 and any(s in w for w in unique if w not in safe_words)):\n",
                                 "            if False:\n")],
@@ -228,8 +228,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                       '    "email": re.compile(r"[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}"),\n')],
                                     "the e-mail pattern of the first version (quadratic time)"),
     # second independent review (N5, N8, safe pairs)
-    "T23_template_words_exempt": ([(BRS, '    texts = [UNLISTED, "Structure Label"]\n',
-                                    '    texts = list(REPORT_TEMPLATES.values()) + [UNLISTED, "Structure Label"]\n')],
+    "T23_template_words_exempt": ([(BRS, '    texts: List[str] = []\n',
+                                    '    texts: List[str] = list(REPORT_TEMPLATES.values())\n')],
                                   "words of the system templates ('Pons', 'Filippi') never reported"),
     "T24_numeric_record_number_in_measurements": ([(G, '        return re.compile(rf"(?<![\\w.,]){chars}(?!\\w|[.,]\\d|\\s?(?:{_UNIT_AFTER}))")\n',
                                                     '        return re.compile(r"(?<![a-z0-9])" + r"[\\s\\-./_#:]{0,3}".join(chars) + r"(?![a-z0-9])")\n')],
@@ -307,13 +307,13 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                                  "the copied text shows a second clinician's entry or application note"),
     "M18_zero_width_space_joins_words": ([(AIR, '    text = text.replace("\\u200b", " ")\n', "")],
                                          "'zero\u200bwidth' becomes 'zerowidth'"),
-    "L1_raw_findings_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
-                                 '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "findings": findings},\n')],
+    "L1_raw_findings_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},\n',
+                                 '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld, "findings": findings},\n')],
                                "the request's findings written to the log"),
-    "L2_prompt_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
-                           '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "prompt": user_prompt},\n')],
+    "L2_prompt_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},\n',
+                           '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld, "prompt": verified_report.first_user_message(view, lang)},\n')],
                          "the prompt written to the log"),
-    "L3_counts_not_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
+    "L3_counts_not_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},\n',
                                '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": {}},\n')],
                              "no record of what was withheld"),
     "C1_false_header_claim": ([(BRS, "Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):\n",

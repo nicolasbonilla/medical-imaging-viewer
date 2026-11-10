@@ -46,7 +46,13 @@ frozen verifier in tests/unit/test_rc102_verified_report_flow.py:
   - the "not evaluated" DIS line is the app's own (`dis_review_gate.NOT_EVALUATED_LINE`), so the route's RC-070
     backstop leaves it unchanged; the limitations are three sentences, so that backstop never reads the T1 of
     "T1-weighted" next to "spinal cord" as a statement on DIS;
-  - the RC-070 backstop runs on the comments inside the loop (a failure, rule `RC070.dis_statement`).
+  - the RC-070 backstop runs on the comments inside the loop (a failure, rule `RC070.dis_statement`);
+  - second independent review of PR #78 (DRAFT): the answer check is strictly stricter than v2 (A, B: see
+    `report_claim_strict`); only the part of the request the report renders is projected and validated, the rest is
+    named "supplied but not included" (C); the four MAGNIMS regions are counted one by one and other labels apart
+    (E); "DIS not evaluated" is written once, in the findings (F); no per-lesion table and no region volumes reach
+    the model (J: the comments need counts, categories, regions and statuses only); the number of regenerations is
+    validated (I).
 
 @module services.verified_report
 """
@@ -226,6 +232,7 @@ T: Dict[str, Dict[str, str]] = {
         "size_nc": "Size distribution: not computed.",
         "reg_conf": "Lesions per MAGNIMS region: periventricular: {pv}; juxtacortical: {jc}; infratentorial: {it}; "
                     "deep white matter: {dwm}.",
+        "reg_other": "Lesions with other segmentation labels (not MAGNIMS regions): {n}.",
         "reg_none": "Lesion regions: not confirmed by a radiologist; not given.",
         "reg_nc": "Lesions per MAGNIMS region: not computed.",
         "dis_ev": "Dissemination in space (brain MRI): lesions in {k} of the {e} regions evaluable on brain MRI; the "
@@ -271,6 +278,7 @@ T: Dict[str, Dict[str, str]] = {
         "size_nc": "Distribución por tamaño: no calculada.",
         "reg_conf": "Lesiones por región MAGNIMS: periventricular: {pv}; yuxtacortical: {jc}; infratentorial: {it}; "
                     "sustancia blanca profunda: {dwm}.",
+        "reg_other": "Lesiones con otras etiquetas de segmentación (no regiones MAGNIMS): {n}.",
         "reg_none": "Regiones de las lesiones: no confirmadas por un radiólogo; no se indican.",
         "reg_nc": "Lesiones por región MAGNIMS: no calculadas.",
         "dis_ev": "Diseminación en el espacio (RM cerebral): lesiones en {k} de las {e} regiones evaluables en la RM "
@@ -314,6 +322,7 @@ T: Dict[str, Dict[str, str]] = {
         "size_nc": "Größenverteilung: nicht berechnet.",
         "reg_conf": "Läsionen je MAGNIMS-Region: periventrikulär: {pv}; juxtakortikal: {jc}; infratentoriell: {it}; "
                     "tiefe weiße Substanz: {dwm}.",
+        "reg_other": "Läsionen mit anderen Segmentierungsbezeichnungen (keine MAGNIMS-Regionen): {n}.",
         "reg_none": "Regionen der Läsionen: nicht radiologisch bestätigt; nicht angegeben.",
         "reg_nc": "Läsionen je MAGNIMS-Region: nicht berechnet.",
         "dis_ev": "Räumliche Dissemination (Hirn-MRT): Läsionen in {k} der {e} im Hirn-MRT beurteilbaren Regionen; das "
@@ -388,7 +397,7 @@ def _loc(s: str, lang: str) -> str:
 
 # ─────────────────────────────────────────────────────────────── the measurement record (from the RC-064 payload)
 def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dict[str, Any]], language: str,
-               review_source: Optional[str] = None) -> Dict[str, Any]:
+               review_source: Optional[str] = None, not_included: Optional[List[str]] = None) -> Dict[str, Any]:
     """The measurement record the model receives and the claim check reads (benchmark records.py, view).
 
     `findings_payload` / `volumetry_payload`: the RC-064 structured payload (`report_payload_guard.provider_payload`),
@@ -404,18 +413,13 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
     # a count of regions that was not computed is written "not computed", it does not turn the state around)
     evaluated = gate.is_evaluated(dis_block)
     la = f.get("lesion_analysis") if isinstance(f.get("lesion_analysis"), dict) else None
-    # regions only when DIS was evaluated (a radiologist confirmed them), a lesion analysis is there (R1: the route
-    # accepts a DIS-only request) AND every region is a MAGNIMS region: the record then carries only the device's own
-    # region names, never a label of the request (RC-064, inherent safety)
+    # regions only when DIS was evaluated (a radiologist confirmed them) and a lesion analysis is there (R1: the route
+    # accepts a DIS-only request). The record carries only the device's four MAGNIMS region names, never a label of
+    # the request (RC-064, inherent safety).
     regs_in = la.get("regions") if la is not None and isinstance(la.get("regions"), dict) else {}
-    region_counts: Dict[str, Optional[int]] = {}
-    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in \
-            and set(regs_in) <= set(REGION_ORDER):
-        # a region absent from the analysis has no lesion (0); a region present whose count was not computed makes
-        # the whole breakdown "not computed" — never 0 (R4)
-        region_counts = {r: (_count(regs_in[r].get("lesion_count")) if isinstance(regs_in[r], dict) else None)
-                         if r in regs_in else 0 for r in REGION_ORDER}
-    regions_ok = bool(region_counts) and all(v is not None for v in region_counts.values())
+    regions_view: Optional[Dict[str, Any]] = None
+    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in:
+        regions_view = _region_breakdown(regs_in)
 
     view: Dict[str, Any] = {"report_language": lang}
     if evaluated:
@@ -431,15 +435,9 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
     else:
         n = _count(la.get("total_count"))
         sd = la.get("size_distribution") if isinstance(la.get("size_distribution"), dict) else None
-        rows, cols = [], ["id", "volume_mm3", "volume_ml", "size_category"] + (["region"] if regions_ok else [])
-        for les in la.get("lesions") or []:
-            if not isinstance(les, dict):
-                continue
-            row = [_count(les.get("id")), _value(les.get("volume_mm3")), _value(les.get("volume_ml")),
-                   les.get("size_category") if les.get("size_category") in ("small", "medium", "large") else None]
-            if regions_ok:
-                row.append(les.get("region") if les.get("region") in REGION_ORDER else None)
-            rows.append(row)
+        # second review of PR #78, J: no per-lesion table — the two comments need the counts, the count category,
+        # the size classes, the regions and the statuses, never one lesion's volume (which also widened the numbers
+        # the claim check accepts, E1)
         view["lesions"] = {
             "computed": True,
             "total_count": n,
@@ -448,16 +446,9 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
             "total_volume_ml": _value(la.get("total_burden_ml")),
             "size_distribution": ({k: _count(sd.get(k)) for k in ("small", "medium", "large")} if sd else None),
             "size_classes_mm3": {"small": "<100", "medium": "100-1000", "large": ">1000"},
-            "lesion_table_columns": cols,
-            "lesion_table": rows,
         }
-    if regions_ok:
-        def region_volume(r):
-            if r not in regs_in:
-                return 0.0                                                  # no lesion in that region
-            return _value(regs_in[r].get("total_volume_ml"))               # None when not computed, never 0
-        view["regions"] = {"confirmed": True, "lesion_counts": dict(region_counts),
-                           "volumes_ml": {r: region_volume(r) for r in REGION_ORDER}}
+    if regions_view is not None:
+        view["regions"] = regions_view
     elif evaluated:
         view["regions"] = {"confirmed": False, "computed": False, "note": "Lesions per MAGNIMS region not computed."}
     else:
@@ -523,15 +514,117 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         view["brain_volumetry"] = None
         view["not_available"] = list(NOT_AVAILABLE)
     # Review of PR #78, R3: measurements the route accepts but the verified report does not use are listed — in the
-    # record and in a code-written limitation line — never dropped silently.
-    not_included = [code for code, present in (
-        ("zone_statistics", bool(f.get("zone_stats"))),
-        ("segmentation_labels", bool(f.get("segmentation_labels"))),
-        ("anomalies", bool(f.get("anomalies"))),
-        ("structure_volumes", bool((vol or {}).get("structures")))) if present]
+    # record and in a code-written limitation line — never dropped silently. Second review, C: the service passes the
+    # list read from the request (those fields are no longer projected, so a bad value there blocks nothing).
+    if not_included is None:
+        not_included = not_included_of(f, vol)
+    not_included = [code for code in NOT_INCLUDED_CODES if code in set(not_included)]
     if not_included:
         view["not_included"] = not_included
     return view
+
+
+def _region_breakdown(regs_in: Dict[str, Any]) -> Dict[str, Any]:
+    """The four MAGNIMS regions of a confirmed lesion analysis, each counted on its own (second review of PR #78, E):
+    a region absent from the analysis has no lesion (0); a region whose count was not computed (or that appears
+    twice) is "not computed" alone — never 0 (R4), and never turns a computed region into "not computed". Lesions
+    with any other label (e.g. the app's labels 5 and 6) are counted apart, never named (no label text reaches the
+    record) and never mixed into the four regions."""
+    counts: Dict[str, int] = {}
+    not_computed: List[str] = []
+    claimed = set()
+    for r in REGION_ORDER:
+        entries = [k for k in regs_in if k == r or re.fullmatch(re.escape(r) + r" \(\d+\)", k)]
+        claimed.update(entries)
+        if not entries:
+            counts[r] = 0
+            continue
+        info = regs_in[entries[0]]
+        n = _count(info.get("lesion_count")) if len(entries) == 1 and isinstance(info, dict) else None
+        if n is None:
+            not_computed.append(r)
+        else:
+            counts[r] = n
+    if claimed:
+        out: Dict[str, Any] = {"confirmed": True, "lesion_counts": counts}
+        if not_computed:
+            out["not_computed"] = not_computed
+    else:
+        # no lesion carries a MAGNIMS region label (e.g. a lesion-type preset): the regions were not computed — four
+        # zeros would be a false "computed" (and a false "no periventricular lesion")
+        out = {"confirmed": False, "computed": False, "note": "Lesions per MAGNIMS region not computed."}
+    others = [v for k, v in regs_in.items() if k not in claimed]
+    if others:
+        ns = [_count(v.get("lesion_count")) if isinstance(v, dict) else None for v in others]
+        out["other_labels_lesion_count"] = None if any(n is None for n in ns) else sum(ns)
+    return out
+
+
+NOT_INCLUDED_CODES = ("zone_statistics", "segmentation_labels", "anomalies", "structure_volumes")
+
+
+def not_included_of(findings: Any, volumetry: Any) -> List[str]:
+    """Codes of the supplied measurements the verified report does not use (R3)."""
+    f = findings if isinstance(findings, dict) else {}
+    vol = volumetry if isinstance(volumetry, dict) else {}
+    return [code for code, present in (
+        ("zone_statistics", bool(f.get("zone_stats"))),
+        ("segmentation_labels", bool(f.get("segmentation_labels"))),
+        ("anomalies", bool(f.get("anomalies"))),
+        ("structure_volumes", bool(vol.get("structures")))) if present]
+
+
+# ─────────────────────────────────────────────────────────────── what the verified report renders (C, D)
+RENDERED_FINDINGS = ("lesion_analysis", "dis_assessment", "longitudinal")
+_RENDERED_LESION_KEYS = ("total_count", "total_burden_mm3", "total_burden_ml", "size_distribution", "region_status",
+                         "regions")
+_RENDERED_DIS_KEYS = ("evaluation_status", "dis_met", "regions_with_lesions", "region_details")
+_RENDERED_VOLUMES = ("total_brain_volume_ml", "intracranial_volume_ml")
+
+
+def renderable_volumetry(volumetry: Any) -> bool:
+    """True when the volumetry carries a brain volume the report writes (total brain or intracranial)."""
+    from app.services.report_payload_guard import _number
+    return isinstance(volumetry, dict) and any(_number(volumetry.get(k)) is not None for k in _RENDERED_VOLUMES)
+
+
+def renderable(findings: Any, volumetry: Any) -> bool:
+    """CAPA-008 aligned with the verified report (second review of PR #78, D): a request with nothing this report
+    can render (only zone statistics, segmentation labels, anomalies or structure volumes) is refused (422)."""
+    f = findings if isinstance(findings, dict) else {}
+    return any(isinstance(f.get(k), dict) and bool(f[k]) for k in RENDERED_FINDINGS) or renderable_volumetry(volumetry)
+
+
+def rendered_request(findings: Any, volumetry: Any) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]], List[str]]:
+    """The part of a request the verified report renders or sends, and the codes of what it does not include.
+
+    Second review of PR #78, C: the RC-064 projection (and its range and patient-number refusals) runs on this part
+    only — a bad value in a field the report never uses no longer refuses the whole report; that field is named
+    "supplied but not included" instead. The typed free-text fields are kept (the projection only flags them, the
+    text is never sent); no per-lesion rows (J), no region volumes, no DIS voxel counts, no sex or age."""
+    from app.services.report_payload_guard import FREE_TEXT_FIELDS
+    f = findings if isinstance(findings, dict) else {}
+    out: Dict[str, Any] = {k: f[k] for k in FREE_TEXT_FIELDS if k in f}
+    la = f.get("lesion_analysis")
+    if isinstance(la, dict) and la:
+        sub = {k: la[k] for k in _RENDERED_LESION_KEYS if k in la}
+        if isinstance(sub.get("regions"), dict):
+            sub["regions"] = {name: ({"lesion_count": info.get("lesion_count")} if isinstance(info, dict) else info)
+                              for name, info in sub["regions"].items()}
+        out["lesion_analysis"] = sub
+    dis = f.get("dis_assessment")
+    if isinstance(dis, dict) and dis:
+        sub = {k: dis[k] for k in _RENDERED_DIS_KEYS if k in dis}
+        if isinstance(sub.get("region_details"), dict):
+            sub["region_details"] = {name: ({"present": info.get("present")} if isinstance(info, dict) else info)
+                                     for name, info in sub["region_details"].items()}
+        out["dis_assessment"] = sub
+    if isinstance(f.get("longitudinal"), dict) and f["longitudinal"]:
+        out["longitudinal"] = f["longitudinal"]
+    vol = None
+    if isinstance(volumetry, dict):
+        vol = {k: volumetry[k] for k in _RENDERED_VOLUMES if k in volumetry} or None
+    return out, vol, not_included_of(f, volumetry)
 
 
 def has_something_to_comment(view: Dict[str, Any]) -> bool:
@@ -570,10 +663,16 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     reg = view["regions"]
     if reg.get("confirmed"):
         c = reg["lesion_counts"]
-        f.append(t["reg_conf"].format(pv=c["Periventricular"], jc=c["Juxtacortical"], it=c["Infratentorial"],
-                                      dwm=c["Deep White Matter"]))
+
+        def rc(r):      # second review, E: a region not computed is "not computed" alone
+            return str(c[r]) if r in c else t["nc"]
+        f.append(t["reg_conf"].format(pv=rc("Periventricular"), jc=rc("Juxtacortical"), it=rc("Infratentorial"),
+                                      dwm=rc("Deep White Matter")))
     else:
         f.append(t["reg_nc"] if reg.get("computed") is False else t["reg_none"])
+    if "other_labels_lesion_count" in reg:      # only set for a confirmed segmentation (an evaluated DIS)
+        other = reg["other_labels_lesion_count"]
+        f.append(t["reg_other"].format(n=other if other is not None else t["nc"]))
     bv = view.get("brain_volumetry")
     if bv:
         def vol_text(x):
@@ -604,7 +703,10 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
                                                 pct=_loc(f"{lng['burden_change_percent']:+.1f}", lang)))
     imp_key = "imp_conf" if confirmed else ("imp_ai" if view["segmentation"].get("source_code") == "src_ai"
                                             else "imp_unc")
-    imp = [t[imp_key].format(count=count.rstrip(".")), dis_s] + ([comp[0]] if comp else [])
+    # second review of PR #78, F: the "not evaluated" DIS statement is written ONCE (in the findings); the impression
+    # repeats an evaluated DIS result only
+    imp = ([t[imp_key].format(count=count.rstrip("."))] + ([dis_s] if dis["status"] == "evaluated" else [])
+           + ([comp[0]] if comp else []))
     items = t["lim_items"].split("|")
     if bv:
         items = items[:-1]
@@ -881,7 +983,8 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
 def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, Any]], Optional[str]]]:
     """RC-064-shaped payloads covering every branch of the record and the report (sources, counts below 20 and in
     each MAGNIMS range, not computed, confirmed regions, DIS met / not met / not evaluated, pairs computed /
-    abstained / not computed, brain volumes or not). Used for the device's own words of the RC-065 check."""
+    abstained / not computed, brain volumes or not). Used for the device's own words of the RC-065 check — and,
+    since the second review of PR #78 (G), ONLY these: every branch of the text the device sends must be here."""
     from app.services.report_payload_guard import NOT_AVAILABLE as NA
 
     def la(n, regions=None, confirmed=True):
@@ -897,7 +1000,7 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
 
     regions = {r: {"lesion_count": 1, "total_volume_mm3": 1.0, "total_volume_ml": 0.001} for r in REGION_ORDER}
     evaluated = {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 2, "total_dis_regions": 5,
-                 "region_details": {r: {"present": True} for r in REGION_ORDER[:3]}}
+                 "region_details": {r: {"present": r != "Infratentorial"} for r in REGION_ORDER[:3]}}
     pair = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.2, "total_lesions_tp1": 3, "total_lesions_tp2": 4,
             "burden_delta_percent": 20.0, "status_counts": {"new": 1, "enlarged": 1, "resolved": 0, "shrunk": 0,
                                                              "stable": 2}}
@@ -913,6 +1016,11 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
     # review of PR #78: DIS evaluated without a lesion analysis (R1); a count of regions not computed (R6); a region
     # count not computed (R4); measurements accepted but not included (R3)
     yield {"dis_assessment": evaluated}, None, None
+    # second review of PR #78, E: other labels next to the four regions (the app's labels 5 and 6), counted or not
+    yield {"lesion_analysis": la(7, {**regions, "Active (Gd+)": {"lesion_count": 2}, "Black Hole (T1)":
+                                     {"lesion_count": 1}}), "dis_assessment": evaluated}, None, None
+    yield {"lesion_analysis": la(7, {"Periventricular": {"lesion_count": 3}, "Black Hole (T1)": {"lesion_count": NA}}),
+           "dis_assessment": evaluated}, None, None
     yield {"lesion_analysis": la(7, regions), "dis_assessment": {**evaluated, "regions_with_lesions": NA}}, None, None
     yield {"lesion_analysis": la(7, {**regions, "Periventricular": {"lesion_count": NA}}),
            "dis_assessment": {**evaluated, "dis_met": False}}, None, None

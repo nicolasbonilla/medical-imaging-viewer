@@ -251,10 +251,9 @@ async def read_patient_identifiers(patient_id: str) -> PatientIdentifiers:
 # A request with none of them (and no volumetry) would make the language model write a
 # report from nothing — the assistant's MS report tool did exactly that for months, because
 # it sent its data under field names this route silently ignored. Such a request is refused.
-MEASUREMENT_FINDING_KEYS = frozenset({
-    "lesion_analysis", "dis_assessment", "longitudinal", "zone_stats",
-    "segmentation_labels", "anomalies",
-})
+# Second review of PR #78 (D, DRAFT): only the blocks the verified report writes count (zone statistics, segmentation
+# labels and anomalies are accepted but not included, so alone they are no measurement for this report).
+MEASUREMENT_FINDING_KEYS = frozenset({"lesion_analysis", "dis_assessment", "longitudinal"})
 
 
 # CAPA-013 (RC-060, RC-061, RC-062; HAZ-007): a draft that received a longitudinal comparison
@@ -453,8 +452,13 @@ async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
         )
 
 
-def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0) -> Optional[str]:
-    """The fixed notice for a draft with lesion measurements or a DIS block but no evaluated DIS, or None."""
+def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0,
+               content: Optional[str] = None) -> Optional[str]:
+    """The fixed notice for a draft with lesion measurements or a DIS block but no evaluated DIS, or None.
+
+    Second review of PR #78 (F, DRAFT): the "not evaluated" statement is guaranteed ONCE. When the draft `content`
+    already carries the app's own line (`dis_review_gate.NOT_EVALUATED_LINE`, written by code in the verified report's
+    findings, RC-102), the notice does not repeat it; without that line (any other content) the notice states it."""
     from app.services import dis_review_gate as gate
 
     if not (findings.get("lesion_analysis") or "dis_assessment" in findings or replaced):
@@ -462,7 +466,8 @@ def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0) -> Op
     if gate.is_evaluated(findings.get("dis_assessment")):
         return None
     lang = language if language in DIS_NOT_EVALUATED_NOTICE else "en"
-    parts = [DIS_NOT_EVALUATED_NOTICE[lang]]
+    stated = content is not None and gate.NOT_EVALUATED_LINE.get(lang, gate.NOT_EVALUATED_LINE["en"]) in content
+    parts = [] if stated else [DIS_NOT_EVALUATED_NOTICE[lang]]
     if replaced:
         parts.append(DIS_LINES_REPLACED[lang].format(n=replaced))
     parts.append(gate.AUTOMATIC_MARKING_NOTICE[lang])
@@ -586,16 +591,19 @@ def get_report_service():
     description="Generate a DRAFT structured brain MRI report from measurements computed by "
                 "the device, for physician review. Verified report (REQ-FUNC-116, DRAFT): every number "
                 "and status is written by code; the Claude API writes two short comments that pass an "
-                "automatic check against the measurements or are withheld (`verification`); zone statistics, "
-                "segmentation labels, anomalies and structure volumes are accepted but not included in the verified "
-                "draft, which names them (`verification.not_included`). Templates: general, "
-                "ms_activity, ms_lesion_burden, ms_comprehensive, ms_longitudinal; languages "
-                "en, es, de. Only the measurements, labels of the device's vocabulary, sex and a "
-                "5-year age band are sent to the model provider; the typed text is added to the "
-                "draft here. The request is checked against the record of the patient of "
-                "`segmentation_id` before it is sent (CAPA-014). 422 when no measurement is supplied "
-                "(CAPA-008); 400 when no segmentation is; 404 when the caller may not access the "
-                "segmentation; 503 when the check cannot run or finds an identifier (nothing is sent).",
+                "automatic check against the measurements or are withheld (`verification`). Written and sent to "
+                "the model provider: the lesion count, the total lesion volume and the size classes, the lesions "
+                "per MAGNIMS region and dissemination in space when a radiologist confirmed the segmentation, the "
+                "change candidates of a visit pair, and the total brain and intracranial volume — no sex, no age "
+                "band, no per-lesion values; the typed text is added to the draft here, never sent. Zone "
+                "statistics, segmentation labels, anomalies and structure volumes are accepted but not included "
+                "in the verified draft, which names them (`verification.not_included`); they are neither sent nor "
+                "checked. Templates: general, ms_activity, ms_lesion_burden, ms_comprehensive, ms_longitudinal "
+                "(recorded; one verified structure); languages en, es, de. The request is checked against the "
+                "record of the patient of `segmentation_id` before it is sent (CAPA-014). 422 when nothing the "
+                "verified report can write is supplied (CAPA-008); 400 when no segmentation is; 404 when the "
+                "caller may not access the segmentation; 503 when the check cannot run or finds an identifier "
+                "(nothing is sent).",
 )
 async def generate_report(
     request: ReportGenerateRequest,
@@ -607,14 +615,17 @@ async def generate_report(
         f"lang={request.language}"
     )
 
-    # CAPA-008 (HAZ-003): never ask the model to write a report without a measurement.
-    if not any(request.findings.get(k) for k in MEASUREMENT_FINDING_KEYS) and not request.volumetry:
+    # CAPA-008 (HAZ-003): never ask the model to write a report without a measurement. Second review of PR #78, D:
+    # aligned with what the verified report can write — zone statistics, segmentation labels, anomalies or structure
+    # volumes alone would give an empty report.
+    from app.services import verified_report
+    if not verified_report.renderable(request.findings, request.volumetry):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
-                "No measurement was supplied (lesion analysis, DIS assessment, longitudinal "
-                "comparison, zone statistics or volumetry). A report without measurements "
-                "would be invented; open a segmentation and run its analysis first."
+                "No measurement the verified report can write was supplied (lesion analysis, DIS "
+                "assessment, longitudinal comparison, or total brain or intracranial volume). A report "
+                "without measurements would be invented; open a segmentation and run its analysis first."
             ),
         )
 
@@ -657,7 +668,8 @@ async def generate_report(
         findings["dis_assessment"] = gate.without_reviewer_identity(
             await server_dis_assessment(report_sid, current_user))
         others = any(findings.get(k) for k in MEASUREMENT_FINDING_KEYS if k != "dis_assessment")
-        if not (others or request.volumetry or gate.is_evaluated(findings["dis_assessment"])):
+        if not (others or verified_report.renderable_volumetry(request.volumetry)
+                or gate.is_evaluated(findings["dis_assessment"])):
             # A "not evaluated" DIS state is not a measurement: the model would draft from nothing (RC-034).
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -706,7 +718,7 @@ async def generate_report(
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
-        dis_text = dis_notice(findings, request.language, replaced)
+        dis_text = dis_notice(findings, request.language, replaced, content=result["content"])
         if dis_text:   # PRB-003 (RC-070, RC-072): appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {dis_text}"
         result = {**result, **parts, "content": draft_text(parts, request.language)}
@@ -718,17 +730,14 @@ async def generate_report(
                        extra={"privacy_check": "refused"})
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                             detail=NOT_SENT_DETAIL.format(reason=str(e)))
-    except RuntimeError as e:
-        # ANTHROPIC_API_KEY not configured
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(e),
-        )
+    # Second review of PR #78 (F): no `except RuntimeError` any more — a missing provider key is no error of the
+    # verified report (measurements-only draft, reason "not_configured"), so any RuntimeError is an internal failure
     except Exception as e:
         logger.error(f"[Report] Generation failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Report generation failed: {str(e)}",
+            # the class name only: an internal message never reaches the client (second review of PR #78, F)
+            detail=f"Report generation failed ({type(e).__name__}).",
         )
 
 

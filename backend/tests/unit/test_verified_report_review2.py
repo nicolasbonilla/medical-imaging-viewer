@@ -362,6 +362,7 @@ def test_rc070_f_a_runtime_error_of_the_service_is_not_reported_as_a_missing_key
     monkeypatch.setattr(ai_report, "get_report_service", lambda: _Failing())
     response = _post(route, {"lesion_analysis": LESIONS})
     assert response.status_code == 500
+    assert "internal detail" not in response.text
 
 
 # ═══════════════════════════════════════════════════════════════════════ G — vocabulary of the text sent now

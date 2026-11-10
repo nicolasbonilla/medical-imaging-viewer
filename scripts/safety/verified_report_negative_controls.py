@@ -42,7 +42,7 @@ import time
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 os.chdir(REPO)
-OUT = "docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_review1_2026-11-10.json"   # first round: _2026-11-10.json (kept)
+OUT = "docs/iec62304/records/risk_verification/VERIFIED-REPORT_negative_controls_review2_2026-11-10.json"   # earlier rounds: _2026-11-10.json, _review1_2026-11-10.json (kept)
 PREFIX = "verified-report-safety-run-"
 
 
@@ -72,6 +72,7 @@ TESTS = [
     "tests/unit/test_rc105_rc106_report_model_controls.py",
     "tests/unit/test_brain_report_service.py",
     "tests/unit/test_verified_report_review1.py",       # independent review of PR #78, R1-R10
+    "tests/unit/test_verified_report_review2.py",       # second independent review of PR #78, A-J
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -79,6 +80,8 @@ BRS = "backend/app/services/brain_report_service.py"
 LEX = "backend/app/services/report_claim_lexicon.py"
 CFG = "backend/app/core/config.py"
 AUD = "backend/app/core/logging/audit.py"
+STR = "backend/app/services/report_claim_strict.py"
+RT = "backend/app/api/routes/ai_report.py"
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-102: the facts are written by code ──
@@ -87,8 +90,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F2_not_computed_as_zero": ([(VR, "    if v is None or v != int(v) or v < 0:\n        return None\n",
                                   "    if v is None or v != int(v) or v < 0:\n        return 0\n")],
                                 "a count that was not computed is written 0"),
-    "F3_regions_without_confirmation": ([(VR, '    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in \\\n',
-                                          '    if la is not None and la.get("regions_confirmed") is not False and regs_in \\\n')],
+    "F3_regions_without_confirmation": ([(VR, '    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in:\n',
+                                          '    if la is not None and la.get("regions_confirmed") is not False and regs_in:\n')],
                                         "lesions per region reported for a segmentation no radiologist confirmed"),
     "F4_dis_without_the_gate": ([(VR, "    evaluated = gate.is_evaluated(dis_block)\n",
                                   "    evaluated = isinstance(dis_block, dict) and dis_block.get(\"evaluation_status\") == \"evaluated\"\n")],
@@ -109,13 +112,13 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F9_first_request_not_checked": ([(BRS, "                assert_prompt_carries_no_identifier(sent_text, identifiers)\n", "                pass\n")],
                                      "the first request is sent without the identifier check (RC-065)"),
     # ── independent review of PR #78 (R1-R10) ──
-    "F10_dis_only_crashes": ([(VR, '    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in \\\n',
-                               '    if evaluated and la.get("regions_confirmed") is not False and regs_in \\\n')],
+    "F10_dis_only_crashes": ([(VR, '    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in:\n',
+                               '    if evaluated and la.get("regions_confirmed") is not False and regs_in:\n')],
                              "R1: a DIS-only request (no lesion analysis) crashes the report (HTTP 500)"),
     "F11_not_included_dropped": ([(VR, '    if view.get("not_included"):\n        lim.append(', '    if False:\n        lim.append(')],
                                  "R3: measurements the verified report does not use are dropped silently"),
-    "F12_region_not_computed_as_zero": ([(VR, '(_count(regs_in[r].get("lesion_count")) if isinstance(regs_in[r], dict) else None)',
-                                          '(_count(regs_in[r].get("lesion_count")) or 0 if isinstance(regs_in[r], dict) else 0)')],
+    "F12_region_not_computed_as_zero": ([(VR, "        if n is None:\n            not_computed.append(r)\n",
+                                          "        if n is None:\n            counts[r] = 0\n")],
                                         "R4: a region count that was not computed is written 0"),
     "F13_stricter_dis_rule_back": ([(VR, "    evaluated = gate.is_evaluated(dis_block)\n",
                                      "    evaluated = gate.is_evaluated(dis_block) and _count(dis_block.get(\"regions_with_lesions\")) is not None\n")],
@@ -125,12 +128,25 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F15_number_reader_accepts_inf": ([(VR, "    from app.services.report_payload_guard import _number\n    return _number(x)\n",
                                         "    return None if isinstance(x, bool) or not isinstance(x, (int, float)) or x != x else x\n")],
                                       "R10: an infinite value is read as a number (and a count of it crashes)"),
+    # ── second independent review of PR #78 (A-J) ──
+    "F16_other_label_hides_regions": ([(VR, "        regions_view = _region_breakdown(regs_in)\n",
+                                        "        regions_view = _region_breakdown(regs_in) if set(regs_in) <= set(REGION_ORDER) else None\n")],
+                                      "E: a label outside the four MAGNIMS regions makes the whole breakdown \"not computed\""),
+    "F17_other_labels_dropped": ([(VR, "    if others:\n        ns =", "    if False:\n        ns =")],
+                                 "E: lesions with other labels are dropped silently"),
+    "F18_not_evaluated_twice": ([(VR, '([dis_s] if dis["status"] == "evaluated" else [])', "[dis_s]")],
+                                "F: the \"DIS not evaluated\" statement is repeated in the impression"),
+    "F19_per_lesion_table_back": ([(VR, '            "size_classes_mm3": {"small": "<100", "medium": "100-1000", "large": ">1000"},\n',
+                                    '            "size_classes_mm3": {"small": "<100", "medium": "100-1000", "large": ">1000"},\n'
+                                    '            "lesion_table": [[les.get("volume_mm3"), les.get("volume_ml")] for les in la.get("lesions") or []\n'
+                                    '                             if isinstance(les, dict)],\n')],
+                                  "J: the per-lesion volumes reach the model again (and widen the E1 number pool)"),
     # ── RC-103: every answer is checked ──
     "C1_claim_check_not_run": ([(VR, "    res = V.verify(assembled, None, view)\n", "    res = {\"elements\": []}\n")],
                                "the frozen claim check does not run on the answer"),
     "C2_digits_allowed": ([(VR, '    if re.search(r"\\d", re.sub(r"\\{[a-z_]+\\}", "", fc + " " + ic)):\n', "    if False:\n")],
                           "digits allowed in the comments"),
-    "C3_headings_allowed": ([(VR, '    if re.search(r"^\\s*#", fc + "\\n" + ic, re.M):\n', "    if False:\n")],
+    "C3_headings_allowed": ([(VR, "    if S.heading_lines(fc) or S.heading_lines(ic):\n", "    if False:\n")],
                             "headings allowed in the comments (a section of the model's own)"),
     "C4_unknown_placeholder_allowed": ([(VR, "        if ph not in vals:\n", "        if False:\n")],
                                        "a placeholder the record does not have is left in the report"),
@@ -155,6 +171,29 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "C14_exact_count_placeholder": ([(VR, '        vals["total_count"] = str(n) if n < 20 else les["count_category"]\n',
                                       '        vals["total_count"] = str(n)\n')],
                                     "R5: the {total_count} placeholder gives the exact count from 20 lesions (MAGNIMS 2021: the range)"),
+    "C15_headings_only_hash": ([(VR, "    if S.heading_lines(fc) or S.heading_lines(ic):\n",
+                                 '    if re.search(r"^\\s*#", fc + "\\n" + ic, re.M):\n')],
+                               "B: a bold or capital comment line is read as a heading and checked for nothing"),
+    "C16_strict_rules_not_run": ([(VR, "    for e in list(res[\"elements\"]) + S.comment_elements(fc) + S.comment_elements(ic):\n",
+                                   "    for e in list(res[\"elements\"]):\n")],
+                                 "A: only the frozen v2 rules run on the answer"),
+    "C17_negation_anywhere_before": ([(STR, '    words = _clause_before(fold, m.start()).split()\n    return bool(L.NEGATION.search(" ".join(words[-GOVERNING_WORDS:])))\n',
+                                       "    return bool(L.NEGATION.search(fold[:m.start()]))\n")],
+                                     "A: a negation anywhere earlier in the sentence exempts a treatment phrase (v2's rule)"),
+    "C18_negation_window_unbounded": ([(STR, "GOVERNING_WORDS = 3\n", "GOVERNING_WORDS = 99\n")],
+                                      "A: a negation anywhere earlier in the clause exempts a treatment phrase"),
+    "C19_negated_diagnosis_exempt": ([(STR, "        diag = _hits(fold, L.L1 + L.L4 + DIAGNOSTIC_TERMS)\n",
+                                       "        diag = [m for m in _hits(fold, L.L1 + L.L4 + DIAGNOSTIC_TERMS) if not governed_by_negation(fold, m)]\n")],
+                                     "A: a denied diagnosis (\"not consistent with MS\") passes"),
+    "C20_disclaimer_found_anywhere": ([(STR, '    return bool(DISCLAIMER.fullmatch(re.sub(r"\\s+", " ", fold).strip(" .!")))\n',
+                                        '    return bool(DISCLAIMER.search(fold))\n')],
+                                      "A: a sentence that only starts with the disclaimer is exempt (\"not a diagnosis, but ... MS\")"),
+    "C21_negated_activity_exempt": ([(STR, "    act = [m for m in _hits(fold, L.L3)\n",
+                                      "    act = [m for m in _hits(fold, L.L3) if not governed_by_negation(fold, m)\n")],
+                                    "A: a denied activity statement (\"no disease activity\") passes"),
+    "C22_regenerations_not_validated": ([(VR, "    if isinstance(max_regenerations, bool) or not isinstance(max_regenerations, int) \\\n"
+                                              "            or not 0 <= max_regenerations <= MAX_REGENERATIONS:\n", "    if False:\n")],
+                                        "I: any number of regenerations is accepted"),
     # ── RC-104: the audit ──
     "A1_attempts_not_audited": ([(BRS, "        self._emit(AuditEventType.CLINICAL_AI_REPORT_ATTEMPT, outcome, details, AuditSeverity.LOW)\n", "        pass\n")],
                                 "the model attempts are not in the audit log"),
@@ -207,6 +246,30 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M12_retired_table_decides": ([(BRS, "    if entry is None:\n        return False\n    retires = entry.get(\"retires_on\")\n",
                                     "    if entry is None or model_id in RETIRED_OR_RETIRING_MODELS:\n        return False\n    retires = entry.get(\"retires_on\")\n")],
                                   "R9: a second allow mechanism (the retired table) next to the allow-list and its retirement date"),
+    # ── RC-064: only what is rendered is sent and validated (second review, C, D, H) ──
+    "P1_unrendered_fields_validated": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers)\n",
+                                         "            payload = provider_payload(findings, volumetry, identifiers)\n")],
+                                       "C: a bad value in a field the report does not render refuses the whole report"),
+    "P2_unrenderable_request_accepted": ([(RT, "    if not verified_report.renderable(request.findings, request.volumetry):\n",
+                                           "    if not (any(request.findings.get(k) for k in (\"lesion_analysis\", \"dis_assessment\", \"longitudinal\", "
+                                           "\"zone_stats\", \"segmentation_labels\", \"anomalies\")) or request.volumetry):\n")],
+                                         "D: a request with nothing the verified report can write gives an empty report"),
+    "P3_description_untruthful": ([(RT, "band, no per-lesion values; the typed text", "band are sent, no per-lesion values; the typed text"),
+                                   (RT, "change candidates of a visit pair, and the total brain and intracranial volume — no sex, no age \"",
+                                    "change candidates of a visit pair, the total brain and intracranial volume, sex and a 5-year age \"")],
+                                  "H: the API description says sex and an age band are sent"),
+    # ── RC-065: the device's own words, and the first request checked as sent (second review, G, J) ──
+    "T1_retired_words_back": ([(BRS, "    texts: List[str] = []\n", "    texts: List[str] = [UNLISTED, \"Structure Label\"]\n"),
+                               (BRS, "    texts.append(verified_report.REGENERATION_PREFIX + verified_report.REGENERATION_SUFFIX)\n",
+                                "    texts.append(verified_report.REGENERATION_PREFIX + verified_report.REGENERATION_SUFFIX)\n"
+                                "    texts.append(BrainReportService.__new__(BrainReportService)._build_findings_prompt({}, None, \"en\"))\n")],
+                              "G: the retired templates' words widen the RC-065 vocabulary again"),
+    "T2_first_message_built_twice": ([(BRS, "                    first_message=sent_text)", "                    first_message=None)")],
+                                     "J: the first request is built a second time after the identifier check"),
+    # ── RC-070: one guaranteed "not evaluated" statement (second review, F) ──
+    "D1_notice_repeats_the_line": ([(RT, "    stated = content is not None and gate.NOT_EVALUATED_LINE.get(lang, gate.NOT_EVALUATED_LINE[\"en\"]) in content\n",
+                                     "    stated = False\n")],
+                                   "F: the route's notice repeats the \"not evaluated\" statement the draft already has"),
 }
 
 

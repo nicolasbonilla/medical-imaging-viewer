@@ -778,6 +778,13 @@ retired free-text design.)*
 - DIS assessment results *(only when evaluated; otherwise the fixed "not evaluated" state)*
 - Longitudinal change statistics *(as unconfirmed change candidates, or the abstention)*
 
+*Second independent review of PR #78 (DRAFT, PENDING owner approval):* no per-lesion values (no lesion table, no
+per-region volumes) reach the model — the two comments need counts, categories, regions and statuses only. Only the
+part of the request the verified report writes is projected and checked (ranges, the patient's own numbers); zone
+statistics, segmentation labels, anomalies and structure volumes are neither sent nor checked and are named in the
+draft as "supplied but not included". Lesions with a label other than the four MAGNIMS regions are counted apart,
+never named. The comments pass the frozen check v2 plus stricter product rules (`report_claim_strict`).
+
 Labels only from the device's fixed vocabulary (MAGNIMS regions, structures, size classes, the label
 names the application ships). Any other label is sent as a numbered placeholder ("[unlisted label 2]");
 its name is shown to the clinician in the draft only. A value that is not a number is sent as "not

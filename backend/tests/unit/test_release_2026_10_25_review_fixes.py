@@ -83,12 +83,14 @@ def test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_not
 @pytest.mark.unit
 def test_rc064_release_r1_confirmed_regions_are_still_sent(route):
     """(Verified report, DRAFT: an evaluated DIS with MAGNIMS regions — the default `_measurements()` also carries a
-    "Black Hole (T1)" region, which an evaluated DIS excludes, REQ-SAFE-038; the record then gives no regions.)"""
+    "Black Hole (T1)" region, which an evaluated DIS excludes, REQ-SAFE-038; the record then gives no regions.)
+    Amended for the second review of PR #78 (J, DRAFT): no per-lesion table reaches the model any more; the regions
+    travel as the record's per-region counts."""
     r = _post(route, _magnims_measurements())        # the default DIS block is evaluated: regions confirmed
     assert r.status_code == 200, r.text
     prompt = route.provider.prompt()
     assert "Lesion regions: not confirmed" not in prompt
-    assert any("Periventricular" in line for line in _lesion_table_lines(prompt)[1:])
+    assert '"lesion_counts":{"Periventricular":1' in prompt and "lesion_table" not in prompt
     assert "Lesions per MAGNIMS region: periventricular: 1;" in prompt
 
 
@@ -231,7 +233,8 @@ def test_rc064_release_r4_markers_and_identifiers_never_reach_the_provider_on_th
     if confirmed:
         assert '"dis":{"status":"evaluated"' in prompt              # the server's real DIS state reached the model
         assert "the brain criterion is" in prompt
-        assert "Periventricular" in rows
+        # (amended for the second review of PR #78, J, DRAFT: the regions travel as per-region counts, no lesion table)
+        assert '"lesion_counts":{"Periventricular"' in prompt and "lesion_table" not in prompt
     else:
         assert '"dis":{"status":"not evaluated"' in prompt
         assert "Lesion regions: not confirmed by a radiologist" in prompt

@@ -63,6 +63,7 @@ from app.services.report_payload_guard import (
     provider_payload,
     words_of,
 )
+from app.services.report_payload_guard import _KNOWN_FIELDS
 
 logger = get_logger(__name__)
 
@@ -1047,15 +1048,23 @@ class BrainReportService:
             if not isinstance(identifiers, PatientIdentifiers):
                 raise PatientRecordUnavailable("the patient's identifiers were not supplied")
 
-            # RC-064: structured payload only — measurements, fixed labels; no free text.
-            payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)
+            # RC-064: structured payload only — measurements, fixed labels; no free text. Second review of PR #78, C:
+            # projected (and its ranges and the patient's own numbers checked) only for what the verified report
+            # renders or sends; what it does not use is named "supplied but not included" and blocks nothing.
+            rendered_findings, rendered_volumetry, not_included = verified_report.rendered_request(findings, volumetry)
+            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers)
             # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
             view = verified_report.build_view(payload.findings, payload.volumetry, lang,
-                                              review_source=_review_source(findings))
+                                              review_source=_review_source(findings), not_included=not_included)
             # RC-066: record that the check ran and what was withheld (counts) — never the payload.
+            # (second review, C: the fields the report does not render are counted here — they are not projected)
+            withheld = {**payload.withheld,
+                        "unknown_fields": sum(1 for k in (findings if isinstance(findings, dict) else {})
+                                              if k not in _KNOWN_FIELDS),
+                        "not_included_fields": len(not_included)}
             logger.info(
                 "[Report] Structured payload checked before the model provider call",
-                extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},
+                extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},
             )
 
             reason = self._interpretive_text_gate(model_id, view)
@@ -1082,7 +1091,8 @@ class BrainReportService:
                     # RC-065 on every regeneration request too: a finding stops the flow (comments withheld)
                     tripwire=lambda text: assert_prompt_carries_no_identifier(text, identifiers),
                     on_attempt=audit.attempt,
-                    deadline_s=verified_report.LLM_DEADLINE_S)   # read at call time (REQ-SAFE-019)
+                    deadline_s=verified_report.LLM_DEADLINE_S,   # read at call time (REQ-SAFE-019)
+                    first_message=sent_text)   # second review, J: built once; what is sent is what was checked
         except Exception as e:  # noqa: BLE001 — audited, then raised as before (the route answers 503 / 500)
             audit.not_sent(e)
             raise
@@ -1232,14 +1242,12 @@ def _synthetic_payloads():
 
 @lru_cache(maxsize=1)
 def _fixed_prompt_word_lists() -> tuple:
-    builder = BrainReportService.__new__(BrainReportService)
-    texts = [UNLISTED, "Structure Label"]
-    for findings, volumetry in _synthetic_payloads():
-        for language in ("en", "es", "de"):
-            texts.append(builder._build_findings_prompt(findings, volumetry, language))
     # Verified report (DRAFT, RC-065 extended): the device's own text of its user messages — the first message (the
     # measurement record and the code-written report, in every branch and language) and the fixed parts of a
     # regeneration request. The model's own words quoted in a regeneration request are NOT device words.
+    # Second review of PR #78, G: ONLY the text sent now — the retired templates' words (and their placeholder and
+    # structure labels) no longer widen the list: each word on it is a word the tripwire cannot report alone.
+    texts: List[str] = []
     for findings, volumetry, source in verified_report.synthetic_payloads():
         for language in verified_report.LANGUAGES:
             view = verified_report.build_view(findings, volumetry, language, review_source=source)

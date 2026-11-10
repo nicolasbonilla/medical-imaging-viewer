@@ -617,11 +617,15 @@ def test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced(e2e, lang, st
 
 @pytest.mark.unit
 def test_rc072_r4_the_notice_does_not_claim_the_draft_is_not_software_text(e2e):
+    """Amended for the second review of PR #78 (F, DRAFT): the verified draft states "not evaluated" once, in its
+    code-written findings line; the route's notice no longer repeats it (it still adds the automatic-marking note)."""
     client, svc, _provider, _ = e2e
     _seed(svc)
     content = _report(client).json()["content"]
     assert "comes from the software" not in content
-    assert "must not be read as a statement on dissemination in space" in content
+    assert content.count("Dissemination in space: not evaluated") == 1
+    from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
+    assert AUTOMATIC_MARKING_NOTICE["en"] in content
 
 
 @pytest.mark.unit

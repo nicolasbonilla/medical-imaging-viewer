@@ -180,7 +180,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                             "lesion counts without an evaluated DIS reach the model with no rule against deriving DIS"),
     "R6_report_notice_removed": ([(AIR, '        if dis_text:   # PRB-003', '        if False:   # PRB-003')],
                                  "a draft without an evaluated DIS ends without the not-evaluated notice"),
-    "R7_report_from_an_unevaluated_dis_only": ([(AIR, '        if not (others or request.volumetry or gate.is_evaluated(findings["dis_assessment"])):\n',
+    "R7_report_from_an_unevaluated_dis_only": ([(AIR, '        if not (others or verified_report.renderable_volumetry(request.volumetry)\n                or gate.is_evaluated(findings["dis_assessment"])):\n',
                                                  '        if False:\n')],
                                                "a draft requested with no measurement but a 'not evaluated' DIS state (RC-034)"),
     "R8_dis_of_another_segmentation_carried_in": ([(AIR, '        if named and report_sid and named != report_sid:\n', '        if False:\n')],
