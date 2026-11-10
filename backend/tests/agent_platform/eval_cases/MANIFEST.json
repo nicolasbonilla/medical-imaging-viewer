@@ -1,0 +1,29 @@
+{
+ "$comment": [
+  "Frozen inputs of the agent eval harness (REQ-AGT-003; RC-118). DRAFT, PENDING owner approval.",
+  "A change to any case file or to the grader must update this record in the same commit, with the reason in the commit message; test_agent_evals.py::test_rc118_case_files_and_grader_are_frozen fails otherwise."
+ ],
+ "schema": "mstool.agent-evals.manifest/1",
+ "as_of": "2026-11-10",
+ "case_files": {
+  "benchmark_a3_reference.json": "276a207e465ba3e50429edd59a7fcc22447870113eeb6bb304ff6653f57fdcc0",
+  "ms-clinical-assistant.json": "f7559f69cf003147bd225f2878e62655f3fa99fdb2d4e58db081f7ac5756cf4b",
+  "report-drafter.json": "26a224176c9aa9f5c31f61e1653ea91050d6e20ef02f58baa9f111bd6287901a"
+ },
+ "grader": {
+  "name": "agents-benchmark deterministic verifier v3",
+  "source_branch": "research/agents-benchmark",
+  "source_commit": "f3c19761133114b3d5dd726ff2d6801019880ead",
+  "source_paths": [
+   "research/agents_benchmark/verifier.py",
+   "research/agents_benchmark/lexicon.py"
+  ],
+  "files": {
+   "lexicon.py": "d071751f7ecd41b4ac80ea1c94646c66d45250f92f6ac2b65f8952a8b71710aa",
+   "verifier.py": "f6f6b2178afaa331a71f5e5bd17eb2c5c8b2d03e41f69335a52b7029e5a0f24b"
+  }
+ },
+ "seeds": {
+  "research/agents_benchmark/tests/test_verifier.py": "1472758a0812c59e4b0aceae0c1550d8b9c798ddd0ab1158c98125b13678f514"
+ }
+}
