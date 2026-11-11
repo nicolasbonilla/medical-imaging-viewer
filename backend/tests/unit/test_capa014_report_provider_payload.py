@@ -175,7 +175,10 @@ class _Provider:
         return self.sent()["messages"][0]["content"]
 
     def sent_text(self):
-        return json.dumps(self.sent(), ensure_ascii=False, default=str)
+        # (Amended with the fifth review of PR #78: the client-side time budget `timeout` — the remaining budget, a
+        # float such as 24.99999… on a slow runner — is not request content; it made the "99999 never sent" case flaky
+        # in CI. Everything else the provider receives is kept.)
+        return json.dumps({k: v for k, v in self.sent().items() if k != "timeout"}, ensure_ascii=False, default=str)
 
 
 class _Patients:
