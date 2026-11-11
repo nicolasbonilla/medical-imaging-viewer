@@ -108,6 +108,12 @@ class AuditEventType(str, Enum):
     SECURITY_ENCRYPTION_FAILURE = "security.encryption.failure"
     SECURITY_DATA_INTEGRITY_VIOLATION = "security.data.integrity_violation"
     SECURITY_KEY_COMPROMISED = "security.key.compromised"
+    # PRB-032: the input validators referenced these four members, which never existed, so every detection raised
+    # AttributeError before its audit event and its *Detected exception (500 instead of 400, nothing audited).
+    SECURITY_INJECTION_ATTEMPT = "security.injection.attempt"
+    SECURITY_XSS_ATTEMPT = "security.xss.attempt"
+    SECURITY_PATH_TRAVERSAL = "security.path_traversal"
+    SECURITY_INVALID_INPUT = "security.invalid_input"
 
     # Administrative Events (A.12.4.3)
     ADMIN_USER_CREATED = "admin.user.created"

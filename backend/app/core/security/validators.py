@@ -18,6 +18,8 @@ Provides comprehensive input validation to prevent:
 
 import re
 import os
+import ntpath
+import posixpath
 import mimetypes
 import hashlib
 from typing import Optional, List, Dict, Any, Tuple
@@ -417,6 +419,9 @@ PATH_TRAVERSAL_PATTERNS = [
     r'\.\.%5c',
 ]
 
+# A Windows drive prefix ("C:\", "C:/" or drive-relative "C:name"): never a valid relative storage path.
+_DRIVE_PREFIX = re.compile(r'^[A-Za-z]:')
+
 
 class PathTraversalValidator:
     """
@@ -443,6 +448,21 @@ class PathTraversalValidator:
         """
         if not value:
             return value
+
+        # Absolute paths of BOTH path families, whatever the host OS (CAPA-003, REQ-SEC-016). The server runs on
+        # Linux, where os.path alone does not see a Windows drive, UNC or device path as absolute.
+        if (posixpath.isabs(value) or ntpath.isabs(value) or _DRIVE_PREFIX.match(value)
+                or value.startswith(('/', '\\'))):
+            audit_logger.log_security_event(
+                event_type=AuditEventType.SECURITY_PATH_TRAVERSAL,
+                severity=AuditSeverity.HIGH,
+                description=f"Absolute path refused in field '{field_name}'",
+                metadata={'field': field_name, 'pattern': 'absolute'}  # no raw value: RMF open item (PRB-020)
+            )
+            raise PathTraversalDetected(
+                f"Path traversal attempt detected in field '{field_name}': "
+                f"Absolute paths not allowed"
+            )
 
         # Check for path traversal patterns
         for pattern in PATH_TRAVERSAL_PATTERNS:
