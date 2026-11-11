@@ -23,6 +23,7 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/CAPA-008_negative_controls_2026-10-17.json"
+OUT = os.environ.get("NC_OUT", OUT)     # (a later run writes its own record; the earlier one is kept)
 TESTS = ["tests/unit/test_capa008_assistant_read_only.py", "tests/unit/test_longitudinal_clinical_rules.py"]
 
 BACKEND = "backend/app/mcp/_backend.py"
@@ -71,7 +72,8 @@ M = {  # name: (file, anchor, replacement, what it re-introduces)
                               "a server imports its own HTTP client"),
     "A9_unauthenticated_http_transport": (RUN_ALL, '    mcp.run(transport="stdio")\n', '    mcp.run(transport="sse")\n',
                                           "the SSE (HTTP) transport without authentication"),
-    "R1_report_without_measurements": (REPORT, "    if not any(request.findings.get(k) for k in MEASUREMENT_FINDING_KEYS) and not request.volumetry:\n",
+    # (eighth review of PR #78, finding 4: re-anchored — the route asks the verified report what it can write)
+    "R1_report_without_measurements": (REPORT, "    if not verified_report.renderable(request.findings, request.volumetry):\n",
                                        "    if False:\n", "a report is drafted with no measurement"),
     "R2_ui_hides_the_reason": (PANEL, "(generateMutation.error as any)?.response?.status === 422", "(generateMutation.error as any)?.response?.status === 499",
                                "the report panel no longer explains the refusal"),

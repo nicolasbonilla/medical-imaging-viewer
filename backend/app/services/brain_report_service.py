@@ -59,6 +59,7 @@ from app.services.report_payload_guard import (
     ProviderGuardError,
     assert_no_identifiers,
     provider_payload,
+    assert_no_patient_numbers,
     words_of,
 )
 from app.services.report_payload_guard import _KNOWN_FIELDS
@@ -69,7 +70,12 @@ logger = get_logger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 # RC-106 (REQ-SAFE-051; HAZ-017, HAZ-013) — DRAFT, PENDING owner approval.
 # The models this version may call for the two comments, each with the request parameters it is called with
-# (the configurations pre-registered for the benchmark, PREREG.md §4: thinking off, effort low). The SDK pinned in
+# (the configurations pre-registered for the benchmark, PREREG.md §4: thinking off, effort low). "Thinking off" is sent
+# as each model accepts it (Claude API reference, 2026-11; eighth review of PR #78, finding 5): Claude Sonnet 5.5
+# rejects {"type": "disabled"} (400) — {"type": "between_tools"} is its documented way to turn thinking off (accepted
+# at effort high or below, no other field), and these requests carry no tools, so no thinking is produced:
+# max_tokens and the 25 s budget hold only the two comments. Claude Haiku 5.5 accepts {"type": "disabled"} at effort
+# high or below. The SDK pinned in
 # requirements.txt (anthropic 0.44.0) predates `thinking` and `output_config`, so they are sent as extra body fields.
 # Any other id — the retiring `claude-sonnet-4-5-20250929` (2026-11-30) included — is refused: the report is
 # delivered with the measurements only and the reason. Changing the model is a change of this table (change control,
@@ -485,16 +491,11 @@ class BrainReportService:
             # Sixth review of PR #78, W4/W5: decide once (the one gate, before the record), then build the record once.
             # Fifth review, V5: the measurement checks (ranges) always run — they protect the code-written text; the
             # patient's own numbers are checked only when a request can be sent.
+            # Eighth review of PR #78, finding 3: decide FIRST (the one gate with the record, the time budget), then
+            # read the patient record only if a call will happen; the projection and the record are built once (W4).
             allowed, reason = self.interpretive_text_gate()
             ids = None
-            if allowed:
-                # seventh review of PR #78, finding 8: the record is read here, only when a request can be sent — the
-                # route hands a lazy reader (no gate in the route)
-                ids = await identifiers() if callable(identifiers) else identifiers
-                if not isinstance(ids, PatientIdentifiers):
-                    # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check against
-                    raise PatientRecordUnavailable("the patient's identifiers were not supplied")
-            payload = provider_payload(rendered_findings, rendered_volumetry, ids)
+            payload = provider_payload(rendered_findings, rendered_volumetry, None)
             # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
             view = verified_report.build_view(payload.findings, payload.volumetry, lang,
                                               review_source=_review_source(findings), not_included=not_included)
@@ -521,6 +522,14 @@ class BrainReportService:
                     reason = verified_report.REASON_TIME_BUDGET
                     logger.warning("[Report] Too little of the time budget left for the AI comments; measurements only",
                                    extra={"report_id": report_id, "llm_budget_s": round(budget, 2)})
+            if reason is None:
+                # a call will happen: the patient's record (the route's lazy reader; seventh review, finding 8)
+                ids = await identifiers() if callable(identifiers) else identifiers
+                if not isinstance(ids, PatientIdentifiers):
+                    # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check against
+                    raise PatientRecordUnavailable("the patient's identifiers were not supplied")
+                # the patient's own numbers in the projected payload refuse the request (same rule as the projection)
+                assert_no_patient_numbers(payload, ids)
             if reason is not None:
                 if reason == verified_report.REASON_MODEL_NOT_ALLOWED:
                     retired = RETIRED_OR_RETIRING_MODELS.get(model_id) if isinstance(model_id, str) else None

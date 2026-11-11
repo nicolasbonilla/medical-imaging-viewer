@@ -70,6 +70,7 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/releases/RELEASE-2026-10-25_integration_negative_controls.json"
+OUT = os.environ.get("NC_OUT", OUT)     # (a later run writes its own record; the earlier one is kept)
 
 AIR = "backend/app/api/routes/ai_report.py"
 BRS = "backend/app/services/brain_report_service.py"
@@ -467,6 +468,26 @@ def run(tests, env):
 
 def sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+# Eighth review of PR #78, finding 4: the route's DIS backstop after the draft assembly (I1b) and the prompt templates
+# (I2, I7b, I44, I45) were removed by the verified report (PR #78: V8 removed the route's scrub; T5 archived the
+# templates) — no code is left for these mutations. The same defects are guarded by
+# scripts/safety/verified_report_negative_controls.py: C5 (the RC-070 check of the model's comments in the loop), D3-D6
+# and F25 (the DIS statement and the notices), F1-F27 (the code-written draft: counts, plurals, regions), C29-C39 (the
+# number words).
+RETIRED_WITH_THE_VERIFIED_REPORT = {name: M.pop(name)[2] for name in (
+    "I1b_check_moved_after_the_draft_assembly", "I2_template_variant_on_the_raw_block_with_its_own_rule",
+    "I7b_prompt_ignores_unconfirmed_regions", "I44_prompt_plural_for_one", "I45_allow_list_without_the_plural")}
+# Anchors already broken on origin/main, in files PR #78 does not touch (I30, I50, I53, I55): reported, not run here.
+NOT_RUN_ANCHORS_BROKEN_BEFORE = ("I30_invisible_opacity_restored_next_session", "I50_dashboard_ignores_the_view",
+                                 "I53_dashboard_without_stored_labels", "I55_drawn_table_not_sent")
+if os.environ.get("NC_TOUCHED") == "1":
+    # only the controls of the files this branch changes (light mode on the owner's laptop)
+    _changed = set(subprocess.run(["git", "diff", "--name-only", "origin/main...HEAD"], capture_output=True,
+                                  text=True).stdout.split())
+    M = {k: v for k, v in M.items() if k not in NOT_RUN_ANCHORS_BROKEN_BEFORE
+         and any(e[0] in _changed or ("backend/" + e[0]) in _changed for e in v[0])}
 
 
 def main():

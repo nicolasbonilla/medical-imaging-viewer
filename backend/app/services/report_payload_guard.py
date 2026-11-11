@@ -391,6 +391,29 @@ class _Projector:
         return o
 
 
+def assert_no_patient_numbers(payload: "ProviderPayload", identifiers: "PatientIdentifiers") -> None:
+    """RC-065 (eighth review of PR #78, finding 3): the patient's own numbers in any number field of the PROJECTED
+    payload refuse the request — the same rule as `provider_payload(..., identifiers)`, run once it is known that a
+    request will be sent (the record is read only then)."""
+    forms = identifiers.number_forms()
+
+    def numbers(x):
+        if isinstance(x, bool):
+            return
+        if isinstance(x, (int, float)):
+            yield x
+        elif isinstance(x, dict):
+            for y in x.values():
+                yield from numbers(y)
+        elif isinstance(x, (list, tuple)):
+            for y in x:
+                yield from numbers(y)
+
+    for n in numbers([payload.findings, payload.volumetry]):
+        if n == n and n not in (float("inf"), float("-inf")) and n == int(n) and str(abs(int(n))) in forms:
+            raise IdentifierInPrompt("identifier check failed (patient_number_in_a_number_field)")
+
+
 def provider_payload(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]],
                      identifiers: Optional["PatientIdentifiers"] = None) -> ProviderPayload:
     """RC-064: the structured payload the provider may receive. The inputs are not modified.

@@ -36,30 +36,9 @@ IDS = PatientIdentifiers.from_record({"mrn": "MRN-TEST-0578", "given_name": "Tes
 T = VR.T["en"]
 GOOD = "[FINDINGS_COMMENT]\nThe marking is automatic.\n[IMPRESSION_COMMENT]\nTo be reviewed by a radiologist."
 
-LESION = {"absent": None,
-          "not_available": {"total_count": None, "total_burden_mm3": None, "total_burden_ml": None},
-          "computed": {"total_count": 7, "total_burden_mm3": 3132.0, "total_burden_ml": 3.132,
-                       "size_distribution": {"small": 4, "medium": 2, "large": 1}}}
-EVALUATED = {"evaluation_status": "evaluated", "regions_with_lesions": 2, "total_dis_regions": 5,
-             "region_details": {"Periventricular": {"present": True}, "Juxtacortical": {"present": True},
-                                "Infratentorial": {"present": False}}}
-DIS = {"absent": None, "not_evaluated": {"evaluation_status": "not_evaluated"},
-       "evaluated_met": {**EVALUATED, "dis_met": True}, "evaluated_not_met": {**EVALUATED, "dis_met": False}}
-_LNG = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.4, "total_lesions_tp1": 3, "total_lesions_tp2": 9,
-        "burden_delta_percent": 40.0, "abstained": False, "new_lesion_min_diameter_mm": 3}
-LONGITUDINAL = {
-    "absent": None,
-    "complete": {**_LNG, "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
-                 "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
-    "null_counts": {**_LNG, "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
-                    "change_candidates": {"new": None, "enlarging": 1, "total": 1}},
-    "small_new": {**_LNG, "status_counts": {"new": 5, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
-                  "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
-}
-VOLUMETRY = {"absent": None, "present": {"total_brain_volume_ml": 1100.0, "intracranial_volume_ml": 1450.0}}
-SOURCE = {"automatic": "ai_draft", "manual": "manual", "not_recorded": "origin_not_recorded"}
-ENTRY = {"none": {}, "indication": {"clinical_indication": "follow-up"}, "technique": {"technique": "3T"},
-         "observations": {"additional_observations": "motion"}}
+# The input dimensions are the product's own (eighth review of PR #78: shared with VR.synthetic_payloads).
+LESION, DIS, LONGITUDINAL = VR.SCENARIO["lesion"], VR.SCENARIO["dis"], VR.SCENARIO["longitudinal"]
+VOLUMETRY, SOURCE, ENTRY = VR.SCENARIO["volumetry"], VR.SCENARIO["source"], VR.SCENARIO["entry"]
 
 
 def _renderable(c):
@@ -73,14 +52,7 @@ CASES = [c for c in CASES if _renderable(c)]
 
 
 def _request(c):
-    findings = dict(ENTRY[c["entry"]])
-    if LESION[c["lesion"]] is not None:
-        findings["lesion_analysis"] = dict(LESION[c["lesion"]])
-    if DIS[c["dis"]] is not None:
-        findings["dis_assessment"] = {**DIS[c["dis"]], "segmentation_review": {"source": SOURCE[c["source"]]}}
-    if LONGITUDINAL[c["longitudinal"]] is not None:
-        findings["longitudinal"] = LONGITUDINAL[c["longitudinal"]]
-    return findings, VOLUMETRY[c["volumetry"]]
+    return VR.scenario_request(c)
 
 
 def _service(client=None, enabled=False):
@@ -366,6 +338,7 @@ def test_rc106_the_answer_check_stays_fast():
 def test_the_matrix_is_large_enough():
     assert len(CASES) >= 1000 and len(I7_CASES) >= 90
 
+
 # ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 # Eighth independent review of PR #78 — the device never contradicts itself (I9-I11; DRAFT, PENDING owner approval)
 # ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -467,7 +440,7 @@ def test_rc065_every_draft_template_appears_in_the_synthetic_payloads():
             out.append(VR.change_notice(view, lang) or "")
         text = "\n".join(out)
         for key, template in VR.T[lang].items():
-            for fragment in re.split(r"\{[^}]*\}", template):
+            for fragment in re.split(r"\{[^}]*\}|\|", template):
                 fragment = fragment.strip(" .,;:()")
                 if len(fragment) >= 12 and fragment not in text:
                     missing.append((lang, key, fragment[:60]))

@@ -552,7 +552,8 @@ def test_rc070_report_prompt_with_lesions_and_no_evaluated_dis_forbids_deriving_
         "Periventricular": {"lesion_count": 2, "total_volume_mm3": 30.0, "total_volume_ml": 0.03}}},
         "dis_assessment": {"evaluation_status": "not_evaluated"}})
     assert NOT_EVALUATED_LINE["en"] in prompt and "periventricular" not in prompt.lower()
-    assert "write that dissemination in space was not evaluated and say nothing else about it" in " ".join(VR.SYSTEM_PROMPT.split())
+    # (amended with the eighth review of PR #78, I10: the model says nothing about DIS — the code writes its state)
+    assert "say nothing about dissemination in space" in " ".join(VR.SYSTEM_PROMPT.split()).lower()
 
 
 @pytest.mark.unit
