@@ -22,13 +22,17 @@ from app.mcp._backend import api_get, api_post_compute
 from app.services.region_evidence import strip_region_confidence as _strip_region_confidence
 from app.services.longitudinal_candidate_safety import assistant_rate_sentence
 
+# Documentation only (agent platform D-AGT-7, fifth review of PR #79): fastmcp 2.3.0 silently IGNORED a
+# `description=` argument (the client never received this text) and fastmcp 3.x refuses it. Sending it as part of
+# the instructions would change what the client model reads (a prompt change for RVP-AGT-001), so it is not sent.
+SERVER_DESCRIPTION = (
+    "Investigational, read-only MS lesion measurements for physician review: lesion "
+    "analysis, MAGNIMS region classification, brain-MRI DIS items (McDonald 2024), "
+    "two-timepoint comparison candidates and draft reports. Not for diagnosis."
+)
+
 mcp = FastMCP(
     "ms-clinical-mcp",
-    description=(
-        "Investigational, read-only MS lesion measurements for physician review: lesion "
-        "analysis, MAGNIMS region classification, brain-MRI DIS items (McDonald 2024), "
-        "two-timepoint comparison candidates and draft reports. Not for diagnosis."
-    ),
     instructions=(
         "You assist a physician who reviews brain MRI measurements computed by an "
         "investigational device. The device is NOT intended for diagnosis: never state or "

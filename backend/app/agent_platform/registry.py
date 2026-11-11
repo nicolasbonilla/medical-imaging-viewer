@@ -99,6 +99,7 @@ class RefusalCode(str, Enum):
     RUN_INPUT_INVALID = "run_input_invalid"
     RUN_INTERNAL_ERROR = "run_internal_error"
     RUN_ABORTED = "run_aborted"
+    BACKEND_SCOPE_MISSING = "backend_scope_missing"
 
     def __str__(self) -> str:  # so f-strings and json.dumps(str(code)) give the bare code
         return self.value
@@ -141,6 +142,8 @@ REASONS: Dict[RefusalCode, str] = {
     RefusalCode.RUN_INPUT_INVALID: "the run's scope or untrusted inputs are not well formed; nothing is run",
     RefusalCode.RUN_INTERNAL_ERROR: "the platform failed during the run; nothing is delivered",
     RefusalCode.RUN_ABORTED: "the run was aborted by the process; nothing is delivered",
+    RefusalCode.BACKEND_SCOPE_MISSING: "the agent's tools need the study-scoped capability the backend issues for "
+                                       "the run, and the run has none",
 }
 
 # Codes of a run that FAILED (the model, a tool or the verifier did not work) as opposed to one the platform
@@ -213,7 +216,11 @@ class ModelEntry:
 # other kind is type-checked; nested ``object`` / ``array`` values are walked and any id-like key in them is
 # scope-checked too.
 RESOURCE_KINDS = frozenset({"resource_id", "optional_resource_id", "resource_ids"})
-ARGUMENT_KINDS = RESOURCE_KINDS | frozenset({"string", "integer", "number", "boolean", "object", "array"})
+VALUE_KINDS = frozenset({"string", "integer", "number", "boolean", "object", "array"})
+# Fifth review of PR #79, finding 7: a declared argument is REQUIRED unless its kind starts with "optional_"
+# (bound to the real functions: optional exactly when the parameter has a default).
+ARGUMENT_KINDS = RESOURCE_KINDS | VALUE_KINDS | frozenset("optional_" + k for k in VALUE_KINDS)
+OUTPUT_TYPES = frozenset({"object", "array"})
 
 
 def is_id_like(name: Any, *, locations: bool = True) -> bool:
@@ -231,8 +238,17 @@ class ToolEntry:
     name: str
     access: str
     arguments: Tuple[Tuple[str, str], ...] = ()          # (argument, kind), as declared in the registry
+    # Fifth review of PR #79 (structural finding, a): the tool's TYPED OUTPUT schema (agents.json "output").
     result_exempt_keys: Tuple[str, ...] = ()             # id-like result keys that name no resource (e.g. report_id)
     result_resource_keys: Tuple[str, ...] = ()           # result keys whose values ARE resource ids (real schema)
+    result_actor_keys: Tuple[str, ...] = ()              # result keys that name PEOPLE (an actor-id string only)
+    output_type: str = "object"
+
+    def definition(self) -> Dict[str, Any]:
+        """What a provider adapter sends for this tool, as far as the registry knows it (finding 4)."""
+        return {"name": self.name, "access": self.access, "arguments": dict(self.arguments),
+                "output": {"type": self.output_type, "resource_fields": list(self.result_resource_keys),
+                           "actor_fields": list(self.result_actor_keys), "exempt_fields": list(self.result_exempt_keys)}}
 
     @property
     def scope_arguments(self) -> Tuple[str, ...]:
@@ -259,6 +275,7 @@ class AgentSpec:
     max_output_tokens: int
     parameters: Tuple[Tuple[str, Any], ...] = field(default=())
     requires_verifier: bool = False
+    requires_backend_scope: bool = False      # RC-121: its tools reach the backend only with the run's capability
 
     def parameter(self, name: str, default=None):
         return dict(self.parameters).get(name, default)
@@ -329,7 +346,7 @@ class CostLedger(Protocol):
     def reserve(self, agent_id: str, study_key: str, day: str, usd: float, study_cap: float,
                 day_cap: float) -> Tuple[Optional[str], Optional["RefusalCode"]]: ...
 
-    def settle(self, reservation_id: str, usd: Optional[float]) -> None: ...
+    def settle(self, reservation_id: str, usd: Optional[float]) -> bool: ...
 
     def add(self, agent_id: str, study_key: str, day: str, usd: float) -> None: ...
 
@@ -342,6 +359,7 @@ class InMemoryCostLedger:
         self._day: Dict[Tuple[str, str], float] = {}
         self._reservations: Dict[str, Tuple[str, str, str, float]] = {}
         self._lock = threading.Lock()
+        self.overruns = 0
 
     def totals(self, agent_id: str, study_key: str, day: str) -> Tuple[float, float]:
         with self._lock:
@@ -371,14 +389,22 @@ class InMemoryCostLedger:
         with self._lock:
             return len(self._reservations)
 
-    def settle(self, reservation_id: str, usd: Optional[float]) -> None:
+    def settle(self, reservation_id: str, usd: Optional[float]) -> bool:
+        """Charge the actual cost. Fifth review of PR #79, finding 4: returns True (and counts it) when the actual
+        cost EXCEEDED the reserved worst case — it was spent, so it is charged in full; the totals may then pass a
+        cap, and the next reservation is refused."""
         with self._lock:
             entry = self._reservations.pop(reservation_id, None)
             if entry is None:
                 raise ValueError("unknown or already settled reservation")
             agent_id, study_key, day, reserved = entry
-            if usd is not None:                            # None: the actual cost is unknown, the worst case stays
-                self._apply(agent_id, study_key, day, usd - reserved)
+            if usd is None:                                # the actual cost is unknown: the worst case stays
+                return False
+            self._apply(agent_id, study_key, day, usd - reserved)
+            if usd > reserved + 1e-12:
+                self.overruns += 1
+                return True
+            return False
 
 
 # ------------------------------------------------------------------ audit
@@ -550,13 +576,27 @@ class AgentRegistry:
             if bad_ids:
                 err(f"tool {name}: id-like arguments {bad_ids} must be declared as resource kinds")
                 continue
-            exempt = t.get("result_exempt_keys") or []
-            resource = t.get("result_resource_keys") or []
-            if not all(isinstance(x, list) and all(isinstance(k, str) for k in x) for x in (exempt, resource)):
-                err(f"tool {name}: result_exempt_keys and result_resource_keys must be lists of keys")
+            if "result_exempt_keys" in t or "result_resource_keys" in t:
+                err(f"tool {name}: declare its result fields in its typed 'output' schema only")
+                continue
+            out = t.get("output")
+            if out is None and t["access"] == "write":
+                out = {"type": "object", "resource_fields": [], "actor_fields": [], "exempt_fields": []}
+            fields = ("resource_fields", "actor_fields", "exempt_fields")
+            if (not isinstance(out, Mapping) or out.get("type") not in OUTPUT_TYPES
+                    or set(out) - {"type", *fields, "$comment"}
+                    or not all(isinstance(out.get(f), list) and all(isinstance(k, str) and k for k in out[f])
+                               for f in fields)):
+                err(f"tool {name}: a typed 'output' schema is required (type object|array; resource_fields, "
+                    f"actor_fields and exempt_fields as lists of keys)")
+                continue
+            if set(out["actor_fields"]) & set(out["resource_fields"]):
+                err(f"tool {name}: a field cannot be both a resource and an actor")
                 continue
             self._tools[name] = ToolEntry(name=name, access=t["access"], arguments=tuple(sorted(args.items())),
-                                          result_exempt_keys=tuple(exempt), result_resource_keys=tuple(resource))
+                                          result_exempt_keys=tuple(out["exempt_fields"]),
+                                          result_resource_keys=tuple(out["resource_fields"]),
+                                          result_actor_keys=tuple(out["actor_fields"]), output_type=out["type"])
         for aid, a in data["agents"].items():
             if not isinstance(aid, str) or not _AGENT_ID.fullmatch(aid):
                 err(f"agent id not well formed: {aid!r}")
@@ -608,7 +648,8 @@ class AgentRegistry:
                 cost_cap_per_day_usd=float(values["per_day"]), max_steps=values["max_steps"],
                 max_tool_calls=values["max_tool_calls"], max_tool_result_bytes=values["max_tool_result_bytes"],
                 max_input_tokens=values["max_input_tokens"], max_output_tokens=values["max_output_tokens"],
-                parameters=tuple(sorted(params.items())), requires_verifier=a.get("requires_verifier") is True)
+                parameters=tuple(sorted(params.items())), requires_verifier=a.get("requires_verifier") is True,
+                requires_backend_scope=a.get("requires_backend_scope") is True)
 
     # -------------------------------------------------------------- lookups
     def agent(self, agent_id: str) -> Optional[AgentSpec]:
@@ -736,12 +777,18 @@ class AgentRegistry:
             return self._refuse(code or RefusalCode.STUDY_COST_CAP, **ctx)
         return Decision.ok(d.warnings, reservation)
 
-    def settle(self, reservation: str, usd: Optional[float]) -> None:
-        """Charge a reserved call its actual cost (``None``: unknown, the reserved worst case stays charged)."""
+    def settle(self, reservation: str, usd: Optional[float]) -> bool:
+        """Charge a reserved call its actual cost (``None``: unknown, the reserved worst case stays charged).
+        True when the actual cost exceeded the reservation (fifth review, finding 4)."""
         if usd is not None and (not isinstance(usd, (int, float)) or isinstance(usd, bool) or not math.isfinite(usd)
                                 or usd < 0):
             usd = None
-        self._ledger.settle(reservation, None if usd is None else float(usd))
+        return self._ledger.settle(reservation, None if usd is None else float(usd)) is True
+
+    def tool_definitions(self, names) -> Tuple[Dict[str, Any], ...]:
+        """The definitions of the named, registered tools (sorted by name) — sent with a request and counted in
+        its worst-case reservation (fifth review, finding 4)."""
+        return tuple(self._tools[n].definition() for n in sorted(names) if n in self._tools)
 
     def record_cost(self, agent_id: str, study_key: str, usd: float) -> None:
         if not isinstance(usd, (int, float)) or isinstance(usd, bool) or not math.isfinite(usd) or usd < 0:

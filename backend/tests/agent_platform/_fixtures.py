@@ -26,9 +26,13 @@ def make_registry_data(**overrides):
                                "use_status": "in_use"},
         },
         "tools": {
-            "read_measurements": {"access": "read", "arguments": {"segmentation_id": "resource_id"}},
-            "compare_visits": {"access": "compute", "arguments": {"baseline_id": "resource_id", "followup_id": "resource_id"}},
-            "write_annotation": {"access": "write", "arguments": {"segmentation_id": "resource_id", "note": "string"}},
+            # Fifth review of PR #79: every tool declares a typed output schema (RC-121 / RC-114).
+            "read_measurements": {"access": "read", "arguments": {"segmentation_id": "resource_id"},
+                                  "output": {"type": "object", "resource_fields": [], "actor_fields": [], "exempt_fields": []}},
+            "compare_visits": {"access": "compute", "arguments": {"baseline_id": "resource_id", "followup_id": "resource_id"},
+                               "output": {"type": "object", "resource_fields": [], "actor_fields": [], "exempt_fields": []}},
+            "write_annotation": {"access": "write", "arguments": {"segmentation_id": "resource_id", "note": "string"},
+                                 "output": {"type": "object", "resource_fields": [], "actor_fields": [], "exempt_fields": []}},
         },
         "agents": {
             "test-agent": {

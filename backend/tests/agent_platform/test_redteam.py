@@ -30,7 +30,8 @@ from tests.agent_platform import _harness as H
 from tests.agent_platform._mcp import FakeBackend, assistant_tools
 
 VIEWS = json.loads((Path(__file__).with_name("eval_cases") / "report-drafter.json").read_text(encoding="utf-8"))["views"]
-STUDY_A = RunScope("study-A", frozenset({"seg-A", "seg-B", "file-A", "file-B"}))
+# Amended for the fifth review of PR #79 (RC-121): an assistant run carries the backend's capability.
+STUDY_A = RunScope("study-A", frozenset({"seg-A", "seg-B", "file-A", "file-B"}), capability=H.EVAL_CAPABILITY)
 IDENTIFIERS = ("Doe", "Jane", "19700101", "1970-01-01", "MRN-998877")
 
 

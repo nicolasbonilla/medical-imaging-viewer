@@ -34,6 +34,7 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, Path, status
 
 from app.core.logging import get_logger
+from app.security import agent_scope as _agent_scope
 from app.security.auth import get_current_active_user
 from app.security.models import User, UserRole
 from app.security.patient_access import (
@@ -83,6 +84,11 @@ async def authorize_patient_access(
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Patient not found",
     )
+
+    # RC-121 (HAZ-021): outside an AI agent's study-scoped capability, the same 404 (agent_scope.py).
+    if not _agent_scope.allows_patient(patient_id, user):
+        logger.warning("Patient access denied: outside the agent scope", extra={"user_id": str(user.id)})
+        raise not_found
 
     patient = None
     try:
@@ -156,6 +162,9 @@ async def authorize_storage_ref(
             "Rejected malformed imaging storage reference",
             extra={"user_id": str(user.id)},
         )
+        raise not_found
+
+    if not _agent_scope.allows_study(ref.study_id):       # RC-121: an imaging object of another study
         raise not_found
 
     # Reuse the patient authorization decision against the parsed patient_id.

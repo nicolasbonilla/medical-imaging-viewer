@@ -29,8 +29,9 @@ import difflib
 import re
 import statistics
 import threading
+from collections import OrderedDict
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from app.agent_platform.hashing import sha256_text
@@ -114,12 +115,24 @@ def sentence_changes(shown: str, final: str) -> Tuple[int, int]:
     return len(a), changed
 
 
-class OversightRecorder:
-    """In-memory recorder (per instance). The durable store is integration step P-8."""
+PENDING_TTL = timedelta(days=7)
+MAX_PENDING = 10_000
 
-    def __init__(self, clock: Optional[Callable[[], datetime]] = None):
+
+class OversightRecorder:
+    """In-memory recorder (per instance). The durable store is integration step P-8.
+
+    Fifth review of PR #79, finding 6: the drafts shown and not yet signed are BOUNDED — an entry expires
+    ``pending_ttl`` after it was shown (a sign-off after that is not counted), at most ``max_pending`` entries are
+    kept (the oldest is evicted), and a sign-off of a different text than the one shown evicts the entry."""
+
+    def __init__(self, clock: Optional[Callable[[], datetime]] = None, *, pending_ttl: timedelta = PENDING_TTL,
+                 max_pending: int = MAX_PENDING):
         self._clock = clock or (lambda: datetime.now(timezone.utc))
-        self._pending: Dict[Tuple[str, str], Dict[str, Any]] = {}
+        self._ttl = pending_ttl
+        self._max = max(1, int(max_pending))
+        self._pending: "OrderedDict[Tuple[str, str], Dict[str, Any]]" = OrderedDict()
+        self.evicted = 0
         self.events: List[OversightEvent] = []
         self.mismatches = 0
         self._lock = threading.Lock()
@@ -130,10 +143,23 @@ class OversightRecorder:
         same text shown again keeps the time it was first shown."""
         key = (draft_key(draft_id), reader_key(reader_id))
         digest = sha256_text(draft_text)
+        now = self._clock()
         with self._lock:
+            self._expire(now)
             current = self._pending.get(key)
             if current is None or current["draft_sha256"] != digest:
-                self._pending[key] = {"agent_id": agent_id, "shown_at": self._clock(), "draft_sha256": digest}
+                self._pending[key] = {"agent_id": agent_id, "shown_at": now, "draft_sha256": digest}
+                self._pending.move_to_end(key)
+            while len(self._pending) > self._max:
+                self._pending.popitem(last=False)
+                self.evicted += 1
+
+    def _expire(self, now: datetime) -> None:
+        """Drop the entries shown more than the TTL ago (insertion order = order shown)."""
+        stale = [k for k, v in self._pending.items() if now - v["shown_at"] > self._ttl]
+        for k in stale:
+            del self._pending[k]
+        self.evicted += len(stale)
 
     def pending_records(self) -> List[Dict[str, Any]]:
         with self._lock:
@@ -144,9 +170,13 @@ class OversightRecorder:
     def signed(self, draft_id: str, reader_id: str, shown_text: str, final_text: str) -> Optional[OversightEvent]:
         key = (draft_key(draft_id), reader_key(reader_id))
         with self._lock:
+            self._expire(self._clock())
             pending = self._pending.get(key)
             if pending is None or pending["draft_sha256"] != sha256_text(shown_text):
                 self.mismatches += 1
+                if pending is not None:                   # finding 6: a mismatch evicts the entry
+                    del self._pending[key]
+                    self.evicted += 1
                 return None
             del self._pending[key]
         chars, ratio = edit_size(shown_text, final_text)

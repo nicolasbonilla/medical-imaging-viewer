@@ -20,11 +20,12 @@ from typing import Optional
 from fastmcp import FastMCP
 from app.mcp._backend import api_get
 
-mcp = FastMCP(
-    "brain-imaging-mcp",
-    description="Read-only brain MRI access for the assistant — metadata without identifiers, "
-                "slices, segmentation list",
-)
+# Documentation only (agent platform D-AGT-7, fifth review of PR #79): fastmcp 2.3.0 silently IGNORED a
+# `description=` argument (the client never received this text) and fastmcp 3.x refuses it; it is not sent.
+SERVER_DESCRIPTION = ("Read-only brain MRI access for the assistant — metadata without identifiers, "
+                      "slices, segmentation list")
+
+mcp = FastMCP("brain-imaging-mcp")
 
 
 # =============================================================================

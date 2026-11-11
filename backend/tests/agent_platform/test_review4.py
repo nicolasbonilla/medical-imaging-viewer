@@ -42,7 +42,9 @@ from tests.agent_platform._fixtures import FIXED_NOW, make_registry_data
 
 BACKEND = Path(__file__).resolve().parents[2]
 SCOPE = RunScope(K.STUDY, K.STUDY_IDS)
-TOOL = R.ToolEntry(name="analyze_lesions", access="read", arguments=(("segmentation_id", "resource_id"),))
+# Amended for the fifth review of PR #79: actor fields are those the tool DECLARES (no platform-wide list).
+TOOL = R.ToolEntry(name="analyze_lesions", access="read", arguments=(("segmentation_id", "resource_id"),),
+                   result_actor_keys=("created_by", "reviewed_by_id"))
 VENDOR_UIDS = ["1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017",       # Siemens
                "1.3.46.670589.11.42151.5.0.6524.2020061716142632055",            # Philips
                "1.3.6.1.4.1.14519.5.2.1.7695.2311.123456789",                    # an enterprise root (TCIA)
@@ -100,9 +102,10 @@ def test_rc114_review4_an_actor_id_value_is_still_exempt():
 
 # ================================================================== 3. mcp pinned
 def test_rc117_review4_mcp_is_pinned_exactly_and_the_card_follows():
-    assert C.requirement_pin("mcp") == "1.12.4"
+    # Amended for the fifth review of PR #79 (D-AGT-7): still pinned exactly, now to 1.30.0 (was 1.12.4).
+    assert C.requirement_pin("mcp") == "1.30.0"
     card = C.load_card("ms-clinical-assistant")
-    assert card["sdk_pins"].get("mcp") == "1.12.4"
+    assert card["sdk_pins"].get("mcp") == "1.30.0"
     assert card["mcp"]["observed"]["mcp_sdk_version"] == C.requirement_pin("mcp")
     assert "NOT pin" not in card["mcp"]["mcp_sdk_requirement"]
 
@@ -162,7 +165,10 @@ def test_rc119_review4_legend_follows_authorship():
 # ================================================================== 6. tool arguments named fn / blocking
 def test_review4_tool_arguments_named_fn_and_blocking_reach_the_tool(switches, ledger, audit_events):
     data = make_registry_data()
-    data["tools"]["odd_tool"] = {"access": "read", "arguments": {"segmentation_id": "resource_id", "fn": "string",
+    # Amended for the fifth review of PR #79: every tool declares a typed output schema.
+    data["tools"]["odd_tool"] = {"output": {"type": "object", "resource_fields": [], "actor_fields": [],
+                                            "exempt_fields": []},
+                                 "access": "read", "arguments": {"segmentation_id": "resource_id", "fn": "string",
                                                                   "blocking": "boolean"}}
     data["agents"]["test-agent"]["allowed_tools"].append("odd_tool")
     reg = AgentRegistry(data, switches=switches, ledger=ledger, audit=audit_events.append, clock=lambda: FIXED_NOW)

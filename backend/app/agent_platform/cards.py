@@ -46,8 +46,14 @@ REPO = BACKEND.parent
 
 # ------------------------------------------------------------------ MCP modules without fastmcp
 class StubFastMCP:
-    def __init__(self, name, description=None, instructions=None, **kwargs):
-        self.name, self.description, self.instructions = name, description, instructions
+    """The constructor of fastmcp 3.x (the pinned version): ``name`` and ``instructions``; any other keyword is
+    refused as the real one refuses it (fifth review of PR #79: 2.3.0 silently ignored ``description=``)."""
+
+    def __init__(self, name=None, instructions=None, **kwargs):
+        if kwargs:
+            raise TypeError(f"FastMCP() got unexpected keyword argument(s): {', '.join(map(repr, kwargs))}")
+        self.name, self.instructions = name, instructions
+        self.description = None                      # never sent to the client
         self.tools: Dict[str, Callable] = {}
         self.resources: Dict[str, Callable] = {}
 

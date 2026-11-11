@@ -37,6 +37,7 @@ owner's data-processing decision first).
 
 from __future__ import annotations
 
+import atexit
 import collections
 import contextvars
 import json
@@ -61,7 +62,10 @@ INSTRUMENTATION_SCOPE = "mstool.agent_platform"
 OPERATIONS = frozenset({"chat", "create_agent", "embeddings", "execute_tool", "generate_content", "invoke_agent",
                         "text_completion"})                        # well-known values in v1.37.0
 RUN_STATUSES = frozenset({"delivered", "withheld", "refused", "abstained", "failed"})
-VERDICTS = frozenset({"pass", "withheld", "blocked", "not_run"})
+# The verdicts a verifier may give — the ONE set (fifth review of PR #79, finding 9; runtime.py imports it). A
+# verify span starts as "not_run" until the verifier answers.
+VERDICTS = frozenset({"pass", "withheld", "blocked"})
+SPAN_VERDICTS = VERDICTS | {"not_run"}
 
 _ID = re.compile(r"[A-Za-z0-9_.:/-]{1,128}")
 _CODE = re.compile(r"[a-z0-9_.:-]{1,64}")
@@ -128,7 +132,7 @@ ALLOWED_ATTRIBUTES: Dict[str, Callable[[Any], bool]] = {
     "mstool.content.tool_result_sha256": _is_hash,
     "mstool.prompt.template_sha256": _is_hash,
     "mstool.verifier.name": _is_id,
-    "mstool.verifier.verdict": lambda v: v in VERDICTS,
+    "mstool.verifier.verdict": lambda v: v in SPAN_VERDICTS,
     "mstool.verifier.withheld_count": _is_count,
     "mstool.refusal.code": _is_code,
     "mstool.run.status": lambda v: v in RUN_STATUSES,
@@ -303,6 +307,33 @@ class OtlpJsonFileExporter:
         return flushed and not self._thread.is_alive()
 
 
+_DEFAULT_EXPORTER = None
+_DEFAULT_LOCK = threading.Lock()
+
+
+def default_exporter():
+    """Fifth review of PR #79, finding 5: ONE process-wide exporter for every ``Tracer()`` built without one
+    (one writer thread and one file handle at most), created on first use from the settings and closed at
+    shutdown (``atexit``)."""
+    global _DEFAULT_EXPORTER
+    with _DEFAULT_LOCK:
+        if _DEFAULT_EXPORTER is None:
+            _DEFAULT_EXPORTER = exporter_from_env()
+            if isinstance(_DEFAULT_EXPORTER, OtlpJsonFileExporter):
+                atexit.register(close_default_exporter)
+        return _DEFAULT_EXPORTER
+
+
+def close_default_exporter(timeout: float = 5.0) -> None:
+    """Flush and close the process-wide exporter (at shutdown; tests)."""
+    global _DEFAULT_EXPORTER
+    with _DEFAULT_LOCK:
+        exporter, _DEFAULT_EXPORTER = _DEFAULT_EXPORTER, None
+    close = getattr(exporter, "close", None)
+    if close is not None:
+        close(timeout)
+
+
 def exporter_from_env():
     """Off unless MSTOOL_AGENT_TRACE_EXPORTER is exactly 'otlp-json-file' AND MSTOOL_AGENT_TRACE_FILE is set."""
     if os.environ.get("MSTOOL_AGENT_TRACE_EXPORTER", "") == "otlp-json-file":
@@ -408,7 +439,7 @@ class SpanHandle:
 
 class Tracer:
     def __init__(self, exporter=None, *, clock_ns: Callable[[], int] = time.time_ns):
-        self.exporter = exporter if exporter is not None else exporter_from_env()
+        self.exporter = exporter if exporter is not None else default_exporter()
         self.clock_ns = clock_ns
         self.finished: Deque[Span] = collections.deque(maxlen=FINISHED_BUFFER)
 

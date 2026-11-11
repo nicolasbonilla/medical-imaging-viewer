@@ -40,6 +40,7 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, Path, status
 
 from app.core.logging import get_logger
+from app.security import agent_scope as _agent_scope
 from app.security.auth import get_current_active_user
 from app.security.models import User
 from app.security.patient_access import (
@@ -82,6 +83,14 @@ async def authorize_resolved_patient(
         )
         raise not_found
 
+    # RC-121 (HAZ-021): an AI agent's request carries a study-scoped capability (app/security/agent_scope.py);
+    # an object of another patient, or a request of another user than the one it was issued to, is refused with
+    # the same 404. Without a capability nothing changes.
+    if not _agent_scope.allows_patient(patient_id, user):
+        logger.warning("Resource access denied: outside the agent scope",
+                       extra={"user_id": str(user.id), "resource": resource_label})
+        raise not_found
+
     created_by = None
     patient = None
     try:
@@ -111,6 +120,8 @@ async def authorize_resolved_patient(
 # Resolvers: object id -> owning patient_id. Return None on any failure.
 # ---------------------------------------------------------------------------
 async def resolve_study_patient_id(study_id, study_service) -> Optional[str]:
+    if not _agent_scope.allows_study(study_id):           # RC-121: a study outside the agent scope does not resolve
+        return None
     try:
         study = await study_service.get_study(study_id, include_stats=False)
     except Exception:
@@ -174,6 +185,8 @@ async def resolve_segmentation_patient_id(segmentation_id, segmentation_service)
     if file_id is None and isinstance(metadata, dict):
         file_id = metadata.get("file_id")
     if not file_id:
+        return None
+    if not _agent_scope.allows_storage_path(str(file_id)):  # RC-121: a segmentation of another study
         return None
     return extract_patient_id_from_path(str(file_id))
 
@@ -332,7 +345,7 @@ async def authorize_list_scope(
     """
     from app.security.models import UserRole
 
-    if user.role == UserRole.ADMIN:
+    if user.role == UserRole.ADMIN and not _agent_scope.scope_active():   # RC-121: no archive-wide agent listing
         return
 
     if patient_id is not None:
@@ -376,7 +389,7 @@ async def authorize_file_scope(
     from app.security.models import UserRole
     from app.security.storage_access import extract_patient_id_from_path
 
-    if user.role == UserRole.ADMIN:
+    if user.role == UserRole.ADMIN and not _agent_scope.scope_active():   # RC-121
         return
 
     ids = [f for f in (file_ids or []) if f]
@@ -390,6 +403,8 @@ async def authorize_file_scope(
         )
 
     for file_id in ids:
+        if not _agent_scope.allows_storage_path(str(file_id)):   # RC-121: a file of another study
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
         patient_id = extract_patient_id_from_path(str(file_id))
         await authorize_resolved_patient(
             patient_id=patient_id, resource_label="Segmentation", user=user,

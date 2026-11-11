@@ -217,8 +217,10 @@ def test_rc119_review3_render_html_refuses_an_invalid_record_and_escapes_every_v
                                      RT.Verdict("pass", "x", 0, None), RT.Verdict("maybe", "x")])
 def test_rc110_review3_malformed_verdict_fails_closed_and_is_audited(registry, audit_events, verdict):
     rt = RT.AgentRuntime(registry, T.Tracer(T.NoopExporter()), verifier=lambda d, c: verdict)
+    # Amended for the fifth review of PR #79 (finding 1): the answer states its normal end; there is no default.
     res = rt.run("test-agent", model_client=H.ScriptedModel([RT.ModelResponse("model-current", "Seven lesions.",
-                                                                              input_tokens=1, output_tokens=1)]),
+                                                                              input_tokens=1, output_tokens=1,
+                                                                              stop_reason="end_turn")]),
                  scope=SCOPE, system="s", user_content="u")
     assert res.status == "failed" and res.code == RefusalCode.VERIFIER_FAILED and res.text is None
     assert [e for e in audit_events if e.get("event") == "agent.run"][-1]["outcome"] == "failure"

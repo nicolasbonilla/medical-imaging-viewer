@@ -1,0 +1,43 @@
+"""
+The run's study-scoped capability, as the tool layer sees it — RC-121 (HAZ-021), REQ-AGT-008.
+
+DRAFT, PENDING owner approval. Fifth review of PR #79 (structural finding): the run scope is enforced at the
+SOURCE. For an agent whose tools reach the backend (``requires_backend_scope`` in agents.json), the backend
+issues a short-lived capability for the run's patient and studies (``app.security.agent_scope``, after its own
+CAPA-009 authorization of each study). The runtime holds it in ``RunScope.capability`` and makes it current
+around every tool call; the backend client (``app.mcp._backend``) sends it in ``CAPABILITY_HEADER`` with every
+request; the backend then refuses any object outside the capability in the same object-level checks that
+already protect every route (404, as for an object the clinician may not see). The model never sees the
+capability, and a tool cannot widen it: it is signed by the backend and bound to the clinician.
+
+The id walk of ``untrusted.py`` (RC-114) stays as a second, defence-in-depth layer.
+
+Standard library only (the platform has no third-party dependency).
+
+@module agent_platform.capability
+"""
+
+from __future__ import annotations
+
+import contextlib
+import contextvars
+from typing import Iterator, Optional
+
+CAPABILITY_HEADER = "X-MSTool-Agent-Scope"
+
+_CURRENT: "contextvars.ContextVar[Optional[str]]" = contextvars.ContextVar("mstool_agent_capability", default=None)
+
+
+def current_capability() -> Optional[str]:
+    """The capability of the run whose tool is executing now, or None outside a tool call."""
+    return _CURRENT.get()
+
+
+@contextlib.contextmanager
+def capability_context(token: Optional[str]) -> Iterator[None]:
+    """Make ``token`` current for the enclosed tool call (worker threads started inside inherit it)."""
+    reset = _CURRENT.set(token if isinstance(token, str) and token else None)
+    try:
+        yield
+    finally:
+        _CURRENT.reset(reset)

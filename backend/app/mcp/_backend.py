@@ -24,6 +24,8 @@ HTTP transport would expose that token to any local process or web page able to 
 import os
 from typing import Optional
 
+from app.agent_platform.capability import CAPABILITY_HEADER, current_capability
+
 # Routes that only compute and return, AND either authorize every object they reference
 # (RC-029) or reference none. Each was checked to store nothing (CAPA-008 §2):
 # - compare / longitudinal compare: authorize_mask_specs, return metrics, store nothing;
@@ -98,7 +100,25 @@ def _api_base() -> str:
 
 def _headers() -> dict:
     token = os.environ.get("API_SERVICE_TOKEN", "")
-    return {"Authorization": f"Bearer {token}"} if token else {}
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    # RC-121 (fifth review of PR #79): inside an agent run, the run's study-scoped capability goes with EVERY
+    # request; the backend then refuses any object outside the run's patient and studies.
+    capability = current_capability()
+    if capability:
+        headers[CAPABILITY_HEADER] = capability
+    return headers
+
+
+# Tests only: an in-process transport (httpx.ASGITransport) instead of the network.
+_TRANSPORT = None
+
+
+def _client(timeout: float):
+    import httpx
+    kwargs = {"timeout": timeout}
+    if _TRANSPORT is not None:
+        kwargs["transport"] = _TRANSPORT
+    return httpx.AsyncClient(**kwargs)
 
 
 def check_compute_only(path: str) -> None:
@@ -111,8 +131,7 @@ def check_compute_only(path: str) -> None:
 
 async def api_get(path: str, params: Optional[dict] = None, timeout: float = 60.0) -> dict:
     """Authenticated GET as the operating clinician; direct identifiers are removed."""
-    import httpx
-    async with httpx.AsyncClient(timeout=timeout) as client:
+    async with _client(timeout) as client:
         response = await client.get(f"{_api_base()}/api/v1{path}", params=params, headers=_headers())
         response.raise_for_status()
         return assistant_view(response.json())
@@ -121,8 +140,7 @@ async def api_get(path: str, params: Optional[dict] = None, timeout: float = 60.
 async def api_post_compute(path: str, json_data: Optional[dict] = None, timeout: float = 120.0) -> dict:
     """Authenticated POST to a compute-only route; any other route is refused before sending."""
     check_compute_only(path)
-    import httpx
-    async with httpx.AsyncClient(timeout=timeout) as client:
+    async with _client(timeout) as client:
         response = await client.post(f"{_api_base()}/api/v1{path}", json=json_data, headers=_headers())
         response.raise_for_status()
         return assistant_view(response.json())

@@ -17,7 +17,11 @@ so the platform does not ask it to:
    close its ``<untrusted_data>`` block or open a fake system or tool tag; length capped with a visible
    mark; the SHA-256 of the ORIGINAL text kept for the trace.
 3. Tool calls: every id argument must belong to the run's study (``RunScope``), whatever the model was
-   told; an undeclared argument ending in ``_id`` is scoped too.
+   told; an undeclared argument ending in ``_id`` is scoped too. Fifth review of PR #79 (structural finding):
+   the PRIMARY scope control is at the source — the backend refuses any object outside the run's capability
+   (RC-121, ``agent_platform.capability``, ``app.security.agent_scope``); this module's id walk (RC-114) is the
+   SECOND, defence-in-depth layer, driven by each tool's declared output schema (resource, actor and exempt
+   fields), with no further id pattern.
 4. Tool results: plain JSON only (no NaN or infinity), bounded size and depth; a result that carries an
    id of another study is refused WHOLE (a tool that returns another patient's data is compromised);
    direct identifiers and unconfirmed activity flags are removed (``app.mcp._backend.assistant_view``, the
@@ -32,6 +36,7 @@ so the platform does not ask it to:
 
 from __future__ import annotations
 
+import functools
 import json
 import math
 import re
@@ -137,8 +142,33 @@ class QuotedData:
     flags: Tuple[str, ...]
 
 
+# Fifth review of PR #79, finding 3: look-alike brackets (U+FF1C/FF1E, U+2039/203A, U+3008/3009, U+27E8/27E9,
+# U+2329/232A, U+FE64/FE65, U+02C2/02C3, the Canadian syllabics U+1433/1438, ...) could forge a closing tag. The
+# data is NFKC-normalised (full-width and small forms become ASCII ``< >``), then ``& < >`` are escaped and EVERY
+# remaining bracket-like character is written as a numeric reference, so no character in the block body looks like
+# a delimiter in any script.
+_BRACKET_WORDS = ("ANGLE BRACKET", "ANGLE QUOTATION MARK", "LESS-THAN", "GREATER-THAN", "CHEVRON", "ARROWHEAD")
+
+
+@functools.lru_cache(maxsize=1)
+def bracket_like() -> FrozenSet[str]:
+    """Every character of planes 0-1 that is, or looks like, an angle bracket (computed once)."""
+    out = set("<>\u1433\u1438\u02c2\u02c3")
+    for cp in range(0x80, 0x20000):
+        if 0xD800 <= cp < 0xE000:
+            continue
+        ch = chr(cp)
+        name = unicodedata.name(ch, "")
+        folded = unicodedata.normalize("NFKC", ch)
+        if "<" in folded or ">" in folded or any(w in name for w in _BRACKET_WORDS):
+            out.add(ch)
+    return frozenset(out)
+
+
 def _escape(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    t = unicodedata.normalize("NFKC", text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    looks = bracket_like()
+    return "".join(f"&#x{ord(c):x};" if c in looks else c for c in t)
 
 
 def quote_untrusted(text: Any, source: str, *, max_chars: int = DEFAULT_MAX_CHARS,
@@ -214,6 +244,9 @@ class RunScope:
 
     study_key: str
     resource_ids: FrozenSet[str]
+    # RC-121 (fifth review of PR #79, structural finding): the study-scoped capability the BACKEND issued for this
+    # run; sent by the tool layer with every backend request; the backend refuses anything outside it.
+    capability: Optional[str] = None
 
     def allows(self, value: Any) -> bool:
         return isinstance(value, str) and (value in self.resource_ids or value == self.study_key)
@@ -228,7 +261,8 @@ class RunScope:
 #   a storage object path that embeds the patient and study UUIDs).
 # - RESOURCE_KEYS: keys whose values ARE resource ids whatever they look like (strings, numbers, lists); a tool
 #   may declare more (``result_resource_keys``, from its real output schema).
-# - ACTOR keys (created_by, reviewed_by_id, user_id, ...) name people, not study resources: not scope-checked.
+# - ACTOR fields name people, not study resources. Fifth review of PR #79: they are the fields the TOOL declares
+#   (``output.actor_fields``) — no platform-wide list — and only an actor-id string under one is exempt.
 # - Location keys (*_path, *_uri, *_url) must hold an in-scope id as a whole; a storage location (gs://, s3://,
 #   storage URLs) anywhere refuses the value.
 STORAGE_LOCATION = re.compile(r"(?i)\b(?:gs|s3|file|ftp)://|https?://storage\.(?:googleapis|cloud\.google)\.com/")
@@ -253,11 +287,8 @@ RESOURCE_KEYS = frozenset({"segmentation_id", "file_id", "study_id", "patient_id
                            # fourth review, finding 2: *_by keys that name RESOURCES, not people
                            "superseded_by", "replaced_by", "supersedes", "replaces", "derived_from", "copied_from",
                            "merged_into"})
-# Fourth review, finding 2 (a verified BYPASS): only these keys name PEOPLE, and only a STRING that is an
-# actor id (a UUID or a system:<name> identity) is exempt — dicts and lists under them are walked.
-ACTOR_KEYS = frozenset({"created_by", "updated_by", "modified_by", "reviewed_by", "reviewed_by_id", "annotated_by",
-                        "uploaded_by", "signed_by", "approved_by", "confirmed_by", "requested_by", "user_id",
-                        "owner_id", "reviewer_id", "author_id", "uploader_id", "actor_id"})
+# Fourth review, finding 2 (a verified BYPASS): only a STRING that is an actor id (a UUID or a system:<name>
+# identity) under a declared actor field is exempt — dicts and lists under it are walked.
 ACTOR_ID = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|system:[a-z0-9-]{1,40}")
 _LOCATION_KEY = re.compile(r"(?i)(?:path|uri|url)$")
 
@@ -312,7 +343,7 @@ def _resource_value(value: Any, scope: RunScope, invalid: RefusalCode) -> Option
 
 
 def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode, resource_keys: FrozenSet[str],
-                exempt: Tuple[str, ...] = (), flags: Optional[list] = None,
+                exempt: Tuple[str, ...] = (), actor_keys: FrozenSet[str] = frozenset(), flags: Optional[list] = None,
                 skip_ids: bool = False) -> Optional[RefusalCode]:
     """Walk the WHOLE value once (RC-113, RC-114): JSON shape, storage locations, resource ids by value and by
     declared key, and the injection alarm for every string (collected in ``flags``)."""
@@ -325,20 +356,20 @@ def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode
             if not skip_ids and not _ids_in_scope(k, scope):
                 return RefusalCode.OUT_OF_SCOPE_RESOURCE
             # An exemption covers one STRING value only, never a subtree (fourth review, finding 2).
-            exempt_value = isinstance(v, str) and (k in exempt or (k in ACTOR_KEYS and bool(ACTOR_ID.fullmatch(v))))
+            exempt_value = isinstance(v, str) and (k in exempt or (k in actor_keys and bool(ACTOR_ID.fullmatch(v))))
             if not skip_ids and not exempt_value and (k in resource_keys or _LOCATION_KEY.search(k)):
                 bad = _resource_value(v, scope, invalid)
                 if bad:
                     return bad
             bad = _scope_walk(v, depth + 1, scope, invalid=invalid, resource_keys=resource_keys, exempt=exempt,
-                              flags=flags, skip_ids=skip_ids or exempt_value)
+                              actor_keys=actor_keys, flags=flags, skip_ids=skip_ids or exempt_value)
             if bad:
                 return bad
         return None
     if isinstance(value, list):
         for v in value:
             bad = _scope_walk(v, depth + 1, scope, invalid=invalid, resource_keys=resource_keys, exempt=exempt,
-                              flags=flags, skip_ids=skip_ids)
+                              actor_keys=actor_keys, flags=flags, skip_ids=skip_ids)
             if bad:
                 return bad
         return None
@@ -366,8 +397,10 @@ def _kind_ok(kind: str, value: Any) -> bool:
         return value is None or isinstance(value, str)
     if kind == "resource_ids":
         return isinstance(value, list) and all(isinstance(v, str) and v for v in value)
+    if kind.startswith("optional_"):                      # fifth review, finding 7: only these may be left empty
+        return value is None or _kind_ok(kind[len("optional_"):], value)
     if value is None:
-        return True                                       # every other declared argument may be left empty
+        return False                                      # a required argument has a value
     if kind == "string":
         return isinstance(value, str) and len(value) <= MAX_STRING_ARGUMENT
     if kind == "integer":
@@ -386,7 +419,8 @@ def _kind_ok(kind: str, value: Any) -> bool:
 def check_tool_arguments(tool: ToolEntry, arguments: Any, scope: RunScope) -> Decision:
     """RC-114 (review of PR #79, finding 5): (1) every id-like value anywhere in the arguments — top level,
     nested, in lists, plurals, path / uri / url — names a resource of the run's study; (2) the arguments match
-    the tool's declared schema: no undeclared key, every value of its declared kind, every required id given."""
+    the tool's declared schema: no undeclared key, every value of its declared kind, every REQUIRED argument
+    given (fifth review of PR #79, finding 7: required unless its kind is ``optional_*``)."""
     if not isinstance(arguments, Mapping):
         return Decision.refuse(RefusalCode.TOOL_ARGUMENTS_INVALID)
     declared_ids = frozenset(name for name, kind in tool.arguments if kind in RESOURCE_KINDS)
@@ -400,7 +434,7 @@ def check_tool_arguments(tool: ToolEntry, arguments: Any, scope: RunScope) -> De
         if kind is None or not _kind_ok(kind, value):
             return Decision.refuse(RefusalCode.TOOL_ARGUMENTS_INVALID)
     for name, kind in declared.items():
-        if kind == "resource_id" and name not in arguments:
+        if not kind.startswith("optional_") and name not in arguments:      # every required argument given
             return Decision.refuse(RefusalCode.TOOL_ARGUMENTS_INVALID)
     return Decision.ok()
 
@@ -421,9 +455,12 @@ def validate_tool_result(result: Any, *, tool: ToolEntry, scope: RunScope, max_b
     anywhere — by value, as a key, under a resource or location key — or a storage location refuses the WHOLE
     result. Third review of PR #79, finding 9: one walk (with the alarm once per string), one serialisation."""
     flags: list = []
+    if tool.output_type == "array" and not isinstance(result, list) or \
+            tool.output_type == "object" and not isinstance(result, Mapping):
+        return ToolResultCheck(False, RefusalCode.TOOL_RESULT_INVALID)          # not the declared output type
     bad = _scope_walk(result, 0, scope, invalid=RefusalCode.TOOL_RESULT_INVALID,
                       resource_keys=RESOURCE_KEYS | frozenset(tool.result_resource_keys),
-                      exempt=tool.result_exempt_keys, flags=flags)
+                      exempt=tool.result_exempt_keys, actor_keys=frozenset(tool.result_actor_keys), flags=flags)
     if bad:
         return ToolResultCheck(False, bad)
     cleaned = assistant_view(result)       # the MCP client's own rule: no identifier, no unconfirmed activity flag

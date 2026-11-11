@@ -2,15 +2,15 @@
  "schema": "mstool.agent-card/1",
  "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-002)",
  "agent_id": "ms-clinical-assistant",
- "card_version": "2026-11-11.1",
+ "card_version": "2026-11-11.2",
  "model": {
   "id": null,
   "control": "client",
   "note": "The model is chosen by the clinician's MCP client (Claude Desktop / Claude Code), not by MSTool: it is neither pinned nor recorded by the device. What MSTool controls is the servers' instructions, tool descriptions and tools, recorded below."
  },
  "sdk_pins": {
-  "fastmcp": "2.3.0",
-  "mcp": "1.12.4"
+  "fastmcp": "3.2.4",
+  "mcp": "1.30.0"
  },
  "parameters": {},
  "mcp": {
@@ -19,27 +19,132 @@
    "imaging-mcp (backend/app/mcp/imaging_server.py)"
   ],
   "transport": "stdio only (run_all.py); no HTTP transport",
-  "framework": "fastmcp==2.3.0 (pinned in backend/requirements.txt)",
-  "mcp_sdk_requirement": "mcp==1.12.4, pinned exactly in backend/requirements.txt (fastmcp 2.3.0 accepts mcp>=1.8.0,<2.0.0); the protocol revision spoken changes only when this pin changes",
+  "framework": "fastmcp==3.2.4 (pinned in backend/requirements.txt; was 2.3.0)",
+  "mcp_sdk_requirement": "mcp==1.30.0, pinned exactly in backend/requirements.txt (fastmcp 3.2.4 accepts mcp>=1.24.0,<2.0); the protocol revision spoken changes only when this pin changes",
   "observed": {
-   "mcp_sdk_version": "1.12.4",
-   "latest_protocol_version": "2025-06-18",
-   "where": "the CI job agent-platform (backend/requirements.txt install on ubuntu-latest), GitHub Actions run 42901365003, 2026-11-10",
-   "meaning": "the MCP revision the servers implement is 2025-06-18, older than the 2025-11-25 and 2026-07-28 revisions; fixed by the mcp pin until a re-validated upgrade (Integration_Plan P-7)"
+   "mcp_sdk_version": "1.30.0",
+   "latest_protocol_version": "2025-11-25",
+   "where": "read from the published mcp 1.30.0 wheel (sha256 666edb5009503e1047c9d60346a756f94b261f05cc2625f23d41c728ffc484d0, mcp/types.py LATEST_PROTOCOL_VERSION), 2026-11-11; the CI install is checked against it by test_rc117_mcp_sdk_as_installed_matches_the_card",
+   "meaning": "the servers now implement MCP revision 2025-11-25 (supported: 2024-11-05, 2025-03-26, 2025-06-18, 2025-11-25); the 2026-07-28 revision is in the mcp 2.x line, which needs Starlette >= 1.0.1"
   },
-  "advisories": "read on OSV 2026-11-11. fastmcp 2.3.0: 8 advisories fixed in later releases (1 critical: SSRF and path traversal in the OpenAPI provider; high: OAuth proxy and auth integration, MCP <1.23 dependency); mcp 1.12.4: 4 advisories, all in the HTTP and WebSocket transports (DNS rebinding, session principal, session accumulation, Host/Origin). The servers use none of these parts: stdio transport only, no OpenAPI provider, no OAuth, no installer; the deployed app does not import fastmcp. An upgrade is a SOUP change for the owner to decide (SOUP-AI-002, Integration_Plan P-7)",
-  "spec_compared_with": "MCP specification revisions 2025-11-25 and 2026-07-28 (research_notes, Vanguardia de los agentes MSTool, Q2); per-request user authorization of the 2026-07-28 revision is not implemented: the servers use the clinician's own token (CAPA-008)"
+  "spec_compared_with": "MCP specification revisions 2025-11-25 and 2026-07-28 (research_notes, Vanguardia de los agentes MSTool, Q2); per-request user authorization of the 2026-07-28 revision is not implemented: the servers use the clinician's own token (CAPA-008)",
+  "advisories_closed": [
+   {
+    "id": "GHSA-vv7q-7jx5-f767",
+    "package": "fastmcp",
+    "severity": "critical",
+    "fixed_in": "3.2.0",
+    "summary": "SSRF and path traversal in the OpenAPI provider",
+    "was_in": "fastmcp 2.3.0"
+   },
+   {
+    "id": "GHSA-5h2m-4q8j-pqpj",
+    "package": "fastmcp",
+    "severity": "high",
+    "fixed_in": "2.14.2",
+    "summary": "OAuth proxy token reuse across MCP servers",
+    "was_in": "fastmcp 2.3.0"
+   },
+   {
+    "id": "GHSA-c2jp-c369-7pvx",
+    "package": "fastmcp",
+    "severity": "high",
+    "fixed_in": "2.13.0",
+    "summary": "auth integration confused deputy (account takeover)",
+    "was_in": "fastmcp 2.3.0"
+   },
+   {
+    "id": "GHSA-rww4-4w9c-7733",
+    "package": "fastmcp",
+    "severity": "high",
+    "fixed_in": "3.2.0",
+    "summary": "missing consent verification in the OAuth proxy callback",
+    "was_in": "fastmcp 2.3.0"
+   },
+   {
+    "id": "GHSA-rcfx-77hg-w2wv",
+    "package": "fastmcp",
+    "severity": "high",
+    "fixed_in": "2.14.0",
+    "summary": "depended on an MCP SDK without DNS rebinding protection",
+    "was_in": "fastmcp 2.3.0"
+   },
+   {
+    "id": "GHSA-m8x7-r2rg-vh5g",
+    "package": "fastmcp",
+    "severity": "moderate",
+    "fixed_in": "3.2.0",
+    "summary": "command injection in the Gemini CLI installer",
+    "was_in": "fastmcp 2.3.0"
+   },
+   {
+    "id": "GHSA-rj5c-58rq-j5g5",
+    "package": "fastmcp",
+    "severity": "moderate",
+    "fixed_in": "2.13.0",
+    "summary": "Windows command injection in the Cursor installer",
+    "was_in": "fastmcp 2.3.0"
+   },
+   {
+    "id": "GHSA-mxxr-jv3v-6pgc",
+    "package": "fastmcp",
+    "severity": "moderate",
+    "fixed_in": "2.13.0",
+    "summary": "reflected XSS in the client's OAuth callback page",
+    "was_in": "fastmcp 2.3.0"
+   },
+   {
+    "id": "GHSA-9h52-p55h-vw2f",
+    "package": "mcp",
+    "severity": "high",
+    "fixed_in": "1.23.0",
+    "summary": "DNS rebinding protection not enabled by default (HTTP servers)",
+    "was_in": "mcp 1.12.4"
+   },
+   {
+    "id": "GHSA-jpw9-pfvf-9f58",
+    "package": "mcp",
+    "severity": "high",
+    "fixed_in": "1.27.2",
+    "summary": "HTTP transports serve session requests without verifying the principal",
+    "was_in": "mcp 1.12.4"
+   },
+   {
+    "id": "GHSA-vj7q-gjh5-988w",
+    "package": "mcp",
+    "severity": "high",
+    "fixed_in": "1.28.1",
+    "summary": "WebSocket server transport without Host/Origin validation",
+    "was_in": "mcp 1.12.4"
+   },
+   {
+    "id": "GHSA-84m7-p3x7-pcfv",
+    "package": "mcp",
+    "severity": "moderate",
+    "fixed_in": "1.30.0",
+    "summary": "unbounded session accumulation in the StreamableHTTP transport",
+    "was_in": "mcp 1.12.4"
+   }
+  ],
+  "advisories_open": [
+   {
+    "id": "GHSA-7xgj-8392-5q4r",
+    "package": "fastmcp",
+    "severity": "moderate",
+    "affected": "3.0.0 to 3.4.9",
+    "fixed_in": "3.4.10",
+    "summary": "post-transform component authorization is skipped on direct calls",
+    "applies": false,
+    "why": "the servers use no component authorization policy, no transform and no proxy template (stdio only, the clinician's own token; the backend authorizes every object and, under RC-121, the run's scope). The fix (fastmcp >= 3.4.10) needs Starlette >= 1.0.1, i.e. FastAPI >= 0.13x for the whole backend: an owner decision (D-AGT-8)"
+   }
+  ],
+  "advisories_source": "OSV (api.osv.dev), read 2026-11-11, for fastmcp 2.3.0, 3.2.4 and mcp 1.12.4, 1.30.0"
  },
  "prompt_templates": {
   "agent_platform.untrusted.UNTRUSTED_DATA_RULE": {
    "sha256": "b0655b49777c0a75962cc6c9fd63edcfa36e7a67d6884fc7f08ff34a0e025300",
    "chars": 200,
    "source": "backend/app/agent_platform/untrusted.py"
-  },
-  "mcp.imaging_server.description": {
-   "sha256": "ef85b2bb664acc4595ded40280a70e3d06b683d236886d9d7c6dae236870243a",
-   "chars": 102,
-   "source": "backend/app/mcp/imaging_server.py"
   },
   "mcp.imaging_server.resource[imaging://supported-formats]": {
    "sha256": "47f7328d93383014552a690d2950562ec2108464f797223d6484157d22cc6577",
@@ -70,11 +175,6 @@
    "sha256": "eef4d59b6afa866928350c72ba557363a0c15d34309279ed8a49da9cfef4f114",
    "chars": 636,
    "source": "backend/app/mcp/imaging_server.py"
-  },
-  "mcp.ms_clinical_server.description": {
-   "sha256": "1752c84cfb897285029ba7cec056559e5eb2789afb6be4013b3aab10d7058eda",
-   "chars": 230,
-   "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.instructions": {
    "sha256": "d1004aa3e0c8557fdf7caddd3e4b6b79c02fcbf97dc8007115b8eb750f7aba7c",
@@ -150,6 +250,12 @@
    "date": "2026-11-11",
    "card_version": "2026-11-11.1",
    "what": "fourth review of PR #79, finding 3: mcp pinned exactly (1.12.4) in requirements.txt and recorded in sdk_pins; advisories of fastmcp 2.3.0 and mcp 1.12.4 recorded",
+   "approved_by": null
+  },
+  {
+   "date": "2026-11-11",
+   "card_version": "2026-11-11.2",
+   "what": "fifth review of PR #79, D-AGT-7: fastmcp 2.3.0 -> 3.2.4 and mcp 1.12.4 -> 1.30.0 (protocol 2025-06-18 -> 2025-11-25), closing 12 published advisories (one moderate fastmcp advisory left, not applicable); the servers' `description=` argument, which 2.3.0 silently ignored and 3.x refuses, is no longer passed, so it is no longer recorded as text sent to the client; template hashes refreshed",
    "approved_by": null
   }
  ]

@@ -19,7 +19,9 @@ from app.core.security import (
 from app.core.exception_handlers import register_exception_handlers
 from app.core.container import init_container
 from app.api.routes import auth, imaging, segmentation, segmentation_regions, segmentation_analysis, websocket, authentication, patients, studies, documents, ai_segmentation, ai_report, clinical_tools, dicomweb, fhir, conformal
+from app.api.routes import agent_scope
 from app.models.schemas import HealthCheck
+from app.security.agent_scope import AgentScopeMiddleware
 
 settings = get_settings()
 
@@ -148,6 +150,11 @@ logger.info("DI Container initialized and attached to app")
 
 # Register exception handlers (MUST be before routes)
 register_exception_handlers(app)
+
+# RC-121 (HAZ-021, agent platform; DRAFT, PENDING owner approval): an AI agent's study-scoped capability.
+# Added first, so it is the INNERMOST layer: the audit and logging layers see its refusals, and the scope it sets
+# is current for the routes' object-level checks. Requests without the header pass unchanged.
+app.add_middleware(AgentScopeMiddleware)
 
 # Add IP blacklist middleware (ISO 27001 A.13.1.3 - MUST be first to block malicious IPs)
 app.add_middleware(IPBlacklistMiddleware)
@@ -313,6 +320,9 @@ app.include_router(dicomweb.router, prefix=settings.API_V1_STR)
 
 # HL7 FHIR interoperability (ImagingStudy, DiagnosticReport, Patient)
 app.include_router(fhir.router, prefix=settings.API_V1_STR)
+
+# Agent platform: study-scoped capability for an agent run (RC-121; issues a signed token, stores nothing)
+app.include_router(agent_scope.router, prefix=settings.API_V1_STR)
 
 
 if __name__ == "__main__":

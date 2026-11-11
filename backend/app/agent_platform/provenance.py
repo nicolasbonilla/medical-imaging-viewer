@@ -28,7 +28,7 @@ from __future__ import annotations
 import difflib
 import html
 import re
-from dataclasses import asdict, dataclass, replace
+from dataclasses import MISSING, asdict, dataclass, fields, replace
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from app.agent_platform.hashing import sha256_text as _sha
@@ -83,16 +83,30 @@ class ProvenanceDocument:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "ProvenanceDocument":
-        if data.get("schema") != SCHEMA:
-            raise ValueError("unknown provenance schema")
-        segments = tuple(Segment(**s) for s in data["segments"])
-        for s in segments:                                  # third review of PR #79, finding 7
-            if not segment_is_valid(s):
+        """Load a stored record. Fifth review of PR #79, finding 8: every malformed input raises ValueError (never
+        TypeError or KeyError): the record must be a mapping of this schema whose ``segments`` is a list of
+        mappings with exactly the Segment fields (the required ones present, no other key)."""
+        if not isinstance(data, Mapping) or data.get("schema") != SCHEMA:
+            raise ValueError("not a provenance record of schema " + SCHEMA)
+        if set(data) - {"schema", "segments"} or not isinstance(data.get("segments"), list):
+            raise ValueError("a provenance record has exactly 'schema' and a list of 'segments'")
+        segments = []
+        for raw in data["segments"]:
+            if not isinstance(raw, Mapping) or not all(isinstance(k, str) for k in raw):
+                raise ValueError("a provenance segment is not a mapping")
+            missing, extra = _REQUIRED_FIELDS - set(raw), set(raw) - _SEGMENT_FIELDS
+            if missing or extra:
+                raise ValueError(f"a provenance segment has missing {sorted(missing)} or unknown {sorted(extra)} fields")
+            segment = Segment(**raw)
+            if not segment_is_valid(segment):              # third review of PR #79, finding 7
                 raise ValueError("a provenance segment is not valid (author, kind, text or hash)")
-        return cls(segments)
+            segments.append(segment)
+        return cls(tuple(segments))
 
 
 KINDS = frozenset({"heading", "sentence", "list_item", "table_row", "blank"})
+_SEGMENT_FIELDS = frozenset(f.name for f in fields(Segment))
+_REQUIRED_FIELDS = frozenset(f.name for f in fields(Segment) if f.default is MISSING)
 
 
 def segment_is_valid(s: Segment) -> bool:

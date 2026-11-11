@@ -85,7 +85,8 @@ def test_rc117_a_parameter_change_without_the_card_is_caught():
 def test_rc117_config_defaults_are_read_from_the_source():
     assert C.config_default("CLAUDE_MODEL") == "claude-sonnet-4-5-20250929"
     assert C.config_default("CLAUDE_MAX_TOKENS") == 4096
-    assert C.requirement_pin("anthropic") == "0.44.0" and C.requirement_pin("fastmcp") == "2.3.0"
+    # Amended for the fifth review of PR #79 (D-AGT-7): fastmcp upgraded from 2.3.0 to 3.2.4.
+    assert C.requirement_pin("anthropic") == "0.44.0" and C.requirement_pin("fastmcp") == "3.2.4"
 
 
 def test_rc117_mcp_sdk_as_installed_matches_the_card():

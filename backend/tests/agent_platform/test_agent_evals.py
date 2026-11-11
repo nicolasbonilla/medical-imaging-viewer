@@ -89,7 +89,9 @@ def grade_assistant_replay(case, variant):
     responses = [H.response(step.get("text", ""), model=H.CLIENT_MODEL, tool_calls=step.get("tool_calls", ()))
                  for step in variant["transcript"]]
     res = rt.run("ms-clinical-assistant", model_client=H.ScriptedModel(responses, provider="client"),
-                 scope=RunScope("study-A", frozenset({"seg-A", "seg-B", "file-A", "file-B"})),
+                 # amended for the fifth review of PR #79 (RC-121): the run carries the backend's capability
+                 scope=RunScope("study-A", frozenset({"seg-A", "seg-B", "file-A", "file-B"}),
+                                capability=H.EVAL_CAPABILITY),
                  system="Read-only assistant.", user_content="Summarise the measurements of this study.")
     problems = []
     if res.status != case.expect["status"]:

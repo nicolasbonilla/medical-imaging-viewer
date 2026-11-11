@@ -59,9 +59,10 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence, Tuple
 
 from app.agent_platform import provenance as prov
+from app.agent_platform.capability import capability_context
 from app.agent_platform.registry import (FAILURE_CODES, AgentRegistry, RefusalCode, audit_actor, pseudonymise,
                                          within_run)
-from app.agent_platform.tracing import Tracer
+from app.agent_platform.tracing import VERDICTS, Tracer
 from app.agent_platform.untrusted import (UNTRUSTED_DATA_RULE, RunScope, check_tool_arguments, quote_untrusted,
                                           validate_tool_result)
 
@@ -86,6 +87,9 @@ class ModelRequest:
     messages: Tuple[Dict[str, Any], ...]
     tools: Tuple[str, ...]
     max_tokens: int
+    # Fifth review of PR #79, finding 4: the definitions the provider receives for those tools (name, access,
+    # declared arguments and output). They are part of the input and of the worst-case reservation.
+    tool_definitions: Tuple[Dict[str, Any], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -95,7 +99,9 @@ class ModelResponse:
     tool_calls: Tuple[ToolCall, ...] = ()
     input_tokens: Any = None
     output_tokens: Any = None
-    stop_reason: Optional[str] = "end_turn"
+    # Fifth review of PR #79, finding 1: no default end. A provider adapter that does not report how the answer
+    # ended gives None, which is never a normal end (TEXT_END / TOOL_END): nothing is delivered.
+    stop_reason: Optional[str] = None
 
 
 class ModelClient(Protocol):
@@ -134,12 +140,21 @@ class RunResult:
     alarms: Tuple[str, ...] = ()
 
 
-def estimate_tokens(system: str, messages: Sequence[Mapping[str, Any]]) -> int:
+TOOL_DEFINITION_OVERHEAD_TOKENS = 256      # per tool: the provider's own framing and the tool's description
+
+
+def estimate_tokens(system: str, messages: Sequence[Mapping[str, Any]],
+                    tools: Sequence[Mapping[str, Any]] = ()) -> int:
     """A deliberately HIGH estimate: one token per 2 UTF-8 bytes (real tokenizers average about 4 characters
-    per token in English), plus a per-message overhead. Used for the limits and the worst-case cost."""
+    per token in English), plus a per-message overhead. Used for the limits and the worst-case cost. Fifth review
+    of PR #79, finding 4: the tool definitions sent with the request are counted too (their JSON plus a fixed
+    overhead per tool)."""
     total = math.ceil(len((system or "").encode("utf-8")) / 2) + 8
     for m in messages:
         total += math.ceil(len(json.dumps(m, ensure_ascii=False, default=str).encode("utf-8")) / 2) + 8
+    for t in tools or ():
+        total += math.ceil(len(json.dumps(t, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")) / 2)
+        total += TOOL_DEFINITION_OVERHEAD_TOKENS
     return total
 
 
@@ -147,13 +162,13 @@ def _valid_count(n: Any) -> bool:
     return isinstance(n, int) and not isinstance(n, bool) and 0 <= n <= 10_000_000
 
 
-def audit_outcome(status: str) -> str:
+def audit_outcome(status: str, code: Any = None) -> str:
+    """Fifth review of PR #79, finding 9: the outcome is derived from the CODE — a code of
+    ``registry.FAILURE_CODES`` (the model, a tool, the verifier or the platform did not work) is a failure, any
+    other refusal a denial; only a delivered run is a success."""
     if status == "delivered":
         return "success"
-    return "failure" if status == "failed" else "denied"
-
-
-VERDICTS = frozenset({"pass", "withheld", "blocked"})
+    return "failure" if code in FAILURE_CODES else "denied"
 
 
 def verdict_is_valid(verdict: Any) -> bool:
@@ -168,7 +183,8 @@ def verdict_is_valid(verdict: Any) -> bool:
 def scope_is_valid(scope: Any) -> bool:
     """Fourth review of PR #79, finding 4: a run's scope is a RunScope of strings."""
     return (isinstance(scope, RunScope) and isinstance(scope.study_key, str) and bool(scope.study_key)
-            and isinstance(scope.resource_ids, frozenset) and all(isinstance(r, str) for r in scope.resource_ids))
+            and isinstance(scope.resource_ids, frozenset) and all(isinstance(r, str) for r in scope.resource_ids)
+            and (scope.capability is None or (isinstance(scope.capability, str) and bool(scope.capability))))
 
 
 def untrusted_is_valid(untrusted: Any) -> bool:
@@ -177,6 +193,19 @@ def untrusted_is_valid(untrusted: Any) -> bool:
         return False
     return all(isinstance(item, (list, tuple)) and len(item) == 2 and isinstance(item[0], str)
                and isinstance(item[1], str) for item in untrusted)
+
+
+def _binds(fn: Callable, arguments: Mapping[str, Any]) -> bool:
+    """True when ``fn(**arguments)`` binds to the function's signature (or the signature cannot be read)."""
+    try:
+        sig = inspect.signature(fn)
+    except (TypeError, ValueError):
+        return True
+    try:
+        sig.bind(**dict(arguments))
+    except TypeError:
+        return False
+    return True
 
 
 def response_is_malformed(response: Any) -> bool:
@@ -294,7 +323,7 @@ class AgentRuntime:
             settle_open_reservation()
             audit_run("failure", RefusalCode.RUN_ABORTED)
             raise
-        audit_run(audit_outcome(result.status), result.code)
+        audit_run(audit_outcome(result.status, result.code), result.code)
         return result
 
     @staticmethod
@@ -338,6 +367,10 @@ class AgentRuntime:
             return stop("refused", RefusalCode.PARAMETER_OVERRIDE)
         if spec.requires_verifier and self.verifier is None:
             return stop("refused", RefusalCode.VERIFIER_MISSING)
+        # Fifth review of PR #79 (structural finding), RC-121: the tools of this agent reach the backend only
+        # with the study-scoped capability the backend issued for this run; the backend enforces it.
+        if spec.requires_backend_scope and not scope.capability:
+            return stop("refused", RefusalCode.BACKEND_SCOPE_MISSING)
         if model_id is None:
             if not spec.allowed_models:
                 return stop("refused", RefusalCode.UNKNOWN_MODEL)
@@ -364,9 +397,10 @@ class AgentRuntime:
             first += "\n" + "\n".join(q.block for q in quoted)
         messages: List[Dict[str, Any]] = [{"role": "user", "content": first}]
         final_text: Optional[str] = None
+        tool_definitions = reg.tool_definitions(sorted(spec.allowed_tools))
 
         for step in range(1, spec.max_steps + 1):
-            est_in = estimate_tokens(system, messages)
+            est_in = estimate_tokens(system, messages, tools=tool_definitions)
             d = reg.authorize_model_call(agent_id, model_id, study_key=scope.study_key, input_tokens=est_in,
                                          max_output_tokens=max_tokens, trace_id=tid)
             if not d.allowed:
@@ -374,7 +408,8 @@ class AgentRuntime:
             state["reservation"] = d.reservation              # settled below, or at the run boundary on a fault
             warnings.extend(w for w in d.warnings if w not in warnings)
             request = ModelRequest(model_id=model_id, system=system, messages=tuple(dict(m) for m in messages),
-                                   tools=tuple(sorted(spec.allowed_tools)), max_tokens=max_tokens)
+                                   tools=tuple(sorted(spec.allowed_tools)), max_tokens=max_tokens,
+                                   tool_definitions=tool_definitions)
             res.steps = step
             worst = reg.estimate_cost_usd(model_id, est_in, max_tokens) or 0.0
             with self.tracer.chat_span(model_id, provider=getattr(model_client, "provider", "unknown"),
@@ -401,8 +436,12 @@ class AgentRuntime:
                 usage_ok = _valid_count(response.input_tokens) and _valid_count(response.output_tokens)
                 cost = (reg.estimate_cost_usd(model_id, response.input_tokens, response.output_tokens) if usage_ok
                         else None)
-                reg.settle(d.reservation, cost)                 # None: impossible usage, the worst case stays
+                overrun = reg.settle(d.reservation, cost)       # None: impossible usage, the worst case stays
                 state.pop("reservation", None)
+                if overrun:                                     # finding 4: flagged; the caps refuse the next call
+                    chat.set("mstool.cost.reservation_exceeded", True)
+                    if "cost_reservation_exceeded" not in warnings:
+                        warnings.append("cost_reservation_exceeded")
                 res.cost_usd += worst if cost is None else cost
                 chat.set("gen_ai.response.model", response.model_id)
                 if usage_ok:
@@ -429,6 +468,10 @@ class AgentRuntime:
             if not calls:
                 final_text = response.text if isinstance(response.text, str) else ""
                 break
+            if step == spec.max_steps:
+                # Fifth review of PR #79, finding 2: the results of tools called on the last allowed step could
+                # never reach the model, so they are not run at all.
+                return stop("abstained", RefusalCode.STEP_LIMIT)
             messages.append({"role": "assistant", "content": response.text or "",
                              "tool_calls": [{"id": c.call_id, "name": c.name, "arguments": dict(c.arguments)
                                              if isinstance(c.arguments, Mapping) else None} for c in calls]})
@@ -451,8 +494,14 @@ class AgentRuntime:
                     if fn is None:
                         ts.set("mstool.refusal.code", str(RefusalCode.UNKNOWN_TOOL))
                         return stop("refused", RefusalCode.UNKNOWN_TOOL)
+                    if not _binds(fn, call.arguments):
+                        # Fifth review of PR #79, finding 7: a malformed call is refused before the tool runs
+                        # (a denial), never audited as the tool's own failure.
+                        ts.set("mstool.refusal.code", str(RefusalCode.TOOL_ARGUMENTS_INVALID))
+                        return stop("refused", RefusalCode.TOOL_ARGUMENTS_INVALID)
                     try:
-                        raw = await self._off_loop(fn, blocking_model, kwargs=dict(call.arguments))
+                        with capability_context(scope.capability):       # RC-121: sent with every backend request
+                            raw = await self._off_loop(fn, blocking_model, kwargs=dict(call.arguments))
                     except Exception as exc:  # noqa: BLE001 — a failing tool: no draft
                         ts.fail(type(exc).__name__)
                         return stop("failed", RefusalCode.TOOL_FAILED)

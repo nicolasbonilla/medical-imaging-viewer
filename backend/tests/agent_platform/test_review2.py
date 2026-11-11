@@ -143,8 +143,9 @@ def test_rc114_review2_production_registry_declares_the_result_resource_keys_of_
     resources at all; what a tool declares instead is which result keys DO hold resource ids (its real schema)."""
     tools = H.production_data()["tools"]
     assert all("result_numeric_keys" not in t for t in tools.values())
-    assert tools["compare_longitudinal"]["result_resource_keys"] == ["id"]
-    assert tools["list_segmentations"]["result_resource_keys"] == ["id"]
+    # Amended for the fifth review of PR #79: the result fields are declared in each tool's typed output schema.
+    assert tools["compare_longitudinal"]["output"]["resource_fields"] == ["id"]
+    assert tools["list_segmentations"]["output"]["resource_fields"] == ["id"]
 
 
 # ================================================================== 4. malformed provider response

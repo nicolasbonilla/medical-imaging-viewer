@@ -338,6 +338,16 @@ def test_rc114_review5_the_walk_reads_the_declared_schema_not_new_patterns():
     assert Path(U.__file__).read_text(encoding="utf-8").count("re.compile(") <= 7, "no new id pattern"
 
 
+def test_rc114_review5_the_declared_output_type_is_enforced():
+    """Added WITH the fix (not failing-first): a result of another type than the tool's declared output refuses."""
+    scope = RunScope(K.STUDY, K.STUDY_IDS)
+    obj = R.ToolEntry(name="t", access="read", output_type="object")
+    arr = R.ToolEntry(name="t", access="read", output_type="array")
+    assert not U.validate_tool_result([{"a": 1}], tool=obj, scope=scope, max_bytes=10_000).ok
+    assert not U.validate_tool_result({"a": 1}, tool=arr, scope=scope, max_bytes=10_000).ok
+    assert U.validate_tool_result([{"a": 1}], tool=arr, scope=scope, max_bytes=10_000).ok
+
+
 # ================================================================== 1. unknown stop reason
 def test_rc110_review5_an_unknown_stop_reason_is_not_delivered(registry):
     assert RT.ModelResponse("model-current", "Seven lesions.").stop_reason is None

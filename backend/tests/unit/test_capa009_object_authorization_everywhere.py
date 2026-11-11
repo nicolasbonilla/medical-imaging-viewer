@@ -61,6 +61,9 @@ CALLS = ["require_imaging_access", "authorize_file_scope", "authorize_mask_specs
 # Every mounted route that references an object, with the mechanism that authorizes it.
 # A route added without an entry, or losing its mechanism, fails the build.
 ROUTE_AUTH = {
+    # Agent platform RC-121 (PR #79, fifth review; DRAFT, PENDING owner approval): issues a study-scoped
+    # capability after authorizing every listed study; stores nothing.
+    ("POST", "/agent-scope"): "call:authorize_study_id",
     ("POST", "/ai/anomaly/detect"): "call:_authorized_image_request",
     ("POST", "/ai/segment/auto"): "call:_authorized_image_request",
     ("POST", "/ai/segment/interactive"): "call:_authorized_image_request",

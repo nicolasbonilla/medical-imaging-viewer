@@ -12,7 +12,8 @@
     "2026-11-30). Prices are USD per million tokens; re-check them at every re-validation.",
     "Review of PR #79 (2026-11-10): every tool declares its arguments (kind per argument; id-like arguments are resource kinds) — a call with an undeclared or mistyped argument is refused; result_exempt_keys names id-like result keys that are not resources (e.g. a new report id). Switches: an agent runs only when MSTOOL_AGENTS_SWITCH AND its own MSTOOL_AGENT_SWITCH__<ID> read 'on'.",
     "Second review of PR #79 (2026-11-10), superseded by the third review: result ids are no longer decided by key names.",
-    "Third review of PR #79 (2026-11-10): a resource id is recognised by its VALUE (UUIDs, DICOM UIDs, prefixed test ids) or by a resource key (segmentation_id, file_id, study_id, ... and the tool's result_resource_keys, taken from the real output schemas: 'id' of compare_longitudinal and list_segmentations); lesion, label, region and zone numbers are not resources; actor keys (created_by, ...) are not scope-checked. Contract tests feed the real outputs of every tool through the check (tests/agent_platform/test_review3.py)."
+    "Third review of PR #79 (2026-11-10): a resource id is recognised by its VALUE (UUIDs, DICOM UIDs, prefixed test ids) or by a resource key (segmentation_id, file_id, study_id, ... and the tool's result_resource_keys, taken from the real output schemas: 'id' of compare_longitudinal and list_segmentations); lesion, label, region and zone numbers are not resources; actor keys (created_by, ...) are not scope-checked. Contract tests feed the real outputs of every tool through the check (tests/agent_platform/test_review3.py).",
+    "Fifth review of PR #79: every tool declares a typed 'output' schema (resource, actor and exempt fields); an argument is required unless its kind is optional_*; an agent with requires_backend_scope reaches the backend only with the study-scoped capability the backend issued for the run (RC-121)."
   ],
   "registry_version": "2026-11-10.4",
   "status": "DRAFT, PENDING owner approval",
@@ -46,6 +47,12 @@
       "server": "ms-clinical-mcp",
       "arguments": {
         "segmentation_id": "resource_id"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "summarize_dis_items": {
@@ -53,6 +60,14 @@
       "server": "ms-clinical-mcp",
       "arguments": {
         "segmentation_id": "resource_id"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [
+          "annotated_by"
+        ],
+        "exempt_fields": []
       }
     },
     "analyze_lesions": {
@@ -60,6 +75,12 @@
       "server": "ms-clinical-mcp",
       "arguments": {
         "segmentation_id": "resource_id"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "compare_longitudinal": {
@@ -69,28 +90,44 @@
         "baseline_id": "resource_id",
         "followup_id": "resource_id"
       },
-      "result_resource_keys": [
-        "id"
-      ]
+      "output": {
+        "type": "object",
+        "resource_fields": [
+          "id"
+        ],
+        "actor_fields": [],
+        "exempt_fields": []
+      }
     },
     "generate_ms_report": {
       "access": "compute",
       "server": "ms-clinical-mcp",
       "arguments": {
         "segmentation_id": "resource_id",
-        "language": "string",
-        "include_longitudinal": "boolean",
+        "language": "optional_string",
+        "include_longitudinal": "optional_boolean",
         "longitudinal_baseline_id": "optional_resource_id"
       },
-      "result_exempt_keys": [
-        "report_id"
-      ]
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": [
+          "report_id"
+        ]
+      }
     },
     "get_image_metadata": {
       "access": "read",
       "server": "imaging-mcp",
       "arguments": {
         "file_id": "resource_id"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "get_slice_image": {
@@ -99,9 +136,15 @@
       "arguments": {
         "file_id": "resource_id",
         "slice_index": "integer",
-        "window_center": "number",
-        "window_width": "number",
-        "direction": "string"
+        "window_center": "optional_number",
+        "window_width": "optional_number",
+        "direction": "optional_string"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "process_image": {
@@ -109,7 +152,13 @@
       "server": "imaging-mcp",
       "arguments": {
         "file_id": "resource_id",
-        "max_slices": "integer"
+        "max_slices": "optional_integer"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "list_segmentations": {
@@ -118,9 +167,16 @@
       "arguments": {
         "file_id": "resource_id"
       },
-      "result_resource_keys": [
-        "id"
-      ]
+      "output": {
+        "type": "array",
+        "resource_fields": [
+          "id"
+        ],
+        "actor_fields": [
+          "created_by"
+        ],
+        "exempt_fields": []
+      }
     },
     "get_matplotlib_visualization": {
       "access": "read",
@@ -128,9 +184,15 @@
       "arguments": {
         "file_id": "resource_id",
         "slice_index": "integer",
-        "colormap": "string",
-        "window_center": "number",
-        "window_width": "number"
+        "colormap": "optional_string",
+        "window_center": "optional_number",
+        "window_width": "optional_number"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "annotate_cvs_prl": {
@@ -139,6 +201,12 @@
       "arguments": {
         "segmentation_id": "resource_id",
         "annotations": "array"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "classify_lesions_magnims": {
@@ -146,18 +214,36 @@
       "server": "retired (CAPA-008)",
       "arguments": {
         "segmentation_id": "resource_id"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "import_dicom_to_viewer": {
       "access": "write",
       "server": "retired (CAPA-008)",
-      "arguments": {}
+      "arguments": {},
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
+      }
     },
     "save_segmentation": {
       "access": "write",
       "server": "application only",
       "arguments": {
         "segmentation_id": "resource_id"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "sign_report": {
@@ -165,6 +251,12 @@
       "server": "application only (radiologist)",
       "arguments": {
         "segmentation_id": "resource_id"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     }
   },
@@ -217,6 +309,7 @@
         "list_segmentations",
         "get_matplotlib_visualization"
       ],
+      "requires_backend_scope": true,
       "cost_cap_usd": {
         "per_study": 0.0,
         "per_day": 0.0
