@@ -69,6 +69,12 @@
    "tests_first_commit": "7b74f7d", "tests_first_ci": "run 43047890072: failure (17 of 17 new tests failed against 677ebe8)",
    "implementation_commit": "9c55e6c", "implementation_ci": "run 43050301741: success (agent platform 604 passed, 1 skipped; backend suite 2483 passed)",
    "implementation_result": "17 review-7 tests pass; whole offline suite locally 602 passed, 3 skipped by design; earlier tests amended with notes"},
+  {"controls": ["RC-110", "RC-117", "RC-121"],
+   "tests_file": "backend/tests/agent_platform/test_review8.py",
+   "what": "the eighth (final) independent review of PR #79: F1 scope refusals audited, F2-F10",
+   "tests_first_commit": "21b14ee", "tests_first_ci": "run 43056441126: failure (12 failed: the 11 new tests and the card-schema test that runs where fastmcp is installed)",
+   "implementation_commit": "1dfd120", "implementation_ci": "run 43058409712: success (agent platform 616 passed, 1 skipped; backend suite 2483 passed)",
+   "implementation_result": "review-8 tests pass; whole offline suite locally 612 passed, 4 skipped by design"},
   {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
    "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
  ]

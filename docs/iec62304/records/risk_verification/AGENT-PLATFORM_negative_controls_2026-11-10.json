@@ -895,10 +895,10 @@
       "RC-120"
     ],
     "latest_round": {
-      "executed": "2026-11-11T16:38:02",
-      "mutations": 20,
-      "detected": 20,
-      "restored_passed": 602,
+      "executed": "2026-11-11T17:26:59",
+      "mutations": 10,
+      "detected": 10,
+      "restored_passed": 613,
       "restored_failed": 0
     }
   },
@@ -6214,6 +6214,164 @@
         "failing_tests": []
       },
       "reason": "seventh review of PR #79 at 9c55e6c: 10 new (CC1-CC10: human-confirmed session, no elicitation, patient switch, source view, traversal, refused write, scope required, issuance stop), 4 re-anchored, 6 next to changed lines",
+      "superseded": [
+        "U6_only_declared_ids_scoped",
+        "U7_result_scope_off"
+      ]
+    },
+    {
+      "executed": "2026-11-11T17:26:59",
+      "mutations": {
+        "DD1_chokepoint_denial_not_audited": {
+          "failed": 2,
+          "passed": 611,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a scope refusal at the patient chokepoint leaves no access-audit row",
+          "applied": true
+        },
+        "DD2_study_resolver_denial_not_audited": {
+          "failed": 2,
+          "passed": 611,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a study refused by the scope leaves no access-audit row",
+          "applied": true
+        },
+        "DD3_segmentation_denial_not_audited": {
+          "failed": 3,
+          "passed": 610,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review8_an_out_of_scope_read_writes_exactly_one_denied_audit_row",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a segmentation refused by the scope leaves no access-audit row",
+          "applied": true
+        },
+        "DD4_storage_ref_denial_not_audited": {
+          "failed": 3,
+          "passed": 610,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review8_an_out_of_scope_read_writes_exactly_one_denied_audit_row",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "an imaging file refused by the scope leaves no access-audit row",
+          "applied": true
+        },
+        "DD5_patient_dependency_denial_not_audited": {
+          "failed": 2,
+          "passed": 611,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a scope refusal at the patient dependency leaves no access-audit row",
+          "applied": true
+        },
+        "DD6_denial_audited_with_another_reason": {
+          "failed": 3,
+          "passed": 610,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review8_an_out_of_scope_read_writes_exactly_one_denied_audit_row",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a scope refusal is audited under another reason than agent_scope_denied",
+          "applied": true
+        },
+        "AA9_resolver_patient_hook_removed": {
+          "failed": 4,
+          "passed": 609,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review5_the_backend_refuses_every_object_outside_the_capability",
+            "test_rc121_review5_the_capa009_chokepoints_refuse_objects_outside_the_scope",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the CAPA-009 chokepoint ignores the agent scope",
+          "applied": true
+        },
+        "AA10_study_resolver_hook_removed": {
+          "failed": 3,
+          "passed": 610,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review5_the_capa009_chokepoints_refuse_objects_outside_the_scope",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a study outside the agent scope resolves",
+          "applied": true
+        },
+        "AA11_storage_ref_study_hook_removed": {
+          "failed": 5,
+          "passed": 608,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review5_the_backend_refuses_every_object_outside_the_capability",
+            "test_rc121_review5_the_capa009_chokepoints_refuse_objects_outside_the_scope",
+            "test_rc121_review8_an_out_of_scope_read_writes_exactly_one_denied_audit_row",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "an imaging file of another study passes the agent scope",
+          "applied": true
+        },
+        "AA12_patient_dependency_hook_removed": {
+          "failed": 3,
+          "passed": 610,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review5_the_capa009_chokepoints_refuse_objects_outside_the_scope",
+            "test_rc121_review8_every_scope_chokepoint_audits_before_raising"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the patient dependency ignores the agent scope",
+          "applied": true
+        }
+      },
+      "method": "one mutation at a time in a throwaway copy outside the repository; anchors asserted unique",
+      "source_sha256": {
+        "backend/app/security/patient_access.py": "ad1263ab4884072d453846c7c01b08c89db27b1b2d025f176675afae96b74e74",
+        "backend/app/security/patient_access_dependency.py": "ca7fb9312a005fb2a6ca919a2e9e06bce2df12a7e4a434a942624eb21cb2f371",
+        "backend/app/security/resource_access.py": "4d2f59b44ed0cb9ddb40d12c638661312a65f66bd8a9df9ae5c6a3e001869290"
+      },
+      "baseline": {
+        "failed": 0,
+        "passed": 613,
+        "errors": 0,
+        "failing_tests": []
+      },
+      "restored": {
+        "failed": 0,
+        "passed": 613,
+        "errors": 0,
+        "failing_tests": []
+      },
+      "reason": "eighth (final) review of PR #79 at 1dfd120, F1 only: 6 new (DD1-DD6: a scope refusal without its access-audit row, or under another reason), 4 re-anchored on the same lines",
       "superseded": [
         "U6_only_declared_ids_scoped",
         "U7_result_scope_off"

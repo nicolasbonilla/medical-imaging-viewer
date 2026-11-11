@@ -976,6 +976,19 @@ One safety finding, fixed structurally. Failing-first tests at `7b74f7d` (CI run
 
 **Open item (owner), added:** D-AGT-9 — how the physician recognises the patient in the confirmation: the web app shows the same reference next to the patient, or the confirmation may name the patient more explicitly, weighed against the client possibly passing it to the model.
 
+### B.12 Eighth (final) independent review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+
+No patient-data leak found (the exit rule for safety). Failing-first tests at `21b14ee` (CI run 43056441126 red: 12 failed); fixes at `1dfd120` (CI run 43058409712: success (agent platform 616 passed, 1 skipped; backend suite 2483 passed)); negative controls for F1 only: 10 of 10 detected (DD1-DD6 new, AA9-AA12 re-anchored), restored suite 613 passed / 0 failed.
+
+| # | Finding | Control | Fix |
+|---|---|---|---|
+| F1 | Scope refusals bypassed the access-audit trail | RC-121 (RC-026 trail) | one access-audit row `denied:agent_scope_denied` before every scope refusal (patient chokepoint, patient dependency, storage reference, study and segmentation resolvers, file-scope listing) |
+| F2 | report-drafter's only model retires on 2026-11-30 | RC-117 | registry entry and daily job say it is **unavailable from 2026-11-30** until the owner approves the successor through RVP-AGT-001 (D-AGT-1); `claude-sonnet-5-5` stays `candidate`; PR #78's verified report already uses `claude-sonnet-5-5` — the two are reconciled when D-AGT-1 is decided |
+| F3 | The card showed the request context as a model parameter | RC-117 | Context-annotated parameters hidden, as the real server does; checked against the real server in CI |
+| F4–F10 | Unclear session refusals, silent truncation, refusal classes, double authorization, duplicate path rule, dead report route and description, "one hour", substring ".." | RC-121, RC-110 | clear "no session was opened"; > 20 refused; `tool_not_allowed_for_agent`; preview ticket reused; `parse_patient_storage_ref`; removed; 15 minutes; segment rule and 255-character names |
+
+**Pre-existing, outside this PR:** on `main` (run 42366112064, `d5d4726`) the non-blocking risk-control step fails `tests/security/test_input_validation.py::TestPathTraversalProtection::test_detect_absolute_paths` and `::test_detect_path_traversal`.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

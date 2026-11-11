@@ -1177,11 +1177,12 @@
         "tests/agent_platform/test_review3.py",
         "tests/agent_platform/test_review4.py",
         "tests/agent_platform/test_review5.py",
-        "tests/agent_platform/test_review7.py"
+        "tests/agent_platform/test_review7.py",
+        "tests/agent_platform/test_review8.py"
       ],
       "requirement": "REQ-AGT-001",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 28 current mutations of RC-110 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 28 of 28 detected (AA18_stop_reason_defaults_to_end_turn, AA28_malformed_call_runs, AA30_outcome_from_status, BB7_refusal_audited_as_failure, CC8_refused_write_is_a_failure, R12_invalid_registry_used, R13_refusals_not_audited, R14_trailing_newline_id, R1_write_tools_allowed, R2_unapproved_agent_runs, R5_retirement_ignored, R6_model_allow_list_ignored, R7_candidate_model_used, V11_failures_audited_as_denials, V1_truncated_output_delivered, V2_truncated_tool_calls_run, W10_cancel_not_audited, W12_empty_output_delivered, W8_malformed_response_used, X2_continue_after_refused_tool, X6_verifier_optional, X7_withheld_delivered, Y3_model_none_audited_invalid, Y4_agent_audit_anonymous, Y8_malformed_verdict_used, Z4_boundary_exception_escapes, Z5_run_inputs_not_validated, Z8_in_run_decisions_audited_twice); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 28 current mutations of RC-110 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 28 of 28 detected (AA18_stop_reason_defaults_to_end_turn, AA28_malformed_call_runs, AA30_outcome_from_status, BB7_refusal_audited_as_failure, CC8_refused_write_is_a_failure, R12_invalid_registry_used, R13_refusals_not_audited, R14_trailing_newline_id, R1_write_tools_allowed, R2_unapproved_agent_runs, R5_retirement_ignored, R6_model_allow_list_ignored, R7_candidate_model_used, V11_failures_audited_as_denials, V1_truncated_output_delivered, V2_truncated_tool_calls_run, W10_cancel_not_audited, W12_empty_output_delivered, W8_malformed_response_used, X2_continue_after_refused_tool, X6_verifier_optional, X7_withheld_delivered, Y3_model_none_audited_invalid, Y4_agent_audit_anonymous, Y8_malformed_verdict_used, Z4_boundary_exception_escapes, Z5_run_inputs_not_validated, Z8_in_run_decisions_audited_twice); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-111": {
@@ -1197,7 +1198,7 @@
       ],
       "requirement": "REQ-AGT-001",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 5 current mutations of RC-111 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 5 of 5 detected (R11_env_switch_lenient, R3_kill_switch_ignored, R4_unreadable_switch_is_on, V4_global_switch_ignored, X1_no_switch_before_delivery); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 5 current mutations of RC-111 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 5 of 5 detected (R11_env_switch_lenient, R3_kill_switch_ignored, R4_unreadable_switch_is_on, V4_global_switch_ignored, X1_no_switch_before_delivery); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-112": {
@@ -1216,7 +1217,7 @@
       ],
       "requirement": "REQ-AGT-001",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 14 current mutations of RC-112 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 14 of 14 detected (AA19_tools_run_on_the_last_step, AA21_tool_definitions_not_reserved, AA22_overrun_not_flagged, BB5_paid_route_allowed_to_agents, BB6_paid_route_called_by_the_client, R8_study_cap_ignored, R9_day_cap_ignored, U4_no_length_cap, V5_in_flight_calls_not_reserved, V6_settle_charges_nothing, W9_cancel_leaks_reservation, X10_no_tool_call_limit, X8_cost_not_charged, X9_no_step_limit); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 12 current mutations of RC-112 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 12 of 12 detected (AA19_tools_run_on_the_last_step, AA21_tool_definitions_not_reserved, AA22_overrun_not_flagged, R8_study_cap_ignored, R9_day_cap_ignored, U4_no_length_cap, V5_in_flight_calls_not_reserved, V6_settle_charges_nothing, W9_cancel_leaks_reservation, X10_no_tool_call_limit, X8_cost_not_charged, X9_no_step_limit); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-113": {
@@ -1236,7 +1237,7 @@
       ],
       "requirement": "REQ-AGT-008",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 12 current mutations of RC-113 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 12 of 12 detected (AA20_brackets_look_alike_pass, CC5_source_view_skipped_in_a_run, U10_dicom_identifiers_read, U1_markup_not_escaped, U2_file_names_quoted, U3_invisible_chars_kept, U8_identifiers_kept, U9_result_size_unbounded, V12_alarms_dropped, W1_activity_flags_reach_the_model, X11_tool_result_not_checked, X12_untrusted_inputs_unquoted); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 12 current mutations of RC-113 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 12 of 12 detected (AA20_brackets_look_alike_pass, CC5_source_view_skipped_in_a_run, U10_dicom_identifiers_read, U1_markup_not_escaped, U2_file_names_quoted, U3_invisible_chars_kept, U8_identifiers_kept, U9_result_size_unbounded, V12_alarms_dropped, W1_activity_flags_reach_the_model, X11_tool_result_not_checked, X12_untrusted_inputs_unquoted); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-114": {
@@ -1256,7 +1257,7 @@
       ],
       "requirement": "REQ-AGT-008",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 19 current mutations of RC-114 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 19 of 19 detected (AA17_output_type_unchecked, AA27_required_arguments_not_checked, U5_argument_scope_off, U6_undeclared_arguments_accepted, U7_ids_not_compared_with_scope, V7_plural_ids_not_checked, V8_nested_values_not_walked, V9_path_uri_not_checked, W4_foreign_id_keys_ignored, W5_numeric_ids_ignored, W6_storage_locations_ignored, W7_ids_found_by_value_ignored, X3_no_argument_scope_in_run, Y1_resource_keys_ignored, Y2_actor_keys_scope_checked, Z12_uuid_root_uid_ignored, Z1_uid_tokens_ignored, Z2_actor_exemption_hides_subtree, Z3_resource_by_keys_dropped); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 19 current mutations of RC-114 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 19 of 19 detected (AA17_output_type_unchecked, AA27_required_arguments_not_checked, U5_argument_scope_off, U6_undeclared_arguments_accepted, U7_ids_not_compared_with_scope, V7_plural_ids_not_checked, V8_nested_values_not_walked, V9_path_uri_not_checked, W4_foreign_id_keys_ignored, W5_numeric_ids_ignored, W6_storage_locations_ignored, W7_ids_found_by_value_ignored, X3_no_argument_scope_in_run, Y1_resource_keys_ignored, Y2_actor_keys_scope_checked, Z12_uuid_root_uid_ignored, Z1_uid_tokens_ignored, Z2_actor_exemption_hides_subtree, Z3_resource_by_keys_dropped); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-115": {
@@ -1272,7 +1273,7 @@
       ],
       "requirement": "REQ-AGT-001",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 5 current mutations of RC-115 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 5 of 5 detected (R10_fuzzy_model_id, V3_output_budget_ignored, X14_environment_model_honoured, X4_identity_not_checked, X5_overrides_honoured); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 5 current mutations of RC-115 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 5 of 5 detected (R10_fuzzy_model_id, V3_output_budget_ignored, X14_environment_model_honoured, X4_identity_not_checked, X5_overrides_honoured); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-116": {
@@ -1290,7 +1291,7 @@
       ],
       "requirement": "REQ-AGT-002",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 9 current mutations of RC-116 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 9 of 9 detected (AA23_exporter_per_tracer, T1_unknown_attributes_kept, T2_hash_not_validated, T3_export_on_by_default, T4_exception_text_recorded, T5_request_trace_not_adopted, T6_reader_not_pseudonymised, T7_span_name_off_convention, Z10_trace_lines_lost); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 9 current mutations of RC-116 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 9 of 9 detected (AA23_exporter_per_tracer, T1_unknown_attributes_kept, T2_hash_not_validated, T3_export_on_by_default, T4_exception_text_recorded, T5_request_trace_not_adopted, T6_reader_not_pseudonymised, T7_span_name_off_convention, Z10_trace_lines_lost); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-117": {
@@ -1303,11 +1304,12 @@
         "tests/agent_platform/test_review2.py",
         "tests/agent_platform/test_review3.py",
         "tests/agent_platform/test_review4.py",
-        "tests/agent_platform/test_review5.py"
+        "tests/agent_platform/test_review5.py",
+        "tests/agent_platform/test_review8.py"
       ],
       "requirement": "REQ-AGT-005",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 9 current mutations of RC-117 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 9 of 9 detected (AA31_mcp_stack_reverted, AA32_stub_accepts_what_fastmcp_3_refuses, C1_template_hash_not_compared, C2_new_template_ignored, C3_code_model_not_compared, C4_variants_not_hashed, W13_card_hashes_docstrings_only, Y5_retirement_check_ignores_the_date, Z9_mcp_pin_loosened); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 9 current mutations of RC-117 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 9 of 9 detected (AA31_mcp_stack_reverted, AA32_stub_accepts_what_fastmcp_3_refuses, C1_template_hash_not_compared, C2_new_template_ignored, C3_code_model_not_compared, C4_variants_not_hashed, W13_card_hashes_docstrings_only, Y5_retirement_check_ignores_the_date, Z9_mcp_pin_loosened); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-118": {
@@ -1322,7 +1324,7 @@
       ],
       "requirement": "REQ-AGT-003, REQ-AGT-004",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 5 current mutations of RC-118 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 5 of 5 detected (E1_pass_at_1_instead_of_pass_hat_k, E2_replay_determinism_off, E3_k_not_enforced, E4_grader_weakened, W14_mutations_written_into_the_checkout); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 5 current mutations of RC-118 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 5 of 5 detected (E1_pass_at_1_instead_of_pass_hat_k, E2_replay_determinism_off, E3_k_not_enforced, E4_grader_weakened, W14_mutations_written_into_the_checkout); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-119": {
@@ -1340,7 +1342,7 @@
       ],
       "requirement": "REQ-AGT-006",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 14 current mutations of RC-119 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 14 of 14 detected (AA29_from_dict_fields_unchecked, P1_model_text_not_marked, P2_edits_keep_model_mark, P3_html_not_escaped, P4_hash_binding_ignored, P5_legend_missing, W11_edited_marker_lost, W2_list_marker_split_off, W3_abbreviations_split, X13_delivered_text_unmarked, Y6_html_author_unchecked, Y7_from_dict_unchecked, Z6_model_part_without_model, Z7_model_segment_without_model_loaded); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 14 current mutations of RC-119 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 14 of 14 detected (AA29_from_dict_fields_unchecked, P1_model_text_not_marked, P2_edits_keep_model_mark, P3_html_not_escaped, P4_hash_binding_ignored, P5_legend_missing, W11_edited_marker_lost, W2_list_marker_split_off, W3_abbreviations_split, X13_delivered_text_unmarked, Y6_html_author_unchecked, Y7_from_dict_unchecked, Z6_model_part_without_model, Z7_model_segment_without_model_loaded); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-120": {
@@ -1358,7 +1360,7 @@
       ],
       "requirement": "REQ-AGT-007",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 8 current mutations of RC-120 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 8 of 8 detected (AA24_oversight_unbounded, AA25_oversight_never_expires, AA26_mismatch_not_evicted, O1_acceptance_always_true, O2_shown_text_not_checked, O3_reader_not_pseudonymised, V10_first_version_kept, Z11_edit_size_on_characters); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 8 current mutations of RC-120 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 8 of 8 detected (AA24_oversight_unbounded, AA25_oversight_never_expires, AA26_mismatch_not_evicted, O1_acceptance_always_true, O2_shown_text_not_checked, O3_reader_not_pseudonymised, V10_first_version_kept, Z11_edit_size_on_characters); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     },
     "RC-121": {
@@ -1369,11 +1371,12 @@
       "tests": [
         "tests/agent_platform/test_review5.py",
         "tests/agent_platform/test_review6.py",
-        "tests/agent_platform/test_review7.py"
+        "tests/agent_platform/test_review7.py",
+        "tests/agent_platform/test_review8.py"
       ],
       "requirement": "REQ-AGT-009",
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
-      "negative_control": "Latest result of each of the 32 current mutations of RC-121 (rounds in a throwaway copy, 2026-11-10/11, the last after the seventh independent review of PR #79): 32 of 32 detected (AA10_study_resolver_hook_removed, AA11_storage_ref_study_hook_removed, AA12_patient_dependency_hook_removed, AA13_capability_not_sent, AA14_capability_not_required, AA15_capability_not_current_in_tools, AA16_output_schema_optional, AA1_backend_scope_patient_unchecked, AA2_backend_scope_not_bound_to_its_user, AA3_backend_scope_study_unchecked, AA4_storage_path_study_unchecked, AA5_scope_signature_not_checked, AA6_scope_expiry_not_checked, AA7_agent_routes_unrestricted, AA8_admin_bypass_for_agent_listing, AA9_resolver_patient_hook_removed, BB10_patient_spellings_differ, BB11_pass_returned_to_the_model, BB1_assistant_unscoped_passes_the_backend, BB2_assistant_marker_not_sent, BB3_no_local_session_check, BB4_session_never_expires, BB8_refusal_becomes_500, BB9_issuance_reimplemented, CC10_issuance_continues_after_a_refusal, CC1_confirmation_not_required, CC2_no_elicitation_still_opens, CC3_old_session_survives_a_new_request, CC4_patient_switch_not_audited, CC6_path_traversal_passes, CC7_loose_file_parameter, CC9_scope_optional_for_the_assistant); last restored suite 602 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
+      "negative_control": "Latest result of each of the 38 current mutations of RC-121 (rounds in a throwaway copy, 2026-11-10/11, the last after the eighth (final) review of PR #79): 38 of 38 detected (AA10_study_resolver_hook_removed, AA11_storage_ref_study_hook_removed, AA12_patient_dependency_hook_removed, AA13_capability_not_sent, AA14_capability_not_required, AA15_capability_not_current_in_tools, AA16_output_schema_optional, AA1_backend_scope_patient_unchecked, AA2_backend_scope_not_bound_to_its_user, AA3_backend_scope_study_unchecked, AA4_storage_path_study_unchecked, AA5_scope_signature_not_checked, AA6_scope_expiry_not_checked, AA7_agent_routes_unrestricted, AA8_admin_bypass_for_agent_listing, AA9_resolver_patient_hook_removed, BB10_patient_spellings_differ, BB11_pass_returned_to_the_model, BB1_assistant_unscoped_passes_the_backend, BB2_assistant_marker_not_sent, BB3_no_local_session_check, BB4_session_never_expires, BB8_refusal_becomes_500, BB9_issuance_reimplemented, CC10_issuance_continues_after_a_refusal, CC1_confirmation_not_required, CC2_no_elicitation_still_opens, CC3_old_session_survives_a_new_request, CC4_patient_switch_not_audited, CC6_path_traversal_passes, CC7_loose_file_parameter, CC9_scope_optional_for_the_assistant, DD1_chokepoint_denial_not_audited, DD2_study_resolver_denial_not_audited, DD3_segmentation_denial_not_audited, DD4_storage_ref_denial_not_audited, DD5_patient_dependency_denial_not_audited, DD6_denial_audited_with_another_reason); last restored suite 613 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
     }
   },
