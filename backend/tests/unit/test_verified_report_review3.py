@@ -80,10 +80,11 @@ def _line_of(view, lang, placeholder):
     """The code-written line that states the value of a placeholder (None when the report has no such line)."""
     f, comp, _imp, _lim = VR.skeleton(view, lang)
     t = VR.T[lang]
+    # (amended with the seventh review of PR #78, I1: no lesion block without a lesion analysis)
     if placeholder == "total_count":
-        return f[1]
+        return f[1] if view["lesions"].get("computed") else None
     if placeholder == "total_volume_ml":
-        return f[2]
+        return f[2] if view["lesions"].get("computed") else None
     if placeholder in ("new_candidates", "enlarging_candidates"):
         return comp[0] if comp else None
     if placeholder == "brain_regions_with_lesions":
@@ -245,7 +246,15 @@ def test_rc106_t3_the_service_builds_the_async_client_without_retries(monkeypatc
     monkeypatch.setitem(sys.modules, "anthropic", module)
     svc = BRS.BrainReportService()
     svc._settings = SimpleNamespace(ANTHROPIC_API_KEY="test-not-a-key-t3")   # fifth review, V4: a key of its own
-    svc._get_client()
+
+    async def lookup():         # (amended with the seventh review, finding 9: a client only on a running loop)
+        return svc._get_client()
+
+    loop = asyncio.new_event_loop()
+    try:
+        loop.run_until_complete(lookup())
+    finally:
+        loop.close()
     assert module.AsyncAnthropic.call_args.kwargs["max_retries"] == 0
     assert not module.Anthropic.called
 

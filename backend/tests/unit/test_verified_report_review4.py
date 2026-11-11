@@ -224,7 +224,9 @@ def test_rc070_q6_the_notice_decides_on_an_explicit_fact_not_on_a_substring():
     report service owns the statement and returns the typed field `dis_evaluation`; nothing searches a text for it."""
     import app.api.routes.ai_report as route_module
     assert not hasattr(route_module, "dis_notice") and not hasattr(route_module, "DIS_NOT_EVALUATED_NOTICE")
-    result = _generate(_service(None, key=""), {"lesion_analysis": LESIONS})
+    # (amended with the seventh review of PR #78, I2: a DIS block present and not evaluated)
+    result = _generate(_service(None, key=""), {"lesion_analysis": LESIONS,
+                                                "dis_assessment": {"evaluation_status": "not_evaluated"}})
     assert result["dis_evaluation"] == "not_evaluated" and "dis_not_evaluated_stated" not in result
 
 

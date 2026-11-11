@@ -100,14 +100,27 @@ NOT_COUNTS = ["Lesions are seen in both hemispheres.", "This is the first automa
               "Most lesions are small, and the total volume is given above."]
 
 
+def _lang_of(sentence):
+    """(amended with the seventh review of PR #78, finding 5: the number-word lexicon is the REPORT language's only —
+    each sentence is checked in a report of its own language)"""
+    s = sentence.lower()
+    if any(w in s for w in ("zwei", "einundzwanzig", "beide", "größen", "läsion", "vier ")):
+        return "de"
+    if any(w in s for w in ("ambas", "doce", "única", "lesión", "lesiones", "recuento", "medianas")):
+        return "es"
+    return "en"
+
+
 @pytest.mark.parametrize("sentence", COUNTS)
 def test_rc103_w3_a_count_in_words_fails(sentence):
-    assert "FMT.number_words" in _rules(_view({"lesion_analysis": LESIONS}), _answer(sentence))
+    lang = _lang_of(sentence)
+    assert "FMT.number_words" in _rules(_view({"lesion_analysis": LESIONS}, lang=lang), _answer(sentence), lang)
 
 
 @pytest.mark.parametrize("sentence", NOT_COUNTS)
 def test_rc103_w3_ordinals_and_non_count_uses_pass(sentence):
-    assert "FMT.number_words" not in _rules(_view({"lesion_analysis": LESIONS}), _answer(sentence))
+    lang = _lang_of(sentence)
+    assert "FMT.number_words" not in _rules(_view({"lesion_analysis": LESIONS}, lang=lang), _answer(sentence), lang)
 
 
 # ═══════════════════════════════════════════════════════════════════════ W4 — decide once, build once
@@ -147,8 +160,12 @@ def test_rc105_w5_the_route_and_the_service_use_one_gate(enabled, model, key):
 
 
 def test_rc105_w5_the_route_asks_the_one_gate():
+    """(amended with the seventh review of PR #78, finding 8: the route asks no gate at all — the service's one gate
+    decides, and the route hands it a lazy reader of the patient record)"""
     import app.api.routes.ai_report as R
-    assert "interpretive_text_gate(" in inspect.getsource(R.generate_report)
+    src = inspect.getsource(R.generate_report)
+    assert "interpretive_text_gate(" not in src and "hasattr(service" not in src
+    assert "async def identifiers()" in src
 
 
 # ═══════════════════════════════════════════════════════════════════════ W6 — one client per running loop

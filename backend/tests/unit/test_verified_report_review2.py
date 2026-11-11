@@ -233,6 +233,7 @@ def test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_the_ported_c
     assert added > 0
 
 
+@pytest.mark.slow       # (seventh review of PR #78: large by design — run in CI, not on the owner's laptop)
 @pytest.mark.parametrize("findings", [NOT_EVALUATED_VIEW, EVALUATED_VIEW], ids=["dis_not_evaluated", "dis_evaluated"])
 def test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments(findings, monkeypatch):
     """The same property on the answer check (the loop's own check), on generated adversarial comments: a negation

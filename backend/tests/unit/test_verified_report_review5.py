@@ -148,7 +148,9 @@ def test_rc103_v1_fuzz_number_ordinal_and_count_words_fail_the_check_in_every_la
                                       "Se marcaron doce lesiones.", "There are twenty-one small lesions.",
                                       "Es gibt einundzwanzig kleine Läsionen.", "Ambas regiones tienen lesiones."])
 def test_rc103_v1_the_reviewers_examples_fail(sentence):
-    assert "FMT.number_words" in _rules(_view({"lesion_analysis": LESIONS}), _answer(sentence))
+    # (amended with the seventh review of PR #78, finding 5: each sentence in a report of its own language)
+    lang = "de" if sentence.startswith(("Zwei", "Es gibt")) else "es" if sentence.startswith(("Se ", "Ambas")) else "en"
+    assert "FMT.number_words" in _rules(_view({"lesion_analysis": LESIONS}, lang=lang), _answer(sentence), lang)
 
 
 @pytest.mark.parametrize("lang,sentence", [
@@ -216,15 +218,20 @@ def test_rc106_v4_one_cached_client_with_the_allowed_timeout_closed_on_shutdown(
     module = MagicMock()
     module.AsyncAnthropic.return_value.close = AsyncMock()
     monkeypatch.setitem(sys.modules, "anthropic", module)
-    _run(BRS.close_report_clients())
     a, b = BRS.BrainReportService(), BRS.BrainReportService()
     for svc in (a, b):
         svc._settings = SimpleNamespace(ANTHROPIC_API_KEY="test-not-a-key")
-    assert a._get_client() is b._get_client()
+
+    async def lookups_then_shutdown():
+        # (amended with the seventh review of PR #78, finding 9: a client exists only on a running loop)
+        same = a._get_client() is b._get_client()
+        await BRS.close_report_clients()
+        return same
+
+    assert _run(lookups_then_shutdown())
     assert module.AsyncAnthropic.call_count == 1
     kw = module.AsyncAnthropic.call_args.kwargs
     assert kw["max_retries"] == 0 and kw["timeout"] == VR.LLM_DEADLINE_S
-    _run(BRS.close_report_clients())
     module.AsyncAnthropic.return_value.close.assert_awaited_once()
     assert "close_report_clients" in (REPO / "backend" / "app" / "main.py").read_text(encoding="utf-8")
 
@@ -323,7 +330,9 @@ def test_rc070_v8_the_service_owns_the_dis_notice_and_returns_a_typed_field(rout
     body = _post(route, {"lesion_analysis": LESIONS}).json()
     assert body["dis_evaluation"] == "not_evaluated"
     assert body["content"].count(NOT_EVALUATED_LINE["en"].rstrip(".")) == 1
-    assert body["content"].count(AUTOMATIC_MARKING_NOTICE["en"]) == 1
+    # (amended with the seventh review of PR #78, finding 7 / I5: the automatic-marking notice only for an automatic
+    # review source — this route test's segmentation has none; the matrix test checks every source)
+    assert body["content"].count(AUTOMATIC_MARKING_NOTICE["en"]) == 0
     src = (REPO / "backend" / "app" / "api" / "routes" / "ai_report.py").read_text(encoding="utf-8")
     assert "scrub_unevaluated_dis(" not in src and "def dis_notice" not in src
     assert "dis_not_evaluated_stated" not in src
@@ -353,7 +362,10 @@ def test_rc102_v9_no_dis_line_without_lesion_findings(findings, volumetry):
 
 def test_rc102_v9_with_a_lesion_analysis_the_line_is_written_once():
     from app.services.dis_review_gate import NOT_EVALUATED_LINE
-    report = VR.assemble(_view({"lesion_analysis": LESIONS}), "en", "", "")
+    # (amended with the seventh review of PR #78, I2: the line belongs to a DIS block present and not evaluated —
+    # the route always sends one with a lesion analysis)
+    report = VR.assemble(_view({"lesion_analysis": LESIONS, "dis_assessment": {"evaluation_status": "not_evaluated"}}),
+                         "en", "", "")
     assert report.count(NOT_EVALUATED_LINE["en"]) == 1
 
 

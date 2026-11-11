@@ -302,6 +302,10 @@ T: Dict[str, Dict[str, str]] = {
                   "the change must be assessed visually.",
         "lng_nc": "No automatic change result: the change candidates were not computed; the change must be assessed "
                   "visually.",
+        "lng_below_size": "A further {k} new lesion(s) smaller than {d} mm were marked; they are below the minimum "
+                          "size for review and were not proposed as change candidates.",
+        "lng_below_size_nd": "A further {k} new lesion(s) were marked below the minimum size for review; they were not "
+                             "proposed as change candidates.",
         "lim": "Not available to the automatic analysis: {items}.",
         "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|brain volumetry",
         "lim_cord": "Spinal cord and optic nerve imaging: not available.",
@@ -351,6 +355,10 @@ T: Dict[str, Dict[str, str]] = {
                    "{v2} ml en esta visita ({pct} %).",
         "lng_ab": "Sin resultado automático de cambio: la adquisición de las dos visitas es distinta o no se pudo "
                   "establecer; el cambio debe valorarse visualmente.",
+        "lng_below_size": "Además se marcaron {k} lesiones nuevas de menos de {d} mm; están por debajo del tamaño "
+                          "mínimo de revisión y no se propusieron como candidatos de cambio.",
+        "lng_below_size_nd": "Además se marcaron {k} lesiones nuevas por debajo del tamaño mínimo de revisión; no se "
+                             "propusieron como candidatos de cambio.",
         "lng_nc": "Sin resultado automático de cambio: los candidatos de cambio no se calcularon; el cambio debe "
                   "valorarse visualmente.",
         "lim": "No disponibles para el análisis automático: {items}.",
@@ -401,6 +409,10 @@ T: Dict[str, Dict[str, str]] = {
                    "und {v2} ml bei dieser Untersuchung ({pct} %).",
         "lng_ab": "Kein automatisches Veränderungsergebnis: Die Aufnahmetechnik der beiden Untersuchungen unterscheidet "
                   "sich oder ließ sich nicht feststellen; die Veränderung muss visuell beurteilt werden.",
+        "lng_below_size": "Zusätzlich wurden {k} neue Läsionen unter {d} mm markiert; sie liegen unter der "
+                          "Mindestgröße für die Prüfung und wurden nicht als Veränderungskandidaten vorgeschlagen.",
+        "lng_below_size_nd": "Zusätzlich wurden {k} neue Läsionen unter der Mindestgröße für die Prüfung markiert; sie "
+                             "wurden nicht als Veränderungskandidaten vorgeschlagen.",
         "lng_nc": "Kein automatisches Veränderungsergebnis: Die Veränderungskandidaten wurden nicht berechnet; die "
                   "Veränderung muss visuell beurteilt werden.",
         "lim": "Für die automatische Analyse nicht verfügbar: {items}.",
@@ -528,13 +540,15 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         if k is not None:
             # absent when not computed (R6): the frozen check then refuses any count of regions (it compares with -1)
             view["dis"]["brain_regions_with_lesions"] = k
-    elif la is not None:
+    elif isinstance(dis_block, dict):
+        # seventh review of PR #78, finding 1 (I2): a DIS assessment present and not evaluated is stated whatever else
+        # is in the report (V9 had tied it to a lesion analysis); a report without a DIS block has no DIS line
         view["dis"] = {"status": "not evaluated",
                        "reason": "No radiologist has confirmed the lesions and their MAGNIMS regions; dissemination "
                                  "in space was not assessed."}
     else:
-        # fifth review of PR #78, V9: no lesion findings (a volumetry-only or longitudinal-only report) — an
-        # unevaluated dissemination in space is not part of this report and no line is written about it
+        # no DIS block in the request (a volumetry-only or longitudinal-only report): dissemination in space is not
+        # part of this report and no line is written about it (fifth review, V9; seventh review, I2)
         view["dis"] = {"status": DIS_NOT_IN_REPORT}
 
     lng = f.get("longitudinal") if isinstance(f.get("longitudinal"), dict) else None
@@ -555,6 +569,11 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
                                     "framing": "No automatic change result for this pair; the change must be assessed "
                                                "visually."}
         else:
+            # seventh review of PR #78, finding 4 (I4): new lesions the rule counts but does not propose (below the
+            # minimum size for review) are never dropped silently — their number is part of the record and the draft
+            sc_new = _count(sc.get("new"))
+            if isinstance(lng.get("change_candidates"), dict) and sc_new is not None and sc_new > cands["new"]:
+                cands["new_below_review_size"] = sc_new - cands["new"]
             view["longitudinal"] = {
                 "abstained": False,
                 # (benchmark framing without its last clause, "do not establish activity or dissemination in time":
@@ -569,6 +588,9 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
                 "burden_change_percent": finite_number(lng.get("burden_delta_percent")),
                 "registration": "not verified at lesion scale",
             }
+            d = finite_number(lng.get("new_lesion_min_diameter_mm"))
+            if d is not None:
+                view["longitudinal"]["new_lesion_min_diameter_mm"] = d
 
     vol = volumetry_payload if isinstance(volumetry_payload, dict) else None
     tbv = finite_number((vol or {}).get("total_brain_volume_ml"))
@@ -717,8 +739,18 @@ def reviewable_candidate_counts(longitudinal: Any) -> Tuple[Optional[int], Optio
 
 
 def has_something_to_comment(view: Dict[str, Any]) -> bool:
-    return bool(view["lesions"].get("computed") or view.get("longitudinal") is not None
-                or view.get("brain_volumetry") or view["dis"]["status"] == "evaluated")
+    """Seventh review of PR #78, finding 6 (I7): a value the code computed — not a block that is all "not computed"
+    (a lesion analysis without any value, a comparison without candidates, a volumetry without a volume)."""
+    les = view["lesions"]
+    sd = les.get("size_distribution") or {}
+    lesion_value = les.get("computed") and (
+        any(les.get(k) is not None for k in ("total_count", "total_volume_ml", "total_volume_mm3"))
+        or any(v is not None for v in sd.values()))
+    lng = view.get("longitudinal")
+    bv = view.get("brain_volumetry") or {}
+    volume = any(bv.get(k) is not None for k in ("total_brain_volume_ml", "intracranial_volume_ml"))
+    return bool(lesion_value or (lng is not None and not lng.get("abstained")) or volume
+                or view["dis"]["status"] == "evaluated")
 
 
 def _count_line(view: Dict[str, Any], t: Dict[str, str]) -> str:
@@ -759,9 +791,14 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     sd = les.get("size_distribution")
     size = (t["size"].format(s=sd["small"], m=sd["medium"], l=sd["large"])
             if sd and all(sd.get(k) is not None for k in ("small", "medium", "large")) else t["size_nc"])
-    f = [src, count, volume, size]
+    # seventh review of PR #78, finding 2 (I1): the lesion block (and its impression) only when a lesion analysis was
+    # requested — a volumetry-only or longitudinal-only draft has no "lesion count: not computed"
+    lesions_in = les.get("computed") is True
+    f = [src, count, volume, size] if lesions_in else []
     reg = view["regions"]
-    if reg.get("confirmed"):
+    if not lesions_in:
+        pass
+    elif reg.get("confirmed"):
         c = reg["lesion_counts"]
 
         def rc(r):      # second review, E: a region not computed is "not computed" alone
@@ -770,7 +807,7 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
                                       dwm=rc("Deep White Matter")))
     else:
         f.append(t["reg_nc"] if reg.get("computed") is False else t["reg_none"])
-    if "other_labels_lesion_count" in reg:      # only set for a confirmed segmentation (an evaluated DIS)
+    if lesions_in and "other_labels_lesion_count" in reg:   # only for a confirmed segmentation (an evaluated DIS)
         other = reg["other_labels_lesion_count"]
         f.append(t["reg_other"].format(n=other if other is not None else t["nc"]))
     bv = view.get("brain_volumetry")
@@ -797,6 +834,11 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
             cc = lng["candidates"]
             comp = [t["lng_ok"].format(new=stated["new_candidates"], enl=stated["enlarging_candidates"],
                                        res=cc["resolved"], shr=cc["shrunk"], sta=cc["stable"])]
+            below = cc.get("new_below_review_size")
+            if below:       # seventh review, finding 4 (I4): never dropped silently (wording: owner decision)
+                d = lng.get("new_lesion_min_diameter_mm")
+                comp.append(t["lng_below_size"].format(k=below, d=_loc(f"{d:g}", lang)) if d is not None
+                            else t["lng_below_size_nd"].format(k=below))
             v1, v2 = lng["visit_1"]["total_volume_ml"], lng["visit_2"]["total_volume_ml"]
             if v1 is not None and v2 is not None and lng.get("burden_change_percent") is not None:
                 comp.append(t["lng_vol"].format(v1=_loc(_num(v1, 2), lang), v2=_loc(_num(v2, 2), lang),
@@ -805,7 +847,7 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
                                             else "imp_unc")
     # second review of PR #78, F: the "not evaluated" DIS statement is written ONCE (in the findings); the impression
     # repeats an evaluated DIS result only
-    imp = ([t[imp_key].format(count=count.rstrip("."))] + ([dis_s] if dis["status"] == "evaluated" else [])
+    imp = (([t[imp_key].format(count=count.rstrip("."))] if lesions_in else []) + ([dis_s] if dis["status"] == "evaluated" else [])
            + ([comp[0]] if comp else []))
     all_items = t["lim_items"].split("|")
     entry = (view.get("clinician_entry") or {}).get("clinical_indication") is True   # sixth review, W2
@@ -958,44 +1000,64 @@ NUMBER_WORDS_MESSAGE = ("A count written in words is not allowed in the comments
 # regions", "ambas regiones", "zwei neue Kandidaten"). Ordinals and other uses pass ("the first marking", "both
 # hemispheres", "once confirmed", "half of the volume"). Folded text (no accents, ss for sharp s), whole words; the
 # words of the report language and of the other two, except "once" (Spanish eleven, English "once") outside Spanish.
-_COUNT_WORDS = {
-    "en": ("zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|"
-           "seventeen|eighteen|nineteen|twenty|thirty|forty|fourty|fifty|sixty|seventy|eighty|ninety|hundreds?|"
-           "thousands?|dozens?|both|single|couple|pairs?"),
-    "es": ("cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|dieci\\w+|veinte|"
-           "veinti\\w+|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien|cientos?|mil|docenas?|ambos|ambas|"
-           "unic[oa]s?|par|pares"),
-    "de": ("null|eins|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn|elf|zwolf|\\w+zehn|zwanzig|dreissig|\\w+zig|"
-           "\\w+und(?:zwanzig|dreissig|vierzig|funfzig|sechzig|siebzig|achtzig|neunzig)|hundert\\w*|tausend\\w*|"
-           "dutzend\\w*|beide[nrs]?|einzige[nrms]?|paar"),
+def _german_numbers() -> Tuple[str, ...]:
+    """German cardinals, generated (folded: no umlauts, ss): 0-19, the tens, 21-99 as "<unit>und<ten>", the hundreds and
+    thousands — explicit words, no suffix pattern (seventh review of PR #78, finding 5: "einzig" is not a number)."""
+    units = ("ein", "zwei", "drei", "vier", "funf", "sechs", "sieben", "acht", "neun")
+    tens = ("zwanzig", "dreissig", "vierzig", "funfzig", "sechzig", "siebzig", "achtzig", "neunzig")
+    words = ["null", "eins", "zwei", "drei", "vier", "funf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwolf",
+             "dreizehn", "vierzehn", "funfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn", *tens,
+             "hundert", "tausend", "dutzend", "dutzende", "dutzenden"]
+    words += [u + "und" + t for u in units for t in tens]
+    words += [u + "hundert" for u in units] + [u + "tausend" for u in units]
+    return tuple(words)
+
+
+# Seventh review of PR #78, finding 5: the lexicon of the REPORT language only, as explicit word lists (folded).
+_CARDINALS = {
+    "en": ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+           "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "thirty",
+           "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred", "hundreds", "thousand", "thousands",
+           "dozen", "dozens"),
+    "es": ("cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce",
+           "trece", "catorce", "quince", "dieciseis", "diecisiete", "dieciocho", "diecinueve", "veinte", "veintiuno",
+           "veintiun", "veintiuna", "veintidos", "veintitres", "veinticuatro", "veinticinco", "veintiseis", "veintisiete",
+           "veintiocho", "veintinueve", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa",
+           "cien", "ciento", "cientos", *(h + g for h in ("doscient", "trescient", "cuatrocient", "quinient", "seiscient",
+                                                        "setecient", "ochocient", "novecient") for g in ("os", "as")),
+           "mil", "docena", "docenas"),
+    "de": _german_numbers(),
 }
-_COUNTED_NOUN = re.compile(r"(?:" + "|".join((
-    # en
-    r"lesions?|foci|focus|candidates?|regions?|locations?|areas?|segments?|spots?|plaques?|sites?|zones?",
-    r"hyperintensit(?:y|ies)",
-    # es
-    r"lesion|lesiones|focos?|candidatos?|regiones|localizacion(?:es)?|segmentos?|placas?|zonas?|hiperintensidad(?:es)?",
-    # de (compounds: "Marklagerlasionen", "Entmarkungsherde", "Veranderungskandidaten")
-    r"\w*lasion(?:en)?|\w*herde?n?|\w*kandidat(?:en)?|regionen|lokalisation(?:en)?|areale?n?|segmente?n?|zonen?",
-    r"hyperintensitat(?:en)?",
-)) + r")")
-# What a CARDINAL also counts or measures when it comes right before it (the offline re-scoring of the benchmark's
-# drafts found these counts slipping a noun-only rule: "eleven small, four medium and four large", "una lesion grande,
-# diez medianas", "vier kleine, vierzehn mittlere", "seven point two millimeters"): a size class or a unit.
-_SIZE_OR_UNIT = re.compile(r"(?:" + "|".join((
-    r"small|medium|large|tiny|pequen[ao]s?|median[ao]s?|grandes?|klein(?:e[nrsm]?)?|mittlere[nrsm]?|mittelgross\w*",
-    r"gross(?:e[nrsm]?)?|millimet(?:er|re)s?|mm|millilit(?:er|re)s?|ml|centimet(?:er|re)s?|cm|percent|milimetros?",
-    r"mililitros?|centimetros?|millimeter|milliliter|zentimeter|prozent",
-)) + r")")
-# ...and a cardinal that comes AFTER one of these words, in the same clause ("the total count of lesions is
-# twenty-five", "in the range of twenty to fifty", "a total volume of zero", "el recuento total de lesiones es de cero").
-_COUNT_HEAD = re.compile(r"(?:" + "|".join((
-    r"count|counts|number|total|range|category|volume|recuento|numero|cantidad|rango|categoria|volumen",
-    r"anzahl|gesamtzahl|zahl|bereich|kategorie",
-)) + r")")
-_QUANTIFIERS = frozenset(("both", "single", "couple", "pair", "pairs", "ambos", "ambas", "unico", "unica", "unicos",
-                          "unicas", "par", "pares", "beide", "beiden", "beider", "beides", "einzige", "einzigen",
-                          "einziger", "einziges", "einzigem", "paar"))
+# words that count only the noun right after them ("both regions", "a single new lesion"), never a size or a unit
+_QUANTIFIER_WORDS = {
+    "en": ("both", "single", "couple", "pair", "pairs"),
+    "es": ("ambos", "ambas", "unico", "unica", "unicos", "unicas", "par", "pares"),
+    "de": ("beide", "beiden", "beider", "beides", "einzige", "einzigen", "einziger", "einziges", "einzigem", "paar"),
+}
+_COUNT_WORD_OF = {lang: frozenset(_CARDINALS[lang] + _QUANTIFIER_WORDS[lang]) for lang in _CARDINALS}
+_COUNTED_NOUN_OF = {
+    "en": re.compile(r"lesions?|foci|focus|candidates?|regions?|locations?|areas?|segments?|spots?|plaques?|sites?|"
+                     r"zones?|components?|hyperintensit(?:y|ies)"),
+    "es": re.compile(r"lesion|lesiones|focos?|candidatos?|region|regiones|localizacion(?:es)?|areas?|segmentos?|"
+                     r"placas?|zonas?|componentes?|hiperintensidad(?:es)?"),
+    # German compounds ("Marklagerlasionen", "Entmarkungsherde", "Veranderungskandidaten") end in the noun
+    "de": re.compile(r"\w*lasion(?:en)?|\w*herde?n?|\w*kandidat(?:en)?|regionen?|lokalisation(?:en)?|areale?n?|"
+                     r"segmente?n?|zonen?|komponenten?|hyperintensitat(?:en)?"),
+}
+# what a CARDINAL also counts or measures right after it: a size class or a unit ("four small", "seven millimeters")
+_SIZE_OR_UNIT_OF = {
+    "en": re.compile(r"small|medium|large|tiny|millimet(?:er|re)s?|mm|millilit(?:er|re)s?|ml|centimet(?:er|re)s?|cm|"
+                     r"percent"),
+    "es": re.compile(r"pequen[ao]s?|median[ao]s?|grandes?|milimetros?|mililitros?|centimetros?|mm|ml|cm"),
+    "de": re.compile(r"klein(?:e[nrsm]?)?|mittlere[nrsm]?|mittelgross(?:e[nrsm]?)?|gross(?:e[nrsm]?)?|millimeter|"
+                     r"milliliter|zentimeter|prozent|mm|ml|cm"),
+}
+# ...and a cardinal that comes after one of these words in the same clause ("the total count of lesions is twenty")
+_COUNT_HEADS = {
+    "en": frozenset(("count", "counts", "number", "total", "range", "category", "volume")),
+    "es": frozenset(("recuento", "numero", "total", "cantidad", "rango", "categoria", "volumen")),
+    "de": frozenset(("anzahl", "gesamtzahl", "zahl", "bereich", "kategorie", "volumen")),
+}
 _SENTENCE_BREAK = re.compile(r"[.;:!?\n]")
 _CLAUSE_BREAK = re.compile(r"[.;:!?,\n]")
 _COUNT_WINDOW = 4                 # a counted noun within the next four words (at most three words between)
@@ -1003,18 +1065,9 @@ _QUANTIFIER_WINDOW = 2            # "both regions", "a single new lesion" — no
 _HEAD_WINDOW = 5                  # "count / total / range / volume ..." up to five words before a cardinal
 
 
-def _count_word(lang: str) -> "re.Pattern[str]":
-    words = [w for code, ws in _COUNT_WORDS.items() for w in ws.split("|")
-             if code == lang or not (w == "once" and code == "es")]
-    return re.compile("(?:" + "|".join(dict.fromkeys(words)) + ")")
-
-
-_COUNT_WORD_OF = {lang: _count_word(lang) for lang in ("en", "es", "de")}
-
-
-def _counts(fold: str, tokens, i: int) -> bool:
-    word = tokens[i].group(0)
-    cardinal = word not in _QUANTIFIERS
+def _counts(fold: str, tokens, i: int, lang: str) -> bool:
+    cardinal = tokens[i].group(0) in _CARDINALS[lang]
+    noun, size = _COUNTED_NOUN_OF[lang], _SIZE_OR_UNIT_OF[lang]
     k, end = 0, tokens[i].end()
     for nxt in tokens[i + 1:i + 1 + 2 * _COUNT_WINDOW]:
         gap, end = fold[end:nxt.start()], nxt.end()
@@ -1023,27 +1076,29 @@ def _counts(fold: str, tokens, i: int) -> bool:
         k += 0 if gap == "-" else 1          # a hyphenated word is one word ("a single medium-sized lesion")
         if k > _COUNT_WINDOW:
             break
-        if _COUNTED_NOUN.fullmatch(nxt.group(0)) and (cardinal or k <= _QUANTIFIER_WINDOW):
+        if noun.fullmatch(nxt.group(0)) and (cardinal or k <= _QUANTIFIER_WINDOW):
             return True
-        if cardinal and k <= 2 and _SIZE_OR_UNIT.fullmatch(nxt.group(0)):
+        if cardinal and k <= 2 and size.fullmatch(nxt.group(0)):
             return True
     if cardinal:
         for prev in reversed(tokens[max(0, i - _HEAD_WINDOW):i]):
             if _CLAUSE_BREAK.search(fold[prev.end():tokens[i].start()]):
                 break
-            if _COUNT_HEAD.fullmatch(prev.group(0)):
+            if prev.group(0) in _COUNT_HEADS[lang]:
                 return True
     return False
 
 
 def number_words(text: str, lang: str = "en") -> List[str]:
-    """The number and count words of `text` that count or measure (sixth review of PR #78, W3; fifth review, V1): a
-    clinical noun within four words after a cardinal (two words after "both", "a single"…), a size class or a unit right
-    after a cardinal, or a count / total / range / volume word up to five words before a cardinal in the same clause."""
+    """The number words of `text`, in the report's language, that count or measure (sixth review of PR #78, W3;
+    seventh review, finding 5): a clinical noun within four words after a cardinal (two after "both", "a single"…), a
+    size class or a unit right after a cardinal, or a count / total / range / volume word up to five words before a
+    cardinal in the same clause."""
+    lang = lang if lang in _CARDINALS else "en"
     fold = L_fold(text)
     tokens = list(re.finditer(r"\w+", fold))
-    word = _COUNT_WORD_OF.get(lang, _COUNT_WORD_OF["en"])
-    return [tok.group(0) for i, tok in enumerate(tokens) if word.fullmatch(tok.group(0)) and _counts(fold, tokens, i)]
+    words = _COUNT_WORD_OF[lang]
+    return [tok.group(0) for i, tok in enumerate(tokens) if tok.group(0) in words and _counts(fold, tokens, i, lang)]
 
 
 TEMPLATE_TOKEN_MESSAGE = ("Braces and brackets are not allowed in the comments: write a placeholder exactly as listed, "

@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from typing import Optional, List, Dict, Any, Literal, Tuple
 from pydantic import BaseModel, Field
 
+from app.services import verified_report
 from app.security import get_current_active_user
 from app.security.models import User
 from app.security.resource_access import authorize_segmentation_id
@@ -492,8 +493,7 @@ async def generate_report(
     current_user: User = Depends(get_current_active_user),
 ):
     """Generate a draft brain MRI report from measurements computed by the device."""
-    from app.services import verified_report as _budget
-    started = _budget.now()   # REQ-SAFE-019 (sixth review of PR #78, W7): the 30 s count from here
+    started = verified_report.now()   # REQ-SAFE-019 (sixth review of PR #78, W7): the 30 s count from here
     logger.info(
         f"[Report] Generate request: template={request.template_type}, "
         f"lang={request.language}"
@@ -502,7 +502,6 @@ async def generate_report(
     # CAPA-008 (HAZ-003): never ask the model to write a report without a measurement. Second review of PR #78, D:
     # aligned with what the verified report can write — zone statistics, segmentation labels, anomalies or structure
     # volumes alone would give an empty report.
-    from app.services import verified_report
     if not verified_report.renderable(request.findings, request.volumetry):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -520,17 +519,11 @@ async def generate_report(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SUBJECT_REQUIRED_DETAIL)
     patient_id = await authorize_segmentation_id(request.segmentation_id, current_user)
     service = get_report_service()
-    identifiers = None
-    # fifth review of PR #78, V5: the patient record is read only when a request can be sent (kill switch on, model
-    # allowed, key configured); otherwise nothing is sent and the measurements-only draft needs no record. A service
-    # that cannot tell (an offline test double) gets the record, as before — the check is never skipped by default.
-    # sixth review, W5: the service's ONE gate, asked without a record (the service asks it again with the record)
-    if not hasattr(service, "interpretive_text_gate") or service.interpretive_text_gate()[0] is not False:
-        try:
-            identifiers = await read_patient_identifiers(patient_id)
-        except PatientRecordUnavailable as e:
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                                detail=NOT_SENT_DETAIL.format(reason=str(e)))
+
+    async def identifiers():
+        """The patient's own identifiers, read only if the service will send a request (seventh review of PR #78,
+        finding 8: the service's one gate decides; with nothing to send, no record is read)."""
+        return await read_patient_identifiers(patient_id)
 
     findings = dict(request.findings)
     if "longitudinal" in findings:   # CAPA-013, review of PR #63 (blocker 1)

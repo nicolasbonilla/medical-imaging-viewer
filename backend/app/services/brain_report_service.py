@@ -121,21 +121,6 @@ class ProviderWiringFault(Exception):
     review of PR #78, Q5): a provider-side failure, never read as an answer that failed the check."""
 
 
-def _is_async_client(client: Any, create: Any) -> bool:
-    """The SDK's async client by TYPE (fourth review of PR #78, Q5); a client of another type (the offline test
-    doubles) is async when its `create` is a coroutine function. A plain wrapper hiding an async create is handled by
-    awaiting its awaitable result."""
-    try:
-        import anthropic
-        if isinstance(client, anthropic.AsyncAnthropic):
-            return True
-        if isinstance(client, anthropic.Anthropic):
-            return False
-    except ImportError:          # the SDK is not installed (offline tests): only the test doubles exist
-        pass
-    return inspect.iscoroutinefunction(create)
-
-
 def _failure_reason(exc: BaseException) -> str:
     """RC-106: the audit-safe reason of a provider failure (404 = the model is no longer served)."""
     name = type(exc).__name__
@@ -181,6 +166,7 @@ class _ReportAudit:
     def __init__(self, report_id: str, actor: Any, segmentation_id: Optional[str], template_type: str, language: str):
         self.report_id, self.actor, self.segmentation_id = report_id, actor, segmentation_id
         self.template_type, self.language = template_type, language
+        self.attempts_recorded = 0      # seventh review of PR #78, finding 3 (I8)
 
     def _emit(self, event_type, outcome, details, severity):
         from app.core.logging.audit import emit_audit
@@ -195,6 +181,7 @@ class _ReportAudit:
 
     def attempt(self, record: Dict[str, Any]) -> None:
         from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
+        self.attempts_recorded += 1
         outcome = AuditOutcome.SUCCESS if record.get("verdict") == "pass" else AuditOutcome.FAILURE
         details = {k: record.get(k) for k in ("attempt", "model_id", "model_answered", "prompt_sha256", "verdict",
                                               "rule_ids", "latency_ms", "stop_reason", "input_tokens",
@@ -218,9 +205,17 @@ class _ReportAudit:
         failed (failure) — is audited too; the reason is a code, never the message."""
         from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
         refused = isinstance(exc, ProviderGuardError)
-        details = {"report_outcome": "not_sent" if refused else "error", "interpretive_text": "not_sent",
-                   "attempts": 0, "llm_reason": _refusal_code(exc) if refused else None,
-                   "error": None if refused else type(exc).__name__}
+        called = self.attempts_recorded
+        if called:
+            # seventh review of PR #78, finding 3 (I8): an exception AFTER one or more model calls is an error with the
+            # attempts really made — never "not sent, 0 attempts"
+            details = {"report_outcome": "error", "interpretive_text": "withheld", "attempts": called,
+                       "llm_reason": _refusal_code(exc) if refused else None, "error": type(exc).__name__}
+        else:
+            details = {"report_outcome": "not_sent" if refused else "error", "interpretive_text": "not_sent",
+                       "attempts": 0, "llm_reason": _refusal_code(exc) if refused else None,
+                       "error": None if refused else type(exc).__name__}
+        refused = refused and not called
         self._emit(AuditEventType.CLINICAL_AI_REPORT_VERIFICATION,
                    AuditOutcome.DENIED if refused else AuditOutcome.FAILURE,
                    {k: v for k, v in details.items() if v is not None}, AuditSeverity.MEDIUM)
@@ -295,6 +290,10 @@ DIS_EVALUATION = {"evaluated": "evaluated", "not evaluated": "not_evaluated",
                   verified_report.DIS_NOT_IN_REPORT: "not_in_report"}
 
 
+# The review sources of an automatic marking (the automatic-marking notice is for these only; seventh review, finding 7)
+AUTOMATIC_REVIEW_SOURCES = ("ai_draft", "automatic_tool")
+
+
 def _review_source(findings: Any) -> Optional[str]:
     """The segmentation source code of the server's DIS state (`ai_draft`, `automatic_tool`, `origin_not_recorded`),
     set by the report route from the stored segmentation; anything else: None (fixed "not confirmed" text)."""
@@ -309,14 +308,10 @@ def _review_source(findings: Any) -> Optional[str]:
 # never reused ("Event loop is closed") — configured with the allowed time budget, closed at shutdown (main.py).
 # Loops are weak keys, and closed loops are dropped on every look-up.
 _CLIENTS_BY_LOOP: "weakref.WeakKeyDictionary[Any, Dict[str, Any]]" = weakref.WeakKeyDictionary()
-_CLIENTS_WITHOUT_LOOP: Dict[str, Any] = {}
 
 
 def _client_cache() -> Dict[str, Any]:
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        return _CLIENTS_WITHOUT_LOOP
+    loop = asyncio.get_running_loop()       # the client is only ever used on the request's loop (seventh review, 9)
     for old in [lp for lp in list(_CLIENTS_BY_LOOP.keys()) if lp.is_closed()]:
         _CLIENTS_BY_LOOP.pop(old, None)
     return _CLIENTS_BY_LOOP.setdefault(loop, {})
@@ -337,17 +332,12 @@ def _shared_client(api_key: str):
 def _forget_report_clients() -> None:
     """Drop every cached client without closing it (tests; a client of another loop cannot be closed from here)."""
     _CLIENTS_BY_LOOP.clear()
-    _CLIENTS_WITHOUT_LOOP.clear()
 
 
 async def close_report_clients() -> None:
-    """Close the shared provider clients of the running loop and those made outside a loop (their connection pools);
-    called at application shutdown. Clients of other, closed loops are dropped."""
-    clients = list(_CLIENTS_WITHOUT_LOOP.values())
-    try:
-        clients += list((_CLIENTS_BY_LOOP.get(asyncio.get_running_loop()) or {}).values())
-    except RuntimeError:
-        pass
+    """Close the shared provider clients of the running loop (their connection pools); called at application
+    shutdown. Clients of other, closed loops are dropped."""
+    clients = list((_CLIENTS_BY_LOOP.get(asyncio.get_running_loop()) or {}).values())
     _forget_report_clients()
     for client in clients:
         close = getattr(client, "close", None)
@@ -418,30 +408,19 @@ class BrainReportService:
         """One provider call of the flow (RC-106): fixed parameters of the allow-list, the remaining time budget as
         timeout; any failure becomes a ProviderFailure (audit-safe).
 
-        Third review of PR #78, T3: the service's client is the SDK's async client; its request is awaited under the
-        remaining budget, so at the deadline the request itself is cancelled (no thread, no request left running).
-        A synchronous client — only the offline test doubles have one — is waited for in a worker thread under the
-        same bound."""
+        Third review of PR #78, T3; seventh review, finding 8: ONE call path — the SDK's async client's request is
+        awaited under the remaining budget, so at the deadline the request itself is cancelled (no worker thread, no
+        request left running)."""
         params = REPORT_MODELS[model_id]["params"]
         max_tokens = int(self._settings.CLAUDE_MAX_TOKENS)
 
         async def call(system: str, messages: List[Dict[str, str]], timeout_s: float) -> verified_report.ModelReply:
-            loop = asyncio.get_running_loop()
-            deadline = loop.time() + float(timeout_s)
             try:
-                client = self._get_client()
-                create = client.messages.create
-                kwargs = dict(model=model_id, max_tokens=max_tokens, system=system, messages=messages,
-                              extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))
-                # fourth review of PR #78, Q5: decided on the client's TYPE (the SDK's async client), not on wrapper
-                # attributes; and any awaitable result — an async create behind a plain wrapper — is awaited under the
-                # budget that is left (the remaining budget bounds the request itself: R2, T3)
-                if _is_async_client(client, create):
-                    message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))
-                else:
-                    message = await asyncio.wait_for(asyncio.to_thread(create, **kwargs), timeout=float(timeout_s))
-                if inspect.isawaitable(message):
-                    message = await asyncio.wait_for(message, timeout=max(0.0, deadline - loop.time()))
+                message = self._get_client().messages.create(
+                    model=model_id, max_tokens=max_tokens, system=system, messages=messages,
+                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))
+                if inspect.isawaitable(message):      # the request, bounded by the remaining budget (R2, T3)
+                    message = await asyncio.wait_for(message, timeout=float(timeout_s))
                 reply = reply_of(message)
             except Exception as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is
                 raise verified_report.ProviderFailure(_failure_reason(e), type(e).__name__) from e
@@ -507,10 +486,15 @@ class BrainReportService:
             # Fifth review, V5: the measurement checks (ranges) always run — they protect the code-written text; the
             # patient's own numbers are checked only when a request can be sent.
             allowed, reason = self.interpretive_text_gate()
-            if allowed and not isinstance(identifiers, PatientIdentifiers):
-                # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check against
-                raise PatientRecordUnavailable("the patient's identifiers were not supplied")
-            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers if allowed else None)
+            ids = None
+            if allowed:
+                # seventh review of PR #78, finding 8: the record is read here, only when a request can be sent — the
+                # route hands a lazy reader (no gate in the route)
+                ids = await identifiers() if callable(identifiers) else identifiers
+                if not isinstance(ids, PatientIdentifiers):
+                    # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check against
+                    raise PatientRecordUnavailable("the patient's identifiers were not supplied")
+            payload = provider_payload(rendered_findings, rendered_volumetry, ids)
             # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
             view = verified_report.build_view(payload.findings, payload.volumetry, lang,
                                               review_source=_review_source(findings), not_included=not_included)
@@ -552,31 +536,33 @@ class BrainReportService:
                 if UNLISTED.rstrip("]") in sent_text:
                     raise LabelInRecord("a label of the request reached the measurement record")
                 # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
-                assert_prompt_carries_no_identifier(sent_text, identifiers)
+                assert_prompt_carries_no_identifier(sent_text, ids)
                 result = await verified_report.run_flow(
                     view, lang, self._model_call(model_id),
                     request_meta={"model": model_id, "max_tokens": int(self._settings.CLAUDE_MAX_TOKENS),
                                   "params": REPORT_MODELS[model_id]["params"]},
                     # RC-065 on every regeneration request too: a finding stops the flow (comments withheld)
-                    tripwire=lambda text: assert_prompt_carries_no_identifier(text, identifiers),
+                    tripwire=lambda text: assert_prompt_carries_no_identifier(text, ids),
                     on_attempt=audit.attempt,
                     deadline_s=budget,   # REQ-SAFE-019: what is left of the request's budget (sixth review, W7)
                     first_message=sent_text)   # second review, J: built once; what is sent is what was checked
+            # seventh review of PR #78, finding 3 (I8): the draft is finished INSIDE the audited block — an exception
+            # after the model calls is audited with the attempts really made
+            # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that no generated report can leave this
+            # service without it — regardless of what the model produced. See _apply_disclaimer.
+            text = result.text
+            dis_evaluation = DIS_EVALUATION[view["dis"]["status"]]
+            if dis_evaluation == "not_evaluated" and _review_source(findings) in AUTOMATIC_REVIEW_SOURCES:
+                # PRB-003 (RC-072): the findings state "not evaluated" once (skeleton); the fixed notice on automatic
+                # marking follows — only for an automatic marking (seventh review, finding 7, I5)
+                from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
+                text = f"{text}\n\n> {AUTOMATIC_MARKING_NOTICE[lang]}"
+            content = _apply_disclaimer(text, language)
+            change = verified_report.change_notice(view, lang)
         except Exception as e:  # noqa: BLE001 — audited, then raised as before (the route answers 503 / 500)
             audit.not_sent(e)
             raise
         audit.outcome(result, model_id if reason is None else None)
-
-        # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that no generated report can leave this
-        # service without it — regardless of what the model produced. See _apply_disclaimer.
-        text = result.text
-        dis_evaluation = DIS_EVALUATION[view["dis"]["status"]]
-        if dis_evaluation == "not_evaluated":
-            # PRB-003 (RC-070, RC-072; fifth review of PR #78, V8): this service owns the DIS notice — the findings
-            # state "not evaluated" once (skeleton); the fixed notice on automatic marking follows, written by code
-            from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
-            text = f"{text}\n\n> {AUTOMATIC_MARKING_NOTICE[lang]}"
-        content = _apply_disclaimer(text, language)
         processing_time_ms = int((time.time() - start_time) * 1000)
         logger.info(
             f"[Report] Verified draft {result.outcome} in {processing_time_ms}ms",
@@ -599,7 +585,7 @@ class BrainReportService:
             "dis_evaluation": dis_evaluation,
             # CAPA-013 (sixth review of PR #78, W1): the change notice, from the validated record (one source with the
             # draft's comparison line; a null or missing count is "not computed")
-            "change_notice": verified_report.change_notice(view, lang),
+            "change_notice": change,
             # CAPA-014: placeholder -> label as written, for the clinician's draft only. Verified report (review of
             # PR #78, R8): the record never carries a placeholder (a request would be refused above), so there is no
             # placeholder to name and no application note "sent as numbered placeholders".

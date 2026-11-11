@@ -114,8 +114,8 @@ def main(argv=None):
                         # sixth review, W3: only when it counts a clinical noun, in the report's language)
                         words = VR.number_words(fc + "\n" + ic, r["lang"])
                         fold = VR.L_fold(fc + "\n" + ic)
-                        word_re = VR._COUNT_WORD_OF[r["lang"]]
-                        unflagged = [m for m in re.finditer(r"\w+", fold) if word_re.fullmatch(m.group(0))]
+                        count_words = VR._COUNT_WORD_OF[r["lang"]]
+                        unflagged = [m for m in re.finditer(r"\w+", fold) if m.group(0) in count_words]
                         if len(unflagged) > len(words):     # a count word that counts no listed clinical noun
                             slips_seen[-1] = [fold[max(0, u.start() - 60):u.end() + 60].replace("\n", " ")
                                               for u in unflagged]

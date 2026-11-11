@@ -335,6 +335,10 @@ class _Projector:
                               for k in ("new", "enlarged", "resolved", "shrunk", "stable")}
         # fifth review of PR #78, V2: the reviewable change candidates (CAPA-013) — the figure the draft states, as the
         # route's notice and the review screen
+        # seventh review of PR #78, finding 4: the minimum size the rule reviews (for the below-size line)
+        d = self.number(lng.get("new_lesion_min_diameter_mm"), "new_lesion_min_diameter_mm", 0, 100, required=False)
+        if d is not None:
+            o["new_lesion_min_diameter_mm"] = d
         cc = lng.get("change_candidates")
         if isinstance(cc, dict):
             o["change_candidates"] = {k: self.count(cc.get(k), "change_candidates") for k in ("new", "enlarging")}
