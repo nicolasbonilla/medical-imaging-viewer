@@ -456,6 +456,10 @@ def test_rc064_j_no_per_lesion_value_reaches_the_model_and_the_number_pool_shrin
 
 def test_rc065_j_the_first_message_is_built_once_and_is_exactly_what_was_checked(monkeypatch):
     built, checked = [], []
+    # (amended with the fifth review of PR #78: the identifier check's cached word lists are built on first use from
+    # `first_user_message` of every synthetic payload — warmed here, so the count is this report's own; in a test order
+    # where this test ran first, CI counted those 120 calls)
+    BRS._fixed_prompt_word_lists()
     original = VR.first_user_message
 
     def counting(view, lang):
