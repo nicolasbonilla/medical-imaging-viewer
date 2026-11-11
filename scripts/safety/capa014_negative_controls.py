@@ -57,6 +57,7 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/CAPA-014_review5_negative_controls_2026-10-25.json"
+OUT = os.environ.get("NC_OUT", OUT)     # (a later run writes its own record; the earlier one is kept)
 BACKEND_TESTS = ["tests/unit/test_capa014_report_provider_payload.py",
                  "tests/unit/test_capa009_object_authorization_everywhere.py",
                  "tests/unit/test_capa008_assistant_read_only.py",
@@ -100,7 +101,7 @@ def skip_generic(*names):
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-064: structured payload only ──
-    "P1_payload_bypassed": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, None)\n", "            payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, \"unlisted\": {}})()\n")],
+    "P1_payload_bypassed": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, \"unlisted\": {}})()\n")],
                             "the request's findings go to the prompt builder as received"),
     "P2_builder_prints_free_text": ([(BRS, "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n",
                                       "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n        if findings.get(\"clinical_indication\"):\n"
@@ -363,8 +364,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
 # Third independent review of PR #78 (T5, DRAFT, PENDING owner approval): these mutations targeted the retired report
 # templates and findings-prompt builder, archived outside the shipped code (docs/archive/retired_report_prompt.py).
 # They are kept by name, not run; the controls they exercised are verified on the verified report by
-# scripts/safety/verified_report_negative_controls.py.
-RETIRED_WITH_THE_TEMPLATES = {name: M.pop(name)[1] for name in ("P2_builder_prints_free_text", "P6_any_sex_sent", "P17_builder_prints_not_evaluated_as_not_met", "P22_synthetic_dis_without_state", "P23_synthetic_dis_without_absent_region", "M3_model_not_told", "M8_instruction_always_sent")}
+# scripts/safety/verified_report_negative_controls.py. Ninth review of PR #78, I15: T23 inserted the retired
+# REPORT_TEMPLATES name — an INVALID mutant (it died by NameError, before any test, and was counted as a kill).
+# Replaced by: verified_report_negative_controls.py (P1-P8, C1-C42, F1-F29; T23's RC-065 device words: F29).
+RETIRED_WITH_THE_TEMPLATES = {name: M.pop(name)[1] for name in ("P2_builder_prints_free_text", "P6_any_sex_sent", "P17_builder_prints_not_evaluated_as_not_met", "P22_synthetic_dis_without_state", "P23_synthetic_dis_without_absent_region", "M3_model_not_told", "M8_instruction_always_sent", "T23_template_words_exempt")}
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
 EXPECTED_UNDETECTED = {}
@@ -405,6 +408,14 @@ def run_for(paths):
 
 def sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+# Ninth review of PR #78: re-run only the named controls (NC_ONLY=name,name) — e.g. the re-anchored ones — in a
+# throwaway copy; the full table runs when it is unset.
+if os.environ.get("NC_ONLY"):
+    _only = set(os.environ["NC_ONLY"].split(","))
+    M = {k: v for k, v in M.items() if k in _only}
+    assert set(M) == _only, f"unknown control(s): {sorted(_only - set(M))}"
 
 
 def main():

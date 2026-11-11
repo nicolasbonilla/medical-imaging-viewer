@@ -90,10 +90,11 @@ STR = "backend/app/services/report_claim_strict.py"
 GRD = "backend/app/services/report_payload_guard.py"
 RT = "backend/app/api/routes/ai_report.py"
 MAIN = "backend/app/main.py"
+LCS = "backend/app/services/longitudinal_candidate_safety.py"
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-102: the facts are written by code ──
-    "F1_range_from_21": ([(VR, "    if n < 20:\n        return t[\"count_exact\"]", "    if n < 21:\n        return t[\"count_exact\"]")],
+    "F1_range_from_21": ([(VR, "            \"total_count\": n if n is not None and n < 20 else None,\n", "            \"total_count\": n if n is not None and n < 21 else None,\n"), (VR, "    if n is not None and n < 20:\n        return t[\"count_exact\"]", "    if n is not None and n < 21:\n        return t[\"count_exact\"]")],
                          "20 lesions reported as an exact count, not as the MAGNIMS 2021 range"),
     "F2_not_computed_as_zero": ([(VR, "    if v is None or v != int(v) or v < 0:\n        return None\n",
                                   "    if v is None or v != int(v) or v < 0:\n        return 0\n")],
@@ -297,7 +298,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "MEASUREMENT_FINDING_KEYS = frozenset({\"lesion_analysis\", \"dis_assessment\", \"longitudinal\"})")],
                                  "Q7: a second literal list of the blocks the report writes"),
     # ── RC-064: only what is rendered is sent and validated (second review, C, D, H) ──
-    "P1_unrendered_fields_validated": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, None)\n", "            payload = provider_payload(findings, volumetry, None)\n")],
+    "P1_unrendered_fields_validated": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            payload = project_measurements(findings, volumetry)\n")],
                                        "C: a bad value in a field the report does not render refuses the whole report"),
     "P2_unrenderable_request_accepted": ([(RT, "    if not verified_report.renderable(request.findings, request.volumetry):\n",
                                            "    if not (any(request.findings.get(k) for k in (\"lesion_analysis\", \"dis_assessment\", \"longitudinal\", "
@@ -344,7 +345,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "V4: the application shutdown does not close the shared client"),
     "K3_record_read_when_nothing_is_sent": ([(RT, '    if not hasattr(service, "interpretive_text_gate") or service.interpretive_text_gate()[0] is not False:\n', "    if True:\n")],
                                             "V5: kill switch off, the route still needs the patient record (503)"),
-    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, None)\n", "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers if isinstance(identifiers, PatientIdentifiers) else None)\n")],
+    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers if isinstance(identifiers, PatientIdentifiers) else None)\n")],
                                                      "V5: provider-only refusals apply when nothing is sent"),
     "P7_identifiers_not_required_when_sending": ([(BRS, "                if not isinstance(ids, PatientIdentifiers):\n", "                if False:\n")],
                                                  "V5: a request is sent without the patient's identifiers"),
@@ -402,7 +403,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "D6_marking_notice_for_any_source": ([(BRS, "            if dis_evaluation == \"not_evaluated\" and _review_source(findings) in AUTOMATIC_REVIEW_SOURCES:\n",
                                            "            if dis_evaluation == \"not_evaluated\":\n")],
                                          "I5: the automatic-marking notice on a manual segmentation"),
-    "M22_record_read_when_nothing_is_sent": ([(BRS, "            ids = None\n            payload = provider_payload(rendered_findings, rendered_volumetry, None)\n", "            ids = (await identifiers() if callable(identifiers) else identifiers) if allowed else None\n            payload = provider_payload(rendered_findings, rendered_volumetry, None)\n")],
+    "M22_record_read_when_nothing_is_sent": ([(BRS, "            ids = None\n            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            ids = (await identifiers() if callable(identifiers) else identifiers) if allowed else None\n            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n")],
                                              "finding 8: the patient record is read (and its failure refuses) with nothing to send"),
     # ── eighth independent review of PR #78: the device never contradicts itself (I9-I11) ──
     "L9_below_size_line_split": ([(VR, '"lng_below_size": "A further {k} new lesion(s) smaller than {d} mm were marked below the minimum size for "',
@@ -418,8 +419,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                              "I10: \"T1-weighted images were not provided\" (rule 1) fails the digits rule"),
     "L11_stable_count_required": ([(VR, "        if new is None or enlarged is None:\n", "        if any(v is None for v in cands.values()):\n")],
                                   "I11: the draft says \"not computed\" where the review screen shows the candidates"),
-    "M23_record_read_before_deciding": ([(BRS, "            ids = None\n            payload = provider_payload(rendered_findings, rendered_volumetry, None)\n",
-                                          "            ids = (await identifiers() if callable(identifiers) else identifiers) if allowed else None\n            payload = provider_payload(rendered_findings, rendered_volumetry, None)\n")],
+    "M23_record_read_before_deciding": ([(BRS, "            ids = None\n            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            ids = (await identifiers() if callable(identifiers) else identifiers) if allowed else None\n            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n")],
                                         "finding 3: an unreadable record refuses a draft that would send nothing"),
     "F28_empty_impression_heading": ([(VR, "    if imp or impression_comment:\n", "    if True:\n")],
                                      "finding 7: an empty Impression heading on a volumetry-only draft"),
@@ -428,14 +428,57 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                               "finding 8: \"two lesions\" in a German report passes the check"),
     "F29_synthetic_payloads_without_the_matrix": ([(VR, "    for case in scenario_covering_cases():\n", "    for case in scenario_covering_cases()[:0]:\n")],
                                                   "finding 6: branches of the draft missing from the RC-065 device words"),
+    # ── ninth independent review of PR #78: I12-I14 and findings 1, 7, 8 ──
+    "F30_exact_count_from_twenty_in_the_record": ([(VR, '            "total_count": n if n is not None and n < 20 else None,\n',
+                                                    '            "total_count": n,\n')],
+                                                  "I12: from 20 lesions the exact count reaches the record sent to the model"),
+    "F31_exact_visit_totals_in_the_record": ([(VR, '                "visit_1": {**_magnims_count(_count(lng.get("total_lesions_tp1"))),\n',
+                                               '                "visit_1": {"total_count": _count(lng.get("total_lesions_tp1")),\n')],
+                                             "I12: an exact visit total from 20 lesions reaches the record"),
+    "L12_status_counts_relabelled": ([(VR, "    # counts every new component, below the review size too, and is never relabelled as reviewable candidates\n    return None, None\n",
+                                       "    # counts every new component, below the review size too, and is never relabelled as reviewable candidates\n    sc = lng.get(\"status_counts\") or {}\n"
+                                       "    return _count(sc.get(\"new\")), _count(sc.get(\"enlarged\"))\n")],
+                                     "I13: without the candidate block every new component is stated as a reviewable candidate"),
+    "P9_implausible_value_as_an_ai_error": ([(RT, "    except ImplausibleMeasurement as e:\n", "    except ZeroDivisionError as e:\n")],
+                                            "I14: an implausible measurement answers 'not sent to the AI service' (503)"),
+    "P10_provider_payload_on_every_draft": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n",
+                                              "            payload = provider_payload(rendered_findings, rendered_volumetry, None)   # (ninth review, I14)\n")],
+                                            "I14: the provider payload is built with nothing to send"),
+    "M24_budget_from_the_first_decision": ([(BRS, "                left = (verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S\n"
+                                                  "                        - (verified_report.now() - started))\n"
+                                                  "                budget = min(verified_report.LLM_DEADLINE_S, left)\n"
+                                                  "            if reason is None and left < verified_report.MIN_LLM_BUDGET_S:\n",
+                                             "            if reason is None and left < verified_report.MIN_LLM_BUDGET_S:\n")],
+                                           "finding 1: the model gets the budget left before the record and the word list were read"),
+    "C43_evidence_read_on_every_record": ([(LCS, "@functools.lru_cache(maxsize=4)\n", "")],
+                                          "finding 7: the evidence JSON is read from disk for every record"),
+    "C44_rule_check_served_from_the_cache": ([(LCS, "def load_false_candidate_evidence(path: Optional[Path] = None) -> Optional[Dict[str, Any]]:\n",
+                                               "@functools.lru_cache(maxsize=4)\n"
+                                               "def load_false_candidate_evidence(path: Optional[Path] = None) -> Optional[Dict[str, Any]]:\n")],
+                                             "finding 7 done wrongly: the rate is served from a cache after the rule in force changed"),
+    "F33_frozen_check_without_the_range": ([(STR, "    res = V.verify(authored, delivered, as_the_frozen_check_reads_it(view))\n",
+                                             "    res = V.verify(authored, delivered, view)\n")],
+                                           "I12 done wrongly: the frozen check reads a record without a count and refuses every "
+                                           "comment from 20 lesions upward"),
+    "F34_range_placeholder_dropped": ([(VR, '    elif cat and cat != "exact":\n        vals["total_count"] = cat\n', "")],
+                                      "I12 done wrongly: from 20 lesions the {total_count} placeholder is no longer available"),
+    "F32_format_rule_twice": ([(RT, "        # (ninth review of PR #78, finding 8: CAPA-014's format-character rule runs once, inside neutralised_model_text\n",
+                                '        result = {**result, "content": without_format_characters(result["content"])}\n'
+                                "        # (ninth review of PR #78, finding 8: CAPA-014's format-character rule runs once, inside neutralised_model_text\n")],
+                              "finding 8: the route runs the format-character rule a second time"),
 }
 
 # Fifth review of PR #78, V8: the route's DIS notice and its `stated` fact were removed — the report service owns the
 # statement and the notice (controls D3, D4, F25 and the review5 tests); these two mutations have no code left to act on.
+# Replaced by: D3, D4, F25.
 RETIRED_WITH_THE_ROUTE_NOTICE = {name: M.pop(name)[1] for name in ("D1_notice_repeats_the_line", "D2_notice_by_substring")}
 # Seventh review of PR #78, finding 8: the route asks no gate any more (the service's one gate reads the record lazily);
-# the same defect is now M22.
+# the same defect is now M22. Replaced by: M22 (and M23).
 RETIRED_WITH_THE_LAZY_READER = {name: M.pop(name)[1] for name in ("K3_record_read_when_nothing_is_sent",)}
+# Ninth review of PR #78, I12: from 20 lesions upward the record holds the MAGNIMS range only, so R5's defect (the
+# {total_count} placeholder giving the exact count) has no exact count left to give; its line was rewritten.
+# Replaced by: F1, F34 and test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown.
+RETIRED_WITH_THE_RANGE_ONLY_RECORD = {name: M.pop(name)[1] for name in ("C14_exact_count_placeholder",)}
 
 
 def offline_env():

@@ -592,6 +592,13 @@ def sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+# Ninth review of PR #78, I15: W11's anchor (`_reference_header(ref_bytes)` in segmentation_service.py) was already
+# gone on origin/main — a later change restructured the reference loading; PR #78 does not touch that file.
+# Replaced by: none yet — an OPEN ITEM for the change that owns this control (re-anchor it against the new code);
+# until then it is not run and no kill is claimed for it.
+NOT_RUN_ANCHORS_BROKEN_BEFORE = {name: M.pop(name)[-1] for name in ("W11_reference_voxels_loaded",)}
+
+
 def main():
     only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
     files = sorted({e[0] for edits, _t, _w in M.values() for e in edits})

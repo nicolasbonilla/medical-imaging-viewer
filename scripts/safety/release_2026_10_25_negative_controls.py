@@ -279,8 +279,8 @@ M = {
         [(DRAWN, "  if (!(input.lesionOpacity >= MIN_VISIBLE_LESION_OPACITY)) out.push({ kind: 'opacity_low', opacity: input.lesionOpacity });\n", "")],
         [UI_B], "M3: an invisible lesion opacity does not stop the confirmation"),
     "I30_invisible_opacity_restored_next_session": (
-        [(STORE, "          return { ...current, ...stored, lesionOpacity: visible ? opacity : current.lesionOpacity };\n",
-          "          return { ...current, ...stored };\n")],
+        # (ninth review of PR #78, I15: re-anchored — the store writes the opacity on a line of its own; same defect)
+        [(STORE, "            lesionOpacity: visible ? opacity : current.lesionOpacity,\n", "")],
         [UI_STORE], "M3: a stored opacity of 0 hides every lesion in the next session"),
     "I31_dis_state_without_the_removal": (
         [(GATE, '        "removed_small_components": (record.get("removed_small_components")\n',
@@ -476,29 +476,44 @@ def sha(text):
 # scripts/safety/verified_report_negative_controls.py: C5 (the RC-070 check of the model's comments in the loop), D3-D6
 # and F25 (the DIS statement and the notices), F1-F27 (the code-written draft: counts, plurals, regions), C29-C39 (the
 # number words).
+# Replaced by: verified_report_negative_controls.py C5, D3-D6, F25, F1-F27, C29-C42.
 RETIRED_WITH_THE_VERIFIED_REPORT = {name: M.pop(name)[2] for name in (
     "I1b_check_moved_after_the_draft_assembly", "I2_template_variant_on_the_raw_block_with_its_own_rule",
     "I7b_prompt_ignores_unconfirmed_regions", "I44_prompt_plural_for_one", "I45_allow_list_without_the_plural")}
 # Eighth review of PR #78: re-run on the touched files, three controls are NOT detected — each re-introduces its defect
-# in an earlier layer whose effect the verified report's single rules now mask, so nothing written or sent changes:
+# in an earlier layer whose effect the verified report's single rules now mask, so nothing written or sent changes.
+# Guarded by: the layer's own controls named per entry below (verified_report_negative_controls.py).
 MASKED_BY_THE_VERIFIED_REPORT = {
     "I7_unconfirmed_regions_sent_as_labels": "the record gives lesions per region only from an evaluated DIS "
                                              "(verified_report.build_view; controls F4, F16-F19)",
-    "I8_format_characters_removed_only_after_the_check": "the check applies the format-character rule to the comments "
-                                                         "it checks, the text delivered is the text checked (fourth "
-                                                         "review Q6; its controls in verified_report_negative_controls.py)",
     "I10_route_uses_its_own_status_only_rule": "the record decides 'evaluated' by the gate's one rule "
                                                "(gate.is_evaluated in build_view; controls F4, D5, F25)",
 }
-# Anchors already broken on origin/main, in files PR #78 does not touch (I30, I50, I53, I55): reported, not run here.
-NOT_RUN_ANCHORS_BROKEN_BEFORE = ("I30_invisible_opacity_restored_next_session", "I50_dashboard_ignores_the_view",
-                                 "I53_dashboard_without_stored_labels", "I55_drawn_table_not_sent")
+# Ninth review of PR #78, finding 8: the route's own format-character pass (I8's anchor) was removed — the rule runs
+# once, inside neutralised_model_text, and the service's check applies it to the comments it checks (fourth review, Q6).
+# Replaced by: test_verified_report_scenario_matrix.py::test_rc070_the_format_character_rule_runs_once_in_the_route and
+# the Q6 controls of verified_report_negative_controls.py.
+RETIRED_WITH_FINDING_8 = {name: M.pop(name)[2] for name in ("I8_format_characters_removed_only_after_the_check",)}
+# Anchors already broken on origin/main, in files PR #78 does not touch (I50, I53, I55; I30 is re-anchored above).
+# Replaced by: none yet — an OPEN ITEM for the change that owns this control (re-anchor it against the new code);
+# until then it is not run and no kill is claimed for it.
+NOT_RUN_ANCHORS_BROKEN_BEFORE = {name: M.pop(name)[2] for name in ("I50_dashboard_ignores_the_view",
+                                                                     "I53_dashboard_without_stored_labels",
+                                                                     "I55_drawn_table_not_sent")}
 if os.environ.get("NC_TOUCHED") == "1":
     # only the controls of the files this branch changes (light mode on the owner's laptop)
     _changed = set(subprocess.run(["git", "diff", "--name-only", "origin/main...HEAD"], capture_output=True,
                                   text=True).stdout.split())
     M = {k: v for k, v in M.items() if k not in NOT_RUN_ANCHORS_BROKEN_BEFORE
          and any(e[0] in _changed or ("backend/" + e[0]) in _changed for e in v[0])}
+
+
+# Ninth review of PR #78: re-run only the named controls (NC_ONLY=name,name) — e.g. the re-anchored ones — in a
+# throwaway copy; the full table runs when it is unset.
+if os.environ.get("NC_ONLY"):
+    _only = set(os.environ["NC_ONLY"].split(","))
+    M = {k: v for k, v in M.items() if k in _only}
+    assert set(M) == _only, f"unknown control(s): {sorted(_only - set(M))}"
 
 
 def main():
