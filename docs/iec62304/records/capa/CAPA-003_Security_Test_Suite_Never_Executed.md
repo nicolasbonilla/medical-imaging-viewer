@@ -118,6 +118,26 @@ that encodes an expectation that was never valid (a **documentation error**).
 Fixing them indiscriminately to make CI green would discard exactly the signal
 this CAPA exists to recover.
 
+## 7. Implementation — 2026-11-11, PR #80 (DRAFT, *owner approval pending — not signed*)
+
+State found on `main` @ `d5d4726`: the suite had been repaired step by step. GitHub ran it in the non-blocking step
+with this result: 110 passed, 5 expected failures, **2 failed**. The 2 failed on Linux only, the host the server runs
+on.
+
+| ID | Status (proposed) | Evidence |
+|----|-------------------|----------|
+| CA-3.1 | Done before this PR | The suite collects and runs on GitHub (110 passed). |
+| CA-3.2 | Done — every test passes or is linked to a tracked defect | The 2 Linux failures were a real defect: fixed (PRB-032 A). The triage also found a test changed to pass: the audit enum replaced by a `MagicMock` to hide four missing members. Fixed, and the mock removed (PRB-032 B). The 5 expected failures now cite PRB-032 C1–C5 and are strict. |
+| CA-3.3 | Done | `continue-on-error` removed: `tests/security/` gates the build. |
+| PA-3.1 | Done | `tests/unit/test_ci_runs_every_test_directory.py` fails when a backend test directory is run by no workflow step. On first run it found `tests/services/` (51 tests, never run by CI), now added as a CI step. |
+
+**Closure requires the owner**:
+- confirm the root cause (§3);
+- approve PRB-032's severity and its open items;
+- merge PR #80.
+
+Until then the status stays OPEN.
+
 ---
 
 **Prepared by**: Internal code audit
