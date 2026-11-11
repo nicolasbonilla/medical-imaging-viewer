@@ -13,9 +13,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from app.security import get_current_active_user
-from app.security.agent_scope import DEFAULT_TTL_SECONDS, MAX_STUDIES, scope_active, sign_for_patient
+from app.security.agent_scope import DEFAULT_TTL_SECONDS, MAX_STUDIES, issue_for_studies
 from app.security.models import User
-from app.security.resource_access import authorize_study_id
 
 router = APIRouter(prefix="/agent-scope", tags=["Agent platform"])
 
@@ -32,10 +31,8 @@ class AgentScopeResponse(BaseModel):
 
 @router.post("", response_model=AgentScopeResponse)
 async def issue_agent_scope(body: AgentScopeRequest, current_user: User = Depends(get_current_active_user)):
-    from fastapi import HTTPException, status
-    if scope_active():
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="An agent request cannot issue an agent scope")
-    ids = [str(s) for s in body.study_ids]
-    patients = {await authorize_study_id(sid, current_user) for sid in ids}      # CAPA-009, 404 when denied
-    token = sign_for_patient(current_user, patients, ids, run_id=body.run_id, ttl_seconds=DEFAULT_TTL_SECONDS)
+    # Sixth review of PR #79, C2: the ONE implementation (agent_scope.issue_for_studies): every study authorized
+    # with the CAPA-009 resolver (404 when denied), deduplicated, one patient, and no agent-scoped request.
+    token = await issue_for_studies([str(s) for s in body.study_ids], current_user, run_id=body.run_id,
+                                    ttl_seconds=DEFAULT_TTL_SECONDS)
     return AgentScopeResponse(token=token, expires_in=DEFAULT_TTL_SECONDS)

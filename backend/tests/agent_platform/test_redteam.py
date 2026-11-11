@@ -218,7 +218,10 @@ def test_rc114_asi03_bare_mcp_tool_reads_any_record_the_clinician_may_read():
 ])
 def test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend(step):
     res, _, backend, _ = assistant_run([step, {"text": "x"}])
-    assert res.status == "refused" and res.code == RefusalCode.OUT_OF_SCOPE_RESOURCE
+    # Amended for the sixth review of PR #79 (S2): generate_ms_report is no longer allowed to the assistant (paid
+    # model outside its cost ledger), so that step is refused even earlier, as a tool not allowed.
+    assert res.status == "refused" and res.code in (RefusalCode.OUT_OF_SCOPE_RESOURCE,
+                                                    RefusalCode.TOOL_NOT_ALLOWED)
     assert not backend.asked_for("seg-OTHER") and not backend.asked_for("p-OTHER")
 
 

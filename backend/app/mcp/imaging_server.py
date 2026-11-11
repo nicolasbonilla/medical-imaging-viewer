@@ -18,7 +18,7 @@ descriptions is passed through and must not contain identifiers.
 from typing import Optional
 
 from fastmcp import FastMCP
-from app.mcp._backend import api_get
+from app.mcp._backend import api_get, open_session
 
 # Documentation only (agent platform D-AGT-7, fifth review of PR #79): fastmcp 2.3.0 silently IGNORED a
 # `description=` argument (the client never received this text) and fastmcp 3.x refuses it; it is not sent.
@@ -31,6 +31,21 @@ mcp = FastMCP("brain-imaging-mcp")
 # =============================================================================
 # Tools (read-only)
 # =============================================================================
+
+@mcp.tool()
+async def open_imaging_session(study_ids: list[str]) -> dict:
+    """Open the study session. Call this FIRST, with the id of the study the physician is reviewing (and, for a
+    two-timepoint comparison, the prior study of the same patient). Every other tool is refused until a session
+    is open; the session covers only these studies of one patient and ends after at most one hour.
+
+    Args:
+        study_ids: the study ids (1 to 20) of ONE patient
+
+    Returns:
+        {"session": "open", "studies", "expires_in_seconds", "note"}
+    """
+    return await open_session(study_ids)
+
 
 @mcp.tool()
 async def get_image_metadata(file_id: str) -> dict:

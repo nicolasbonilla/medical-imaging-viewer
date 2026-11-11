@@ -156,7 +156,11 @@ class OversightRecorder:
 
     def _expire(self, now: datetime) -> None:
         """Drop the entries shown more than the TTL ago (insertion order = order shown)."""
-        stale = [k for k, v in self._pending.items() if now - v["shown_at"] > self._ttl]
+        stale = []
+        for k, v in self._pending.items():               # sixth review, E4: oldest first; stop at the first valid
+            if now - v["shown_at"] <= self._ttl:
+                break
+            stale.append(k)
         for k in stale:
             del self._pending[k]
         self.evicted += len(stale)

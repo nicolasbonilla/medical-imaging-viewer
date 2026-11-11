@@ -46,6 +46,7 @@ GRADER = "backend/tests/agent_platform/graders/report_verifier_v3/verifier.py"
 MCPB = "backend/app/mcp/_backend.py"
 SEC = "backend/app/security/"
 ASC, RAC, PAD = SEC + "agent_scope.py", SEC + "resource_access.py", SEC + "patient_access_dependency.py"
+SEG, RTE = "backend/app/api/routes/segmentation.py", "backend/app/api/routes/agent_scope.py"
 REQ = "backend/requirements.txt"
 NCS = "scripts/safety/agent_platform_negative_controls.py"
 
@@ -243,8 +244,8 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                            "            res.executed_tools, res.warnings = tuple(executed), tuple(warnings)\n"
                            "            return res\n", "RC-113", "early returns drop the injection alarms"),
     # ---------------------------------------------------------------- second independent review of PR #79
-    "W1_activity_flags_reach_the_model": (MCPB, "    return drop_unconfirmed_activity_flags(drop_direct_identifiers(value))\n",
-                                          "    return drop_direct_identifiers(value)\n", "RC-113",
+    "W1_activity_flags_reach_the_model": (MCPB, "                if str(k).replace(\"_\", \"\").lower() not in IDENTIFIER_KEYS and k not in UNCONFIRMED_ACTIVITY_KEYS}\n",
+                                          "                if str(k).replace(\"_\", \"\").lower() not in IDENTIFIER_KEYS}\n", "RC-113",
                                           "activity flags computed from unconfirmed candidates reach a model (CAPA-013)"),
     "W2_list_marker_split_off": (PRV, '        head = content[:marker.end()] if marker else ""\n', '        head = ""\n', "RC-119",
                                  "a list marker is split from its item and tagged on its own"),
@@ -349,7 +350,7 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
         "", "RC-121", "a forged or altered capability is accepted"),
     "AA6_scope_expiry_not_checked": (ASC, "    if not current < exp <= current + MAX_TTL_SECONDS:\n        raise AgentScopeError(\"expired\")\n",
         "", "RC-121", "an expired capability is accepted"),
-    "AA7_agent_routes_unrestricted": (ASC, "            if not route_allowed(str(scope.get(\"method\", \"\")).upper(), str(scope.get(\"path\", \"\"))):\n                raise AgentScopeError(\"not an agent route\")\n",
+    "AA7_agent_routes_unrestricted": (ASC, "            if not route_allowed(method, path):\n                raise AgentScopeError(\"not an agent route\")\n",
         "", "RC-121", "an agent request reaches routes outside the assistant's object-authorized read routes"),
     "AA8_admin_bypass_for_agent_listing": (RAC, "    if user.role == UserRole.ADMIN and not _agent_scope.scope_active():   # RC-121: no archive-wide agent listing\n",
         "    if user.role == UserRole.ADMIN:\n", "RC-121", "an administrator's agent request lists across all patients"),
@@ -361,7 +362,7 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
         "", "RC-121", "an imaging file of another study passes the agent scope"),
     "AA12_patient_dependency_hook_removed": (PAD, "    if not _agent_scope.allows_patient(patient_id, user):\n        logger.warning(\"Patient access denied: outside the agent scope\", extra={\"user_id\": str(user.id)})\n        raise not_found\n",
         "", "RC-121", "the patient dependency ignores the agent scope"),
-    "AA13_capability_not_sent": (MCPB, "    if capability:\n        headers[CAPABILITY_HEADER] = capability\n",
+    "AA13_capability_not_sent": (MCPB, "    if capability:                                         # RC-121: the run's / the session's pass\n        headers[CAPABILITY_HEADER] = capability\n",
         "", "RC-121", "the assistant's backend client does not send the run's capability"),
     "AA14_capability_not_required": (RUN, "        if spec.requires_backend_scope and not scope.capability:\n",
         "        if False:\n", "RC-121", "a scope-bound agent runs without a capability"),
@@ -385,8 +386,8 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
         "        self.exporter = exporter if exporter is not None else exporter_from_env()\n", "RC-116", "every tracer opens its own exporter, thread and file handle"),
     "AA24_oversight_unbounded": (OVS, "            while len(self._pending) > self._max:\n",
         "            while False:\n", "RC-120", "the drafts awaiting sign-off grow without bound"),
-    "AA25_oversight_never_expires": (OVS, "        stale = [k for k, v in self._pending.items() if now - v[\"shown_at\"] > self._ttl]\n",
-        "        stale = []\n", "RC-120", "a draft shown long ago is still counted when signed"),
+    "AA25_oversight_never_expires": (OVS, "            if now - v[\"shown_at\"] <= self._ttl:\n                break\n",
+        "            if True:\n                break\n", "RC-120", "a draft shown long ago is still counted when signed"),
     "AA26_mismatch_not_evicted": (OVS, "                if pending is not None:                   # finding 6: a mismatch evicts the entry\n",
         "                if False:\n", "RC-120", "a sign-off of another text leaves the entry pending"),
     "AA27_required_arguments_not_checked": (UNT, "        if not kind.startswith(\"optional_\") and name not in arguments:      # every required argument given\n",
@@ -401,6 +402,29 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
         "fastmcp==2.3.0\n", "RC-117", "fastmcp goes back to 2.3.0 and its eight published advisories"),
     "AA32_stub_accepts_what_fastmcp_3_refuses": (CRD, "        if kwargs:\n            raise TypeError(f\"FastMCP() got unexpected keyword argument(s): {', '.join(map(repr, kwargs))}\")\n",
         "", "RC-117", "the card's stub accepts constructor arguments the pinned fastmcp refuses"),
+    # ---------------------------------------------------------------- sixth independent review of PR #79
+    "BB1_assistant_unscoped_passes_the_backend": (ASC, "        if not values and not assistant:\n",
+        "        if not values:\n", "RC-121", "the backend serves an assistant request that carries no study session"),
+    "BB2_assistant_marker_not_sent": (MCPB, "    headers[CLIENT_HEADER] = ASSISTANT_CLIENT              # always: the backend refuses an unscoped assistant request\n",
+        "", "RC-121", "the assistant's requests are not recognisable by the backend"),
+    "BB3_no_local_session_check": (MCPB, "    if capability is None and _requires_scope():\n",
+        "    if False:\n", "RC-121", "the assistant sends requests without a study session"),
+    "BB4_session_never_expires": (MCPB, "    if token and time.monotonic() < _SESSION.get(\"expires_at\", 0):\n",
+        "    if token:\n", "RC-121", "an expired study session is still used"),
+    "BB5_paid_route_allowed_to_agents": (ASC, "    (\"POST\", re.compile(re.escape(API_PREFIX + p))) for p in sorted(COMPUTE_ONLY_POST_PATHS - PAID_MODEL_POST_PATHS))\n",
+        "    (\"POST\", re.compile(re.escape(API_PREFIX + p))) for p in sorted(COMPUTE_ONLY_POST_PATHS))\n", "RC-112", "an agent scope reaches a route that calls a paid model"),
+    "BB6_paid_route_called_by_the_client": (MCPB, "        if path in PAID_MODEL_POST_PATHS:\n            raise ScopeRefused(f\"POST {path} calls a paid model; an agent never calls it (RC-112)\")\n",
+        "", "RC-112", "the assistant's client calls a paid model route"),
+    "BB7_refusal_audited_as_failure": (RUN, "                    except ScopeRefused as exc:\n",
+        "                    except ZeroDivisionError as exc:\n", "RC-110", "a backend scope refusal is audited as the tool's failure"),
+    "BB8_refusal_becomes_500": (SEG, "    except HTTPException:\n        raise          # PR #79 sixth review, C1: an authorization refusal (404/400) stays a refusal, never a 500\n",
+        "", "RC-121", "the segmentation list turns an authorization refusal into a 500"),
+    "BB9_issuance_reimplemented": (RTE, "    token = await issue_for_studies([str(s) for s in body.study_ids], current_user, run_id=body.run_id,\n                                    ttl_seconds=DEFAULT_TTL_SECONDS)\n",
+        "    from app.security.agent_scope import sign_for_patient\n    token = sign_for_patient(current_user, {None}, [], run_id=body.run_id)\n", "RC-121", "the issuance route does not use the one tested implementation"),
+    "BB10_patient_spellings_differ": (ASC, "    canonical = {_canon(p) for p in patients}\n",
+        "    canonical = set(patients)\n", "RC-121", "one patient in two spellings counts as two patients"),
+    "BB11_pass_returned_to_the_model": (MCPB, "    return {\"session\": \"open\", \"studies\": len(set(study_ids)), \"expires_in_seconds\": ttl,\n",
+        "    return {\"session\": \"open\", \"token\": data[\"token\"], \"studies\": len(set(study_ids)), \"expires_in_seconds\": ttl,\n", "RC-121", "the study session's pass reaches the model"),
 }
 
 

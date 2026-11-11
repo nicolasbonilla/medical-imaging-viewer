@@ -13,7 +13,8 @@
     "Review of PR #79 (2026-11-10): every tool declares its arguments (kind per argument; id-like arguments are resource kinds) — a call with an undeclared or mistyped argument is refused; result_exempt_keys names id-like result keys that are not resources (e.g. a new report id). Switches: an agent runs only when MSTOOL_AGENTS_SWITCH AND its own MSTOOL_AGENT_SWITCH__<ID> read 'on'.",
     "Second review of PR #79 (2026-11-10), superseded by the third review: result ids are no longer decided by key names.",
     "Third review of PR #79 (2026-11-10): a resource id is recognised by its VALUE (UUIDs, DICOM UIDs, prefixed test ids) or by a resource key (segmentation_id, file_id, study_id, ... and the tool's result_resource_keys, taken from the real output schemas: 'id' of compare_longitudinal and list_segmentations); lesion, label, region and zone numbers are not resources; actor keys (created_by, ...) are not scope-checked. Contract tests feed the real outputs of every tool through the check (tests/agent_platform/test_review3.py).",
-    "Fifth review of PR #79: every tool declares a typed 'output' schema (resource, actor and exempt fields); an argument is required unless its kind is optional_*; an agent with requires_backend_scope reaches the backend only with the study-scoped capability the backend issued for the run (RC-121)."
+    "Fifth review of PR #79: every tool declares a typed 'output' schema (resource, actor and exempt fields); an argument is required unless its kind is optional_*; an agent with requires_backend_scope reaches the backend only with the study-scoped capability the backend issued for the run (RC-121).",
+    "Sixth review of PR #79: the assistant opens a study session first (open_study_session / open_imaging_session: the backend issues the pass, which never reaches the model); without it every assistant request is refused locally AND by the backend. generate_ms_report is not allowed to the assistant: it calls a paid model outside the agent's cost ledger (RC-112)."
   ],
   "registry_version": "2026-11-10.4",
   "status": "DRAFT, PENDING owner approval",
@@ -42,6 +43,19 @@
     }
   },
   "tools": {
+    "open_study_session": {
+      "access": "compute",
+      "server": "ms-clinical-mcp",
+      "arguments": {
+        "study_ids": "resource_ids"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
+      }
+    },
     "get_region_classification": {
       "access": "read",
       "server": "ms-clinical-mcp",
@@ -115,6 +129,19 @@
         "exempt_fields": [
           "report_id"
         ]
+      }
+    },
+    "open_imaging_session": {
+      "access": "compute",
+      "server": "imaging-mcp",
+      "arguments": {
+        "study_ids": "resource_ids"
+      },
+      "output": {
+        "type": "object",
+        "resource_fields": [],
+        "actor_fields": [],
+        "exempt_fields": []
       }
     },
     "get_image_metadata": {
@@ -298,11 +325,12 @@
       "model_control": "client",
       "allowed_models": [],
       "allowed_tools": [
+        "open_study_session",
+        "open_imaging_session",
         "get_region_classification",
         "summarize_dis_items",
         "analyze_lesions",
         "compare_longitudinal",
-        "generate_ms_report",
         "get_image_metadata",
         "get_slice_image",
         "process_image",

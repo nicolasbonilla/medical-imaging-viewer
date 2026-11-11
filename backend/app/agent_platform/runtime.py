@@ -59,7 +59,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence, Tuple
 
 from app.agent_platform import provenance as prov
-from app.agent_platform.capability import capability_context
+from app.agent_platform.capability import ScopeRefused, capability_context
 from app.agent_platform.registry import (FAILURE_CODES, AgentRegistry, RefusalCode, audit_actor, pseudonymise,
                                          within_run)
 from app.agent_platform.tracing import VERDICTS, Tracer
@@ -193,6 +193,13 @@ def untrusted_is_valid(untrusted: Any) -> bool:
         return False
     return all(isinstance(item, (list, tuple)) and len(item) == 2 and isinstance(item[0], str)
                and isinstance(item[1], str) for item in untrusted)
+
+
+def _refusal_code(value: Any, default: RefusalCode) -> RefusalCode:
+    try:
+        return RefusalCode(value)
+    except ValueError:
+        return default
 
 
 def _binds(fn: Callable, arguments: Mapping[str, Any]) -> bool:
@@ -502,6 +509,12 @@ class AgentRuntime:
                     try:
                         with capability_context(scope.capability):       # RC-121: sent with every backend request
                             raw = await self._off_loop(fn, blocking_model, kwargs=dict(call.arguments))
+                    except ScopeRefused as exc:
+                        # Sixth review of PR #79, C1: the backend (or the client) refused an object outside the
+                        # run's scope — a DENIAL, audited as such, never the tool's own failure.
+                        code = _refusal_code(exc.code, RefusalCode.OUT_OF_SCOPE_RESOURCE)
+                        ts.set("mstool.refusal.code", str(code))
+                        return stop("refused", code)
                     except Exception as exc:  # noqa: BLE001 — a failing tool: no draft
                         ts.fail(type(exc).__name__)
                         return stop("failed", RefusalCode.TOOL_FAILED)

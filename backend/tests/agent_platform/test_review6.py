@@ -191,7 +191,7 @@ def test_rc121_review6_the_route_uses_the_one_issuance_and_the_route_lists_are_o
             if isinstance(call, ast.Call) and getattr(call.func, "id", "") in ("api_get", "api_post_compute"):
                 arg = call.args[0]
                 path = arg.value if isinstance(arg, ast.Constant) else "".join(
-                    v.value if isinstance(v, ast.Constant) else "x1" for v in arg.values)
+                    v.value if isinstance(v, ast.Constant) else "7" for v in arg.values)   # a digit fits every slot
                 method = "GET" if call.func.id == "api_get" else "POST"
                 if path in _backend.PAID_MODEL_POST_PATHS:
                     continue

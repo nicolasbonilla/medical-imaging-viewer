@@ -28,6 +28,7 @@ Without the header nothing changes: the clinician's own authorization applies as
 """
 from __future__ import annotations
 
+import asyncio
 import base64
 import contextlib
 import contextvars
@@ -43,8 +44,9 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 
-from app.agent_platform.capability import CAPABILITY_HEADER
+from app.agent_platform.capability import ASSISTANT_CLIENT, CAPABILITY_HEADER, CLIENT_HEADER
 from app.core.logging import get_logger
+from app.mcp._backend import AGENT_GET_ROUTES, AGENT_SCOPE_PATH, COMPUTE_ONLY_POST_PATHS, PAID_MODEL_POST_PATHS
 
 logger = get_logger(__name__)
 
@@ -58,16 +60,15 @@ _KEY_LABEL = b"mstool-agent-scope-v1"
 _B64 = re.compile(r"[A-Za-z0-9_-]+")
 _IDENT = re.compile(r"[A-Za-z0-9:_.@-]{1,128}")
 
-# The ONLY routes an agent-scoped request may reach: the assistant's read and compute-only routes
-# (app/mcp/_backend.py), each object-authorized by CAPA-009 (tests/unit/test_capa009_*: ROUTE_AUTH).
-AGENT_ROUTES = (
-    ("GET", re.compile(r"^/api/v1/segmentation/[^/]+$")),                                  # record, and /list
-    ("GET", re.compile(r"^/api/v1/segmentation/[^/]+/(?:dis-assessment|lesion-analysis)$")),
-    ("GET", re.compile(r"^/api/v1/imaging/(?:metadata|process)/.+$")),
-    ("GET", re.compile(r"^/api/v1/imaging/(?:slice|matplotlib-2d)/.+/[0-9]+$")),
-    ("POST", re.compile(r"^/api/v1/segmentation/longitudinal/compare$")),
-    ("POST", re.compile(r"^/api/v1/ai/report/generate$")),
-)
+# The ONLY routes an agent-scoped request may reach — built from the ONE list of the assistant's client
+# (app/mcp/_backend.py; sixth review of PR #79, C3): its read routes and its compute-only POST routes, MINUS the
+# routes that call a paid model (S2: they would bypass the agent's cost ledger, RC-112). Each is object-authorized
+# by CAPA-009 (tests/unit/test_capa009_*: ROUTE_AUTH).
+API_PREFIX = "/api/v1"
+AGENT_ROUTES = tuple(("GET", re.compile(re.escape(API_PREFIX) + rx)) for rx in AGENT_GET_ROUTES) + tuple(
+    ("POST", re.compile(re.escape(API_PREFIX + p))) for p in sorted(COMPUTE_ONLY_POST_PATHS - PAID_MODEL_POST_PATHS))
+# Sixth review (S1): the one route an assistant request may reach WITHOUT a scope — the issuance of its pass.
+ISSUE_ROUTE = ("POST", API_PREFIX + AGENT_SCOPE_PATH)
 
 
 class AgentScopeError(ValueError):
@@ -225,24 +226,27 @@ async def issue_for_studies(study_ids, user, *, run_id: str, ttl_seconds: int = 
                             now: Optional[int] = None) -> str:
     """Authorize every study for ``user`` with the CAPA-009 resolver (404 when not entitled), require ONE owning
     patient, and sign the capability. An agent-scoped request can never mint one."""
-    from app.security.resource_access import authorize_study_id
+    from app.security import resource_access
     if scope_active():
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="An agent request cannot issue an agent scope")
-    ids = [_canon(s) for s in (study_ids or ())]
-    if not ids or None in ids or len(ids) > MAX_STUDIES:
+    canon = [_canon(s) for s in (study_ids or ())]
+    ids = sorted(set(canon))                                   # sixth review, E1: each study authorized once ...
+    if not ids or None in canon or len(ids) > MAX_STUDIES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Name 1 to {MAX_STUDIES} study UUIDs")
-    patients = {await authorize_study_id(sid, user) for sid in ids}
-    return sign_for_patient(user, patients, ids, run_id=run_id, ttl_seconds=ttl_seconds, now=now)
+    patients = await asyncio.gather(*(resource_access.authorize_study_id(sid, user) for sid in ids))  # ... together
+    return sign_for_patient(user, set(patients), ids, run_id=run_id, ttl_seconds=ttl_seconds, now=now)
 
 
 def sign_for_patient(user, patients, study_ids, *, run_id: str, ttl_seconds: int = DEFAULT_TTL_SECONDS,
                      now: Optional[int] = None) -> str:
-    """Sign for studies ALREADY authorized; they must belong to exactly one patient."""
-    if len(patients) != 1 or None in patients:
+    """Sign for studies ALREADY authorized; they must belong to exactly one patient (compared as canonical UUIDs:
+    sixth review, C4 — one patient in two spellings is one patient)."""
+    canonical = {_canon(p) for p in patients}
+    if len(canonical) != 1 or None in canonical:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="An agent scope covers the studies of one patient")
     try:
-        token = issue_scope_token(user_id=str(user.id), patient_id=next(iter(patients)), study_ids=study_ids,
+        token = issue_scope_token(user_id=str(user.id), patient_id=next(iter(canonical)), study_ids=study_ids,
                                   run_id=run_id, ttl_seconds=ttl_seconds, now=now)
     except AgentScopeError:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Agent scope not available")
@@ -256,6 +260,7 @@ class AgentScopeMiddleware:
     current for the request. A request without the header passes unchanged."""
 
     _HEADER = CAPABILITY_HEADER.lower().encode("latin-1")
+    _CLIENT = CLIENT_HEADER.lower().encode("latin-1")
 
     def __init__(self, app):
         self.app = app
@@ -263,14 +268,23 @@ class AgentScopeMiddleware:
     async def __call__(self, scope, receive, send):
         if scope.get("type") not in ("http", "websocket"):
             return await self.app(scope, receive, send)
-        values = [v for k, v in scope.get("headers") or () if k.lower() == self._HEADER]
-        if not values:
-            return await self.app(scope, receive, send)
+        headers = scope.get("headers") or ()
+        values = [v for k, v in headers if k.lower() == self._HEADER]
+        assistant = any(k.lower() == self._CLIENT and v == ASSISTANT_CLIENT.encode("latin-1") for k, v in headers)
+        if not values and not assistant:
+            return await self.app(scope, receive, send)            # not an agent request: unchanged
+        method, path = str(scope.get("method", "")).upper(), str(scope.get("path", ""))
         try:
+            if not values:
+                # Sixth review of PR #79 (S1): an ASSISTANT request without a pass reaches only the issuance of
+                # its pass; anything else is refused, whatever the client did or did not volunteer.
+                if scope["type"] == "http" and (method, path) == ISSUE_ROUTE:
+                    return await self.app(scope, receive, send)
+                raise AgentScopeError("an assistant request needs a study session")
             if len(values) != 1 or scope["type"] != "http":
                 raise AgentScopeError("one header, HTTP only")
             granted = verify_scope_token(values[0].decode("latin-1"))
-            if not route_allowed(str(scope.get("method", "")).upper(), str(scope.get("path", ""))):
+            if not route_allowed(method, path):
                 raise AgentScopeError("not an agent route")
         except (AgentScopeError, UnicodeDecodeError) as exc:
             logger.warning("Agent scope refused", extra={"reason": str(exc)[:80]})

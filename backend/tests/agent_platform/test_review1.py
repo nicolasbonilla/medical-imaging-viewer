@@ -251,7 +251,7 @@ def test_rc114_review1_declared_arguments_match_the_real_mcp_functions():
         params = list(inspect.signature(getattr(module, name)).parameters)
         assert sorted(params) == sorted(tool["arguments"]), (name, params, tool["arguments"])
         checked += 1
-    assert checked == 10
+    assert checked == 12          # amended for the sixth review of PR #79: + open_study_session, open_imaging_session
 
 
 # ================================================================== 6. bounded trace buffer

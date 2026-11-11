@@ -18,7 +18,7 @@ CAPA-008: the assistant is read-only and is never a diagnostic tool.
 """
 
 from fastmcp import FastMCP
-from app.mcp._backend import api_get, api_post_compute
+from app.mcp._backend import api_get, api_post_compute, open_session
 from app.services.region_evidence import strip_region_confidence as _strip_region_confidence
 from app.services.longitudinal_candidate_safety import assistant_rate_sentence
 
@@ -39,7 +39,8 @@ mcp = FastMCP(
         "imply that a patient has or does not have MS, never state that diagnostic criteria "
         "are met, and never recommend treatment. Present every number as a device "
         "measurement that the physician must verify on the images.\n\n"
-        "Typical workflow:\n"
+        "Typical workflow (open_study_session() first: every other tool is refused until a study session is "
+        "open):\n"
         "1. get_region_classification() — the stored MAGNIMS region per lesion (candidates)\n"
         "2. summarize_dis_items() — brain-MRI DIS items + clinician-recorded CVS/PRL readings\n"
         "3. compare_longitudinal() — new/enlarging lesion CANDIDATES between two timepoints\n"
@@ -116,6 +117,21 @@ def only_evaluated_dis(dis):
 # =============================================================================
 # Tools (read-only)
 # =============================================================================
+
+
+@mcp.tool()
+async def open_study_session(study_ids: list[str]) -> dict:
+    """Open the study session. Call this FIRST, with the id of the study the physician is reviewing (and, for a
+    two-timepoint comparison, the prior study of the same patient). Every other tool is refused until a session
+    is open; the session covers only these studies of one patient and ends after at most one hour.
+
+    Args:
+        study_ids: the study ids (1 to 20) of ONE patient
+
+    Returns:
+        {"session": "open", "studies", "expires_in_seconds", "note"}
+    """
+    return await open_session(study_ids)
 
 
 @mcp.tool()

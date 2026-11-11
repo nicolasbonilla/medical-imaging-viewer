@@ -82,7 +82,9 @@ def test_rc113_review2_one_shared_rule_with_the_mcp_client():
     from app.mcp import _backend
     assert U.assistant_view is _backend.assistant_view
     src = inspect.getsource(_backend)
-    assert src.count("assistant_view(response.json())") == 2, "api_get and api_post_compute use the shared rule"
+    # Amended for the sixth review of PR #79 (E3): api_get and api_post_compute both end in _result(), which applies
+    # the shared rule once (inside a platform run the runtime applies it instead, still once).
+    assert src.count("return _result(response)") == 2 and src.count("assistant_view(data)") == 1
 
 
 # ================================================================== 2. provenance splitter

@@ -24,6 +24,28 @@ import contextvars
 from typing import Iterator, Optional
 
 CAPABILITY_HEADER = "X-MSTool-Agent-Scope"
+# Sixth review of PR #79 (S1): EVERY request the assistant's backend client sends carries this marker, whatever
+# the session state, so the backend can refuse an assistant request that has no valid scope (it never depends
+# on the client volunteering the scope header).
+CLIENT_HEADER = "X-MSTool-Client"
+ASSISTANT_CLIENT = "mcp-assistant"
+
+
+class ScopeRefused(PermissionError):
+    """The backend (or the client, before sending) refused a request outside the run's study scope. The runtime
+    audits it as a DENIAL (``code``), never as the tool's own failure (sixth review, C1)."""
+
+    code = "out_of_scope_resource"
+
+    def __init__(self, message: str, status: Optional[int] = None):
+        super().__init__(message)
+        self.status = status
+
+
+class ScopeRequired(ScopeRefused):
+    """No study session / capability: the assistant reaches nothing (sixth review, S1)."""
+
+    code = "backend_scope_missing"
 
 _CURRENT: "contextvars.ContextVar[Optional[str]]" = contextvars.ContextVar("mstool_agent_capability", default=None)
 

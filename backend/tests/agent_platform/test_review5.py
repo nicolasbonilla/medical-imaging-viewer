@@ -267,7 +267,13 @@ def test_rc121_review5_a_buggy_tool_is_refused_by_the_backend_even_when_the_walk
     tool = R.ToolEntry(name="read_measurements", access="read", arguments=(("segmentation_id", "resource_id"),))
     run_scope_ids = frozenset({SEG_IN})
 
-    leaked = asyncio.run(_backend.api_get(f"/segmentation/{SEG_PRIOR}"))          # no capability: served
+    # Amended for the sixth review of PR #79 (S1): the assistant's client now refuses any request without a pass,
+    # and the backend refuses an unscoped ASSISTANT request; the premise is shown with the clinician's own request
+    # (no assistant marker), which the backend serves.
+    async def as_clinician(path):
+        async with httpx.AsyncClient(transport=_backend._TRANSPORT) as client:
+            return _backend.assistant_view((await client.get("http://testserver/api/v1" + path)).json())
+    leaked = asyncio.run(as_clinician(f"/segmentation/{SEG_PRIOR}"))              # no capability: served
     assert U.validate_tool_result(leaked, tool=tool, scope=RunScope(S1, run_scope_ids), max_bytes=10_000).ok, \
         "the premise: the id walk cannot tell this foreign result from the run's own"
 
@@ -279,7 +285,7 @@ def test_rc121_review5_a_buggy_tool_is_refused_by_the_backend_even_when_the_walk
 
     data = make_registry_data()
     data["agents"]["test-agent"]["requires_backend_scope"] = True
-    for fn, expected in ((buggy_read, "failed"), (correct_read, "delivered")):
+    for fn, expected in ((buggy_read, "refused"), (correct_read, "delivered")):
         reg = AgentRegistry(data, switches=InMemoryKillSwitches({"test-agent": True}), clock=lambda: FIXED_NOW)
         token = S.issue_scope_token(user_id=K.USER, patient_id=P1, study_ids=[S1], run_id="run-1")
         model = H.ScriptedModel([
@@ -290,8 +296,8 @@ def test_rc121_review5_a_buggy_tool_is_refused_by_the_backend_even_when_the_walk
         res = asyncio.run(rt.arun("test-agent", model_client=model, scope=RunScope(S1, run_scope_ids, capability=token),
                                   system="s", user_content="u"))
         assert res.status == expected, (fn.__name__, res.status, res.code)
-        if expected == "failed":
-            assert res.code == RefusalCode.TOOL_FAILED and res.text is None
+        if expected == "refused":         # amended for the sixth review (C1): a scope refusal is a denial
+            assert res.code == RefusalCode.OUT_OF_SCOPE_RESOURCE and res.text is None
 
 
 def test_rc121_review5_a_scope_bound_agent_needs_a_capability():

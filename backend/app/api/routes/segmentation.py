@@ -107,6 +107,8 @@ async def create_segmentation(
 
         return segmentation
 
+    except HTTPException:
+        raise          # PR #79 sixth review, C1: an authorization refusal (404) stays a refusal, never a 500
     except Exception as e:
         logger.error(
             "Failed to create segmentation",
@@ -160,6 +162,8 @@ async def list_segmentations(
             shown, count = dis_gate.metadata_for_viewer(dis_gate.without_stored_dis(r.metadata), current_user)
             out.append(r.model_copy(update={"metadata": shown, "clinician_review_history_count": count}))
         return out
+    except HTTPException:
+        raise          # PR #79 sixth review, C1: an authorization refusal (404/400) stays a refusal, never a 500
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

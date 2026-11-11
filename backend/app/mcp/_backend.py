@@ -21,10 +21,16 @@ HTTP transport would expose that token to any local process or web page able to 
 @module mcp._backend
 """
 
+import json
 import os
+import re
+import time
+import uuid
+from pathlib import Path
 from typing import Optional
 
-from app.agent_platform.capability import CAPABILITY_HEADER, current_capability
+from app.agent_platform.capability import (ASSISTANT_CLIENT, CAPABILITY_HEADER, CLIENT_HEADER, ScopeRefused,
+                                           ScopeRequired, current_capability)
 
 # Routes that only compute and return, AND either authorize every object they reference
 # (RC-029) or reference none. Each was checked to store nothing (CAPA-008 §2):
@@ -40,6 +46,27 @@ COMPUTE_ONLY_POST_PATHS = frozenset({
     "/segmentation/longitudinal/compare",
     "/ai/report/generate",
 })
+
+
+# Sixth review of PR #79 (S2): routes that call a PAID model. Never reached by an agent: the call would bypass the
+# agent's cost ledger (RC-112; the assistant's caps are 0.0 USD). Refused here AND by the backend's agent guard.
+PAID_MODEL_POST_PATHS = frozenset({"/ai/report/generate"})
+
+# Sixth review (C3): the ONE list of the assistant's read routes (paths under /api/v1). The backend's agent guard
+# (app/security/agent_scope.py AGENT_ROUTES) is built from these and COMPUTE_ONLY_POST_PATHS minus the paid ones.
+AGENT_GET_ROUTES = (
+    r"/segmentation/[^/]+",                                       # a segmentation record, and /segmentation/list
+    r"/segmentation/[^/]+/(?:dis-assessment|lesion-analysis)",
+    r"/imaging/(?:metadata|process)/.+",
+    r"/imaging/(?:slice|matplotlib-2d)/.+/[0-9]+",
+)
+AGENT_SCOPE_PATH = "/agent-scope"          # issues the study session's pass (backend: issue_for_studies)
+ASSISTANT_AGENT = "ms-clinical-assistant"
+SESSION_MAX_SECONDS = 3600
+
+# Sixth review (S1): this process's study session — the pass the backend issued for the studies the physician
+# opened. Kept in memory only, never returned to the model, never written to disk; it expires with the pass.
+_SESSION: dict = {}
 
 
 class AssistantWriteRefused(PermissionError):
@@ -90,23 +117,105 @@ def assistant_view(value):
     """What any AI assistant or agent may receive from the backend: the value without direct identifiers
     (CAPA-008) and without activity flags computed from unconfirmed candidates (CAPA-013, RC-060). The ONE
     rule shared by this MCP client and the agent platform (app/agent_platform/untrusted.py; second review of
-    PR #79, finding 1)."""
-    return drop_unconfirmed_activity_flags(drop_direct_identifiers(value))
+    PR #79, finding 1). Sixth review, E3: one pass, one copy."""
+    return _view(value)
+
+
+def _view(value):
+    if isinstance(value, dict):
+        return {k: _view(v) for k, v in value.items()
+                if str(k).replace("_", "").lower() not in IDENTIFIER_KEYS and k not in UNCONFIRMED_ACTIVITY_KEYS}
+    if isinstance(value, list):
+        return [_view(v) for v in value]
+    return value
 
 
 def _api_base() -> str:
     return os.environ.get("API_BASE_URL", "http://localhost:8000")
 
 
-def _headers() -> dict:
+def _headers(capability: Optional[str] = None) -> dict:
     token = os.environ.get("API_SERVICE_TOKEN", "")
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    # RC-121 (fifth review of PR #79): inside an agent run, the run's study-scoped capability goes with EVERY
-    # request; the backend then refuses any object outside the run's patient and studies.
-    capability = current_capability()
-    if capability:
+    headers[CLIENT_HEADER] = ASSISTANT_CLIENT              # always: the backend refuses an unscoped assistant request
+    if capability:                                         # RC-121: the run's / the session's pass
         headers[CAPABILITY_HEADER] = capability
     return headers
+
+
+def get_route_allowed(path: str) -> bool:
+    return any(re.fullmatch(rx, path) for rx in AGENT_GET_ROUTES)
+
+
+def _requires_scope() -> bool:
+    """The registry says whether the assistant needs a study scope; an unreadable registry means yes (fail closed)."""
+    try:
+        from app.agent_platform.registry import DEFAULT_REGISTRY_PATH
+        data = json.loads(Path(DEFAULT_REGISTRY_PATH).read_text(encoding="utf-8"))
+        return data["agents"][ASSISTANT_AGENT].get("requires_backend_scope") is not False
+    except Exception:  # noqa: BLE001
+        return True
+
+
+def _active_pass() -> Optional[str]:
+    """The platform run's capability, else this process's study session while it lasts."""
+    capability = current_capability()
+    if capability:
+        return capability
+    token = _SESSION.get("token")
+    if token and time.monotonic() < _SESSION.get("expires_at", 0):
+        return token
+    return None
+
+
+def _prepare(method: str, path: str) -> dict:
+    """Sixth review of PR #79 (S1, S2, C3): refuse locally — before anything is sent — a paid model route, a route
+    that is not one of the assistant's, and any request without a study session when the registry requires one."""
+    if method == "POST":
+        if path in PAID_MODEL_POST_PATHS:
+            raise ScopeRefused(f"POST {path} calls a paid model; an agent never calls it (RC-112)")
+        check_compute_only(path)
+    elif not get_route_allowed(path):
+        raise ScopeRefused(f"GET {path} is not one of the assistant's routes")
+    capability = _active_pass()
+    if capability is None and _requires_scope():
+        raise ScopeRequired("No study session is open: call open_study_session (or open_imaging_session) with the "
+                            "study the physician is reviewing first.")
+    return _headers(capability)
+
+
+def _result(response):
+    """A refusal by the backend (403, or the 404 it gives for an object outside the scope or not visible) is a
+    ScopeRefused — a denial, never the tool's failure (C1). Sixth review E3: inside a platform run the runtime
+    applies ``assistant_view`` once (validate_tool_result); elsewhere it is applied here."""
+    status_code = getattr(response, "status_code", 200)
+    if status_code in (403, 404):
+        raise ScopeRefused(f"refused or not found by the backend ({status_code})", status=status_code)
+    response.raise_for_status()
+    data = response.json()
+    return data if current_capability() else assistant_view(data)
+
+
+async def open_session(study_ids) -> dict:
+    """Open this process's study session (S1): the backend authorizes each study for the clinician (CAPA-009) and
+    issues a pass for ONE patient and these studies (at most 1 h). The pass is kept here; only its status is
+    returned, so it never reaches the model."""
+    if not isinstance(study_ids, list) or not 0 < len(study_ids) <= 20 \
+            or not all(isinstance(s, str) and s for s in study_ids):
+        raise ValueError("study_ids: a list of 1 to 20 study ids")
+    async with _client(30.0) as client:
+        response = await client.post(f"{_api_base()}/api/v1{AGENT_SCOPE_PATH}",
+                                     json={"study_ids": study_ids, "run_id": f"mcp-{uuid.uuid4().hex}"},
+                                     headers=_headers(None))
+    if response.status_code in (403, 404):
+        raise ScopeRefused(f"the study session was refused ({response.status_code})", status=response.status_code)
+    response.raise_for_status()
+    data = response.json()
+    ttl = max(0, min(int(data.get("expires_in", 0)), SESSION_MAX_SECONDS))
+    _SESSION.clear()
+    _SESSION.update(token=str(data["token"]), expires_at=time.monotonic() + max(0, ttl - 5))
+    return {"session": "open", "studies": len(set(study_ids)), "expires_in_seconds": ttl,
+            "note": "Only these studies of one patient can be read until the session ends."}
 
 
 # Tests only: an in-process transport (httpx.ASGITransport) instead of the network.
@@ -130,17 +239,16 @@ def check_compute_only(path: str) -> None:
 
 
 async def api_get(path: str, params: Optional[dict] = None, timeout: float = 60.0) -> dict:
-    """Authenticated GET as the operating clinician; direct identifiers are removed."""
+    """Authenticated GET as the operating clinician, inside the study session; direct identifiers are removed."""
+    headers = _prepare("GET", path)
     async with _client(timeout) as client:
-        response = await client.get(f"{_api_base()}/api/v1{path}", params=params, headers=_headers())
-        response.raise_for_status()
-        return assistant_view(response.json())
+        response = await client.get(f"{_api_base()}/api/v1{path}", params=params, headers=headers)
+    return _result(response)
 
 
 async def api_post_compute(path: str, json_data: Optional[dict] = None, timeout: float = 120.0) -> dict:
     """Authenticated POST to a compute-only route; any other route is refused before sending."""
-    check_compute_only(path)
+    headers = _prepare("POST", path)
     async with _client(timeout) as client:
-        response = await client.post(f"{_api_base()}/api/v1{path}", json=json_data, headers=_headers())
-        response.raise_for_status()
-        return assistant_view(response.json())
+        response = await client.post(f"{_api_base()}/api/v1{path}", json=json_data, headers=headers)
+    return _result(response)

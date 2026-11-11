@@ -40,10 +40,11 @@ FRONTEND = ROOT / "frontend" / "src"
 
 SERVER_MODULES = {"imaging_server", "ms_clinical_server"}
 EXPECTED_TOOLS = {
-    "imaging_server": {"get_image_metadata", "get_slice_image", "process_image",
+    # + the study-session tools (PR #79, sixth review, S1): they obtain the pass from /agent-scope, read nothing
+    "imaging_server": {"open_imaging_session", "get_image_metadata", "get_slice_image", "process_image",
                        "list_segmentations", "get_matplotlib_visualization"},
-    "ms_clinical_server": {"get_region_classification", "summarize_dis_items", "analyze_lesions",
-                           "compare_longitudinal", "generate_ms_report"},
+    "ms_clinical_server": {"open_study_session", "get_region_classification", "summarize_dis_items",
+                           "analyze_lesions", "compare_longitudinal", "generate_ms_report"},
 }
 RETIRED_TOOLS = {"annotate_cvs_prl", "classify_lesions_magnims", "differential_diagnosis",
                  "detect_anomalies", "segment_brain_auto", "segment_interactive",

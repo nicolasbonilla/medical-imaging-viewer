@@ -36,7 +36,6 @@ so the platform does not ask it to:
 
 from __future__ import annotations
 
-import functools
 import json
 import math
 import re
@@ -150,19 +149,17 @@ class QuotedData:
 _BRACKET_WORDS = ("ANGLE BRACKET", "ANGLE QUOTATION MARK", "LESS-THAN", "GREATER-THAN", "CHEVRON", "ARROWHEAD")
 
 
-@functools.lru_cache(maxsize=1)
+# Sixth review of PR #79, E2: a STATIC table (no scan of 130 000 code points on first use, which blocked a cold
+# event loop). Generated from the rule above — every character of planes 0-1 whose NFKC form contains < or >, or
+# whose Unicode name contains one of _BRACKET_WORDS, plus U+1433, U+1438, U+02C2, U+02C3 — and checked against it
+# by test_review6.py (a newer Unicode version that adds such a character fails that test).
+_BRACKET_RANGES = ((0x3C, 0x3C), (0x3E, 0x3E), (0xAB, 0xAB), (0xBB, 0xBB), (0x2C2, 0x2C5), (0x2EF, 0x2F2), (0x350, 0x350), (0x354, 0x356), (0x8F7, 0x8FD), (0x1433, 0x1433), (0x1438, 0x1438), (0x1DFE, 0x1DFF), (0x2039, 0x203A), (0x2264, 0x226B), (0x226E, 0x2279), (0x22D6, 0x22DD), (0x22E6, 0x22E7), (0x2303, 0x2304), (0x2324, 0x2324), (0x2329, 0x232A), (0x2343, 0x2344), (0x2369, 0x2369), (0x2746, 0x2746), (0x276C, 0x2771), (0x27A2, 0x27A4), (0x27E8, 0x27EB), (0x2976, 0x2978), (0x2991, 0x2996), (0x29C0, 0x29C1), (0x29FC, 0x29FD), (0x2A79, 0x2AA9), (0x2AF7, 0x2AFA), (0x2B43, 0x2B43), (0x2B98, 0x2B9F), (0x2BB9, 0x2BB9), (0x2BEC, 0x2BEF), (0x3008, 0x300B), (0xFE3D, 0xFE40), (0xFE64, 0xFE65), (0xFF1C, 0xFF1C), (0xFF1E, 0xFF1E), (0x1D9F5, 0x1D9F6), (0x1F800, 0x1F80B), (0x1F810, 0x1F81F), (0x1F890, 0x1F897), (0x1FBB0, 0x1FBB0), (0x1FBCA, 0x1FBCA))
+BRACKET_LIKE = frozenset(chr(c) for a, b in _BRACKET_RANGES for c in range(a, b + 1))
+
+
 def bracket_like() -> FrozenSet[str]:
-    """Every character of planes 0-1 that is, or looks like, an angle bracket (computed once)."""
-    out = set("<>\u1433\u1438\u02c2\u02c3")
-    for cp in range(0x80, 0x20000):
-        if 0xD800 <= cp < 0xE000:
-            continue
-        ch = chr(cp)
-        name = unicodedata.name(ch, "")
-        folded = unicodedata.normalize("NFKC", ch)
-        if "<" in folded or ">" in folded or any(w in name for w in _BRACKET_WORDS):
-            out.add(ch)
-    return frozenset(out)
+    """Every character of planes 0-1 that is, or looks like, an angle bracket."""
+    return BRACKET_LIKE
 
 
 def _escape(text: str) -> str:
