@@ -162,8 +162,12 @@ def test_rc106_w6_a_second_event_loop_gets_its_own_client(monkeypatch):
     async def two_lookups():
         return svc._get_client(), svc._get_client()
 
-    first = asyncio.run(two_lookups())
-    second = asyncio.run(two_lookups())
+    # two asyncio.run, in a worker thread: asyncio.run unsets the current loop of its thread, which later tests of
+    # this process (using the main thread's loop) must not see
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(1) as worker:
+        first = worker.submit(asyncio.run, two_lookups()).result()
+        second = worker.submit(asyncio.run, two_lookups()).result()
     assert first[0] is first[1] and second[0] is second[1]       # one client within a loop
     assert first[0] is not second[0]                             # never a client of a closed loop
     assert module.AsyncAnthropic.call_count == 2
