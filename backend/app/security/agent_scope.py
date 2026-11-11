@@ -36,7 +36,9 @@ import hmac
 import json
 import os
 import re
+import threading
 import time
+import uuid
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import FrozenSet, Iterable, Iterator, Optional
@@ -82,6 +84,7 @@ class AgentScope:
     study_ids: FrozenSet[str]
     run_id: str
     expires_at: int
+    jti: Optional[str] = None
 
 
 _ACTIVE: "contextvars.ContextVar[Optional[AgentScope]]" = contextvars.ContextVar("mstool_agent_scope", default=None)
@@ -155,6 +158,7 @@ def issue_scope_token(*, user_id: str, patient_id: str, study_ids: Iterable[str]
                "exp": issued + ttl_seconds}
     if pending:                     # eighth review (F6): a preview's ticket — never accepted as a scope
         payload["pend"] = 1
+        payload["jti"] = uuid.uuid4().hex          # round 9 (T1): consumed once
     body = _b64(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
     sig = _b64(hmac.new(_key(), body.encode("ascii"), hashlib.sha256).digest())
     return f"{body}.{sig}"
@@ -176,8 +180,9 @@ def verify_scope_token(token, *, now: Optional[int] = None, pending: bool = Fals
     except (ValueError, UnicodeDecodeError):
         raise AgentScopeError("bad payload")
     base = {"v", "uid", "pid", "sids", "rid", "exp"}
-    if not isinstance(payload, dict) or set(payload) != (base | {"pend"} if pending else base) \
-            or payload["v"] != TOKEN_VERSION or (pending and payload["pend"] != 1):
+    if not isinstance(payload, dict) or set(payload) != (base | {"pend", "jti"} if pending else base) \
+            or payload["v"] != TOKEN_VERSION or (pending and (payload["pend"] != 1 or not isinstance(payload["jti"], str)
+                                                              or not re.fullmatch(r"[0-9a-f]{32}", payload["jti"]))):
         raise AgentScopeError("bad payload")
     uid, pid, sids, rid, exp = payload["uid"], payload["pid"], payload["sids"], payload["rid"], payload["exp"]
     if not (isinstance(uid, str) and _IDENT.fullmatch(uid) and isinstance(rid, str) and _IDENT.fullmatch(rid)
@@ -188,7 +193,8 @@ def verify_scope_token(token, *, now: Optional[int] = None, pending: bool = Fals
     current = int(time.time()) if now is None else int(now)
     if not current < exp <= current + MAX_TTL_SECONDS:
         raise AgentScopeError("expired")
-    return AgentScope(user_id=uid, patient_id=pid, study_ids=frozenset(sids), run_id=rid, expires_at=exp)
+    return AgentScope(user_id=uid, patient_id=pid, study_ids=frozenset(sids), run_id=rid, expires_at=exp,
+                      jti=payload.get("jti"))
 
 
 # ---------------------------------------------------------------------------- enforcement (CAPA-009 chokepoints)
@@ -249,16 +255,23 @@ async def issue_for_studies(study_ids, user, *, run_id: str, ttl_seconds: int = 
     return token
 
 
-async def _authorize_studies(study_ids, user):
-    """Each study once (deduplicated), with the services built ONCE, one after the other, stopping at the first
-    refusal (seventh review of PR #79, R10: no access-audit row is written after a refused study)."""
-    from app.security import resource_access
+def _requested_studies(study_ids) -> list:
+    """The ONE set of checks on a session request (round 9 of PR #79, T3): never from an agent-scoped request; 1 to
+    MAX_STUDIES study UUIDs; canonical and deduplicated."""
     if scope_active():
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="An agent request cannot issue an agent scope")
     canon = [_canon(s) for s in (study_ids or ())]
     ids = sorted(set(canon))
     if not ids or None in canon or len(ids) > MAX_STUDIES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Name 1 to {MAX_STUDIES} study UUIDs")
+    return ids
+
+
+async def _authorize_studies(study_ids, user):
+    """Each study once (deduplicated), with the services built ONCE, one after the other, stopping at the first
+    refusal (seventh review of PR #79, R10: no access-audit row is written after a refused study)."""
+    from app.security import resource_access
+    ids = _requested_studies(study_ids)
     services = resource_access.study_services()
     patients = []
     for sid in ids:
@@ -272,12 +285,7 @@ async def preview_studies(study_ids, user) -> dict:
     Eighth review (F6): each study is read ONCE and authorized ONCE (one access-audit row each, CAPA-009 chokepoint);
     the issuance after the physician's confirmation reuses the ticket and authorizes nothing again."""
     from app.security import resource_access
-    if scope_active():
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="An agent request cannot issue an agent scope")
-    canon = [_canon(s) for s in (study_ids or ())]
-    ids = sorted(set(canon))
-    if not ids or None in canon or len(ids) > MAX_STUDIES:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Name 1 to {MAX_STUDIES} study UUIDs")
+    ids = _requested_studies(study_ids)
     studies_service, patients_service, care_team = resource_access.study_services()
     found, patients = {}, []
     for sid in ids:                                            # one after the other, stop at the first refusal
@@ -307,8 +315,9 @@ async def preview_studies(study_ids, user) -> dict:
                                    run_id="preview", ttl_seconds=PENDING_TTL_SECONDS, pending=True)
     except AgentScopeError:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Agent scope not available")
-    return {"patient_ref": _canon(patients[0])[:8], "studies": studies, "expires_in": DEFAULT_TTL_SECONDS,
-            "pending": ticket}
+    return {"patient_ref": _canon(patients[0])[:8], "studies": studies, "pending": ticket,
+            "confirm_within_seconds": PENDING_TTL_SECONDS,      # round 9 (T2): time left to confirm (the ticket)
+            "session_seconds": DEFAULT_TTL_SECONDS}             # the length of the session once confirmed
 
 
 async def issue_from_pending(ticket, user, *, run_id: str) -> str:
@@ -323,9 +332,86 @@ async def issue_from_pending(ticket, user, *, run_id: str) -> str:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The confirmation expired or is not valid")
     if pending.user_id != str(getattr(user, "id", "")):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The confirmation belongs to another user")
+    try:
+        fresh = ticket_store().consume(pending.jti, pending.expires_at)       # round 9 (T1): single-use, atomic
+    except AgentScopeError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Agent scope not available")
+    if not fresh:
+        _audit_replay(user, pending.jti)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This confirmation was already used")
     token = sign_for_patient(user, {pending.patient_id}, sorted(pending.study_ids), run_id=run_id)
     _record_session(user, pending.patient_id)
     return token
+
+
+# Round 9 of PR #79 (T1): a preview's ticket is SINGLE-USE. Its jti is recorded as consumed ATOMICALLY when the
+# pass is issued; a second redemption is refused (409) and audited as a replay. The record is kept until the ticket
+# would have expired.
+# Choice: Firestore create-if-absent (``FirestoreTicketStore``, the default) — atomic ACROSS instances, which the
+# backend may run (Cloud Run scales out); an in-process store guarded by a lock would let a second instance redeem
+# the same ticket. The Firestore TTL policy on ``expires_at`` removes the records after expiry (deployment step).
+# If the store cannot be reached, no pass is issued (fail closed). ``MemoryTicketStore`` (lock, expiry) only when
+# AGENT_SCOPE_TICKET_STORE=memory — the offline tests.
+class MemoryTicketStore:
+    def __init__(self, max_entries: int = 100_000):
+        self._used: "OrderedDict[str, int]" = OrderedDict()
+        self._lock = threading.Lock()
+        self._max = max_entries
+
+    def consume(self, jti: str, expires_at: int) -> bool:
+        now = int(time.time())
+        with self._lock:
+            while self._used and next(iter(self._used.values())) <= now:     # same lifetime: oldest expire first
+                self._used.popitem(last=False)
+            if jti in self._used:
+                return False
+            if len(self._used) >= self._max:
+                raise AgentScopeError("ticket store full")                    # never forget an unexpired ticket
+            self._used[jti] = int(expires_at)
+            return True
+
+
+class FirestoreTicketStore:
+    COLLECTION = "agent_scope_tickets"
+
+    def __init__(self, client=None):
+        self._client = client
+
+    def consume(self, jti: str, expires_at: int) -> bool:
+        from datetime import datetime, timedelta, timezone
+        from google.api_core.exceptions import AlreadyExists
+        try:
+            client = self._client
+            if client is None:
+                from app.core.firebase import get_firestore_client
+                client = get_firestore_client()
+            client.collection(self.COLLECTION).document(jti).create(
+                {"expires_at": datetime(1970, 1, 1, tzinfo=timezone.utc)
+                 + timedelta(seconds=min(int(expires_at), 253402300799))})       # clamped to 9999-12-31
+        except AlreadyExists:
+            return False
+        except Exception as exc:  # noqa: BLE001 — unreachable store: fail closed
+            raise AgentScopeError("ticket store unavailable") from exc
+        return True
+
+
+_MEMORY_TICKETS = MemoryTicketStore()
+
+
+def ticket_store():
+    return _MEMORY_TICKETS if os.environ.get("AGENT_SCOPE_TICKET_STORE") == "memory" else FirestoreTicketStore()
+
+
+def _audit_replay(user, jti: str) -> None:
+    uid = str(getattr(user, "id", ""))
+    logger.warning("Agent scope: confirmation ticket replayed", extra={"user_id": uid})
+    try:
+        from app.core.logging.audit import AuditEventType, AuditOutcome, emit_audit
+        emit_audit(AuditEventType.CLINICAL_AI_RUN, AuditOutcome.DENIED, user_id=uid,
+                   username=getattr(user, "username", None), role=getattr(user, "role", None),
+                   reason="agent.scope:ticket_replay", resource_type="agent_scope", resource_ids={"jti": jti})
+    except Exception:  # noqa: BLE001 — auditing never turns a refusal into a grant
+        pass
 
 
 # Seventh review (R1): the patient of each clinician's latest assistant session, to audit a PATIENT SWITCH. In

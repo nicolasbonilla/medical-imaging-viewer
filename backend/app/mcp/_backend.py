@@ -198,14 +198,15 @@ async def _scope_request(body: dict) -> dict:
     return response.json()
 
 
-def _confirmation_text(preview: dict, ttl_minutes: int) -> str:
+def _confirmation_text(preview: dict, session_minutes: int, confirm_minutes: int) -> str:
     """Written by the SERVER from the backend's answer, never by the model (seventh review, R1)."""
     studies = "; ".join(f"study {s.get('study_ref', '?')} of {s.get('date') or 'unknown date'}"
                         f" ({s['series'] if s.get('series') is not None else 'unknown number of'} series)"
                         for s in preview.get("studies", []))
-    return (f"Open the MSTool assistant for patient {preview.get('patient_ref', '?')} — {studies}? The assistant "
-            f"will read only {'this study' if len(preview.get('studies', [])) == 1 else 'these studies'} of this "
-            f"patient, for at most {ttl_minutes} minutes. Confirm only if this is the patient you are reviewing.")
+    return (f"Open the MSTool assistant for patient {preview.get('patient_ref', '?')} — {studies}? Confirm within "
+            f"{confirm_minutes} minutes. The session then lasts {session_minutes} minutes, and the assistant reads only "
+            f"{'this study' if len(preview.get('studies', [])) == 1 else 'these studies'} of this patient. Confirm "
+            f"only if this is the patient you are reviewing.")
 
 
 async def open_session(ctx) -> dict:
@@ -234,9 +235,10 @@ async def open_session(ctx) -> dict:
         raise ScopeRequired(f"No session was opened: at most 20 studies ({len(ids)} were given).")
     run_id = f"mcp-{uuid.uuid4().hex}"
     preview = await _scope_request({"study_ids": ids, "run_id": run_id, "preview": True})
-    ttl_minutes = max(1, int(preview.get("expires_in", 900)) // 60)
+    session_minutes = max(1, int(preview.get("session_seconds", 900)) // 60)              # round 9 (T2)
+    confirm_minutes = max(1, int(preview.get("confirm_within_seconds", 300)) // 60)
     try:
-        answer = await elicit(_confirmation_text(preview, ttl_minutes), response_type=None)
+        answer = await elicit(_confirmation_text(preview, session_minutes, confirm_minutes), response_type=None)
     except Exception:  # noqa: BLE001
         raise ScopeRequired(NO_ELICITATION)
     if getattr(answer, "action", None) != "accept":

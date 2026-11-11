@@ -453,6 +453,15 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
         "        logger.warning(\"Patient access denied: outside the agent scope\", extra={\"user_id\": str(user.id)})\n", "RC-121", "a scope refusal at the patient dependency leaves no access-audit row"),
     "DD6_denial_audited_with_another_reason": (PAC, "    DENIED_AGENT_SCOPE = \"denied:agent_scope_denied\"\n",
         "    DENIED_AGENT_SCOPE = \"denied:no_care_team_assignment_\"\n", "RC-121", "a scope refusal is audited under another reason than agent_scope_denied"),
+    # ---------------------------------------------------------------- round 9 of PR #79: T1
+    "EE1_ticket_redeemed_twice": (ASC, "        fresh = ticket_store().consume(pending.jti, pending.expires_at)       # round 9 (T1): single-use, atomic\n",
+        "        fresh = True\n", "RC-121", "one physician confirmation is redeemed for several passes"),
+    "EE2_replay_not_audited": (ASC, "        _audit_replay(user, pending.jti)\n",
+        "", "RC-121", "a replayed confirmation leaves no audit row"),
+    "EE3_shared_store_not_atomic": (ASC, "            client.collection(self.COLLECTION).document(jti).create(\n",
+        "            client.collection(self.COLLECTION).document(jti).set(\n", "RC-121", "the shared store overwrites instead of create-if-absent"),
+    "EE4_memory_store_forgets": (ASC, "            self._used[jti] = int(expires_at)\n",
+        "", "RC-121", "the in-process store does not record a consumed ticket"),
 }
 
 
