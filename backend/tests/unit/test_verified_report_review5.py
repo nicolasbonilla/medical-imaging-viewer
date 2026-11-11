@@ -20,6 +20,7 @@ Offline: fake providers, in-memory audit sink, no credential, no network.
 import ast
 import asyncio
 import inspect
+import re
 from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
@@ -187,11 +188,15 @@ def test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates(lang)
 
 
 def test_rc102_v2_without_the_candidate_block_both_count_what_the_rule_counts():
+    # (amended with the ninth review of PR #78, I13: without the candidate block the reviewable counts are not
+    # computed — status_counts.new counts every new component, below the review size too, and is never relabelled)
     lng = {k: v for k, v in LONG.items() if k != "change_candidates"}
-    assert VR.reviewable_candidate_counts(lng) == (5, 2)
+    assert VR.reviewable_candidate_counts(lng) == (None, None)
     view = _view({"longitudinal": lng})
-    assert view["longitudinal"]["candidates"]["new"] == 5
-    assert "(5 new, 2 enlarging)" in VR.change_notice(view, "en")   # (sixth review, W1: the service's notice)
+    assert not (view["longitudinal"].get("candidates") or {}).get("new")
+    for lang in VR.LANGUAGES:
+        text = VR.assemble(view, lang, "", "") + "\n" + (VR.change_notice(view, lang) or "")
+        assert not re.search(r"(?<![\d.,])5(?![\d.,])", text), text
 
 
 # ═══════════════════════════════════════════════════════════════════════ V3 — an internal check error is withheld

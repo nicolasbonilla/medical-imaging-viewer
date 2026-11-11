@@ -391,6 +391,13 @@ class _Projector:
         return o
 
 
+def project_measurements(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]]) -> "ProviderPayload":
+    """The measurement record's source (ninth review of PR #78, I14): the RC-064 projection of what the report renders,
+    with every measurement's plausible range checked (ImplausibleMeasurement) — run for every draft, comments on or
+    off. The patient's own numbers are checked apart (`assert_no_patient_numbers`), only when a call will happen."""
+    return provider_payload(findings, volumetry, None)
+
+
 def assert_no_patient_numbers(payload: "ProviderPayload", identifiers: "PatientIdentifiers") -> None:
     """RC-065 (eighth review of PR #78, finding 3): the patient's own numbers in any number field of the PROJECTED
     payload refuse the request — the same rule as `provider_payload(..., identifiers)`, run once it is known that a

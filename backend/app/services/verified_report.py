@@ -271,7 +271,7 @@ T: Dict[str, Dict[str, str]] = {
         "src_tool": "Source: automatic lesion segmentation by a software tool, not confirmed by a radiologist.",
         "src_unc": "Source: segmentation not confirmed by a radiologist.",
         "count_exact": "Lesions marked: {n} (MAGNIMS 2021: exact count below 20).",
-        "count_range": "Lesions marked: {cat} lesions (MAGNIMS 2021 range; {n} connected components).",
+        "count_range": "Lesions marked: {cat} lesions (MAGNIMS 2021 range).",
         "count_nc": "Lesion count: not computed.",
         "volume": "Total lesion volume: {ml} mL ({mm3} mm³).",
         "volume_ml": "Total lesion volume: {ml} mL.", "volume_mm3": "Total lesion volume: {mm3} mm³.",
@@ -326,7 +326,7 @@ T: Dict[str, Dict[str, str]] = {
                     "radiólogo.",
         "src_unc": "Origen: segmentación no confirmada por un radiólogo.",
         "count_exact": "Lesiones marcadas: {n} (MAGNIMS 2021: recuento exacto por debajo de 20).",
-        "count_range": "Lesiones marcadas: {cat} lesiones (rango MAGNIMS 2021; {n} componentes conectados).",
+        "count_range": "Lesiones marcadas: {cat} lesiones (rango MAGNIMS 2021).",
         "count_nc": "Recuento de lesiones: no calculado.",
         "volume": "Volumen lesional total: {ml} ml ({mm3} mm³).",
         "volume_ml": "Volumen lesional total: {ml} ml.", "volume_mm3": "Volumen lesional total: {mm3} mm³.",
@@ -379,7 +379,7 @@ T: Dict[str, Dict[str, str]] = {
         "src_tool": "Quelle: automatische Läsionssegmentierung durch ein Software-Werkzeug, nicht radiologisch bestätigt.",
         "src_unc": "Quelle: Segmentierung, nicht radiologisch bestätigt.",
         "count_exact": "Markierte Läsionen: {n} (MAGNIMS 2021: exakte Anzahl unter 20).",
-        "count_range": "Markierte Läsionen: {cat} Läsionen (MAGNIMS-2021-Bereich; {n} zusammenhängende Komponenten).",
+        "count_range": "Markierte Läsionen: {cat} Läsionen (MAGNIMS-2021-Bereich).",
         "count_nc": "Läsionsanzahl: nicht berechnet.",
         "volume": "Gesamtläsionsvolumen: {ml} ml ({mm3} mm³).",
         "volume_ml": "Gesamtläsionsvolumen: {ml} ml.", "volume_mm3": "Gesamtläsionsvolumen: {mm3} mm³.",
@@ -441,6 +441,14 @@ def _count(x: Any) -> Optional[int]:
     if v is None or v != int(v) or v < 0:
         return None
     return int(v)
+
+
+def _magnims_count(n: Optional[int]) -> Dict[str, Any]:
+    """A count as the record may hold it (ninth review of PR #78, I12): the exact count below 20, the MAGNIMS 2021
+    range from 20 upward."""
+    if n is None:
+        return {"total_count": None}
+    return {"total_count": n} if n < 20 else {"total_count": None, "count_category": count_category(n)}
 
 
 def count_category(n: int) -> str:
@@ -517,9 +525,11 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         # second review of PR #78, J: no per-lesion table — the two comments need the counts, the count category,
         # the size classes, the regions and the statuses, never one lesion's volume (which also widened the numbers
         # the claim check accepts, E1)
+        # ninth review of PR #78, I12 (MAGNIMS 2021): from 20 lesions upward the record holds only the range — the
+        # exact count stays in the application's lesion analysis (its source), never in the draft or the request
         view["lesions"] = {
             "computed": True,
-            "total_count": n,
+            "total_count": n if n is not None and n < 20 else None,
             "count_category": count_category(n) if n is not None else None,
             "total_volume_mm3": finite_number(la.get("total_burden_mm3")),
             "total_volume_ml": finite_number(la.get("total_burden_ml")),
@@ -590,9 +600,9 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
                 "framing": "UNCONFIRMED change candidates proposed automatically, to be reviewed one by one by a "
                            "radiologist; they are not findings.",
                 "candidates": cands,
-                "visit_1": {"total_count": _count(lng.get("total_lesions_tp1")),
+                "visit_1": {**_magnims_count(_count(lng.get("total_lesions_tp1"))),
                             "total_volume_ml": finite_number(lng.get("burden_tp1_ml"))},
-                "visit_2": {"total_count": _count(lng.get("total_lesions_tp2")),
+                "visit_2": {**_magnims_count(_count(lng.get("total_lesions_tp2"))),
                             "total_volume_ml": finite_number(lng.get("burden_tp2_ml"))},
                 "burden_change_percent": finite_number(lng.get("burden_delta_percent")),
                 "registration": "not verified at lesion scale",
@@ -754,8 +764,9 @@ def reviewable_candidate_counts(longitudinal: Any) -> Tuple[Optional[int], Optio
     cc = lng.get("change_candidates")
     if isinstance(cc, dict):
         return _count(cc.get("new")), _count(cc.get("enlarging"))
-    sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
-    return _count(sc.get("new")), _count(sc.get("enlarged"))
+    # ninth review of PR #78, I13: without the candidate block the change is "not computed" — status_counts.new
+    # counts every new component, below the review size too, and is never relabelled as reviewable candidates
+    return None, None
 
 
 def has_something_to_comment(view: Dict[str, Any]) -> bool:
@@ -764,7 +775,7 @@ def has_something_to_comment(view: Dict[str, Any]) -> bool:
     les = view["lesions"]
     sd = les.get("size_distribution") or {}
     lesion_value = les.get("computed") and (
-        any(les.get(k) is not None for k in ("total_count", "total_volume_ml", "total_volume_mm3"))
+        any(les.get(k) is not None for k in ("total_count", "count_category", "total_volume_ml", "total_volume_mm3"))
         or any(v is not None for v in sd.values()))
     lng = view.get("longitudinal")
     bv = view.get("brain_volumetry") or {}
@@ -775,12 +786,12 @@ def has_something_to_comment(view: Dict[str, Any]) -> bool:
 
 def _count_line(view: Dict[str, Any], t: Dict[str, str]) -> str:
     les = view["lesions"]
-    n = les.get("total_count")
-    if n is None:
-        return t["count_nc"]
-    if n < 20:
+    n, cat = les.get("total_count"), les.get("count_category")
+    if n is not None and n < 20:
         return t["count_exact"].format(n=n)
-    return t["count_range"].format(n=n, cat=les["count_category"])
+    if cat and cat != "exact":       # ninth review, I12: the range only (the exact count is not in the record)
+        return t["count_range"].format(cat=cat)
+    return t["count_nc"]
 
 
 def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[str]], List[str], List[str]]:
@@ -972,10 +983,13 @@ def stated_values(view: Dict[str, Any], lang: str) -> Dict[str, str]:
     the placeholders are filled from them — a placeholder is never available when its line says "not computed"."""
     les, lng, dis = view["lesions"], view.get("longitudinal") or {}, view["dis"]
     vals: Dict[str, str] = {}
-    if les.get("total_count") is not None:
-        # MAGNIMS 2021 (review of PR #78, R5): the exact count below 20, the range from 20 — as the code-written line
-        n = les["total_count"]
-        vals["total_count"] = str(n) if n < 20 else les["count_category"]
+    # MAGNIMS 2021 (review of PR #78, R5): the exact count below 20, the range from 20 — as the code-written line
+    # (ninth review, I12: from 20 upward the record holds the range only, so the placeholder carries the range)
+    n, cat = les.get("total_count"), les.get("count_category")
+    if n is not None and n < 20:
+        vals["total_count"] = str(n)
+    elif cat and cat != "exact":
+        vals["total_count"] = cat
     if les.get("total_volume_ml") is not None:
         vals["total_volume_ml"] = _loc(_num(les["total_volume_ml"], 2), lang)
     cc = lng.get("candidates") if not lng.get("abstained") else None
@@ -1149,7 +1163,7 @@ FIXED_FEEDBACK_TEXTS = (
     "Dissemination in space was not evaluated: the comments must say nothing about it, about region counts or about "
     "typical regions.",
     "not in the record", "is not one of the record's counts", "regions assigned but not confirmed in the record",
-    "stated, record", "count category vs total", "DIS statement while DIS was not evaluated",
+    "stated, record", "count category vs total", "count category vs the record's range", "DIS statement while DIS was not evaluated",
     "DIS met not met stated, record met True False", "DIS regions vs record",
     "change statement although the pair abstained", "new/enlarging stated without candidate wording",
     "'no new lesions' while the record has new candidates", "statement on the record cannot support",
@@ -1214,9 +1228,14 @@ def check(view: Dict[str, Any], lang: str, text: str) -> Tuple[Optional[str], Li
     # checked for nothing there — no heading is allowed in a comment
     if res["headings"]:
         fails.append({"rule": "FMT.heading", "message": "Headings are not allowed in the comments."})
+    rng = view["lesions"].get("count_category") if view["lesions"].get("total_count") is None else None
     for e in res["elements"]:
+        detail = e["detail"]
+        if rng and e.get("kind") == "category":
+            # (ninth review, I12: the frozen check read the range's lowest count; the request names the range)
+            detail = re.sub(r" vs total \d+$", f" vs the record's range {rng}", detail)
         for rule in _rule_ids(e):
-            fails.append({"rule": rule, "message": f"{e['detail']} (in: \"{e['unit']}\")"})
+            fails.append({"rule": rule, "message": f"{detail} (in: \"{e['unit']}\")"})
     if view["dis"]["status"] != "evaluated":
         from app.services import dis_review_gate as gate
         for comment in (fc, ic):

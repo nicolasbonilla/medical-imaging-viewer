@@ -992,8 +992,12 @@ def test_n4_an_implausible_value_refuses_the_request(route, path, value):
     findings = _measurements()
     _set(findings, path, value)
     r = _post(route, findings)
-    assert r.status_code == 503, r.text
-    assert "nothing was sent" in r.text.lower() and "plausible" in r.text.lower()
+    # (amended with the ninth review of PR #78, I14: a 422 that names the measurement, never an AI-service error —
+    # nothing was going to be sent; the clinician corrects the input)
+    assert r.status_code == 422, r.text
+    text = r.text.lower()
+    assert "plausible" in text and path.split(".")[-1] in text and "ai service" not in text
+    assert str(value) not in r.text
     assert route.provider.calls == []   # fifth review of PR #78, V5 (amended): the route first asks whether a request can be sent (a client look-up, nothing sent) — `created` is no longer a proxy for 'nothing sent'
 
 

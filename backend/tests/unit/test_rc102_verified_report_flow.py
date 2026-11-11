@@ -17,6 +17,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from app.services import report_claim_strict as S
 from app.services import report_claim_verifier as V
 from app.services import verified_report as VR
 from app.services.dis_review_gate import NOT_EVALUATED_LINE, scrub_unevaluated_dis
@@ -60,11 +61,13 @@ def test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch(c
     _i, findings, volumetry, source = case
     view = VR.build_view(findings, volumetry, lang, review_source=source)
     report = VR.assemble(view, lang, "", "")
-    res = V.verify(report, None, view)
+    # (amended with the ninth review of PR #78, I12: from 20 lesions the record holds the range only; the frozen check
+    # reads it as the product's one claim check gives it — the range's lowest count, S.as_the_frozen_check_reads_it)
+    res = V.verify(report, None, S.as_the_frozen_check_reads_it(view))
     assert not res["primary"], res["elements"]
     # (amended with the seventh review of PR #78, I2: without a DIS block in the request the draft has no DIS line — the route always sends one with
     # a lesion analysis, so the frozen check's DIS item is required only when the block is there)
-    if view["lesions"].get("total_count") is not None:
+    if view["lesions"].get("total_count") is not None or view["lesions"].get("count_category") not in (None, "exact"):
         omissions = {k: v for k, v in res["omissions"].items()
                      if not (k == "dis" and view["dis"]["status"] == VR.DIS_NOT_IN_REPORT)}
         assert not any(omissions.values()), res["omissions"]       # no mandatory item missing
@@ -88,17 +91,22 @@ def test_rc102_the_routes_dis_backstop_leaves_the_code_written_report_unchanged(
 @pytest.mark.parametrize("n,line", [
     (0, "Lesions marked: 0 (MAGNIMS 2021: exact count below 20)."),
     (19, "Lesions marked: 19 (MAGNIMS 2021: exact count below 20)."),
-    (20, "Lesions marked: 20-50 lesions (MAGNIMS 2021 range; 20 connected components)."),
-    (50, "Lesions marked: 20-50 lesions (MAGNIMS 2021 range; 50 connected components)."),
-    (51, "Lesions marked: 50-100 lesions (MAGNIMS 2021 range; 51 connected components)."),
-    (100, "Lesions marked: 50-100 lesions (MAGNIMS 2021 range; 100 connected components)."),
-    (101, "Lesions marked: >100 lesions (MAGNIMS 2021 range; 101 connected components)."),
+    # (amended with the ninth review of PR #78, I12: from 20 lesions upward the range only — the exact count of
+    # connected components is not written)
+    (20, "Lesions marked: 20-50 lesions (MAGNIMS 2021 range)."),
+    (50, "Lesions marked: 20-50 lesions (MAGNIMS 2021 range)."),
+    (51, "Lesions marked: 50-100 lesions (MAGNIMS 2021 range)."),
+    (100, "Lesions marked: 50-100 lesions (MAGNIMS 2021 range)."),
+    (101, "Lesions marked: >100 lesions (MAGNIMS 2021 range)."),
 ])
 def test_rc102_lesion_count_follows_magnims_2021(n, line):
     view = _view({"lesion_analysis": _la(n, confirmed=False)})
     report = VR.assemble(view, "en", "", "")
     assert line in report
-    assert not V.verify(report, None, view)["omissions"]["count"]
+    assert not V.verify(report, None, S.as_the_frozen_check_reads_it(view))["omissions"]["count"]
+    if n >= 20:
+        shown = re.sub(r"\([<>]?\d+(?:-\d+)? mm³\)", " ", report.replace(VR.count_category(n), " "))  # size-class bounds
+        assert not re.search(rf"(?<![\d.,]){n}(?![\d.,])", shown), report
 
 
 def test_rc102_a_value_not_computed_is_written_not_computed_never_zero():
@@ -172,14 +180,18 @@ def test_rc102_the_record_builder_applies_the_dis_gate_itself(block):
 def test_rc102_longitudinal_results_only_as_unconfirmed_candidates_or_the_abstention():
     pair = {"burden_tp1_ml": 1.2, "burden_tp2_ml": 1.5, "total_lesions_tp1": 10, "total_lesions_tp2": 13,
             "burden_delta_percent": 25.0, "status_counts": {"new": 3, "enlarged": 1, "resolved": 0, "shrunk": 1,
-                                                             "stable": 9}}
+                                                             "stable": 9},
+            # (amended with the ninth review of PR #78, I13: the reviewable counts come from the candidate block only)
+            "change_candidates": {"new": 3, "enlarging": 1, "total": 4, "confirmed": 0, "rejected": 0,
+                                  "awaiting_review": 4}}
     report = VR.assemble(_view({"lesion_analysis": _la(13, confirmed=False), "longitudinal": pair}), "en", "", "")
     assert ("The software proposed 3 new and 1 enlarging unconfirmed change candidates (0 resolved, 1 shrunk and 9 "
             "stable), to be reviewed one by one by a radiologist; they are not findings.") in report
     assert "1.20 mL at the previous visit and 1.50 mL at this visit (+25.0 %)" in report
     abstained = VR.assemble(_view({"longitudinal": {"abstained": True}}), "en", "", "")
     assert VR.T["en"]["lng_ab"] in abstained and "candidates (" not in abstained
-    partial = VR.assemble(_view({"longitudinal": {**pair, "status_counts": {"new": 3}}}), "en", "", "")
+    partial = VR.assemble(_view({"longitudinal": {**{k: v for k, v in pair.items() if k != "change_candidates"},
+                                                  "status_counts": {"new": 3}}}), "en", "", "")
     assert VR.T["en"]["lng_nc"] in partial and "3 new" not in partial
 
 

@@ -99,11 +99,12 @@ export function LongitudinalResultPanel({
 
   const abstained = result.abstained === true;
   const cc = result.change_candidates;
-  // CAPA-013 (sixth review of PR #78, W1): the reviewable candidates, or what the rule counts without that block
+  // CAPA-013 (sixth review of PR #78, W1; ninth review, I13): the reviewable candidates only — without the candidate
+  // block the change is "not computed", as in the draft; status_counts.new counts every new component (below the review
+  // size too) and is never shown as "new ≥ d mm"
   const counts = (cc ?? {}) as Record<string, unknown>;
-  const statusCounts = ((result as { status_counts?: Record<string, unknown> }).status_counts ?? {});
-  const newCount = cc ? counts.new : statusCounts.new;
-  const enlargingCount = cc ? counts.enlarging : statusCounts.enlarged;
+  const newCount = cc ? counts.new : undefined;
+  const enlargingCount = cc ? counts.enlarging : undefined;
   const countsComputed = Number.isInteger(newCount) && Number.isInteger(enlargingCount);
   const evidence = result.false_candidate_evidence;
   const confirmedBox = result.reader_confirmed_activity;

@@ -60,6 +60,7 @@ from app.services.report_payload_guard import (
     assert_no_identifiers,
     provider_payload,
     assert_no_patient_numbers,
+    project_measurements,
     words_of,
 )
 from app.services.report_payload_guard import _KNOWN_FIELDS
@@ -495,7 +496,7 @@ class BrainReportService:
             # read the patient record only if a call will happen; the projection and the record are built once (W4).
             allowed, reason = self.interpretive_text_gate()
             ids = None
-            payload = provider_payload(rendered_findings, rendered_volumetry, None)
+            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)
             # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
             view = verified_report.build_view(payload.findings, payload.volumetry, lang,
                                               review_source=_review_source(findings), not_included=not_included)
@@ -546,6 +547,17 @@ class BrainReportService:
                     raise LabelInRecord("a label of the request reached the measurement record")
                 # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
                 assert_prompt_carries_no_identifier(sent_text, ids)
+                # Ninth review of PR #78, finding 1 (REQ-SAFE-019): what is left of the request's 30 s is recomputed HERE,
+                # after the record and the device-word list, and run_flow counts on the same clock before each call
+                left = (verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S
+                        - (verified_report.now() - started))
+                budget = min(verified_report.LLM_DEADLINE_S, left)
+            if reason is None and left < verified_report.MIN_LLM_BUDGET_S:
+                reason = verified_report.REASON_TIME_BUDGET
+                logger.warning("[Report] Too little of the time budget left for the AI comments; measurements only",
+                               extra={"report_id": report_id, "llm_budget_s": round(left, 2)})
+                result = verified_report.measurements_only(view, lang, reason)
+            elif reason is None:
                 result = await verified_report.run_flow(
                     view, lang, self._model_call(model_id),
                     request_meta={"model": model_id, "max_tokens": int(self._settings.CLAUDE_MAX_TOKENS),
@@ -554,6 +566,7 @@ class BrainReportService:
                     tripwire=lambda text: assert_prompt_carries_no_identifier(text, ids),
                     on_attempt=audit.attempt,
                     deadline_s=budget,   # REQ-SAFE-019: what is left of the request's budget (sixth review, W7)
+                    clock=verified_report.now,   # (ninth review, finding 1: the request's clock)
                     first_message=sent_text)   # second review, J: built once; what is sent is what was checked
             # seventh review of PR #78, finding 3 (I8): the draft is finished INSIDE the audited block — an exception
             # after the model calls is audited with the attempts really made

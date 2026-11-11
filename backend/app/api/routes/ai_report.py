@@ -23,6 +23,7 @@ from app.security.resource_access import authorize_mask_specs
 from app.services.report_payload_guard import (
     FREE_TEXT_FIELDS,
     PatientIdentifiers,
+    ImplausibleMeasurement,
     PatientRecordUnavailable,
     ProviderGuardError,
     without_format_characters,      # the one shared rule (fourth review of PR #78, Q6)
@@ -522,7 +523,8 @@ async def generate_report(
 
     async def identifiers():
         """The patient's own identifiers, read only if the service will send a request (seventh review of PR #78,
-        finding 8: the service's one gate decides; with nothing to send, no record is read)."""
+        finding 8; eighth review, finding 3: the service decides first — its one gate, the record, the time budget —
+        and reads the patient record only when a call will happen)."""
         return await read_patient_identifiers(patient_id)
 
     findings = dict(request.findings)
@@ -578,11 +580,8 @@ async def generate_report(
             segmentation_id=request.segmentation_id,
             request_started=started,
         )
-        # Release 2026-10-25 (integration review of PR #69, item 2): CAPA-014's format-character rule (zero-width
-        # space -> space, every other format character removed) on the service's text. Fifth review of PR #78, V8: the
-        # DIS statement and notice are the service's (`dis_evaluation`); the model's comments were checked there for
-        # any DIS statement (RC070.dis_statement) — the route re-checks no code-written text.
-        result = {**result, "content": without_format_characters(result["content"])}
+        # (ninth review of PR #78, finding 8: CAPA-014's format-character rule runs once, inside neutralised_model_text
+        # when the draft is assembled below; the service's check applies the same rule to the comments it checks)
         # CAPA-014 (RC-066): the typed text and the names of unlisted labels join the draft here, after the
         # model, as fields of their own; they were never sent.
         unlisted = result.pop("unlisted_labels", None)
@@ -593,6 +592,13 @@ async def generate_report(
         result = {**result, **parts, "content": draft_text(parts, request.language)}
         return ReportResponse(**result)
 
+    except ImplausibleMeasurement as e:
+        # Ninth review of PR #78, I14: a measurement outside its plausible range is never written as a fact — the
+        # request is refused (422) naming the measurement, whatever the AI comments' state; the clinician corrects the
+        # input. Nothing about the AI service: nothing was going to be sent.
+        logger.warning("[Report] A measurement is outside its plausible range; no draft written")
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail=f"{str(e)[:1].upper()}{str(e)[1:]}. Correct the input; no draft was written.")
     except ProviderGuardError as e:
         # CAPA-014 (RC-065): the service refused to send; the message names categories, no identifier.
         logger.warning("[Report] Not sent: the identifier check refused the request",

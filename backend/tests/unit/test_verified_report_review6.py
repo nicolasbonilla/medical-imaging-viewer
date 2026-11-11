@@ -137,6 +137,9 @@ def test_rc102_w4_the_record_is_projected_and_built_once(monkeypatch):
         return real_view(*a, **k)
 
     monkeypatch.setattr(BRS, "provider_payload", payload)
+    # (amended with the ninth review of PR #78, I14: the service projects through project_measurements — the same
+    # projection, measurements only, run before any call is decided)
+    monkeypatch.setattr(BRS, "project_measurements", payload)
     monkeypatch.setattr(VR, "build_view", view)
     client = _Client()
     result = _generate(_service(client), {"lesion_analysis": LESIONS})

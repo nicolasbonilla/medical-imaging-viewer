@@ -520,6 +520,22 @@ def test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown(lang):
     assert not bad, f"I12 ({lang}): {len(bad)} cases; first: {bad[:6]}"
 
 
+@pytest.mark.parametrize("lang", VR.LANGUAGES)
+def test_rc103_i12_a_clean_comment_on_twenty_lesions_or_more_passes_the_claim_check(lang):
+    """I12 with the claim check (found by the older frozen-check test after the I12 fix): the record holds the range
+    only, and the frozen check still reads the code-written range line as correct — a clean comment is never
+    refused because the exact count is gone; another range in the code line would still be refused."""
+    text = ("[FINDINGS_COMMENT]\nMost of the {total_count} lesions are small.\n[IMPRESSION_COMMENT]\n"
+            "Automatic marking, to be reviewed by a radiologist.")
+    bad = []
+    for n in (20, 37, 50, 51, 100, 101, 200):
+        view = VR.build_view({"lesion_analysis": {"total_count": n, "total_burden_ml": 3.1}}, None, lang)
+        assembled, fails = VR.check(view, lang, text)
+        if fails or VR.count_category(n) not in assembled:
+            bad.append((n, [f["rule"] for f in fails]))
+    assert not bad, bad
+
+
 # ── I14: the launch configuration (kill switch off) never answers with an error about the AI service
 from tests.unit.test_capa014_report_provider_payload import _measurements, _post as _route_post, route  # noqa: E402,F401
 
@@ -554,7 +570,7 @@ def test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai
     r = _route_post(route, findings)
     assert r.status_code in (200, 422), r.text
     if r.status_code == 422:
-        detail = r.json()["detail"]
+        detail = r.text          # (the app's error envelope; the route tests read the response text)
         assert path.split(".")[-1] in detail and "AI" not in detail and "sent" not in detail.lower(), detail
     else:
         assert str(value) not in r.json()["content"]
@@ -613,8 +629,12 @@ def test_rc102_the_false_candidate_evidence_is_read_once(monkeypatch):
     getattr(lcs.load_false_candidate_evidence, "cache_clear", lambda: None)()
     monkeypatch.setattr(lcs.json, "loads", counting)
     for _ in range(5):
-        lcs.load_false_candidate_evidence()
+        assert lcs.load_false_candidate_evidence() is not None
     assert len(reads) <= 1, f"read {len(reads)} times"
+    # only the file is cached: the check against the rule in force still runs on every call (RC-061)
+    import app.services.longitudinal_tracking_service as lts
+    monkeypatch.setattr(lts, "NEW_LESION_MIN_DIAMETER_MM", 4.0)
+    assert lcs.load_false_candidate_evidence() is None
 
 
 # ── finding 8: the format-character rule once, inside neutralised_model_text

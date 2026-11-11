@@ -224,13 +224,28 @@ def heading_lines(text: str) -> List[str]:
     return out
 
 
+# Ninth review of PR #78, I12 (MAGNIMS 2021): from 20 lesions upward the record holds the range, not the exact count.
+# The frozen v2 check (unchanged) compares a stated range with a count, so it reads the record with the lowest count
+# of the range — one that falls in that range alone (20, 51, 101): the range is what is checked ("fewer than 20" or
+# another range is still refused). That count is never written in the draft nor sent: it exists for this comparison.
+RANGE_FLOOR = {"20-50": 20, "50-100": 51, ">100": 101}
+
+
+def as_the_frozen_check_reads_it(view: Dict[str, Any]) -> Dict[str, Any]:
+    les = view.get("lesions") or {}
+    floor = RANGE_FLOOR.get(les.get("count_category"))
+    if les.get("total_count") is not None or floor is None:
+        return view
+    return {**view, "lesions": {**les, "total_count": floor}}
+
+
 def verify(authored: str, delivered: Optional[str], view: Dict[str, Any], *,
            model_text: Optional[Sequence[str]] = None) -> Dict[str, Any]:
     """The ONE claim check of the product (fifth review of PR #78, V7: verified_report.check calls only this, and the
     strictness property tests run it): the frozen v2 result, all kept, with the stricter elements of every sentence of
     the model's own text added (never removed) — `model_text`, the model's comments; without it, the whole `authored`
     text. `headings` lists the lines of that text the frozen check reads as headings (and so checks for nothing)."""
-    res = V.verify(authored, delivered, view)
+    res = V.verify(authored, delivered, as_the_frozen_check_reads_it(view))
     texts = [authored] if model_text is None else list(model_text)
     extra = [e for text in texts for e in comment_elements(text, view)]
     res["headings"] = [h for text in texts for h in heading_lines(text)]

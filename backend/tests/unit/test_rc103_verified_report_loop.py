@@ -25,7 +25,9 @@ LA = {"total_count": 7, "total_burden_mm3": 3132.0, "total_burden_ml": 3.132,
 UNCONFIRMED = _view({"lesion_analysis": LA, "dis_assessment": {"evaluation_status": "not_evaluated"}})
 PAIR = _view({"lesion_analysis": LA, "longitudinal": {
     "burden_tp1_ml": 1.2, "burden_tp2_ml": 1.5, "total_lesions_tp1": 10, "total_lesions_tp2": 13,
-    "burden_delta_percent": 25.0, "status_counts": {"new": 3, "enlarged": 1, "resolved": 0, "shrunk": 1, "stable": 9}}})
+    "burden_delta_percent": 25.0, "status_counts": {"new": 3, "enlarged": 1, "resolved": 0, "shrunk": 1, "stable": 9},
+    # (amended with the ninth review of PR #78, I13: the reviewable counts come from the candidate block only)
+    "change_candidates": {"new": 3, "enlarging": 1, "total": 4, "confirmed": 0, "rejected": 0, "awaiting_review": 4}}})
 
 
 def answer(findings, impression="Automatic marking, to be reviewed by a radiologist."):
