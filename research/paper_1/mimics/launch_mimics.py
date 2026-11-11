@@ -293,7 +293,9 @@ def listing():
 
 
 def running():
-    out = sh(f"gcloud compute instances list --project={PROJECT} --filter=name~^mimics- --format=value(name)", check=False)
+    # check=True: a failed or timed-out listing must abort, never read as "no VM running" (that would relaunch a
+    # duplicate of a VM that is still working and pay for it twice).
+    out = sh(f"gcloud compute instances list --project={PROJECT} --filter=name~^mimics- --format=value(name)")
     return [x for x in out.split() if x]
 
 
