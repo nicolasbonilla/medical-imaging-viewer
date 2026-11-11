@@ -132,9 +132,13 @@ async def test_rc104_no_prompt_record_answer_or_typed_text_in_the_audit(sink):
     mine = [r for r in sink.memory_records if r.get("resource_ids", {}).get("report_id") == result["report_id"]]
     assert len(mine) == 3
     text = json.dumps(mine).casefold()
-    for absent in ("zqx", "juan", "perez", "lesions marked", "measurement record", "consistent with", "3132",
+    for absent in ("zqx", "juan", "perez", "lesions marked", "measurement record", "consistent with",
                    "findings_comment", "write the draft"):
         assert absent not in text, absent
+    # (amended with the fifth review of PR #78: the number is looked for as a number — the records carry random
+    # hexadecimal ids and hashes, which contained "3132" by chance in a CI run)
+    import re
+    assert not re.search(r"(?<![0-9a-f-])3132(?![0-9a-f-])", text), "3132"
 
 
 def test_rc104_the_audit_allow_list_keeps_codes_and_drops_free_text():
