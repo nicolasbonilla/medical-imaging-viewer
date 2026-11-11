@@ -77,6 +77,8 @@ def _cap_module():
 @pytest.fixture
 def scope_key(monkeypatch):
     monkeypatch.setenv("AGENT_SCOPE_KEY", "test-only-agent-scope-key-0123456789abcdef")
+    # Round 9 of PR #79 (T1): the single-use tickets of the tests are consumed in process (production: Firestore)
+    monkeypatch.setenv("AGENT_SCOPE_TICKET_STORE", "memory")
 
 
 class _Backend:
