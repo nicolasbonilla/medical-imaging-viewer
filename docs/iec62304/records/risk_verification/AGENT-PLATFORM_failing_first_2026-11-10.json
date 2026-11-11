@@ -63,6 +63,12 @@
    "tests_first_commit": "866bd7a", "tests_first_ci": "run 43041141190: failure (11 of 11 new tests failed against c05e7ac)",
    "implementation_commit": "6ccea55", "implementation_ci": "run 43042580368: success (agent platform 589 passed, 1 skipped; backend suite 2483 passed)",
    "implementation_result": "11 review-6 tests pass; whole offline suite locally 587 passed, 3 skipped by design; earlier tests amended with notes"},
+  {"controls": ["RC-110", "RC-112", "RC-113", "RC-121"],
+   "tests_file": "backend/tests/agent_platform/test_review7.py",
+   "what": "the seventh independent adversarial review of PR #79: R1 the physician chooses and confirms the study session (MCP elicitation), and R2-R10",
+   "tests_first_commit": "7b74f7d", "tests_first_ci": "run 43047890072: failure (17 of 17 new tests failed against 677ebe8)",
+   "implementation_commit": "9c55e6c", "implementation_ci": "run 43050301741: success (agent platform 604 passed, 1 skipped; backend suite 2483 passed)",
+   "implementation_result": "17 review-7 tests pass; whole offline suite locally 602 passed, 3 skipped by design; earlier tests amended with notes"},
   {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
    "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
  ]
