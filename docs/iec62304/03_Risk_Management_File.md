@@ -989,6 +989,16 @@ No patient-data leak found (the exit rule for safety). Failing-first tests at `2
 
 **Pre-existing, outside this PR:** on `main` (run 42366112064, `d5d4726`) the non-blocking risk-control step fails `tests/security/test_input_validation.py::TestPathTraversalProtection::test_detect_absolute_paths` and `::test_detect_path_traversal`.
 
+### B.13 Light verification of PR #79, round 9 (2026-11-11) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix |
+|---|---|---|---|
+| T1 | One confirmation could be redeemed for several passes for 5 minutes | RC-121 | the ticket carries a jti consumed atomically before the pass is signed — **Firestore create-if-absent** (atomic across Cloud Run instances, which an in-process lock is not; the record holds `expires_at`, removed by a Firestore TTL policy after expiry — deployment step); an unreachable store issues nothing; a second redemption → 409 and one `agent.scope:ticket_replay` audit row. In-process store (lock, expiry) only for the offline tests |
+| T2 | The preview's single `expires_in` (900 s) did not match the ticket (300 s) | RC-121 | `confirm_within_seconds` (300) and `session_seconds` (900); the physician reads both |
+| T3 | Request checks copied in two functions | RC-121 | one helper, `_requested_studies` |
+
+Failing-first tests at `b5571ee` (CI run 43063117100 red: 5 of 5); fixes at `b6430d6` (CI run 43063554593 green: 621 platform tests, 2483 backend tests). Negative controls for T1: 4 of 4 detected (EE1–EE4), restored suite 618 passed / 0 failed.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

@@ -75,6 +75,11 @@
    "tests_first_commit": "21b14ee", "tests_first_ci": "run 43056441126: failure (12 failed: the 11 new tests and the card-schema test that runs where fastmcp is installed)",
    "implementation_commit": "1dfd120", "implementation_ci": "run 43058409712: success (agent platform 616 passed, 1 skipped; backend suite 2483 passed)",
    "implementation_result": "review-8 tests pass; whole offline suite locally 612 passed, 4 skipped by design"},
+  {"controls": ["RC-121"], "tests_file": "backend/tests/agent_platform/test_review9.py",
+   "what": "round 9 of PR #79 (light verification): T1 single-use confirmation ticket, T2, T3",
+   "tests_first_commit": "b5571ee", "tests_first_ci": "run 43063117100: failure (5 of 5 new tests)",
+   "implementation_commit": "b6430d6", "implementation_ci": "run 43063554593: success (agent platform 621 passed, 1 skipped; backend 2483 passed)",
+   "implementation_result": "whole offline suite locally 618 passed, 4 skipped by design"},
   {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
    "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
  ]

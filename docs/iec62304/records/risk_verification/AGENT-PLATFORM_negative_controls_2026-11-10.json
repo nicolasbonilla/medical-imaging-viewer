@@ -895,10 +895,10 @@
       "RC-120"
     ],
     "latest_round": {
-      "executed": "2026-11-11T17:26:59",
-      "mutations": 10,
-      "detected": 10,
-      "restored_passed": 613,
+      "executed": "2026-11-11T17:58:23",
+      "mutations": 4,
+      "detected": 4,
+      "restored_passed": 618,
       "restored_failed": 0
     }
   },
@@ -6372,6 +6372,80 @@
         "failing_tests": []
       },
       "reason": "eighth (final) review of PR #79 at 1dfd120, F1 only: 6 new (DD1-DD6: a scope refusal without its access-audit row, or under another reason), 4 re-anchored on the same lines",
+      "superseded": [
+        "U6_only_declared_ids_scoped",
+        "U7_result_scope_off"
+      ]
+    },
+    {
+      "executed": "2026-11-11T17:58:23",
+      "mutations": {
+        "EE1_ticket_redeemed_twice": {
+          "failed": 2,
+          "passed": 616,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review9_a_confirmation_authorises_exactly_one_pass"
+          ],
+          "control": "RC-121",
+          "reintroduces": "one physician confirmation is redeemed for several passes",
+          "applied": true
+        },
+        "EE2_replay_not_audited": {
+          "failed": 2,
+          "passed": 616,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review9_a_confirmation_authorises_exactly_one_pass"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a replayed confirmation leaves no audit row",
+          "applied": true
+        },
+        "EE3_shared_store_not_atomic": {
+          "failed": 2,
+          "passed": 616,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review9_the_shared_store_consumes_atomically_and_fails_closed"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the shared store overwrites instead of create-if-absent",
+          "applied": true
+        },
+        "EE4_memory_store_forgets": {
+          "failed": 2,
+          "passed": 616,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review9_a_confirmation_authorises_exactly_one_pass"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the in-process store does not record a consumed ticket",
+          "applied": true
+        }
+      },
+      "method": "one mutation at a time in a throwaway copy outside the repository; anchors asserted unique",
+      "source_sha256": {
+        "backend/app/security/agent_scope.py": "1632acc666412f1fd09a18982fcedc073dc1f280d4a9e151d0c02235206b4bd1"
+      },
+      "baseline": {
+        "failed": 0,
+        "passed": 618,
+        "errors": 0,
+        "failing_tests": []
+      },
+      "restored": {
+        "failed": 0,
+        "passed": 618,
+        "errors": 0,
+        "failing_tests": []
+      },
+      "reason": "round 9 of PR #79 at b6430d6, T1 only: 4 new (EE1-EE4: ticket redeemed twice, replay not audited, shared store not atomic, in-process store forgets)",
       "superseded": [
         "U6_only_declared_ids_scoped",
         "U7_result_scope_off"
