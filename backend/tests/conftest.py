@@ -996,8 +996,8 @@ def _fresh_report_provider_clients():
     ends without one (a cached test double never reaches another test)."""
     module = sys.modules.get("app.services.brain_report_service")
     if module is not None:
-        module._SHARED_CLIENTS.clear()
+        module._forget_report_clients()   # sixth review, W6: per loop
     yield
     module = sys.modules.get("app.services.brain_report_service")
     if module is not None:
-        module._SHARED_CLIENTS.clear()
+        module._forget_report_clients()   # sixth review, W6: per loop

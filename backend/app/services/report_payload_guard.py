@@ -399,8 +399,10 @@ def provider_payload(findings: Optional[Dict[str, Any]], volumetry: Optional[Dic
     p.counts["free_text_fields"] = sum(1 for k in FREE_TEXT_FIELDS if f.get(k))
     p.counts["unknown_fields"] = sum(1 for k in f if k not in _KNOWN_FIELDS)
     out: Dict[str, Any] = {}
-    if any(isinstance(f.get(k), str) and f[k].strip() for k in FREE_TEXT_FIELDS):
-        out["clinician_entry"] = True       # a flag only: the text itself is added to the draft by the route
+    entered = {k: True for k in FREE_TEXT_FIELDS if isinstance(f.get(k), str) and f[k].strip()}
+    if entered:
+        # flags only, one per typed field (sixth review of PR #78, W2): the text itself is added to the draft by the route
+        out["clinician_entry"] = entered
     band = age_band(f.get("patient_age"))
     if band:
         out["patient_age"] = band

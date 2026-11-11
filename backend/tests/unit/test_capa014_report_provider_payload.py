@@ -414,7 +414,10 @@ def test_rc064_the_payload_itself_holds_only_known_fields_and_no_marker():
     assert set(payload.findings) <= {"lesion_analysis", "dis_assessment", "longitudinal", "zone_stats",
                                      "segmentation_labels", "anomalies", "patient_age", "patient_sex",
                                      "clinician_entry"}
-    assert payload.findings.get("clinician_entry") in (None, True)     # a flag only (second review, N6)
+    # flags only (second review, N6); one per typed field (sixth review of PR #78, W2 — amended: was a single flag)
+    entry = payload.findings.get("clinician_entry")
+    assert entry is None or (set(entry) <= {"clinical_indication", "technique", "additional_observations"}
+                             and set(entry.values()) == {True})
     assert MARK not in json.dumps([payload.findings, payload.volumetry]).casefold()
     assert payload.withheld["free_text_fields"] == 3 and payload.withheld["unknown_fields"] == 3
 
@@ -1041,10 +1044,10 @@ def test_n6_the_instruction_is_sent_only_when_something_was_typed(route):
     assert _post(route, {**_measurements(), "technique": "3T, Gd+ ZQX-typed"}).status_code == 200
     typed = route.provider.prompt()
     assert "ZQX-typed" not in typed and "added to the draft by the application" not in typed
-    assert VR.T["en"]["lim_indication_entry"] in typed and VR.T["en"]["lim_indication_entry"] not in untyped
-    strip = lambda p: [line for line in p.split("\n") if "clinical indication" not in line.lower()
-                       and "Not available to the automatic analysis" not in line]
-    assert strip(typed.replace('"clinician_entry":true,', "")) == strip(untyped)
+    # (amended with the sixth review of PR #78, W2: only the technique was typed — the clinical indication is not the
+    # clinician's entry and stays "not available"; the request differs only by the per-field flag)
+    assert VR.T["en"]["lim_indication_entry"] not in typed and VR.T["en"]["lim_indication_entry"] not in untyped
+    assert typed.replace('"clinician_entry":{"technique":true},', "") == untyped
 
 
 # N8: all-digit record numbers do not collide with measurement numbers.

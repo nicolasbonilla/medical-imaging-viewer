@@ -1336,6 +1336,7 @@
       "spacing_between_slices_mm": "Espaciado entre cortes (mm)"
     },
     "candidatesSummary": "{{total}} candidatos de cambio sin confirmar ({{n}} nuevos ≥{{d}} mm, {{e}} agrandados), que un radiólogo debe revisar uno a uno.",
+    "candidatesNotComputed": "Los candidatos de cambio no se calcularon; el cambio entre las visitas debe valorarse visualmente.",
     "candidatesReview": "Pendientes de revisión: {{awaiting}} · confirmados: {{confirmed}} · rechazados: {{rejected}}.",
     "candidatesNoStatement": "El programa no hace ninguna afirmación sobre la evolución de la enfermedad a partir de estos candidatos; solo cuenta la confirmación de un radiólogo.",
     "decisionsVoided": "Había decisiones registradas sobre segmentaciones que han cambiado; ya no se aplican.",

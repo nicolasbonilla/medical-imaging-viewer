@@ -1325,6 +1325,7 @@
       "spacing_between_slices_mm": "Schichtabstand (mm)"
     },
     "candidatesSummary": "{{total}} unbestätigte Veränderungskandidaten ({{n}} neu ≥{{d}} mm, {{e}} vergrößert), die ein Radiologe einzeln prüft.",
+    "candidatesNotComputed": "Die Veränderungskandidaten wurden nicht berechnet; die Veränderung muss visuell beurteilt werden.",
     "candidatesReview": "Zu prüfen: {{awaiting}} · bestätigt: {{confirmed}} · verworfen: {{rejected}}.",
     "candidatesNoStatement": "Die Software trifft aus diesen Kandidaten keine Aussage über den Krankheitsverlauf; nur die Bestätigung durch einen Radiologen zählt.",
     "decisionsVoided": "Frühere Entscheidungen wurden zu inzwischen geänderten Segmentierungen erfasst; sie gelten nicht mehr.",

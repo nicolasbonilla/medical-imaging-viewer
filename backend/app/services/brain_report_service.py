@@ -40,11 +40,12 @@ Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
 import asyncio
 import copy
 import inspect
+import weakref
 import time
 import uuid
 from datetime import date
 from functools import lru_cache
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -303,26 +304,51 @@ def _review_source(findings: Any) -> Optional[str]:
     return source if source in ("ai_draft", "automatic_tool", "origin_not_recorded") else None
 
 
-# RC-106 (fifth review of PR #78, V4): ONE provider client (and its connection pool) per API key for the whole
-# process — not a new client per request — configured with the allowed time budget, closed at shutdown (main.py).
-_SHARED_CLIENTS: Dict[str, Any] = {}
+# RC-106 (fifth review of PR #78, V4; sixth review, W6): ONE provider client (and its connection pool) per API key
+# and per running event loop — an httpx pool belongs to the loop it was opened on, so a client of a closed loop is
+# never reused ("Event loop is closed") — configured with the allowed time budget, closed at shutdown (main.py).
+# Loops are weak keys, and closed loops are dropped on every look-up.
+_CLIENTS_BY_LOOP: "weakref.WeakKeyDictionary[Any, Dict[str, Any]]" = weakref.WeakKeyDictionary()
+_CLIENTS_WITHOUT_LOOP: Dict[str, Any] = {}
+
+
+def _client_cache() -> Dict[str, Any]:
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return _CLIENTS_WITHOUT_LOOP
+    for old in [lp for lp in list(_CLIENTS_BY_LOOP.keys()) if lp.is_closed()]:
+        _CLIENTS_BY_LOOP.pop(old, None)
+    return _CLIENTS_BY_LOOP.setdefault(loop, {})
 
 
 def _shared_client(api_key: str):
-    client = _SHARED_CLIENTS.get(api_key)
+    cache = _client_cache()
+    client = cache.get(api_key)
     if client is None:
         import anthropic
         # no SDK retry (review of PR #78, R2: a retry got a fresh full timeout); the async client (third review, T3);
         # its default timeout is the whole budget of a draft (each request is also given the budget that is left)
         client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=verified_report.LLM_DEADLINE_S)
-        _SHARED_CLIENTS[api_key] = client
+        cache[api_key] = client
     return client
 
 
+def _forget_report_clients() -> None:
+    """Drop every cached client without closing it (tests; a client of another loop cannot be closed from here)."""
+    _CLIENTS_BY_LOOP.clear()
+    _CLIENTS_WITHOUT_LOOP.clear()
+
+
 async def close_report_clients() -> None:
-    """Close the shared provider clients (their connection pools); called at application shutdown."""
-    clients = list(_SHARED_CLIENTS.values())
-    _SHARED_CLIENTS.clear()
+    """Close the shared provider clients of the running loop and those made outside a loop (their connection pools);
+    called at application shutdown. Clients of other, closed loops are dropped."""
+    clients = list(_CLIENTS_WITHOUT_LOOP.values())
+    try:
+        clients += list((_CLIENTS_BY_LOOP.get(asyncio.get_running_loop()) or {}).values())
+    except RuntimeError:
+        pass
+    _forget_report_clients()
     for client in clients:
         close = getattr(client, "close", None)
         if close is None:
@@ -370,34 +396,23 @@ class BrainReportService:
             )
         return _shared_client(api_key)
 
-    def provider_call_possible(self) -> bool:
-        """Whether a request can be sent at all: kill switch on, the model allowed, a key configured (fifth review of
-        PR #78, V5). When it cannot, nothing is sent — no patient record is needed and the provider-only refusals do
-        not apply; the measurement checks that protect the code-written text still do."""
+    def interpretive_text_gate(self, view: Optional[Dict[str, Any]] = None) -> Tuple[bool, Optional[str]]:
+        """THE gate of the AI comments (sixth review of PR #78, W5): (allowed, reason). The route asks it without a
+        record (whether to read the patient record at all), the service with the record — one function, so they can
+        never disagree. RC-105: the kill switch; RC-106: the model allow-list and retirement; nothing measured:
+        nothing to comment on (only with a record); no key: not configured (nothing is sent)."""
         if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:
-            return False
+            return False, verified_report.REASON_OFF
         if not report_model_allowed(getattr(self._settings, "CLAUDE_MODEL", None)):
-            return False
-        try:
-            self._get_client()
-        except RuntimeError:
-            return False
-        return True
-
-    def _interpretive_text_gate(self, model_id: Any, view: Dict[str, Any]) -> Optional[str]:
-        """Why the comments are not requested (a REASON_* code), or None. RC-105: the kill switch; RC-106: the model
-        allow-list and retirement; no key: not configured; nothing measured: nothing to comment on."""
-        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:
-            return verified_report.REASON_OFF
-        if not report_model_allowed(model_id):
-            return verified_report.REASON_MODEL_NOT_ALLOWED
-        if not verified_report.has_something_to_comment(view):
-            return verified_report.REASON_NOTHING_TO_COMMENT
-        try:
-            self._get_client()          # no ANTHROPIC_API_KEY: RuntimeError (nothing is sent)
-        except RuntimeError:
-            return verified_report.REASON_NOT_CONFIGURED
-        return None
+            return False, verified_report.REASON_MODEL_NOT_ALLOWED
+        if view is not None and not verified_report.has_something_to_comment(view):
+            return False, verified_report.REASON_NOTHING_TO_COMMENT
+        if not getattr(self._settings, "ANTHROPIC_API_KEY", None):
+            try:
+                self._get_client()      # no key: RuntimeError (nothing is sent) — unless a client was given (doubles)
+            except RuntimeError:
+                return False, verified_report.REASON_NOT_CONFIGURED
+        return True, None               # (a configured key: no client is built just to decide)
 
     def _model_call(self, model_id: str) -> "verified_report.Call":
         """One provider call of the flow (RC-106): fixed parameters of the allow-list, the remaining time budget as
@@ -443,6 +458,7 @@ class BrainReportService:
         identifiers: Optional[PatientIdentifiers] = None,
         audit_actor: Any = None,
         segmentation_id: Optional[str] = None,
+        request_started: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Generate the verified draft of a brain MRI report (REQ-FUNC-116; DRAFT, PENDING owner approval).
@@ -467,6 +483,8 @@ class BrainReportService:
             ProviderGuardError: no identifiers, or the check found one in the first request — nothing was sent
         """
         start_time = time.time()
+        # REQ-SAFE-019 (sixth review of PR #78, W7): the budget counts from the start of the request (the route's)
+        started = request_started if isinstance(request_started, (int, float)) else verified_report.now()
         report_id = str(uuid.uuid4())
 
         if findings is None:
@@ -485,24 +503,19 @@ class BrainReportService:
             # projected (and its ranges checked) only for what the verified report renders or sends; what it does not
             # use is named "supplied but not included" and blocks nothing.
             rendered_findings, rendered_volumetry, not_included = verified_report.rendered_request(findings, volumetry)
-
-            def record_of(ids: Optional[PatientIdentifiers]):
-                payload_ = provider_payload(rendered_findings, rendered_volumetry, ids)
-                # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
-                return payload_, verified_report.build_view(payload_.findings, payload_.volumetry, lang,
-                                                            review_source=_review_source(findings),
-                                                            not_included=not_included)
-
-            # fifth review of PR #78, V5: the measurement checks (ranges) always run — they protect the code-written
-            # text; the patient-record checks only when a request will be sent
-            payload, view = record_of(None)
-            reason = self._interpretive_text_gate(model_id, view)
-            if reason is None:
-                # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check against, so
-                # no request is sent; with them, the patient's own numbers are refused in every number field
-                if not isinstance(identifiers, PatientIdentifiers):
-                    raise PatientRecordUnavailable("the patient's identifiers were not supplied")
-                payload, view = record_of(identifiers)
+            # Sixth review of PR #78, W4/W5: decide once (the one gate, before the record), then build the record once.
+            # Fifth review, V5: the measurement checks (ranges) always run — they protect the code-written text; the
+            # patient's own numbers are checked only when a request can be sent.
+            allowed, reason = self.interpretive_text_gate()
+            if allowed and not isinstance(identifiers, PatientIdentifiers):
+                # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check against
+                raise PatientRecordUnavailable("the patient's identifiers were not supplied")
+            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers if allowed else None)
+            # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
+            view = verified_report.build_view(payload.findings, payload.volumetry, lang,
+                                              review_source=_review_source(findings), not_included=not_included)
+            if allowed:
+                allowed, reason = self.interpretive_text_gate(view)    # the record: is there something to comment?
             # RC-066: record that the check ran and what was withheld (counts) — never the payload.
             # (second review, C: the fields the report does not render are counted here — they are not projected)
             withheld = {**payload.withheld,
@@ -514,6 +527,16 @@ class BrainReportService:
                 extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},
             )
 
+            budget = verified_report.LLM_DEADLINE_S
+            if reason is None:
+                # REQ-SAFE-019 (sixth review, W7): what is left of the request's 30 s, minus the response margin
+                left = (verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S
+                        - (verified_report.now() - started))
+                budget = min(verified_report.LLM_DEADLINE_S, left)
+                if left < verified_report.MIN_LLM_BUDGET_S:
+                    reason = verified_report.REASON_TIME_BUDGET
+                    logger.warning("[Report] Too little of the time budget left for the AI comments; measurements only",
+                                   extra={"report_id": report_id, "llm_budget_s": round(budget, 2)})
             if reason is not None:
                 if reason == verified_report.REASON_MODEL_NOT_ALLOWED:
                     retired = RETIRED_OR_RETIRING_MODELS.get(model_id) if isinstance(model_id, str) else None
@@ -537,7 +560,7 @@ class BrainReportService:
                     # RC-065 on every regeneration request too: a finding stops the flow (comments withheld)
                     tripwire=lambda text: assert_prompt_carries_no_identifier(text, identifiers),
                     on_attempt=audit.attempt,
-                    deadline_s=verified_report.LLM_DEADLINE_S,   # read at call time (REQ-SAFE-019)
+                    deadline_s=budget,   # REQ-SAFE-019: what is left of the request's budget (sixth review, W7)
                     first_message=sent_text)   # second review, J: built once; what is sent is what was checked
         except Exception as e:  # noqa: BLE001 — audited, then raised as before (the route answers 503 / 500)
             audit.not_sent(e)
@@ -574,6 +597,9 @@ class BrainReportService:
             # fifth review of PR #78, V8/V9: the DIS state of this draft, typed — "evaluated", "not_evaluated" (the
             # findings say so once, the notice follows) or "not_in_report" (no lesion findings: no DIS line)
             "dis_evaluation": dis_evaluation,
+            # CAPA-013 (sixth review of PR #78, W1): the change notice, from the validated record (one source with the
+            # draft's comparison line; a null or missing count is "not computed")
+            "change_notice": verified_report.change_notice(view, lang),
             # CAPA-014: placeholder -> label as written, for the clinician's draft only. Verified report (review of
             # PR #78, R8): the record never carries a placeholder (a request would be refused above), so there is no
             # placeholder to name and no application note "sent as numbered placeholders".

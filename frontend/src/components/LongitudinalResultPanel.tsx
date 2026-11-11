@@ -99,6 +99,12 @@ export function LongitudinalResultPanel({
 
   const abstained = result.abstained === true;
   const cc = result.change_candidates;
+  // CAPA-013 (sixth review of PR #78, W1): the reviewable candidates, or what the rule counts without that block
+  const counts = (cc ?? {}) as Record<string, unknown>;
+  const statusCounts = ((result as { status_counts?: Record<string, unknown> }).status_counts ?? {});
+  const newCount = cc ? counts.new : statusCounts.new;
+  const enlargingCount = cc ? counts.enlarging : statusCounts.enlarged;
+  const countsComputed = Number.isInteger(newCount) && Number.isInteger(enlargingCount);
   const evidence = result.false_candidate_evidence;
   const confirmedBox = result.reader_confirmed_activity;
   // Share of all proposed candidates that were false in the source record (review of PR #63:
@@ -242,9 +248,14 @@ export function LongitudinalResultPanel({
             className="rounded border border-amber-500/50 bg-amber-500/10 px-2 py-1.5 text-[10px] leading-snug text-amber-800 dark:text-amber-200 space-y-1"
           >
             <p className="font-semibold">
-              {t('longitudinal.candidatesSummary', {
-                total: cc?.total ?? 0, n: cc?.new ?? 0, e: cc?.enlarging ?? 0, d: result.new_lesion_min_diameter_mm ?? 3,
-              })}
+              {/* Sixth review of PR #78, W1: the same source and the same "not computed" as the draft and its notice —
+                  a null or missing count is never shown as 0 */}
+              {countsComputed
+                ? t('longitudinal.candidatesSummary', {
+                    total: (newCount as number) + (enlargingCount as number), n: newCount, e: enlargingCount,
+                    d: result.new_lesion_min_diameter_mm ?? 3,
+                  })
+                : t('longitudinal.candidatesNotComputed')}
             </p>
             {cc?.decisions_unavailable ? (
               <p data-testid="longitudinal-decisions-unavailable" className="font-semibold text-red-600 dark:text-red-400">

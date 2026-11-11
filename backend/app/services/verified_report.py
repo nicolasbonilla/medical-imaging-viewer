@@ -77,6 +77,17 @@ FLOW_ID = "verified-report-1 (fixed flow + frozen claim check v2, benchmark arm 
 FLOW_CODE = "verified-report-1"  # the audit-safe code of FLOW_ID
 MAX_REGENERATIONS = 2            # benchmark config.A3_MAX_REGENERATIONS: at most 3 answers in all
 LLM_DEADLINE_S = 25.0            # all model calls of one report together (REQ-SAFE-019: an answer within 30 s)
+# Sixth review of PR #78, W7 (REQ-SAFE-019): the 30 s count from the START of the request — the server's lesion table,
+# DIS assessment and patient record come first; the model gets what is left, minus a margin for the response, and at
+# most LLM_DEADLINE_S. With less than MIN_LLM_BUDGET_S left, no request is sent (measurements only, audited).
+REQUEST_BUDGET_S = 30.0
+RESPONSE_MARGIN_S = 3.0
+MIN_LLM_BUDGET_S = 5.0
+
+
+def now() -> float:
+    """The clock of the request's time budget (monotonic seconds; one function, so a test can drive it)."""
+    return time.monotonic()
 LANGUAGES = ("en", "es", "de")
 
 LANG_NAME = {"en": "English", "es": "Spanish", "de": "German"}
@@ -114,6 +125,7 @@ REASON_FEEDBACK_PRIVACY = "feedback_identifier_check"   # RC-065 check refused a
 REASON_NOTHING_TO_COMMENT = "no_measurement_for_comment"  # no lesion, change, volume or DIS result to comment on
 REASON_INTERNAL_CHECK = "internal_check_error"  # the check itself failed after the model answered (5th review, V3)
 REASON_WIRING = "provider_wiring"               # the client returned something that is not an answer (4th review, Q5)
+REASON_TIME_BUDGET = "time_budget"              # too little of the request's 30 s was left for the model (6th, W7)
 
 # The fixed notes after a report without comments, in the report language (RC-103, RC-105, RC-106).
 WITHHELD: Dict[str, Dict[str, str]] = {
@@ -134,6 +146,8 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                           "measurements above are complete.",
         "internal": "Interpretive text withheld: the automatic check could not be completed. The measurements "
                     "above are complete.",
+        "time": "Interpretive text not requested: too little of the time budget was left after the measurements "
+                "were computed. The measurements above are complete.",
     },
     "es": {
         REASON_BLOCKED: "Texto interpretativo retenido por la comprobación de seguridad: los comentarios de la IA no "
@@ -154,6 +168,8 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                           "servidor. Las mediciones de arriba están completas.",
         "internal": "Texto interpretativo retenido: la comprobación automática no pudo completarse. Las "
                     "mediciones de arriba están completas.",
+        "time": "Texto interpretativo no solicitado: quedaba muy poco del tiempo disponible después de calcular "
+                "las mediciones. Las mediciones de arriba están completas.",
     },
     "de": {
         REASON_BLOCKED: "Interpretierender Text von der Sicherheitsprüfung zurückgehalten: Die KI-Kommentare haben die "
@@ -173,12 +189,15 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                           "eingerichtet. Die Messwerte oben sind vollständig.",
         "internal": "Interpretierender Text zurückgehalten: Die automatische Prüfung konnte nicht abgeschlossen "
                     "werden. Die Messwerte oben sind vollständig.",
+        "time": "Interpretierender Text nicht angefordert: Nach der Berechnung der Messwerte blieb zu wenig "
+                "Zeit. Die Messwerte oben sind vollständig.",
     },
 }
 _NOTE_OF_REASON = {
     REASON_BLOCKED: REASON_BLOCKED, REASON_FEEDBACK_PRIVACY: REASON_FEEDBACK_PRIVACY,
     REASON_PROVIDER: "unavailable", REASON_TIMEOUT: "unavailable", REASON_REFUSAL: "unavailable",
     REASON_MODEL_UNAVAILABLE: "unavailable", REASON_WIRING: "unavailable", REASON_INTERNAL_CHECK: "internal",
+    REASON_TIME_BUDGET: "time",
     # fourth review of PR #78, Q4: no provider key is "not requested — not configured", as the state says
     REASON_NOT_CONFIGURED: "not_configured",
     REASON_OFF: "off", REASON_MODEL_NOT_ALLOWED: "model", REASON_NOTHING_TO_COMMENT: "nothing",
@@ -457,10 +476,12 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         regions_view = _region_breakdown(regs_in)
 
     view: Dict[str, Any] = {"report_language": lang}
-    if f.get("clinician_entry") is True:
-        # a flag only (RC-064: the text is never sent) — the clinician typed something the route adds to the draft
-        # (fourth review of PR #78, Q3: the limitations then say so instead of "clinical indication: not available")
-        view["clinician_entry"] = True
+    entry = f.get("clinician_entry")
+    if isinstance(entry, dict) and any(entry.get(k) is True for k in FREE_TEXT_FIELDS):
+        # flags only (RC-064: the text is never sent) — which fields the clinician typed; the route adds them to the
+        # draft. Sixth review of PR #78, W2: one flag per field — the limitations name the clinician's entry for the
+        # clinical indication only when the indication itself was typed (fourth review, Q3)
+        view["clinician_entry"] = {k: True for k in FREE_TEXT_FIELDS if entry.get(k) is True}
     if evaluated:
         view["segmentation"] = {"source": "segmentation confirmed by a radiologist for this exact mask (lesions and "
                                           "MAGNIMS regions)", "confirmed_by_radiologist": True}
@@ -787,7 +808,7 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     imp = ([t[imp_key].format(count=count.rstrip("."))] + ([dis_s] if dis["status"] == "evaluated" else [])
            + ([comp[0]] if comp else []))
     all_items = t["lim_items"].split("|")
-    entry = view.get("clinician_entry") is True
+    entry = (view.get("clinician_entry") or {}).get("clinical_indication") is True   # sixth review, W2
     drawn = [_OTHER_IMAGE_ITEM[c] for c in (reg.get("labels_from_other_images") or []) if c in _OTHER_IMAGE_ITEM]
     # fourth review of PR #78, Q3: a typed indication is shown separately in this same draft — not "not available";
     # fifth review, V6: an image the confirmed segmentation has labels drawn on is not "not available" either
@@ -800,6 +821,81 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
         lim.append(t["not_included"].format(items=", ".join(t["ni_" + k] for k in view["not_included"])))
     lim.append(t["lim_diag"])
     return f, comp, imp, lim
+
+
+# CAPA-013 (RC-060, RC-061, RC-062; HAZ-007): the notice after a draft with a longitudinal comparison, written by code
+# in the report language. Sixth review of PR #78, W1: built HERE from the validated record (`view["longitudinal"]`), the
+# same source as the draft's comparison line — a count that is null or missing is "not computed", never 0. (Moved from
+# the route, which recomputed it from the request.)
+CHANGE_NOTICE: Dict[str, Dict[str, str]] = {
+    "en": {
+        "candidates": "**Automatic change candidates (unconfirmed).** The software proposed {total} "
+                      "unconfirmed change candidate(s) ({new} new, {enl} enlarging), to be reviewed one "
+                      "by one by a radiologist. They are not findings. The radiologist's decisions are "
+                      "recorded in the application, not in this draft.",
+        "evidence": "In a public test with expert-marked change ({patients} patients) this rule proposed "
+                    "on average {mean} false candidates per patient, {pct} % of all the candidates it "
+                    "proposed ({source}, {date}).",
+        "no_evidence": "No measured false-candidate rate is available for this rule.",
+        "abstained": "**No automatic change candidates.** The acquisition of the two visits differs or "
+                     "could not be established; the change between the visits must be assessed visually.",
+        "not_computed": "**No automatic change candidates.** The change candidates were not computed; the change "
+                        "between the visits must be assessed visually.",
+    },
+    "es": {
+        "candidates": "**Candidatos automáticos de cambio (sin confirmar).** El programa propuso {total} "
+                      "candidatos de cambio sin confirmar ({new} nuevos, {enl} agrandados), que un radiólogo "
+                      "debe revisar uno a uno. No son hallazgos. Las decisiones del radiólogo constan en la "
+                      "aplicación, no en este borrador.",
+        "evidence": "En una prueba pública con cambios marcados por expertos ({patients} pacientes), esta "
+                    "regla propuso de media {mean} candidatos falsos por paciente, el {pct} % de todos los "
+                    "candidatos que propuso ({source}, {date}).",
+        "no_evidence": "No hay una tasa medida de candidatos falsos para esta regla.",
+        "abstained": "**Sin candidatos automáticos de cambio.** La adquisición de las dos visitas es "
+                     "distinta o no se pudo establecer; el cambio entre las visitas debe valorarse "
+                     "visualmente.",
+        "not_computed": "**Sin candidatos automáticos de cambio.** Los candidatos de cambio no se calcularon; el "
+                        "cambio entre las visitas debe valorarse visualmente.",
+    },
+    "de": {
+        "candidates": "**Automatische Veränderungskandidaten (unbestätigt).** Die Software schlug {total} "
+                      "unbestätigte Veränderungskandidaten vor ({new} neu, {enl} vergrößert), die ein "
+                      "Radiologe einzeln prüft. Sie sind keine Befunde. Die Entscheidungen des Radiologen "
+                      "sind in der Anwendung erfasst, nicht in diesem Entwurf.",
+        "evidence": "In einem öffentlichen Test mit von Experten markierten Veränderungen ({patients} "
+                    "Patienten) schlug diese Regel im Mittel {mean} falsche Kandidaten pro Patient vor, "
+                    "{pct} % aller vorgeschlagenen Kandidaten ({source}, {date}).",
+        "no_evidence": "Für diese Regel liegt keine gemessene Rate falscher Kandidaten vor.",
+        "abstained": "**Keine automatischen Veränderungskandidaten.** Die Aufnahmetechnik der beiden "
+                     "Untersuchungen unterscheidet sich oder ließ sich nicht feststellen; die Veränderung "
+                     "muss visuell beurteilt werden.",
+        "not_computed": "**Keine automatischen Veränderungskandidaten.** Die Veränderungskandidaten wurden nicht "
+                        "berechnet; die Veränderung muss visuell beurteilt werden.",
+    },
+}
+
+
+def change_notice(view: Dict[str, Any], lang: str) -> Optional[str]:
+    """The CAPA-013 notice of this draft, from the validated record (sixth review of PR #78, W1), or None."""
+    lng = view.get("longitudinal")
+    if not isinstance(lng, dict):
+        return None
+    texts = CHANGE_NOTICE.get(lang, CHANGE_NOTICE["en"])
+    if lng.get("abstained"):
+        return texts["not_computed"] if lng.get("reason") == "change candidates not computed" else texts["abstained"]
+    cc = lng["candidates"]
+    new, enl = cc["new"], cc["enlarged"]          # never None here: a None count makes the record "not computed"
+    lines = [texts["candidates"].format(total=new + enl, new=new, enl=enl)]
+    from app.services.longitudinal_candidate_safety import false_share_percent, load_false_candidate_evidence
+    ev = load_false_candidate_evidence()
+    if ev:
+        mean = f"{ev['false_candidates_per_patient']:g}"
+        lines.append(texts["evidence"].format(
+            patients=ev["patients"], mean=mean if lang == "en" else mean.replace(".", ","),
+            pct=false_share_percent(ev), source=ev["source"], date=ev["measured_on"]))
+    else:
+        lines.append(texts["no_evidence"])
+    return " ".join(lines)
 
 
 PLACEHOLDERS = ("total_count", "total_volume_ml", "new_candidates", "enlarging_candidates", "brain_regions_with_lesions")
@@ -855,34 +951,65 @@ def first_user_message(view: Dict[str, Any], lang: str) -> str:
 _HAS_A_LETTER = re.compile(r"[^\W\d_]")
 _TEMPLATE_TOKEN = re.compile("[{}\\[\\]｛｝［］⦃⦄⟦⟧]")
 EMPTY_COMMENT_MESSAGE = "Both comments must say something: an empty comment is not allowed."
-NUMBER_WORDS_MESSAGE = "Numbers written in words are not allowed in the comments; use a placeholder or no number."
-# Fifth review of PR #78, V1: number, ordinal and count words (en / es / de, folded: no accents, ss for sharp s), as
-# whole words — hyphenated parts ("twenty-one") and compounds ("einundzwanzig", "veintidos", "dreizehn") included.
-# Articles ("a", "an", "un", "una", "ein", "eine") stay allowed; a word that only contains a number is not one
-# ("beobachtet", "Hilfe").
-_NUMBER_WORDS = re.compile(r"\b(?:" + "|".join((
+NUMBER_WORDS_MESSAGE = ("A count written in words is not allowed in the comments (for example \"two lesions\"); use a "
+                        "placeholder or no number.")
+# Sixth review of PR #78, W3 (calibration of V1): a number word fails the check only when it COUNTS a clinical noun —
+# the noun within the next four words of the same sentence ("two lesions", "a single new lesion", "three of the four
+# regions", "ambas regiones", "zwei neue Kandidaten"). Ordinals and other uses pass ("the first marking", "both
+# hemispheres", "once confirmed", "half of the volume"). Folded text (no accents, ss for sharp s), whole words; the
+# words of the report language and of the other two, except "once" (Spanish eleven, English "once") outside Spanish.
+_COUNT_WORDS = {
+    "en": ("zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|"
+           "seventeen|eighteen|nineteen|twenty|thirty|forty|fourty|fifty|sixty|seventy|eighty|ninety|hundreds?|"
+           "thousands?|dozens?|both|single|couple|pairs?"),
+    "es": ("cero|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|trece|catorce|quince|dieci\\w+|veinte|"
+           "veinti\\w+|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien|cientos?|mil|docenas?|ambos|ambas|"
+           "unic[oa]s?|par|pares"),
+    "de": ("null|eins|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn|elf|zwolf|\\w+zehn|zwanzig|dreissig|\\w+zig|"
+           "\\w+und(?:zwanzig|dreissig|vierzig|funfzig|sechzig|siebzig|achtzig|neunzig)|hundert\\w*|tausend\\w*|"
+           "dutzend\\w*|beide[nrs]?|einzige[nrms]?|paar"),
+}
+_COUNTED_NOUN = re.compile(r"(?:" + "|".join((
     # en
-    r"zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen",
-    r"seventeen|eighteen|nineteen|twenty|thirty|forty|fourty|fifty|sixty|seventy|eighty|ninety|hundreds?",
-    r"thousands?|dozens?|both|single|couple|pairs?|half|halves|twice|thrice|once|first|second|third|fourth",
-    r"fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|\w+teenth|twentieth",
+    r"lesions?|foci|focus|candidates?|regions?|locations?|areas?|segments?|spots?|plaques?|sites?|zones?",
+    r"hyperintensit(?:y|ies)",
     # es
-    r"uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|doce|trece|catorce|quince|dieci\w+|veinte",
-    r"veinti\w+|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien|cientos?|mil|docenas?",
-    r"ambos|ambas|primer[oa]?|primeros|primeras|segund[oa]s?|tercer[oa]?s?|cuart[oa]s?|quint[oa]s?",
-    r"sext[oa]s?|septim[oa]s?|octav[oa]s?|noven[oa]s?|decim[oa]s?|unic[oa]s?|par|pares|mitad|cero|doble|triple",
-    # de
-    r"eins|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn|elf|zwolf|\w+zehn|zwanzig|dreissig|\w+zig",
-    r"\w+und(?:zwanzig|dreissig|vierzig|funfzig|sechzig|siebzig|achtzig|neunzig)|hundert\w*|tausend\w*",
-    r"dutzend\w*|beide[nrs]?|einzig|einzige[nrms]?|paar|halfte|halb|halbe[nrms]?|null|einmal|zweimal|dreimal",
-    r"doppelt|doppelte[nrms]?|erste[nrms]?|zweite[nrms]?|dritte[nrms]?|drittel|vierte[nrms]?|viertel",
-    r"funfte[nrms]?|sechste[nrms]?|siebte[nrms]?|achte[nrms]?|neunte[nrms]?|zehnte[nrms]?",
-)) + r")\b")
+    r"lesion|lesiones|focos?|candidatos?|regiones|localizacion(?:es)?|segmentos?|placas?|zonas?|hiperintensidad(?:es)?",
+    # de (compounds: "Marklagerlasionen", "Entmarkungsherde", "Veranderungskandidaten")
+    r"\w*lasion(?:en)?|\w*herde?n?|\w*kandidat(?:en)?|regionen|lokalisation(?:en)?|areale?n?|segmente?n?|zonen?",
+    r"hyperintensitat(?:en)?",
+)) + r")")
+_SENTENCE_BREAK = re.compile(r"[.;:!?\n]")
+_COUNT_WINDOW = 4                 # the counted noun within the next four words (at most three words between)
 
 
-def number_words(text: str) -> List[str]:
-    """The number, ordinal and count words of `text` (fifth review of PR #78, V1)."""
-    return [m.group(0) for m in _NUMBER_WORDS.finditer(L_fold(text))]
+def _count_word(lang: str) -> "re.Pattern[str]":
+    words = [w for code, ws in _COUNT_WORDS.items() for w in ws.split("|")
+             if code == lang or not (w == "once" and code == "es")]
+    return re.compile("(?:" + "|".join(dict.fromkeys(words)) + ")")
+
+
+_COUNT_WORD_OF = {lang: _count_word(lang) for lang in ("en", "es", "de")}
+
+
+def number_words(text: str, lang: str = "en") -> List[str]:
+    """The number and count words of `text` that count a clinical noun (sixth review of PR #78, W3; fifth review, V1)."""
+    fold = L_fold(text)
+    tokens = list(re.finditer(r"\w+", fold))
+    word = _COUNT_WORD_OF.get(lang, _COUNT_WORD_OF["en"])
+    out = []
+    for i, tok in enumerate(tokens):
+        if not word.fullmatch(tok.group(0)):
+            continue
+        for nxt in tokens[i + 1:i + 1 + _COUNT_WINDOW]:
+            if _SENTENCE_BREAK.search(fold[tok.end():nxt.start()]):
+                break
+            if _COUNTED_NOUN.fullmatch(nxt.group(0)):
+                out.append(tok.group(0))
+                break
+    return out
+
+
 TEMPLATE_TOKEN_MESSAGE = ("Braces and brackets are not allowed in the comments: write a placeholder exactly as listed, "
                           "or no number.")
 
@@ -942,7 +1069,7 @@ def check(view: Dict[str, Any], lang: str, text: str) -> Tuple[Optional[str], Li
         fails.append({"rule": "FMT.digits",
                       "message": "Digits are not allowed in the comments; use a placeholder or no number."})
     # fifth review of PR #78, V1: a number written in words states a count as a digit does
-    if number_words(fc + "\n" + ic):
+    if number_words(fc + "\n" + ic, lang):
         fails.append({"rule": "FMT.number_words", "message": NUMBER_WORDS_MESSAGE})
     for k, v in vals.items():
         fc, ic = fc.replace("{" + k + "}", v), ic.replace("{" + k + "}", v)
@@ -1181,9 +1308,12 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
     yield {"lesion_analysis": la(7, confirmed=False), "zone_stats": {"total_brain_voxels": 1}, "segmentation_labels": ["x"],
            "anomalies": [{"type": "x"}]}, {**vol, "structures": [{"structure_name": "x", "volume_ml": 1.0}]}, "ai_draft"
     # fourth review of PR #78, Q3: the clinician typed an indication (a flag only), with and without evaluated DIS
-    yield {"clinician_entry": True, "lesion_analysis": la(7, confirmed=False),
+    yield {"clinician_entry": {"clinical_indication": True}, "lesion_analysis": la(7, confirmed=False),
            "dis_assessment": {"evaluation_status": "not_evaluated"}}, None, "ai_draft"
-    yield {"clinician_entry": True, "lesion_analysis": la(7, regions), "dis_assessment": evaluated}, vol, None
+    yield {"clinician_entry": {"clinical_indication": True, "technique": True}, "lesion_analysis": la(7, regions),
+           "dis_assessment": evaluated}, vol, None
+    # sixth review of PR #78, W2: only the technique typed — the indication stays "not available"
+    yield {"clinician_entry": {"technique": True}, "lesion_analysis": la(7, confirmed=False)}, None, "ai_draft"
     # third review of PR #78, T1: a volume in mL only, and in mm³ only (each line states what the record has)
     yield {"lesion_analysis": {"total_count": 7, "total_burden_mm3": NA, "total_burden_ml": 3.132}}, None, "ai_draft"
     yield {"lesion_analysis": {"total_count": 7, "total_burden_mm3": 3132.0, "total_burden_ml": NA}}, None, "ai_draft"

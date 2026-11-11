@@ -70,6 +70,7 @@ def main(argv=None):
 
     groups = defaultdict(Counter)
     kinds_new = defaultdict(Counter)
+    unflagged_examples = []               # sixth review, W3: delivered drafts with a count word the rule lets pass
     number_words = defaultdict(Counter)   # fifth review, V1: which words flag a delivered draft (model-language)
     examples = defaultdict(list)
     totals = Counter()
@@ -89,6 +90,7 @@ def main(argv=None):
                 job.view, job.lang = view, r["lang"]
                 vals = A.placeholder_values(view, r["lang"])
                 attempt_new = []
+                slips_seen = []     # sixth review, W3: per attempt, the count words the rule lets pass (for review)
                 for att in r["result"]["attempts"]:
                     _assembled, v2 = A.A3.check(job, att["text"])
                     recorded = list(att.get("failures") or [])
@@ -100,6 +102,7 @@ def main(argv=None):
                         totals["recomputed_v2_same_failures_other_order"] += 1
                     m = A._SLOT.search(att["text"] or "")
                     strict = []
+                    slips_seen.append([])
                     if m:
                         # (fourth review of PR #78: the comments read with the shared format-character rule, Q6; the
                         # empty-comment and raw-template-token rules, Q1 and Q2)
@@ -107,8 +110,15 @@ def main(argv=None):
                         ic = VR.without_format_characters(m.group(2)).strip()
                         if not (VR._HAS_A_LETTER.search(fc) and VR._HAS_A_LETTER.search(ic)):
                             strict.append({"kind": "empty_comment", "unit": (fc or ic or "")[:80]})
-                        # (fifth review of PR #78, V1: a number written in words, before the placeholders are filled)
-                        words = VR.number_words(fc + "\n" + ic)
+                        # (fifth review of PR #78, V1: a number written in words, before the placeholders are filled;
+                        # sixth review, W3: only when it counts a clinical noun, in the report's language)
+                        words = VR.number_words(fc + "\n" + ic, r["lang"])
+                        fold = VR.L_fold(fc + "\n" + ic)
+                        word_re = VR._COUNT_WORD_OF[r["lang"]]
+                        unflagged = [m for m in re.finditer(r"\w+", fold) if word_re.fullmatch(m.group(0))]
+                        if len(unflagged) > len(words):     # a count word that counts no listed clinical noun
+                            slips_seen[-1] = [fold[max(0, u.start() - 60):u.end() + 60].replace("\n", " ")
+                                              for u in unflagged]
                         if words:
                             strict.append({"kind": "number_words", "words": sorted(set(words)),
                                            "unit": f"{sorted(set(words))[:4]} in: {(fc + ' | ' + ic)[:150]}"})
@@ -138,6 +148,10 @@ def main(argv=None):
                 g["delivered_before"] += 1
                 v2f, st = attempt_new[k]
                 assert not v2f, (r["key"], "a delivered answer must have passed v2")
+                if slips_seen[k] and not st:
+                    g["delivered_with_unflagged_count_words"] += 1
+                    unflagged_examples.append({"model": alias, "lang": r["lang"], "record": r["record_id"],
+                                               "snippets": slips_seen[k][:3]})
                 if st:
                     g["now_flagged"] += 1
                     g[f"cond_{cond}_now_flagged"] += 1
@@ -164,12 +178,14 @@ def main(argv=None):
             "now_blocked_certain": g["now_blocked_certain"], "now_need_regeneration": g["now_need_regeneration"],
             "blocked_after_lower_bound": g["blocked_before"] + g["now_blocked_certain"],
             "blocked_after_upper_bound": g["blocked_before"] + nf,
-            "healthy_control_drafts": g["cond_v_drafts"], "healthy_control_now_flagged": g["cond_v_now_flagged"]})
+            "healthy_control_drafts": g["cond_v_drafts"], "healthy_control_now_flagged": g["cond_v_now_flagged"],
+            "delivered_with_unflagged_count_words": g["delivered_with_unflagged_count_words"]})
     record = {
         "executed": "2026-11-11",
         "purpose": "second independent review of PR #78 (items A, B): offline re-scoring of the benchmark's existing "
                    "A3 drafts with the product's stricter claim check (no model called); re-run for the fourth review "
-                   "(Q1, Q2, Q6) and the fifth review (V1: numbers written in words, en / es / de)",
+                   "(Q1, Q2, Q6), the fifth review (V1: numbers written in words) and the sixth review (W3: a "
+                   "number word fails only when it counts a clinical noun, en / es / de)",
         "benchmark_code": "research/agents_benchmark at f3c1976 (A3.check with the frozen verifier v2)",
         "product_rules": "backend/app/services/report_claim_strict.py",
         "product_rules_sha256": hashlib.sha256((BACKEND / "app" / "services" / "report_claim_strict.py")
@@ -192,6 +208,7 @@ def main(argv=None):
         "per_model_language_subset": rows,
         "new_flags_by_rule_and_model": {m: dict(c) for m, c in sorted(kinds_new.items())},
         "examples_of_new_flags": dict(examples),
+        "delivered_drafts_with_count_words_not_flagged": unflagged_examples,
         "number_words_in_flagged_delivered_drafts": {k: dict(c.most_common(12)) for k, c in sorted(number_words.items())},
         "conditions": CONDITION,
     }

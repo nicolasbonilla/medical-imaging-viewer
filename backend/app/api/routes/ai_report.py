@@ -252,57 +252,9 @@ async def read_patient_identifiers(patient_id: str) -> PatientIdentifiers:
 MEASUREMENT_FINDING_KEYS = frozenset(RENDERED_FINDINGS)       # fourth review, Q7: the verified report's own list
 
 
-# CAPA-013 (RC-060, RC-061, RC-062; HAZ-007): a draft that received a longitudinal comparison
-# ends with this notice, written by code in the report language — whatever the model wrote.
-# The measured false-candidate rate comes from the server's versioned asset, never from the
-# request. No wording here may present unconfirmed candidates as a statement on the disease.
-LONGITUDINAL_NOTICE: Dict[str, Dict[str, str]] = {
-    "en": {
-        "candidates": "**Automatic change candidates (unconfirmed).** The software proposed {total} "
-                      "unconfirmed change candidate(s) ({new} new, {enl} enlarging), to be reviewed one "
-                      "by one by a radiologist. They are not findings. The radiologist's decisions are "
-                      "recorded in the application, not in this draft.",
-        "evidence": "In a public test with expert-marked change ({patients} patients) this rule proposed "
-                    "on average {mean} false candidates per patient, {pct} % of all the candidates it "
-                    "proposed ({source}, {date}).",
-        "no_evidence": "No measured false-candidate rate is available for this rule.",
-        "abstained": "**No automatic change candidates.** The acquisition of the two visits differs or "
-                     "could not be established; the change between the visits must be assessed visually.",
-    },
-    "es": {
-        "candidates": "**Candidatos automáticos de cambio (sin confirmar).** El programa propuso {total} "
-                      "candidatos de cambio sin confirmar ({new} nuevos, {enl} agrandados), que un radiólogo "
-                      "debe revisar uno a uno. No son hallazgos. Las decisiones del radiólogo constan en la "
-                      "aplicación, no en este borrador.",
-        "evidence": "En una prueba pública con cambios marcados por expertos ({patients} pacientes), esta "
-                    "regla propuso de media {mean} candidatos falsos por paciente, el {pct} % de todos los "
-                    "candidatos que propuso ({source}, {date}).",
-        "no_evidence": "No hay una tasa medida de candidatos falsos para esta regla.",
-        "abstained": "**Sin candidatos automáticos de cambio.** La adquisición de las dos visitas es "
-                     "distinta o no se pudo establecer; el cambio entre las visitas debe valorarse "
-                     "visualmente.",
-    },
-    "de": {
-        "candidates": "**Automatische Veränderungskandidaten (unbestätigt).** Die Software schlug {total} "
-                      "unbestätigte Veränderungskandidaten vor ({new} neu, {enl} vergrößert), die ein "
-                      "Radiologe einzeln prüft. Sie sind keine Befunde. Die Entscheidungen des Radiologen "
-                      "sind in der Anwendung erfasst, nicht in diesem Entwurf.",
-        "evidence": "In einem öffentlichen Test mit von Experten markierten Veränderungen ({patients} "
-                    "Patienten) schlug diese Regel im Mittel {mean} falsche Kandidaten pro Patient vor, "
-                    "{pct} % aller vorgeschlagenen Kandidaten ({source}, {date}).",
-        "no_evidence": "Für diese Regel liegt keine gemessene Rate falscher Kandidaten vor.",
-        "abstained": "**Keine automatischen Veränderungskandidaten.** Die Aufnahmetechnik der beiden "
-                     "Untersuchungen unterscheidet sich oder ließ sich nicht feststellen; die Veränderung "
-                     "muss visuell beurteilt werden.",
-    },
-}
-
-
-def _int(v) -> int:
-    try:
-        return max(0, int(v))
-    except Exception:  # noqa: BLE001
-        return 0
+# CAPA-013 (RC-060, RC-061, RC-062; HAZ-007): the change notice of a draft with a longitudinal comparison is written by
+# the report service from its validated record (sixth review of PR #78, W1: `verified_report.change_notice`, returned
+# as `change_notice`); the route appends it after the model's text and never recomputes it from the request.
 
 
 # Review of PR #63, blocker 1: a report request is client data. A reader decision in it cannot be
@@ -324,31 +276,6 @@ def drop_unverifiable_decisions(longitudinal: Any) -> Any:
         out["change_candidates"] = {k: v for k, v in out["change_candidates"].items()
                                     if k not in UNVERIFIABLE_CANDIDATE_COUNTS}
     return out
-
-
-def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
-    """The fixed notice for a draft that received a longitudinal comparison, or None."""
-    if not isinstance(longitudinal, dict) or not longitudinal:
-        return None
-    from app.services.longitudinal_candidate_safety import load_false_candidate_evidence
-
-    texts = LONGITUDINAL_NOTICE.get(language, LONGITUDINAL_NOTICE["en"])
-    if longitudinal.get("abstained"):
-        return texts["abstained"]
-    # fifth review of PR #78, V2: the ONE source of the draft, this notice and the review screen
-    from app.services.verified_report import reviewable_candidate_counts
-    new, enl = (n or 0 for n in reviewable_candidate_counts(longitudinal))
-    lines = [texts["candidates"].format(total=new + enl, new=new, enl=enl)]
-    from app.services.longitudinal_candidate_safety import false_share_percent
-    ev = load_false_candidate_evidence()
-    if ev:
-        mean = f"{ev['false_candidates_per_patient']:g}"
-        lines.append(texts["evidence"].format(
-            patients=ev["patients"], mean=mean if language == "en" else mean.replace(".", ","),
-            pct=false_share_percent(ev), source=ev["source"], date=ev["measured_on"]))
-    else:
-        lines.append(texts["no_evidence"])
-    return " ".join(lines)
 
 
 # PRB-003 (RC-070, RC-072; HAZ-008, HAZ-003): a report request is client data, so a DIS conclusion in it cannot be
@@ -514,6 +441,8 @@ class ReportResponse(BaseModel):
     # PRB-003 / RC-070 (fifth review of PR #78, V8; DRAFT): the DIS state of the draft, as the service wrote it —
     # "evaluated", "not_evaluated" (stated once in the findings, the notice follows) or "not_in_report"
     dis_evaluation: Optional[Literal["evaluated", "not_evaluated", "not_in_report"]] = None
+    # CAPA-013 (sixth review of PR #78, W1; DRAFT): the change notice the service wrote from its validated record
+    change_notice: Optional[str] = None
 
 
 class ReportTemplateInfo(BaseModel):
@@ -563,6 +492,8 @@ async def generate_report(
     current_user: User = Depends(get_current_active_user),
 ):
     """Generate a draft brain MRI report from measurements computed by the device."""
+    from app.services import verified_report as _budget
+    started = _budget.now()   # REQ-SAFE-019 (sixth review of PR #78, W7): the 30 s count from here
     logger.info(
         f"[Report] Generate request: template={request.template_type}, "
         f"lang={request.language}"
@@ -593,8 +524,8 @@ async def generate_report(
     # fifth review of PR #78, V5: the patient record is read only when a request can be sent (kill switch on, model
     # allowed, key configured); otherwise nothing is sent and the measurements-only draft needs no record. A service
     # that cannot tell (an offline test double) gets the record, as before — the check is never skipped by default.
-    possible = getattr(service, "provider_call_possible", None)
-    if not callable(possible) or possible() is not False:
+    # sixth review, W5: the service's ONE gate, asked without a record (the service asks it again with the record)
+    if not hasattr(service, "interpretive_text_gate") or service.interpretive_text_gate()[0] is not False:
         try:
             identifiers = await read_patient_identifiers(patient_id)
         except PatientRecordUnavailable as e:
@@ -652,6 +583,7 @@ async def generate_report(
             # RC-104 (DRAFT): who asked and for which segmentation, for the audit record of every model attempt
             audit_actor=current_user,
             segmentation_id=request.segmentation_id,
+            request_started=started,
         )
         # Release 2026-10-25 (integration review of PR #69, item 2): CAPA-014's format-character rule (zero-width
         # space -> space, every other format character removed) on the service's text. Fifth review of PR #78, V8: the
@@ -662,8 +594,8 @@ async def generate_report(
         # model, as fields of their own; they were never sent.
         unlisted = result.pop("unlisted_labels", None)
         parts = draft_parts(result["content"], request.language, request.findings, unlisted)
-        notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
-        if notice:   # CAPA-013: appended in code, after the model, in the report language
+        notice = result.get("change_notice")
+        if notice:   # CAPA-013 (sixth review, W1): the service's notice, from its validated record
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
         result = {**result, **parts, "content": draft_text(parts, request.language)}
         return ReportResponse(**result)

@@ -457,9 +457,17 @@ def report_client(monkeypatch):
     import app.api.routes.ai_report as ai_report
 
     class _Svc:
+        # (amended with the sixth review of PR #78, W1: the change notice is the report service's, built from its
+        # validated record — the stand-in returns it the way the service does; the route no longer computes it)
         async def generate_report(self, **kw):
+            from app.services import verified_report as VR
+            from app.services.report_payload_guard import provider_payload
+            f, v, ni = VR.rendered_request(kw["findings"], kw.get("volumetry"))
+            p = provider_payload(f, v)
+            view = VR.build_view(p.findings, p.volumetry, VR.language_of(kw["language"]), not_included=ni)
             return {"report_id": "r", "content": "draft body", "template_type": kw["template_type"],
-                    "language": kw["language"], "processing_time_ms": 1}
+                    "language": kw["language"], "processing_time_ms": 1,
+                    "change_notice": VR.change_notice(view, VR.language_of(kw["language"]))}
 
     monkeypatch.setattr(ai_report, "get_report_service", lambda: _Svc())
     _report_subject(monkeypatch)

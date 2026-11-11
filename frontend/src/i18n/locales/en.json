@@ -1325,6 +1325,7 @@
       "spacing_between_slices_mm": "Spacing between slices (mm)"
     },
     "candidatesSummary": "{{total}} unconfirmed change candidates ({{n}} new ≥{{d}} mm, {{e}} enlarging), to be reviewed one by one by a radiologist.",
+    "candidatesNotComputed": "The change candidates were not computed; the change between the visits must be assessed visually.",
     "candidatesReview": "Awaiting review: {{awaiting}} · confirmed: {{confirmed}} · rejected: {{rejected}}.",
     "candidatesNoStatement": "The software makes no statement about the course of the disease from these candidates; only a radiologist's confirmation counts.",
     "decisionsVoided": "Earlier decisions were recorded on segmentations that have changed since; they no longer apply.",

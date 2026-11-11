@@ -111,15 +111,19 @@ def sink():
 NUMBER_WORDS = {
     "en": ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
            "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty", "twenty-one",
-           "thirty", "forty-two", "hundred", "dozen", "both", "first", "second", "third", "fourth", "tenth", "twice",
-           "single", "pair", "half", "zero"],
+           "thirty", "forty-two", "hundred", "dozen", "both", "single", "pair", "zero"],
     "es": ["uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce", "trece",
            "catorce", "quince", "dieciséis", "diecinueve", "veinte", "veintiuno", "veintidós", "treinta", "cien",
-           "docena", "ambos", "ambas", "primera", "segundo", "tercera", "cuarto", "única", "par", "mitad", "cero"],
+           "docena", "ambos", "ambas", "única", "par", "cero"],
     "de": ["eins", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf",
            "dreizehn", "neunzehn", "zwanzig", "einundzwanzig", "zweiundvierzig", "dreißig", "hundert", "Dutzend",
-           "beide", "beiden", "erste", "zweite", "dritten", "vierte", "einzige", "Paar", "Hälfte", "null", "zweimal"],
+           "beide", "beiden", "einzige", "Paar", "null"],
 }
+# (amended with the sixth review of PR #78, W3: a number word fails only when it counts a clinical noun — ordinals and
+# other uses pass, in the same frames; they were in the lists above)
+NOT_COUNT_WORDS = {"en": ["first", "second", "third", "fourth", "tenth", "twice", "half"],
+                   "es": ["primera", "segundo", "tercera", "cuarto", "mitad"],
+                   "de": ["erste", "zweite", "dritten", "vierte", "Hälfte", "zweimal"]}
 FRAMES = {"en": "Most of the {w} lesions are small.", "es": "La mayoría de las {w} lesiones son pequeñas.",
           "de": "Die meisten der {w} Läsionen sind klein."}
 
@@ -134,7 +138,9 @@ def test_rc103_v1_fuzz_number_ordinal_and_count_words_fail_the_check_in_every_la
                                                                                FRAMES[lang].format(w=variant))):
                     assert "FMT.number_words" in _rules(view, answer, lang), (lang, variant)
                     n += 1
-    assert n > 500
+        for w in NOT_COUNT_WORDS[lang]:
+            assert "FMT.number_words" not in _rules(view, _answer(FRAMES[lang].format(w=w)), lang), (lang, w)
+    assert n > 400
 
 
 @pytest.mark.parametrize("sentence", ["Twelve lesions are marked.", "Lesions lie in three of the four regions.",
@@ -166,26 +172,24 @@ LONG = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.4, "total_lesions_tp1": 3, "tot
 
 @pytest.mark.parametrize("lang", VR.LANGUAGES)
 def test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates(lang):
-    from app.api.routes.ai_report import longitudinal_notice
     view = _view({"longitudinal": LONG}, lang=lang)
     assert view["longitudinal"]["candidates"]["new"] == 2 and view["longitudinal"]["candidates"]["enlarged"] == 1
     comp = VR.skeleton(view, lang)[1][0]
     t = VR.T[lang]
     assert comp == t["lng_ok"].format(new=2, enl=1, res=0, shr=0, sta=3)
     assert VR.stated_values(view, lang)["new_candidates"] == "2"
-    notice = longitudinal_notice(LONG, lang)
-    from app.api.routes.ai_report import LONGITUDINAL_NOTICE
-    assert LONGITUDINAL_NOTICE[lang]["candidates"].format(total=3, new=2, enl=1) in notice
+    # (amended with the sixth review of PR #78, W1: the notice is the service's, from the same record)
+    notice = VR.change_notice(view, lang)
+    assert VR.CHANGE_NOTICE[lang]["candidates"].format(total=3, new=2, enl=1) in notice
     assert VR.reviewable_candidate_counts(LONG) == (2, 1)
 
 
 def test_rc102_v2_without_the_candidate_block_both_count_what_the_rule_counts():
-    from app.api.routes.ai_report import longitudinal_notice
     lng = {k: v for k, v in LONG.items() if k != "change_candidates"}
     assert VR.reviewable_candidate_counts(lng) == (5, 2)
     view = _view({"longitudinal": lng})
     assert view["longitudinal"]["candidates"]["new"] == 5
-    assert "(5 new, 2 enlarging)" in longitudinal_notice(lng, "en")
+    assert "(5 new, 2 enlarging)" in VR.change_notice(view, "en")   # (sixth review, W1: the service's notice)
 
 
 # ═══════════════════════════════════════════════════════════════════════ V3 — an internal check error is withheld
