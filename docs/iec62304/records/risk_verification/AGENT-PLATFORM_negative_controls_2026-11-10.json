@@ -895,10 +895,10 @@
       "RC-120"
     ],
     "latest_round": {
-      "executed": "2026-11-11T00:34:18",
-      "mutations": 2,
-      "detected": 2,
-      "restored_passed": 487,
+      "executed": "2026-11-11T01:06:50",
+      "mutations": 27,
+      "detected": 27,
+      "restored_passed": 544,
       "restored_failed": 0
     }
   },
@@ -4339,6 +4339,484 @@
         "failing_tests": []
       },
       "reason": "baseline gate added and .github/workflows copied; Y5 and Y4 again with a clean baseline and restored run",
+      "superseded": [
+        "U6_only_declared_ids_scoped",
+        "U7_result_scope_off"
+      ]
+    },
+    {
+      "executed": "2026-11-11T01:06:50",
+      "mutations": {
+        "R5_retirement_ignored": {
+          "failed": 7,
+          "passed": 537,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_retired_model_is_never_called",
+            "test_rc110_retired_model_is_refused_on_and_after_its_date",
+            "test_rc115_llm03_report_model_is_refused_from_its_retirement_date",
+            "test_rc117_retirement_check_with_a_frozen_date",
+            "test_rc117_review3_retirement_check_takes_an_injected_date",
+            "test_rc117_review4_cards_reuse_the_registry_retirement_rule",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a retired model is still called",
+          "applied": true
+        },
+        "X1_no_switch_before_delivery": {
+          "failed": 2,
+          "passed": 542,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc111_switch_turned_off_before_delivery_withholds_the_text",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-111",
+          "reintroduces": "text is delivered after the agent was switched off",
+          "applied": true
+        },
+        "X2_continue_after_refused_tool": {
+          "failed": 15,
+          "passed": 529,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[annotate_cvs_prl]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[classify_lesions_magnims]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[import_dicom_to_viewer]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[save_segmentation]",
+            "test_rc110_asi02_llm06_write_tool_is_refused_and_never_runs[sign_report]",
+            "test_rc110_asi03_an_agent_cannot_use_another_agents_tools",
+            "test_rc110_asi05_platform_has_no_code_execution_path",
+            "test_rc110_unknown_tool_ends_the_run",
+            "test_rc110_write_tool_never_runs_and_nothing_is_delivered",
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_asi07_message_claiming_to_come_from_another_agent_is_only_data",
+            "test_rc118_case[as-replay-calls-an-unregistered-tool]",
+            "test_rc118_case[as-replay-hijacked-to-write]",
+            "test_rc118_report_and_gate",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "the run continues after a refused (e.g. write) tool call",
+          "applied": true
+        },
+        "V8_nested_values_not_walked": {
+          "failed": 48,
+          "passed": 496,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload1-out_of_scope_resource]",
+            "test_rc113_deeply_nested_tool_result_is_refused",
+            "test_rc113_valid_tool_result_is_cleaned_and_quoted",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result0]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result1]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result2]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result4]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result5]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result6]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args0]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args1]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args3]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result1]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result3]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result5]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result7]",
+            "test_rc114_review2_storage_locations_in_arguments_are_refused",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[analyze_lesions]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[compare_longitudinal]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[generate_ms_report]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[get_image_metadata]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[get_matplotlib_visualization]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[get_region_classification]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[get_slice_image]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[list_segmentations]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[process_image]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[summarize_dis_items]",
+            "test_rc114_review3_foreign_values_are_refused_by_their_value[bad0]",
+            "test_rc114_review3_foreign_values_are_refused_by_their_value[bad3]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad0]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad1]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad5]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.2.840.113619.2.55.3.604688119.868.1599000000.1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.46.670589.11.42151.5.0.6524.2020061716142632055]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.6.1.4.1.14519.5.2.1.7695.2311.123456789]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-2.25.329800735698586629295641978511506172918]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.2.840.113619.2.55.3.604688119.868.1599000000.1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017]"
+          ],
+          "control": "RC-114",
+          "reintroduces": "ids nested in objects are not scope-checked",
+          "applied": true
+        },
+        "V9_path_uri_not_checked": {
+          "failed": 3,
+          "passed": 541,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review1_report_arguments_follow_the_schema[args5-out_of_scope_resource]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result4]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-114",
+          "reintroduces": "path / uri / url values are not scope-checked",
+          "applied": true
+        },
+        "V12_alarms_dropped": {
+          "failed": 3,
+          "passed": 541,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_review1_alarms_survive_every_early_return",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-113",
+          "reintroduces": "early returns drop the injection alarms",
+          "applied": true
+        },
+        "W4_foreign_id_keys_ignored": {
+          "failed": 9,
+          "passed": 535,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result0]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result1]",
+            "test_rc114_review3_foreign_values_are_refused_by_their_value[bad1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-1.2.840.113619.2.55.3.604688119.868.1599000000.1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-1.3.46.670589.11.42151.5.0.6524.2020061716142632055]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-1.3.6.1.4.1.14519.5.2.1.7695.2311.123456789]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-2.25.329800735698586629295641978511506172918]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-114",
+          "reintroduces": "another resource used as a dict key passes",
+          "applied": true
+        },
+        "W10_cancel_not_audited": {
+          "failed": 3,
+          "passed": 541,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review2_cancelled_tool_call_is_audited",
+            "test_rc112_review2_cancelled_model_call_settles_and_is_audited",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a cancelled run leaves no audit record",
+          "applied": true
+        },
+        "Y1_resource_keys_ignored": {
+          "failed": 8,
+          "passed": 536,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_asi03_cross_patient_read_through_the_platform_is_refused_before_the_backend[step6]",
+            "test_rc114_out_of_scope_arguments_are_refused[args1]",
+            "test_rc114_out_of_scope_arguments_are_refused[args2]",
+            "test_rc114_out_of_scope_arguments_are_refused[args5]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result2]",
+            "test_rc114_review3_foreign_values_are_refused_by_their_value[bad2]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad4]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-114",
+          "reintroduces": "a non-pattern id under a resource key (segmentation_id: 12345) passes",
+          "applied": true
+        },
+        "Y2_actor_keys_scope_checked": {
+          "failed": 7,
+          "passed": 537,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review3_real_output_of_every_tool_passes[list_segmentations]",
+            "test_rc114_review3_real_output_of_every_tool_passes[summarize_dis_items]",
+            "test_rc114_review4_an_actor_id_value_is_still_exempt",
+            "test_rc118_case[as-replay-reads-its-own-study]",
+            "test_rc118_case[as-replay-tool-loop-exhaustion]",
+            "test_rc118_report_and_gate",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-114",
+          "reintroduces": "the clinician's own user id (created_by) refuses a legitimate result",
+          "applied": true
+        },
+        "Y5_retirement_check_ignores_the_date": {
+          "failed": 3,
+          "passed": 541,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc117_retirement_check_with_a_frozen_date",
+            "test_rc117_review3_retirement_check_takes_an_injected_date",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-117",
+          "reintroduces": "the retirement check never reports a retired model",
+          "applied": true
+        },
+        "R13_refusals_not_audited": {
+          "failed": 15,
+          "passed": 529,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_agent_not_approved_by_the_owner_is_refused",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[../test-agent]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[7]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[None]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[TEST-AGENT]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[test",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[test-agent\\n]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[test\\u2010agent]",
+            "test_rc110_malformed_agent_id_is_refused_and_not_echoed[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+            "test_rc110_registry_that_lists_a_write_tool_for_an_agent_refuses_everything",
+            "test_rc110_unknown_agent_is_refused_and_audited",
+            "test_rc110_unknown_tool_and_write_tool_are_refused",
+            "test_rc112_study_cap_refuses_the_call_that_would_pass_it",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "refusals leave no audit record",
+          "applied": true
+        },
+        "X8_cost_not_charged": {
+          "failed": 4,
+          "passed": 540,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_cost_is_charged_and_the_study_cap_stops_the_run",
+            "test_rc112_impossible_usage_is_charged_at_the_worst_case",
+            "test_rc112_llm10_daily_cost_cap_holds_across_studies",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-112",
+          "reintroduces": "calls are not charged against the caps",
+          "applied": true
+        },
+        "W9_cancel_leaks_reservation": {
+          "failed": 2,
+          "passed": 542,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_review2_cancelled_model_call_settles_and_is_audited",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-112",
+          "reintroduces": "a cancelled call leaves its reservation open",
+          "applied": true
+        },
+        "Y4_agent_audit_anonymous": {
+          "failed": 3,
+          "passed": 541,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review3_100_runs_a_minute_lose_no_audit_record[False]",
+            "test_rc110_review3_100_runs_a_minute_lose_no_audit_record[True]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "agent audit records are anonymous and dropped under load",
+          "applied": true
+        },
+        "Z1_uid_tokens_ignored": {
+          "failed": 16,
+          "passed": 528,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-1.2.840.113619.2.55.3.604688119.868.1599000000.1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-1.3.46.670589.11.42151.5.0.6524.2020061716142632055]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-1.3.6.1.4.1.14519.5.2.1.7695.2311.123456789]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-2.25.329800735698586629295641978511506172918]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.2.840.113619.2.55.3.604688119.868.1599000000.1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.46.670589.11.42151.5.0.6524.2020061716142632055]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.6.1.4.1.14519.5.2.1.7695.2311.123456789]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-2.25.329800735698586629295641978511506172918]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.2.840.113619.2.55.3.604688119.868.1599000000.1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.3.46.670589.11.42151.5.0.6524.2020061716142632055]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.3.6.1.4.1.14519.5.2.1.7695.2311.123456789]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-2.25.329800735698586629295641978511506172918]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-114",
+          "reintroduces": "a foreign DICOM UID of another root (Siemens, Philips, GE...) in text or as a key passes",
+          "applied": true
+        },
+        "Z2_actor_exemption_hides_subtree": {
+          "failed": 4,
+          "passed": 540,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad0]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad1]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad5]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-114",
+          "reintroduces": "a dict or list under an actor or exempt key is not walked",
+          "applied": true
+        },
+        "Z3_resource_by_keys_dropped": {
+          "failed": 2,
+          "passed": 542,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad4]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-114",
+          "reintroduces": "superseded_by / replaced_by name another resource unchecked",
+          "applied": true
+        },
+        "Z4_boundary_exception_escapes": {
+          "failed": 2,
+          "passed": 542,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review4_an_internal_error_becomes_an_audited_failure",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "an internal error escapes the run as an exception instead of an audited failure",
+          "applied": true
+        },
+        "Z5_run_inputs_not_validated": {
+          "failed": 6,
+          "passed": 538,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review4_invalid_run_inputs_are_refused_and_audited[kwargs0]",
+            "test_rc110_review4_invalid_run_inputs_are_refused_and_audited[kwargs1]",
+            "test_rc110_review4_invalid_run_inputs_are_refused_and_audited[kwargs2]",
+            "test_rc110_review4_invalid_run_inputs_are_refused_and_audited[kwargs3]",
+            "test_rc110_review4_invalid_run_inputs_are_refused_and_audited[kwargs4]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a malformed scope or untrusted input reaches the run",
+          "applied": true
+        },
+        "Z6_model_part_without_model": {
+          "failed": 2,
+          "passed": 542,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc119_review4_a_model_part_without_a_model_id_is_refused"
+          ],
+          "control": "RC-119",
+          "reintroduces": "model text is composed without naming its model",
+          "applied": true
+        },
+        "Z7_model_segment_without_model_loaded": {
+          "failed": 2,
+          "passed": 542,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc119_review4_a_model_part_without_a_model_id_is_refused"
+          ],
+          "control": "RC-119",
+          "reintroduces": "a stored model unit without a model id is loaded",
+          "applied": true
+        },
+        "Z8_in_run_decisions_audited_twice": {
+          "failed": 5,
+          "passed": 539,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review3_100_runs_a_minute_lose_no_audit_record[False]",
+            "test_rc110_review3_100_runs_a_minute_lose_no_audit_record[True]",
+            "test_rc110_review4_exactly_one_audit_record_per_run[refused_agent]",
+            "test_rc110_review4_exactly_one_audit_record_per_run[write_tool]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a run leaves more than one audit record",
+          "applied": true
+        },
+        "Z9_mcp_pin_loosened": {
+          "failed": 3,
+          "passed": 541,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc117_card_is_current_with_the_code_and_the_registry[ms-clinical-assistant]",
+            "test_rc117_review4_mcp_is_pinned_exactly_and_the_card_follows",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-117",
+          "reintroduces": "the MCP SDK (the protocol revision spoken) is whatever pip resolves",
+          "applied": true
+        },
+        "Z10_trace_lines_lost": {
+          "failed": 3,
+          "passed": 541,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc116_file_exporter_needs_both_settings_and_writes_otlp_json",
+            "test_rc116_review4_file_exporter_uses_one_handle_and_a_bounded_flush",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-116",
+          "reintroduces": "the file exporter loses the spans it is given",
+          "applied": true
+        },
+        "Z11_edit_size_on_characters": {
+          "failed": 2,
+          "passed": 542,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc120_review4_edit_size_of_a_15k_report_is_bounded"
+          ],
+          "control": "RC-120",
+          "reintroduces": "the edit size is a whole-text character diff (seconds on a long report)",
+          "applied": true
+        },
+        "Z12_uuid_root_uid_ignored": {
+          "failed": 4,
+          "passed": 540,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[key-2.25.329800735698586629295641978511506172918]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-2.25.329800735698586629295641978511506172918]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-2.25.329800735698586629295641978511506172918]",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-114",
+          "reintroduces": "a foreign UUID-derived UID (2.25.<integer>) passes",
+          "applied": true
+        }
+      },
+      "method": "one mutation at a time in a throwaway copy outside the repository; anchors asserted unique",
+      "source_sha256": {
+        "backend/app/agent_platform/cards.py": "fa0dcc54c3bb8874a81b046e1b9222f950abc65b42a02b65676565a6c1bca2f0",
+        "backend/app/agent_platform/oversight.py": "d217601f72c672d1cecaea758e7af0bea26329c485f766df77378ce01f3c765d",
+        "backend/app/agent_platform/provenance.py": "150220a80aea14a63e85f47076d9a70500eb1e5f2f4b00447bff8c687912be14",
+        "backend/app/agent_platform/registry.py": "8b5297f763260f38bceba23837d7ff576fb646704c92a5fda349129362b90b1f",
+        "backend/app/agent_platform/runtime.py": "7b79221d02bd987dc1fa7dca44f0e1c156e4d42c78faac9198918705c909c1e7",
+        "backend/app/agent_platform/tracing.py": "058493a2a75895d0c64322ea8dc5d93f003adc623b1622638a591ea5d970dd0f",
+        "backend/app/agent_platform/untrusted.py": "6a1acec943482c1f9b873a4bc93d389e99135b14a7ccb2c2ec9584d38b32e53b",
+        "backend/requirements.txt": "b05df90df0fa0ccb8fd8047efb318044d5defadfa3440367eee7828a9b2a78dc"
+      },
+      "baseline": {
+        "failed": 0,
+        "passed": 544,
+        "errors": 0,
+        "failing_tests": []
+      },
+      "restored": {
+        "failed": 0,
+        "passed": 544,
+        "errors": 0,
+        "failing_tests": []
+      },
+      "reason": "fourth review of PR #79 at 7a7fa62: 11 mutations re-anchored to the new code, 4 next to changed lines, 12 new controls Z1-Z12",
       "superseded": [
         "U6_only_declared_ids_scoped",
         "U7_result_scope_off"
