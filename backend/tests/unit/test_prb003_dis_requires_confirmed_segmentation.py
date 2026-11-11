@@ -535,7 +535,8 @@ def _prompt(findings, language="en"):
 ], ids=["legacy-met", "not-evaluated", "no-flag"])
 def test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated(block):
     from app.services.dis_review_gate import NOT_EVALUATED_LINE
-    prompt = _prompt({"dis_assessment": block})
+    # fifth review of PR #78, V9 (amended): the DIS line belongs to a report with lesion findings
+    prompt = _prompt({"dis_assessment": block, "lesion_analysis": {"total_count": 2}})
     assert "brain criterion" not in prompt and "not met" not in prompt.lower() and '"dis_met_brain"' not in prompt
     assert NOT_EVALUATED_LINE["en"] in prompt and '"status":"not evaluated"' in prompt
     assert "requires clinician review of the segmentation" in prompt
@@ -700,12 +701,27 @@ def test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language(r
     from app.api.routes.ai_report import AI_DRAFT_HEADING
     body = r.json()
     ai_text, content = body["ai_text"], body["content"]
-    assert ai_text.startswith("draft body")
-    notice = ai_text[len("draft body"):]
-    assert phrase in notice
-    from app.services import dis_review_gate as gate
-    assert gate.AUTOMATIC_MARKING_NOTICE[lang] in notice
     assert content.startswith(f"### {AI_DRAFT_HEADING[lang]}") and content.endswith(ai_text)
+    # Fifth review of PR #78 (V8, DRAFT — amended): the report service owns the DIS statement and the notice; the
+    # route adds none (the stubbed service's text is delivered alone). The real service, in each language: the
+    # findings state "not evaluated" once, and the notice on automatic marking follows.
+    assert ai_text.startswith("draft body") and phrase not in ai_text
+    import asyncio
+    from types import SimpleNamespace
+    from app.services import dis_review_gate as gate
+    from app.services.brain_report_service import BrainReportService
+    real = BrainReportService()
+    real._settings = SimpleNamespace(REPORT_LLM_ENABLED=False, CLAUDE_MODEL=None, CLAUDE_MAX_TOKENS=1,
+                                     ANTHROPIC_API_KEY="")
+    loop = asyncio.new_event_loop()     # not asyncio.run: it would unset the current loop of later tests
+    try:
+        result = loop.run_until_complete(real.generate_report(findings={"lesion_analysis": {"total_count": 2}},
+                                                              language=lang))
+    finally:
+        loop.close()
+    text = result["content"]
+    assert result["dis_evaluation"] == "not_evaluated" and text.count(phrase) == 1
+    assert text.index(gate.AUTOMATIC_MARKING_NOTICE[lang]) > text.index(phrase)
 
 
 @pytest.mark.unit

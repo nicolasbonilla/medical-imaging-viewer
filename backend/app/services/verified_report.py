@@ -67,6 +67,7 @@ from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, Iterator, List, Optional, Tuple
 
 from app.services import report_claim_strict as S
+from app.services.report_claim_lexicon import fold as L_fold
 from app.services import report_claim_verifier as V
 # third review of PR #78, T6: the one shared reader of a measurement value, imported here (not inside functions)
 from app.services.report_payload_guard import FREE_TEXT_FIELDS, finite_number, without_format_characters
@@ -88,6 +89,10 @@ SECTIONS = {
            "limitations": "Einschränkungen"},
 }
 
+# The DIS state of a report without a lesion analysis and without a DIS block (fifth review of PR #78, V9); the
+# response's typed field `dis_evaluation` (V8) is "evaluated", "not_evaluated" or "not_in_report".
+DIS_NOT_IN_REPORT = "not part of this report"
+
 # Outcome codes (audit `report_outcome`, response `verification.outcome`).
 PASSED = tuple(f"passed_{k}" for k in range(MAX_REGENERATIONS + 1))   # named from the attempt number (review 2, I)
 BLOCKED = "blocked"
@@ -107,6 +112,7 @@ REASON_REFUSAL = "refusal"                      # the model declined (stop_reaso
 REASON_MODEL_UNAVAILABLE = "model_unavailable"  # the provider no longer serves the model (404) (RC-106)
 REASON_FEEDBACK_PRIVACY = "feedback_identifier_check"   # RC-065 check refused a regeneration request
 REASON_NOTHING_TO_COMMENT = "no_measurement_for_comment"  # no lesion, change, volume or DIS result to comment on
+REASON_INTERNAL_CHECK = "internal_check_error"  # the check itself failed after the model answered (5th review, V3)
 REASON_WIRING = "provider_wiring"               # the client returned something that is not an answer (4th review, Q5)
 
 # The fixed notes after a report without comments, in the report language (RC-103, RC-105, RC-106).
@@ -126,6 +132,8 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                    "comment on.",
         "not_configured": "Interpretive text not requested: the AI comments are not configured on this server. The "
                           "measurements above are complete.",
+        "internal": "Interpretive text withheld: the automatic check could not be completed. The measurements "
+                    "above are complete.",
     },
     "es": {
         REASON_BLOCKED: "Texto interpretativo retenido por la comprobación de seguridad: los comentarios de la IA no "
@@ -144,6 +152,8 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                    "diseminación que comentar.",
         "not_configured": "Texto interpretativo no solicitado: los comentarios de la IA no están configurados en este "
                           "servidor. Las mediciones de arriba están completas.",
+        "internal": "Texto interpretativo retenido: la comprobación automática no pudo completarse. Las "
+                    "mediciones de arriba están completas.",
     },
     "de": {
         REASON_BLOCKED: "Interpretierender Text von der Sicherheitsprüfung zurückgehalten: Die KI-Kommentare haben die "
@@ -161,12 +171,14 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                    "Volumina oder Dissemination, das kommentiert werden könnte.",
         "not_configured": "Interpretierender Text nicht angefordert: Die KI-Kommentare sind auf diesem Server nicht "
                           "eingerichtet. Die Messwerte oben sind vollständig.",
+        "internal": "Interpretierender Text zurückgehalten: Die automatische Prüfung konnte nicht abgeschlossen "
+                    "werden. Die Messwerte oben sind vollständig.",
     },
 }
 _NOTE_OF_REASON = {
     REASON_BLOCKED: REASON_BLOCKED, REASON_FEEDBACK_PRIVACY: REASON_FEEDBACK_PRIVACY,
     REASON_PROVIDER: "unavailable", REASON_TIMEOUT: "unavailable", REASON_REFUSAL: "unavailable",
-    REASON_MODEL_UNAVAILABLE: "unavailable", REASON_WIRING: "unavailable",
+    REASON_MODEL_UNAVAILABLE: "unavailable", REASON_WIRING: "unavailable", REASON_INTERNAL_CHECK: "internal",
     # fourth review of PR #78, Q4: no provider key is "not requested — not configured", as the state says
     REASON_NOT_CONFIGURED: "not_configured",
     REASON_OFF: "off", REASON_MODEL_NOT_ALLOWED: "model", REASON_NOTHING_TO_COMMENT: "nothing",
@@ -275,6 +287,8 @@ T: Dict[str, Dict[str, str]] = {
         "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|brain volumetry",
         "lim_cord": "Spinal cord and optic nerve imaging: not available.",
         "lim_diag": "This draft is not a diagnosis.",
+        "lim_other_images": "{items}: not provided to the automatic analysis; lesions the radiologist labelled on "
+                            "these images are counted above as other labels.",
         "lim_indication_entry": "Clinical indication: see the clinician's entry, shown separately in this draft and not "
                                 "used by the automatic analysis.",
         "imp_conf": "Confirmed segmentation: {count}.", "imp_ai": "Automatic marking (unconfirmed): {count}.",
@@ -324,6 +338,8 @@ T: Dict[str, Dict[str, str]] = {
         "lim_items": "indicación clínica|imágenes con contraste|imágenes ponderadas en T1|volumetría cerebral",
         "lim_cord": "Imágenes de médula espinal y de nervio óptico: no disponibles.",
         "lim_diag": "Este borrador no es un diagnóstico.",
+        "lim_other_images": "{items}: no se aportaron al análisis automático; las lesiones que el radiólogo marcó "
+                            "en estas imágenes se cuentan arriba como otras etiquetas.",
         "lim_indication_entry": "Indicación clínica: la entrada del médico se muestra aparte en este borrador y no se "
                                 "aportó al análisis automático.",
         "imp_conf": "Segmentación confirmada: {count}.", "imp_ai": "Marcación automática (sin confirmar): {count}.",
@@ -372,6 +388,8 @@ T: Dict[str, Dict[str, str]] = {
         "lim_items": "klinische Fragestellung|kontrastmittelgestützte Bildgebung|T1-gewichtete Bildgebung|Hirnvolumetrie",
         "lim_cord": "Bildgebung von Rückenmark und Sehnerv: nicht verfügbar.",
         "lim_diag": "Dieser Entwurf ist keine Diagnose.",
+        "lim_other_images": "{items}: der automatischen Analyse nicht übermittelt; die vom Radiologen auf diesen "
+                            "Bildern markierten Läsionen sind oben als andere Bezeichnungen gezählt.",
         "lim_indication_entry": "Klinische Fragestellung: der ärztliche Eintrag steht gesondert in diesem Entwurf und "
                                 "wurde der automatischen Analyse nicht übermittelt.",
         "imp_conf": "Bestätigte Segmentierung: {count}.", "imp_ai": "Automatische Markierung (unbestätigt): {count}.",
@@ -489,10 +507,14 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         if k is not None:
             # absent when not computed (R6): the frozen check then refuses any count of regions (it compares with -1)
             view["dis"]["brain_regions_with_lesions"] = k
-    else:
+    elif la is not None:
         view["dis"] = {"status": "not evaluated",
                        "reason": "No radiologist has confirmed the lesions and their MAGNIMS regions; dissemination "
                                  "in space was not assessed."}
+    else:
+        # fifth review of PR #78, V9: no lesion findings (a volumetry-only or longitudinal-only report) — an
+        # unevaluated dissemination in space is not part of this report and no line is written about it
+        view["dis"] = {"status": DIS_NOT_IN_REPORT}
 
     lng = f.get("longitudinal") if isinstance(f.get("longitudinal"), dict) else None
     if lng is None:
@@ -503,7 +525,10 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
                                            "visually."}
     else:
         sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
-        cands = {k_: _count(sc.get(k_)) for k_ in ("new", "enlarged", "resolved", "shrunk", "stable")}
+        # fifth review of PR #78, V2: new and enlarging as the CAPA-013 notice and the review screen state them
+        new, enlarged = reviewable_candidate_counts(lng)
+        cands = {"new": new, "enlarged": enlarged,
+                 **{k_: _count(sc.get(k_)) for k_ in ("resolved", "shrunk", "stable")}}
         if any(v is None for v in cands.values()):
             view["longitudinal"] = {"abstained": True, "reason": "change candidates not computed",
                                     "framing": "No automatic change result for this pair; the change must be assessed "
@@ -578,7 +603,19 @@ def _region_breakdown(regs_in: Dict[str, Any]) -> Dict[str, Any]:
     if others:
         ns = [_count(v.get("lesion_count")) if isinstance(v, dict) else None for v in others]
         out["other_labels_lesion_count"] = None if any(n is None for n in ns) else sum(ns)
+    # fifth review of PR #78, V6: labels drawn on images the automatic analysis does not read (codes only; the label
+    # names never enter the record) — the limitations then say so instead of "not available"
+    drawn = [code for name, code in LABELS_FROM_OTHER_IMAGES
+             if isinstance(regs_in.get(name), dict) and (_count(regs_in[name].get("lesion_count")) or 0) > 0]
+    if drawn:
+        out["labels_from_other_images"] = drawn
     return out
+
+
+# The app's labels drawn on another image than the FLAIR the analysis reads (lesion_analysis_service.MAGNIMS_REGIONS
+# labels 5 and 6), with the index of that image in `lim_items` (1 contrast-enhanced, 2 T1-weighted).
+LABELS_FROM_OTHER_IMAGES = (("Active (Gd+)", "contrast"), ("Black Hole (T1)", "t1"))
+_OTHER_IMAGE_ITEM = {"contrast": 1, "t1": 2}
 
 
 NOT_INCLUDED_CODES = ("zone_statistics", "segmentation_labels", "anomalies", "structure_volumes")
@@ -644,6 +681,18 @@ def rendered_request(findings: Any, volumetry: Any) -> Tuple[Dict[str, Any], Opt
     if isinstance(volumetry, dict):
         vol = {k: volumetry[k] for k in _RENDERED_VOLUMES if k in volumetry} or None
     return out, vol, not_included_of(f, volumetry)
+
+
+def reviewable_candidate_counts(longitudinal: Any) -> Tuple[Optional[int], Optional[int]]:
+    """(new, enlarging) change candidates as CAPA-013 states them — the ONE source of the draft, the route's notice
+    and the review screen (fifth review of PR #78, V2): `change_candidates` (new lesions of at least the minimum size
+    the rule reviews, and enlarging lesions); without that block, what the rule counts (`status_counts`)."""
+    lng = longitudinal if isinstance(longitudinal, dict) else {}
+    cc = lng.get("change_candidates")
+    if isinstance(cc, dict):
+        return _count(cc.get("new")), _count(cc.get("enlarging"))
+    sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
+    return _count(sc.get("new")), _count(sc.get("enlarged"))
 
 
 def has_something_to_comment(view: Dict[str, Any]) -> bool:
@@ -715,7 +764,7 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
         dis_s = (t["dis_ev"].format(k=stated["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"], met=met)
                  if "brain_regions_with_lesions" in stated else t["dis_ev_nc"].format(met=met))
         f += [dis_s, t["dis_ext"]]
-    else:
+    elif dis["status"] == "not evaluated":
         dis_s = _dis_not_evaluated_line(lang)
         f.append(dis_s)
     comp = None
@@ -737,15 +786,16 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     # repeats an evaluated DIS result only
     imp = ([t[imp_key].format(count=count.rstrip("."))] + ([dis_s] if dis["status"] == "evaluated" else [])
            + ([comp[0]] if comp else []))
-    items = t["lim_items"].split("|")
+    all_items = t["lim_items"].split("|")
     entry = view.get("clinician_entry") is True
-    if entry:
-        # fourth review of PR #78, Q3: the clinician typed an indication, shown separately in this same draft — it
-        # is not listed as "not available"; a line says it is shown separately and was not used by the analysis
-        items = items[1:]
-    if bv:
-        items = items[:-1]
+    drawn = [_OTHER_IMAGE_ITEM[c] for c in (reg.get("labels_from_other_images") or []) if c in _OTHER_IMAGE_ITEM]
+    # fourth review of PR #78, Q3: a typed indication is shown separately in this same draft — not "not available";
+    # fifth review, V6: an image the confirmed segmentation has labels drawn on is not "not available" either
+    dropped = ({0} if entry else set()) | set(drawn) | ({len(all_items) - 1} if bv else set())
+    items = [x for i, x in enumerate(all_items) if i not in dropped]
     lim = [t["lim"].format(items=", ".join(items)), t["lim_cord"]] + ([t["lim_indication_entry"]] if entry else [])
+    if drawn:
+        lim.append(t["lim_other_images"].format(items=", ".join(all_items[i] for i in sorted(drawn))))
     if view.get("not_included"):
         lim.append(t["not_included"].format(items=", ".join(t["ni_" + k] for k in view["not_included"])))
     lim.append(t["lim_diag"])
@@ -805,13 +855,41 @@ def first_user_message(view: Dict[str, Any], lang: str) -> str:
 _HAS_A_LETTER = re.compile(r"[^\W\d_]")
 _TEMPLATE_TOKEN = re.compile("[{}\\[\\]｛｝［］⦃⦄⟦⟧]")
 EMPTY_COMMENT_MESSAGE = "Both comments must say something: an empty comment is not allowed."
+NUMBER_WORDS_MESSAGE = "Numbers written in words are not allowed in the comments; use a placeholder or no number."
+# Fifth review of PR #78, V1: number, ordinal and count words (en / es / de, folded: no accents, ss for sharp s), as
+# whole words — hyphenated parts ("twenty-one") and compounds ("einundzwanzig", "veintidos", "dreizehn") included.
+# Articles ("a", "an", "un", "una", "ein", "eine") stay allowed; a word that only contains a number is not one
+# ("beobachtet", "Hilfe").
+_NUMBER_WORDS = re.compile(r"\b(?:" + "|".join((
+    # en
+    r"zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen",
+    r"seventeen|eighteen|nineteen|twenty|thirty|forty|fourty|fifty|sixty|seventy|eighty|ninety|hundreds?",
+    r"thousands?|dozens?|both|single|couple|pairs?|half|halves|twice|thrice|once|first|second|third|fourth",
+    r"fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|\w+teenth|twentieth",
+    # es
+    r"uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|doce|trece|catorce|quince|dieci\w+|veinte",
+    r"veinti\w+|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|cien|cientos?|mil|docenas?",
+    r"ambos|ambas|primer[oa]?|primeros|primeras|segund[oa]s?|tercer[oa]?s?|cuart[oa]s?|quint[oa]s?",
+    r"sext[oa]s?|septim[oa]s?|octav[oa]s?|noven[oa]s?|decim[oa]s?|unic[oa]s?|par|pares|mitad|cero|doble|triple",
+    # de
+    r"eins|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn|elf|zwolf|\w+zehn|zwanzig|dreissig|\w+zig",
+    r"\w+und(?:zwanzig|dreissig|vierzig|funfzig|sechzig|siebzig|achtzig|neunzig)|hundert\w*|tausend\w*",
+    r"dutzend\w*|beide[nrs]?|einzig|einzige[nrms]?|paar|halfte|halb|halbe[nrms]?|null|einmal|zweimal|dreimal",
+    r"doppelt|doppelte[nrms]?|erste[nrms]?|zweite[nrms]?|dritte[nrms]?|drittel|vierte[nrms]?|viertel",
+    r"funfte[nrms]?|sechste[nrms]?|siebte[nrms]?|achte[nrms]?|neunte[nrms]?|zehnte[nrms]?",
+)) + r")\b")
+
+
+def number_words(text: str) -> List[str]:
+    """The number, ordinal and count words of `text` (fifth review of PR #78, V1)."""
+    return [m.group(0) for m in _NUMBER_WORDS.finditer(L_fold(text))]
 TEMPLATE_TOKEN_MESSAGE = ("Braces and brackets are not allowed in the comments: write a placeholder exactly as listed, "
                           "or no number.")
 
 # The fixed words of a regeneration request (the rules' own messages and the verifier's detail templates), for the
 # RC-065 list of the device's own words; the parts the model wrote (quoted after "in:") are not among them.
 FIXED_FEEDBACK_TEXTS = (
-    EMPTY_COMMENT_MESSAGE, TEMPLATE_TOKEN_MESSAGE,
+    EMPTY_COMMENT_MESSAGE, TEMPLATE_TOKEN_MESSAGE, NUMBER_WORDS_MESSAGE,
     "The answer did not follow the format", "Placeholder is not available for this record",
     "Digits are not allowed in the comments; use a placeholder or no number.",
     "Headings are not allowed in the comments.", "The answer was cut off; write both comments in full, briefly.",
@@ -863,21 +941,25 @@ def check(view: Dict[str, Any], lang: str, text: str) -> Tuple[Optional[str], Li
     if re.search(r"\d", re.sub(r"\{[a-z_]+\}", "", fc + " " + ic)):
         fails.append({"rule": "FMT.digits",
                       "message": "Digits are not allowed in the comments; use a placeholder or no number."})
+    # fifth review of PR #78, V1: a number written in words states a count as a digit does
+    if number_words(fc + "\n" + ic):
+        fails.append({"rule": "FMT.number_words", "message": NUMBER_WORDS_MESSAGE})
     for k, v in vals.items():
         fc, ic = fc.replace("{" + k + "}", v), ic.replace("{" + k + "}", v)
     # fourth review, Q2: after the available placeholders are filled, no brace or bracket may remain — any other
     # token ({Total_Count}, { total_count }, {{...}}, [PLACEHOLDER], full-width braces) is a raw template token
     if _TEMPLATE_TOKEN.search(fc + "\n" + ic):
         fails.append({"rule": "FMT.template_token", "message": TEMPLATE_TOKEN_MESSAGE})
-    # second review of PR #78, B: a line the frozen check would read as a heading (markdown, bold-only, capitals)
-    # is checked for nothing there — no heading is allowed in a comment
-    if S.heading_lines(fc) or S.heading_lines(ic):
-        fails.append({"rule": "FMT.heading", "message": "Headings are not allowed in the comments."})
     assembled = assemble(view, lang, fc, ic)
-    res = V.verify(assembled, None, view)
-    # second review of PR #78, A: the frozen v2 elements, all kept, plus the stricter rules on every sentence of
-    # every line of the model's two comments (report_claim_strict: only adds, never removes)
-    for e in list(res["elements"]) + S.comment_elements(fc, view) + S.comment_elements(ic, view):
+    # fifth review of PR #78, V7: the ONE claim-check function — the frozen v2 elements, all kept, plus the stricter
+    # rules on every line of the model's two comments (second review A, B, K; headings included) — the same function
+    # the strictness property tests run
+    res = S.verify(assembled, None, view, model_text=(fc, ic))
+    # second review of PR #78, B: a line the frozen check reads as a heading (markdown, bold-only, capitals) is
+    # checked for nothing there — no heading is allowed in a comment
+    if res["headings"]:
+        fails.append({"rule": "FMT.heading", "message": "Headings are not allowed in the comments."})
+    for e in res["elements"]:
         for rule in _rule_ids(e):
             fails.append({"rule": rule, "message": f"{e['detail']} (in: \"{e['unit']}\")"})
     if view["dis"]["status"] != "evaluated":
@@ -1018,7 +1100,15 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
             on_attempt(record)
             return measurements_only(view, lang, REASON_REFUSAL, attempts, outcome=_after_asking(attempts),
                                      tokens=tuple(tokens), model_answered=answered)
-        assembled, fails = check(view, lang, reply.text)
+        try:
+            assembled, fails = check(view, lang, reply.text)
+        except Exception as e:  # noqa: BLE001 — fifth review of PR #78, V3: the check itself failed (a fault of this
+            # server, not of the answer): the comments are withheld, the measurements delivered, the attempt audited
+            record.update({"verdict": "error", "rule_ids": [], "error": type(e).__name__})
+            attempts.append(record)
+            on_attempt(record)
+            return measurements_only(view, lang, REASON_INTERNAL_CHECK, attempts, outcome=OUTCOME_WITHHELD,
+                                     tokens=tuple(tokens), model_answered=answered)
         if reply.stop_reason == "max_tokens":
             fails = [{"rule": "FMT.truncated", "message": "The answer was cut off; write both comments in full, "
                                                           "briefly."}] + fails

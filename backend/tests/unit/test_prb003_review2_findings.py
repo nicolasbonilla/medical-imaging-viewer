@@ -314,16 +314,10 @@ def test_rc070_n3_the_draft_states_how_many_statements_were_replaced(e2e, monkey
     content = r.json()["content"]
     assert "**space**" not in content and "| Periventricular |" not in content
     assert r.json()["verification"]["interpretive_text"] == "withheld" and len(provider.calls) == 3
-
-    class _Svc:
-        async def generate_report(self, **kw):
-            return {"report_id": "r", "content": REPORT_DISCLAIMERS["en"] + "\n\n" + hostile,
-                    "template_type": kw["template_type"], "language": kw["language"], "processing_time_ms": 1}
-
-    monkeypatch.setattr(ai_report, "get_report_service", lambda: _Svc())
-    content = _report(client).json()["content"]
-    assert "**space**" not in content and "| Periventricular |" not in content
-    assert "2 statement(s)" in content
+    # Fifth review of PR #78 (V8, DRAFT — amended): the route's own backstop (replace and count, for any service) was
+    # retired — the report service owns the DIS statement, and its check refuses such comments (above; RC070 and the
+    # stricter DIS rule, test_verified_report_review2_dis.py). The route re-checks no service text.
+    assert not hasattr(ai_report, "DIS_LINES_REPLACED") and REPORT_DISCLAIMERS["en"]
 
 
 # ───────────────────────────────────── N4: no per-region template section without an evaluated DIS

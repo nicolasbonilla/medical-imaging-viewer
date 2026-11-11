@@ -244,7 +244,7 @@ def test_rc106_t3_the_service_builds_the_async_client_without_retries(monkeypatc
     module = MagicMock()
     monkeypatch.setitem(sys.modules, "anthropic", module)
     svc = BRS.BrainReportService()
-    svc._settings = SimpleNamespace(ANTHROPIC_API_KEY="test-not-a-key")
+    svc._settings = SimpleNamespace(ANTHROPIC_API_KEY="test-not-a-key-t3")   # fifth review, V4: a key of its own
     svc._get_client()
     assert module.AsyncAnthropic.call_args.kwargs["max_retries"] == 0
     assert not module.Anthropic.called

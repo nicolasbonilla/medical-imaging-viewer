@@ -125,6 +125,12 @@ async def lifespan(app: FastAPI):
             logger.error("AUDIT_SINK_SHUTDOWN_NOT_DRAINED", extra=get_durable_audit_sink().status())
     except Exception as e:  # noqa: BLE001
         logger.error(f"Audit sink flush at shutdown failed: {e}")
+    # RC-106 (fifth review of PR #78, V4): the report's one shared provider client and its connection pool
+    try:
+        from app.services.brain_report_service import close_report_clients
+        await close_report_clients()
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Report client close at shutdown failed: {type(e).__name__}")
     await asyncio.sleep(0.1)
     logger.info("Application shutdown complete")
 

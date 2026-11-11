@@ -70,6 +70,7 @@ def main(argv=None):
 
     groups = defaultdict(Counter)
     kinds_new = defaultdict(Counter)
+    number_words = defaultdict(Counter)   # fifth review, V1: which words flag a delivered draft (model-language)
     examples = defaultdict(list)
     totals = Counter()
     mismatch = 0
@@ -106,6 +107,11 @@ def main(argv=None):
                         ic = VR.without_format_characters(m.group(2)).strip()
                         if not (VR._HAS_A_LETTER.search(fc) and VR._HAS_A_LETTER.search(ic)):
                             strict.append({"kind": "empty_comment", "unit": (fc or ic or "")[:80]})
+                        # (fifth review of PR #78, V1: a number written in words, before the placeholders are filled)
+                        words = VR.number_words(fc + "\n" + ic)
+                        if words:
+                            strict.append({"kind": "number_words", "words": sorted(set(words)),
+                                           "unit": f"{sorted(set(words))[:4]} in: {(fc + ' | ' + ic)[:150]}"})
                         for k, v in vals.items():
                             fc, ic = fc.replace("{" + k + "}", v), ic.replace("{" + k + "}", v)
                         if VR._TEMPLATE_TOKEN.search(fc + "\n" + ic):
@@ -138,6 +144,7 @@ def main(argv=None):
                     g["now_blocked_certain" if k == max_k else "now_need_regeneration"] += 1
                     for e in st:
                         kinds_new[alias][e["kind"]] += 1
+                        number_words[f"{alias}-{r['lang']}"].update(e.get("words") or [])
                         ex = examples[e["kind"]]
                         if len(ex) < 3:
                             ex.append({"model": alias, "lang": r["lang"], "condition": CONDITION.get(cond, cond),
@@ -159,9 +166,10 @@ def main(argv=None):
             "blocked_after_upper_bound": g["blocked_before"] + nf,
             "healthy_control_drafts": g["cond_v_drafts"], "healthy_control_now_flagged": g["cond_v_now_flagged"]})
     record = {
-        "executed": "2026-11-10",
+        "executed": "2026-11-11",
         "purpose": "second independent review of PR #78 (items A, B): offline re-scoring of the benchmark's existing "
-                   "A3 drafts with the product's stricter claim check (no model called)",
+                   "A3 drafts with the product's stricter claim check (no model called); re-run for the fourth review "
+                   "(Q1, Q2, Q6) and the fifth review (V1: numbers written in words, en / es / de)",
         "benchmark_code": "research/agents_benchmark at f3c1976 (A3.check with the frozen verifier v2)",
         "product_rules": "backend/app/services/report_claim_strict.py",
         "product_rules_sha256": hashlib.sha256((BACKEND / "app" / "services" / "report_claim_strict.py")
@@ -184,6 +192,7 @@ def main(argv=None):
         "per_model_language_subset": rows,
         "new_flags_by_rule_and_model": {m: dict(c) for m, c in sorted(kinds_new.items())},
         "examples_of_new_flags": dict(examples),
+        "number_words_in_flagged_delivered_drafts": {k: dict(c.most_common(12)) for k, c in sorted(number_words.items())},
         "conditions": CONDITION,
     }
     Path(a.out).write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

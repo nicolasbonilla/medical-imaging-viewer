@@ -333,6 +333,11 @@ class _Projector:
         sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
         o["status_counts"] = {k: self.count(sc.get(k), "status_counts")
                               for k in ("new", "enlarged", "resolved", "shrunk", "stable")}
+        # fifth review of PR #78, V2: the reviewable change candidates (CAPA-013) — the figure the draft states, as the
+        # route's notice and the review screen
+        cc = lng.get("change_candidates")
+        if isinstance(cc, dict):
+            o["change_candidates"] = {k: self.count(cc.get(k), "change_candidates") for k in ("new", "enlarging")}
         return o
 
     def zone_stats(self, zs: dict) -> dict:

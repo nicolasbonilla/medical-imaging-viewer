@@ -11,7 +11,7 @@ import re
 import unicodedata
 
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any, Literal, Tuple
 from pydantic import BaseModel, Field
 
 from app.security import get_current_active_user
@@ -335,12 +335,9 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
     texts = LONGITUDINAL_NOTICE.get(language, LONGITUDINAL_NOTICE["en"])
     if longitudinal.get("abstained"):
         return texts["abstained"]
-    cc = longitudinal.get("change_candidates")
-    if isinstance(cc, dict):
-        new, enl = _int(cc.get("new")), _int(cc.get("enlarging"))
-    else:  # a payload without the candidate block: count what the rule counts
-        sc = longitudinal.get("status_counts") or {}
-        new, enl = _int(sc.get("new")), _int(sc.get("enlarged"))
+    # fifth review of PR #78, V2: the ONE source of the draft, this notice and the review screen
+    from app.services.verified_report import reviewable_candidate_counts
+    new, enl = (n or 0 for n in reviewable_candidate_counts(longitudinal))
     lines = [texts["candidates"].format(total=new + enl, new=new, enl=enl)]
     from app.services.longitudinal_candidate_safety import false_share_percent
     ev = load_false_candidate_evidence()
@@ -354,32 +351,11 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
     return " ".join(lines)
 
 
-# PRB-003 (RC-070, RC-072; HAZ-008, HAZ-003): a report request is client data, so a DIS conclusion in it
-# cannot be trusted. The route derives the DIS state on the server for the report's own segmentation
-# (`segmentation_id` of the request — never another one named inside a block), evaluated only on classified,
-# radiologist-confirmed regions; without it the lesion measurements reach the model without regions, the
-# template carries no DIS instruction, any DIS statement the model writes is replaced, and the draft ends with
-# this notice, written by code in the report language (review of PR #68, findings 2-4).
-DIS_NOT_EVALUATED_NOTICE: Dict[str, str] = {
-    "en": "**Dissemination in space: not evaluated.** No radiologist has confirmed the lesions and their MAGNIMS "
-          "regions for the current version of the segmentation, so the software did not assess dissemination "
-          "in space; this draft must not be read as a statement on dissemination in space.",
-    "es": "**Diseminación en el espacio: no evaluada.** Ningún radiólogo ha confirmado las lesiones y sus regiones "
-          "MAGNIMS en la versión actual de la segmentación, por lo que el programa no evaluó la diseminación en "
-          "el espacio; este borrador no debe leerse como una afirmación sobre la diseminación en el espacio.",
-    "de": "**Räumliche Dissemination: nicht beurteilt.** Kein Radiologe hat die Läsionen und ihre MAGNIMS-Regionen "
-          "in der aktuellen Fassung der Segmentierung bestätigt; die Software hat die räumliche Dissemination daher "
-          "nicht beurteilt, und dieser Entwurf darf nicht als Aussage zur räumlichen Dissemination gelesen werden.",
-}
-# Second review of PR #68, N3: counted per statement (sentence, clause, table row or region heading).
-DIS_LINES_REPLACED: Dict[str, str] = {
-    "en": "{n} statement(s) of the drafting model's text on dissemination in space or on lesion regions were "
-          "replaced or removed.",
-    "es": "Se sustituyeron o eliminaron {n} afirmación(es) del texto del modelo de redacción sobre la diseminación "
-          "en el espacio o sobre las regiones de las lesiones.",
-    "de": "{n} Aussage(n) des Modelltextes zur räumlichen Dissemination oder zu den Regionen der Läsionen wurden "
-          "ersetzt oder entfernt.",
-}
+# PRB-003 (RC-070, RC-072; HAZ-008, HAZ-003): a report request is client data, so a DIS conclusion in it cannot be
+# trusted. The route derives the DIS state on the server for the report's own segmentation (`segmentation_id` of the
+# request — never another one named inside a block), evaluated only on classified, radiologist-confirmed regions;
+# without it the lesion measurements reach the model without regions. Fifth review of PR #78, V8: the report service
+# owns the statement and the notice (`dis_evaluation`); the route adds no DIS text and re-checks none.
 
 
 # Release 2026-10-25 (integration review of PR #69, item 6): the 422 of a lesion table that cannot be computed starts
@@ -446,27 +422,6 @@ async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
             detail=(f"{LESION_TABLE_FAILED_PHRASE} ({type(e).__name__}) for segmentation {segmentation_id}. "
                     "Nothing was sent."),
         )
-
-
-def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0, stated: bool = False) -> Optional[str]:
-    """The fixed notice for a draft with lesion measurements or a DIS block but no evaluated DIS, or None.
-
-    Second review of PR #78 (F, DRAFT): the "not evaluated" statement is guaranteed ONCE. Fourth review (Q6): the
-    route no longer searches the processed text for it — `stated` is the service's own fact
-    (`dis_not_evaluated_stated`: the code-written findings carry `dis_review_gate.NOT_EVALUATED_LINE`, RC-102). When
-    stated, the notice does not repeat it; otherwise (any other service) the notice states it."""
-    from app.services import dis_review_gate as gate
-
-    if not (findings.get("lesion_analysis") or "dis_assessment" in findings or replaced):
-        return None
-    if gate.is_evaluated(findings.get("dis_assessment")):
-        return None
-    lang = language if language in DIS_NOT_EVALUATED_NOTICE else "en"
-    parts = [] if stated is True else [DIS_NOT_EVALUATED_NOTICE[lang]]
-    if replaced:
-        parts.append(DIS_LINES_REPLACED[lang].format(n=replaced))
-    parts.append(gate.AUTOMATIC_MARKING_NOTICE[lang])
-    return " ".join(parts)
 
 
 # =============================================================================
@@ -556,6 +511,9 @@ class ReportResponse(BaseModel):
     # (passed_0/1/2, blocked, not_requested), whether the AI comments are in it (delivered / withheld /
     # not_requested) and why not, the number of attempts and the rule ids that failed last. Codes only.
     verification: Optional[Dict[str, Any]] = None
+    # PRB-003 / RC-070 (fifth review of PR #78, V8; DRAFT): the DIS state of the draft, as the service wrote it —
+    # "evaluated", "not_evaluated" (stated once in the findings, the notice follows) or "not_in_report"
+    dis_evaluation: Optional[Literal["evaluated", "not_evaluated", "not_in_report"]] = None
 
 
 class ReportTemplateInfo(BaseModel):
@@ -630,11 +588,18 @@ async def generate_report(
     if not request.segmentation_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SUBJECT_REQUIRED_DETAIL)
     patient_id = await authorize_segmentation_id(request.segmentation_id, current_user)
-    try:
-        identifiers = await read_patient_identifiers(patient_id)
-    except PatientRecordUnavailable as e:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=NOT_SENT_DETAIL.format(reason=str(e)))
+    service = get_report_service()
+    identifiers = None
+    # fifth review of PR #78, V5: the patient record is read only when a request can be sent (kill switch on, model
+    # allowed, key configured); otherwise nothing is sent and the measurements-only draft needs no record. A service
+    # that cannot tell (an offline test double) gets the record, as before — the check is never skipped by default.
+    possible = getattr(service, "provider_call_possible", None)
+    if not callable(possible) or possible() is not False:
+        try:
+            identifiers = await read_patient_identifiers(patient_id)
+        except PatientRecordUnavailable as e:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                detail=NOT_SENT_DETAIL.format(reason=str(e)))
 
     findings = dict(request.findings)
     if "longitudinal" in findings:   # CAPA-013, review of PR #63 (blocker 1)
@@ -678,7 +643,6 @@ async def generate_report(
         findings["lesion_analysis"] = gate.without_region_breakdown(findings["lesion_analysis"])
 
     try:
-        service = get_report_service()
         result = await service.generate_report(
             template_type=request.template_type,
             findings=findings,
@@ -689,29 +653,11 @@ async def generate_report(
             audit_actor=current_user,
             segmentation_id=request.segmentation_id,
         )
-        # Fourth review of PR #78 (Q6): the service's own fact — its code-written findings state "DIS not evaluated"
-        # (never a search of the text); a service without the fact gets the full notice.
-        stated_by_service = result.pop("dis_not_evaluated_stated", False) is True
         # Release 2026-10-25 (integration review of PR #69, item 2): CAPA-014's format-character rule (zero-width
-        # space -> space, every other format character removed) is applied to the MODEL's text before the DIS check,
-        # so a zero-width joiner or space cannot hide a DIS statement from it. The clinician's typed text is not part
-        # of `result["content"]` and never passes through the check. (Fourth review, Q6: the verified report's check
-        # applies the same shared rule to the comments it checks, so on its text this layer and the DIS backstop below
-        # change nothing; both stay as the route's own backstop for any service text — route-level tests: the
-        # zero-width and DIS-statement cases of test_release_2026_10_25_review_fixes.py and RC-070 n3.)
+        # space -> space, every other format character removed) on the service's text. Fifth review of PR #78, V8: the
+        # DIS statement and notice are the service's (`dis_evaluation`); the model's comments were checked there for
+        # any DIS statement (RC070.dis_statement) — the route re-checks no code-written text.
         result = {**result, "content": without_format_characters(result["content"])}
-        replaced = 0
-        # Finding 4 / N3: a DIS statement written by the model is replaced, in code — a BACKSTOP; the main controls
-        # are the earlier layers (no regions sent, the system safety rule, no DIS or per-region template section).
-        # Merge note (PR #67 + PR #68, release 2026-10-25): this check runs on the model's text only (with the
-        # RC-006 disclaimer), BEFORE `draft_parts` / `draft_text` add the clinician's typed entry and the
-        # application's notes, which it must never touch.
-        if not dis_evaluated:
-            content, replaced = gate.scrub_unevaluated_dis(result["content"], request.language)
-            if replaced:
-                logger.warning("[Report] DIS statements written by the model were replaced",
-                               extra={"replaced_statements": replaced})
-            result = {**result, "content": content}
         # CAPA-014 (RC-066): the typed text and the names of unlisted labels join the draft here, after the
         # model, as fields of their own; they were never sent.
         unlisted = result.pop("unlisted_labels", None)
@@ -719,9 +665,6 @@ async def generate_report(
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
-        dis_text = dis_notice(findings, request.language, replaced, stated=stated_by_service)
-        if dis_text:   # PRB-003 (RC-070, RC-072): appended in code, after the model, in the report language
-            parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {dis_text}"
         result = {**result, **parts, "content": draft_text(parts, request.language)}
         return ReportResponse(**result)
 

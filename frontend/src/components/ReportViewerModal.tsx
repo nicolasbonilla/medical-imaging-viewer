@@ -151,7 +151,8 @@ function verificationStateKey(v: ReportVerification | null): string | null {
   if (!v) return null;
   if (v.interpretive_text === 'delivered') return 'reportViewer.verification.delivered';
   if (v.interpretive_text === 'withheld') {
-    return v.reason === 'failed_check' || v.reason === 'feedback_identifier_check'
+    // fifth review of PR #78, V3: the check itself failing after the model answered is a withheld check too
+    return v.reason === 'failed_check' || v.reason === 'feedback_identifier_check' || v.reason === 'internal_check_error'
       ? 'reportViewer.verification.withheldCheck'
       : 'reportViewer.verification.withheldUnavailable';
   }

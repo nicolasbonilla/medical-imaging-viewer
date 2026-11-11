@@ -220,23 +220,21 @@ def test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failur
 
 # ═══════════════════════════════════════════════════════════════════════ Q6 — explicit facts; the text checked is delivered
 def test_rc070_q6_the_notice_decides_on_an_explicit_fact_not_on_a_substring():
-    from app.api.routes.ai_report import DIS_NOT_EVALUATED_NOTICE, dis_notice
-    from app.services.dis_review_gate import NOT_EVALUATED_LINE
-    findings = {"lesion_analysis": LESIONS}
-    assert DIS_NOT_EVALUATED_NOTICE["en"] not in (dis_notice(findings, "en", 0, stated=True) or "")
-    assert DIS_NOT_EVALUATED_NOTICE["en"] in dis_notice(findings, "en", 0, stated=False)
-    # a quoted copy of the line inside some text is not the code-written statement
-    assert DIS_NOT_EVALUATED_NOTICE["en"] in dis_notice(findings, "en", 0, stated=False)
-    assert NOT_EVALUATED_LINE["en"]
+    """Amended for the fifth review of PR #78 (V8, DRAFT): the route's notice and its `stated` fact were retired — the
+    report service owns the statement and returns the typed field `dis_evaluation`; nothing searches a text for it."""
+    import app.api.routes.ai_report as route_module
+    assert not hasattr(route_module, "dis_notice") and not hasattr(route_module, "DIS_NOT_EVALUATED_NOTICE")
+    result = _generate(_service(None, key=""), {"lesion_analysis": LESIONS})
+    assert result["dis_evaluation"] == "not_evaluated" and "dis_not_evaluated_stated" not in result
 
 
 def test_rc070_q6_the_route_uses_the_service_fact(route_text):
-    from app.api.routes.ai_report import DIS_NOT_EVALUATED_NOTICE
+    """Amended for the fifth review of PR #78 (V8, DRAFT): a service text that merely CONTAINS the line is delivered
+    as written — the route adds no DIS text and removes none (the statement is the service's)."""
     from app.services.dis_review_gate import NOT_EVALUATED_LINE
-    # a text that merely CONTAINS the line (no fact from the service): the route must still state "not evaluated"
     route_text.text_state.text = "> a reader wrote: " + NOT_EVALUATED_LINE["en"]
     body = _post(route_text, {"lesion_analysis": LESIONS}).json()
-    assert DIS_NOT_EVALUATED_NOTICE["en"] in body["content"]
+    assert body["ai_text"].count(NOT_EVALUATED_LINE["en"]) == 1
 
 
 # (a zero-width SPACE becomes a visible space under the shared rule — "demye lination" hides nothing — so the in-word

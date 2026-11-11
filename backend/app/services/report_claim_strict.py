@@ -34,7 +34,7 @@ Rules A and B read text only; rule K also reads the record's DIS state.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Sequence, Any, Dict, Iterator, List, Optional
 
 from app.services import report_claim_lexicon as L
 from app.services import report_claim_verifier as V
@@ -158,13 +158,18 @@ def _criteria_on_dis(fold: str) -> List["re.Match[str]"]:
     """Criterion words that speak of dissemination in space: in the same clause as its name and at most four words
     from it ("the findings fulfil DIS", "DIS is not met", "erfullt die raumliche Dissemination") — not a verb of
     another part of the sentence ("the scan demonstrates seven lesions, with DIS not evaluated")."""
-    out = []
-    for d in DIS_NAMED.finditer(fold):
-        for m in DIS_CRITERION.finditer(fold):
-            between = fold[m.end():d.start()] if m.end() <= d.start() else fold[d.end():m.start()]
-            if m.start() < d.end() and m.end() > d.start():
+    # fifth review of PR #78, V10: the names found once, one pass over the criterion words; a criterion word near two
+    # names is kept once (by its span)
+    names = [d.span() for d in DIS_NAMED.finditer(fold)]
+    out, spans = [], set()
+    for m in DIS_CRITERION.finditer(fold):
+        for d_start, d_end in names:
+            if m.start() < d_end and m.end() > d_start:
                 between = ""
-            if not CLAUSE_BREAK.search(between) and len(between.split()) <= DIS_WORDS_APART and m not in out:
+            else:
+                between = fold[m.end():d_start] if m.end() <= d_start else fold[d_end:m.start()]
+            if not CLAUSE_BREAK.search(between) and len(between.split()) <= DIS_WORDS_APART and m.span() not in spans:
+                spans.add(m.span())
                 out.append(m)
     return out
 
@@ -219,10 +224,16 @@ def heading_lines(text: str) -> List[str]:
     return out
 
 
-def verify(authored: str, delivered: Optional[str], view: Dict[str, Any]) -> Dict[str, Any]:
-    """The frozen v2 result with the stricter elements of every sentence of `authored` added (never removed)."""
+def verify(authored: str, delivered: Optional[str], view: Dict[str, Any], *,
+           model_text: Optional[Sequence[str]] = None) -> Dict[str, Any]:
+    """The ONE claim check of the product (fifth review of PR #78, V7: verified_report.check calls only this, and the
+    strictness property tests run it): the frozen v2 result, all kept, with the stricter elements of every sentence of
+    the model's own text added (never removed) — `model_text`, the model's comments; without it, the whole `authored`
+    text. `headings` lists the lines of that text the frozen check reads as headings (and so checks for nothing)."""
     res = V.verify(authored, delivered, view)
-    extra = comment_elements(authored, view)
+    texts = [authored] if model_text is None else list(model_text)
+    extra = [e for text in texts for e in comment_elements(text, view)]
+    res["headings"] = [h for text in texts for h in heading_lines(text)]
     if extra:
         res["elements"] = list(res["elements"]) + extra
         res["n_elements"] = len(res["elements"])

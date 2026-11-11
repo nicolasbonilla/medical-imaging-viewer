@@ -623,7 +623,7 @@ def test_rc065_patient_record_unavailable_no_provider_call(route, patients):
     r = _post(route, _measurements())
     assert r.status_code == 503, r.text
     assert "nothing was sent" in r.text.lower()
-    assert route.provider.calls == [] and route.created == []
+    assert route.provider.calls == []   # fifth review of PR #78, V5 (amended): the route first asks whether a request can be sent (a client look-up, nothing sent) — `created` is no longer a proxy for 'nothing sent'
 
 
 @pytest.mark.unit
@@ -672,11 +672,13 @@ async def test_rc065_service_refuses_to_send_without_identifiers():
     from app.services.brain_report_service import BrainReportService
     from app.services.report_payload_guard import PatientRecordUnavailable
     svc = BrainReportService()
-    asked = []
-    svc._get_client = lambda: asked.append(1) or _Provider()
+    provider = _Provider()
+    svc._get_client = lambda: provider
     with pytest.raises(PatientRecordUnavailable):
         await svc.generate_report(template_type="general", findings=_measurements())
-    assert asked == []
+    # fifth review of PR #78, V5 (amended): the client is looked up to decide whether a request can be sent at all;
+    # the guarantee is unchanged — no request without the patient's identifiers
+    assert provider.calls == []
 
 
 @pytest.mark.unit
@@ -986,7 +988,7 @@ def test_n4_an_implausible_value_refuses_the_request(route, path, value):
     r = _post(route, findings)
     assert r.status_code == 503, r.text
     assert "nothing was sent" in r.text.lower() and "plausible" in r.text.lower()
-    assert route.provider.calls == [] and route.created == []
+    assert route.provider.calls == []   # fifth review of PR #78, V5 (amended): the route first asks whether a request can be sent (a client look-up, nothing sent) — `created` is no longer a proxy for 'nothing sent'
 
 
 @pytest.mark.unit
@@ -1133,8 +1135,10 @@ def test_rc064_dis_evaluated_state_is_kept_and_reported():
     assert "evaluation_status" not in legacy.findings["dis_assessment"]          # no state is invented
     # Release 2026-10-25 integration with PR #68 (merge note 1 of #67: #68's rule wins): a block WITHOUT the
     # "evaluated" state is printed NOT EVALUATED — never MET / NOT MET (was "MET (3/5 regions)" on #67 alone).
+    # (fifth review of PR #78, V9 — amended: the DIS line belongs to a report with lesion findings)
     legacy_prompt = _verified_prompt({"dis_assessment": {"dis_met": True, "regions_with_lesions": 3,
-                                                         "total_dis_regions": 5}}, None)
+                                                         "total_dis_regions": 5},
+                                      "lesion_analysis": {"total_count": 2}}, None)
     assert NOT_EVALUATED_LINE["en"] in legacy_prompt
     assert "brain criterion" not in legacy_prompt and "not met" not in legacy_prompt.lower()
     assert "3 of the" not in legacy_prompt
@@ -1272,7 +1276,7 @@ def test_r2_the_patients_own_numbers_in_a_number_field_refuse(route, path, value
     r = _post(route, findings)
     assert r.status_code == 503, r.text
     assert "nothing was sent" in r.text.lower() and "1234567" not in r.text
-    assert route.provider.calls == [] and route.created == []
+    assert route.provider.calls == []   # fifth review of PR #78, V5 (amended): the route first asks whether a request can be sent (a client look-up, nothing sent) — `created` is no longer a proxy for 'nothing sent'
 
 
 @pytest.mark.unit

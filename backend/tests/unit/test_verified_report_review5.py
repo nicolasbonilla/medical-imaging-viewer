@@ -253,6 +253,20 @@ def test_rc105_v5_nothing_sent_keeps_the_measurement_checks_only():
     assert result["verification"]["reason"] == VR.REASON_NOT_CONFIGURED
 
 
+def test_rc065_v5_when_a_request_will_be_sent_the_identifiers_are_still_required():
+    """Guard, added with the correction (fifth review, V5): the patient-record dependency is dropped only when nothing
+    is sent — a request that would be sent still needs the patient's identifiers, and nothing is sent without them."""
+    from app.services.report_payload_guard import PatientRecordUnavailable
+    client = _Client()
+    with pytest.raises(PatientRecordUnavailable):
+        _generate(_service(client), {"lesion_analysis": LESIONS}, identifiers=None)
+    assert client.calls == []
+    # and with them, the patient's own numbers are refused in every number field (provider-only check, kept)
+    with pytest.raises(Exception) as refused:
+        _generate(_service(client), {"lesion_analysis": {**LESIONS, "total_burden_mm3": 1011980.0}}, identifiers=IDS)
+    assert type(refused.value).__name__ == "IdentifierInPrompt" and client.calls == []
+
+
 # ═══════════════════════════════════════════════════════════════════════ V6 — limitations consistent with the labels
 def _regions(**counts):
     return {name: {"lesion_count": n} for name, n in counts.items()}

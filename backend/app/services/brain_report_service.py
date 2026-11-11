@@ -289,6 +289,11 @@ def _apply_disclaimer(content: str, language: str) -> str:
 TEMPLATE_IDS = ("general", "ms_activity", "ms_lesion_burden", "ms_comprehensive", "ms_longitudinal")
 
 
+# The DIS state of a draft (fifth review of PR #78, V8): the view's status -> the response's typed field.
+DIS_EVALUATION = {"evaluated": "evaluated", "not evaluated": "not_evaluated",
+                  verified_report.DIS_NOT_IN_REPORT: "not_in_report"}
+
+
 def _review_source(findings: Any) -> Optional[str]:
     """The segmentation source code of the server's DIS state (`ai_draft`, `automatic_tool`, `origin_not_recorded`),
     set by the report route from the stored segmentation; anything else: None (fixed "not confirmed" text)."""
@@ -296,6 +301,38 @@ def _review_source(findings: Any) -> Optional[str]:
     review = block.get("segmentation_review") if isinstance(block, dict) else None
     source = review.get("source") if isinstance(review, dict) else None
     return source if source in ("ai_draft", "automatic_tool", "origin_not_recorded") else None
+
+
+# RC-106 (fifth review of PR #78, V4): ONE provider client (and its connection pool) per API key for the whole
+# process — not a new client per request — configured with the allowed time budget, closed at shutdown (main.py).
+_SHARED_CLIENTS: Dict[str, Any] = {}
+
+
+def _shared_client(api_key: str):
+    client = _SHARED_CLIENTS.get(api_key)
+    if client is None:
+        import anthropic
+        # no SDK retry (review of PR #78, R2: a retry got a fresh full timeout); the async client (third review, T3);
+        # its default timeout is the whole budget of a draft (each request is also given the budget that is left)
+        client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=verified_report.LLM_DEADLINE_S)
+        _SHARED_CLIENTS[api_key] = client
+    return client
+
+
+async def close_report_clients() -> None:
+    """Close the shared provider clients (their connection pools); called at application shutdown."""
+    clients = list(_SHARED_CLIENTS.values())
+    _SHARED_CLIENTS.clear()
+    for client in clients:
+        close = getattr(client, "close", None)
+        if close is None:
+            continue
+        try:
+            done = close()
+            if inspect.isawaitable(done):
+                await done
+        except Exception as e:  # noqa: BLE001 — shutdown goes on
+            logger.warning(f"[Report] Provider client close failed: {type(e).__name__}")
 
 
 class BrainReportService:
@@ -317,21 +354,35 @@ class BrainReportService:
         self._settings = get_settings()
 
     def _get_client(self):
-        """Lazy-load Anthropic client."""
-        if self._client is None:
-            api_key = self._settings.ANTHROPIC_API_KEY
-            if not api_key:
-                raise RuntimeError(
-                    "ANTHROPIC_API_KEY not configured. "
-                    "Set the environment variable to enable report generation."
-                )
-            import anthropic
-            # RC-106: no SDK retry (review of PR #78, R2: a retry got a fresh full timeout, about twice the budget);
-            # the flow's own regeneration and its 25 s budget for all calls of a draft are the only repetition.
-            # Third review, T3: the ASYNC client (anthropic==0.44.0 has it) — awaited on the event loop, so the end
-            # of the budget cancels the HTTP request itself; no worker thread is left running.
-            self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)
-        return self._client
+        """The provider client: the process's one shared client (fifth review of PR #78, V4), unless one was given
+        to this instance (offline test doubles). RuntimeError without ANTHROPIC_API_KEY (nothing is sent).
+
+        RC-106: the flow's own regeneration and its 25 s budget for all calls of a draft are the only repetition.
+        Third review, T3: the ASYNC client — awaited on the event loop, so the end of the budget cancels the HTTP
+        request itself; no worker thread is left running."""
+        if self._client is not None:
+            return self._client
+        api_key = self._settings.ANTHROPIC_API_KEY
+        if not api_key:
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY not configured. "
+                "Set the environment variable to enable report generation."
+            )
+        return _shared_client(api_key)
+
+    def provider_call_possible(self) -> bool:
+        """Whether a request can be sent at all: kill switch on, the model allowed, a key configured (fifth review of
+        PR #78, V5). When it cannot, nothing is sent — no patient record is needed and the provider-only refusals do
+        not apply; the measurement checks that protect the code-written text still do."""
+        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:
+            return False
+        if not report_model_allowed(getattr(self._settings, "CLAUDE_MODEL", None)):
+            return False
+        try:
+            self._get_client()
+        except RuntimeError:
+            return False
+        return True
 
     def _interpretive_text_gate(self, model_id: Any, view: Dict[str, Any]) -> Optional[str]:
         """Why the comments are not requested (a REASON_* code), or None. RC-105: the kill switch; RC-106: the model
@@ -404,7 +455,7 @@ class BrainReportService:
             findings: Clinical findings dict (only the structured payload is used, CAPA-014)
             volumetry: Volumetry results dict (optional; total brain and intracranial volume are reported)
             language: Report language (en, es, de)
-            identifiers: The patient's own identifiers, from the patient record (required, for the check)
+            identifiers: The patient's own identifiers, from the patient record (required when a request is sent)
             audit_actor: the authenticated user, for the audit records (RC-104)
             segmentation_id: the report's segmentation, for the audit records
 
@@ -430,19 +481,28 @@ class BrainReportService:
         # RC-104: every outcome is audited — also a request refused before any model call (review of PR #78, R7)
         audit = _ReportAudit(report_id, audit_actor, segmentation_id, template_type, lang)
         try:
-            # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check
-            # against, so no request is sent.
-            if not isinstance(identifiers, PatientIdentifiers):
-                raise PatientRecordUnavailable("the patient's identifiers were not supplied")
-
             # RC-064: structured payload only — measurements, fixed labels; no free text. Second review of PR #78, C:
-            # projected (and its ranges and the patient's own numbers checked) only for what the verified report
-            # renders or sends; what it does not use is named "supplied but not included" and blocks nothing.
+            # projected (and its ranges checked) only for what the verified report renders or sends; what it does not
+            # use is named "supplied but not included" and blocks nothing.
             rendered_findings, rendered_volumetry, not_included = verified_report.rendered_request(findings, volumetry)
-            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers)
-            # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
-            view = verified_report.build_view(payload.findings, payload.volumetry, lang,
-                                              review_source=_review_source(findings), not_included=not_included)
+
+            def record_of(ids: Optional[PatientIdentifiers]):
+                payload_ = provider_payload(rendered_findings, rendered_volumetry, ids)
+                # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
+                return payload_, verified_report.build_view(payload_.findings, payload_.volumetry, lang,
+                                                            review_source=_review_source(findings),
+                                                            not_included=not_included)
+
+            # fifth review of PR #78, V5: the measurement checks (ranges) always run — they protect the code-written
+            # text; the patient-record checks only when a request will be sent
+            payload, view = record_of(None)
+            reason = self._interpretive_text_gate(model_id, view)
+            if reason is None:
+                # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check against, so
+                # no request is sent; with them, the patient's own numbers are refused in every number field
+                if not isinstance(identifiers, PatientIdentifiers):
+                    raise PatientRecordUnavailable("the patient's identifiers were not supplied")
+                payload, view = record_of(identifiers)
             # RC-066: record that the check ran and what was withheld (counts) — never the payload.
             # (second review, C: the fields the report does not render are counted here — they are not projected)
             withheld = {**payload.withheld,
@@ -454,7 +514,6 @@ class BrainReportService:
                 extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},
             )
 
-            reason = self._interpretive_text_gate(model_id, view)
             if reason is not None:
                 if reason == verified_report.REASON_MODEL_NOT_ALLOWED:
                     retired = RETIRED_OR_RETIRING_MODELS.get(model_id) if isinstance(model_id, str) else None
@@ -487,7 +546,14 @@ class BrainReportService:
 
         # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that no generated report can leave this
         # service without it — regardless of what the model produced. See _apply_disclaimer.
-        content = _apply_disclaimer(result.text, language)
+        text = result.text
+        dis_evaluation = DIS_EVALUATION[view["dis"]["status"]]
+        if dis_evaluation == "not_evaluated":
+            # PRB-003 (RC-070, RC-072; fifth review of PR #78, V8): this service owns the DIS notice — the findings
+            # state "not evaluated" once (skeleton); the fixed notice on automatic marking follows, written by code
+            from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
+            text = f"{text}\n\n> {AUTOMATIC_MARKING_NOTICE[lang]}"
+        content = _apply_disclaimer(text, language)
         processing_time_ms = int((time.time() - start_time) * 1000)
         logger.info(
             f"[Report] Verified draft {result.outcome} in {processing_time_ms}ms",
@@ -505,9 +571,9 @@ class BrainReportService:
             "tokens_used": {"input": result.input_tokens, "output": result.output_tokens} if asked else None,
             # R3: what the verified report does not include is named, never dropped silently
             "verification": {**result.summary(), "not_included": list(view.get("not_included") or [])},
-            # fourth review of PR #78, Q6: a fact for the route — the code-written findings state "DIS not evaluated"
-            # (`skeleton` writes `dis_review_gate.NOT_EVALUATED_LINE` whenever DIS was not evaluated)
-            "dis_not_evaluated_stated": view["dis"]["status"] != "evaluated",
+            # fifth review of PR #78, V8/V9: the DIS state of this draft, typed — "evaluated", "not_evaluated" (the
+            # findings say so once, the notice follows) or "not_in_report" (no lesion findings: no DIS line)
+            "dis_evaluation": dis_evaluation,
             # CAPA-014: placeholder -> label as written, for the clinician's draft only. Verified report (review of
             # PR #78, R8): the record never carries a placeholder (a request would be refused above), so there is no
             # placeholder to name and no application note "sent as numbered placeholders".

@@ -101,20 +101,23 @@ PROBE = (f"Lesions in periventricular and juxta{ZWSP}cortical regions, consisten
 @pytest.mark.unit
 @pytest.mark.parametrize("language", ["en", "es", "de"])
 def test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement(route_text, language):
-    """(Verified report, DRAFT: the route layer, `route_text` — through the real service the probe is withheld by the
-    claim check, RC-103; see test_rc103_* / test_rc070_n3_*.)"""
+    """Amended for the fifth review of PR #78 (V8, DRAFT): the report service owns the DIS statement and checks the
+    model's comments — zero-width characters removed first (the shared rule), then RC070.dis_statement; the route
+    re-checks no service text (its backstop was retired). The probe fails the service's check in every language; the
+    clinician's typed text is never checked and stays exactly as typed."""
+    from app.services import verified_report as VR
+    from app.services.report_payload_guard import provider_payload
+    p = provider_payload({"lesion_analysis": {"total_count": 2}}, None)
+    view = VR.build_view(p.findings, p.volumetry, language)
+    _, fails = VR.check(view, language, f"[FINDINGS_COMMENT]\n{PROBE}\n[IMPRESSION_COMMENT]\nDraft for review.")
+    assert "RC070.dis_statement" in [f["rule"] for f in fails], fails
     route = route_text
     typed = f"Outside report: dissem{ZWJ}ination in space met."
-    route.text_state.text = f"## FINDINGS\nTwo lesions.\n\n{PROBE}\n"
+    route.text_state.text = "## FINDINGS\nLesions.\n"
     r = _post(route, {**_measurements(), "dis_assessment": NOT_EVALUATED, "clinical_indication": typed},
               language=language)
     assert r.status_code == 200, r.text
     body = r.json()
-    plain = body["ai_text"].replace(ZWJ, "").replace(ZWSP, " ")
-    assert "consistent with dissemination in space" not in plain
-    assert "juxta cortical" not in plain and "juxtacortical" not in plain
-    from app.api.routes.ai_report import DIS_LINES_REPLACED
-    assert DIS_LINES_REPLACED[language].split("{n}")[1][:20] in body["ai_text"]   # the notice counts it
     # the clinician's typed text never passes through the check: exactly as typed
     assert body["clinician_entry"]["fields"][0]["text"] == typed
 
@@ -172,7 +175,9 @@ def real_path(monkeypatch):
     from app.services.brain_report_service import BrainReportService
 
     svc = _service()
-    provider = _Provider("Two lesions were marked.")   # verified report (DRAFT): a findings comment that passes RC-103
+    # verified report (DRAFT): a findings comment that passes RC-103 (fifth review of PR #78, V1 — amended: no number
+    # word; was "Two lesions were marked.")
+    provider = _Provider("Lesions were marked.")
     authorized = []
 
     async def _authorize_segmentation(segmentation_id, user):
