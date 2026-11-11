@@ -248,10 +248,11 @@ def test_rc114_review1_declared_arguments_match_the_real_mcp_functions():
         module = servers.get(tool.get("server"))
         if module is None:
             continue
-        params = list(inspect.signature(getattr(module, name)).parameters)
+        params = [p for p in inspect.signature(getattr(module, name)).parameters
+                  if p != "ctx"]          # the request context (elicitation) is never a model argument (7th review)
         assert sorted(params) == sorted(tool["arguments"]), (name, params, tool["arguments"])
         checked += 1
-    assert checked == 12          # amended for the sixth review of PR #79: + open_study_session, open_imaging_session
+    assert checked == 11          # amended: + the two session tools (6th review), - generate_ms_report (7th review)
 
 
 # ================================================================== 6. bounded trace buffer

@@ -42,7 +42,13 @@ class FakeBackend:
         parts = path.strip("/").split("/")
         return parts[1] if len(parts) > 1 and parts[0] == "segmentation" else None
 
+    # Amended for the seventh review of PR #79 (R3/R4): like the real client (app/mcp/_backend.py), the fake applies
+    # the shared rule at the source; the platform then only checks the viewed result.
     async def api_get(self, path, params=None, timeout=60.0):
+        from app.mcp._backend import assistant_view
+        return assistant_view(await self._raw_get(path, params))
+
+    async def _raw_get(self, path, params=None):
         from tests.agent_platform import _contract as K
         self.requests.append(("GET", path))
         if path.startswith("/imaging/"):
@@ -72,6 +78,10 @@ class FakeBackend:
         return K.segmentation_record(seg, rec["file"])
 
     async def api_post_compute(self, path, json_data=None, timeout=120.0):
+        from app.mcp._backend import assistant_view
+        return assistant_view(await self._raw_post(path, json_data))
+
+    async def _raw_post(self, path, json_data=None):
         from tests.agent_platform import _contract as K
         self.requests.append(("POST", path, json_data))
         if path == "/ai/report/generate":
@@ -88,8 +98,8 @@ def wire(module, backend: FakeBackend):
     return module
 
 
-ASSISTANT_TOOLS = ("get_region_classification", "summarize_dis_items", "analyze_lesions", "compare_longitudinal",
-                   "generate_ms_report")
+# generate_ms_report removed by the seventh review of PR #79 (R2): reports are drafted by the verified-report agent.
+ASSISTANT_TOOLS = ("get_region_classification", "summarize_dis_items", "analyze_lesions", "compare_longitudinal")
 
 
 def assistant_tools(backend: FakeBackend):

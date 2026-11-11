@@ -606,16 +606,14 @@ async def test_rc065_service_refuses_to_send_without_identifiers():
 
 
 @pytest.mark.unit
+# Amended for PR #79, seventh review (R2): the assistant no longer has a report tool (a paid model outside the
+# agent's cost ledger); reports are drafted by the verified-report agent in the app (PR #78). The risk this
+# test controlled cannot arise from the assistant any more; the test now asserts the tool is gone.
 def test_rc065_assistant_report_tool_names_the_segmentation():
     import ast
     tree = ast.parse((REPO / "backend/app/mcp/ms_clinical_server.py").read_text(encoding="utf-8"))
-    tool = next(n for n in ast.walk(tree) if isinstance(n, ast.AsyncFunctionDef) and n.name == "generate_ms_report")
-    calls = [n for n in ast.walk(tool) if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "api_post_compute"
-             and isinstance(n.args[0], ast.Constant) and n.args[0].value == "/ai/report/generate"]
-    assert len(calls) == 1
-    fields = {k.value: v for k, v in zip(calls[0].args[1].keys, calls[0].args[1].values)}
-    assert isinstance(fields.get("segmentation_id"), ast.Name) and fields["segmentation_id"].id == "segmentation_id"
-    assert set(fields) <= {"template_type", "language", "findings", "segmentation_id"}
+    assert not [n for n in ast.walk(tree) if isinstance(n, ast.AsyncFunctionDef) and n.name == "generate_ms_report"]
+    assert "/ai/report/generate" not in (REPO / "backend/app/mcp/ms_clinical_server.py").read_text(encoding="utf-8")
 
 
 # ============================================================================= RC-066

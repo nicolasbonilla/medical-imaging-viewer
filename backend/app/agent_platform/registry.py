@@ -221,6 +221,7 @@ VALUE_KINDS = frozenset({"string", "integer", "number", "boolean", "object", "ar
 # (bound to the real functions: optional exactly when the parameter has a default).
 ARGUMENT_KINDS = RESOURCE_KINDS | VALUE_KINDS | frozenset("optional_" + k for k in VALUE_KINDS)
 OUTPUT_TYPES = frozenset({"object", "array"})
+MCP_SERVERS = frozenset({"ms-clinical-mcp", "imaging-mcp"})
 
 
 def is_id_like(name: Any, *, locations: bool = True) -> bool:
@@ -606,6 +607,12 @@ class AgentRegistry:
                 err(f"agent {aid}: approval.status must be one of {sorted(APPROVAL_STATUSES)}")
             models = a.get("allowed_models")
             tools = a.get("allowed_tools")
+            # Seventh review of PR #79 (R5): the assistant's servers never reach the backend without a scope (the
+            # backend refuses it), so an agent with tools on them MUST declare requires_backend_scope: true.
+            on_mcp = [n for n in (tools or []) if isinstance(data["tools"].get(n), Mapping)
+                      and data["tools"][n].get("server") in MCP_SERVERS]
+            if on_mcp and a.get("requires_backend_scope") is not True:
+                err(f"agent {aid}: tools {on_mcp} run on the assistant's MCP servers; requires_backend_scope must be true")
             if not isinstance(models, list) or not isinstance(tools, list):
                 err(f"agent {aid}: allowed_models and allowed_tools must be lists")
                 continue

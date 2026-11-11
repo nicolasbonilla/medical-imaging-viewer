@@ -65,9 +65,12 @@ def calls():
 
 @pytest.fixture
 def runtime(registry, mem, calls):
+    # Amended for the seventh review of PR #79 (R3/R4): the shared rule is applied at the SOURCE (the client); the
+    # platform refuses a result that did not pass it, and never views a second time.
     def read_measurements(segmentation_id):
+        from app.mcp._backend import assistant_view
         calls.append(("read_measurements", segmentation_id))
-        return {"segmentation_id": segmentation_id, "lesion_count": 7, "PatientName": PHI}
+        return assistant_view({"segmentation_id": segmentation_id, "lesion_count": 7, "PatientName": PHI})
 
     def compare_visits(baseline_id, followup_id):
         calls.append(("compare_visits", baseline_id, followup_id))

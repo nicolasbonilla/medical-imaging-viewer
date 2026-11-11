@@ -60,8 +60,7 @@ def tool_outputs():
         "summarize_dis_items": lambda: clinical.summarize_dis_items(K.SEG_A),
         "analyze_lesions": lambda: clinical.analyze_lesions(K.SEG_A),
         "compare_longitudinal": lambda: clinical.compare_longitudinal(K.SEG_B, K.SEG_A),
-        "generate_ms_report": lambda: clinical.generate_ms_report(K.SEG_A, include_longitudinal=True,
-                                                                  longitudinal_baseline_id=K.SEG_B),
+        # generate_ms_report removed by the seventh review of PR #79 (R2)
         "get_image_metadata": lambda: imaging.get_image_metadata(K.FILE_A),
         "get_slice_image": lambda: imaging.get_slice_image(K.FILE_A, 8),
         "process_image": lambda: imaging.process_image(K.FILE_A),

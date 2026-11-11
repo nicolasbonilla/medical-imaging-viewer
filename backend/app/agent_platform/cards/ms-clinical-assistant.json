@@ -2,7 +2,7 @@
  "schema": "mstool.agent-card/1",
  "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-002)",
  "agent_id": "ms-clinical-assistant",
- "card_version": "2026-11-11.3",
+ "card_version": "2026-11-11.4",
  "model": {
   "id": null,
   "control": "client",
@@ -172,8 +172,8 @@
    "source": "backend/app/mcp/imaging_server.py"
   },
   "mcp.imaging_server.tool[open_imaging_session].definition": {
-   "sha256": "103bffa5046173708808be7997cb69e9d6d6e165b9b89ef32c018f22da92fa90",
-   "chars": 751,
+   "sha256": "61213ea156129d660ffdee064e918c34f55791ac042449de0bf3190a7d4097f4",
+   "chars": 667,
    "source": "backend/app/mcp/imaging_server.py"
   },
   "mcp.imaging_server.tool[process_image].definition": {
@@ -182,18 +182,18 @@
    "source": "backend/app/mcp/imaging_server.py"
   },
   "mcp.ms_clinical_server.instructions": {
-   "sha256": "b41c7617b5c04ca1d0fb1b0330ccf7dc5ce1536d377e8e04a39b2206c5e9c008",
-   "chars": 2913,
+   "sha256": "5e9648583a2907afde19400a95e0261d884dcbf90f831631ebcd40f517a0a5c1",
+   "chars": 3000,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.resource[prompts://ms-longitudinal-workflow]": {
-   "sha256": "df189124bbf45a9eca0e67d8e0acac21326a34f9cd03ec8c7a2db71c658bf700",
-   "chars": 1290,
+   "sha256": "532b9124b4e86d2c10926f5f649238cefb36f243bbfeed31b34a826142d56bb0",
+   "chars": 1264,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.resource[prompts://ms-review-workflow]": {
-   "sha256": "12f7bc891a8cddf35a434d7f41707842e5f2d5f48b440887c2fbf082a7b1efae",
-   "chars": 1932,
+   "sha256": "d97ab7887d069215f9d97d07f2e6bf187ae425af7a1e822afd34fd161d4f206d",
+   "chars": 1858,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.tool[analyze_lesions].definition": {
@@ -206,19 +206,14 @@
    "chars": 1293,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
-  "mcp.ms_clinical_server.tool[generate_ms_report].definition": {
-   "sha256": "96f9e2aedfb1ac5300cc00096ae7406baf5c89f5f888853503dc19196bddada8",
-   "chars": 1451,
-   "source": "backend/app/mcp/ms_clinical_server.py"
-  },
   "mcp.ms_clinical_server.tool[get_region_classification].definition": {
    "sha256": "43baf9b075d8c0b6bfb793f1aed4b3b281f753e8ec6155bcbcc7d936d48b01c4",
    "chars": 1181,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.tool[open_study_session].definition": {
-   "sha256": "5109f74a0cff3c604f90f29721ef57518b39dbf327f41709c49b938b49e3c39c",
-   "chars": 747,
+   "sha256": "b171806d4665e9281cc7ef69c99a85a54a1dc738ddd64c38994a1315853caf3d",
+   "chars": 663,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.tool[summarize_dis_items].definition": {
@@ -272,6 +267,12 @@
    "date": "2026-11-11",
    "card_version": "2026-11-11.3",
    "what": "sixth review of PR #79 (S1, S2): new tools open_study_session / open_imaging_session (the backend issues the study session's pass, which never reaches the model; every other tool is refused without it, locally and by the backend); the clinical server's instructions say to open the session first; generate_ms_report is no longer allowed to the assistant (paid model outside its cost ledger); template hashes refreshed",
+   "approved_by": null
+  },
+  {
+   "date": "2026-11-11",
+   "card_version": "2026-11-11.4",
+   "what": "seventh review of PR #79 (R1, R2): the session tools take no argument - the physician chooses and confirms the study through the client (MCP elicitation, request context `ctx`, never a model argument); generate_ms_report removed from the server and from the instructions (reports by the verified-report agent in the app, PR #78); template hashes refreshed",
    "approved_by": null
   }
  ]

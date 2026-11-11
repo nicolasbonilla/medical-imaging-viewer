@@ -459,10 +459,14 @@ async def authorize_patient_id(patient_id, user, resource_label: str = "Patient"
     )
 
 
-async def authorize_study_id(study_id, user) -> Optional[str]:
+def study_services():
+    """The (study, patient, care-team) services, built once for several authorizations (PR #79, seventh review)."""
+    return tuple(_services_or_deny("Study", _study_service, _patient_service, _care_team_service))
+
+
+async def authorize_study_id(study_id, user, *, services=None) -> Optional[str]:
     """Authorize a study referenced outside the path; return its owning patient_id."""
-    studies, patients, care_team = _services_or_deny(
-        "Study", _study_service, _patient_service, _care_team_service)
+    studies, patients, care_team = services if services is not None else study_services()
     pid = await resolve_study_patient_id(study_id, studies) if study_id else None
     await authorize_resolved_patient(
         patient_id=pid, resource_label="Study", user=user,

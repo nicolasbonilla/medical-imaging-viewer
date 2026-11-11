@@ -28,7 +28,6 @@ Without the header nothing changes: the clinician's own authorization applies as
 """
 from __future__ import annotations
 
-import asyncio
 import base64
 import contextlib
 import contextvars
@@ -38,6 +37,7 @@ import json
 import os
 import re
 import time
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import FrozenSet, Iterable, Iterator, Optional
 from uuid import UUID
@@ -226,15 +226,77 @@ async def issue_for_studies(study_ids, user, *, run_id: str, ttl_seconds: int = 
                             now: Optional[int] = None) -> str:
     """Authorize every study for ``user`` with the CAPA-009 resolver (404 when not entitled), require ONE owning
     patient, and sign the capability. An agent-scoped request can never mint one."""
+    ids, patients = await _authorize_studies(study_ids, user)
+    token = sign_for_patient(user, set(patients), ids, run_id=run_id, ttl_seconds=ttl_seconds, now=now)
+    _record_session(user, _canon(patients[0]))
+    return token
+
+
+async def _authorize_studies(study_ids, user):
+    """Each study once (deduplicated), with the services built ONCE, one after the other, stopping at the first
+    refusal (seventh review of PR #79, R10: no access-audit row is written after a refused study)."""
     from app.security import resource_access
     if scope_active():
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="An agent request cannot issue an agent scope")
     canon = [_canon(s) for s in (study_ids or ())]
-    ids = sorted(set(canon))                                   # sixth review, E1: each study authorized once ...
+    ids = sorted(set(canon))
     if not ids or None in canon or len(ids) > MAX_STUDIES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Name 1 to {MAX_STUDIES} study UUIDs")
-    patients = await asyncio.gather(*(resource_access.authorize_study_id(sid, user) for sid in ids))  # ... together
-    return sign_for_patient(user, set(patients), ids, run_id=run_id, ttl_seconds=ttl_seconds, now=now)
+    services = resource_access.study_services()
+    patients = []
+    for sid in ids:
+        patients.append(await resource_access.authorize_study_id(sid, user, services=services))
+    return ids, patients
+
+
+async def preview_studies(study_ids, user) -> dict:
+    """What the physician is asked to confirm (seventh review, R1): the patient reference (the first 8 characters of
+    the patient's id, as the web app shows it), and each study's reference, date and number of series. Nothing is
+    issued or stored."""
+    from app.security import resource_access
+    ids, patients = await _authorize_studies(study_ids, user)
+    if len({_canon(p) for p in patients}) != 1:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="An agent scope covers the studies of one patient")
+    studies_service = resource_access.study_services()[0]
+    studies = []
+    for sid in ids:
+        try:
+            study = await studies_service.get_study(sid, include_stats=True)
+        except Exception:  # noqa: BLE001 — details are informative only; the authorization above already passed
+            study = None
+        date = getattr(study, "study_date", None) or getattr(study, "date", None)
+        series = getattr(study, "series_count", None)
+        if series is None and isinstance(getattr(study, "series", None), (list, tuple)):
+            series = len(study.series)
+        studies.append({"study_ref": sid[:8], "date": str(date)[:10] if date else None,
+                        "series": series if isinstance(series, int) else None})
+    return {"patient_ref": _canon(patients[0])[:8], "studies": studies, "expires_in": DEFAULT_TTL_SECONDS}
+
+
+# Seventh review (R1): the patient of each clinician's latest assistant session, to audit a PATIENT SWITCH. In
+# memory, bounded (like the initiator registry, CAPA-009); a restart only loses the comparison point.
+_LAST_PATIENT: "OrderedDict[str, str]" = OrderedDict()
+_MAX_SESSIONS = 50_000
+
+
+def _record_session(user, patient_id: Optional[str]) -> None:
+    uid = str(getattr(user, "id", ""))
+    previous = _LAST_PATIENT.get(uid)
+    _LAST_PATIENT[uid] = patient_id
+    _LAST_PATIENT.move_to_end(uid)
+    while len(_LAST_PATIENT) > _MAX_SESSIONS:
+        _LAST_PATIENT.popitem(last=False)
+    if previous and patient_id and previous != patient_id:
+        logger.warning("Agent scope: patient switch", extra={"user_id": uid})
+        try:
+            from app.core.logging.audit import AuditEventType, AuditOutcome, emit_audit
+            emit_audit(AuditEventType.CLINICAL_AI_RUN, AuditOutcome.SUCCESS, user_id=uid,
+                       username=getattr(user, "username", None), role=getattr(user, "role", None),
+                       reason="agent.scope:patient_switch", resource_type="agent_scope",
+                       resource_ids={"from_patient": previous, "to_patient": patient_id})
+        except Exception:  # noqa: BLE001 — auditing never breaks the issuance
+            pass
 
 
 def sign_for_patient(user, patients, study_ids, *, run_id: str, ttl_seconds: int = DEFAULT_TTL_SECONDS,

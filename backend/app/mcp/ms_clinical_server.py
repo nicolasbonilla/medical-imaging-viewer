@@ -19,6 +19,10 @@ CAPA-008: the assistant is read-only and is never a diagnostic tool.
 
 from fastmcp import FastMCP
 from app.mcp._backend import api_get, api_post_compute, open_session
+try:
+    from fastmcp import Context            # the request context: elicitation (seventh review of PR #79, R1)
+except ImportError:  # pragma: no cover — a stand-in of fastmcp without it (tests); the real one has it
+    Context = None
 from app.services.region_evidence import strip_region_confidence as _strip_region_confidence
 from app.services.longitudinal_candidate_safety import assistant_rate_sentence
 
@@ -39,12 +43,12 @@ mcp = FastMCP(
         "imply that a patient has or does not have MS, never state that diagnostic criteria "
         "are met, and never recommend treatment. Present every number as a device "
         "measurement that the physician must verify on the images.\n\n"
-        "Typical workflow (open_study_session() first: every other tool is refused until a study session is "
-        "open):\n"
+        "Typical workflow (open_study_session() first — the physician chooses and confirms the study in the "
+        "client; every other tool is refused until a study session is open):\n"
         "1. get_region_classification() — the stored MAGNIMS region per lesion (candidates)\n"
         "2. summarize_dis_items() — brain-MRI DIS items + clinician-recorded CVS/PRL readings\n"
         "3. compare_longitudinal() — new/enlarging lesion CANDIDATES between two timepoints\n"
-        "4. generate_ms_report() — a DRAFT report from the measurements above\n\n"
+        "Reports are drafted by the verified-report agent in the MSTool web app, not by this assistant.\n\n"
         "What the device can and cannot tell (McDonald 2024):\n"
         "- DIS needs typical lesions in >=2 of 5 regions (periventricular, cortical/"
         "juxtacortical, infratentorial, spinal cord, optic nerve). Brain MRI covers 3 of "
@@ -120,18 +124,15 @@ def only_evaluated_dis(dis):
 
 
 @mcp.tool()
-async def open_study_session(study_ids: list[str]) -> dict:
-    """Open the study session. Call this FIRST, with the id of the study the physician is reviewing (and, for a
-    two-timepoint comparison, the prior study of the same patient). Every other tool is refused until a session
-    is open; the session covers only these studies of one patient and ends after at most one hour.
-
-    Args:
-        study_ids: the study ids (1 to 20) of ONE patient
+async def open_study_session(ctx: Context) -> dict:
+    """Open the study session. Call this FIRST. Pass nothing: the physician chooses the study and confirms it in
+    the client (the server asks them directly). Every other tool is refused until a session is open; the session
+    covers only the confirmed study (and prior study) of one patient and ends after at most one hour.
 
     Returns:
         {"session": "open", "studies", "expires_in_seconds", "note"}
     """
-    return await open_session(study_ids)
+    return await open_session(ctx)
 
 
 @mcp.tool()
@@ -245,78 +246,6 @@ async def compare_longitudinal(baseline_id: str, followup_id: str) -> dict:
     )
 
 
-@mcp.tool()
-async def generate_ms_report(
-    segmentation_id: str,
-    language: str = "en",
-    include_longitudinal: bool = False,
-    longitudinal_baseline_id: str = "",
-) -> dict:
-    """
-    Draft a structured MS brain MRI report FROM THE DEVICE'S MEASUREMENTS, for physician
-    review. The report carries the mandatory AI-draft disclaimer (RC-006).
-
-    The measurements (lesion analysis, DIS assessment and, if requested, the longitudinal
-    comparison) are read first; if none can be read, no report is requested (CAPA-008:
-    a report without measurements would be invented). Read failures are returned, not hidden.
-
-    Args:
-        segmentation_id: ID of the analysed segmentation
-        language: Report language ('en', 'es', 'de')
-        include_longitudinal: Include the longitudinal comparison
-        longitudinal_baseline_id: Baseline segmentation ID for the longitudinal comparison
-    """
-    findings, unavailable = {}, {}
-    try:
-        findings["lesion_analysis"] = await api_get(f"/segmentation/{segmentation_id}/lesion-analysis")
-    except Exception as exc:  # report what could not be read instead of hiding it
-        unavailable["lesion_analysis"] = str(exc)
-    try:
-        findings["dis_assessment"] = only_evaluated_dis(
-            await api_get(f"/segmentation/{segmentation_id}/dis-assessment"))
-    except Exception as exc:
-        unavailable["dis_assessment"] = str(exc)
-    if include_longitudinal and longitudinal_baseline_id:
-        try:
-            findings["longitudinal"] = await api_post_compute(
-                "/segmentation/longitudinal/compare",
-                {
-                    "tp1": {"type": "segmentation", "id": longitudinal_baseline_id},
-                    "tp2": {"type": "segmentation", "id": segmentation_id},
-                },
-            )
-        except Exception as exc:
-            unavailable["longitudinal"] = str(exc)
-
-    if not findings:
-        return {
-            "report": None,
-            "message": "No measurement could be read, so no report was drafted.",
-            "unavailable": unavailable,
-        }
-
-    # Field names are those of the report route's request model (ReportGenerateRequest);
-    # a test binds them, because unknown names are silently dropped by the backend.
-    # CAPA-014: segmentation_id lets the backend remove this patient's identifiers before the
-    # report service calls its model provider; without it the route sends nothing.
-    report = await api_post_compute(
-        "/ai/report/generate",
-        {
-            "template_type": "ms_longitudinal" if "longitudinal" in findings else "general",
-            "language": language,
-            "findings": findings,
-            # PRB-003: the report route derives the DIS state for this segmentation only.
-            "segmentation_id": segmentation_id,
-        },
-    )
-    return {"report": report, "unavailable": unavailable}
-
-
-# =============================================================================
-# Workflow prompts (resources for the assistant)
-# =============================================================================
-
-
 @mcp.resource("prompts://ms-review-workflow")
 def ms_review_workflow() -> str:
     """Review workflow for the device's MS lesion measurements (investigational, read-only)."""
@@ -344,8 +273,7 @@ diagnosis, never state that criteria are met, never recommend treatment.
    They give supportive evidence only in the specific situations the criteria define.
    Never infer a CVS or PRL status yourself.
 
-4. **Draft report**: `generate_ms_report(segmentation_id)` — a draft from the measurements,
-   with the AI-draft disclaimer, for the physician to review, correct and sign.
+4. **Report**: drafted by the verified-report agent in the MSTool web app, not by this assistant.
 
 ## Key references
 - Montalban et al., Lancet Neurol 2025; 24(10): 850-865 (McDonald 2024)
@@ -379,8 +307,7 @@ def ms_longitudinal_workflow() -> str:
    signal, never a confirmation. If `abstained` is true, report no count: the acquisition of the
    two visits differs or could not be established — the images must be compared visually.
 
-4. **Draft report**: `generate_ms_report(followup_id, include_longitudinal=True,
-   longitudinal_baseline_id=baseline_id)`.
+4. **Report**: drafted by the verified-report agent in the MSTool web app, not by this assistant.
 
 ## Candidate categories (device definitions)
 - NEW: present at follow-up, not at baseline

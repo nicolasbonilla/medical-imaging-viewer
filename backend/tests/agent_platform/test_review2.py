@@ -71,7 +71,11 @@ def test_rc113_review2_unconfirmed_activity_flags_never_reach_the_model():
     result = {"segmentation_id": "seg-1", "activity_candidate": True, "dit_candidate": True, "enlarging_count": 3,
               "new_clinically_significant_count": 2, "nested": {"activity_candidate": True},
               "reader_confirmed_activity": {"confirmed": 1}}
-    check = U.validate_tool_result(result, tool=READ, scope=SCOPE, max_bytes=10_000)
+    # Amended for the seventh review of PR #79 (R3/R4): the shared rule is applied at the SOURCE (the client); the
+    # platform refuses a result that did not pass it, and never views a second time.
+    from app.mcp._backend import assistant_view
+    assert not U.validate_tool_result(result, tool=READ, scope=SCOPE, max_bytes=10_000).ok
+    check = U.validate_tool_result(assistant_view(result), tool=READ, scope=SCOPE, max_bytes=10_000)
     assert check.ok
     for key in ("activity_candidate", "dit_candidate", "enlarging_count", "new_clinically_significant_count"):
         assert key not in json.dumps(check.cleaned) and key not in check.for_model
@@ -314,24 +318,21 @@ def test_rc117_review2_a_tool_signature_change_fails_the_card_check(monkeypatch,
 
     def patched(path, alias):
         module = real(path, alias)
-        if path.name == "ms_clinical_server.py":
-            original = module.mcp.tools["generate_ms_report"]
+        # Amended for the seventh review of PR #79 (R2: generate_ms_report removed): process_image is the example.
+        if path.name == "imaging_server.py":
+            original = module.mcp.tools["process_image"]
             if change == "add_parameter":
-                async def generate_ms_report(segmentation_id: str, language: str = "en",
-                                             include_longitudinal: bool = False, longitudinal_baseline_id: str = "",
-                                             write_to_record: bool = True) -> dict:
+                async def process_image(file_id: str, max_slices: int = 10, write_to_record: bool = True) -> dict:
                     return {}
             else:
-                async def generate_ms_report(segmentation_id: str, language: str = "de",
-                                             include_longitudinal: bool = False,
-                                             longitudinal_baseline_id: str = "") -> dict:
+                async def process_image(file_id: str, max_slices: int = 50) -> dict:
                     return {}
-            generate_ms_report.__doc__ = original.__doc__
-            module.mcp.tools["generate_ms_report"] = generate_ms_report
+            process_image.__doc__ = original.__doc__
+            module.mcp.tools["process_image"] = process_image
         return module
     monkeypatch.setattr(C, "load_with_stub_fastmcp", patched)
     problems = C.check_card("ms-clinical-assistant", H.production_data())
-    assert any("tool[generate_ms_report]" in p for p in problems), problems
+    assert any("tool[process_image]" in p for p in problems), problems
 
 
 # ================================================================== 10. negative controls never touch the checkout

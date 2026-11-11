@@ -43,6 +43,18 @@ def _cap():
     return importlib.import_module("app.agent_platform.capability")
 
 
+class _Physician:
+    """Amended for the seventh review of PR #79 (R1): a session is opened by the PHYSICIAN through the client
+    (elicitation): they type the study id, then confirm the server's description."""
+
+    def __init__(self, study_id):
+        self.answers = [("accept", study_id), ("accept", None)]
+
+    async def elicit(self, message, response_type=None, **kwargs):
+        action, data = self.answers.pop(0)
+        return type("Answer", (), {"action": action, "data": data})()
+
+
 def _assistant_app():
     """The scoped test backend, plus the lesion-analysis route, a paid model route and the REAL issuance route."""
     from fastapi import Depends
@@ -84,7 +96,7 @@ def test_rc121_review6_stdio_assistant_without_a_session_is_refused_locally_and_
     CAP = _cap()
     with pytest.raises(CAP.ScopeRequired):
         asyncio.run(server.analyze_lesions(SEG_OTHER))                 # no session: nothing is sent
-    monkeypatch.setattr(backend, "_requires_scope", lambda: False)      # the local check bypassed (a bug) ...
+    monkeypatch.setattr(backend, "_require_pass", lambda capability: None)   # the local check bypassed (a bug) ...
     with pytest.raises(CAP.ScopeRefused) as e:
         asyncio.run(server.analyze_lesions(SEG_OTHER))
     assert e.value.status == 403                                        # ... the backend refuses it anyway
@@ -93,7 +105,7 @@ def test_rc121_review6_stdio_assistant_without_a_session_is_refused_locally_and_
 def test_rc121_review6_a_study_session_is_the_way_in_and_its_pass_never_reaches_the_model(assistant):
     server, backend, _app, _paid = assistant
     CAP = _cap()
-    info = asyncio.run(server.open_study_session([S1]))
+    info = asyncio.run(server.open_study_session(_Physician(S1)))
     assert "token" not in info and backend._SESSION.get("token") and backend._SESSION["token"] not in str(info)
     assert asyncio.run(server.analyze_lesions(SEG_IN)) == {"lesion_count": 7}
     for foreign in (SEG_OTHER, SEG_PRIOR):                             # another patient; same patient, other study
@@ -116,7 +128,7 @@ def test_rc112_review6_the_paid_report_route_is_out_of_reach_of_an_agent(assista
     token = S.issue_scope_token(user_id=USER.id, patient_id=P1, study_ids=[S1], run_id="r")
     assert TestClient(app).post("/api/v1/ai/report/generate", json={},
                                 headers={CAP.CAPABILITY_HEADER: token}).status_code == 403
-    asyncio.run(server.open_study_session([S1]))
+    asyncio.run(server.open_study_session(_Physician(S1)))
     with pytest.raises(PermissionError):
         asyncio.run(backend.api_post_compute("/ai/report/generate", {}))
     assert paid == [], "no paid model call was made"
@@ -190,8 +202,16 @@ def test_rc121_review6_the_route_uses_the_one_issuance_and_the_route_lists_are_o
         for call in ast.walk(tree):
             if isinstance(call, ast.Call) and getattr(call.func, "id", "") in ("api_get", "api_post_compute"):
                 arg = call.args[0]
-                path = arg.value if isinstance(arg, ast.Constant) else "".join(
-                    v.value if isinstance(v, ast.Constant) else "7" for v in arg.values)   # a digit fits every slot
+                # amended (seventh review, R6: strict path parameters): a real storage path in an imaging route's
+                # first slot, a digit elsewhere
+                parts, first = [], True
+                for v in ([arg] if isinstance(arg, ast.Constant) else arg.values):
+                    if isinstance(v, ast.Constant):
+                        parts.append(v.value)
+                    else:
+                        parts.append(FILE_PRIOR if first and "".join(parts).startswith("/imaging/") else "7")
+                        first = False
+                path = "".join(parts)
                 method = "GET" if call.func.id == "api_get" else "POST"
                 if path in _backend.PAID_MODEL_POST_PATHS:
                     continue
@@ -205,11 +225,14 @@ def test_rc121_review6_one_patient_in_two_spellings_is_one_patient(scope_key):
 
 
 def test_rc121_review6_issuance_dedups_and_authorizes_concurrently(scope_key, monkeypatch):
+    # Amended for the seventh review of PR #79 (R10): one study after the other (stopping at the first refusal), with
+    # the services built once — so at most ONE authorization at a time; still deduplicated.
+    _Backend().install(monkeypatch)
     import app.security.resource_access as ra
     S = _scope_module()
     state = {"now": 0, "max": 0, "calls": []}
 
-    async def authorize(study_id, user):
+    async def authorize(study_id, user, **kwargs):
         state["calls"].append(study_id)
         state["now"] += 1
         state["max"] = max(state["max"], state["now"])
@@ -218,7 +241,7 @@ def test_rc121_review6_issuance_dedups_and_authorizes_concurrently(scope_key, mo
         return P1
     monkeypatch.setattr(ra, "authorize_study_id", authorize)
     asyncio.run(S.issue_for_studies([S1, S1.upper(), S2], USER, run_id="r"))
-    assert sorted(state["calls"]) == sorted([S1, S2]) and state["max"] == 2
+    assert sorted(state["calls"]) == sorted([S1, S2]) and state["max"] == 1
 
 
 # ================================================================== E2, E3, E4

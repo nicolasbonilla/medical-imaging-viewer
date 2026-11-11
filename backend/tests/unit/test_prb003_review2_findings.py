@@ -402,8 +402,8 @@ def test_rc070_n5_the_assistant_never_receives_the_confirmer_name(ms_server, mon
     review = out["dis_assessment"]["segmentation_review"]
     assert "dr_rev" not in json.dumps(out) and "u-1" not in json.dumps(out)
     assert (review["reviewed_by_role"], review["reviewed_at"]) == ("radiologist", "2026-10-24T10:00:00Z")
-    _run(ms_server.generate_ms_report("seg-1"))
-    assert "dr_rev" not in json.dumps(posted)
+    # PR #79 seventh review (R2): the assistant has no report tool any more, so nothing is posted
+    assert not hasattr(ms_server, "generate_ms_report") and "dr_rev" not in json.dumps(posted)
 
 
 @pytest.mark.unit

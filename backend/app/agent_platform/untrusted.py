@@ -45,7 +45,7 @@ from typing import Any, FrozenSet, Mapping, Optional, Tuple
 
 from app.agent_platform.hashing import sha256_text
 from app.agent_platform.registry import RESOURCE_KINDS, Decision, RefusalCode, ToolEntry
-from app.mcp._backend import assistant_view
+from app.mcp._backend import IDENTIFIER_KEYS, UNCONFIRMED_ACTIVITY_KEYS, assistant_view  # noqa: F401
 
 QUOTE = "quote"
 WITHHOLD = "withhold"
@@ -341,7 +341,7 @@ def _resource_value(value: Any, scope: RunScope, invalid: RefusalCode) -> Option
 
 def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode, resource_keys: FrozenSet[str],
                 exempt: Tuple[str, ...] = (), actor_keys: FrozenSet[str] = frozenset(), flags: Optional[list] = None,
-                skip_ids: bool = False) -> Optional[RefusalCode]:
+                skip_ids: bool = False, viewed: bool = False) -> Optional[RefusalCode]:
     """Walk the WHOLE value once (RC-113, RC-114): JSON shape, storage locations, resource ids by value and by
     declared key, and the injection alarm for every string (collected in ``flags``)."""
     if depth > MAX_RESULT_DEPTH:
@@ -350,6 +350,8 @@ def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode
         for k, v in value.items():
             if not isinstance(k, str):
                 return invalid
+            if viewed and (k.replace("_", "").lower() in IDENTIFIER_KEYS or k in UNCONFIRMED_ACTIVITY_KEYS):
+                return invalid           # seventh review (R3, R4): the result did not pass the shared rule at the source
             if not skip_ids and not _ids_in_scope(k, scope):
                 return RefusalCode.OUT_OF_SCOPE_RESOURCE
             # An exemption covers one STRING value only, never a subtree (fourth review, finding 2).
@@ -359,14 +361,14 @@ def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode
                 if bad:
                     return bad
             bad = _scope_walk(v, depth + 1, scope, invalid=invalid, resource_keys=resource_keys, exempt=exempt,
-                              actor_keys=actor_keys, flags=flags, skip_ids=skip_ids or exempt_value)
+                              actor_keys=actor_keys, flags=flags, skip_ids=skip_ids or exempt_value, viewed=viewed)
             if bad:
                 return bad
         return None
     if isinstance(value, list):
         for v in value:
             bad = _scope_walk(v, depth + 1, scope, invalid=invalid, resource_keys=resource_keys, exempt=exempt,
-                              actor_keys=actor_keys, flags=flags, skip_ids=skip_ids)
+                              actor_keys=actor_keys, flags=flags, skip_ids=skip_ids, viewed=viewed)
             if bad:
                 return bad
         return None
@@ -457,10 +459,14 @@ def validate_tool_result(result: Any, *, tool: ToolEntry, scope: RunScope, max_b
         return ToolResultCheck(False, RefusalCode.TOOL_RESULT_INVALID)          # not the declared output type
     bad = _scope_walk(result, 0, scope, invalid=RefusalCode.TOOL_RESULT_INVALID,
                       resource_keys=RESOURCE_KEYS | frozenset(tool.result_resource_keys),
-                      exempt=tool.result_exempt_keys, actor_keys=frozenset(tool.result_actor_keys), flags=flags)
+                      exempt=tool.result_exempt_keys, actor_keys=frozenset(tool.result_actor_keys), flags=flags,
+                      viewed=True)
     if bad:
         return ToolResultCheck(False, bad)
-    cleaned = assistant_view(result)       # the MCP client's own rule: no identifier, no unconfirmed activity flag
+    # Seventh review of PR #79 (R3, R4): the shared rule (no direct identifier, no unconfirmed activity flag) is
+    # applied ONCE, at the source (app/mcp/_backend.py); here the walk above CHECKS it was (a result carrying an
+    # identifier key or a flag is refused) and nothing is viewed or copied a second time.
+    cleaned = result
     try:
         text = json.dumps(cleaned, allow_nan=False, sort_keys=True, ensure_ascii=False)
     except (TypeError, ValueError):

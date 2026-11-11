@@ -487,7 +487,8 @@ def test_rc114_review5_required_parameters_are_validated_from_the_schema():
         module = servers.get(tool.get("server"))
         if module is None:
             continue
-        for p in inspect.signature(getattr(module, name)).parameters.values():
+        for p in [q for q in inspect.signature(getattr(module, name)).parameters.values()
+                  if q.name != "ctx"]:          # the request context is not a model argument (seventh review)
             optional = tool["arguments"][p.name].startswith("optional_")
             assert optional == (p.default is not inspect.Parameter.empty), (name, p.name)
 
