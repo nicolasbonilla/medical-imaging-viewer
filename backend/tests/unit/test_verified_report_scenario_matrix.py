@@ -365,3 +365,163 @@ def test_rc106_the_answer_check_stays_fast():
 
 def test_the_matrix_is_large_enough():
     assert len(CASES) >= 1000 and len(I7_CASES) >= 90
+
+# ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+# Eighth independent review of PR #78 — the device never contradicts itself (I9-I11; DRAFT, PENDING owner approval)
+# ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+import json as _json
+from pathlib import Path as _Path
+
+FIXTURE = _json.loads((_Path(__file__).resolve().parents[1] / "fixtures" / "longitudinal_cases.json")
+                      .read_text(encoding="utf-8"))
+
+
+def _i9_violations(lang):
+    """The code-written draft of every case passes the device's own verifier (frozen v2 + strict rules) with empty
+    comments, the change notice included."""
+    bad = []
+    for c in CASES:
+        findings, volumetry = _request(c)
+        f, v, ni = VR.rendered_request(findings, volumetry)
+        p = BRS.provider_payload(f, v)
+        view = VR.build_view(p.findings, p.volumetry, lang, review_source=BRS._review_source(findings),
+                             not_included=ni)
+        for part in (VR.assemble(view, lang, "", ""), VR.change_notice(view, lang)):
+            if not part:
+                continue
+            res = VR.S.verify(part, None, view, model_text=("", ""))
+            if res["primary"]:
+                bad.append((c, sorted({r for e in res["elements"] for r in VR._rule_ids(e)})))
+                break
+    return bad
+
+
+@pytest.mark.parametrize("lang", VR.LANGUAGES)
+def test_rc103_i9_the_code_written_draft_passes_the_devices_own_verifier(lang):
+    bad = _i9_violations(lang)
+    assert not bad, f"I9 ({lang}): {len(bad)} of {len(CASES)} cases; first: " + "; ".join(
+        f"{c} -> {r}" for c, r in bad[:3])
+
+
+# ── I10: every rule of the model's instructions can be obeyed and pass the check
+def _rule_cases():
+    lesions = {"lesion_analysis": dict(LESION["computed"])}
+    not_eval = {**lesions, "dis_assessment": {"evaluation_status": "not_evaluated"}}
+    evaluated = {**lesions, "dis_assessment": DIS["evaluated_met"]}
+    lng = {**lesions, "longitudinal": LONGITUDINAL["complete"]}
+    abst = {**lesions, "longitudinal": {"abstained": True}}
+    says_dis = "write that dissemination in space was not evaluated" in " ".join(VR.RULES.split())
+    rule3 = "Dissemination in space was not evaluated." if says_dis else "The marking is automatic."
+    return [
+        (1, not_eval, "Contrast-enhanced and T1-weighted images were not provided."),
+        (2, not_eval, "There are {total_count} marked lesions."),
+        (3, not_eval, rule3),
+        (3, evaluated, "The marking was confirmed by a radiologist."),
+        (4, not_eval, "Most lesions are small."),
+        (5, lng, "The software proposed {new_candidates} new change candidates for radiologist review."),
+        (5, abst, "The change must be assessed visually."),
+        (6, not_eval, "This automatic draft is for radiologist review."),
+        (7, not_eval, "Most lesions are small."),
+    ]
+
+
+def test_rc103_i10_a_comment_that_obeys_each_rule_passes_the_check():
+    rules = [int(n) for n in re.findall(r"^(\d+)\. ", VR.RULES, re.M)]
+    cases = _rule_cases()
+    assert sorted(set(n for n, _f, _c in cases)) == rules, "every rule needs a canonical comment"
+    bad = []
+    for n, findings, comment in cases:
+        f, v, ni = VR.rendered_request(findings, None)
+        p = BRS.provider_payload(f, v)
+        view = VR.build_view(p.findings, p.volumetry, "en", not_included=ni)
+        fails = VR.check(view, "en", f"[FINDINGS_COMMENT]\n{comment}\n[IMPRESSION_COMMENT]\nTo be reviewed by a "
+                                     "radiologist.")[1]
+        if fails:
+            bad.append((n, comment, [x["rule"] for x in fails]))
+    assert not bad, f"I10: {bad}"
+
+
+# ── I11: the draft follows the ONE longitudinal rule the review screen follows (shared fixture)
+@pytest.mark.parametrize("case", FIXTURE["cases"], ids=[c["name"] for c in FIXTURE["cases"]])
+def test_rc102_i11_the_draft_follows_the_shared_longitudinal_rule(case):
+    f, v, ni = VR.rendered_request({"longitudinal": case["longitudinal"]}, None)
+    p = BRS.provider_payload(f, v)
+    view = VR.build_view(p.findings, p.volumetry, "en", not_included=ni)
+    lng, exp = view["longitudinal"], case["expected"]
+    computed = not lng.get("abstained")
+    assert computed == exp["computed"], lng
+    if computed:
+        cc = lng["candidates"]
+        assert (cc["new"], cc["enlarged"], cc.get("new_below_review_size")) == (
+            exp["new"], exp["enlarging"], exp["below_size"])
+
+
+# ── finding 6: every template of the code-written draft feeds the RC-065 device-words list
+def test_rc065_every_draft_template_appears_in_the_synthetic_payloads():
+    missing = []
+    for lang in VR.LANGUAGES:
+        out = []
+        for findings, volumetry, source in VR.synthetic_payloads():
+            view = VR.build_view(findings, volumetry, lang, review_source=source)
+            out.append(VR.first_user_message(view, lang))
+            out.append(VR.change_notice(view, lang) or "")
+        text = "\n".join(out)
+        for key, template in VR.T[lang].items():
+            for fragment in re.split(r"\{[^}]*\}", template):
+                fragment = fragment.strip(" .,;:()")
+                if len(fragment) >= 12 and fragment not in text:
+                    missing.append((lang, key, fragment[:60]))
+    assert not missing, missing[:6]
+
+
+# ── finding 3: decide first; the record is read only when a call will happen
+@pytest.mark.parametrize("case", ["nothing_to_comment", "too_little_time"])
+def test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent(case):
+    from app.services.report_payload_guard import PatientRecordUnavailable
+
+    async def unreadable():
+        raise PatientRecordUnavailable("the patient's record could not be read")
+
+    client = _Client()
+    lesion = "not_available" if case == "nothing_to_comment" else "computed"
+    c = {"lesion": lesion, "dis": "not_evaluated", "longitudinal": "absent", "volumetry": "absent",
+         "source": "automatic", "entry": "none"}
+    findings, volumetry = _request(c)
+    kw = {"request_started": VR.now() - 27.0} if case == "too_little_time" else {}
+    result = _run(_service(client, enabled=True).generate_report(template_type="general", findings=findings,
+                                                                 volumetry=volumetry, language="en",
+                                                                 identifiers=unreadable, **kw))
+    assert client.calls == []
+    assert result["verification"]["reason"] in (VR.REASON_NOTHING_TO_COMMENT, VR.REASON_TIME_BUDGET)
+
+
+# ── finding 7: no empty "Impression" heading
+def test_rc102_no_empty_impression_heading():
+    c = {"lesion": "absent", "dis": "absent", "longitudinal": "absent", "volumetry": "present", "source": "manual",
+         "entry": "none"}
+    content = _draft(c)["content"]
+    heading = f"## {S['impression']}"
+    if heading in content:
+        after = content.split(heading, 1)[1].lstrip("\n")
+        assert after and not after.startswith("## "), "an empty Impression section"
+
+
+# ── finding 8: a count in another language's words is still a count (collision words excepted)
+@pytest.mark.parametrize("lang,sentence", [("de", "There are two lesions."), ("es", "Es gibt zwei Läsionen."),
+                                           ("en", "Hay doce lesiones.")])
+def test_rc103_a_count_in_another_languages_words_fails(lang, sentence):
+    view = VR.build_view({"lesion_analysis": dict(LESION["computed"])}, None, lang)
+    fails = VR.check(view, lang, f"[FINDINGS_COMMENT]\n{sentence}\n[IMPRESSION_COMMENT]\nTo be reviewed.")[1]
+    assert "FMT.number_words" in [x["rule"] for x in fails]
+
+
+# ── finding 5: "thinking off" is sent as each model accepts it, and the comment says so
+def test_rc106_thinking_off_is_sent_as_each_model_accepts_it():
+    sonnet = BRS.REPORT_MODELS["claude-sonnet-5-5"]["params"]
+    assert sonnet["thinking"] == {"type": "between_tools"}
+    assert sonnet["output_config"]["effort"] in ("low", "medium", "high")
+    haiku = BRS.REPORT_MODELS["claude-haiku-5-5"]["params"]
+    assert haiku["thinking"] == {"type": "disabled"} and haiku["output_config"]["effort"] in ("low", "medium", "high")
+    import inspect as _inspect
+    assert "between_tools" in _inspect.getsource(BRS).split("REPORT_MODELS: Dict")[0], \
+        "the comment must say what between_tools means"
