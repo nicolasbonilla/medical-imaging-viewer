@@ -41,7 +41,9 @@ def test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinici
     # and the notice says DIS was not evaluated
     assert DIS_STATEMENT not in body["ai_text"]
     assert body["verification"]["interpretive_text"] == "withheld"
-    assert gate.AUTOMATIC_MARKING_NOTICE[language] in body["ai_text"]
+    # (amended with the seventh review of PR #78, finding 7 / I5: the automatic-marking notice only for an automatic marking — this route test's
+    # segmentation has no automatic origin; the scenario matrix checks every source)
+    assert gate.AUTOMATIC_MARKING_NOTICE[language] not in body["ai_text"]
     # the clinician's typed text is untouched: as its own field and quoted in the single text
     fields = body["clinician_entry"]["fields"]
     assert [f["key"] for f in fields] == ["clinical_indication"]

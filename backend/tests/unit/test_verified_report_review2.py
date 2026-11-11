@@ -361,7 +361,9 @@ def test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once(route,
     body = response.json()
     assert body["content"].count(NOT_EVALUATED_PHRASE[lang]) == 1, body["content"]
     from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
-    assert AUTOMATIC_MARKING_NOTICE[lang] in body["content"]
+    # (amended with the seventh review of PR #78, finding 7 / I5: the automatic-marking notice only for an automatic marking — this route test's
+    # segmentation has no automatic origin; the scenario matrix checks every source)
+    assert AUTOMATIC_MARKING_NOTICE[lang] not in body["content"]
 
 
 def test_rc070_f_a_runtime_error_of_the_service_is_not_reported_as_a_missing_key(route, monkeypatch):

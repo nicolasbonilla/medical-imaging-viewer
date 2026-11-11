@@ -56,7 +56,14 @@ class _Client:
     def create(self, **kw):
         self.calls.append(kw)
         if self.delay:
-            time.sleep(self.delay)
+            return self._slow()     # (amended with the seventh review of PR #78, finding 8: ONE async call path — a slow provider is an
+        return self._message()      # async request the deadline cancels; was a blocking time.sleep)
+
+    async def _slow(self):
+        await asyncio.sleep(self.delay)
+        return self._message()
+
+    def _message(self):
         return SimpleNamespace(content=[SimpleNamespace(type="text", text=self.answer)], stop_reason="end_turn",
                                model="claude-sonnet-5-5", usage=SimpleNamespace(input_tokens=2, output_tokens=2))
 
@@ -79,7 +86,8 @@ def test_rc102_r1_dis_evaluated_without_lesion_analysis_gives_a_report():
     view = _view({"dis_assessment": EVALUATED})
     assert view["dis"]["status"] == "evaluated" and view["lesions"]["computed"] is False
     report = VR.assemble(view, "en", "", "")
-    assert "Lesions per MAGNIMS region: not computed." in report and "Lesion count: not computed." in report
+    # (amended with the seventh review of PR #78, I1: without a lesion analysis no lesion line is written, not even "not computed")
+    assert "Lesions per MAGNIMS region" not in report and "Lesion count" not in report
     assert not V.verify(report, None, view)["primary"]
     result = _generate(_service(_Client()), {"dis_assessment": EVALUATED})
     assert result["verification"]["outcome"] == "passed_0"
@@ -106,7 +114,10 @@ def test_rc106_r2_the_client_makes_no_retry_of_its_own(monkeypatch):
     monkeypatch.setitem(sys.modules, "anthropic", module)
     svc = BRS.BrainReportService()
     svc._settings = SimpleNamespace(ANTHROPIC_API_KEY="test-not-a-key")
-    svc._get_client()
+    async def lookup():         # (amended with the seventh review of PR #78, finding 9: a client only on a running loop)
+        return svc._get_client()
+
+    _run(lookup())
     assert module.AsyncAnthropic.call_args.kwargs["max_retries"] == 0
 
 

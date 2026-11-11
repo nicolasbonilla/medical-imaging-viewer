@@ -348,5 +348,20 @@ def test_i8_the_audit_counts_every_model_call_also_after_an_exception(sink, monk
     assert outcomes[0]["details"]["report_outcome"] == "error"
 
 
+def test_rc106_the_answer_check_stays_fast():
+    """REQ-SAFE-019 guard (seventh review of PR #78): checking one 600-character answer takes about 20-40 ms (target
+    under 50 ms on CI hardware); best of 7 must stay under 0.25 s — an order-of-magnitude regression (a backtracking
+    pattern, a huge alternation) fails here, ordinary machine noise does not."""
+    import timeit
+    view = VR.build_view({"lesion_analysis": dict(LESION["computed"]),
+                          "dis_assessment": {"evaluation_status": "not_evaluated"}}, None, "en")
+    sentence = ("Although both regions show small lesions, these are not consistent with demyelination, and treatment "
+                "escalation should not be considered until three of the four regions are reviewed; ")
+    answer = "[FINDINGS_COMMENT]\n" + (sentence * 4)[:600] + "\n[IMPRESSION_COMMENT]\nTo be reviewed by a radiologist."
+    VR.check(view, "en", answer)
+    best = min(timeit.repeat(lambda: VR.check(view, "en", answer), number=1, repeat=7))
+    assert best < 0.25, f"one 600-character answer check took {best * 1000:.0f} ms"
+
+
 def test_the_matrix_is_large_enough():
     assert len(CASES) >= 1000 and len(I7_CASES) >= 90

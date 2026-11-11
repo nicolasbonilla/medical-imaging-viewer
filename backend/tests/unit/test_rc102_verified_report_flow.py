@@ -62,8 +62,12 @@ def test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch(c
     report = VR.assemble(view, lang, "", "")
     res = V.verify(report, None, view)
     assert not res["primary"], res["elements"]
+    # (amended with the seventh review of PR #78, I2: without a DIS block in the request the draft has no DIS line — the route always sends one with
+    # a lesion analysis, so the frozen check's DIS item is required only when the block is there)
     if view["lesions"].get("total_count") is not None:
-        assert not any(res["omissions"].values()), res["omissions"]       # no mandatory item missing
+        omissions = {k: v for k, v in res["omissions"].items()
+                     if not (k == "dis" and view["dis"]["status"] == VR.DIS_NOT_IN_REPORT)}
+        assert not any(omissions.values()), res["omissions"]       # no mandatory item missing
     if view["dis"]["status"] != "evaluated":
         assert not res["hc_unsafe"], res["hc_unsafe"]                     # nothing unsafe for a healthy person
 
@@ -106,7 +110,7 @@ def test_rc102_a_value_not_computed_is_written_not_computed_never_zero():
     assert not re.search(r"(?:marked|volume|distribution): 0\b", report)
     assert view["lesions"]["total_count"] is None and "total_count" not in VR.stated_values(view, "en")
     no_lesions = _view({"longitudinal": {"abstained": True}})
-    assert "Lesion count: not computed." in VR.assemble(no_lesions, "en", "", "")
+    assert "Lesion count" not in VR.assemble(no_lesions, "en", "", "")     # (amended with the seventh review of PR #78, I1)
 
 
 def test_rc102_regions_only_when_a_radiologist_confirmed_them():
@@ -139,6 +143,9 @@ def test_rc102_dissemination_in_space_only_when_evaluated(lang):
             findings["dis_assessment"] = dis
         view = _view(findings, lang=lang)
         report = VR.assemble(view, lang, "", "")
+        if dis is None:     # (amended with the seventh review of PR #78, I2: no DIS block, no DIS line)
+            assert view["dis"]["status"] == VR.DIS_NOT_IN_REPORT and NOT_EVALUATED_LINE[lang] not in report
+            continue
         assert view["dis"]["status"] == "not evaluated" and NOT_EVALUATED_LINE[lang] in report
         assert VR.T[lang]["dis_ev"].split("{k}")[0] not in report
     met = VR.assemble(_view({"lesion_analysis": _la(7, REGIONS), "dis_assessment": EVALUATED}, lang=lang), lang, "", "")

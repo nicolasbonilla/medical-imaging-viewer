@@ -625,7 +625,9 @@ def test_rc072_r4_the_notice_does_not_claim_the_draft_is_not_software_text(e2e):
     assert "comes from the software" not in content
     assert content.count("Dissemination in space: not evaluated") == 1
     from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
-    assert AUTOMATIC_MARKING_NOTICE["en"] in content
+    # (amended with the seventh review of PR #78, finding 7 / I5: the automatic-marking notice only for an automatic marking — this route test's
+    # segmentation has no automatic origin; the scenario matrix checks every source)
+    assert AUTOMATIC_MARKING_NOTICE["en"] not in content
 
 
 @pytest.mark.unit

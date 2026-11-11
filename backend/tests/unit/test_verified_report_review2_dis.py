@@ -93,7 +93,7 @@ def test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused(lang, sent
 @pytest.mark.parametrize("lang", VR.LANGUAGES)
 def test_rc103_k_the_code_written_not_evaluated_sentence_still_passes(lang):
     from app.services.dis_review_gate import NOT_EVALUATED_LINE
-    view = _view(None, lang)
+    view = _view({"evaluation_status": "not_evaluated"}, lang)     # (amended with the seventh review of PR #78, I2: the DIS block present)
     report = VR.assemble(view, lang, "", "")
     assert NOT_EVALUATED_LINE[lang] in report and not V.verify(report, None, view)["primary"]
     _assembled, fails = VR.check(view, lang, _answer(NOT_EVALUATED_LINE[lang], "findings"))

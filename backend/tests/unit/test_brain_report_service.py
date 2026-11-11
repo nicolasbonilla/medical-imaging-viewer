@@ -16,6 +16,8 @@ Requirement traceability:
     prompt builder and templates (kept as the benchmark's arm A0 reference) are unchanged.
 """
 
+import asyncio
+
 import pytest
 from datetime import date
 from unittest.mock import MagicMock, patch, AsyncMock
@@ -124,9 +126,15 @@ class TestBrainReportService:
         self.service._settings.ANTHROPIC_API_KEY = "valid-key"
         self.service._client = None
 
+        async def lookups():        # (amended with the seventh review of PR #78, finding 9: a client only on a running loop)
+            return self.service._get_client(), self.service._get_client()
+
         with patch.dict("sys.modules", {"anthropic": mock_module}):
-            client1 = self.service._get_client()
-            client2 = self.service._get_client()
+            loop = asyncio.new_event_loop()
+            try:
+                client1, client2 = loop.run_until_complete(lookups())
+            finally:
+                loop.close()
             assert client1 is client2
             mock_module.AsyncAnthropic.assert_called_once()
 
@@ -290,7 +298,7 @@ class TestBrainReportService:
                                                         findings=None, language="en")
         from app.services.brain_report_service import REPORT_DISCLAIMERS
         assert result["content"].startswith(REPORT_DISCLAIMERS["en"])     # RC-006: disclaimer unconditionally
-        assert "Lesion count: not computed." in result["content"]
+        assert "Lesion count" not in result["content"]     # (amended with the seventh review of PR #78, I1: no block that was not requested)
         assert result["verification"]["reason"] == "no_measurement_for_comment"
         mock_client.messages.create.assert_not_called()
 

@@ -546,8 +546,11 @@ def test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated(block)
 def test_rc070_report_prompt_with_lesions_and_no_evaluated_dis_forbids_deriving_dis():
     from app.services import verified_report as VR
     from app.services.dis_review_gate import NOT_EVALUATED_LINE
+    # (amended with the seventh review of PR #78, I2: the route always sends the DIS block with a lesion analysis —
+    # here not evaluated; without any block the draft has no DIS line)
     prompt = _prompt({"lesion_analysis": {"total_count": 3, "regions": {
-        "Periventricular": {"lesion_count": 2, "total_volume_mm3": 30.0, "total_volume_ml": 0.03}}}})
+        "Periventricular": {"lesion_count": 2, "total_volume_mm3": 30.0, "total_volume_ml": 0.03}}},
+        "dis_assessment": {"evaluation_status": "not_evaluated"}})
     assert NOT_EVALUATED_LINE["en"] in prompt and "periventricular" not in prompt.lower()
     assert "write that dissemination in space was not evaluated and say nothing else about it" in " ".join(VR.SYSTEM_PROMPT.split())
 
@@ -715,8 +718,12 @@ def test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language(r
                                      ANTHROPIC_API_KEY="")
     loop = asyncio.new_event_loop()     # not asyncio.run: it would unset the current loop of later tests
     try:
-        result = loop.run_until_complete(real.generate_report(findings={"lesion_analysis": {"total_count": 2}},
-                                                              language=lang))
+        # (amended with the seventh review of PR #78, I2/I5: the DIS block not evaluated, from an automatic marking — the route always sends one)
+        result = loop.run_until_complete(real.generate_report(
+            findings={"lesion_analysis": {"total_count": 2},
+                      "dis_assessment": {"evaluation_status": "not_evaluated",
+                                         "segmentation_review": {"source": "ai_draft"}}},
+            language=lang))
     finally:
         loop.close()
     text = result["content"]

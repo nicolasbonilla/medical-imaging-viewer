@@ -717,7 +717,9 @@ def rendered_request(findings: Any, volumetry: Any) -> Tuple[Dict[str, Any], Opt
         if isinstance(sub.get("region_details"), dict):
             sub["region_details"] = {name: ({"present": info.get("present")} if isinstance(info, dict) else info)
                                      for name, info in sub["region_details"].items()}
-        out["dis_assessment"] = sub
+        # seventh review of PR #78, I2: a DIS block present in the request is never dropped — without any rendered key
+        # it is the gate's "not evaluated" state (never "met"), so the draft states it
+        out["dis_assessment"] = sub or {"evaluation_status": "not_evaluated"}
     if isinstance(f.get("longitudinal"), dict) and f["longitudinal"]:
         out["longitudinal"] = f["longitudinal"]
     vol = None

@@ -78,6 +78,7 @@ TESTS = [
     "tests/unit/test_verified_report_review4.py",       # fourth independent review of PR #78, Q1-Q8
     "tests/unit/test_verified_report_review5.py",       # fifth independent review of PR #78, V1-V10
     "tests/unit/test_verified_report_review6.py",       # sixth independent review of PR #78, W1-W7
+    "tests/unit/test_verified_report_scenario_matrix.py",   # seventh review: invariants I1-I8 over 1128 cases
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -116,7 +117,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F8_t1_next_to_spinal_cord": ([(VR, '        "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|brain volumetry",',
                                     '        "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|spinal cord imaging|brain volumetry",')],
                                   "a limitation sentence the route's backstop reads as a statement on DIS"),
-    "F9_first_request_not_checked": ([(BRS, "                assert_prompt_carries_no_identifier(sent_text, identifiers)\n", "                pass\n")],
+    "F9_first_request_not_checked": ([(BRS, "                assert_prompt_carries_no_identifier(sent_text, ids)\n", "                pass\n")],
                                      "the first request is sent without the identifier check (RC-065)"),
     # ── independent review of PR #78 (R1-R10) ──
     "F10_dis_only_crashes": ([(VR, '    if la is not None and evaluated and la.get("regions_confirmed") is not False and regs_in:\n',
@@ -236,8 +237,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                  "the default model is the one retiring on 2026-11-30 (the defect as found)"),
     "M3_retirement_date_ignored": ([(BRS, "    return retires is None or (today or date.today()) < date.fromisoformat(retires)\n", "    return True\n")],
                                    "an allow-listed model past its retirement date is still called"),
-    "M4_sampling_parameter_sent": ([(BRS, "                              extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))",
-                                     "                              extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)), temperature=0.0)")],
+    "M4_sampling_parameter_sent": ([(BRS, "extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))", "extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)), temperature=0.0)")],
                                    "a sampling parameter is sent (400 on the current models)"),
     "M5_answer_read_by_position": ([(BRS, '    text = "".join(_block_field(b, "text") or "" for b in blocks\n                   if _block_field(b, "type") == "text" and isinstance(_block_field(b, "text"), str))\n',
                                      '    text = (_block_field(blocks[0], "text") or "") if blocks else ""\n')],
@@ -253,8 +253,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M10_sdk_retry_back": ([(BRS, "anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=",
                              "anthropic.AsyncAnthropic(api_key=api_key, max_retries=1, timeout=")],
                            "R2: the SDK retries with a fresh full timeout (about twice the 25 s budget)"),
-    "M11_wait_not_bounded": ([(BRS, "                    message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))\n",
-                               "                    message = await create(**kwargs)\n")],
+    "M11_wait_not_bounded": ([(BRS, "                    message = await asyncio.wait_for(message, timeout=float(timeout_s))\n", "                    message = await message\n")],
                              "R2: the wait for the provider is not bounded by the remaining budget"),
     "M12_retired_table_decides": ([(BRS, "    if entry is None:\n        return False\n    retires = entry.get(\"retires_on\")\n",
                                     "    if entry is None or model_id in RETIRED_OR_RETIRING_MODELS:\n        return False\n    retires = entry.get(\"retires_on\")\n")],
@@ -269,9 +268,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M13_sync_client_back": ([(BRS, "anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=",
                                "anthropic.Anthropic(api_key=api_key, max_retries=0, timeout=")],
                              "T3: the blocking client again (a request outlives the time budget in a worker thread)"),
-    "M14_request_not_cancelled": ([(BRS, "                    message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))\n",
-                                    "                    message = await asyncio.wait_for(asyncio.shield(create(**kwargs)), "
-                                    "timeout=float(timeout_s))\n")],
+    "M14_request_not_cancelled": ([(BRS, "                    message = await asyncio.wait_for(message, timeout=float(timeout_s))\n", "                    message = await asyncio.wait_for(asyncio.shield(message), timeout=float(timeout_s))\n")],
                                   "T3: the deadline ends the wait but the request keeps running (not cancelled)"),
     # ── fourth independent review of PR #78 (Q1-Q7) ──
     "C25_empty_comment_allowed": ([(VR, "    if not (_HAS_A_LETTER.search(fc) and _HAS_A_LETTER.search(ic)):\n", "    if False:\n")],
@@ -287,7 +284,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M15_not_configured_said_failed": ([(VR, "    REASON_NOT_CONFIGURED: \"not_configured\",\n",
                                          "    REASON_NOT_CONFIGURED: \"unavailable\",\n")],
                                        "Q4: no provider key: the note says the AI service failed"),
-    "M16_wrapped_async_not_awaited": ([(BRS, "                if inspect.isawaitable(message):\n", "                if False:\n")],
+    "M16_wrapped_async_not_awaited": ([(BRS, "                if inspect.isawaitable(message):      # the request", "                if False:      # the request")],
                                       "Q5: an async create behind a plain wrapper is never awaited"),
     "M17_wiring_fault_read_as_answer": ([(BRS, "    if not isinstance(blocks, (list, tuple)):\n        raise ProviderWiringFault(",
                                           "    if False:\n        raise ProviderWiringFault(")],
@@ -300,7 +297,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "MEASUREMENT_FINDING_KEYS = frozenset({\"lesion_analysis\", \"dis_assessment\", \"longitudinal\"})")],
                                  "Q7: a second literal list of the blocks the report writes"),
     # ── RC-064: only what is rendered is sent and validated (second review, C, D, H) ──
-    "P1_unrendered_fields_validated": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers if allowed else None)\n", "            payload = provider_payload(findings, volumetry, identifiers if allowed else None)\n")],
+    "P1_unrendered_fields_validated": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, ids)\n", "            payload = provider_payload(findings, volumetry, ids)\n")],
                                        "C: a bad value in a field the report does not render refuses the whole report"),
     "P2_unrenderable_request_accepted": ([(RT, "    if not verified_report.renderable(request.findings, request.volumetry):\n",
                                            "    if not (any(request.findings.get(k) for k in (\"lesion_analysis\", \"dis_assessment\", \"longitudinal\", "
@@ -322,7 +319,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── fifth independent review of PR #78 (V1-V10) ──
     "C29_number_words_allowed": ([(VR, '    if number_words(fc + "\\n" + ic, lang):\n', "    if False:\n")],
                                  "V1: a count written in words (\"Twelve lesions\") passes the check"),
-    "C30_german_number_words_missed": ([(VR, '"null|eins|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn|elf|zwolf|', '"null|eins|')],
+    "C30_german_number_words_missed": ([(VR, '"zwei", "drei", "vier", "funf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwolf",\n', '"elf", "zwolf",\n')],
                                        "V1: German number words (\"zwei neue Kandidaten\") pass the check"),
     "L5_candidates_from_status_counts": ([(VR, '    if isinstance(cc, dict):\n        return _count(cc.get("new")), _count(cc.get("enlarging"))\n',
                                            '    if False:\n        return _count(cc.get("new")), _count(cc.get("enlarging"))\n')],
@@ -347,21 +344,20 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "V4: the application shutdown does not close the shared client"),
     "K3_record_read_when_nothing_is_sent": ([(RT, '    if not hasattr(service, "interpretive_text_gate") or service.interpretive_text_gate()[0] is not False:\n', "    if True:\n")],
                                             "V5: kill switch off, the route still needs the patient record (503)"),
-    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "rendered_volumetry, identifiers if allowed else None)\n", "rendered_volumetry, identifiers)\n")],
+    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            ids = None\n            if allowed:\n", "            ids = identifiers if isinstance(identifiers, PatientIdentifiers) else None\n            if allowed:\n")],
                                                      "V5: provider-only refusals apply when nothing is sent"),
-    "P7_identifiers_not_required_when_sending": ([(BRS, "            if allowed and not isinstance(identifiers, PatientIdentifiers):\n", "            if False:\n")],
+    "P7_identifiers_not_required_when_sending": ([(BRS, "                if not isinstance(ids, PatientIdentifiers):\n", "                if False:\n")],
                                                  "V5: a request is sent without the patient's identifiers"),
     "F24_limitations_ignore_drawn_labels": ([(VR, "    dropped = ({0} if entry else set()) | set(drawn) |", "    dropped = ({0} if entry else set()) |")],
                                             "V6: contrast-enhanced and T1-weighted imaging listed as not available although labels were drawn on them"),
     "C31_check_rebuilds_the_combination": ([(VR, "    res = S.verify(assembled, None, view, model_text=(fc, ic))\n",
                                              "    res = V.verify(assembled, None, view)\n    res = {**res, \"elements\": list(res[\"elements\"]) + S.comment_elements(fc, view) + S.comment_elements(ic, view), \"headings\": S.heading_lines(fc) + S.heading_lines(ic)}\n")],
                                            "V7: check() rebuilds the combination itself (another path than the property tests)"),
-    "D3_service_notice_missing": ([(BRS, '        if dis_evaluation == "not_evaluated":\n', "        if False:\n")],
+    "D3_service_notice_missing": ([(BRS, '            if dis_evaluation == "not_evaluated" and _review_source(findings) in AUTOMATIC_REVIEW_SOURCES:\n', "            if False:\n")],
                                   "V8: the draft without an evaluated DIS has no notice on automatic marking"),
     "D4_dis_evaluation_not_typed": ([(BRS, '            "dis_evaluation": dis_evaluation,\n', '            "dis_evaluation": None,\n')],
                                     "V8: the response does not say whether DIS was evaluated"),
-    "F25_dis_line_without_lesion_findings": ([(VR, '    elif la is not None:\n        view["dis"] = {"status": "not evaluated",',
-                                               '    elif True:\n        view["dis"] = {"status": "not evaluated",')],
+    "F25_dis_line_without_lesion_findings": ([(VR, "    else:\n        # no DIS block in the request", "    elif True:\n        view[\"dis\"] = {\"status\": \"not evaluated\"}\n    else:\n        # no DIS block in the request")],
                                              "V9: a volumetry-only or longitudinal-only draft states \"DIS not evaluated\""),
     "C32_criterion_counted_twice": ([(STR, " and len(between.split()) <= DIS_WORDS_APART and m.span() not in spans:\n",
                                       " and len(between.split()) <= DIS_WORDS_APART:\n")],
@@ -370,7 +366,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "L6_null_count_notice_as_zero": ([(VR, '        return texts["not_computed"] if lng.get("reason") == "change candidates not computed" else texts["abstained"]\n',
                                        '        return texts["candidates"].format(total=0, new=0, enl=0) if lng.get("reason") == "change candidates not computed" else texts["abstained"]\n')],
                                      "W1: a null or missing count is stated as 0 candidates in the notice"),
-    "L7_notice_not_from_the_record": ([(BRS, '            "change_notice": verified_report.change_notice(view, lang),\n', '            "change_notice": None,\n')],
+    "L7_notice_not_from_the_record": ([(BRS, "            change = verified_report.change_notice(view, lang)\n", "            change = None\n")],
                                       "W1: the draft has no change notice from its own record"),
     "F26_any_entry_names_the_indication": ([(VR, '    entry = (view.get("clinician_entry") or {}).get("clinical_indication") is True   # sixth review, W2\n',
                                              '    entry = bool(view.get("clinician_entry"))   # sixth review, W2\n')],
@@ -378,21 +374,45 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "P8_one_flag_for_every_field": ([(GRD, '        out["clinician_entry"] = entered\n',
                                       '        out["clinician_entry"] = {k: True for k in FREE_TEXT_FIELDS}\n')],
                                     "W2: any typed field flags every field (the indication too)"),
-    "C33_size_and_unit_counts_missed": ([(VR, "        if cardinal and k <= 2 and _SIZE_OR_UNIT.fullmatch(nxt.group(0)):\n", "        if False:\n")],
+    "C33_size_and_unit_counts_missed": ([(VR, "        if cardinal and k <= 2 and size.fullmatch(nxt.group(0)):\n", "        if False:\n")],
                                         "W3: \"four small, ten medium\" and \"seven point two millimeters\" pass the check"),
-    "C34_count_heads_missed": ([(VR, "            if _COUNT_HEAD.fullmatch(prev.group(0)):\n", "            if False:\n")],
+    "C34_count_heads_missed": ([(VR, "            if prev.group(0) in _COUNT_HEADS[lang]:\n", "            if False:\n")],
                                "W3: \"the total count of lesions is twenty-five\" passes the check"),
-    "C35_every_number_word_fails": ([(VR, "if word.fullmatch(tok.group(0)) and _counts(fold, tokens, i)]", "if word.fullmatch(tok.group(0))]")],
+    "C35_every_number_word_fails": ([(VR, "if tok.group(0) in words and _counts(fold, tokens, i, lang)]", "if tok.group(0) in words]")],
                                     "W3: the over-broad rule again (\"both hemispheres\", \"a single FLAIR sequence\" fail)"),
     "C36_quantifier_window_unbounded": ([(VR, "_QUANTIFIER_WINDOW = 2 ", "_QUANTIFIER_WINDOW = 4 ")],
                                         "W3: \"both small and large lesions\" read as a count"),
     "C37_hyphenated_word_counted_twice": ([(VR, '        k += 0 if gap == "-" else 1', "        k += 1")],
                                           "W3: \"a single medium-sized lesion\" passes the check"),
+    # ── seventh independent review of PR #78: the clinical invariants of the scenario matrix ──
+    "D5_dis_line_tied_to_lesions": ([(VR, "    elif isinstance(dis_block, dict):\n        # seventh review of PR #78, finding 1 (I2)",
+                                      "    elif la is not None:\n        # seventh review of PR #78, finding 1 (I2)")],
+                                    "I2: an unevaluated DIS without a lesion analysis is silently dropped"),
+    "F27_lesion_block_always": ([(VR, "    lesions_in = les.get(\"computed\") is True\n", "    lesions_in = True\n")],
+                                "I1: a volumetry-only draft writes \"lesion count: not computed\" and lesion impressions"),
+    "A6_not_sent_after_calls": ([(BRS, "        if called:\n            # seventh review", "        if False:\n            # seventh review")],
+                                "I8: an exception after model calls is audited as not sent, 0 attempts"),
+    "L8_small_new_lesions_dropped": ([(VR, '            if isinstance(lng.get("change_candidates"), dict) and sc_new is not None and sc_new > cands["new"]:\n',
+                                       "            if False:\n")],
+                                     "I4: new lesions below the review size vanish from the draft"),
+    "C39_german_compounds_missing": ([(VR, '    words += [u + "und" + t for u in units for t in tens]\n', "")],
+                                     "finding 5: \"einundzwanzig Läsionen\" passes the check"),
+    "K4_all_not_available_commented": ([(VR, '    lesion_value = les.get("computed") and (', '    lesion_value = les.get("computed") or (')],
+                                       "I7: the model is asked to comment on a lesion analysis without any value"),
+    "D6_marking_notice_for_any_source": ([(BRS, "            if dis_evaluation == \"not_evaluated\" and _review_source(findings) in AUTOMATIC_REVIEW_SOURCES:\n",
+                                           "            if dis_evaluation == \"not_evaluated\":\n")],
+                                         "I5: the automatic-marking notice on a manual segmentation"),
+    "M22_record_read_when_nothing_is_sent": ([(BRS, "            if allowed:\n                # seventh review of PR #78, finding 8",
+                                               "            if True:\n                # seventh review of PR #78, finding 8")],
+                                             "finding 8: the patient record is read (and its failure refuses) with nothing to send"),
 }
 
 # Fifth review of PR #78, V8: the route's DIS notice and its `stated` fact were removed — the report service owns the
 # statement and the notice (controls D3, D4, F25 and the review5 tests); these two mutations have no code left to act on.
 RETIRED_WITH_THE_ROUTE_NOTICE = {name: M.pop(name)[1] for name in ("D1_notice_repeats_the_line", "D2_notice_by_substring")}
+# Seventh review of PR #78, finding 8: the route asks no gate any more (the service's one gate reads the record lazily);
+# the same defect is now M22.
+RETIRED_WITH_THE_LAZY_READER = {name: M.pop(name)[1] for name in ("K3_record_read_when_nothing_is_sent",)}
 
 
 def offline_env():

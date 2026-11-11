@@ -100,7 +100,7 @@ def skip_generic(*names):
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-064: structured payload only ──
-    "P1_payload_bypassed": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers if allowed else None)\n",
+    "P1_payload_bypassed": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, ids)\n",
                               "            payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, "
                               "\"unlisted\": {}})()\n")],
                             "the request's findings go to the prompt builder as received"),
@@ -179,7 +179,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                                 '    return f"{value:.1f}%"\n')],
                                               "'not available%' in the prompt"),
     # ── RC-065: detection-only tripwire and fail closed ──
-    "T1_tripwire_removed": ([(BRS, "                assert_prompt_carries_no_identifier(sent_text, identifiers)\n", "")],
+    "T1_tripwire_removed": ([(BRS, "                assert_prompt_carries_no_identifier(sent_text, ids)\n", "")],
                             "no check of the final prompt"),
     "T2_name_check_removed": ([(G, "            if s in unique or (len(s) >= 4 and any(s in w for w in unique if w not in safe_words)):\n",
                                 "            if False:\n")],
@@ -254,7 +254,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F4_incomplete_record_accepted": ([(G, "        if not (mrn and given and family and isinstance(birth, date)):\n",
                                         "        if not (mrn or given or family):\n")],
                                       "a record without record number, name or birth date accepted"),
-    "F5_service_sends_without_identifiers": ([(BRS, "            if allowed and not isinstance(identifiers, PatientIdentifiers):\n", "            if False:\n")],
+    "F5_service_sends_without_identifiers": ([(BRS, "                if not isinstance(ids, PatientIdentifiers):\n", "                if False:\n")],
                                              "the service builds and sends a prompt without the patient's identifiers"),
     "F6_assistant_omits_segmentation": ([(MCPS, '            "segmentation_id": segmentation_id,\n', "")],
                                         "the assistant's report tool sends no segmentation (every draft refused)"),
