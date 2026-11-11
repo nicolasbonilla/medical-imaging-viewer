@@ -81,10 +81,12 @@ from app.core.security.validators import (
 # below still asserts that the validator raises the correct *Detected exception
 # for each adversarial payload.  (The broken audit-enum reference is reported
 # separately as a production finding.)
+#
+# PRB-032 (2026-11-11): the missing members were added to AuditEventType, so the real enum is used again; only the
+# logger is isolated. test_validators_audit_events.py pins every member the validators reference.
 @pytest.fixture(autouse=True)
 def _isolate_audit_side_effects(monkeypatch):
     monkeypatch.setattr(validators_module, "audit_logger", MagicMock())
-    monkeypatch.setattr(validators_module, "AuditEventType", MagicMock())
 
 
 # =============================================================================
