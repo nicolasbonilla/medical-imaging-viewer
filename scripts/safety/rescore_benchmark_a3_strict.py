@@ -61,6 +61,7 @@ def main(argv=None):
     sys.path[:0] = [str(Path(a.bench_root)), str(BACKEND)]
     from research.agents_benchmark import arms as A          # noqa: E402  (benchmark code at f3c1976)
     from app.services import report_claim_strict as S         # noqa: E402  (the product's stricter rules)
+    from app.services import verified_report as VR            # noqa: E402  (its format rules, fourth review)
 
     man = json.loads((work / "records" / "manifest.json").read_text(encoding="utf-8"))
     pilot = set(man["subsets"]["pilot"])
@@ -99,9 +100,16 @@ def main(argv=None):
                     m = A._SLOT.search(att["text"] or "")
                     strict = []
                     if m:
-                        fc, ic = m.group(1).strip(), m.group(2).strip()
+                        # (fourth review of PR #78: the comments read with the shared format-character rule, Q6; the
+                        # empty-comment and raw-template-token rules, Q1 and Q2)
+                        fc = VR.without_format_characters(m.group(1)).strip()
+                        ic = VR.without_format_characters(m.group(2)).strip()
+                        if not (VR._HAS_A_LETTER.search(fc) and VR._HAS_A_LETTER.search(ic)):
+                            strict.append({"kind": "empty_comment", "unit": (fc or ic or "")[:80]})
                         for k, v in vals.items():
                             fc, ic = fc.replace("{" + k + "}", v), ic.replace("{" + k + "}", v)
+                        if VR._TEMPLATE_TOKEN.search(fc + "\n" + ic):
+                            strict.append({"kind": "template_token", "unit": (fc + " | " + ic)[:180]})
                         if S.heading_lines(fc) or S.heading_lines(ic):
                             strict.append({"kind": "heading", "unit": (S.heading_lines(fc) + S.heading_lines(ic))[0]})
                         strict += S.comment_elements(fc, view) + S.comment_elements(ic, view)   # A, B and K (the record's DIS state)

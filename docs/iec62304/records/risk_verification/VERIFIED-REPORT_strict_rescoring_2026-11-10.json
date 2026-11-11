@@ -14,7 +14,7 @@
   "recorded_vs_recomputed_v2_note": "verdicts (pass / fail) agree for every answer; where the lists differ they hold the same failures in another order (the benchmark's placeholder check iterates a set, so the order of its messages varies between runs; see 'recomputation_counts')",
   "superset_violations": 0,
   "recomputation_counts": {
-    "recomputed_v2_same_failures_other_order": 129
+    "recomputed_v2_same_failures_other_order": 138
   },
   "reading": "now_flagged = a delivered draft whose passing answer the product check flags; with the last allowed answer (passed_2) it would now be blocked for certain, otherwise the loop would ask again and the new answer is unknown offline: blocked after the change lies between the lower and the upper bound.",
   "summary_per_model_and_language": [
