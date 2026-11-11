@@ -77,6 +77,7 @@ TESTS = [
     "tests/unit/test_verified_report_review3.py",       # third independent review of PR #78, T1-T6
     "tests/unit/test_verified_report_review4.py",       # fourth independent review of PR #78, Q1-Q8
     "tests/unit/test_verified_report_review5.py",       # fifth independent review of PR #78, V1-V10
+    "tests/unit/test_verified_report_review6.py",       # sixth independent review of PR #78, W1-W7
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -223,14 +224,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "A6_refusal_not_audited": ([(BRS, "            audit.not_sent(e)\n            raise\n", "            raise\n")],
                                "R7: a draft refused by a privacy check (or failed) before any model call leaves no audit record"),
     # ── RC-105: the kill switch ──
-    "K1_kill_switch_ignored": ([(BRS, '        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:\n            return verified_report.REASON_OFF\n',
-                                 "        if False:\n            return verified_report.REASON_OFF\n")],
+    "K1_kill_switch_ignored": ([(BRS, '        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:\n            return False, verified_report.REASON_OFF\n', "        if False:\n            return False, verified_report.REASON_OFF\n")],
                                "REPORT_LLM_ENABLED=false still calls the model"),
     "K2_kill_switch_setting_removed": ([(CFG, "    REPORT_LLM_ENABLED: bool = Field(default=True)\n", "")],
                                        "the environment cannot switch the model off"),
     # ── RC-106: the model ──
-    "M1_allow_list_bypassed": ([(BRS, "        if not report_model_allowed(model_id):\n            return verified_report.REASON_MODEL_NOT_ALLOWED\n",
-                                 "        if model_id is None:\n            return verified_report.REASON_MODEL_NOT_ALLOWED\n")],
+    "M1_allow_list_bypassed": ([(BRS, "        if not report_model_allowed(getattr(self._settings, \"CLAUDE_MODEL\", None)):\n", "        if getattr(self._settings, \"CLAUDE_MODEL\", None) is None:\n")],
                                "any configured model id is called"),
     "M2_retiring_default_back": ([(CFG, '    CLAUDE_MODEL: str = Field(default="claude-sonnet-5-5")\n',
                                    '    CLAUDE_MODEL: str = Field(default="claude-sonnet-4-5-20250929")\n')],
@@ -301,8 +300,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "MEASUREMENT_FINDING_KEYS = frozenset({\"lesion_analysis\", \"dis_assessment\", \"longitudinal\"})")],
                                  "Q7: a second literal list of the blocks the report writes"),
     # ── RC-064: only what is rendered is sent and validated (second review, C, D, H) ──
-    "P1_unrendered_fields_validated": ([(BRS, "                payload_ = provider_payload(rendered_findings, rendered_volumetry, ids)\n",
-                                         "                payload_ = provider_payload(findings, volumetry, ids)\n")],
+    "P1_unrendered_fields_validated": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers if allowed else None)\n", "            payload = provider_payload(findings, volumetry, identifiers if allowed else None)\n")],
                                        "C: a bad value in a field the report does not render refuses the whole report"),
     "P2_unrenderable_request_accepted": ([(RT, "    if not verified_report.renderable(request.findings, request.volumetry):\n",
                                            "    if not (any(request.findings.get(k) for k in (\"lesion_analysis\", \"dis_assessment\", \"longitudinal\", "
@@ -322,10 +320,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                      "    parts = [DIS_NOT_EVALUATED_NOTICE[lang]]\n")],
                                    "F: the route's notice repeats the \"not evaluated\" statement the draft already has"),
     # ── fifth independent review of PR #78 (V1-V10) ──
-    "C29_number_words_allowed": ([(VR, '    if number_words(fc + "\\n" + ic):\n', "    if False:\n")],
+    "C29_number_words_allowed": ([(VR, '    if number_words(fc + "\\n" + ic, lang):\n', "    if False:\n")],
                                  "V1: a count written in words (\"Twelve lesions\") passes the check"),
-    "C30_german_number_words_missed": ([(VR, '    r"eins|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn|elf|zwolf|\\w+zehn|zwanzig|dreissig|\\w+zig",\n',
-                                         '    r"eins",\n')],
+    "C30_german_number_words_missed": ([(VR, '"null|eins|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn|elf|zwolf|', '"null|eins|')],
                                        "V1: German number words (\"zwei neue Kandidaten\") pass the check"),
     "L5_candidates_from_status_counts": ([(VR, '    if isinstance(cc, dict):\n        return _count(cc.get("new")), _count(cc.get("enlarging"))\n',
                                            '    if False:\n        return _count(cc.get("new")), _count(cc.get("enlarging"))\n')],
@@ -339,7 +336,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "A5_check_error_attempt_not_audited": ([(VR, "            attempts.append(record)\n            on_attempt(record)\n            return measurements_only(view, lang, REASON_INTERNAL_CHECK",
                                              "            attempts.append(record)\n            return measurements_only(view, lang, REASON_INTERNAL_CHECK")],
                                            "V3: the answered attempt of an internal check error is not audited"),
-    "M18_client_per_request": ([(BRS, "    client = _SHARED_CLIENTS.get(api_key)\n", "    client = None\n")],
+    "M18_client_per_request": ([(BRS, "    client = cache.get(api_key)\n", "    client = None\n")],
                                "V4: a new client and connection pool on every request"),
     "M19_client_not_closed": ([(BRS, "            done = close()\n", "            done = None\n")],
                               "V4: the shared client is never closed"),
@@ -348,14 +345,11 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M21_not_closed_at_shutdown": ([(MAIN, "        from app.services.brain_report_service import close_report_clients\n        await close_report_clients()\n",
                                      "        pass\n")],
                                    "V4: the application shutdown does not close the shared client"),
-    "K3_record_read_when_nothing_is_sent": ([(BRS, '        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:\n            return False\n',
-                                              "        if False:\n            return False\n")],
+    "K3_record_read_when_nothing_is_sent": ([(RT, '    if not hasattr(service, "interpretive_text_gate") or service.interpretive_text_gate()[0] is not False:\n', "    if True:\n")],
                                             "V5: kill switch off, the route still needs the patient record (503)"),
-    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            payload, view = record_of(None)\n",
-                                                       "            payload, view = record_of(identifiers)\n")],
+    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "rendered_volumetry, identifiers if allowed else None)\n", "rendered_volumetry, identifiers)\n")],
                                                      "V5: provider-only refusals apply when nothing is sent"),
-    "P7_identifiers_not_required_when_sending": ([(BRS, "                if not isinstance(identifiers, PatientIdentifiers):\n                    raise PatientRecordUnavailable(\"the patient's identifiers were not supplied\")\n                payload, view = record_of(identifiers)\n",
-                                                   "                payload, view = record_of(identifiers)\n")],
+    "P7_identifiers_not_required_when_sending": ([(BRS, "            if allowed and not isinstance(identifiers, PatientIdentifiers):\n", "            if False:\n")],
                                                  "V5: a request is sent without the patient's identifiers"),
     "F24_limitations_ignore_drawn_labels": ([(VR, "    dropped = ({0} if entry else set()) | set(drawn) |", "    dropped = ({0} if entry else set()) |")],
                                             "V6: contrast-enhanced and T1-weighted imaging listed as not available although labels were drawn on them"),
@@ -372,6 +366,28 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "C32_criterion_counted_twice": ([(STR, " and len(between.split()) <= DIS_WORDS_APART and m.span() not in spans:\n",
                                       " and len(between.split()) <= DIS_WORDS_APART:\n")],
                                     "V10: a criterion word near two DIS names is counted twice"),
+    # ── sixth independent review of PR #78 (W1-W3) ──
+    "L6_null_count_notice_as_zero": ([(VR, '        return texts["not_computed"] if lng.get("reason") == "change candidates not computed" else texts["abstained"]\n',
+                                       '        return texts["candidates"].format(total=0, new=0, enl=0) if lng.get("reason") == "change candidates not computed" else texts["abstained"]\n')],
+                                     "W1: a null or missing count is stated as 0 candidates in the notice"),
+    "L7_notice_not_from_the_record": ([(BRS, '            "change_notice": verified_report.change_notice(view, lang),\n', '            "change_notice": None,\n')],
+                                      "W1: the draft has no change notice from its own record"),
+    "F26_any_entry_names_the_indication": ([(VR, '    entry = (view.get("clinician_entry") or {}).get("clinical_indication") is True   # sixth review, W2\n',
+                                             '    entry = bool(view.get("clinician_entry"))   # sixth review, W2\n')],
+                                           "W2: a typed technique or observation is called the clinician's indication"),
+    "P8_one_flag_for_every_field": ([(GRD, '        out["clinician_entry"] = entered\n',
+                                      '        out["clinician_entry"] = {k: True for k in FREE_TEXT_FIELDS}\n')],
+                                    "W2: any typed field flags every field (the indication too)"),
+    "C33_size_and_unit_counts_missed": ([(VR, "        if cardinal and k <= 2 and _SIZE_OR_UNIT.fullmatch(nxt.group(0)):\n", "        if False:\n")],
+                                        "W3: \"four small, ten medium\" and \"seven point two millimeters\" pass the check"),
+    "C34_count_heads_missed": ([(VR, "            if _COUNT_HEAD.fullmatch(prev.group(0)):\n", "            if False:\n")],
+                               "W3: \"the total count of lesions is twenty-five\" passes the check"),
+    "C35_every_number_word_fails": ([(VR, "if word.fullmatch(tok.group(0)) and _counts(fold, tokens, i)]", "if word.fullmatch(tok.group(0))]")],
+                                    "W3: the over-broad rule again (\"both hemispheres\", \"a single FLAIR sequence\" fail)"),
+    "C36_quantifier_window_unbounded": ([(VR, "_QUANTIFIER_WINDOW = 2 ", "_QUANTIFIER_WINDOW = 4 ")],
+                                        "W3: \"both small and large lesions\" read as a count"),
+    "C37_hyphenated_word_counted_twice": ([(VR, '        k += 0 if gap == "-" else 1', "        k += 1")],
+                                          "W3: \"a single medium-sized lesion\" passes the check"),
 }
 
 # Fifth review of PR #78, V8: the route's DIS notice and its `stated` fact were removed — the report service owns the
