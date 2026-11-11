@@ -46,7 +46,7 @@ from fastapi import HTTPException, status
 
 from app.agent_platform.capability import ASSISTANT_CLIENT, CAPABILITY_HEADER, CLIENT_HEADER
 from app.core.logging import get_logger
-from app.mcp._backend import AGENT_GET_ROUTES, AGENT_SCOPE_PATH, COMPUTE_ONLY_POST_PATHS, PAID_MODEL_POST_PATHS
+from app.mcp._backend import AGENT_GET_ROUTES, AGENT_SCOPE_PATH, COMPUTE_ONLY_POST_PATHS
 
 logger = get_logger(__name__)
 
@@ -66,7 +66,7 @@ _IDENT = re.compile(r"[A-Za-z0-9:_.@-]{1,128}")
 # by CAPA-009 (tests/unit/test_capa009_*: ROUTE_AUTH).
 API_PREFIX = "/api/v1"
 AGENT_ROUTES = tuple(("GET", re.compile(re.escape(API_PREFIX) + rx)) for rx in AGENT_GET_ROUTES) + tuple(
-    ("POST", re.compile(re.escape(API_PREFIX + p))) for p in sorted(COMPUTE_ONLY_POST_PATHS - PAID_MODEL_POST_PATHS))
+    ("POST", re.compile(re.escape(API_PREFIX + p))) for p in sorted(COMPUTE_ONLY_POST_PATHS))   # no paid-model route
 # Sixth review (S1): the one route an assistant request may reach WITHOUT a scope — the issuance of its pass.
 ISSUE_ROUTE = ("POST", API_PREFIX + AGENT_SCOPE_PATH)
 
@@ -135,8 +135,11 @@ def _canon(value) -> Optional[str]:
         return None
 
 
+PENDING_TTL_SECONDS = 300
+
+
 def issue_scope_token(*, user_id: str, patient_id: str, study_ids: Iterable[str], run_id: str,
-                      ttl_seconds: int = DEFAULT_TTL_SECONDS, now: Optional[int] = None) -> str:
+                      ttl_seconds: int = DEFAULT_TTL_SECONDS, now: Optional[int] = None, pending: bool = False) -> str:
     """Sign a capability. Callers authorize first (``issue_for_studies``); this only validates and signs."""
     if not isinstance(user_id, str) or not _IDENT.fullmatch(user_id):
         raise AgentScopeError("user id not well formed")
@@ -150,12 +153,14 @@ def issue_scope_token(*, user_id: str, patient_id: str, study_ids: Iterable[str]
     issued = int(time.time()) if now is None else int(now)
     payload = {"v": TOKEN_VERSION, "uid": user_id, "pid": _uuid(patient_id), "sids": studies, "rid": run_id,
                "exp": issued + ttl_seconds}
+    if pending:                     # eighth review (F6): a preview's ticket — never accepted as a scope
+        payload["pend"] = 1
     body = _b64(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
     sig = _b64(hmac.new(_key(), body.encode("ascii"), hashlib.sha256).digest())
     return f"{body}.{sig}"
 
 
-def verify_scope_token(token, *, now: Optional[int] = None) -> AgentScope:
+def verify_scope_token(token, *, now: Optional[int] = None, pending: bool = False) -> AgentScope:
     """The scope a token grants, or AgentScopeError (signature, shape, expiry, lifetime)."""
     key = _key()
     if not isinstance(token, str) or not 0 < len(token) <= MAX_TOKEN_CHARS or token.count(".") != 1:
@@ -170,8 +175,9 @@ def verify_scope_token(token, *, now: Optional[int] = None) -> AgentScope:
         payload = json.loads(_unb64(body))
     except (ValueError, UnicodeDecodeError):
         raise AgentScopeError("bad payload")
-    if not isinstance(payload, dict) or set(payload) != {"v", "uid", "pid", "sids", "rid", "exp"} \
-            or payload["v"] != TOKEN_VERSION:
+    base = {"v", "uid", "pid", "sids", "rid", "exp"}
+    if not isinstance(payload, dict) or set(payload) != (base | {"pend"} if pending else base) \
+            or payload["v"] != TOKEN_VERSION or (pending and payload["pend"] != 1):
         raise AgentScopeError("bad payload")
     uid, pid, sids, rid, exp = payload["uid"], payload["pid"], payload["sids"], payload["rid"], payload["exp"]
     if not (isinstance(uid, str) and _IDENT.fullmatch(uid) and isinstance(rid, str) and _IDENT.fullmatch(rid)
@@ -194,19 +200,30 @@ def allows_patient(patient_id, user) -> bool:
     return (_canon(patient_id) or str(patient_id)) == scope.patient_id and str(getattr(user, "id", "")) == scope.user_id
 
 
+def audit_denial(user=None, patient_id=None) -> None:
+    """Eighth review of PR #79 (F1): every refusal by the agent scope writes ONE access-audit row (the CAPA-002 /
+    RC-026 trail, reason ``agent_scope_denied``) BEFORE the 404 is raised. Without a user (a resolver), the user the
+    capability was issued to."""
+    from app.security import patient_access
+    scope = _ACTIVE.get()
+    user_id = str(getattr(user, "id", "")) or (scope.user_id if scope else "")
+    patient_access.audit_access_decision(
+        user_id=user_id, patient_id=str(patient_id) if patient_id else None,
+        result=patient_access.AccessResult(patient_access.AccessDecision.DENIED_AGENT_SCOPE))
+
+
 def allows_study(study_id) -> bool:
     scope = _ACTIVE.get()
     return scope is None or _canon(study_id) in scope.study_ids
 
 
 def study_of_storage_path(path) -> Optional[str]:
-    """The study of a ``patients/{uuid}/studies/{uuid}/...`` storage path, or None."""
-    if not isinstance(path, str):
+    """The study of a storage path, by the ONE rule for a path (eighth review, F7): the RC-027 parser."""
+    from app.security.storage_access import StorageRefError, parse_patient_storage_ref
+    try:
+        return parse_patient_storage_ref(path).study_id
+    except (StorageRefError, TypeError, AttributeError):
         return None
-    parts = path.split("/")
-    if len(parts) < 4 or parts[0] != "patients" or parts[2] != "studies":
-        return None
-    return _canon(parts[3])
 
 
 def allows_storage_path(path) -> bool:
@@ -251,27 +268,64 @@ async def _authorize_studies(study_ids, user):
 
 async def preview_studies(study_ids, user) -> dict:
     """What the physician is asked to confirm (seventh review, R1): the patient reference (the first 8 characters of
-    the patient's id, as the web app shows it), and each study's reference, date and number of series. Nothing is
-    issued or stored."""
+    the patient's id), and each study's reference, date and number of series — plus a short-lived PENDING ticket.
+    Eighth review (F6): each study is read ONCE and authorized ONCE (one access-audit row each, CAPA-009 chokepoint);
+    the issuance after the physician's confirmation reuses the ticket and authorizes nothing again."""
     from app.security import resource_access
-    ids, patients = await _authorize_studies(study_ids, user)
+    if scope_active():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="An agent request cannot issue an agent scope")
+    canon = [_canon(s) for s in (study_ids or ())]
+    ids = sorted(set(canon))
+    if not ids or None in canon or len(ids) > MAX_STUDIES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Name 1 to {MAX_STUDIES} study UUIDs")
+    studies_service, patients_service, care_team = resource_access.study_services()
+    found, patients = {}, []
+    for sid in ids:                                            # one after the other, stop at the first refusal
+        try:
+            study = await studies_service.get_study(sid, include_stats=True)
+        except Exception:  # noqa: BLE001 — not found / datastore error: the same 404
+            study = None
+        pid = resource_access.patient_id_of(study) if study is not None else None
+        await resource_access.authorize_resolved_patient(patient_id=pid, resource_label="Study", user=user,
+                                                         patient_service=patients_service,
+                                                         care_team_service=care_team)
+        found[sid], patients = study, patients + [pid]
     if len({_canon(p) for p in patients}) != 1:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="An agent scope covers the studies of one patient")
-    studies_service = resource_access.study_services()[0]
     studies = []
     for sid in ids:
-        try:
-            study = await studies_service.get_study(sid, include_stats=True)
-        except Exception:  # noqa: BLE001 — details are informative only; the authorization above already passed
-            study = None
+        study = found[sid]
         date = getattr(study, "study_date", None) or getattr(study, "date", None)
         series = getattr(study, "series_count", None)
         if series is None and isinstance(getattr(study, "series", None), (list, tuple)):
             series = len(study.series)
         studies.append({"study_ref": sid[:8], "date": str(date)[:10] if date else None,
                         "series": series if isinstance(series, int) else None})
-    return {"patient_ref": _canon(patients[0])[:8], "studies": studies, "expires_in": DEFAULT_TTL_SECONDS}
+    try:
+        ticket = issue_scope_token(user_id=str(user.id), patient_id=_canon(patients[0]), study_ids=ids,
+                                   run_id="preview", ttl_seconds=PENDING_TTL_SECONDS, pending=True)
+    except AgentScopeError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Agent scope not available")
+    return {"patient_ref": _canon(patients[0])[:8], "studies": studies, "expires_in": DEFAULT_TTL_SECONDS,
+            "pending": ticket}
+
+
+async def issue_from_pending(ticket, user, *, run_id: str) -> str:
+    """Issue the session's pass from a preview's ticket, after the physician confirmed (eighth review, F6): the
+    studies were authorized by the preview minutes ago (≤ 5 min), for this same user; nothing is authorized or read
+    again."""
+    if scope_active():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="An agent request cannot issue an agent scope")
+    try:
+        pending = verify_scope_token(ticket, pending=True)
+    except AgentScopeError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The confirmation expired or is not valid")
+    if pending.user_id != str(getattr(user, "id", "")):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The confirmation belongs to another user")
+    token = sign_for_patient(user, {pending.patient_id}, sorted(pending.study_ids), run_id=run_id)
+    _record_session(user, pending.patient_id)
+    return token
 
 
 # Seventh review (R1): the patient of each clinician's latest assistant session, to audit a PATIENT SWITCH. In

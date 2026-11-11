@@ -47,6 +47,7 @@ MCPB = "backend/app/mcp/_backend.py"
 SEC = "backend/app/security/"
 ASC, RAC, PAD = SEC + "agent_scope.py", SEC + "resource_access.py", SEC + "patient_access_dependency.py"
 SEG, RTE = "backend/app/api/routes/segmentation.py", "backend/app/api/routes/agent_scope.py"
+CAPM, PAC = "backend/app/agent_platform/capability.py", SEC + "patient_access.py"
 REQ = "backend/requirements.txt"
 NCS = "scripts/safety/agent_platform_negative_controls.py"
 
@@ -351,13 +352,13 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
         "", "RC-121", "an agent request reaches routes outside the assistant's object-authorized read routes"),
     "AA8_admin_bypass_for_agent_listing": (RAC, "    if user.role == UserRole.ADMIN and not _agent_scope.scope_active():   # RC-121: no archive-wide agent listing\n",
         "    if user.role == UserRole.ADMIN:\n", "RC-121", "an administrator's agent request lists across all patients"),
-    "AA9_resolver_patient_hook_removed": (RAC, "    if not _agent_scope.allows_patient(patient_id, user):\n        logger.warning(\"Resource access denied: outside the agent scope\",\n                       extra={\"user_id\": str(user.id), \"resource\": resource_label})\n        raise not_found\n",
+    "AA9_resolver_patient_hook_removed": (RAC, "    if not _agent_scope.allows_patient(patient_id, user):\n        logger.warning(\"Resource access denied: outside the agent scope\",\n                       extra={\"user_id\": str(user.id), \"resource\": resource_label})\n        _agent_scope.audit_denial(user, patient_id)             # F1: the access-audit row, before the 404\n        raise not_found\n",
         "", "RC-121", "the CAPA-009 chokepoint ignores the agent scope"),
-    "AA10_study_resolver_hook_removed": (RAC, "    if not _agent_scope.allows_study(study_id):           # RC-121: a study outside the agent scope does not resolve\n        return None\n",
+    "AA10_study_resolver_hook_removed": (RAC, "    if not _agent_scope.allows_study(study_id):           # RC-121: a study outside the agent scope does not resolve\n        _agent_scope.audit_denial()                          # F1: audited before it resolves to nothing\n        return None\n",
         "", "RC-121", "a study outside the agent scope resolves"),
-    "AA11_storage_ref_study_hook_removed": (PAD, "    if not _agent_scope.allows_study(ref.study_id):       # RC-121: an imaging object of another study\n        raise not_found\n",
+    "AA11_storage_ref_study_hook_removed": (PAD, "    if not _agent_scope.allows_study(ref.study_id):       # RC-121: an imaging object of another study\n        _agent_scope.audit_denial(user, ref.patient_id)         # F1\n        raise not_found\n",
         "", "RC-121", "an imaging file of another study passes the agent scope"),
-    "AA12_patient_dependency_hook_removed": (PAD, "    if not _agent_scope.allows_patient(patient_id, user):\n        logger.warning(\"Patient access denied: outside the agent scope\", extra={\"user_id\": str(user.id)})\n        raise not_found\n",
+    "AA12_patient_dependency_hook_removed": (PAD, "    if not _agent_scope.allows_patient(patient_id, user):\n        logger.warning(\"Patient access denied: outside the agent scope\", extra={\"user_id\": str(user.id)})\n        _agent_scope.audit_denial(user, patient_id)             # F1: the access-audit row, before the 404\n        raise not_found\n",
         "", "RC-121", "the patient dependency ignores the agent scope"),
     "AA13_capability_not_sent": (MCPB, "    if capability:                                         # RC-121: the run's / the session's pass\n        headers[CAPABILITY_HEADER] = capability\n",
         "", "RC-121", "the assistant's backend client does not send the run's capability"),
@@ -408,10 +409,6 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
         "    if False:\n", "RC-121", "the assistant sends requests without a study session"),
     "BB4_session_never_expires": (MCPB, "    if token and time.monotonic() < _SESSION.get(\"expires_at\", 0):\n",
         "    if token:\n", "RC-121", "an expired study session is still used"),
-    "BB5_paid_route_allowed_to_agents": (ASC, "    (\"POST\", re.compile(re.escape(API_PREFIX + p))) for p in sorted(COMPUTE_ONLY_POST_PATHS - PAID_MODEL_POST_PATHS))\n",
-        "    (\"POST\", re.compile(re.escape(API_PREFIX + p))) for p in sorted(COMPUTE_ONLY_POST_PATHS))\n", "RC-112", "an agent scope reaches a route that calls a paid model"),
-    "BB6_paid_route_called_by_the_client": (MCPB, "        if path in PAID_MODEL_POST_PATHS:\n            raise ScopeRefused(f\"POST {path} calls a paid model; an agent never calls it (RC-112)\")\n",
-        "", "RC-112", "the assistant's client calls a paid model route"),
     "BB7_refusal_audited_as_failure": (RUN, "                    except ScopeRefused as exc:\n",
         "                    except ZeroDivisionError as exc:\n", "RC-110", "a backend scope refusal is audited as the tool's failure"),
     "BB8_refusal_becomes_500": (SEG, "    except HTTPException:\n        raise          # PR #79 sixth review, C1: an authorization refusal (404/400) stays a refusal, never a 500\n",
@@ -433,16 +430,29 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
         "    if False:\n", "RC-121", "a switch to another patient is not audited"),
     "CC5_source_view_skipped_in_a_run": (MCPB, "    return assistant_view(data)\n",
         "    return data if current_capability() else assistant_view(data)\n", "RC-113", "inside a platform run, identifiers and activity flags are not removed at the source"),
-    "CC6_path_traversal_passes": (MCPB, "    return (isinstance(path, str) and path.startswith(\"/\") and \"..\" not in path and \"%\" not in path\n",
-        "    return (isinstance(path, str) and path.startswith(\"/\")\n", "RC-121", "a dot segment or an encoded character in a path parameter passes"),
-    "CC7_loose_file_parameter": (MCPB, "_FILE_ID = rf\"patients/{_UUID}/studies/{_UUID}/series/{_UUID}/[A-Za-z0-9][A-Za-z0-9._-]{{0,199}}\"\n",
+    "CC6_path_traversal_passes": (MCPB, "            and not any(seg in (\"..\", \".\", \"\") for seg in path[1:].split(\"/\"))      # F10: \"..\" as a SEGMENT only\n",
+        "", "RC-121", "a dot segment in a path parameter passes"),
+    "CC7_loose_file_parameter": (MCPB, "_FILE_ID = rf\"patients/{_UUID}/studies/{_UUID}/series/{_UUID}/[A-Za-z0-9][A-Za-z0-9._-]{{0,254}}\"   # = RC-027\n",
         "_FILE_ID = r\".+\"\n", "RC-121", "a file path parameter of any shape reaches the backend"),
-    "CC8_refused_write_is_a_failure": (MCPB, "    code = \"tool_not_allowed_for_agent\"\n",
-        "    code = \"not_a_refusal_code\"\n", "RC-110", "a refused write is audited with no denial code"),
+    "CC8_refused_write_is_a_failure": (CAPM, "    code = \"tool_not_allowed_for_agent\"\n",
+        "    code = \"not_a_refusal_code\"\n", "RC-110", "a refused write or non-assistant route is audited with no denial code"),
     "CC9_scope_optional_for_the_assistant": (REG, "            if on_mcp and a.get(\"requires_backend_scope\") is not True:\n",
         "            if False:\n", "RC-121", "the registry accepts the assistant without a backend scope"),
     "CC10_issuance_continues_after_a_refusal": (ASC, "    for sid in ids:\n        patients.append(await resource_access.authorize_study_id(sid, user, services=services))\n",
         "    for sid in ids:\n        try:\n            patients.append(await resource_access.authorize_study_id(sid, user, services=services))\n        except HTTPException:\n            patients.append(None)\n    if None in patients:\n        raise HTTPException(status_code=404, detail=\"Study not found\")\n", "RC-121", "issuance keeps authorizing studies after the first refusal"),
+    # ---------------------------------------------------------------- eighth (final) review of PR #79: F1
+    "DD1_chokepoint_denial_not_audited": (RAC, "        _agent_scope.audit_denial(user, patient_id)             # F1: the access-audit row, before the 404\n        raise not_found\n",
+        "        raise not_found\n", "RC-121", "a scope refusal at the patient chokepoint leaves no access-audit row"),
+    "DD2_study_resolver_denial_not_audited": (RAC, "        _agent_scope.audit_denial()                          # F1: audited before it resolves to nothing\n",
+        "", "RC-121", "a study refused by the scope leaves no access-audit row"),
+    "DD3_segmentation_denial_not_audited": (RAC, "        _agent_scope.audit_denial(None, extract_patient_id_from_path(str(file_id)))      # F1\n",
+        "", "RC-121", "a segmentation refused by the scope leaves no access-audit row"),
+    "DD4_storage_ref_denial_not_audited": (PAD, "        _agent_scope.audit_denial(user, ref.patient_id)         # F1\n",
+        "", "RC-121", "an imaging file refused by the scope leaves no access-audit row"),
+    "DD5_patient_dependency_denial_not_audited": (PAD, "        logger.warning(\"Patient access denied: outside the agent scope\", extra={\"user_id\": str(user.id)})\n        _agent_scope.audit_denial(user, patient_id)             # F1: the access-audit row, before the 404\n",
+        "        logger.warning(\"Patient access denied: outside the agent scope\", extra={\"user_id\": str(user.id)})\n", "RC-121", "a scope refusal at the patient dependency leaves no access-audit row"),
+    "DD6_denial_audited_with_another_reason": (PAC, "    DENIED_AGENT_SCOPE = \"denied:agent_scope_denied\"\n",
+        "    DENIED_AGENT_SCOPE = \"denied:no_care_team_assignment_\"\n", "RC-121", "a scope refusal is audited under another reason than agent_scope_denied"),
 }
 
 

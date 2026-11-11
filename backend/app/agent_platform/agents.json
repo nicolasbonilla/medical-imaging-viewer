@@ -295,6 +295,7 @@
       "allowed_models": [
         "claude-sonnet-4-5-20250929"
       ],
+      "availability": "unavailable from 2026-11-30: its only approved model claude-sonnet-4-5-20250929 retires then, and the successor claude-sonnet-5-5 is 'candidate' (not re-validated). Owner decision D-AGT-1 through RVP-AGT-001; the platform never switches models by itself. PR #78's verified report already uses claude-sonnet-5-5: reconcile both when D-AGT-1 is decided.",
       "allowed_tools": [],
       "requires_verifier": true,
       "cost_cap_usd": {
@@ -314,7 +315,7 @@
       }
     },
     "ms-clinical-assistant": {
-      "purpose": "Read-only assistant over the MCP servers (STDIO, run by the clinician in Claude Desktop / Claude Code): reads stored measurements, compares visits, drafts from measurements",
+      "purpose": "Read-only assistant over the MCP servers (STDIO, run by the clinician in Claude Desktop / Claude Code): reads stored measurements, compares visits",
       "approval": {
         "status": "pending",
         "ref": "agent-platform PR: entry to be approved by the owner"

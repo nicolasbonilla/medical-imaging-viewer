@@ -195,7 +195,7 @@ def test_rc121_review6_the_route_uses_the_one_issuance_and_the_route_lists_are_o
     src = inspect.getsource(issuance.issue_agent_scope)
     assert "issue_for_studies(" in src and "authorize_study_id(" not in src and "sign_for_patient(" not in src
     post = {rx.pattern for m, rx in S.AGENT_ROUTES if m == "POST"}
-    allowed_posts = _backend.COMPUTE_ONLY_POST_PATHS - _backend.PAID_MODEL_POST_PATHS
+    allowed_posts = _backend.COMPUTE_ONLY_POST_PATHS    # eighth review (F8): the paid route is not compute-only
     assert all(S.route_allowed("POST", "/api/v1" + p) for p in allowed_posts) and len(post) == len(allowed_posts)
     for module in ("ms_clinical_server.py", "imaging_server.py"):
         tree = ast.parse((BACKEND / "app" / "mcp" / module).read_text(encoding="utf-8"))
@@ -213,8 +213,6 @@ def test_rc121_review6_the_route_uses_the_one_issuance_and_the_route_lists_are_o
                         first = False
                 path = "".join(parts)
                 method = "GET" if call.func.id == "api_get" else "POST"
-                if path in _backend.PAID_MODEL_POST_PATHS:
-                    continue
                 assert S.route_allowed(method, "/api/v1" + path), (module, method, path)
 
 

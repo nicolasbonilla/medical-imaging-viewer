@@ -42,6 +42,13 @@ class ScopeRefused(PermissionError):
         self.status = status
 
 
+class ToolNotAllowed(ScopeRefused):
+    """A route the assistant may not call (a write, a paid model, a non-assistant read): a denial, tool not allowed
+    (eighth review, F5)."""
+
+    code = "tool_not_allowed_for_agent"
+
+
 class ScopeRequired(ScopeRefused):
     """No study session / capability: the assistant reaches nothing (sixth review, S1)."""
 

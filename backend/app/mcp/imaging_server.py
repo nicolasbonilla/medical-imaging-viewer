@@ -24,11 +24,6 @@ try:
 except ImportError:  # pragma: no cover — a stand-in of fastmcp without it (tests); the real one has it
     Context = None
 
-# Documentation only (agent platform D-AGT-7, fifth review of PR #79): fastmcp 2.3.0 silently IGNORED a
-# `description=` argument (the client never received this text) and fastmcp 3.x refuses it; it is not sent.
-SERVER_DESCRIPTION = ("Read-only brain MRI access for the assistant — metadata without identifiers, "
-                      "slices, segmentation list")
-
 mcp = FastMCP("brain-imaging-mcp")
 
 
@@ -40,7 +35,8 @@ mcp = FastMCP("brain-imaging-mcp")
 async def open_imaging_session(ctx: Context) -> dict:
     """Open the study session. Call this FIRST. Pass nothing: the physician chooses the study and confirms it in
     the client (the server asks them directly). Every other tool is refused until a session is open; the session
-    covers only the confirmed study (and prior study) of one patient and ends after at most one hour.
+    covers only the confirmed study (and prior study) of one patient and ends after 15 minutes (open it
+    again to continue).
 
     Returns:
         {"session": "open", "studies", "expires_in_seconds", "note"}

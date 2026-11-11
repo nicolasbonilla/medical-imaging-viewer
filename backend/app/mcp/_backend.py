@@ -29,7 +29,7 @@ import uuid
 from typing import Optional
 
 from app.agent_platform.capability import (ASSISTANT_CLIENT, CAPABILITY_HEADER, CLIENT_HEADER, ScopeRefused,
-                                           ScopeRequired, current_capability)
+                                           ScopeRequired, ToolNotAllowed, current_capability)
 
 # Routes that only compute and return, AND either authorize every object they reference
 # (RC-029) or reference none. Each was checked to store nothing (CAPA-008 §2):
@@ -43,13 +43,8 @@ from app.agent_platform.capability import (ASSISTANT_CLIENT, CAPABILITY_HEADER, 
 COMPUTE_ONLY_POST_PATHS = frozenset({
     "/segmentation/compare",
     "/segmentation/longitudinal/compare",
-    "/ai/report/generate",
 })
 
-
-# Sixth review of PR #79 (S2): routes that call a PAID model. Never reached by an agent: the call would bypass the
-# agent's cost ledger (RC-112; the assistant's caps are 0.0 USD). Refused here AND by the backend's agent guard.
-PAID_MODEL_POST_PATHS = frozenset({"/ai/report/generate"})
 
 # Sixth review (C3): the ONE list of the assistant's read routes (paths under /api/v1). The backend's agent guard
 # (app/security/agent_scope.py AGENT_ROUTES) is built from these and COMPUTE_ONLY_POST_PATHS minus the paid ones.
@@ -57,7 +52,7 @@ PAID_MODEL_POST_PATHS = frozenset({"/ai/report/generate"})
 # grammar — so nothing like "../" or an encoded slash can ride in it; and the path must already be normalised.
 _UUID = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 _SEGMENTATION_ID = r"[A-Za-z0-9_-]{1,128}"
-_FILE_ID = rf"patients/{_UUID}/studies/{_UUID}/series/{_UUID}/[A-Za-z0-9][A-Za-z0-9._-]{{0,199}}"
+_FILE_ID = rf"patients/{_UUID}/studies/{_UUID}/series/{_UUID}/[A-Za-z0-9][A-Za-z0-9._-]{{0,254}}"   # = RC-027
 AGENT_GET_ROUTES = (
     rf"/segmentation/{_SEGMENTATION_ID}",                          # a segmentation record, and /segmentation/list
     rf"/segmentation/{_SEGMENTATION_ID}/(?:dis-assessment|lesion-analysis)",
@@ -72,11 +67,9 @@ SESSION_MAX_SECONDS = 3600
 _SESSION: dict = {}
 
 
-class AssistantWriteRefused(ScopeRefused):
+class AssistantWriteRefused(ToolNotAllowed):
     """The assistant tried to call a backend route that is not on the compute-only list. Seventh review (R7): a
     REFUSAL, audited as a denial (tool not allowed), never as the tool's failure."""
-
-    code = "tool_not_allowed_for_agent"
 
 
 # Direct identifiers removed from every response before the assistant sees it (by assistant_view, the ONE
@@ -132,8 +125,9 @@ def _headers(capability: Optional[str] = None) -> dict:
 
 def path_is_clean(path: str) -> bool:
     """Seventh review (R6): no dot segment, encoded character, backslash or empty segment, and already normalised."""
-    return (isinstance(path, str) and path.startswith("/") and ".." not in path and "%" not in path
-            and "\\" not in path and "//" not in path and posixpath.normpath(path) == path)
+    return (isinstance(path, str) and path.startswith("/") and "%" not in path and "\\" not in path
+            and not any(seg in ("..", ".", "") for seg in path[1:].split("/"))      # F10: ".." as a SEGMENT only
+            and posixpath.normpath(path) == path)
 
 
 def get_route_allowed(path: str) -> bool:
@@ -165,11 +159,9 @@ def _prepare(method: str, path: str) -> dict:
     if not path_is_clean(path):
         raise ScopeRefused("the request path is not clean (dot segment, encoded character or backslash)")
     if method == "POST":
-        if path in PAID_MODEL_POST_PATHS:
-            raise ScopeRefused(f"POST {path} calls a paid model; an agent never calls it (RC-112)")
-        check_compute_only(path)
+        check_compute_only(path)            # a paid-model route is not compute-only (eighth review, F8)
     elif not get_route_allowed(path):
-        raise ScopeRefused(f"GET {path} is not one of the assistant's routes")
+        raise ToolNotAllowed(f"GET {path} is not one of the assistant's routes")      # F5
     capability = _active_pass()
     _require_pass(capability)
     return _headers(capability)
@@ -196,8 +188,12 @@ ASK_STUDY = ("MSTool assistant — which study are you reviewing? Paste the stud
 async def _scope_request(body: dict) -> dict:
     async with _client(30.0) as client:
         response = await client.post(f"{_api_base()}/api/v1{AGENT_SCOPE_PATH}", json=body, headers=_headers(None))
-    if getattr(response, "status_code", 200) in (403, 404):
-        raise ScopeRefused(f"the study session was refused ({response.status_code})", status=response.status_code)
+    status_code = getattr(response, "status_code", 200)
+    if status_code in (403, 404):
+        raise ScopeRefused(f"the study session was refused ({status_code})", status=status_code)
+    if status_code in (400, 422):                                             # eighth review, F4
+        raise ScopeRequired(f"No session was opened: the backend refused the request ({status_code}); check the "
+                            f"study id in the MSTool web app.")
     response.raise_for_status()
     return response.json()
 
@@ -231,9 +227,11 @@ async def open_session(ctx) -> dict:
     data = getattr(entry, "data", None)
     if getattr(entry, "action", None) != "accept" or not isinstance(data, str):
         raise ScopeRequired("The physician chose no study: no study session.")
-    ids = [x.strip() for x in data.replace(";", ",").split(",") if x.strip()][:20]
+    ids = [x.strip() for x in data.replace(";", ",").split(",") if x.strip()]
     if not ids:
         raise ScopeRequired("The physician chose no study: no study session.")
+    if len(ids) > 20:                                                         # eighth review, F4: never truncated
+        raise ScopeRequired(f"No session was opened: at most 20 studies ({len(ids)} were given).")
     run_id = f"mcp-{uuid.uuid4().hex}"
     preview = await _scope_request({"study_ids": ids, "run_id": run_id, "preview": True})
     ttl_minutes = max(1, int(preview.get("expires_in", 900)) // 60)
@@ -243,7 +241,7 @@ async def open_session(ctx) -> dict:
         raise ScopeRequired(NO_ELICITATION)
     if getattr(answer, "action", None) != "accept":
         raise ScopeRequired("The physician did not confirm the study: no study session.")
-    issued = await _scope_request({"study_ids": ids, "run_id": run_id})
+    issued = await _scope_request({"pending": preview["pending"], "run_id": run_id})    # F6: no second authorization
     ttl = max(0, min(int(issued.get("expires_in", 0)), SESSION_MAX_SECONDS))
     _SESSION.update(token=str(issued["token"]), expires_at=time.monotonic() + max(0, ttl - 5),
                     patient_ref=preview.get("patient_ref"))

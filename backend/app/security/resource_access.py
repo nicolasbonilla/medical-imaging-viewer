@@ -89,6 +89,7 @@ async def authorize_resolved_patient(
     if not _agent_scope.allows_patient(patient_id, user):
         logger.warning("Resource access denied: outside the agent scope",
                        extra={"user_id": str(user.id), "resource": resource_label})
+        _agent_scope.audit_denial(user, patient_id)             # F1: the access-audit row, before the 404
         raise not_found
 
     created_by = None
@@ -121,6 +122,7 @@ async def authorize_resolved_patient(
 # ---------------------------------------------------------------------------
 async def resolve_study_patient_id(study_id, study_service) -> Optional[str]:
     if not _agent_scope.allows_study(study_id):           # RC-121: a study outside the agent scope does not resolve
+        _agent_scope.audit_denial()                          # F1: audited before it resolves to nothing
         return None
     try:
         study = await study_service.get_study(study_id, include_stats=False)
@@ -187,6 +189,7 @@ async def resolve_segmentation_patient_id(segmentation_id, segmentation_service)
     if not file_id:
         return None
     if not _agent_scope.allows_storage_path(str(file_id)):  # RC-121: a segmentation of another study
+        _agent_scope.audit_denial(None, extract_patient_id_from_path(str(file_id)))      # F1
         return None
     return extract_patient_id_from_path(str(file_id))
 
@@ -404,6 +407,7 @@ async def authorize_file_scope(
 
     for file_id in ids:
         if not _agent_scope.allows_storage_path(str(file_id)):   # RC-121: a file of another study
+            _agent_scope.audit_denial(user, extract_patient_id_from_path(str(file_id)))   # F1
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
         patient_id = extract_patient_id_from_path(str(file_id))
         await authorize_resolved_patient(
@@ -462,6 +466,10 @@ async def authorize_patient_id(patient_id, user, resource_label: str = "Patient"
 def study_services():
     """The (study, patient, care-team) services, built once for several authorizations (PR #79, seventh review)."""
     return tuple(_services_or_deny("Study", _study_service, _patient_service, _care_team_service))
+
+
+def patient_id_of(obj) -> Optional[str]:
+    return _patient_id_of(obj)
 
 
 async def authorize_study_id(study_id, user, *, services=None) -> Optional[str]:

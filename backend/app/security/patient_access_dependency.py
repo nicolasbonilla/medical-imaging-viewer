@@ -88,6 +88,7 @@ async def authorize_patient_access(
     # RC-121 (HAZ-021): outside an AI agent's study-scoped capability, the same 404 (agent_scope.py).
     if not _agent_scope.allows_patient(patient_id, user):
         logger.warning("Patient access denied: outside the agent scope", extra={"user_id": str(user.id)})
+        _agent_scope.audit_denial(user, patient_id)             # F1: the access-audit row, before the 404
         raise not_found
 
     patient = None
@@ -165,6 +166,7 @@ async def authorize_storage_ref(
         raise not_found
 
     if not _agent_scope.allows_study(ref.study_id):       # RC-121: an imaging object of another study
+        _agent_scope.audit_denial(user, ref.patient_id)         # F1
         raise not_found
 
     # Reuse the patient authorization decision against the parsed patient_id.

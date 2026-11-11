@@ -73,9 +73,14 @@ class StubFastMCP:
         raise RuntimeError("an MCP server is never run while its card is computed")
 
 
+class StubContext:
+    """fastmcp's request Context: injected by the server, never a model-visible parameter (eighth review, F3)."""
+
+
 def load_with_stub_fastmcp(path: Path, alias: str):
     stub = types.ModuleType("fastmcp")
     stub.FastMCP = StubFastMCP
+    stub.Context = StubContext
     saved = sys.modules.get("fastmcp")
     sys.modules["fastmcp"] = stub
     try:
@@ -136,6 +141,10 @@ def tool_definition(name: str, fn: Callable) -> str:
     FastMCP sends is derived from exactly these; adding, removing, retyping or re-defaulting a parameter changes
     the hash."""
     sig = inspect.signature(fn)
+    # Eighth review (F3): a parameter annotated with fastmcp's Context is hidden from the client, exactly as the
+    # real server advertises the tool.
+    sig = sig.replace(parameters=[p for p in sig.parameters.values()
+                                  if getattr(p.annotation, "__name__", "") not in ("Context", "StubContext")])
     params = [{"name": p.name, "kind": p.kind.name, "annotation": _annotation(p.annotation),
                "default": None if p.default is inspect.Parameter.empty else repr(p.default),
                "required": p.default is inspect.Parameter.empty} for p in sig.parameters.values()]
@@ -302,13 +311,41 @@ def retirement_warnings(today, agents: Optional[Iterable[str]] = None) -> List[s
             for agent_id, model, state, days in _card_retirements(today, agents) if state == "warning"]
 
 
-def main(argv: List[str]) -> int:  # pragma: no cover — maintainer tool and the scheduled retirement job
+def availability_alerts(today, data: Optional[Dict[str, Any]] = None) -> List[str]:
+    """Eighth review of PR #79 (F2): an agent whose every approved ('in_use') model retires within the warning window
+    becomes UNAVAILABLE on that date unless the owner approves a successor through RVP-AGT-001 (D-AGT-1). Said loudly
+    by the daily job (an error, not a warning)."""
+    from datetime import date as _date
+    data = data or json.loads((Path(__file__).with_name("agents.json")).read_text(encoding="utf-8"))
+    models = data["models"]
+    candidates = sorted(m for m, v in models.items() if v.get("use_status") == "candidate")
+    out = []
+    for aid, agent in sorted(data["agents"].items()):
+        usable = [m for m in agent.get("allowed_models", []) if models.get(m, {}).get("use_status") == "in_use"]
+        if not usable:
+            continue
+        ends = []
+        for m in usable:
+            retires = models[m].get("retires_on")
+            state, _days = retirement_state(_date.fromisoformat(retires) if retires else None, today)
+            if state == "ok":
+                break
+            ends.append(retires)
+        else:
+            out.append(f"{aid}: UNAVAILABLE from {max(ends)} — its only approved model(s) {', '.join(usable)} retire then; "
+                       f"the successor {', '.join(candidates) or '(none registered)'} is 'candidate', not re-validated. "
+                       f"Owner decision D-AGT-1 (RVP-AGT-001). PR #78's verified report already uses claude-sonnet-5-5: "
+                       f"reconcile both when D-AGT-1 is decided.")
+    return out
+
+
+def main(argv: List[str], today=None) -> int:  # pragma: no cover — maintainer tool and the scheduled retirement job
     if argv == ["--retirement"]:
         from datetime import datetime, timezone
-        today = datetime.now(timezone.utc).date()
+        today = today or datetime.now(timezone.utc).date()
         for w in retirement_warnings(today):
             print(f"::warning::{w}")
-        problems = retirement_problems(today)
+        problems = retirement_problems(today) + availability_alerts(today)
         for p in problems:
             print(f"::error::{p}")
         return 1 if problems else 0
