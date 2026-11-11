@@ -104,7 +104,7 @@ def test_rc102_a_value_not_computed_is_written_not_computed_never_zero():
     for line in ("Lesion count: not computed.", "Total lesion volume: not computed.", "Size distribution: not computed."):
         assert line in report
     assert not re.search(r"(?:marked|volume|distribution): 0\b", report)
-    assert view["lesions"]["total_count"] is None and "total_count" not in VR.placeholder_values(view, "en")
+    assert view["lesions"]["total_count"] is None and "total_count" not in VR.stated_values(view, "en")
     no_lesions = _view({"longitudinal": {"abstained": True}})
     assert "Lesion count: not computed." in VR.assemble(no_lesions, "en", "", "")
 

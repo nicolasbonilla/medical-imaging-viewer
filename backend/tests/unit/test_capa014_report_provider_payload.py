@@ -715,9 +715,16 @@ def test_rc066_the_model_is_told_the_entry_is_added_by_the_application(route):
     """Amended for the verified report (REQ-FUNC-116, DRAFT; name kept): the model is given no TECHNIQUE or CLINICAL
     INDICATION section to fill, so it needs no instruction about the clinician's entry and receives none; the record
     states that the clinical indication is not available to the analysis."""
+    # (amended for the fourth review of PR #78, Q3, DRAFT: the code-written limitations now say that the clinician's
+    # entry is shown separately and was not used by the analysis — a fixed line of the report, not an instruction;
+    # the typed text itself is still never sent)
+    from app.services import verified_report as VR
     assert _post(route, {**_measurements(), **TYPED}).status_code == 200
     sent = route.provider.prompt() + route.provider.sent()["system"]
-    assert "added to the draft by the application" not in sent and "clinician's entry" not in sent.lower()
+    assert "added to the draft by the application" not in sent
+    assert "clinician's entry" not in route.provider.sent()["system"].lower()
+    assert sent.count(VR.T["en"]["lim_indication_entry"]) == 1
+    assert not any(text in sent for text in TYPED.values())
     assert "TECHNIQUE" not in sent and "CLINICAL INDICATION" not in sent
     assert "clinical indication" in _record_sent(route)["not_available"]
 
@@ -1019,12 +1026,20 @@ def test_n5_exempt_words_are_those_of_the_user_prompt_only():
 def test_n6_the_instruction_is_sent_only_when_something_was_typed(route):
     """Amended for the verified report (REQ-FUNC-116, DRAFT; name kept): the request is the same whether or not the
     clinician typed something — the model is never told about the entry (it has no section that could need it)."""
+    # (amended for the fourth review of PR #78, Q3, DRAFT: with something typed, the request differs only by the flag
+    # and the code-written limitation lines that say the clinician's entry is shown separately — never by the text)
+    from app.services import verified_report as VR
     assert _post(route, _measurements()).status_code == 200
     untyped = route.provider.prompt()
     assert "added to the draft by the application" not in untyped
     route.provider.calls.clear()
-    assert _post(route, {**_measurements(), "technique": "3T"}).status_code == 200
-    assert route.provider.prompt() == untyped
+    assert _post(route, {**_measurements(), "technique": "3T, Gd+ ZQX-typed"}).status_code == 200
+    typed = route.provider.prompt()
+    assert "ZQX-typed" not in typed and "added to the draft by the application" not in typed
+    assert VR.T["en"]["lim_indication_entry"] in typed and VR.T["en"]["lim_indication_entry"] not in untyped
+    strip = lambda p: [line for line in p.split("\n") if "clinical indication" not in line.lower()
+                       and "Not available to the automatic analysis" not in line]
+    assert strip(typed.replace('"clinician_entry":true,', "")) == strip(untyped)
 
 
 # N8: all-digit record numbers do not collide with measurement numbers.

@@ -72,7 +72,7 @@ def test_rc102_t1_a_volume_in_ml_only_is_written_and_only_then_offered_as_a_plac
     assert "Total lesion volume: not computed." not in assembled, assembled
     assert "Total lesion volume: 3.13 mL" in assembled and fails == []
     mm3_only = _view({"lesion_analysis": {"total_count": 7, "total_burden_mm3": 3132.0}})
-    assert "total_volume_ml" not in VR.placeholder_values(mm3_only, "en")
+    assert "total_volume_ml" not in VR.stated_values(mm3_only, "en")
     assert "3132 mm³" in VR.assemble(mm3_only, "en", "", "")
 
 
@@ -120,7 +120,7 @@ def _views():
 def test_rc102_t1_property_a_placeholder_is_available_exactly_when_its_line_states_the_value():
     n = 0
     for view, lang in _views():
-        vals = VR.placeholder_values(view, lang)
+        vals = VR.stated_values(view, lang)
         for ph in VR.PLACEHOLDERS:
             line = _line_of(view, lang, ph)
             stated = _states_a_value(view, lang, ph, line)

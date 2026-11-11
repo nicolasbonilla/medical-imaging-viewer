@@ -239,7 +239,9 @@ def test_rc070_q6_the_route_uses_the_service_fact(route_text):
     assert DIS_NOT_EVALUATED_NOTICE["en"] in body["content"]
 
 
-@pytest.mark.parametrize("hidden", ["the pattern is typical of demye​lination",
+# (a zero-width SPACE becomes a visible space under the shared rule — "demye lination" hides nothing — so the in-word
+# cases use characters the rule removes: a zero-width joiner, a soft hyphen)
+@pytest.mark.parametrize("hidden", ["the pattern is typical of demye‍lination",
                                     "trea­tment escalation should be considered",
                                     "consis‍tent with multi­ple sclerosis"])
 def test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check(hidden):

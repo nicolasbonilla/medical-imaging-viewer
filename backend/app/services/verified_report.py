@@ -69,7 +69,7 @@ from typing import Any, Awaitable, Callable, Dict, Iterator, List, Optional, Tup
 from app.services import report_claim_strict as S
 from app.services import report_claim_verifier as V
 # third review of PR #78, T6: the one shared reader of a measurement value, imported here (not inside functions)
-from app.services.report_payload_guard import FREE_TEXT_FIELDS, finite_number
+from app.services.report_payload_guard import FREE_TEXT_FIELDS, finite_number, without_format_characters
 from app.services.report_payload_guard import NOT_AVAILABLE as PAYLOAD_NOT_AVAILABLE
 
 FLOW_ID = "verified-report-1 (fixed flow + frozen claim check v2, benchmark arm A3 at f3c1976)"
@@ -107,6 +107,7 @@ REASON_REFUSAL = "refusal"                      # the model declined (stop_reaso
 REASON_MODEL_UNAVAILABLE = "model_unavailable"  # the provider no longer serves the model (404) (RC-106)
 REASON_FEEDBACK_PRIVACY = "feedback_identifier_check"   # RC-065 check refused a regeneration request
 REASON_NOTHING_TO_COMMENT = "no_measurement_for_comment"  # no lesion, change, volume or DIS result to comment on
+REASON_WIRING = "provider_wiring"               # the client returned something that is not an answer (4th review, Q5)
 
 # The fixed notes after a report without comments, in the report language (RC-103, RC-105, RC-106).
 WITHHELD: Dict[str, Dict[str, str]] = {
@@ -123,6 +124,8 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                  "allows. The measurements above are complete.",
         "nothing": "Interpretive text not requested: there is no lesion, change, volume or dissemination result to "
                    "comment on.",
+        "not_configured": "Interpretive text not requested: the AI comments are not configured on this server. The "
+                          "measurements above are complete.",
     },
     "es": {
         REASON_BLOCKED: "Texto interpretativo retenido por la comprobación de seguridad: los comentarios de la IA no "
@@ -139,6 +142,8 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                  "que esta versión permite. Las mediciones de arriba están completas.",
         "nothing": "Texto interpretativo no solicitado: no hay ningún resultado de lesiones, cambios, volúmenes ni "
                    "diseminación que comentar.",
+        "not_configured": "Texto interpretativo no solicitado: los comentarios de la IA no están configurados en este "
+                          "servidor. Las mediciones de arriba están completas.",
     },
     "de": {
         REASON_BLOCKED: "Interpretierender Text von der Sicherheitsprüfung zurückgehalten: Die KI-Kommentare haben die "
@@ -154,12 +159,16 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                  "das diese Version zulässt. Die Messwerte oben sind vollständig.",
         "nothing": "Interpretierender Text nicht angefordert: Es gibt kein Ergebnis zu Läsionen, Veränderungen, "
                    "Volumina oder Dissemination, das kommentiert werden könnte.",
+        "not_configured": "Interpretierender Text nicht angefordert: Die KI-Kommentare sind auf diesem Server nicht "
+                          "eingerichtet. Die Messwerte oben sind vollständig.",
     },
 }
 _NOTE_OF_REASON = {
     REASON_BLOCKED: REASON_BLOCKED, REASON_FEEDBACK_PRIVACY: REASON_FEEDBACK_PRIVACY,
     REASON_PROVIDER: "unavailable", REASON_TIMEOUT: "unavailable", REASON_REFUSAL: "unavailable",
-    REASON_MODEL_UNAVAILABLE: "unavailable", REASON_NOT_CONFIGURED: "unavailable",
+    REASON_MODEL_UNAVAILABLE: "unavailable", REASON_WIRING: "unavailable",
+    # fourth review of PR #78, Q4: no provider key is "not requested — not configured", as the state says
+    REASON_NOT_CONFIGURED: "not_configured",
     REASON_OFF: "off", REASON_MODEL_NOT_ALLOWED: "model", REASON_NOTHING_TO_COMMENT: "nothing",
 }
 
@@ -266,6 +275,8 @@ T: Dict[str, Dict[str, str]] = {
         "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|brain volumetry",
         "lim_cord": "Spinal cord and optic nerve imaging: not available.",
         "lim_diag": "This draft is not a diagnosis.",
+        "lim_indication_entry": "Clinical indication: see the clinician's entry, shown separately in this draft and not "
+                                "used by the automatic analysis.",
         "imp_conf": "Confirmed segmentation: {count}.", "imp_ai": "Automatic marking (unconfirmed): {count}.",
         "imp_unc": "Unconfirmed segmentation: {count}.",
     },
@@ -313,6 +324,8 @@ T: Dict[str, Dict[str, str]] = {
         "lim_items": "indicación clínica|imágenes con contraste|imágenes ponderadas en T1|volumetría cerebral",
         "lim_cord": "Imágenes de médula espinal y de nervio óptico: no disponibles.",
         "lim_diag": "Este borrador no es un diagnóstico.",
+        "lim_indication_entry": "Indicación clínica: la entrada del médico se muestra aparte en este borrador y no se "
+                                "aportó al análisis automático.",
         "imp_conf": "Segmentación confirmada: {count}.", "imp_ai": "Marcación automática (sin confirmar): {count}.",
         "imp_unc": "Segmentación sin confirmar: {count}.",
     },
@@ -359,6 +372,8 @@ T: Dict[str, Dict[str, str]] = {
         "lim_items": "klinische Fragestellung|kontrastmittelgestützte Bildgebung|T1-gewichtete Bildgebung|Hirnvolumetrie",
         "lim_cord": "Bildgebung von Rückenmark und Sehnerv: nicht verfügbar.",
         "lim_diag": "Dieser Entwurf ist keine Diagnose.",
+        "lim_indication_entry": "Klinische Fragestellung: der ärztliche Eintrag steht gesondert in diesem Entwurf und "
+                                "wurde der automatischen Analyse nicht übermittelt.",
         "imp_conf": "Bestätigte Segmentierung: {count}.", "imp_ai": "Automatische Markierung (unbestätigt): {count}.",
         "imp_unc": "Unbestätigte Segmentierung: {count}.",
     },
@@ -371,14 +386,8 @@ NOT_AVAILABLE = ("clinical indication", "contrast-enhanced imaging", "T1-weighte
                  "optic nerve imaging", "brain volumetry")
 
 
-def _value(x: Any) -> Optional[float]:
-    """A number of the RC-064 payload, or None ("not available" there, never 0 here). The guard's own reader (review
-    of PR #78, R10; public since the third review, T6): booleans, non-numbers, NaN and ±inf are not numbers."""
-    return finite_number(x)
-
-
 def _count(x: Any) -> Optional[int]:
-    v = _value(x)
+    v = finite_number(x)
     if v is None or v != int(v) or v < 0:
         return None
     return int(v)
@@ -430,6 +439,10 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         regions_view = _region_breakdown(regs_in)
 
     view: Dict[str, Any] = {"report_language": lang}
+    if f.get("clinician_entry") is True:
+        # a flag only (RC-064: the text is never sent) — the clinician typed something the route adds to the draft
+        # (fourth review of PR #78, Q3: the limitations then say so instead of "clinical indication: not available")
+        view["clinician_entry"] = True
     if evaluated:
         view["segmentation"] = {"source": "segmentation confirmed by a radiologist for this exact mask (lesions and "
                                           "MAGNIMS regions)", "confirmed_by_radiologist": True}
@@ -450,8 +463,8 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
             "computed": True,
             "total_count": n,
             "count_category": count_category(n) if n is not None else None,
-            "total_volume_mm3": _value(la.get("total_burden_mm3")),
-            "total_volume_ml": _value(la.get("total_burden_ml")),
+            "total_volume_mm3": finite_number(la.get("total_burden_mm3")),
+            "total_volume_ml": finite_number(la.get("total_burden_ml")),
             "size_distribution": ({k: _count(sd.get(k)) for k in ("small", "medium", "large")} if sd else None),
             "size_classes_mm3": {"small": "<100", "medium": "100-1000", "large": ">1000"},
         }
@@ -504,16 +517,16 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
                            "radiologist; they are not findings.",
                 "candidates": cands,
                 "visit_1": {"total_count": _count(lng.get("total_lesions_tp1")),
-                            "total_volume_ml": _value(lng.get("burden_tp1_ml"))},
+                            "total_volume_ml": finite_number(lng.get("burden_tp1_ml"))},
                 "visit_2": {"total_count": _count(lng.get("total_lesions_tp2")),
-                            "total_volume_ml": _value(lng.get("burden_tp2_ml"))},
-                "burden_change_percent": _value(lng.get("burden_delta_percent")),
+                            "total_volume_ml": finite_number(lng.get("burden_tp2_ml"))},
+                "burden_change_percent": finite_number(lng.get("burden_delta_percent")),
                 "registration": "not verified at lesion scale",
             }
 
     vol = volumetry_payload if isinstance(volumetry_payload, dict) else None
-    tbv = _value((vol or {}).get("total_brain_volume_ml"))
-    icv = _value((vol or {}).get("intracranial_volume_ml"))
+    tbv = finite_number((vol or {}).get("total_brain_volume_ml"))
+    icv = finite_number((vol or {}).get("intracranial_volume_ml"))
     if vol is not None and (tbv is not None or icv is not None):
         view["brain_volumetry"] = {"total_brain_volume_ml": tbv, "intracranial_volume_ml": icv,
                                    "normative_comparison": "not part of this draft"}
@@ -725,9 +738,14 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     imp = ([t[imp_key].format(count=count.rstrip("."))] + ([dis_s] if dis["status"] == "evaluated" else [])
            + ([comp[0]] if comp else []))
     items = t["lim_items"].split("|")
+    entry = view.get("clinician_entry") is True
+    if entry:
+        # fourth review of PR #78, Q3: the clinician typed an indication, shown separately in this same draft — it
+        # is not listed as "not available"; a line says it is shown separately and was not used by the analysis
+        items = items[1:]
     if bv:
         items = items[:-1]
-    lim = [t["lim"].format(items=", ".join(items)), t["lim_cord"]]
+    lim = [t["lim"].format(items=", ".join(items)), t["lim_cord"]] + ([t["lim_indication_entry"]] if entry else [])
     if view.get("not_included"):
         lim.append(t["not_included"].format(items=", ".join(t["ni_" + k] for k in view["not_included"])))
     lim.append(t["lim_diag"])
@@ -735,12 +753,6 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
 
 
 PLACEHOLDERS = ("total_count", "total_volume_ml", "new_candidates", "enlarging_candidates", "brain_regions_with_lesions")
-
-
-def placeholder_values(view: Dict[str, Any], lang: str) -> Dict[str, str]:
-    """Values the code fills in for the model's placeholders: exactly the values the code-written report states
-    (third review of PR #78, T1 — one availability rule, `stated_values`)."""
-    return stated_values(view, lang)
 
 
 def stated_values(view: Dict[str, Any], lang: str) -> Dict[str, str]:
@@ -788,9 +800,18 @@ def first_user_message(view: Dict[str, Any], lang: str) -> str:
     return user_lang_line(lang) + RECORD_PREFIX + record_json(view) + SKELETON_PREFIX + skel
 
 
+# Fourth review of PR #78: Q1 an empty comment (no letter at all) is nothing written; Q2 no brace or bracket (ASCII,
+# full-width or white) may remain once the available placeholders are filled.
+_HAS_A_LETTER = re.compile(r"[^\W\d_]")
+_TEMPLATE_TOKEN = re.compile("[{}\\[\\]｛｝［］⦃⦄⟦⟧]")
+EMPTY_COMMENT_MESSAGE = "Both comments must say something: an empty comment is not allowed."
+TEMPLATE_TOKEN_MESSAGE = ("Braces and brackets are not allowed in the comments: write a placeholder exactly as listed, "
+                          "or no number.")
+
 # The fixed words of a regeneration request (the rules' own messages and the verifier's detail templates), for the
 # RC-065 list of the device's own words; the parts the model wrote (quoted after "in:") are not among them.
 FIXED_FEEDBACK_TEXTS = (
+    EMPTY_COMMENT_MESSAGE, TEMPLATE_TOKEN_MESSAGE,
     "The answer did not follow the format", "Placeholder is not available for this record",
     "Digits are not allowed in the comments; use a placeholder or no number.",
     "Headings are not allowed in the comments.", "The answer was cut off; write both comments in full, briefly.",
@@ -829,8 +850,13 @@ def check(view: Dict[str, Any], lang: str, text: str) -> Tuple[Optional[str], Li
     if not m:
         return None, [{"rule": "FMT.format",
                        "message": "The answer did not follow the format: [FINDINGS_COMMENT] ... [IMPRESSION_COMMENT] ..."}]
-    fc, ic = m.group(1).strip(), m.group(2).strip()
-    vals = placeholder_values(view, lang)
+    # fourth review of PR #78, Q6: the comments are read with the shared format-character rule — the text checked is
+    # the text delivered (a zero-width character or a soft hyphen cannot hide a phrase from the check)
+    fc, ic = without_format_characters(m.group(1)).strip(), without_format_characters(m.group(2)).strip()
+    # fourth review, Q1: an empty comment ("", spaces, ".", "-", "**") is nothing written — never checked as written
+    if not (_HAS_A_LETTER.search(fc) and _HAS_A_LETTER.search(ic)):
+        fails.append({"rule": "FMT.empty", "message": EMPTY_COMMENT_MESSAGE})
+    vals = stated_values(view, lang)
     for ph in sorted(set(re.findall(r"\{([a-z_]+)\}", fc + " " + ic))):
         if ph not in vals:
             fails.append({"rule": "FMT.placeholder", "message": f"Placeholder {{{ph}}} is not available for this record."})
@@ -839,6 +865,10 @@ def check(view: Dict[str, Any], lang: str, text: str) -> Tuple[Optional[str], Li
                       "message": "Digits are not allowed in the comments; use a placeholder or no number."})
     for k, v in vals.items():
         fc, ic = fc.replace("{" + k + "}", v), ic.replace("{" + k + "}", v)
+    # fourth review, Q2: after the available placeholders are filled, no brace or bracket may remain — any other
+    # token ({Total_Count}, { total_count }, {{...}}, [PLACEHOLDER], full-width braces) is a raw template token
+    if _TEMPLATE_TOKEN.search(fc + "\n" + ic):
+        fails.append({"rule": "FMT.template_token", "message": TEMPLATE_TOKEN_MESSAGE})
     # second review of PR #78, B: a line the frozen check would read as a heading (markdown, bold-only, capitals)
     # is checked for nothing there — no heading is allowed in a comment
     if S.heading_lines(fc) or S.heading_lines(ic):
@@ -1060,6 +1090,10 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
            "dis_assessment": {**evaluated, "dis_met": False}}, None, None
     yield {"lesion_analysis": la(7, confirmed=False), "zone_stats": {"total_brain_voxels": 1}, "segmentation_labels": ["x"],
            "anomalies": [{"type": "x"}]}, {**vol, "structures": [{"structure_name": "x", "volume_ml": 1.0}]}, "ai_draft"
+    # fourth review of PR #78, Q3: the clinician typed an indication (a flag only), with and without evaluated DIS
+    yield {"clinician_entry": True, "lesion_analysis": la(7, confirmed=False),
+           "dis_assessment": {"evaluation_status": "not_evaluated"}}, None, "ai_draft"
+    yield {"clinician_entry": True, "lesion_analysis": la(7, regions), "dis_assessment": evaluated}, vol, None
     # third review of PR #78, T1: a volume in mL only, and in mm³ only (each line states what the record has)
     yield {"lesion_analysis": {"total_count": 7, "total_burden_mm3": NA, "total_burden_ml": 3.132}}, None, "ai_draft"
     yield {"lesion_analysis": {"total_count": 7, "total_burden_mm3": 3132.0, "total_burden_ml": NA}}, None, "ai_draft"

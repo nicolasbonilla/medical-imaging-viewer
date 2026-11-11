@@ -160,14 +160,21 @@ def finite_number(value: Any) -> Optional[float]:
     return value
 
 
-_number = finite_number      # the guard's own name for it
+
+def without_format_characters(text: str) -> str:
+    """`text` without Unicode format characters (soft hyphen, zero-width joiners, BOM, bidirectional controls); a
+    zero-width space becomes a space, so that the words it separated stay apart. Shared (fourth review of PR #78,
+    Q6): the verified report's check reads the comments with this rule, so the text checked is the text
+    delivered; the report route applies the same rule to the text it receives."""
+    text = text.replace("\u200b", " ")
+    return "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
 
 
 def age_band(value: Any) -> Optional[str]:
     """5-year band of an age in years ("45-49"); "90 or older" from 90. None when not an age."""
     if isinstance(value, str) and re.fullmatch(r"\s*\d{1,3}(?:\.\d{1,3})?\s*", value):
         value = float(value)
-    n = _number(value)
+    n = finite_number(value)
     if n is None or n < 0 or n > 130:
         return None
     years = int(n)
@@ -227,7 +234,7 @@ class _Projector:
         """The number; NOT_AVAILABLE (None when optional) when it is not a number. A whole number equal to one
         of the patient's own numbers refuses the request. Outside [low, high] the request is refused too,
         unless `outside` says what to use instead."""
-        n = _number(value)
+        n = finite_number(value)
         if n is None:
             if value is not None:
                 self.counts["values_not_numbers"] += 1

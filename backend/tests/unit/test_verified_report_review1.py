@@ -156,12 +156,12 @@ def test_rc102_r4_a_region_count_not_computed_is_never_written_0():
 # ── R5
 def test_rc102_r5_the_total_count_placeholder_follows_magnims_from_20_lesions():
     view = _view({"lesion_analysis": {"total_count": 75, "total_burden_mm3": 10.0, "total_burden_ml": 0.01}})
-    assert VR.placeholder_values(view, "en")["total_count"] == "50-100"
+    assert VR.stated_values(view, "en")["total_count"] == "50-100"
     assembled, fails = VR.check(view, "en", "[FINDINGS_COMMENT]\nMost of the {total_count} lesions are small.\n"
                                             "[IMPRESSION_COMMENT]\nTo be reviewed.")
     assert fails == [] and "Most of the 50-100 lesions are small." in assembled and "75 lesions" not in assembled
     small = _view({"lesion_analysis": {"total_count": 7, "total_burden_mm3": 10.0, "total_burden_ml": 0.01}})
-    assert VR.placeholder_values(small, "en")["total_count"] == "7"
+    assert VR.stated_values(small, "en")["total_count"] == "7"
 
 
 # ── R6

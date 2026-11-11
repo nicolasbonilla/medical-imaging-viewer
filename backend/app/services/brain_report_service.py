@@ -115,9 +115,31 @@ def _refusal_code(exc: BaseException) -> str:
     return "privacy_check_refused"
 
 
+class ProviderWiringFault(Exception):
+    """The provider client returned something that is not a model answer (a wiring fault of this server; fourth
+    review of PR #78, Q5): a provider-side failure, never read as an answer that failed the check."""
+
+
+def _is_async_client(client: Any, create: Any) -> bool:
+    """The SDK's async client by TYPE (fourth review of PR #78, Q5); a client of another type (the offline test
+    doubles) is async when its `create` is a coroutine function. A plain wrapper hiding an async create is handled by
+    awaiting its awaitable result."""
+    try:
+        import anthropic
+        if isinstance(client, anthropic.AsyncAnthropic):
+            return True
+        if isinstance(client, anthropic.Anthropic):
+            return False
+    except ImportError:          # the SDK is not installed (offline tests): only the test doubles exist
+        pass
+    return inspect.iscoroutinefunction(create)
+
+
 def _failure_reason(exc: BaseException) -> str:
     """RC-106: the audit-safe reason of a provider failure (404 = the model is no longer served)."""
     name = type(exc).__name__
+    if isinstance(exc, ProviderWiringFault):
+        return verified_report.REASON_WIRING
     if getattr(exc, "status_code", None) == 404 or name == "NotFoundError":
         return verified_report.REASON_MODEL_UNAVAILABLE
     if "Timeout" in name:
@@ -131,8 +153,11 @@ def _block_field(block: Any, name: str) -> Any:
 
 def reply_of(message: Any) -> "verified_report.ModelReply":
     """The model's answer, read by block TYPE: only `text` blocks count (a thinking or other block — which the pinned
-    SDK returns as an unvalidated object — is never read as the answer, unlike `content[0].text`)."""
-    blocks = getattr(message, "content", None) or []
+    SDK returns as an unvalidated object — is never read as the answer, unlike `content[0].text`). Something that is
+    not a message (no list of content blocks) is a wiring fault, not an empty answer (fourth review of PR #78, Q5)."""
+    blocks = getattr(message, "content", None)
+    if not isinstance(blocks, (list, tuple)):
+        raise ProviderWiringFault(type(message).__name__)
     text = "".join(_block_field(b, "text") or "" for b in blocks
                    if _block_field(b, "type") == "text" and isinstance(_block_field(b, "text"), str))
     usage = getattr(message, "usage", None)
@@ -335,19 +360,26 @@ class BrainReportService:
         max_tokens = int(self._settings.CLAUDE_MAX_TOKENS)
 
         async def call(system: str, messages: List[Dict[str, str]], timeout_s: float) -> verified_report.ModelReply:
+            loop = asyncio.get_running_loop()
+            deadline = loop.time() + float(timeout_s)
             try:
                 client = self._get_client()
                 create = client.messages.create
                 kwargs = dict(model=model_id, max_tokens=max_tokens, system=system, messages=messages,
                               extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))
-                if inspect.iscoroutinefunction(inspect.unwrap(create)):
-                    # the remaining budget bounds the request itself (R2, T3): wait_for cancels it at the deadline
+                # fourth review of PR #78, Q5: decided on the client's TYPE (the SDK's async client), not on wrapper
+                # attributes; and any awaitable result — an async create behind a plain wrapper — is awaited under the
+                # budget that is left (the remaining budget bounds the request itself: R2, T3)
+                if _is_async_client(client, create):
                     message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))
                 else:
                     message = await asyncio.wait_for(asyncio.to_thread(create, **kwargs), timeout=float(timeout_s))
+                if inspect.isawaitable(message):
+                    message = await asyncio.wait_for(message, timeout=max(0.0, deadline - loop.time()))
+                reply = reply_of(message)
             except Exception as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is
                 raise verified_report.ProviderFailure(_failure_reason(e), type(e).__name__) from e
-            return reply_of(message)
+            return reply
 
         return call
 
@@ -473,6 +505,9 @@ class BrainReportService:
             "tokens_used": {"input": result.input_tokens, "output": result.output_tokens} if asked else None,
             # R3: what the verified report does not include is named, never dropped silently
             "verification": {**result.summary(), "not_included": list(view.get("not_included") or [])},
+            # fourth review of PR #78, Q6: a fact for the route — the code-written findings state "DIS not evaluated"
+            # (`skeleton` writes `dis_review_gate.NOT_EVALUATED_LINE` whenever DIS was not evaluated)
+            "dis_not_evaluated_stated": view["dis"]["status"] != "evaluated",
             # CAPA-014: placeholder -> label as written, for the clinician's draft only. Verified report (review of
             # PR #78, R8): the record never carries a placeholder (a request would be refused above), so there is no
             # placeholder to name and no application note "sent as numbered placeholders".

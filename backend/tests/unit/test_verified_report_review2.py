@@ -160,7 +160,7 @@ def _v2_check(view, lang, text):
     if not m:
         return {"FMT.format"}
     fc, ic = m.group(1).strip(), m.group(2).strip()
-    vals = VR.placeholder_values(view, lang)
+    vals = VR.stated_values(view, lang)
     rules = set()
     if any(ph not in vals for ph in re.findall(r"\{([a-z_]+)\}", fc + " " + ic)):
         rules.add("FMT.placeholder")

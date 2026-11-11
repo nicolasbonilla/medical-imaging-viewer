@@ -75,6 +75,7 @@ TESTS = [
     "tests/unit/test_verified_report_review2.py",       # second independent review of PR #78, A-J
     "tests/unit/test_verified_report_review2_dis.py",   # item K (found by PR #79): DIS wording
     "tests/unit/test_verified_report_review3.py",       # third independent review of PR #78, T1-T6
+    "tests/unit/test_verified_report_review4.py",       # fourth independent review of PR #78, Q1-Q8
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -83,6 +84,7 @@ LEX = "backend/app/services/report_claim_lexicon.py"
 CFG = "backend/app/core/config.py"
 AUD = "backend/app/core/logging/audit.py"
 STR = "backend/app/services/report_claim_strict.py"
+GRD = "backend/app/services/report_payload_guard.py"
 RT = "backend/app/api/routes/ai_report.py"
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
@@ -127,8 +129,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "R6: a confirmed mask reported as not confirmed (the report contradicts the gate)"),
     "F14_placeholder_in_record_sent": ([(BRS, '                if UNLISTED.rstrip("]") in sent_text:\n', "                if False:\n")],
                                        "R8: a label of the request in the record is sent instead of refused"),
-    "F15_number_reader_accepts_inf": ([(VR, "    return finite_number(x)\n",
-                                        "    return None if isinstance(x, bool) or not isinstance(x, (int, float)) or x != x else x\n")],
+    "F15_number_reader_accepts_inf": ([(GRD, "    if isinstance(value, float) and not math.isfinite(value):\n        return None\n    return value\n",
+                                        "    return value\n")],
                                       "R10: an infinite value is read as a number (and a count of it crashes)"),
     # ── second independent review of PR #78 (A-J) ──
     "F16_other_label_hides_regions": ([(VR, "        regions_view = _region_breakdown(regs_in)\n",
@@ -258,15 +260,6 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F20_volume_needs_both_units": ([(VR, "    elif ml_text is not None:\n        volume = t[\"volume_ml\"].format(ml=ml_text)\n",
                                       "    elif False:\n        volume = t[\"volume_ml\"].format(ml=ml_text)\n")],
                                     "T1: a volume in mL only is written \"not computed\" while its placeholder is filled"),
-    "F21_placeholders_by_their_own_rule": ([(VR, "    return stated_values(view, lang)\n\n\ndef stated_values(",
-                                             "    vals = stated_values(view, lang)\n"
-                                             "    les = view[\"lesions\"]\n"
-                                             "    if les.get(\"total_count\") is not None and \"total_count\" not in vals:\n"
-                                             "        vals[\"total_count\"] = str(les[\"total_count\"])\n"
-                                             "    if les.get(\"total_volume_mm3\") is not None and \"total_volume_ml\" not in vals:\n"
-                                             "        vals[\"total_volume_ml\"] = _loc(_num(les[\"total_volume_mm3\"] / 1000.0, 2), lang)\n"
-                                             "    return vals\n\n\ndef stated_values(")],
-                                           "T1: a placeholder filled by a rule of its own (a value the report's line does not state)"),
     "A7_withheld_reported_as_not_requested": ([(VR, "    return OUTCOME_WITHHELD if asked else NOT_REQUESTED\n",
                                                 "    return NOT_REQUESTED\n")],
                                               "T2: a draft the AI was asked for and did not deliver is recorded as not requested"),
@@ -277,6 +270,32 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                     "                    message = await asyncio.wait_for(asyncio.shield(create(**kwargs)), "
                                     "timeout=float(timeout_s))\n")],
                                   "T3: the deadline ends the wait but the request keeps running (not cancelled)"),
+    # ── fourth independent review of PR #78 (Q1-Q7) ──
+    "C25_empty_comment_allowed": ([(VR, "    if not (_HAS_A_LETTER.search(fc) and _HAS_A_LETTER.search(ic)):\n", "    if False:\n")],
+                                  "Q1: an empty or \".\" comment is checked as written and delivered"),
+    "C26_template_tokens_allowed": ([(VR, "    if _TEMPLATE_TOKEN.search(fc + \"\\n\" + ic):\n", "    if False:\n")],
+                                    "Q2: a raw template token ({Total_Count}, [PLACEHOLDER]) reaches a draft"),
+    "C27_format_characters_kept": ([(VR, "    fc, ic = without_format_characters(m.group(1)).strip(), without_format_characters(m.group(2)).strip()\n",
+                                     "    fc, ic = m.group(1).strip(), m.group(2).strip()\n")],
+                                   "Q6: a zero-width joiner or a soft hyphen hides a phrase from the check"),
+    "F22_indication_listed_not_available": ([(VR, "    if entry:\n        # fourth review of PR #78, Q3",
+                                              "    if False:\n        # fourth review of PR #78, Q3")],
+                                            "Q3: a typed indication is also listed as \"not available\""),
+    "M15_not_configured_said_failed": ([(VR, "    REASON_NOT_CONFIGURED: \"not_configured\",\n",
+                                         "    REASON_NOT_CONFIGURED: \"unavailable\",\n")],
+                                       "Q4: no provider key: the note says the AI service failed"),
+    "M16_wrapped_async_not_awaited": ([(BRS, "                if inspect.isawaitable(message):\n", "                if False:\n")],
+                                      "Q5: an async create behind a plain wrapper is never awaited"),
+    "M17_wiring_fault_read_as_answer": ([(BRS, "    if not isinstance(blocks, (list, tuple)):\n        raise ProviderWiringFault(",
+                                          "    if False:\n        raise ProviderWiringFault(")],
+                                        "Q5: something that is not a message is read as an empty answer (a check failure)"),
+    "D2_notice_by_substring": ([(RT, "        stated_by_service = result.pop(\"dis_not_evaluated_stated\", False) is True\n",
+                                 "        stated_by_service = result.pop(\"dis_not_evaluated_stated\", False) is True and False or "
+                                 "gate.NOT_EVALUATED_LINE[\"en\"] in result[\"content\"]\n")],
+                               "Q6: the route decides by a substring search over the processed text"),
+    "P4_second_list_of_blocks": ([(RT, "MEASUREMENT_FINDING_KEYS = frozenset(RENDERED_FINDINGS)",
+                                   "MEASUREMENT_FINDING_KEYS = frozenset({\"lesion_analysis\", \"dis_assessment\", \"longitudinal\"})")],
+                                 "Q7: a second literal list of the blocks the report writes"),
     # ── RC-064: only what is rendered is sent and validated (second review, C, D, H) ──
     "P1_unrendered_fields_validated": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers)\n",
                                          "            payload = provider_payload(findings, volumetry, identifiers)\n")],
@@ -295,8 +314,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "T2_first_message_built_twice": ([(BRS, "                    first_message=sent_text)", "                    first_message=None)")],
                                      "J: the first request is built a second time after the identifier check"),
     # ── RC-070: one guaranteed "not evaluated" statement (second review, F) ──
-    "D1_notice_repeats_the_line": ([(RT, "    stated = content is not None and gate.NOT_EVALUATED_LINE.get(lang, gate.NOT_EVALUATED_LINE[\"en\"]) in content\n",
-                                     "    stated = False\n")],
+    "D1_notice_repeats_the_line": ([(RT, "    parts = [] if stated is True else [DIS_NOT_EVALUATED_NOTICE[lang]]\n",
+                                     "    parts = [DIS_NOT_EVALUATED_NOTICE[lang]]\n")],
                                    "F: the route's notice repeats the \"not evaluated\" statement the draft already has"),
 }
 

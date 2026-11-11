@@ -24,7 +24,10 @@ from app.services.report_payload_guard import (
     PatientIdentifiers,
     PatientRecordUnavailable,
     ProviderGuardError,
+    without_format_characters,      # the one shared rule (fourth review of PR #78, Q6)
 )
+# fourth review of PR #78, Q7: the blocks the verified report writes — one source
+from app.services.verified_report import RENDERED_FINDINGS
 
 from app.core.logging import get_logger
 
@@ -102,13 +105,6 @@ _BOLD_LINE = re.compile(r"(\*\*|__).+\1:?")
 
 def without_bidi(text: str) -> str:
     return _BIDI.sub("", text)
-
-
-def without_format_characters(text: str) -> str:
-    """`text` without Unicode format characters (soft hyphen, zero-width joiners, BOM, bidirectional controls); a
-    zero-width space becomes a space, so that the words it separated stay apart."""
-    text = text.replace("\u200b", " ")
-    return "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
 
 
 def quoted(text: str) -> str:
@@ -253,7 +249,7 @@ async def read_patient_identifiers(patient_id: str) -> PatientIdentifiers:
 # it sent its data under field names this route silently ignored. Such a request is refused.
 # Second review of PR #78 (D, DRAFT): only the blocks the verified report writes count (zone statistics, segmentation
 # labels and anomalies are accepted but not included, so alone they are no measurement for this report).
-MEASUREMENT_FINDING_KEYS = frozenset({"lesion_analysis", "dis_assessment", "longitudinal"})
+MEASUREMENT_FINDING_KEYS = frozenset(RENDERED_FINDINGS)       # fourth review, Q7: the verified report's own list
 
 
 # CAPA-013 (RC-060, RC-061, RC-062; HAZ-007): a draft that received a longitudinal comparison
@@ -452,13 +448,13 @@ async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
         )
 
 
-def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0,
-               content: Optional[str] = None) -> Optional[str]:
+def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0, stated: bool = False) -> Optional[str]:
     """The fixed notice for a draft with lesion measurements or a DIS block but no evaluated DIS, or None.
 
-    Second review of PR #78 (F, DRAFT): the "not evaluated" statement is guaranteed ONCE. When the draft `content`
-    already carries the app's own line (`dis_review_gate.NOT_EVALUATED_LINE`, written by code in the verified report's
-    findings, RC-102), the notice does not repeat it; without that line (any other content) the notice states it."""
+    Second review of PR #78 (F, DRAFT): the "not evaluated" statement is guaranteed ONCE. Fourth review (Q6): the
+    route no longer searches the processed text for it — `stated` is the service's own fact
+    (`dis_not_evaluated_stated`: the code-written findings carry `dis_review_gate.NOT_EVALUATED_LINE`, RC-102). When
+    stated, the notice does not repeat it; otherwise (any other service) the notice states it."""
     from app.services import dis_review_gate as gate
 
     if not (findings.get("lesion_analysis") or "dis_assessment" in findings or replaced):
@@ -466,8 +462,7 @@ def dis_notice(findings: Dict[str, Any], language: str, replaced: int = 0,
     if gate.is_evaluated(findings.get("dis_assessment")):
         return None
     lang = language if language in DIS_NOT_EVALUATED_NOTICE else "en"
-    stated = content is not None and gate.NOT_EVALUATED_LINE.get(lang, gate.NOT_EVALUATED_LINE["en"]) in content
-    parts = [] if stated else [DIS_NOT_EVALUATED_NOTICE[lang]]
+    parts = [] if stated is True else [DIS_NOT_EVALUATED_NOTICE[lang]]
     if replaced:
         parts.append(DIS_LINES_REPLACED[lang].format(n=replaced))
     parts.append(gate.AUTOMATIC_MARKING_NOTICE[lang])
@@ -694,10 +689,16 @@ async def generate_report(
             audit_actor=current_user,
             segmentation_id=request.segmentation_id,
         )
+        # Fourth review of PR #78 (Q6): the service's own fact — its code-written findings state "DIS not evaluated"
+        # (never a search of the text); a service without the fact gets the full notice.
+        stated_by_service = result.pop("dis_not_evaluated_stated", False) is True
         # Release 2026-10-25 (integration review of PR #69, item 2): CAPA-014's format-character rule (zero-width
         # space -> space, every other format character removed) is applied to the MODEL's text before the DIS check,
         # so a zero-width joiner or space cannot hide a DIS statement from it. The clinician's typed text is not part
-        # of `result["content"]` and never passes through the check.
+        # of `result["content"]` and never passes through the check. (Fourth review, Q6: the verified report's check
+        # applies the same shared rule to the comments it checks, so on its text this layer and the DIS backstop below
+        # change nothing; both stay as the route's own backstop for any service text — route-level tests: the
+        # zero-width and DIS-statement cases of test_release_2026_10_25_review_fixes.py and RC-070 n3.)
         result = {**result, "content": without_format_characters(result["content"])}
         replaced = 0
         # Finding 4 / N3: a DIS statement written by the model is replaced, in code — a BACKSTOP; the main controls
@@ -718,7 +719,7 @@ async def generate_report(
         notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
-        dis_text = dis_notice(findings, request.language, replaced, content=result["content"])
+        dis_text = dis_notice(findings, request.language, replaced, stated=stated_by_service)
         if dis_text:   # PRB-003 (RC-070, RC-072): appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {dis_text}"
         result = {**result, **parts, "content": draft_text(parts, request.language)}
