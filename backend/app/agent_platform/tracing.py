@@ -42,6 +42,7 @@ import contextvars
 import json
 import math
 import os
+import queue
 import re
 import secrets
 import threading
@@ -208,20 +209,98 @@ class InMemoryExporter:
             self.spans.append(span)
 
 
+_STOP = object()
+
+
 class OtlpJsonFileExporter:
     """Appends each span as one OTLP/JSON line to a local file (off unless both settings are given); keeps no
-    span in memory."""
+    span in memory beyond a bounded queue.
+
+    Fourth review of PR #79, finding 8 (availability): the run never waits on the disk. ``export`` serialises
+    the span and puts the line on a bounded queue (``max_queue``); ONE writer thread owns ONE file handle and
+    writes the lines in order. A full queue, a closed exporter or a write error drops the span and counts it
+    in ``dropped`` (the audit log, not the trace, is the record of the run). ``flush(timeout)`` waits at most
+    ``timeout`` seconds and says whether everything was written; ``close(timeout)`` flushes, stops the thread
+    and closes the file."""
 
     retains = False
+    MAX_QUEUE = 10_000
 
-    def __init__(self, path: str):
+    def __init__(self, path: str, *, max_queue: int = MAX_QUEUE):
         self.path = path
+        self.dropped = 0
+        self._queue: "queue.Queue[Any]" = queue.Queue(maxsize=max_queue)
         self._lock = threading.Lock()
+        self._closed = False
+        self._thread = threading.Thread(target=self._write_loop, name="mstool-agent-trace-writer", daemon=True)
+        self._thread.start()
+
+    def _drop(self, n: int = 1) -> None:
+        with self._lock:
+            self.dropped += n
 
     def export(self, span: Span) -> None:
-        line = json.dumps(to_otlp_json([span]), sort_keys=True)
-        with self._lock, open(self.path, "a", encoding="utf-8") as fh:
-            fh.write(line + "\n")
+        if self._closed:
+            self._drop()
+            return
+        try:
+            self._queue.put_nowait(json.dumps(to_otlp_json([span]), sort_keys=True))
+        except queue.Full:
+            self._drop()
+
+    def _write_loop(self) -> None:
+        try:
+            fh = open(self.path, "a", encoding="utf-8")
+        except OSError:
+            fh = None
+        try:
+            while True:
+                line = self._queue.get()
+                try:
+                    if line is _STOP:
+                        return
+                    if fh is None:
+                        self._drop()
+                        continue
+                    try:
+                        fh.write(line + "\n")
+                        if self._queue.empty():
+                            fh.flush()
+                    except (OSError, ValueError):
+                        self._drop()
+                finally:
+                    self._queue.task_done()
+        finally:
+            if fh is not None:
+                try:
+                    fh.close()
+                except OSError:
+                    pass
+
+    def flush(self, timeout: float = 5.0) -> bool:
+        """True when every queued span was written (and the file flushed) within ``timeout`` seconds."""
+        deadline = time.monotonic() + max(0.0, float(timeout))
+        done = self._queue.all_tasks_done
+        with done:
+            while self._queue.unfinished_tasks:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return False
+                done.wait(remaining)
+        return True
+
+    def close(self, timeout: float = 5.0) -> bool:
+        """Flush, stop the writer and close the file; bounded by ``timeout``. Idempotent."""
+        if self._closed:
+            return not self._thread.is_alive()
+        self._closed = True
+        flushed = self.flush(timeout)
+        try:
+            self._queue.put(_STOP, timeout=max(0.0, float(timeout)))
+        except queue.Full:
+            return False
+        self._thread.join(max(0.0, float(timeout)))
+        return flushed and not self._thread.is_alive()
 
 
 def exporter_from_env():

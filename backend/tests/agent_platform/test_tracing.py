@@ -141,6 +141,9 @@ def test_rc116_file_exporter_needs_both_settings_and_writes_otlp_json(monkeypatc
     tracer = T.Tracer(exporter)
     with tracer.agent_span("test-agent", provider="anthropic"):
         pass
+    # Amended for the fourth review of PR #79, finding 8: the file is written by a writer thread, so the test
+    # waits for it (bounded) before reading.
+    assert exporter.flush(timeout=5.0) and exporter.close()
     doc = json.loads(out.read_text(encoding="utf-8").splitlines()[0])
     scope = doc["resourceSpans"][0]["scopeSpans"][0]
     assert scope["schemaUrl"] == T.SEMCONV_SCHEMA_URL

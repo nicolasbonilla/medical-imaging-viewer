@@ -96,6 +96,9 @@ class RefusalCode(str, Enum):
     MODEL_RESPONSE_INVALID = "model_response_invalid"
     MODEL_OUTPUT_EMPTY = "model_output_empty"
     RUN_CANCELLED = "run_cancelled"
+    RUN_INPUT_INVALID = "run_input_invalid"
+    RUN_INTERNAL_ERROR = "run_internal_error"
+    RUN_ABORTED = "run_aborted"
 
     def __str__(self) -> str:  # so f-strings and json.dumps(str(code)) give the bare code
         return self.value
@@ -135,13 +138,47 @@ REASONS: Dict[RefusalCode, str] = {
     RefusalCode.MODEL_RESPONSE_INVALID: "the provider's response does not have the expected shape; nothing is delivered",
     RefusalCode.MODEL_OUTPUT_EMPTY: "the model returned no text; nothing is delivered",
     RefusalCode.RUN_CANCELLED: "the run was cancelled; nothing is delivered",
+    RefusalCode.RUN_INPUT_INVALID: "the run's scope or untrusted inputs are not well formed; nothing is run",
+    RefusalCode.RUN_INTERNAL_ERROR: "the platform failed during the run; nothing is delivered",
+    RefusalCode.RUN_ABORTED: "the run was aborted by the process; nothing is delivered",
 }
 
 # Codes of a run that FAILED (the model, a tool or the verifier did not work) as opposed to one the platform
 # REFUSED: failures are audited as failures, refusals as denials (review of PR #79, finding 8).
 FAILURE_CODES = frozenset({RefusalCode.MODEL_CALL_FAILED, RefusalCode.TOOL_FAILED, RefusalCode.VERIFIER_FAILED,
                            RefusalCode.OUTPUT_TRUNCATED, RefusalCode.MODEL_STOP_UNEXPECTED,
-                           RefusalCode.MODEL_RESPONSE_INVALID, RefusalCode.MODEL_OUTPUT_EMPTY})
+                           RefusalCode.MODEL_RESPONSE_INVALID, RefusalCode.MODEL_OUTPUT_EMPTY,
+                           RefusalCode.RUN_INTERNAL_ERROR, RefusalCode.RUN_ABORTED})
+
+# Fourth review of PR #79, finding 7: the audit event types the platform writes, ONE record per run.
+# - agent.decision        a registry decision taken OUTSIDE a run (a direct check by a caller); inside a run
+#                         decisions are not recorded on their own — the run record carries the final code;
+# - agent.run             exactly one per run: outcome success / denied / failure / cancelled, the final code,
+#                         agent, model (when one was chosen), tool (when the run stopped at a tool call),
+#                         pseudonymised study, trace id, actor; the server log reason is "agent.run:<code>";
+# - agent.signoff_linked  the radiologist's sign-off linked to the run's trace.
+AUDIT_EVENT_TYPES = frozenset({"agent.decision", "agent.run", "agent.signoff_linked"})
+_IN_RUN: "contextvars.ContextVar[bool]" = contextvars.ContextVar("mstool_agent_in_run", default=False)
+
+
+@contextlib.contextmanager
+def within_run():
+    """Inside a run the registry's own decisions are not audited separately (one record per run)."""
+    token = _IN_RUN.set(True)
+    try:
+        yield
+    finally:
+        _IN_RUN.reset(token)
+
+
+def retirement_state(retires_on, today) -> Tuple[str, Optional[int]]:
+    """The ONE retirement rule (fourth review, finding 10): ("retired" | "warning" | "ok", days left)."""
+    if retires_on is None:
+        return "ok", None
+    days = (retires_on - today).days
+    if days <= 0:
+        return "retired", days
+    return ("warning" if days <= RETIREMENT_WARNING_DAYS else "ok"), days
 
 
 @dataclass(frozen=True)
@@ -413,7 +450,10 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
         actor = current_actor()
         emit_audit(AuditEventType.CLINICAL_AI_RUN, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
-                   reason=f"agent.{event.get('code', 'unknown')}"[:64], resource_type="agent_run", resource_ids=ids)
+                   # fourth review of PR #79, finding 7: the reason is "<event type>:<code>", so the server log
+                   # keeps which record of AUDIT_EVENT_TYPES this is (e.g. "agent.run:agent_not_approved")
+                   reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}"[:64],
+                   resource_type="agent_run", resource_ids=ids)
     except Exception:  # noqa: BLE001 — auditing never breaks the caller
         pass
 
@@ -606,7 +646,8 @@ class AgentRegistry:
             pass
 
     def _refuse(self, code: RefusalCode, **ctx) -> Decision:
-        self.audit("denied", code, **ctx)
+        if not _IN_RUN.get():                     # inside a run, the run's single record carries the code
+            self.audit("denied", code, **ctx)
         return Decision.refuse(code)
 
     # -------------------------------------------------------------- checks
@@ -642,13 +683,11 @@ class AgentRegistry:
             return self._refuse(RefusalCode.MODEL_NOT_IN_USE, agent_id=agent_id, model_id=model_id,
                                 trace_id=trace_id)
         warnings = []
-        if entry.retires_on is not None:
-            days_left = (entry.retires_on - self.today()).days
-            if days_left <= 0:
-                return self._refuse(RefusalCode.MODEL_RETIRED, agent_id=agent_id, model_id=model_id,
-                                    trace_id=trace_id)
-            if days_left <= RETIREMENT_WARNING_DAYS:
-                warnings.append(f"model {model_id} retires on {entry.retires_on.isoformat()} ({days_left} days)")
+        state, days_left = retirement_state(entry.retires_on, self.today())
+        if state == "retired":
+            return self._refuse(RefusalCode.MODEL_RETIRED, agent_id=agent_id, model_id=model_id, trace_id=trace_id)
+        if state == "warning":
+            warnings.append(f"model {model_id} retires on {entry.retires_on.isoformat()} ({days_left} days)")
         return Decision.ok(warnings)
 
     def check_tool(self, agent_id: Any, tool_name: Any, *, trace_id: Optional[str] = None) -> Decision:

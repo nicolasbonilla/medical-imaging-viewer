@@ -67,6 +67,10 @@ anthropic==0.44.0
 
 # MCP — Model Context Protocol (Phase 5)
 fastmcp==2.3.0
+# The MCP SDK is pinned exactly (agent platform, fourth review of PR #79, finding 3): it fixes the protocol
+# revision the MCP servers speak. 1.12.4 is the version CI resolved for fastmcp 2.3.0; changing either pin
+# is a SOUP change (SOUP-AI-002) re-verified by RVP-AGT-001 (Integration_Plan P-7).
+mcp==1.12.4
 
 # WebAuthn / Passkeys
 webauthn>=2.1.0

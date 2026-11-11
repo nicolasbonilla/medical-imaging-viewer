@@ -233,18 +233,61 @@ class RunScope:
 #   storage URLs) anywhere refuses the value.
 STORAGE_LOCATION = re.compile(r"(?i)\b(?:gs|s3|file|ftp)://|https?://storage\.(?:googleapis|cloud\.google)\.com/")
 RESOURCE_ID = re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
-                         r"|\b(?:1\.2|2\.25)(?:\.\d+){3,}\b"
                          r"|\b(?:seg|file|study|series|patient|instance)-[A-Z0-9][A-Za-z0-9_-]*")
+# Fourth review of PR #79, finding 1 (a verified BYPASS): DICOM UIDs of ANY root (Siemens 1.3.12.2.1107, Philips
+# 1.3.46.670589, enterprise 1.3.6.1.4.1.*, GE 1.2.840.113619, 2.25.*). A candidate is a maximal run of digits
+# and dots; it is a UID when it follows the PS3.5 §9.1 grammar (``is_dicom_uid``). In free text and in dict keys
+# a UID must have at least UID_MIN_COMPONENTS_IN_TEXT components: a two- or three-component run is
+# indistinguishable from a decimal ("3.1 mL") or a date ("11.11.2026"). The one exception is the UUID-derived
+# root 2.25 (PS3.5 §B.2): "2.25.<the UUID as an integer>" has three components and a long last one
+# (UID_225_MIN_DIGITS; a random 128-bit integer has fewer digits with probability below 1e-28). Under a resource
+# key every value is checked whatever its shape.
+_DOTTED = re.compile(r"(?<!\d)(?<!\d\.)\d+(?:\.\d+)+(?!\.?\d)")
+_UID_COMPONENT = re.compile(r"0|[1-9][0-9]*")
+UID_MIN_COMPONENTS_IN_TEXT = 4
+UID_225_MIN_DIGITS = 10
 RESOURCE_KEYS = frozenset({"segmentation_id", "file_id", "study_id", "patient_id", "series_id", "instance_id",
                            "baseline_id", "followup_id", "longitudinal_baseline_id", "segmentation_ids", "file_ids",
                            "study_ids", "series_ids", "patient_ids", "study_instance_uid", "series_instance_uid",
-                           "sop_instance_uid"})
-_ACTOR_KEY = re.compile(r"(?:^|_)(?:by|by_id|user_id|owner_id|reviewer_id|author_id|uploader_id|actor_id)$")
+                           "sop_instance_uid",
+                           # fourth review, finding 2: *_by keys that name RESOURCES, not people
+                           "superseded_by", "replaced_by", "supersedes", "replaces", "derived_from", "copied_from",
+                           "merged_into"})
+# Fourth review, finding 2 (a verified BYPASS): only these keys name PEOPLE, and only a STRING that is an
+# actor id (a UUID or a system:<name> identity) is exempt — dicts and lists under them are walked.
+ACTOR_KEYS = frozenset({"created_by", "updated_by", "modified_by", "reviewed_by", "reviewed_by_id", "annotated_by",
+                        "uploaded_by", "signed_by", "approved_by", "confirmed_by", "requested_by", "user_id",
+                        "owner_id", "reviewer_id", "author_id", "uploader_id", "actor_id"})
+ACTOR_ID = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|system:[a-z0-9-]{1,40}")
 _LOCATION_KEY = re.compile(r"(?i)(?:path|uri|url)$")
 
 
+def is_dicom_uid(text: Any) -> bool:
+    """PS3.5 §9.1: digits and dots only, at most 64 characters, at least two components, no empty component and
+    no leading zero in a component (a component may be the single digit 0)."""
+    if not isinstance(text, str) or not 0 < len(text) <= 64:
+        return False
+    parts = text.split(".")
+    return len(parts) >= 2 and all(_UID_COMPONENT.fullmatch(p) for p in parts)
+
+
+def resource_tokens(text: str):
+    """Every resource id named in a string: UUIDs and prefixed ids, and DICOM UIDs of any root."""
+    found = RESOURCE_ID.findall(text)
+    found += [m for m in _DOTTED.findall(text) if _uid_in_text(m)]
+    return found
+
+
+def _uid_in_text(m: str) -> bool:
+    if not is_dicom_uid(m):
+        return False
+    parts = m.split(".")
+    return len(parts) >= UID_MIN_COMPONENTS_IN_TEXT or (
+        len(parts) == 3 and parts[:2] == ["2", "25"] and len(parts[2]) >= UID_225_MIN_DIGITS)
+
+
 def _ids_in_scope(text: str, scope: RunScope) -> bool:
-    return scope.allows(text) or all(scope.allows(t) for t in RESOURCE_ID.findall(text))
+    return scope.allows(text) or all(scope.allows(t) for t in resource_tokens(text))
 
 
 def _resource_value(value: Any, scope: RunScope, invalid: RefusalCode) -> Optional[RefusalCode]:
@@ -279,16 +322,16 @@ def _scope_walk(value: Any, depth: int, scope: RunScope, *, invalid: RefusalCode
         for k, v in value.items():
             if not isinstance(k, str):
                 return invalid
-            child_skip = skip_ids or k in exempt or bool(_ACTOR_KEY.search(k))
-            if not child_skip:
-                if not _ids_in_scope(k, scope):
-                    return RefusalCode.OUT_OF_SCOPE_RESOURCE
-                if k in resource_keys or _LOCATION_KEY.search(k):
-                    bad = _resource_value(v, scope, invalid)
-                    if bad:
-                        return bad
+            if not skip_ids and not _ids_in_scope(k, scope):
+                return RefusalCode.OUT_OF_SCOPE_RESOURCE
+            # An exemption covers one STRING value only, never a subtree (fourth review, finding 2).
+            exempt_value = isinstance(v, str) and (k in exempt or (k in ACTOR_KEYS and bool(ACTOR_ID.fullmatch(v))))
+            if not skip_ids and not exempt_value and (k in resource_keys or _LOCATION_KEY.search(k)):
+                bad = _resource_value(v, scope, invalid)
+                if bad:
+                    return bad
             bad = _scope_walk(v, depth + 1, scope, invalid=invalid, resource_keys=resource_keys, exempt=exempt,
-                              flags=flags, skip_ids=child_skip)
+                              flags=flags, skip_ids=skip_ids or exempt_value)
             if bad:
                 return bad
         return None

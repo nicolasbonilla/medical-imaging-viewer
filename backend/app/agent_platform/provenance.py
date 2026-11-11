@@ -96,11 +96,17 @@ KINDS = frozenset({"heading", "sentence", "list_item", "table_row", "blank"})
 
 
 def segment_is_valid(s: Segment) -> bool:
-    """Every field of a unit has its type and an allowed value; its hash binds its text."""
+    """Every field of a unit has its type and an allowed value; its hash binds its text. Fourth review of PR
+    #79, finding 5: a model unit names its model (a non-empty model_id); a unit of any other author carries no
+    model metadata — so the legend, which follows authorship, can always name the model."""
     optional = (s.agent_id, s.model_id, s.trace_id, s.verifier)
-    return (s.author in AUTHORS and s.kind in KINDS and isinstance(s.text, str) and isinstance(s.trailing, str)
+    if not (s.author in AUTHORS and s.kind in KINDS and isinstance(s.text, str) and isinstance(s.trailing, str)
             and isinstance(s.sha256, str) and s.sha256 == _sha(s.text) and isinstance(s.edited_from_model, bool)
-            and all(v is None or isinstance(v, str) for v in optional) and not s.trailing.strip())
+            and all(v is None or isinstance(v, str) for v in optional) and not s.trailing.strip()):
+        return False
+    if s.author == "model":
+        return isinstance(s.model_id, str) and bool(s.model_id.strip())
+    return all(v is None for v in optional)
 
 
 def split_units(text: str) -> List[Tuple[str, str, str]]:
@@ -168,6 +174,9 @@ def compose(parts: Sequence[Tuple[str, str, Mapping[str, Any]]]) -> ProvenanceDo
     for author, text, meta in parts:
         if author not in AUTHORS:
             raise ValueError(f"unknown author {author!r}")
+        model_id = meta.get("model_id")
+        if author == "model" and not (isinstance(model_id, str) and model_id.strip()):
+            raise ValueError("a model part must name its model (model_id)")   # fourth review, finding 5
         for kind, unit, trailing in split_units(text):
             is_model = author == "model" and kind != "blank"
             segments.append(Segment(
@@ -216,7 +225,8 @@ def reconcile(original: ProvenanceDocument, edited_text: str) -> ProvenanceDocum
 
 
 def _legend(doc: ProvenanceDocument) -> str:
-    models = sorted({s.model_id for s in doc.model_segments() if s.model_id})
+    """Follows AUTHORSHIP (fourth review of PR #79, finding 5): any model unit -> the model legend."""
+    models = sorted({s.model_id or "(model not recorded)" for s in doc.model_segments()})
     agents = sorted({s.agent_id for s in doc.model_segments() if s.agent_id})
     verifiers = sorted({s.verifier for s in doc.model_segments() if s.verifier})
     edited = any(s.edited_from_model for s in doc.segments)

@@ -25,6 +25,11 @@ A run is a fixed, bounded loop (no planner, no memory between runs, no agent-to-
     final text -> verifier (if the agent has one; required when the registry says so) -> switch re-read
     -> delivered text marked unit by unit as the model's (provenance)
 
+One audit record per run (fourth review of PR #79, finding 7): the run writes exactly one ``agent.run``
+record (registry.AUDIT_EVENT_TYPES) with its final code; the registry's own decisions inside the run are not
+audited separately. Any exception at the run boundary is a ``run_internal_error`` failure (audited, no text);
+a BaseException other than a cancellation is audited as ``run_aborted`` and re-raised (finding 4).
+
 Fail closed everywhere: any refusal, any tool or model failure, an exhausted step or tool-call budget,
 a truncated or abnormally stopped answer, a verifier that withholds or fails -> NOTHING is delivered
 (``RunResult.text is None``). Audit outcome (review of PR #79, finding 8): a refusal by the platform is
@@ -46,6 +51,7 @@ id, a key or a parameter from the environment: ``CLAUDE_MODEL`` and the like are
 from __future__ import annotations
 
 import asyncio
+import functools
 import inspect
 import json
 import math
@@ -53,7 +59,8 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence, Tuple
 
 from app.agent_platform import provenance as prov
-from app.agent_platform.registry import FAILURE_CODES, AgentRegistry, RefusalCode, audit_actor, pseudonymise
+from app.agent_platform.registry import (FAILURE_CODES, AgentRegistry, RefusalCode, audit_actor, pseudonymise,
+                                         within_run)
 from app.agent_platform.tracing import Tracer
 from app.agent_platform.untrusted import (UNTRUSTED_DATA_RULE, RunScope, check_tool_arguments, quote_untrusted,
                                           validate_tool_result)
@@ -158,6 +165,20 @@ def verdict_is_valid(verdict: Any) -> bool:
             and isinstance(verdict.reasons, tuple))
 
 
+def scope_is_valid(scope: Any) -> bool:
+    """Fourth review of PR #79, finding 4: a run's scope is a RunScope of strings."""
+    return (isinstance(scope, RunScope) and isinstance(scope.study_key, str) and bool(scope.study_key)
+            and isinstance(scope.resource_ids, frozenset) and all(isinstance(r, str) for r in scope.resource_ids))
+
+
+def untrusted_is_valid(untrusted: Any) -> bool:
+    """Untrusted inputs are (source, text) pairs of strings."""
+    if not isinstance(untrusted, (list, tuple)):
+        return False
+    return all(isinstance(item, (list, tuple)) and len(item) == 2 and isinstance(item[0], str)
+               and isinstance(item[1], str) for item in untrusted)
+
+
 def response_is_malformed(response: Any) -> bool:
     """Second review of PR #79, finding 4: the provider's answer must have the expected shape before any field of
     it is used; anything else is a non-delivery (``model_response_invalid``), never an exception."""
@@ -205,14 +226,17 @@ class AgentRuntime:
         return await asyncio.to_thread(model_client.complete, request)
 
     @staticmethod
-    async def _off_loop(fn: Callable, blocking: bool, *args, **kwargs) -> Any:
+    async def _off_loop(fn: Callable, blocking: bool, args: tuple = (), kwargs: Optional[Dict[str, Any]] = None) -> Any:
         """Second review of PR #79, finding 6: in ``arun`` a sync tool or verifier runs in a worker thread so the
         caller's loop stays responsive; a coroutine function is awaited in the loop; in ``run`` (a private loop)
-        everything is called directly. A result that is awaitable is awaited in the loop."""
+        everything is called directly. A result that is awaitable is awaited in the loop. Fourth review, finding
+        6: the call's arguments travel as ONE dict, so a tool argument named ``fn`` or ``blocking`` cannot
+        collide with this function's own parameters."""
+        call = functools.partial(fn, *args, **(kwargs or {}))
         if blocking or inspect.iscoroutinefunction(fn):
-            out = fn(*args, **kwargs)
+            out = call()
         else:
-            out = await asyncio.to_thread(fn, *args, **kwargs)
+            out = await asyncio.to_thread(call)
         if inspect.isawaitable(out):
             out = await out
         return out
@@ -221,31 +245,56 @@ class AgentRuntime:
     async def _arun(self, agent_id: str, kwargs: Dict[str, Any], blocking_model: bool) -> RunResult:
         # Third review of PR #79, finding 4: every audit record of the run names the authenticated actor passed
         # by the caller (``actor=AuditActor(...)``, with the request) — or the platform's system actor.
-        with audit_actor(kwargs.get("actor")):
+        # Fourth review, finding 7: inside the run the registry does not audit its decisions on their own; the
+        # run writes ONE record (registry.AUDIT_EVENT_TYPES).
+        with audit_actor(kwargs.get("actor")), within_run():
             return await self._arun_as_actor(agent_id, kwargs, blocking_model)
 
     async def _arun_as_actor(self, agent_id: str, kwargs: Dict[str, Any], blocking_model: bool) -> RunResult:
-        model_client = kwargs.get("model_client")
-        scope: RunScope = kwargs["scope"]
         reg = self.registry
+        scope = kwargs.get("scope")
+        # Fourth review of PR #79, finding 4: the inputs are validated before anything runs.
+        if not scope_is_valid(scope) or not untrusted_is_valid(kwargs.get("untrusted", ())):
+            reg.audit("denied", RefusalCode.RUN_INPUT_INVALID, event="agent.run", agent_id=agent_id,
+                      study_key=scope.study_key if scope_is_valid(scope) else None)
+            return RunResult(status="refused", code=RefusalCode.RUN_INPUT_INVALID)
+        model_client = kwargs.get("model_client")
         provider = getattr(model_client, "provider", "unknown") or "unknown"
-        trace = {}
+        state: Dict[str, Any] = {}               # the trace id, and a reservation not yet settled
+
+        def audit_run(outcome, code):
+            reg.audit(outcome, code, event="agent.run", agent_id=agent_id, model_id=state.get("model_id"),
+                      tool=state.get("tool"), study_key=scope.study_key, trace_id=state.get("trace_id"))
+
+        def settle_open_reservation():
+            rid = state.pop("reservation", None)
+            if rid:
+                try:
+                    reg.settle(rid, None)          # the worst case stays charged
+                except ValueError:
+                    pass
+
         try:
             with self.tracer.agent_span(agent_id, provider=provider, trace_id=kwargs.get("trace_id"),
                                         audit_request_id=kwargs.get("audit_request_id"), registry_version=reg.version,
                                         study_key=pseudonymise(scope.study_key)) as span:
-                trace["id"] = span.trace_id
-                result = await self._loop(span, agent_id, model_client, scope, kwargs, blocking_model)
+                state["trace_id"] = span.trace_id
+                result = await self._loop(span, agent_id, model_client, scope, kwargs, blocking_model, state)
                 self._finish_span(span, result)
         except asyncio.CancelledError:
-            # Second review of PR #79, finding 5: the reservation was settled where the cancellation hit (model
-            # call) or was never made; the audit trail records the cancelled run; the cancellation propagates.
-            reg.audit("cancelled", RefusalCode.RUN_CANCELLED, event="agent.run", agent_id=agent_id,
-                      study_key=scope.study_key, trace_id=trace.get("id"))
+            # Second review of PR #79, finding 5: settled, audited, then the cancellation propagates.
+            settle_open_reservation()
+            audit_run("cancelled", RefusalCode.RUN_CANCELLED)
             raise
-        reg.audit(audit_outcome(result.status), result.code, event="agent.run", agent_id=agent_id,
-                  model_id=result.model_id if result.model_id else None, study_key=scope.study_key,
-                  trace_id=result.trace_id)
+        except Exception:  # noqa: BLE001 — fourth review, finding 4: a platform fault is an audited failure
+            settle_open_reservation()
+            audit_run("failure", RefusalCode.RUN_INTERNAL_ERROR)
+            return RunResult(status="failed", code=RefusalCode.RUN_INTERNAL_ERROR, trace_id=state.get("trace_id", ""))
+        except BaseException:
+            settle_open_reservation()
+            audit_run("failure", RefusalCode.RUN_ABORTED)
+            raise
+        audit_run(audit_outcome(result.status), result.code)
         return result
 
     @staticmethod
@@ -259,7 +308,7 @@ class AgentRuntime:
         if result.code != "ok":
             span.set("mstool.refusal.code", str(result.code))
 
-    async def _loop(self, span, agent_id, model_client, scope, kwargs, blocking_model) -> RunResult:
+    async def _loop(self, span, agent_id, model_client, scope, kwargs, blocking_model, state) -> RunResult:
         reg = self.registry
         tid = span.trace_id
         system = kwargs.get("system", "")
@@ -272,22 +321,18 @@ class AgentRuntime:
         executed: List[str] = []
         warnings: List[str] = []
 
-        def stop(status: str, code, audit: bool = True) -> RunResult:
-            """Every early return goes through here, so alarms, executed tools and warnings are never dropped."""
+        def stop(status: str, code) -> RunResult:
+            """Every early return goes through here, so alarms, executed tools and warnings are never dropped. The
+            run's ONE audit record is written by the caller with the final code (fourth review, finding 7)."""
             res.status, res.code, res.text = status, code, None
             res.alarms, res.executed_tools, res.warnings = tuple(alarms), tuple(executed), tuple(warnings)
-            if audit and code != "ok":
-                ctx = {"agent_id": agent_id, "study_key": scope.study_key, "trace_id": tid}
-                if res.model_id is not None:
-                    ctx["model_id"] = res.model_id
-                reg.audit(audit_outcome(status), code, **ctx)
             return res
 
         unknown = set(kwargs) - {"model_client", "scope", "system", "user_content", "untrusted", "model_id",
                                  "overrides", "trace_id", "audit_request_id", "output_budget", "actor"}
         d = reg.check_agent(agent_id, trace_id=tid)
         if not d.allowed:
-            return stop("refused", d.code, audit=False)          # the registry audited it
+            return stop("refused", d.code)
         spec = reg.agent(agent_id)
         if overrides or unknown:
             return stop("refused", RefusalCode.PARAMETER_OVERRIDE)
@@ -298,6 +343,7 @@ class AgentRuntime:
                 return stop("refused", RefusalCode.UNKNOWN_MODEL)
             model_id = spec.allowed_models[0]
         res.model_id = model_id if isinstance(model_id, str) else None
+        state["model_id"] = model_id                  # audited as given: a malformed id is recorded as "invalid"
         # Review of PR #79, finding 1: the output budget is one of the registry's budgets for this agent (e.g.
         # max_tokens, or max_tokens_comprehensive for the comprehensive template) — chosen by name, never a number.
         budget_name = kwargs.get("output_budget", BUDGET_PREFIX)
@@ -324,7 +370,8 @@ class AgentRuntime:
             d = reg.authorize_model_call(agent_id, model_id, study_key=scope.study_key, input_tokens=est_in,
                                          max_output_tokens=max_tokens, trace_id=tid)
             if not d.allowed:
-                return stop("refused", d.code, audit=False)
+                return stop("refused", d.code)
+            state["reservation"] = d.reservation              # settled below, or at the run boundary on a fault
             warnings.extend(w for w in d.warnings if w not in warnings)
             request = ModelRequest(model_id=model_id, system=system, messages=tuple(dict(m) for m in messages),
                                    tools=tuple(sorted(spec.allowed_tools)), max_tokens=max_tokens)
@@ -337,14 +384,17 @@ class AgentRuntime:
                     response = await self._call_model(model_client, request, blocking_model)
                 except asyncio.CancelledError:
                     reg.settle(d.reservation, None)             # never leaked: the worst case stays charged
+                    state.pop("reservation", None)
                     raise
                 except Exception as exc:  # noqa: BLE001 — any provider failure: no draft
                     chat.fail(type(exc).__name__)
                     reg.settle(d.reservation, None)             # the provider may have charged: worst case kept
+                    state.pop("reservation", None)
                     res.cost_usd += worst
                     return stop("failed", RefusalCode.MODEL_CALL_FAILED)
                 if response_is_malformed(response):
                     reg.settle(d.reservation, None)
+                    state.pop("reservation", None)
                     res.cost_usd += worst
                     chat.set("mstool.refusal.code", str(RefusalCode.MODEL_RESPONSE_INVALID))
                     return stop("failed", RefusalCode.MODEL_RESPONSE_INVALID)
@@ -352,6 +402,7 @@ class AgentRuntime:
                 cost = (reg.estimate_cost_usd(model_id, response.input_tokens, response.output_tokens) if usage_ok
                         else None)
                 reg.settle(d.reservation, cost)                 # None: impossible usage, the worst case stays
+                state.pop("reservation", None)
                 res.cost_usd += worst if cost is None else cost
                 chat.set("gen_ai.response.model", response.model_id)
                 if usage_ok:
@@ -385,11 +436,12 @@ class AgentRuntime:
                 if res.tool_calls >= spec.max_tool_calls:
                     return stop("abstained", RefusalCode.TOOL_CALL_LIMIT)
                 res.tool_calls += 1
+                state["tool"] = call.name                     # named in the run's record if the run stops here
                 with self.tracer.tool_span(call.name, call_id=call.call_id) as ts:
                     d = reg.check_tool(agent_id, call.name, trace_id=tid)
                     if not d.allowed:
                         ts.set("mstool.refusal.code", str(d.code))
-                        return stop("refused", d.code, audit=False)
+                        return stop("refused", d.code)
                     entry = reg.tool(call.name)
                     d = check_tool_arguments(entry, call.arguments, scope)
                     if not d.allowed:
@@ -400,7 +452,7 @@ class AgentRuntime:
                         ts.set("mstool.refusal.code", str(RefusalCode.UNKNOWN_TOOL))
                         return stop("refused", RefusalCode.UNKNOWN_TOOL)
                     try:
-                        raw = await self._off_loop(fn, blocking_model, **dict(call.arguments))
+                        raw = await self._off_loop(fn, blocking_model, kwargs=dict(call.arguments))
                     except Exception as exc:  # noqa: BLE001 — a failing tool: no draft
                         ts.fail(type(exc).__name__)
                         return stop("failed", RefusalCode.TOOL_FAILED)
@@ -412,6 +464,7 @@ class AgentRuntime:
                     ts.set("mstool.untrusted.alarm_count", len(check.flags))
                     alarms.extend(check.flags)
                     executed.append(call.name)
+                    state.pop("tool", None)
                 messages.append({"role": "tool", "tool_call_id": call.call_id, "content": check.for_model})
         else:
             return stop("abstained", RefusalCode.STEP_LIMIT)
@@ -423,9 +476,9 @@ class AgentRuntime:
         if self.verifier is not None:
             with self.tracer.verify_span("verifier", verdict="not_run") as vs:
                 try:
-                    verdict = await self._off_loop(self.verifier, blocking_model, final_text,
-                                                   {"agent_id": agent_id, "model_id": model_id, "scope": scope,
-                                                    "user_content": user_content})
+                    verdict = await self._off_loop(self.verifier, blocking_model,
+                                                   args=(final_text, {"agent_id": agent_id, "model_id": model_id,
+                                                                      "scope": scope, "user_content": user_content}))
                     ok = verdict_is_valid(verdict)              # third review of PR #79, finding 8
                 except Exception as exc:  # noqa: BLE001 — a verifier that fails withholds
                     vs.fail(type(exc).__name__)
@@ -446,7 +499,7 @@ class AgentRuntime:
 
         d = reg.check_agent(agent_id, trace_id=tid)               # the switch, once more, before delivery
         if not d.allowed:
-            return stop("refused", d.code, audit=False)
+            return stop("refused", d.code)
         res.status, res.code, res.text = "delivered", "ok", delivered
         res.alarms, res.executed_tools, res.warnings = tuple(alarms), tuple(executed), tuple(warnings)
         res.provenance = prov.mark_model_text(delivered, agent_id=agent_id, model_id=model_id, trace_id=tid,

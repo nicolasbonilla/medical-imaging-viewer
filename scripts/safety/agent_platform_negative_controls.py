@@ -44,6 +44,7 @@ REG, UNT, TRC, RUN = P + "registry.py", P + "untrusted.py", P + "tracing.py", P 
 PRV, OVS, CRD, EVL = P + "provenance.py", P + "oversight.py", P + "cards.py", P + "evals.py"
 GRADER = "backend/tests/agent_platform/graders/report_verifier_v3/verifier.py"
 MCPB = "backend/app/mcp/_backend.py"
+REQ = "backend/requirements.txt"
 NCS = "scripts/safety/agent_platform_negative_controls.py"
 
 M = {  # name: (file, anchor, replacement, control, what it re-introduces)
@@ -57,7 +58,7 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                "RC-111", "the kill switch is not read"),
     "R4_unreadable_switch_is_on": (REG, "            return self._refuse(RefusalCode.SWITCH_UNREADABLE, agent_id=agent_id, trace_id=trace_id)\n",
                                    "            on = True\n", "RC-111", "a switch that cannot be read counts as on"),
-    "R5_retirement_ignored": (REG, "            if days_left <= 0:\n", "            if days_left < -36500:\n", "RC-110",
+    "R5_retirement_ignored": (REG, "    if days <= 0:\n", "    if days < -36500:\n", "RC-110",
                               "a retired model is still called"),
     "R6_model_allow_list_ignored": (REG, "        if model_id not in self._agents[agent_id].allowed_models:\n",
                                     "        if False:\n", "RC-110", "any registered model may be used by any agent"),
@@ -126,11 +127,13 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                     "the agent span no longer follows the pinned conventions"),
     # ---------------------------------------------------------------- runtime
     "X1_no_switch_before_delivery": (RUN, '        d = reg.check_agent(agent_id, trace_id=tid)               # the switch, once more, before delivery\n'
-                                          '        if not d.allowed:\n            return stop("refused", d.code, audit=False)\n',
+                                          '        if not d.allowed:\n            return stop("refused", d.code)\n',
                                      "", "RC-111", "text is delivered after the agent was switched off"),
     "X2_continue_after_refused_tool": (RUN, '                    if not d.allowed:\n                        ts.set("mstool.refusal.code", str(d.code))\n'
-                                            '                        return stop("refused", d.code, audit=False)\n',
-                                       "                    if not d.allowed:\n                        continue\n", "RC-110",
+                                            '                        return stop("refused", d.code)\n'
+                                            '                    entry = reg.tool(call.name)\n',
+                                       "                    if not d.allowed:\n                        continue\n"
+                                       "                    entry = reg.tool(call.name)\n", "RC-110",
                                        "the run continues after a refused (e.g. write) tool call"),
     "X3_no_argument_scope_in_run": (RUN, "                    d = check_tool_arguments(entry, call.arguments, scope)\n",
                                     "                    d = Decision.ok()\n", "RC-114", "the run does not check tool arguments"),
@@ -223,20 +226,20 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                   "        for item in []:\n            if isinstance(item, (Mapping, list)):\n", "RC-114",
                                   "ids in a list (*_ids, ids) are not scope-checked"),
     "V8_nested_values_not_walked": (UNT, "            bad = _scope_walk(v, depth + 1, scope, invalid=invalid, resource_keys=resource_keys, exempt=exempt,\n"
-                                         "                              flags=flags, skip_ids=child_skip)\n",
+                                         "                              flags=flags, skip_ids=skip_ids or exempt_value)\n",
                                     "            bad = None\n",
                                     "RC-114", "ids nested in objects are not scope-checked"),
-    "V9_path_uri_not_checked": (UNT, "                if k in resource_keys or _LOCATION_KEY.search(k):\n",
-                                "                if k in resource_keys:\n",
+    "V9_path_uri_not_checked": (UNT, "            if not skip_ids and not exempt_value and (k in resource_keys or _LOCATION_KEY.search(k)):\n",
+                                "            if not skip_ids and not exempt_value and k in resource_keys:\n",
                                 "RC-114", "path / uri / url values are not scope-checked"),
     "V10_first_version_kept": (OVS, '            if current is None or current["draft_sha256"] != digest:\n', "            if current is None:\n",
                                "RC-120", "a regenerated draft keeps the old version, its sign-off is not counted"),
     "V11_failures_audited_as_denials": (RUN, '    return "failure" if status == "failed" else "denied"\n', '    return "denied"\n', "RC-110",
                                         "model, tool and verifier failures are audited as denials"),
     "V12_alarms_dropped": (RUN, "            res.alarms, res.executed_tools, res.warnings = tuple(alarms), tuple(executed), tuple(warnings)\n"
-                                '            if audit and code != "ok":\n',
+                                "            return res\n",
                            "            res.executed_tools, res.warnings = tuple(executed), tuple(warnings)\n"
-                           '            if audit and code != "ok":\n', "RC-113", "early returns drop the injection alarms"),
+                           "            return res\n", "RC-113", "early returns drop the injection alarms"),
     # ---------------------------------------------------------------- second independent review of PR #79
     "W1_activity_flags_reach_the_model": (MCPB, "    return drop_unconfirmed_activity_flags(drop_direct_identifiers(value))\n",
                                           "    return drop_direct_identifiers(value)\n", "RC-113",
@@ -245,7 +248,7 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                  "a list marker is split from its item and tagged on its own"),
     "W3_abbreviations_split": (PRV, "        if _no_split_after(text[start:m.start()], text[m.end():]):\n            continue\n",
                                "        if False:\n            continue\n", "RC-119", "a sentence is split after an abbreviation"),
-    "W4_foreign_id_keys_ignored": (UNT, "                if not _ids_in_scope(k, scope):\n", "                if False:\n",
+    "W4_foreign_id_keys_ignored": (UNT, "            if not skip_ids and not _ids_in_scope(k, scope):\n", "            if False:\n",
                                    "RC-114", "another resource used as a dict key passes"),
     "W5_numeric_ids_ignored": (UNT, "        return None if scope.allows(str(value)) else RefusalCode.OUT_OF_SCOPE_RESOURCE\n",
                                "        return None\n", "RC-114", "a numeric id of another resource passes"),
@@ -259,8 +262,7 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
     "W9_cancel_leaks_reservation": (RUN, "                except asyncio.CancelledError:\n                    reg.settle(d.reservation, None)             # never leaked: the worst case stays charged\n",
                                     "                except asyncio.CancelledError:\n", "RC-112",
                                     "a cancelled call leaves its reservation open"),
-    "W10_cancel_not_audited": (RUN, '            reg.audit("cancelled", RefusalCode.RUN_CANCELLED, event="agent.run", agent_id=agent_id,\n'
-                                    '                      study_key=scope.study_key, trace_id=trace.get("id"))\n',
+    "W10_cancel_not_audited": (RUN, '            audit_run("cancelled", RefusalCode.RUN_CANCELLED)\n',
                                "", "RC-110", "a cancelled run leaves no audit record"),
     "W11_edited_marker_lost": (PRV, "        elif s.edited_from_model and unit.strip():\n            unit = _marked(unit, TEXT_MARK_EDITED)\n",
                                "", "RC-119", "a model sentence the clinician edited loses its AI marker"),
@@ -274,11 +276,11 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                                 '    (REPO / path).write_text(mutated, encoding="utf-8", newline=eol)\n', "RC-118",
                                                 "the negative-control script writes its mutations into the repository"),
     # ---------------------------------------------------------------- third independent review of PR #79
-    "Y1_resource_keys_ignored": (UNT, "                if k in resource_keys or _LOCATION_KEY.search(k):\n",
-                                 "                if _LOCATION_KEY.search(k):\n", "RC-114",
+    "Y1_resource_keys_ignored": (UNT, "            if not skip_ids and not exempt_value and (k in resource_keys or _LOCATION_KEY.search(k)):\n",
+                                 "            if not skip_ids and not exempt_value and _LOCATION_KEY.search(k):\n", "RC-114",
                                  "a non-pattern id under a resource key (segmentation_id: 12345) passes"),
-    "Y2_actor_keys_scope_checked": (UNT, "            child_skip = skip_ids or k in exempt or bool(_ACTOR_KEY.search(k))\n",
-                                    "            child_skip = skip_ids or k in exempt\n", "RC-114",
+    "Y2_actor_keys_scope_checked": (UNT, "            exempt_value = isinstance(v, str) and (k in exempt or (k in ACTOR_KEYS and bool(ACTOR_ID.fullmatch(v))))\n",
+                                    "            exempt_value = isinstance(v, str) and k in exempt\n", "RC-114",
                                     "the clinician's own user id (created_by) refuses a legitimate result"),
     "Y3_model_none_audited_invalid": (REG, "    if value is _UNSET or value is None:\n", "    if value is _UNSET:\n", "RC-110",
                                       "a run that chose no model is audited with model 'invalid'"),
@@ -286,8 +288,8 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                       "                   username=actor.username, role=actor.role,\n",
                                  "        emit_audit(AuditEventType.CLINICAL_AI_RUN, outcome,\n", "RC-110",
                                  "agent audit records are anonymous and dropped under load"),
-    "Y5_retirement_check_ignores_the_date": (CRD, '        if model.get("retires_on") and today >= _date.fromisoformat(model["retires_on"]):\n',
-                                             "        if False:\n", "RC-117", "the retirement check never reports a retired model"),
+    "Y5_retirement_check_ignores_the_date": (CRD, '            for agent_id, model, state, _ in _card_retirements(today, agents) if state == "retired"]\n',
+                                             '            for agent_id, model, state, _ in _card_retirements(today, agents) if False]\n', "RC-117", "the retirement check never reports a retired model"),
     "Y6_html_author_unchecked": (PRV, '    if not verify_document(doc, doc.text()):\n        raise ValueError("refusing to render a provenance record that does not verify")\n',
                                  "", "RC-119", "an invalid provenance record (e.g. a script as author) is rendered"),
     "Y7_from_dict_unchecked": (PRV, "            if not segment_is_valid(s):\n", "            if False:\n", "RC-119",
@@ -295,6 +297,42 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
     "Y8_malformed_verdict_used": (RUN, "                    ok = verdict_is_valid(verdict)              # third review of PR #79, finding 8\n",
                                   "                    ok = isinstance(verdict, Verdict)\n", "RC-110",
                                   "a Verdict with fields of the wrong type is used and the run raises unaudited"),
+    # ---------------------------------------------------------------- fourth independent review of PR #79
+    "Z1_uid_tokens_ignored": (UNT, "    found += [m for m in _DOTTED.findall(text) if _uid_in_text(m)]\n", "", "RC-114",
+                              "a foreign DICOM UID of another root (Siemens, Philips, GE...) in text or as a key passes"),
+    "Z2_actor_exemption_hides_subtree": (UNT, "            exempt_value = isinstance(v, str) and (k in exempt or (k in ACTOR_KEYS and bool(ACTOR_ID.fullmatch(v))))\n",
+                                         "            exempt_value = k in exempt or k in ACTOR_KEYS\n", "RC-114",
+                                         "a dict or list under an actor or exempt key is not walked"),
+    "Z3_resource_by_keys_dropped": (UNT, '                           "superseded_by", "replaced_by", "supersedes", "replaces", "derived_from", "copied_from",\n'
+                                         '                           "merged_into"})\n',
+                                    "                           })\n", "RC-114",
+                                    "superseded_by / replaced_by name another resource unchecked"),
+    "Z4_boundary_exception_escapes": (RUN, "        except Exception:  # noqa: BLE001 — fourth review, finding 4: a platform fault is an audited failure\n"
+                                           "            settle_open_reservation()\n"
+                                           '            audit_run("failure", RefusalCode.RUN_INTERNAL_ERROR)\n'
+                                           '            return RunResult(status="failed", code=RefusalCode.RUN_INTERNAL_ERROR, trace_id=state.get("trace_id", ""))\n',
+                                      "", "RC-110", "an internal error escapes the run as an exception instead of an audited failure"),
+    "Z5_run_inputs_not_validated": (RUN, '        if not scope_is_valid(scope) or not untrusted_is_valid(kwargs.get("untrusted", ())):\n',
+                                    "        if False:\n", "RC-110", "a malformed scope or untrusted input reaches the run"),
+    "Z6_model_part_without_model": (PRV, '        if author == "model" and not (isinstance(model_id, str) and model_id.strip()):\n'
+                                         '            raise ValueError("a model part must name its model (model_id)")   # fourth review, finding 5\n',
+                                    "", "RC-119", "model text is composed without naming its model"),
+    "Z7_model_segment_without_model_loaded": (PRV, "        return isinstance(s.model_id, str) and bool(s.model_id.strip())\n",
+                                              "        return True\n", "RC-119",
+                                              "a stored model unit without a model id is loaded"),
+    "Z8_in_run_decisions_audited_twice": (REG, "        if not _IN_RUN.get():                     # inside a run, the run's single record carries the code\n"
+                                               '            self.audit("denied", code, **ctx)\n',
+                                          '        self.audit("denied", code, **ctx)\n', "RC-110",
+                                          "a run leaves more than one audit record"),
+    "Z9_mcp_pin_loosened": (REQ, "mcp==1.12.4\n", "mcp>=1.8.0,<2.0.0\n", "RC-117",
+                            "the MCP SDK (the protocol revision spoken) is whatever pip resolves"),
+    "Z10_trace_lines_lost": (TRC, "            self._queue.put_nowait(json.dumps(to_otlp_json([span]), sort_keys=True))\n",
+                             "            pass\n", "RC-116", "the file exporter loses the spans it is given"),
+    "Z11_edit_size_on_characters": (OVS, "    a = [u[1] + u[2] for u in split_units(shown)]\n    b = [u[1] + u[2] for u in split_units(final)]\n",
+                                    "    a, b = list(shown), list(final)\n", "RC-120",
+                                    "the edit size is a whole-text character diff (seconds on a long report)"),
+    "Z12_uuid_root_uid_ignored": (UNT, '        len(parts) == 3 and parts[:2] == ["2", "25"] and len(parts[2]) >= UID_225_MIN_DIGITS)\n',
+                                  "        False)\n", "RC-114", "a foreign UUID-derived UID (2.25.<integer>) passes"),
 }
 
 

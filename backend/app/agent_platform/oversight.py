@@ -26,11 +26,12 @@ hospital's figures drift are integration steps (Integration_Plan.md, P-8).
 from __future__ import annotations
 
 import difflib
+import re
 import statistics
 import threading
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from app.agent_platform.hashing import sha256_text
 from app.agent_platform.provenance import split_units
@@ -65,9 +66,39 @@ class OversightEvent:
         return {"schema": SCHEMA, **asdict(self)}
 
 
+# Fourth review of PR #79, finding 9: a character-level diff of two whole reports is quadratic in the worst
+# case (a 15k-character report took seconds). The edit size is computed in three bounded levels: sentences
+# (provenance units) first; inside each changed block, words (a word with its trailing whitespace); inside a
+# changed run of words, characters — only while that run is short (CHAR_DIFF_MAX characters on both sides
+# together; above it, or above WORD_DIFF_MAX words in a block, the longer side counts whole: an upper bound).
+_WORD = re.compile(r"\S+\s*|\s+")
+CHAR_DIFF_MAX = 400
+WORD_DIFF_MAX = 4000
+
+
+def _diff_cost(a: Sequence[str], b: Sequence[str]) -> List[Tuple[str, str]]:
+    """The changed (old, new) pieces of two token lists."""
+    ops = difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes()
+    return [("".join(a[i1:i2]), "".join(b[j1:j2])) for tag, i1, i2, j1, j2 in ops if tag != "equal"]
+
+
+def _char_cost(old: str, new: str) -> int:
+    if len(old) + len(new) > CHAR_DIFF_MAX:
+        return max(len(old), len(new))
+    return sum(max(len(o), len(n)) for o, n in _diff_cost(list(old), list(new)))
+
+
 def edit_size(shown: str, final: str) -> Tuple[int, float]:
-    ops = difflib.SequenceMatcher(None, shown, final, autojunk=False).get_opcodes()
-    chars = sum(max(i2 - i1, j2 - j1) for tag, i1, i2, j1, j2 in ops if tag != "equal")
+    """(changed characters, changed characters / characters shown)."""
+    a = [u[1] + u[2] for u in split_units(shown)]
+    b = [u[1] + u[2] for u in split_units(final)]
+    chars = 0
+    for old_block, new_block in _diff_cost(a, b):
+        wa, wb = _WORD.findall(old_block), _WORD.findall(new_block)
+        if len(wa) > WORD_DIFF_MAX or len(wb) > WORD_DIFF_MAX:
+            chars += max(len(old_block), len(new_block))
+            continue
+        chars += sum(_char_cost(o, n) for o, n in _diff_cost(wa, wb))
     return chars, chars / max(len(shown), 1)
 
 

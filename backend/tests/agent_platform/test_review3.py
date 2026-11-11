@@ -156,7 +156,9 @@ def test_rc110_review3_100_runs_a_minute_lose_no_audit_record(monkeypatch, with_
         kwargs = {"actor": actor} if actor else {}
         rt.run("pending-agent", model_client=H.ScriptedModel([]), scope=SCOPE, system="s", user_content="u", **kwargs)
     agent = [r for r in sink.records if str(r.get("reason", "")).startswith("agent.")]
-    assert len(agent) >= 200, len(agent)                               # a refusal and a run record per run
+    # Amended for the fourth review of PR #79, finding 7: exactly ONE agent.run record per run (was a refusal
+    # record and a run record per run).
+    assert len(agent) == 100 and all(r["reason"] == "agent.run:agent_not_approved" for r in agent), len(agent)
     assert not any((r.get("details") or {}).get("durable_suppressed") for r in sink.records)
     expected = K.USER if with_actor else R.SYSTEM_ACTOR.user_id
     assert all(r.get("actor_user_id") == expected for r in agent)

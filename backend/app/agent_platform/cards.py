@@ -33,9 +33,10 @@ import re
 import sys
 import types
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from app.agent_platform.hashing import sha256_text
+from app.agent_platform.registry import RETIREMENT_WARNING_DAYS, retirement_state  # noqa: F401 — one rule
 
 CARD_SCHEMA = "mstool.agent-card/1"
 CARDS_DIR = Path(__file__).with_name("cards")
@@ -269,33 +270,30 @@ def write_card(agent_id: str) -> None:
                                    newline="\n")
 
 
-RETIREMENT_WARNING_DAYS = 30
+def _card_retirements(today, agents: Optional[Iterable[str]]):
+    """(agent id, model, state, days) for every card's model, by the REGISTRY's one retirement rule (fourth
+    review of PR #79, finding 10): the agents are those with templates (TEMPLATE_SOURCES), never a hard-coded
+    list, and the threshold and arithmetic are registry.retirement_state's."""
+    from datetime import date as _date
+    for agent_id in (sorted(TEMPLATE_SOURCES) if agents is None else agents):
+        model = load_card(agent_id).get("model") or {}
+        retires_on = _date.fromisoformat(model["retires_on"]) if model.get("retires_on") else None
+        state, days = retirement_state(retires_on, today)
+        yield agent_id, model, state, days
 
 
-def retirement_problems(today, agents: tuple = ("report-drafter", "ms-clinical-assistant")) -> List[str]:
+def retirement_problems(today, agents: Optional[Iterable[str]] = None) -> List[str]:
     """Cards whose model has retired on ``today`` (an injected date: third review of PR #79, finding 5). The
     wall-clock check runs in its own scheduled job (.github/workflows/agent-model-retirement.yml), so a model
     retirement never turns unrelated pull requests red; at call time the registry refuses the retired model."""
-    from datetime import date as _date
-    problems = []
-    for agent_id in agents:
-        model = load_card(agent_id).get("model") or {}
-        if model.get("retires_on") and today >= _date.fromisoformat(model["retires_on"]):
-            problems.append(f"{agent_id}: model {model['id']} retired on {model['retires_on']}; the platform refuses it "
-                            "— run the re-validation protocol for a successor (RVP-AGT-001, D-AGT-1)")
-    return problems
+    return [f"{agent_id}: model {model['id']} retired on {model['retires_on']}; the platform refuses it "
+            "— run the re-validation protocol for a successor (RVP-AGT-001, D-AGT-1)"
+            for agent_id, model, state, _ in _card_retirements(today, agents) if state == "retired"]
 
 
-def retirement_warnings(today, agents: tuple = ("report-drafter", "ms-clinical-assistant")) -> List[str]:
-    from datetime import date as _date
-    out = []
-    for agent_id in agents:
-        model = load_card(agent_id).get("model") or {}
-        if model.get("retires_on"):
-            days = (_date.fromisoformat(model["retires_on"]) - today).days
-            if 0 < days <= RETIREMENT_WARNING_DAYS:
-                out.append(f"{agent_id}: model {model['id']} retires on {model['retires_on']} ({days} days)")
-    return out
+def retirement_warnings(today, agents: Optional[Iterable[str]] = None) -> List[str]:
+    return [f"{agent_id}: model {model['id']} retires on {model['retires_on']} ({days} days)"
+            for agent_id, model, state, days in _card_retirements(today, agents) if state == "warning"]
 
 
 def main(argv: List[str]) -> int:  # pragma: no cover — maintainer tool and the scheduled retirement job
