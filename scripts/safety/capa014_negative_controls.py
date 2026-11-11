@@ -100,9 +100,7 @@ def skip_generic(*names):
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-064: structured payload only ──
-    "P1_payload_bypassed": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, ids)\n",
-                              "            payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, "
-                              "\"unlisted\": {}})()\n")],
+    "P1_payload_bypassed": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, None)\n", "            payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, \"unlisted\": {}})()\n")],
                             "the request's findings go to the prompt builder as received"),
     "P2_builder_prints_free_text": ([(BRS, "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n",
                                       "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n        if findings.get(\"clinical_indication\"):\n"
