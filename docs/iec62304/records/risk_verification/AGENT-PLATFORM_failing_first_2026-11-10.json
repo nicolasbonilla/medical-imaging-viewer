@@ -45,6 +45,12 @@
    "tests_first_commit": "116588a", "tests_first_ci": "run 42921874922: failure (37 of 52 new tests; 11 existing eval and red-team tests failed on the real output shapes)",
    "implementation_commit": "03d8eab", "implementation_ci": "run 42922844815: success",
    "implementation_result": "52 review-3 tests pass; whole offline suite 487 passed, 2 skipped by design"},
+  {"controls": ["RC-110", "RC-114", "RC-116", "RC-117", "RC-119", "RC-120"],
+   "tests_file": "backend/tests/agent_platform/test_review4.py",
+   "what": "the 10 findings of the fourth independent adversarial review of PR #79 (two scope bypasses verified by the reviewer)",
+   "tests_first_commit": "e245a67", "tests_first_ci": "run 42926675154: failure (45 of 57 new tests failed against 44d0737; 500 passed)",
+   "implementation_commit": "7a7fa62", "implementation_ci": "run 42928692948: success (agent platform 545 passed, 1 skipped; backend suite 2476 passed)",
+   "implementation_result": "57 review-4 tests pass; whole offline suite locally 544 passed, 2 skipped by design; two earlier tests amended with a note (test_tracing: the file exporter writes in a thread, so the test flushes first; test_review3: exactly one audit record per run)"},
   {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
    "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
  ]

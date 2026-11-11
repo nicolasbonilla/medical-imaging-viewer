@@ -892,6 +892,29 @@ Main finding: the scope control (RC-114) had become **too strict** and refused l
 
 **Open items (owner):** D-AGT-1 migrate the report model before 2026-11-30 through RVP-AGT-001; D-AGT-2 acceptance thresholds of RVP-AGT-001; D-AGT-3 cost caps and limits in `agents.json`; D-AGT-4 approve (or not) each agent entry; D-AGT-5 trace export destination; D-AGT-6 the fast-sign-off threshold.
 
+### B.8 Fourth independent adversarial review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+
+Two scope **BYPASSES** verified by the reviewer (findings 1 and 2): a DICOM UID of a vendor root (Siemens 1.3.12.2.1107…, Philips 1.3.46.670589…, GE 1.2.840.113619…, an enterprise root 1.3.6.1.4.1.…, the UUID root 2.25.…) passed in free text and as a dict key, because only the roots 1.2 and 2.25 were recognised; and another resource under an actor key (`{"reviewed_by": {"segmentation_id": <another>}}`) or named by a `*_by` key (`{"superseded_by": <another>}`) passed, because the actor exemption skipped the whole subtree. Failing-first tests at `e245a67` (CI run 42926675154 red: 45 of the 57 new tests); fixes at `7a7fa62`; negative controls: 11 mutations re-anchored to the new code, 4 next to changed lines and 12 new (Z1–Z12), run in a throwaway copy against a clean baseline (record `AGENT-PLATFORM_negative_controls_2026-11-10.json`, latest re-run).
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| 1 | BYPASS: DICOM UIDs of other roots not recognised | RC-114 | PS3.5 §9.1 grammar (`is_dicom_uid`); any maximal run of digits and dots is a candidate; ≥ 4 components in text and keys, or 2.25.<≥ 10 digits>; any value under a resource key |
+| 2 | BYPASS: the actor exemption hid a subtree; `superseded_by` / `replaced_by` treated as people | RC-114 | the exemption covers one string value only (an actor key only with an actor id: a UUID or `system:<name>`); dicts and lists are walked; seven `*_by` / `*_from` keys that name resources are resource keys |
+| 3 | `mcp` not pinned; the card said so | RC-117 | `mcp==1.12.4` in `requirements.txt`, in the card's `sdk_pins` (checked against the requirement on every PR); advisories recorded (below) |
+| 4 | An exception at the run boundary escaped unaudited; inputs not validated | RC-110 | inputs validated first (`run_input_invalid`); `Exception` → audited `run_internal_error`, no text; other `BaseException` → audited `run_aborted`, re-raised; an open reservation settled at worst case |
+| 5 | A model unit without a model id gave the legend "no part … written by an AI model" | RC-119 | a model part must name its model (compose and load); other authors carry no model metadata; the legend follows authorship |
+| 6 | Tool arguments named `fn` / `blocking` collided with the runner's parameters | (robustness) | arguments travel as one dict (`functools.partial`) |
+| 7 | Several audit records per run, event types undocumented | RC-110 | exactly one `agent.run` record per run (decisions inside a run are not recorded separately); `AUDIT_EVENT_TYPES` documented; server log reason `agent.run:<code>` |
+| 8 | The file exporter opened the file for every span under a lock | RC-116 (availability) | one writer thread, one handle, bounded queue, dropped counter, bounded `flush` / `close` |
+| 9 | The oversight edit size was a whole-text character diff (seconds on a long report) | RC-120 | sentences → words → characters in short runs; 15 000 characters in ~0.03 s, test bound 0.5 s |
+| 10 | `cards.py` duplicated the warning threshold, the date arithmetic and the list of agents | RC-117 | imports `RETIREMENT_WARNING_DAYS` and `retirement_state` from the registry; iterates `TEMPLATE_SOURCES` |
+
+**Trade-off kept (finding 1):** in free text and dict keys a UID needs at least four components (or the 2.25 root with a long integer): a run of two or three components cannot be told from a decimal ("3.1 mL"), a version ("1.2.3") or a date ("11.11.2026"). Under a resource key every value is checked whatever its shape. A UID of another root with three components in free text would not be recognised; real UIDs are longer (a root alone has four or more components).
+
+**SOUP (finding 3), read on OSV 2026-11-11:** fastmcp 2.3.0 has 8 advisories fixed in later releases — critical: SSRF and path traversal in the OpenAPI provider; high: OAuth proxy token reuse, confused deputy in the auth integration and in the OAuth proxy callback, MCP < 1.23 dependency; moderate: command injection in two installers, XSS in the client's OAuth callback page. mcp 1.12.4 has 4 advisories, all in the HTTP and WebSocket transports (DNS rebinding protection, session principal, session accumulation, Host/Origin validation). The MCP servers use the stdio transport only, no OpenAPI provider, no OAuth and no installer, and the deployed application does not import fastmcp, so none applies to the current use. Both versions are pinned exactly and recorded; an upgrade is a SOUP change for the owner (D-AGT-7; Integration_Plan P-7) and is re-verified by RVP-AGT-001.
+
+**Open item (owner), added:** D-AGT-7 — upgrade fastmcp and mcp to releases without these advisories (protocol 2025-11-25 or later) before an HTTP transport is used or the assistant is switched on.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
