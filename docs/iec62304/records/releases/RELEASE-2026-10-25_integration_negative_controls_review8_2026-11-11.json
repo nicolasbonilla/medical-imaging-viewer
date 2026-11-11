@@ -1,0 +1,434 @@
+{
+  "executed": "2026-11-11T23:58:59",
+  "tree": "cdba2c9f5be3e30bc4f6706b998604d5af5aab13",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text); only the bound tests run (backend offline per PRB-002, with an outer environment asking for the Firestore backends and a 60-minute access token that conftest must override; frontend with vitest); bytes restored after each mutation and verified at the end",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "099c485dc37b8bea158b8f320806a1c537502845879bf3a04a210b06b4b21f73",
+    "backend/app/services/report_payload_guard.py": "4772528b46b0511505a32d2406746b73f00a806a2b489916677552834436f654",
+    "backend/tests/conftest.py": "d63252927aedd080cbc07f4a22cb4f48b3a4793d36c33b48538357c9bf32696c",
+    "frontend/src/i18n/locales/en.json": "fe020dced6493ab744ce7a0052ee38d507e3ca0aef67d506543559274555bef9"
+  },
+  "test_sha256": {
+    "tests/unit/test_capa015_audit_and_session.py": "c2d117e9fddae634de5e46d9cc02f6572e783845a9488aae648d53e485e3479a",
+    "tests/unit/test_release_2026_10_25_capture_fixes.py": "a501509edf9048b0ae18917b810d578d88976f3bc1d7b8516da2db054e054a2f",
+    "tests/unit/test_release_2026_10_25_final_check.py": "4cedd9e4f096e030574367bf3f561dfb99d13847f7c4c9aec5ca658b21d6d0b8",
+    "tests/unit/test_release_2026_10_25_integration.py": "9086d8a027a266cc7b1b104cf47ead8d628556a586c1a05566f40e31248c12ee",
+    "tests/unit/test_release_2026_10_25_plural_counts.py": "6e13e1717ff5e3f2b47c32f06618da4766189acd03ef57c8f1a78e6da5a0a371",
+    "tests/unit/test_release_2026_10_25_review2_fixes.py": "43d72c4f11f0dd4c6cd12f907a8c7f1a4c43efd8ff9a7ad52e129f1e95c6191d",
+    "tests/unit/test_release_2026_10_25_review_fixes.py": "8265706a6907fecfd7bdce652b577c2a17795b111f73d3d324ac324bc28f84ec",
+    "tests/unit/test_release_2026_10_30_main_merge.py": "3d2ee53402efbd598ca7a3e405108c65de5d873bf39d16b7e52e01c695ed9645",
+    "tests/unit/test_release_2026_10_30_merge.py": "c14c5f9509674b31c376592500cc696bc4efe687e09a4c5b1544029839020756",
+    "frontend/src/ViewerApp.release20261028.test.tsx": "cedadf165f84b603236344050aa81cb66f03febca8f3dd0a95812b09b502456f",
+    "frontend/src/ViewerApp.release20261029.test.tsx": "b68656add9b17c5288f995a8b21fcceaac2c0af3b0c894ad4859a3ebceaae3a8",
+    "frontend/src/components/AIReportPanel.release20261025.test.tsx": "f2c9328967132e8bb17761d3248da425a6e870779ee8c2fda65556c7d1ade2f3",
+    "frontend/src/components/LesionDashboard.release20261028.test.tsx": "1a811a05144831e36053e1584084516a598fd37f2af0cefe6fa0c1f3a559cc0d",
+    "frontend/src/components/LesionDashboard.release20261028b.test.tsx": "ba3ae5457add30c827f976ae9399e7522afc0d6257b0cc8f9029f914ba6a8552",
+    "frontend/src/components/LesionDashboard.release20261028c.test.tsx": "967ad8efa481a2653c63f62666f2c33df6fbd7efdbf4e5c70fe13beae3e5e6fe",
+    "frontend/src/components/LesionDashboard.release20261028d.test.tsx": "9a8a40dfda2874f2dd527b7c35bff3ff1fd9ff86566da0909f086b5d67baeb03",
+    "frontend/src/components/LesionDashboard.release20261029.test.tsx": "5e4d729ca7356bd85952683552e04dac7b03ce2ec8ae1e33053d6ba49cf139f2",
+    "frontend/src/store/useSegmentationStore.release20261028.test.ts": "c4b641115cf753e048b4b7326bbd6e34bec61e11544e4b313136ccf2a4a6dfac",
+    "frontend/src/utils/drawnLabels.digest.test.ts": "92c961b6caf5665090cbe515ec5e6e65a072a7bc789b4663c84bb44b5ed2c327",
+    "frontend/src/utils/drawnLabels.fallback.test.ts": "43c4894ea43b4f6c3cf3e24b92ac35851927ca8c08ffb5105e3dd7aebe657ef5",
+    "frontend/src/utils/drawnLabels.test.ts": "d012d9d186bb2c8b9b4ca1e2fc473f384c1bba5c6293eea2842dc7aba59475d3",
+    "frontend/src/utils/fallbackColour.release20261030.test.ts": "f1a2aa65ed0f15d53b1e488f3dd6e0cb9fca783b6de7edf862cee0481158450e"
+  },
+  "baseline": {
+    "backend": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 83,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": [
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 9,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 5,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 7,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 9,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 6,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 6,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 3,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 18,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 2,
+        "errors": 0,
+        "failing_tests": []
+      }
+    ]
+  },
+  "mutations": {
+    "I1_check_also_runs_on_the_assembled_draft": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[de]",
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[en]",
+        "test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry[es]"
+      ],
+      "reintroduces": "PRB-003's output check also rewrites the assembled draft, including the clinician's typed entry",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_rc070_release_i1_the_dis_check_changes_the_model_text_never_the_clinicians_entry"
+      ],
+      "executed": "2026-11-12T00:01:40",
+      "detected": true
+    },
+    "I4_audit_backend_not_forced": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "reintroduces": "a developer's environment selects the Firestore audit backend in the test suite (CAPA-015's setdefault)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "executed": "2026-11-12T00:01:55",
+      "detected": true
+    },
+    "I5_refresh_backend_not_forced": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "reintroduces": "a developer's environment selects the Firestore refresh-token store in the test suite",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "executed": "2026-11-12T00:02:02",
+      "detected": true
+    },
+    "I6_access_lifetime_not_forced": {
+      "suite": "backend",
+      "exit": 4,
+      "failed": 0,
+      "passed": 0,
+      "errors": 1,
+      "failing_tests": [],
+      "reintroduces": "an old 60-minute access-token setting reaches the test suite (the start-up check refuses it)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_integration.py::test_release_c1_conftest_forces_the_capa015_test_settings"
+      ],
+      "executed": "2026-11-12T00:02:05",
+      "detected": true,
+      "note": "Detected by design through a start-up failure, not an assertion: with a 60-minute access token and a 30-minute refresh idle limit the application's own start-up check (CAPA-015, RC-068) refuses to start, so the bound test module cannot even be collected and the suite goes red (pytest exit 4). That refusal is the protection the forced setting keeps out of the test suite."
+    },
+    "I7_unconfirmed_regions_sent_as_labels": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 3,
+      "errors": 0,
+      "failing_tests": [],
+      "reintroduces": "unconfirmed regions reach the payload as labels: '[unlisted label 1] = not confirmed' and an app note",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc064_release_r1_unconfirmed_regions_give_no_placeholder_and_no_app_note"
+      ],
+      "executed": "2026-11-12T00:02:13",
+      "detected": false
+    },
+    "I8_format_characters_removed_only_after_the_check": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 3,
+      "errors": 0,
+      "failing_tests": [],
+      "reintroduces": "a zero-width joiner or space hides a DIS statement from PRB-003's output check (review item 2)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r2_zero_width_characters_do_not_hide_a_dis_statement"
+      ],
+      "executed": "2026-11-12T00:02:21",
+      "detected": false
+    },
+    "I10_route_uses_its_own_status_only_rule": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 7,
+      "errors": 0,
+      "failing_tests": [],
+      "reintroduces": "the route decides 'evaluated' by the status alone while the prompt and template need a conclusion (as on 6d1fde2)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r3_one_rule_decides_evaluated_for_route_prompt_and_template"
+      ],
+      "executed": "2026-11-12T00:02:29",
+      "detected": false
+    },
+    "I12_geometry_422_without_its_phrase": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase"
+      ],
+      "reintroduces": "the server's geometry 422 no longer starts with the phrase the panel recognises",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase"
+      ],
+      "executed": "2026-11-12T00:02:40",
+      "detected": true
+    },
+    "I41_every_lesion_table_failure_called_geometry": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release2_n1_a_lesion_table_failure_names_its_real_reason"
+      ],
+      "reintroduces": "n1: every lesion-table failure is reported as an unreadable image geometry",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review2_fixes.py::test_rc070_release2_n1_a_lesion_table_failure_names_its_real_reason"
+      ],
+      "executed": "2026-11-12T00:02:52",
+      "detected": true
+    },
+    "I47_warning_names_magenta": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 17,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 release b1 the en warnings name the fallback colour, never magenta"
+      ],
+      "reintroduces": "the warning names a colour the canvas does not use",
+      "tests": [
+        "frontend/src/utils/drawnLabels.fallback.test.ts"
+      ],
+      "executed": "2026-11-12T00:03:08",
+      "detected": true
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 83,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": [
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 9,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 5,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 7,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 9,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 6,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 6,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 3,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 18,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 2,
+        "errors": 0,
+        "failing_tests": []
+      }
+    ]
+  },
+  "summary": {
+    "mutations": 10,
+    "detected": 7,
+    "undetected": [
+      "I10_route_uses_its_own_status_only_rule",
+      "I7_unconfirmed_regions_sent_as_labels",
+      "I8_format_characters_removed_only_after_the_check"
+    ]
+  }
+}

@@ -479,6 +479,17 @@ def sha(text):
 RETIRED_WITH_THE_VERIFIED_REPORT = {name: M.pop(name)[2] for name in (
     "I1b_check_moved_after_the_draft_assembly", "I2_template_variant_on_the_raw_block_with_its_own_rule",
     "I7b_prompt_ignores_unconfirmed_regions", "I44_prompt_plural_for_one", "I45_allow_list_without_the_plural")}
+# Eighth review of PR #78: re-run on the touched files, three controls are NOT detected — each re-introduces its defect
+# in an earlier layer whose effect the verified report's single rules now mask, so nothing written or sent changes:
+MASKED_BY_THE_VERIFIED_REPORT = {
+    "I7_unconfirmed_regions_sent_as_labels": "the record gives lesions per region only from an evaluated DIS "
+                                             "(verified_report.build_view; controls F4, F16-F19)",
+    "I8_format_characters_removed_only_after_the_check": "the check applies the format-character rule to the comments "
+                                                         "it checks, the text delivered is the text checked (fourth "
+                                                         "review Q6; its controls in verified_report_negative_controls.py)",
+    "I10_route_uses_its_own_status_only_rule": "the record decides 'evaluated' by the gate's one rule "
+                                               "(gate.is_evaluated in build_view; controls F4, D5, F25)",
+}
 # Anchors already broken on origin/main, in files PR #78 does not touch (I30, I50, I53, I55): reported, not run here.
 NOT_RUN_ANCHORS_BROKEN_BEFORE = ("I30_invisible_opacity_restored_next_session", "I50_dashboard_ignores_the_view",
                                  "I53_dashboard_without_stored_labels", "I55_drawn_table_not_sent")
