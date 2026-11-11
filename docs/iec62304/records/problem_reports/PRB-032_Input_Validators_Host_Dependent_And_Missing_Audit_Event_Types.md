@@ -52,9 +52,13 @@ blocks even when the validators work.
 
 ## 2. Fix (A, B) — branch `fix/capa-003-security-gate`
 
-- **A.** The validator refuses absolute paths of both families on every host: `posixpath.isabs` or `ntpath.isabs`,
-  a drive prefix (`^[A-Za-z]:`), or a leading `/` or `\`. The refusal is audited **without** the raw value (RMF
-  precondition, D).
+- **A.** The validator refuses absolute paths of both families on every host:
+  - a leading `/` or `\` (POSIX-absolute, UNC, device and backslash-rooted paths);
+  - a drive prefix `^[A-Za-z]:`, refused by design (a colon is illegal in a Windows file name and no storage path of
+    this system starts with `<letter>:`).
+  - The returned path is normalised with POSIX rules on every host.
+  - Neither path refusal writes the raw value to the audit log, only the field, the pattern and the length, because a
+    file name can carry patient identifiers (RMF precondition, D). The pattern branch logged it before.
 - **B.** The four members are added to `AuditEventType`. The `MagicMock` replacement of the enum is removed from the
   security tests; only the logger is isolated.
 

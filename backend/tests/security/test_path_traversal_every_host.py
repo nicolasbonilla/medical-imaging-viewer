@@ -50,5 +50,18 @@ def test_absolute_paths_refused_on_every_host(host, payload):
 
 @pytest.mark.parametrize("host", HOSTS, indirect=True)
 @pytest.mark.parametrize("payload", SAFE)
-def test_safe_relative_paths_still_accepted_on_every_host(host, payload):
-    assert v.PathTraversalValidator.validate(payload)
+def test_safe_relative_paths_accepted_and_returned_identically_on_every_host(host, payload):
+    # The returned path must not depend on the host either (no separator rewriting on Windows).
+    assert v.PathTraversalValidator.validate(payload) == payload
+
+
+@pytest.mark.parametrize("payload", ["../Juan_Perez_MRN123.dcm", "C:\\Juan_Perez_MRN123.dcm"])
+def test_refusal_audit_event_carries_no_raw_value(monkeypatch, payload):
+    """A file name can carry patient identifiers: the audit event must not contain it (RMF open item, PRB-020)."""
+    recorder = types.SimpleNamespace(calls=[])
+    monkeypatch.setattr(v, "audit_logger",
+                        types.SimpleNamespace(log_security_event=lambda **kw: recorder.calls.append(kw)))
+    with pytest.raises(v.PathTraversalDetected):
+        v.PathTraversalValidator.validate(payload)
+    assert recorder.calls, "the refusal was not audited"
+    assert "Juan_Perez" not in repr(recorder.calls)
