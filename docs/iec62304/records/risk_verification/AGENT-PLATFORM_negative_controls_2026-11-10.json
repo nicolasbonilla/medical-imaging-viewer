@@ -895,10 +895,10 @@
       "RC-120"
     ],
     "latest_round": {
-      "executed": "2026-11-11T15:51:45",
-      "mutations": 21,
-      "detected": 21,
-      "restored_passed": 587,
+      "executed": "2026-11-11T16:38:02",
+      "mutations": 20,
+      "detected": 20,
+      "restored_passed": 602,
       "restored_failed": 0
     }
   },
@@ -5878,6 +5878,342 @@
         "failing_tests": []
       },
       "reason": "sixth review of PR #79 at 6ccea55: 11 new (BB1-BB11: STDIO assistant scope, paid route, refusal as denial, one issuance, patient spellings), 4 re-anchored, 6 next to changed lines",
+      "superseded": [
+        "U6_only_declared_ids_scoped",
+        "U7_result_scope_off"
+      ]
+    },
+    {
+      "executed": "2026-11-11T16:38:02",
+      "mutations": {
+        "U8_identifiers_kept": {
+          "failed": 3,
+          "passed": 599,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_review2_unconfirmed_activity_flags_never_reach_the_model",
+            "test_rc113_valid_tool_result_is_cleaned_and_quoted",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-113",
+          "reintroduces": "a tool result still carrying direct identifiers or unconfirmed activity flags reaches the model",
+          "applied": true
+        },
+        "V8_nested_values_not_walked": {
+          "failed": 48,
+          "passed": 554,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_asi01_asi02_tool_output_injection_cannot_trigger_a_write",
+            "test_rc113_asi02_llm05_compromised_tool_response_never_reaches_the_model[payload1-out_of_scope_resource]",
+            "test_rc113_deeply_nested_tool_result_is_refused",
+            "test_rc113_valid_tool_result_is_cleaned_and_quoted",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result0]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result1]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result2]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result4]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result5]",
+            "test_rc114_review1_foreign_id_anywhere_in_a_result_refuses_it[result6]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args0]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args1]",
+            "test_rc114_review1_nested_and_plural_ids_in_arguments_are_scoped[args3]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result1]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result3]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result5]",
+            "test_rc114_review2_foreign_keys_numeric_ids_and_locations_refuse_the_result[result7]",
+            "test_rc114_review2_storage_locations_in_arguments_are_refused",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[analyze_lesions]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[compare_longitudinal]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[get_image_metadata]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[get_matplotlib_visualization]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[get_region_classification]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[get_slice_image]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[list_segmentations]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[process_image]",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[summarize_dis_items]",
+            "test_rc114_review3_foreign_values_are_refused_by_their_value[bad0]",
+            "test_rc114_review3_foreign_values_are_refused_by_their_value[bad3]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad0]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad1]",
+            "test_rc114_review4_actor_and_exempt_keys_do_not_hide_a_subtree[bad5]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.2.840.113619.2.55.3.604688119.868.1599000000.1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.46.670589.11.42151.5.0.6524.2020061716142632055]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-1.3.6.1.4.1.14519.5.2.1.7695.2311.123456789]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[text-2.25.329800735698586629295641978511506172918]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.2.840.113619.2.55.3.604688119.868.1599000000.1]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.3.12.2.1107.5.2.43.66094.30000020061707373834300000017]",
+            "test_rc114_review4_foreign_dicom_uid_of_any_root_is_refused[value-1.3.46.670589.11.42151.5.0.6524.2020061716142632055]"
+          ],
+          "control": "RC-114",
+          "reintroduces": "ids nested in objects are not scope-checked",
+          "applied": true
+        },
+        "BB3_no_local_session_check": {
+          "failed": 4,
+          "passed": 598,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review6_a_study_session_is_the_way_in_and_its_pass_never_reaches_the_model",
+            "test_rc121_review6_stdio_assistant_without_a_session_is_refused_locally_and_by_the_backend",
+            "test_rc121_review7_an_injected_open_without_human_confirmation_grants_nothing"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the assistant sends requests without a study session",
+          "applied": true
+        },
+        "BB11_pass_returned_to_the_model": {
+          "failed": 2,
+          "passed": 600,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review6_a_study_session_is_the_way_in_and_its_pass_never_reaches_the_model"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the study session's pass reaches the model",
+          "applied": true
+        },
+        "CC1_confirmation_not_required": {
+          "failed": 3,
+          "passed": 599,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review7_a_patient_switch_needs_a_fresh_confirmation_and_is_audited",
+            "test_rc121_review7_an_injected_open_without_human_confirmation_grants_nothing"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a study session opens although the physician did not confirm it",
+          "applied": true
+        },
+        "CC2_no_elicitation_still_opens": {
+          "failed": 1,
+          "passed": 601,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a client without elicitation gets a session anyway",
+          "applied": true
+        },
+        "CC3_old_session_survives_a_new_request": {
+          "failed": 1,
+          "passed": 601,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a declined new session leaves the previous patient's pass active",
+          "applied": true
+        },
+        "CC4_patient_switch_not_audited": {
+          "failed": 2,
+          "passed": 600,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review7_a_patient_switch_needs_a_fresh_confirmation_and_is_audited"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a switch to another patient is not audited",
+          "applied": true
+        },
+        "CC5_source_view_skipped_in_a_run": {
+          "failed": 3,
+          "passed": 599,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_review6_assistant_view_is_applied_once",
+            "test_rc113_review7_identifiers_and_activity_flags_are_removed_at_the_source_inside_a_run",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-113",
+          "reintroduces": "inside a platform run, identifiers and activity flags are not removed at the source",
+          "applied": true
+        },
+        "CC6_path_traversal_passes": {
+          "failed": 1,
+          "passed": 601,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a dot segment or an encoded character in a path parameter passes",
+          "applied": true
+        },
+        "CC7_loose_file_parameter": {
+          "failed": 6,
+          "passed": 596,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[%2e%2e/patients]",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[../../patients/7c6b5a49-3827-4165-8d4c-3b2a19087f6e]",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[patients%2f..%2fx]",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[patients/3f2b9a1c-7d4e-4b8a-9c21-5e6f7a8b9c01/studies/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d/series/0f1e2d3c-4b5a-4968-8776-655443322110/flair_tp2.nii.gz/../../../x]",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[patients\\\\x]"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a file path parameter of any shape reaches the backend",
+          "applied": true
+        },
+        "CC8_refused_write_is_a_failure": {
+          "failed": 2,
+          "passed": 600,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc110_review7_a_refused_write_is_audited_as_a_denial",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-110",
+          "reintroduces": "a refused write is audited with no denial code",
+          "applied": true
+        },
+        "CC9_scope_optional_for_the_assistant": {
+          "failed": 2,
+          "passed": 600,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review7_the_assistant_always_needs_a_scope"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the registry accepts the assistant without a backend scope",
+          "applied": true
+        },
+        "CC10_issuance_continues_after_a_refusal": {
+          "failed": 2,
+          "passed": 600,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review7_issuance_builds_services_once_and_stops_at_the_first_refusal"
+          ],
+          "control": "RC-121",
+          "reintroduces": "issuance keeps authorizing studies after the first refusal",
+          "applied": true
+        },
+        "W1_activity_flags_reach_the_model": {
+          "failed": 8,
+          "passed": 594,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_review2_unconfirmed_activity_flags_never_reach_the_model",
+            "test_rc113_review7_identifiers_and_activity_flags_are_removed_at_the_source_inside_a_run",
+            "test_rc114_review3_a_foreign_id_planted_in_a_real_output_still_refuses_it[compare_longitudinal]",
+            "test_rc114_review3_real_output_of_every_tool_passes[compare_longitudinal]",
+            "test_rc114_review3_unconfirmed_activity_flags_in_a_real_comparison_are_removed",
+            "test_rc118_case[as-replay-reads-its-own-study]",
+            "test_rc118_report_and_gate",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources"
+          ],
+          "control": "RC-113",
+          "reintroduces": "activity flags computed from unconfirmed candidates reach a model (CAPA-013)",
+          "applied": true
+        },
+        "BB1_assistant_unscoped_passes_the_backend": {
+          "failed": 2,
+          "passed": 600,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review6_stdio_assistant_without_a_session_is_refused_locally_and_by_the_backend"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the backend serves an assistant request that carries no study session",
+          "applied": true
+        },
+        "BB2_assistant_marker_not_sent": {
+          "failed": 2,
+          "passed": 600,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review6_stdio_assistant_without_a_session_is_refused_locally_and_by_the_backend"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the assistant's requests are not recognisable by the backend",
+          "applied": true
+        },
+        "BB9_issuance_reimplemented": {
+          "failed": 10,
+          "passed": 592,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc112_review6_the_paid_report_route_is_out_of_reach_of_an_agent",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review6_a_study_session_is_the_way_in_and_its_pass_never_reaches_the_model",
+            "test_rc121_review6_the_route_uses_the_one_issuance_and_the_route_lists_are_one",
+            "test_rc121_review7_a_patient_switch_needs_a_fresh_confirmation_and_is_audited",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[%2e%2e/patients]",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[../../patients/7c6b5a49-3827-4165-8d4c-3b2a19087f6e]",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[patients%2f..%2fx]",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[patients/3f2b9a1c-7d4e-4b8a-9c21-5e6f7a8b9c01/studies/a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d/series/0f1e2d3c-4b5a-4968-8776-655443322110/flair_tp2.nii.gz/../../../x]",
+            "test_rc121_review7_a_traversal_in_a_path_parameter_is_refused_before_sending[patients\\\\x]"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the issuance route does not use the one tested implementation",
+          "applied": true
+        },
+        "AA4_storage_path_study_unchecked": {
+          "failed": 6,
+          "passed": 596,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review5_a_buggy_tool_is_refused_by_the_backend_even_when_the_walk_misses_it",
+            "test_rc121_review5_the_backend_refuses_every_object_outside_the_capability",
+            "test_rc121_review5_the_capa009_chokepoints_refuse_objects_outside_the_scope",
+            "test_rc121_review6_a_study_session_is_the_way_in_and_its_pass_never_reaches_the_model",
+            "test_rc121_review6_an_out_of_scope_tool_call_is_audited_as_a_denial"
+          ],
+          "control": "RC-121",
+          "reintroduces": "a segmentation or file of another study passes the agent scope",
+          "applied": true
+        },
+        "AA13_capability_not_sent": {
+          "failed": 6,
+          "passed": 596,
+          "errors": 0,
+          "failing_tests": [
+            "test_rc113_review6_assistant_view_is_applied_once",
+            "test_rc113_review7_identifiers_and_activity_flags_are_removed_at_the_source_inside_a_run",
+            "test_rc118_review2_no_mutation_is_left_in_the_tracked_sources",
+            "test_rc121_review5_a_buggy_tool_is_refused_by_the_backend_even_when_the_walk_misses_it",
+            "test_rc121_review6_a_study_session_is_the_way_in_and_its_pass_never_reaches_the_model",
+            "test_rc121_review7_a_patient_switch_needs_a_fresh_confirmation_and_is_audited"
+          ],
+          "control": "RC-121",
+          "reintroduces": "the assistant's backend client does not send the run's capability",
+          "applied": true
+        }
+      },
+      "method": "one mutation at a time in a throwaway copy outside the repository; anchors asserted unique",
+      "source_sha256": {
+        "backend/app/agent_platform/registry.py": "9734d6adf2bf5cc81f87ef1f401c0427ca76bbf499dbf14222e905f728af1234",
+        "backend/app/agent_platform/untrusted.py": "f07ae2ed4c6114cdee4f59928040cc343a37d419c084dc22ad8ce81a1d03606d",
+        "backend/app/api/routes/agent_scope.py": "e62911fb3ae5b273aad2f03fa2482a150a529a123aa673b7bc35b394ae8a8cd8",
+        "backend/app/mcp/_backend.py": "0724f36db798c6254bab067a66ef7850b29cfeebda39bdcb3af2711267301503",
+        "backend/app/security/agent_scope.py": "425be5d97b6adab63762b0da99e3254bdbdcca3767c2ae4eae5e890a030d5eae"
+      },
+      "baseline": {
+        "failed": 0,
+        "passed": 602,
+        "errors": 0,
+        "failing_tests": []
+      },
+      "restored": {
+        "failed": 0,
+        "passed": 602,
+        "errors": 0,
+        "failing_tests": []
+      },
+      "reason": "seventh review of PR #79 at 9c55e6c: 10 new (CC1-CC10: human-confirmed session, no elicitation, patient switch, source view, traversal, refused write, scope required, issuance stop), 4 re-anchored, 6 next to changed lines",
       "superseded": [
         "U6_only_declared_ids_scoped",
         "U7_result_scope_off"
