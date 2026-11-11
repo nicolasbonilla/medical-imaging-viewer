@@ -51,6 +51,12 @@
    "tests_first_commit": "e245a67", "tests_first_ci": "run 42926675154: failure (45 of 57 new tests failed against 44d0737; 500 passed)",
    "implementation_commit": "7a7fa62", "implementation_ci": "run 42928692948: success (agent platform 545 passed, 1 skipped; backend suite 2476 passed)",
    "implementation_result": "57 review-4 tests pass; whole offline suite locally 544 passed, 2 skipped by design; two earlier tests amended with a note (test_tracing: the file exporter writes in a thread, so the test flushes first; test_review3: exactly one audit record per run)"},
+  {"controls": ["RC-110", "RC-112", "RC-113", "RC-114", "RC-116", "RC-117", "RC-119", "RC-120", "RC-121"],
+   "tests_file": "backend/tests/agent_platform/test_review5.py",
+   "what": "the fifth independent adversarial review of PR #79: the structural finding (run scope enforced by the backend, RC-121) and 10 findings",
+   "tests_first_commit": "fa23d0f", "tests_first_ci": "run 42933756281: failure (31 of 32 new tests failed against c3a1fa3; the remaining one is a positive control)",
+   "implementation_commit": "42f5970", "implementation_ci": "run 42935697416: success (agent platform 578 passed, 1 skipped; backend suite 2476 passed with pydantic 2.11.7; the servers loaded with the real fastmcp 3.2.4 and the installed mcp 1.30.0 matched the card)",
+   "implementation_result": "32 review-5 tests pass, plus 1 added with the fix (declared output type); whole offline suite locally 576 passed, 3 skipped by design; earlier tests amended with notes (fixtures and the CAPA-009 route table for the typed output and the new route; the evals' assistant runs carry a capability; explicit stop reasons; the new pins)"},
   {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
    "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
  ]
