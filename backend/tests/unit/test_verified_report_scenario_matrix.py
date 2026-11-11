@@ -488,6 +488,143 @@ def test_rc103_a_count_in_another_languages_words_fails(lang, sentence):
     assert "FMT.number_words" in [x["rule"] for x in fails]
 
 
+# ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+# Ninth independent review of PR #78 — invariants I12-I14 and findings 1, 7, 8 (DRAFT, PENDING owner approval)
+# ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+_FIXED_NUMBERS = re.compile(r"MAGNIMS 2021|<100|100-1000|>1000|\"false_candidate_evidence\":\{[^}]*\}")
+
+
+def _shows(text, n, cat):
+    text = _FIXED_NUMBERS.sub(" ", text.replace(cat, " ") if cat else text)
+    return re.search(rf"(?<![\d.,]){n}(?![\d.,])", text) is not None
+
+
+@pytest.mark.parametrize("lang", VR.LANGUAGES)
+def test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown(lang):
+    """I12 (MAGNIMS 2021): from 20 lesions upward neither the draft nor the record sent to the model holds the exact
+    count — only the range; below 20, the exact count. The same for the visit totals of a comparison."""
+    bad = []
+    for n in range(0, 201):
+        lng = {**LONGITUDINAL["complete"], "total_lesions_tp1": n, "total_lesions_tp2": n}
+        f, v, ni = VR.rendered_request({"lesion_analysis": {"total_count": n}, "longitudinal": lng}, None)
+        p = BRS.provider_payload(f, v)
+        view = VR.build_view(p.findings, p.volumetry, lang, not_included=ni)
+        draft, record = VR.assemble(view, lang, "", ""), VR.first_user_message(view, lang)
+        if n >= 20:
+            cat = VR.count_category(n)
+            for name, text in (("draft", draft), ("record", record)):
+                if _shows(text, n, cat):
+                    bad.append((n, name))
+        elif VR.T[lang]["count_exact"].format(n=n) not in draft:
+            bad.append((n, "exact count missing below 20"))
+    assert not bad, f"I12 ({lang}): {len(bad)} cases; first: {bad[:6]}"
+
+
+# ── I14: the launch configuration (kill switch off) never answers with an error about the AI service
+from tests.unit.test_capa014_report_provider_payload import _measurements, _post as _route_post, route  # noqa: E402,F401
+
+IMPLAUSIBLE = [("lesion_analysis.total_count", 20240304), ("lesion_analysis.total_burden_mm3", 19751109),
+               ("lesion_analysis.total_burden_ml", 1e9), ("lesion_analysis.regions.Periventricular.lesion_count", -1)]
+
+
+def _set_path(findings, path, value):
+    target = findings
+    keys = path.split(".")
+    for k in keys[:-1]:
+        target = target[k]
+    target[keys[-1]] = value
+
+
+def test_rc105_i14_with_the_comments_off_every_matrix_case_is_a_measurements_only_draft():
+    bad = []
+    for c in CASES:
+        r = _draft(c)
+        if isinstance(r, Exception) or r["verification"]["reason"] != VR.REASON_OFF:
+            bad.append((c, r if isinstance(r, Exception) else r["verification"]["reason"]))
+    assert not bad, f"I14: {len(bad)} cases; first: {bad[:3]}"
+
+
+@pytest.mark.parametrize("path,value", IMPLAUSIBLE, ids=[p for p, _v in IMPLAUSIBLE])
+def test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error(route, monkeypatch, path,
+                                                                                       value):
+    from app.core.config import get_settings
+    monkeypatch.setattr(get_settings(), "REPORT_LLM_ENABLED", False)
+    findings = _measurements()
+    _set_path(findings, path, value)
+    r = _route_post(route, findings)
+    assert r.status_code in (200, 422), r.text
+    if r.status_code == 422:
+        detail = r.json()["detail"]
+        assert path.split(".")[-1] in detail and "AI" not in detail and "sent" not in detail.lower(), detail
+    else:
+        assert str(value) not in r.json()["content"]
+    assert route.provider.calls == []
+
+
+def test_rc105_i14_the_provider_payload_runs_only_when_a_call_will_happen(monkeypatch):
+    def refuse(*a, **k):
+        raise AssertionError("provider_payload ran although nothing will be sent")
+
+    monkeypatch.setattr(BRS, "provider_payload", refuse)
+    c = {"lesion": "computed", "dis": "not_evaluated", "longitudinal": "complete", "volumetry": "present",
+         "source": "automatic", "entry": "none"}
+    result = _generate(_service(), c)
+    assert result["verification"]["reason"] == VR.REASON_OFF
+
+
+# ── finding 1: the model's budget counts from the request start, after the record and the device-word list
+def test_rc106_a_slow_record_and_word_list_never_exceed_the_request_budget(monkeypatch):
+    clock = SimpleNamespace(t=1000.0)
+    monkeypatch.setattr(VR, "now", lambda: clock.t)
+    real_tripwire = BRS.assert_prompt_carries_no_identifier
+
+    def slow_tripwire(text, ids):
+        clock.t += 12.0                          # the device-word cache built on first use, slowly
+        return real_tripwire(text, ids)
+
+    monkeypatch.setattr(BRS, "assert_prompt_carries_no_identifier", slow_tripwire)
+
+    async def slow_identifiers():
+        clock.t += 12.0                          # the patient record read slowly
+        return IDS
+
+    client = _Client()
+    c = {"lesion": "computed", "dis": "not_evaluated", "longitudinal": "absent", "volumetry": "absent",
+         "source": "automatic", "entry": "none"}
+    findings, volumetry = _request(c)
+    result = _run(_service(client, enabled=True).generate_report(
+        template_type="general", findings=findings, volumetry=volumetry, language="en", identifiers=slow_identifiers,
+        request_started=clock.t))
+    timeouts = [call["timeout"] for call in client.calls]
+    assert all(t <= VR.REQUEST_BUDGET_S - VR.RESPONSE_MARGIN_S - 24.0 + 1e-6 for t in timeouts), timeouts
+    assert not client.calls and result["verification"]["reason"] == VR.REASON_TIME_BUDGET
+
+
+# ── finding 7: the versioned evidence is read once, not on every record
+def test_rc102_the_false_candidate_evidence_is_read_once(monkeypatch):
+    from app.services import longitudinal_candidate_safety as lcs
+    reads = []
+    real = lcs.json.loads
+
+    def counting(*a, **k):
+        reads.append(1)
+        return real(*a, **k)
+
+    getattr(lcs.load_false_candidate_evidence, "cache_clear", lambda: None)()
+    monkeypatch.setattr(lcs.json, "loads", counting)
+    for _ in range(5):
+        lcs.load_false_candidate_evidence()
+    assert len(reads) <= 1, f"read {len(reads)} times"
+
+
+# ── finding 8: the format-character rule once, inside neutralised_model_text
+def test_rc070_the_format_character_rule_runs_once_in_the_route():
+    import inspect as _inspect
+    import app.api.routes.ai_report as R
+    assert "without_format_characters(" not in _inspect.getsource(R.generate_report)
+    assert "without_format_characters(" in _inspect.getsource(R.neutralised_model_text)
+
+
 # ── finding 5: "thinking off" is sent as each model accepts it, and the comment says so
 def test_rc106_thinking_off_is_sent_as_each_model_accepts_it():
     sonnet = BRS.REPORT_MODELS["claude-sonnet-5-5"]["params"]

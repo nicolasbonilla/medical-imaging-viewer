@@ -1,41 +1,200 @@
 {
-  "purpose": "Eighth independent review of PR #78, I11 (CAPA-013): ONE rule for the draft (verified_report.build_view) and the review screen (LongitudinalResultPanel). A comparison is computed when the reviewable new and enlarging counts are known (change_candidates, or the rule's own status_counts when that block is absent); a null or missing count is 'not computed', never 0. New lesions below the review size are change_candidates absent from status_counts.new. Read by backend/tests/unit/test_verified_report_scenario_matrix.py and frontend/src/components/LongitudinalResultPanel.matrix.test.tsx.",
+  "purpose": "Eighth independent review of PR #78, I11 (CAPA-013): ONE rule for the draft (verified_report.build_view) and the review screen (LongitudinalResultPanel). A comparison is computed when the reviewable new and enlarging counts are known (change_candidates, or the rule's own status_counts when that block is absent); a null or missing count is 'not computed', never 0. New lesions below the review size are change_candidates absent from status_counts.new. Read by backend/tests/unit/test_verified_report_scenario_matrix.py and frontend/src/components/LongitudinalResultPanel.matrix.test.tsx. Ninth independent review (I13): without the change_candidates block the change is 'not computed' on both sides — the panel never relabels status_counts.new as size-filtered ('>= d mm').",
   "cases": [
-    {"name": "complete",
-     "longitudinal": {"abstained": false, "new_lesion_min_diameter_mm": 3,
-                      "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
-                      "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
-     "expected": {"computed": true, "new": 2, "enlarging": 1, "below_size": null}},
-    {"name": "small new lesions below the review size",
-     "longitudinal": {"abstained": false, "new_lesion_min_diameter_mm": 3,
-                      "status_counts": {"new": 5, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
-                      "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
-     "expected": {"computed": true, "new": 2, "enlarging": 1, "below_size": 3}},
-    {"name": "new is null",
-     "longitudinal": {"abstained": false, "new_lesion_min_diameter_mm": 3,
-                      "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
-                      "change_candidates": {"new": null, "enlarging": 3, "total": 3}},
-     "expected": {"computed": false, "new": null, "enlarging": null, "below_size": null}},
-    {"name": "new is missing",
-     "longitudinal": {"abstained": false, "new_lesion_min_diameter_mm": 3,
-                      "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
-                      "change_candidates": {"enlarging": 3, "total": 3}},
-     "expected": {"computed": false, "new": null, "enlarging": null, "below_size": null}},
-    {"name": "stable is missing (review case)",
-     "longitudinal": {"abstained": false, "new_lesion_min_diameter_mm": 3,
-                      "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0},
-                      "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
-     "expected": {"computed": true, "new": 2, "enlarging": 1, "below_size": null}},
-    {"name": "no candidate block: the rule's own counts",
-     "longitudinal": {"abstained": false, "new_lesion_min_diameter_mm": 3,
-                      "status_counts": {"new": 5, "enlarged": 2, "resolved": 0, "shrunk": 0, "stable": 3}},
-     "expected": {"computed": true, "new": 5, "enlarging": 2, "below_size": null}},
-    {"name": "no candidate block and new missing",
-     "longitudinal": {"abstained": false, "new_lesion_min_diameter_mm": 3,
-                      "status_counts": {"enlarged": 2, "resolved": 0, "shrunk": 0, "stable": 3}},
-     "expected": {"computed": false, "new": null, "enlarging": null, "below_size": null}},
-    {"name": "abstained",
-     "longitudinal": {"abstained": true},
-     "expected": {"computed": false, "new": null, "enlarging": null, "below_size": null, "abstained": true}}
+    {
+      "name": "complete",
+      "longitudinal": {
+        "abstained": false,
+        "new_lesion_min_diameter_mm": 3,
+        "status_counts": {
+          "new": 2,
+          "enlarged": 1,
+          "resolved": 0,
+          "shrunk": 0,
+          "stable": 3
+        },
+        "change_candidates": {
+          "new": 2,
+          "enlarging": 1,
+          "total": 3
+        }
+      },
+      "expected": {
+        "computed": true,
+        "new": 2,
+        "enlarging": 1,
+        "below_size": null
+      }
+    },
+    {
+      "name": "small new lesions below the review size",
+      "longitudinal": {
+        "abstained": false,
+        "new_lesion_min_diameter_mm": 3,
+        "status_counts": {
+          "new": 5,
+          "enlarged": 1,
+          "resolved": 0,
+          "shrunk": 0,
+          "stable": 3
+        },
+        "change_candidates": {
+          "new": 2,
+          "enlarging": 1,
+          "total": 3
+        }
+      },
+      "expected": {
+        "computed": true,
+        "new": 2,
+        "enlarging": 1,
+        "below_size": 3
+      }
+    },
+    {
+      "name": "new is null",
+      "longitudinal": {
+        "abstained": false,
+        "new_lesion_min_diameter_mm": 3,
+        "status_counts": {
+          "new": 2,
+          "enlarged": 1,
+          "resolved": 0,
+          "shrunk": 0,
+          "stable": 3
+        },
+        "change_candidates": {
+          "new": null,
+          "enlarging": 3,
+          "total": 3
+        }
+      },
+      "expected": {
+        "computed": false,
+        "new": null,
+        "enlarging": null,
+        "below_size": null
+      }
+    },
+    {
+      "name": "new is missing",
+      "longitudinal": {
+        "abstained": false,
+        "new_lesion_min_diameter_mm": 3,
+        "status_counts": {
+          "new": 2,
+          "enlarged": 1,
+          "resolved": 0,
+          "shrunk": 0,
+          "stable": 3
+        },
+        "change_candidates": {
+          "enlarging": 3,
+          "total": 3
+        }
+      },
+      "expected": {
+        "computed": false,
+        "new": null,
+        "enlarging": null,
+        "below_size": null
+      }
+    },
+    {
+      "name": "stable is missing (review case)",
+      "longitudinal": {
+        "abstained": false,
+        "new_lesion_min_diameter_mm": 3,
+        "status_counts": {
+          "new": 2,
+          "enlarged": 1,
+          "resolved": 0,
+          "shrunk": 0
+        },
+        "change_candidates": {
+          "new": 2,
+          "enlarging": 1,
+          "total": 3
+        }
+      },
+      "expected": {
+        "computed": true,
+        "new": 2,
+        "enlarging": 1,
+        "below_size": null
+      }
+    },
+    {
+      "name": "no candidate block: not computed (I13)",
+      "longitudinal": {
+        "abstained": false,
+        "new_lesion_min_diameter_mm": 3,
+        "status_counts": {
+          "new": 5,
+          "enlarged": 2,
+          "resolved": 0,
+          "shrunk": 0,
+          "stable": 3
+        }
+      },
+      "expected": {
+        "computed": false,
+        "new": null,
+        "enlarging": null,
+        "below_size": null
+      }
+    },
+    {
+      "name": "no candidate block and new missing",
+      "longitudinal": {
+        "abstained": false,
+        "new_lesion_min_diameter_mm": 3,
+        "status_counts": {
+          "enlarged": 2,
+          "resolved": 0,
+          "shrunk": 0,
+          "stable": 3
+        }
+      },
+      "expected": {
+        "computed": false,
+        "new": null,
+        "enlarging": null,
+        "below_size": null
+      }
+    },
+    {
+      "name": "abstained",
+      "longitudinal": {
+        "abstained": true
+      },
+      "expected": {
+        "computed": false,
+        "new": null,
+        "enlarging": null,
+        "below_size": null,
+        "abstained": true
+      }
+    },
+    {
+      "name": "no candidate block, 7 new of which 4 below 3 mm (review case I13)",
+      "longitudinal": {
+        "abstained": false,
+        "new_lesion_min_diameter_mm": 3,
+        "status_counts": {
+          "new": 7,
+          "enlarged": 1,
+          "resolved": 0,
+          "shrunk": 0,
+          "stable": 2
+        }
+      },
+      "expected": {
+        "computed": false,
+        "new": null,
+        "enlarging": null,
+        "below_size": null
+      }
+    }
   ]
 }
