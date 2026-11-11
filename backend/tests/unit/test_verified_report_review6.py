@@ -81,14 +81,23 @@ def test_rc102_w2_a_typed_clinical_indication_is_named_as_the_clinicians_entry()
 COUNTS = ["Two lesions are marked.", "A single new lesion is marked.", "Lesions lie in three of the four regions.",
           "There are twenty-one small lesions.", "Both regions show lesions.", "Zero lesions are enlarging.",
           "Ambas regiones tienen lesiones.", "Se marcaron doce lesiones.", "Hay una única lesión nueva.",
-          "Zwei neue Kandidaten wurden markiert.", "Es gibt einundzwanzig kleine Läsionen.", "Beide Regionen zeigen Herde."]
+          "Zwei neue Kandidaten wurden markiert.", "Es gibt einundzwanzig kleine Läsionen.", "Beide Regionen zeigen Herde.",
+          # counts found slipping a noun-only rule in the offline re-scoring of the benchmark's delivered drafts
+          "The lesions are categorized as one large, twenty medium, and eighteen small.",
+          "The total count of lesions is twenty-five.", "A single medium-sized lesion was identified.", "The count lies in the range of twenty to fifty.",
+          "There is a total volume of zero.", "Slices are at least seven point two millimeters thick.",
+          "La distribución muestra una lesión grande, diez medianas y siete pequeñas.",
+          "El recuento total de lesiones es de cero.",
+          "Die Größenverteilung umfasst vier kleine, vierzehn mittlere und eine große Läsion."]
 NOT_COUNTS = ["Lesions are seen in both hemispheres.", "This is the first automatic marking.",
               "The second visit is compared with the first.", "Once confirmed, the marking can be used.",
               "Half of the marked volume is periventricular.", "The marking was checked twice.",
               "A couple of notes: the marking is automatic.", "Las lesiones afectan a ambos hemisferios.",
               "Es la primera marcación automática.", "La mitad del volumen es periventricular.",
               "Una única secuencia FLAIR fue analizada.", "Beide Hemisphären sind betroffen.",
-              "Die einzige Sequenz ist FLAIR.", "Dies ist die erste automatische Markierung."]
+              "Die einzige Sequenz ist FLAIR.", "Dies ist die erste automatische Markierung.",
+              "The lesions are distributed across three size categories.", "Both small and large lesions are marked.",
+              "Most lesions are small, and the total volume is given above."]
 
 
 @pytest.mark.parametrize("sentence", COUNTS)

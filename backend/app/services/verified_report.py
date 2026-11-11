@@ -979,8 +979,28 @@ _COUNTED_NOUN = re.compile(r"(?:" + "|".join((
     r"\w*lasion(?:en)?|\w*herde?n?|\w*kandidat(?:en)?|regionen|lokalisation(?:en)?|areale?n?|segmente?n?|zonen?",
     r"hyperintensitat(?:en)?",
 )) + r")")
+# What a CARDINAL also counts or measures when it comes right before it (the offline re-scoring of the benchmark's
+# drafts found these counts slipping a noun-only rule: "eleven small, four medium and four large", "una lesion grande,
+# diez medianas", "vier kleine, vierzehn mittlere", "seven point two millimeters"): a size class or a unit.
+_SIZE_OR_UNIT = re.compile(r"(?:" + "|".join((
+    r"small|medium|large|tiny|pequen[ao]s?|median[ao]s?|grandes?|klein(?:e[nrsm]?)?|mittlere[nrsm]?|mittelgross\w*",
+    r"gross(?:e[nrsm]?)?|millimet(?:er|re)s?|mm|millilit(?:er|re)s?|ml|centimet(?:er|re)s?|cm|percent|milimetros?",
+    r"mililitros?|centimetros?|millimeter|milliliter|zentimeter|prozent",
+)) + r")")
+# ...and a cardinal that comes AFTER one of these words, in the same clause ("the total count of lesions is
+# twenty-five", "in the range of twenty to fifty", "a total volume of zero", "el recuento total de lesiones es de cero").
+_COUNT_HEAD = re.compile(r"(?:" + "|".join((
+    r"count|counts|number|total|range|category|volume|recuento|numero|cantidad|rango|categoria|volumen",
+    r"anzahl|gesamtzahl|zahl|bereich|kategorie",
+)) + r")")
+_QUANTIFIERS = frozenset(("both", "single", "couple", "pair", "pairs", "ambos", "ambas", "unico", "unica", "unicos",
+                          "unicas", "par", "pares", "beide", "beiden", "beider", "beides", "einzige", "einzigen",
+                          "einziger", "einziges", "einzigem", "paar"))
 _SENTENCE_BREAK = re.compile(r"[.;:!?\n]")
-_COUNT_WINDOW = 4                 # the counted noun within the next four words (at most three words between)
+_CLAUSE_BREAK = re.compile(r"[.;:!?,\n]")
+_COUNT_WINDOW = 4                 # a counted noun within the next four words (at most three words between)
+_QUANTIFIER_WINDOW = 2            # "both regions", "a single new lesion" — not "both small and large lesions"
+_HEAD_WINDOW = 5                  # "count / total / range / volume ..." up to five words before a cardinal
 
 
 def _count_word(lang: str) -> "re.Pattern[str]":
@@ -992,22 +1012,38 @@ def _count_word(lang: str) -> "re.Pattern[str]":
 _COUNT_WORD_OF = {lang: _count_word(lang) for lang in ("en", "es", "de")}
 
 
+def _counts(fold: str, tokens, i: int) -> bool:
+    word = tokens[i].group(0)
+    cardinal = word not in _QUANTIFIERS
+    k, end = 0, tokens[i].end()
+    for nxt in tokens[i + 1:i + 1 + 2 * _COUNT_WINDOW]:
+        gap, end = fold[end:nxt.start()], nxt.end()
+        if _SENTENCE_BREAK.search(gap):
+            break
+        k += 0 if gap == "-" else 1          # a hyphenated word is one word ("a single medium-sized lesion")
+        if k > _COUNT_WINDOW:
+            break
+        if _COUNTED_NOUN.fullmatch(nxt.group(0)) and (cardinal or k <= _QUANTIFIER_WINDOW):
+            return True
+        if cardinal and k <= 2 and _SIZE_OR_UNIT.fullmatch(nxt.group(0)):
+            return True
+    if cardinal:
+        for prev in reversed(tokens[max(0, i - _HEAD_WINDOW):i]):
+            if _CLAUSE_BREAK.search(fold[prev.end():tokens[i].start()]):
+                break
+            if _COUNT_HEAD.fullmatch(prev.group(0)):
+                return True
+    return False
+
+
 def number_words(text: str, lang: str = "en") -> List[str]:
-    """The number and count words of `text` that count a clinical noun (sixth review of PR #78, W3; fifth review, V1)."""
+    """The number and count words of `text` that count or measure (sixth review of PR #78, W3; fifth review, V1): a
+    clinical noun within four words after a cardinal (two words after "both", "a single"…), a size class or a unit right
+    after a cardinal, or a count / total / range / volume word up to five words before a cardinal in the same clause."""
     fold = L_fold(text)
     tokens = list(re.finditer(r"\w+", fold))
     word = _COUNT_WORD_OF.get(lang, _COUNT_WORD_OF["en"])
-    out = []
-    for i, tok in enumerate(tokens):
-        if not word.fullmatch(tok.group(0)):
-            continue
-        for nxt in tokens[i + 1:i + 1 + _COUNT_WINDOW]:
-            if _SENTENCE_BREAK.search(fold[tok.end():nxt.start()]):
-                break
-            if _COUNTED_NOUN.fullmatch(nxt.group(0)):
-                out.append(tok.group(0))
-                break
-    return out
+    return [tok.group(0) for i, tok in enumerate(tokens) if word.fullmatch(tok.group(0)) and _counts(fold, tokens, i)]
 
 
 TEMPLATE_TOKEN_MESSAGE = ("Braces and brackets are not allowed in the comments: write a placeholder exactly as listed, "
