@@ -454,8 +454,10 @@ def _save_progress(key, res):
 
 
 def run_tests():
+    # light mode on the owner's laptop (NC_LIGHT=1): the tests marked slow run in CI only, and no test may hang
+    light = ["-m", "not slow", "--timeout=120"] if os.environ.get("NC_LIGHT") == "1" else []
     r = subprocess.run([PY, "-m", "pytest", *TESTS, "-q", "-p", "no:cacheprovider", "-p", "no:randomly", "-o",
-                        "log_cli=false"], cwd="backend", capture_output=True, text=True, encoding="utf-8",
+                        "log_cli=false", *light], cwd="backend", capture_output=True, text=True, encoding="utf-8",
                        errors="replace", env=offline_env(), timeout=1800)
 
     def count(word):
