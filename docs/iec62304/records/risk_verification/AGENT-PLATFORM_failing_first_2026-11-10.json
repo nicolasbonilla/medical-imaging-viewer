@@ -57,6 +57,12 @@
    "tests_first_commit": "fa23d0f", "tests_first_ci": "run 42933756281: failure (31 of 32 new tests failed against c3a1fa3; the remaining one is a positive control)",
    "implementation_commit": "42f5970", "implementation_ci": "run 42935697416: success (agent platform 578 passed, 1 skipped; backend suite 2476 passed with pydantic 2.11.7; the servers loaded with the real fastmcp 3.2.4 and the installed mcp 1.30.0 matched the card)",
    "implementation_result": "32 review-5 tests pass, plus 1 added with the fix (declared output type); whole offline suite locally 576 passed, 3 skipped by design; earlier tests amended with notes (fixtures and the CAPA-009 route table for the typed output and the new route; the evals' assistant runs carry a capability; explicit stop reasons; the new pins)"},
+  {"controls": ["RC-110", "RC-112", "RC-113", "RC-120", "RC-121"],
+   "tests_file": "backend/tests/agent_platform/test_review6.py",
+   "what": "the sixth independent adversarial review of PR #79: S1 the STDIO assistant fails closed (locally and by the backend), S2 no paid-model route for agents, and C1-C4, E1-E4",
+   "tests_first_commit": "866bd7a", "tests_first_ci": "run 43041141190: failure (11 of 11 new tests failed against c05e7ac)",
+   "implementation_commit": "6ccea55", "implementation_ci": "run 43042580368: success (agent platform 589 passed, 1 skipped; backend suite 2483 passed)",
+   "implementation_result": "11 review-6 tests pass; whole offline suite locally 587 passed, 3 skipped by design; earlier tests amended with notes"},
   {"controls": ["RC-118"], "tests_file": "backend/tests/agent_platform/test_owasp_map.py",
    "tests_first_commit": "891489c", "tests_first_result": "first local run failed: three red-team tests were not mapped to any OWASP item; mapped before the commit (CI run 42901585449 fails only on the MCP card item above)"}
  ]
