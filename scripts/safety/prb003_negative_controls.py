@@ -414,6 +414,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
 # They are kept by name, not run; the controls they exercised are verified on the verified report by
 # scripts/safety/verified_report_negative_controls.py.
 RETIRED_WITH_THE_TEMPLATES = {name: M.pop(name)[1] for name in ("R4_prompt_states_met_for_an_unevaluated_block", "R5_prompt_lets_the_model_derive_dis", "R10_template_still_asks_for_dis", "W22_region_sections_kept", "W23_region_columns_kept")}
+# Fifth review of PR #78, V8: the route's DIS notice, its backstop scrub and the replaced-statement count were removed —
+# the report service owns the statement and the notice, and its check refuses any DIS statement of the model
+# (verified_report_negative_controls.py: C5, D3, D4, F25).
+RETIRED_WITH_THE_ROUTE_NOTICE = {name: M.pop(name)[1] for name in ("R6_report_notice_removed", "R11_model_dis_statement_kept", "R12_misleading_notice_wording", "W21_replaced_count_not_stated")}
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
 EXPECTED_UNDETECTED = {}

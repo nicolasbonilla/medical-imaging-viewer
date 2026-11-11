@@ -76,6 +76,7 @@ TESTS = [
     "tests/unit/test_verified_report_review2_dis.py",   # item K (found by PR #79): DIS wording
     "tests/unit/test_verified_report_review3.py",       # third independent review of PR #78, T1-T6
     "tests/unit/test_verified_report_review4.py",       # fourth independent review of PR #78, Q1-Q8
+    "tests/unit/test_verified_report_review5.py",       # fifth independent review of PR #78, V1-V10
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -86,6 +87,7 @@ AUD = "backend/app/core/logging/audit.py"
 STR = "backend/app/services/report_claim_strict.py"
 GRD = "backend/app/services/report_payload_guard.py"
 RT = "backend/app/api/routes/ai_report.py"
+MAIN = "backend/app/main.py"
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-102: the facts are written by code ──
@@ -146,11 +148,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                     '                             if isinstance(les, dict)],\n')],
                                   "J: the per-lesion volumes reach the model again (and widen the E1 number pool)"),
     # ── RC-103: every answer is checked ──
-    "C1_claim_check_not_run": ([(VR, "    res = V.verify(assembled, None, view)\n", "    res = {\"elements\": []}\n")],
+    "C1_claim_check_not_run": ([(VR, "    res = S.verify(assembled, None, view, model_text=(fc, ic))\n",
+                                 "    res = {\"elements\": [], \"headings\": []}\n")],
                                "the frozen claim check does not run on the answer"),
     "C2_digits_allowed": ([(VR, '    if re.search(r"\\d", re.sub(r"\\{[a-z_]+\\}", "", fc + " " + ic)):\n', "    if False:\n")],
                           "digits allowed in the comments"),
-    "C3_headings_allowed": ([(VR, "    if S.heading_lines(fc) or S.heading_lines(ic):\n", "    if False:\n")],
+    "C3_headings_allowed": ([(VR, "    if res[\"headings\"]:\n", "    if False:\n")],
                             "headings allowed in the comments (a section of the model's own)"),
     "C4_unknown_placeholder_allowed": ([(VR, "        if ph not in vals:\n", "        if False:\n")],
                                        "a placeholder the record does not have is left in the report"),
@@ -175,11 +178,11 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "C14_exact_count_placeholder": ([(VR, '        vals["total_count"] = str(n) if n < 20 else les["count_category"]\n',
                                       '        vals["total_count"] = str(n)\n')],
                                     "R5: the {total_count} placeholder gives the exact count from 20 lesions (MAGNIMS 2021: the range)"),
-    "C15_headings_only_hash": ([(VR, "    if S.heading_lines(fc) or S.heading_lines(ic):\n",
-                                 '    if re.search(r"^\\s*#", fc + "\\n" + ic, re.M):\n')],
+    "C15_headings_only_hash": ([(STR, "    res[\"headings\"] = [h for text in texts for h in heading_lines(text)]\n",
+                                 "    res[\"headings\"] = [ln for text in texts for ln in text.split(\"\\n\") if ln.lstrip().startswith(\"#\")]\n")],
                                "B: a bold or capital comment line is read as a heading and checked for nothing"),
-    "C16_strict_rules_not_run": ([(VR, "    for e in list(res[\"elements\"]) + S.comment_elements(fc, view) + S.comment_elements(ic, view):\n",
-                                   "    for e in list(res[\"elements\"]):\n")],
+    "C16_strict_rules_not_run": ([(STR, "    extra = [e for text in texts for e in comment_elements(text, view)]\n",
+                                   "    extra = []\n")],
                                  "A: only the frozen v2 rules run on the answer"),
     "C17_negation_anywhere_before": ([(STR, '    words = _clause_before(fold, m.start()).split()\n    return bool(L.NEGATION.search(" ".join(words[-GOVERNING_WORDS:])))\n',
                                        "    return bool(L.NEGATION.search(fold[:m.start()]))\n")],
@@ -220,7 +223,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "A6_refusal_not_audited": ([(BRS, "            audit.not_sent(e)\n            raise\n", "            raise\n")],
                                "R7: a draft refused by a privacy check (or failed) before any model call leaves no audit record"),
     # ── RC-105: the kill switch ──
-    "K1_kill_switch_ignored": ([(BRS, '        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:\n', "        if False:\n")],
+    "K1_kill_switch_ignored": ([(BRS, '        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:\n            return verified_report.REASON_OFF\n',
+                                 "        if False:\n            return verified_report.REASON_OFF\n")],
                                "REPORT_LLM_ENABLED=false still calls the model"),
     "K2_kill_switch_setting_removed": ([(CFG, "    REPORT_LLM_ENABLED: bool = Field(default=True)\n", "")],
                                        "the environment cannot switch the model off"),
@@ -247,8 +251,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                              "one call may wait ten minutes (the SDK default)"),
     "M9_404_not_recognised": ([(BRS, '    if getattr(exc, "status_code", None) == 404 or name == "NotFoundError":\n', "    if False:\n")],
                               "a model the provider no longer serves is reported as a generic error"),
-    "M10_sdk_retry_back": ([(BRS, "            self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)\n",
-                             "            self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=1)\n")],
+    "M10_sdk_retry_back": ([(BRS, "anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=",
+                             "anthropic.AsyncAnthropic(api_key=api_key, max_retries=1, timeout=")],
                            "R2: the SDK retries with a fresh full timeout (about twice the 25 s budget)"),
     "M11_wait_not_bounded": ([(BRS, "                    message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))\n",
                                "                    message = await create(**kwargs)\n")],
@@ -263,8 +267,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "A7_withheld_reported_as_not_requested": ([(VR, "    return OUTCOME_WITHHELD if asked else NOT_REQUESTED\n",
                                                 "    return NOT_REQUESTED\n")],
                                               "T2: a draft the AI was asked for and did not deliver is recorded as not requested"),
-    "M13_sync_client_back": ([(BRS, "            self._client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0)\n",
-                               "            self._client = anthropic.Anthropic(api_key=api_key, max_retries=0)\n")],
+    "M13_sync_client_back": ([(BRS, "anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=",
+                               "anthropic.Anthropic(api_key=api_key, max_retries=0, timeout=")],
                              "T3: the blocking client again (a request outlives the time budget in a worker thread)"),
     "M14_request_not_cancelled": ([(BRS, "                    message = await asyncio.wait_for(create(**kwargs), timeout=float(timeout_s))\n",
                                     "                    message = await asyncio.wait_for(asyncio.shield(create(**kwargs)), "
@@ -278,8 +282,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "C27_format_characters_kept": ([(VR, "    fc, ic = without_format_characters(m.group(1)).strip(), without_format_characters(m.group(2)).strip()\n",
                                      "    fc, ic = m.group(1).strip(), m.group(2).strip()\n")],
                                    "Q6: a zero-width joiner or a soft hyphen hides a phrase from the check"),
-    "F22_indication_listed_not_available": ([(VR, "    if entry:\n        # fourth review of PR #78, Q3",
-                                              "    if False:\n        # fourth review of PR #78, Q3")],
+    "F22_indication_listed_not_available": ([(VR, "    dropped = ({0} if entry else set())",
+                                              "    dropped = (set() if entry else set())")],
                                             "Q3: a typed indication is also listed as \"not available\""),
     "M15_not_configured_said_failed": ([(VR, "    REASON_NOT_CONFIGURED: \"not_configured\",\n",
                                          "    REASON_NOT_CONFIGURED: \"unavailable\",\n")],
@@ -297,8 +301,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "MEASUREMENT_FINDING_KEYS = frozenset({\"lesion_analysis\", \"dis_assessment\", \"longitudinal\"})")],
                                  "Q7: a second literal list of the blocks the report writes"),
     # ── RC-064: only what is rendered is sent and validated (second review, C, D, H) ──
-    "P1_unrendered_fields_validated": ([(BRS, "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers)\n",
-                                         "            payload = provider_payload(findings, volumetry, identifiers)\n")],
+    "P1_unrendered_fields_validated": ([(BRS, "                payload_ = provider_payload(rendered_findings, rendered_volumetry, ids)\n",
+                                         "                payload_ = provider_payload(findings, volumetry, ids)\n")],
                                        "C: a bad value in a field the report does not render refuses the whole report"),
     "P2_unrenderable_request_accepted": ([(RT, "    if not verified_report.renderable(request.findings, request.volumetry):\n",
                                            "    if not (any(request.findings.get(k) for k in (\"lesion_analysis\", \"dis_assessment\", \"longitudinal\", "
@@ -317,7 +321,62 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "D1_notice_repeats_the_line": ([(RT, "    parts = [] if stated is True else [DIS_NOT_EVALUATED_NOTICE[lang]]\n",
                                      "    parts = [DIS_NOT_EVALUATED_NOTICE[lang]]\n")],
                                    "F: the route's notice repeats the \"not evaluated\" statement the draft already has"),
+    # ── fifth independent review of PR #78 (V1-V10) ──
+    "C29_number_words_allowed": ([(VR, '    if number_words(fc + "\\n" + ic):\n', "    if False:\n")],
+                                 "V1: a count written in words (\"Twelve lesions\") passes the check"),
+    "C30_german_number_words_missed": ([(VR, '    r"eins|zwei|drei|vier|funf|sechs|sieben|acht|neun|zehn|elf|zwolf|\\w+zehn|zwanzig|dreissig|\\w+zig",\n',
+                                         '    r"eins",\n')],
+                                       "V1: German number words (\"zwei neue Kandidaten\") pass the check"),
+    "L5_candidates_from_status_counts": ([(VR, '    if isinstance(cc, dict):\n        return _count(cc.get("new")), _count(cc.get("enlarging"))\n',
+                                           '    if False:\n        return _count(cc.get("new")), _count(cc.get("enlarging"))\n')],
+                                         "V2: the draft counts every new component, not the reviewable candidates"),
+    "P5_candidates_not_projected": ([(GRD, '        if isinstance(cc, dict):\n            o["change_candidates"]',
+                                      '        if False:\n            o["change_candidates"]')],
+                                    "V2: the reviewable candidates never reach the record"),
+    "F23_check_error_not_caught": ([(VR, "        except Exception as e:  # noqa: BLE001 — fifth review of PR #78, V3",
+                                     "        except ZeroDivisionError as e:  # noqa: BLE001 — fifth review of PR #78, V3")],
+                                   "V3: an error inside the check after the model answered fails the request (500)"),
+    "A5_check_error_attempt_not_audited": ([(VR, "            attempts.append(record)\n            on_attempt(record)\n            return measurements_only(view, lang, REASON_INTERNAL_CHECK",
+                                             "            attempts.append(record)\n            return measurements_only(view, lang, REASON_INTERNAL_CHECK")],
+                                           "V3: the answered attempt of an internal check error is not audited"),
+    "M18_client_per_request": ([(BRS, "    client = _SHARED_CLIENTS.get(api_key)\n", "    client = None\n")],
+                               "V4: a new client and connection pool on every request"),
+    "M19_client_not_closed": ([(BRS, "            done = close()\n", "            done = None\n")],
+                              "V4: the shared client is never closed"),
+    "M20_client_without_timeout": ([(BRS, "max_retries=0, timeout=verified_report.LLM_DEADLINE_S)", "max_retries=0)")],
+                                   "V4: the client is built without the allowed time budget"),
+    "M21_not_closed_at_shutdown": ([(MAIN, "        from app.services.brain_report_service import close_report_clients\n        await close_report_clients()\n",
+                                     "        pass\n")],
+                                   "V4: the application shutdown does not close the shared client"),
+    "K3_record_read_when_nothing_is_sent": ([(BRS, '        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:\n            return False\n',
+                                              "        if False:\n            return False\n")],
+                                            "V5: kill switch off, the route still needs the patient record (503)"),
+    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            payload, view = record_of(None)\n",
+                                                       "            payload, view = record_of(identifiers)\n")],
+                                                     "V5: provider-only refusals apply when nothing is sent"),
+    "P7_identifiers_not_required_when_sending": ([(BRS, "                if not isinstance(identifiers, PatientIdentifiers):\n                    raise PatientRecordUnavailable(\"the patient's identifiers were not supplied\")\n                payload, view = record_of(identifiers)\n",
+                                                   "                payload, view = record_of(identifiers)\n")],
+                                                 "V5: a request is sent without the patient's identifiers"),
+    "F24_limitations_ignore_drawn_labels": ([(VR, "    dropped = ({0} if entry else set()) | set(drawn) |", "    dropped = ({0} if entry else set()) |")],
+                                            "V6: contrast-enhanced and T1-weighted imaging listed as not available although labels were drawn on them"),
+    "C31_check_rebuilds_the_combination": ([(VR, "    res = S.verify(assembled, None, view, model_text=(fc, ic))\n",
+                                             "    res = V.verify(assembled, None, view)\n    res = {**res, \"elements\": list(res[\"elements\"]) + S.comment_elements(fc, view) + S.comment_elements(ic, view), \"headings\": S.heading_lines(fc) + S.heading_lines(ic)}\n")],
+                                           "V7: check() rebuilds the combination itself (another path than the property tests)"),
+    "D3_service_notice_missing": ([(BRS, '        if dis_evaluation == "not_evaluated":\n', "        if False:\n")],
+                                  "V8: the draft without an evaluated DIS has no notice on automatic marking"),
+    "D4_dis_evaluation_not_typed": ([(BRS, '            "dis_evaluation": dis_evaluation,\n', '            "dis_evaluation": None,\n')],
+                                    "V8: the response does not say whether DIS was evaluated"),
+    "F25_dis_line_without_lesion_findings": ([(VR, '    elif la is not None:\n        view["dis"] = {"status": "not evaluated",',
+                                               '    elif True:\n        view["dis"] = {"status": "not evaluated",')],
+                                             "V9: a volumetry-only or longitudinal-only draft states \"DIS not evaluated\""),
+    "C32_criterion_counted_twice": ([(STR, " and len(between.split()) <= DIS_WORDS_APART and m.span() not in spans:\n",
+                                      " and len(between.split()) <= DIS_WORDS_APART:\n")],
+                                    "V10: a criterion word near two DIS names is counted twice"),
 }
+
+# Fifth review of PR #78, V8: the route's DIS notice and its `stated` fact were removed — the report service owns the
+# statement and the notice (controls D3, D4, F25 and the review5 tests); these two mutations have no code left to act on.
+RETIRED_WITH_THE_ROUTE_NOTICE = {name: M.pop(name)[1] for name in ("D1_notice_repeats_the_line", "D2_notice_by_substring")}
 
 
 def offline_env():
