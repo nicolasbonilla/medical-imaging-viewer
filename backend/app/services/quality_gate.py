@@ -295,6 +295,49 @@ def read_source_series_description(file_id, study_service=None) -> Optional[str]
         return None
 
 
+def study_of(file_id) -> Optional[str]:
+    """The study id in a source image's storage path (for the pseudonymised study key), or None."""
+    m = lcs._FILE_ID_RE.fullmatch(str(file_id or ""))
+    return m.group(1) if m else None
+
+
+async def single_study_inputs(file_path: str, storage_service, imaging_service, *, bucket: str,
+                              physician_confirmed_flair: bool = False) -> Dict[str, Any]:
+    """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file: its header's
+    series description (else the stored series record), the RC-054 geometry, the stored inversion time. The
+    skull is 'pending': the browser's skull gates and the app's removal decide it before the output (RC-125).
+    Anything unreadable stays unknown, so the gate warns or abstains; it never raises."""
+    description, geometry = None, None
+    try:
+        data = await storage_service.download_file(bucket, file_path)
+        fmt = getattr(imaging_service.detect_format(data, file_path.rsplit("/", 1)[-1]), "value", None)
+        loader = {"dicom": imaging_service.load_dicom, "nifti": imaging_service.load_nifti}.get(fmt)
+        if loader is not None:
+            _, meta = loader(data)
+            description = getattr(meta, "series_description", None)
+            geometry = getattr(meta, "acquisition_geometry", None)
+    except Exception:  # noqa: BLE001 — unknown header: sequence missing, thickness unknown
+        pass
+    acq = lcs.read_source_acquisition(file_path)
+    if not (isinstance(description, str) and description.strip()):
+        description = read_source_series_description(file_path)
+    return {"mode": "single", "visits": [{
+        "sequence": sequence_from_header(description, (acq or {}).get("inversion_time_ms")),
+        "physician_confirmed_flair": physician_confirmed_flair is True,
+        "thickness": thickness_from_geometry(geometry),
+        "scanner": None,
+        "skull": "pending",
+    }]}
+
+
+def actor_for(user, request=None):
+    """The authenticated clinician as the platform's audit actor (never anonymous, CAPA-015)."""
+    from app.agent_platform.registry import AuditActor
+    role = getattr(user, "role", None)
+    return AuditActor(user_id=str(getattr(user, "id", "") or ""), username=getattr(user, "username", None),
+                      role=str(getattr(role, "value", role)) if role is not None else None, request=request)
+
+
 def visit_from_stored_records(file_id, *, skull: str = "unknown", physician_confirmed_flair: bool = False,
                               study_service=None) -> Dict[str, Any]:
     """Gate inputs of one visit from the records stored with its source image (comparison mode)."""
@@ -382,4 +425,15 @@ def apply_to_comparison(result: Dict[str, Any], gate: Dict[str, Any]) -> Dict[st
         out.update({"abstained": True, "changes": []})
         out.update({k: None for k in lcs.ABSTAINED_NULL_FIELDS})
         out["reader_confirmed_activity"] = None
+        out["caveat"] = ("No automatic change candidates and no lesion load or count comparison for this pair: the "
+                         "quality gate stopped it (" + ", ".join(gate.get("codes") or ["gate_unavailable"]) + "). "
+                         "Compare the images visually with the overlay.")
     return out
+
+
+def comparison_gate(source_tp1, source_tp2, *, user=None, request=None) -> Dict[str, Any]:
+    """The gate on two visits from their stored records (RC-123), through the platform (RC-126)."""
+    visits = [visit_from_stored_records(s) for s in (source_tp1, source_tp2)]
+    return run_quality_gate({"mode": "comparison", "visits": visits},
+                            study_key=study_of(source_tp2) or study_of(source_tp1) or "",
+                            actor=actor_for(user, request) if user is not None else None)

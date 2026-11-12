@@ -286,6 +286,12 @@ class Settings(BaseSettings):
     ENABLE_CACHE_WARMING: bool = Field(default=False)
     CACHE_WARMING_ON_STARTUP: bool = Field(default=False)
 
+    # Single quality gate (REQ-FUNC-117, REQ-SAFE-054, RC-123/RC-126; DRAFT, PENDING owner approval). OFF: the
+    # longitudinal routes behave exactly as before. ON: every comparison is decided by the gate, which fails
+    # closed — while the 'quality-gate' agent is not approved or a switch is off, NO comparison shows candidates
+    # (owner decision D-QG-2: switch it on together with MSTOOL_AGENTS_SWITCH / MSTOOL_AGENT_SWITCH__QUALITY_GATE).
+    QUALITY_GATE_ENFORCED: bool = Field(default=False)
+
     # Security Middleware Configuration (ISO 27001 A.14.2.1)
     RATE_LIMIT_ENABLED: bool = Field(default=True)
     INPUT_VALIDATION_ENABLED: bool = Field(default=True)

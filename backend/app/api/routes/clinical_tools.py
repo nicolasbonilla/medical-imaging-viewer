@@ -12,7 +12,7 @@ the tool version, academic citation, and regulatory status.
 
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 
@@ -22,7 +22,7 @@ from app.security.patient_access_dependency import require_imaging_access
 from app.security.resource_access import authorize_patient_id, authorize_study_id
 from app.security.ownership import initiators
 from app.core.logging import get_logger
-from app.core.container import get_tool_runner_service
+from app.core.container import get_imaging_service, get_storage_service, get_tool_runner_service
 from app.core.interfaces.ai_interface import (
     LSTAISegmentRequest,
     SynthSegRequest,
@@ -83,6 +83,36 @@ async def skull_strip(
     return Response(content=brain, media_type="application/gzip", headers={
         "Cache-Control": "no-store", "X-Strip-Model": model if re.fullmatch(r"[0-9a-f]{12}", model or "") else "",
         "Access-Control-Expose-Headers": "X-Strip-Model"})
+
+
+class QualityGateRequest(BaseModel):
+    file_id: str = Field(..., min_length=1, max_length=500)
+    physician_confirmed_flair: bool = False
+
+
+@router.post("/quality-gate")
+async def quality_gate(
+    body: QualityGateRequest,
+    request: Request,
+    storage_service=Depends(get_storage_service),
+    imaging_service=Depends(get_imaging_service),
+    current_user: User = Depends(get_current_active_user),
+):
+    """The single quality gate before the in-browser AI (REQ-FUNC-117, REQ-SAFE-052/054; RC-122, RC-126).
+    Read only, nothing stored. The inputs are derived here from the stored file (never from the client, never
+    from the file name); the decision comes through the agent platform (approval, kill switches: fail closed).
+    The response carries the derived inputs so the browser re-evaluates the SAME rule (gate.ts) with the skull
+    outcome before any AI output is shown."""
+    from app.core.config import get_settings
+    from app.services import quality_gate as qg
+
+    paths = await _authorized_inputs([body.file_id], None, None, current_user)
+    inputs = await qg.single_study_inputs(paths[0], storage_service, imaging_service,
+                                          bucket=get_settings().GCS_BUCKET_NAME,
+                                          physician_confirmed_flair=body.physician_confirmed_flair)
+    result = qg.run_quality_gate(inputs, study_key=qg.study_of(paths[0]) or paths[0],
+                                 actor=qg.actor_for(current_user, request))
+    return {**result, "inputs": inputs}
 
 
 @router.get("/tools", response_model=List[Dict[str, Any]])

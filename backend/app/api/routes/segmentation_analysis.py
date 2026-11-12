@@ -903,6 +903,10 @@ async def compare_longitudinal(
             binding=binding, stored_review=stored_review,
             visit_check=visit_check, review_read_failed=review_read_failed,
         )
+        if settings.QUALITY_GATE_ENFORCED:   # RC-123 / RC-126 (DRAFT): the single quality gate decides, fail closed
+            from app.services import quality_gate as qg
+            result = qg.apply_to_comparison(
+                result, qg.comparison_gate(source_tp1, source_tp2, user=current_user, request=request))
 
         logger.info("Longitudinal comparison completed (unconfirmed candidates, registration unverified)", extra={
             "new": status_counts.get("new"),
@@ -1067,13 +1071,20 @@ async def detect_slowly_expanding_lesions(
             _source_acquisition(source_tp2) if source_tp2 else None,
             spacing_tp1, _sp2,
         )
-        if acquisition_check["status"] != "same" or visit_check["status"] != "ok":
+        gate = None
+        if settings.QUALITY_GATE_ENFORCED:   # RC-123 / RC-126 (DRAFT): the single quality gate decides, fail closed
+            from app.services import quality_gate as qg
+            gate = qg.comparison_gate(source_tp1, source_tp2, user=current_user, request=request)
+        gate_stops = gate is not None and gate.get("ai_output_allowed") is not True
+        if acquisition_check["status"] != "same" or visit_check["status"] != "ok" or gate_stops:
             return {
                 "ok": False, "abstained": True,
-                "reason": lcs._abstention_caveat(acquisition_check, visit_check),
+                "reason": (qg.apply_to_comparison({}, gate)["caveat"] if gate_stops
+                           else lcs._abstention_caveat(acquisition_check, visit_check)),
                 "sels": [], "n_existing": 0, "n_sel": 0,
                 "acquisition_check": acquisition_check, "visit_check": visit_check,
                 "registration_verified": False, "adjudication_required": True,
+                **({"quality_gate": gate} if gate is not None else {}),
             }
         if intensity_tp1 is None or intensity_tp2 is None:
             raise HTTPException(status_code=422,
@@ -1098,6 +1109,7 @@ async def detect_slowly_expanding_lesions(
             "n_sel": sel.n_sel,
             "background_expanding_fraction": sel.background_expanding_fraction,
             "voxel_expansion_floor": sel.voxel_expansion_floor,
+            **({"quality_gate": gate} if gate is not None else {}),
             # Class C candidate firewall.
             "registration_verified": False,
             "adjudication_required": True,

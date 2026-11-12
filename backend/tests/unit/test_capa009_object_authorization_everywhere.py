@@ -78,6 +78,7 @@ ROUTE_AUTH = {
     ("DELETE", "/auth/webauthn/credentials/{credential_id}"): "self",
     ("POST", "/clinical/flames/segment"): "call:_authorized_inputs",
     ("POST", "/clinical/skull-strip"): "call:_authorized_inputs",   # REQ-FUNC-115
+    ("POST", "/clinical/quality-gate"): "call:_authorized_inputs",  # REQ-FUNC-117 (DRAFT)
     ("POST", "/clinical/lst-ai/segment"): "call:_authorized_inputs",
     ("POST", "/clinical/synthseg/parcellate"): "call:_authorized_inputs",
     ("GET", "/clinical/task/{task_id}"): "initiator",
@@ -425,6 +426,7 @@ DENIED = [  # (method, path, json) -> 404 for a caller without access, before an
     ("get", "/ai/segment/t-1/status", None),
     ("post", "/clinical/flames/segment", {"flair_file_id": FILE}),
     ("post", "/clinical/skull-strip", {"file_id": FILE}),   # REQ-FUNC-115
+    ("post", "/clinical/quality-gate", {"file_id": FILE}),  # REQ-FUNC-117 (DRAFT)
     ("post", "/clinical/synthseg/parcellate", {"file_id": FILE}),
     ("get", "/clinical/task/t-1", None),
     ("get", "/clinical/task/t-1/result", None),
