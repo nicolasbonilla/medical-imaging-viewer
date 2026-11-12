@@ -113,6 +113,24 @@ describe('I6 (eleventh review): two consultations per run, not three', () => {
   });
 });
 
+describe('O3 (twelfth review): after an attested run, the "before" panel shows the decision that started it', () => {
+  it('rc127 the attested decision replaces the stale abstain', async () => {
+    flames('idle');
+    h.answer = (f, confirmed) => Promise.resolve(confirmed
+      ? answer('pending', ['sequence_confirmed_by_physician', 'skull_pending'], {}, f)
+      : answer('abstain', ['sequence_missing'], { attestable_visits: ['study'] }, f));
+    render(<BrowserFlamesCard flairFileId={FILE} />);
+    await waitFor(() => expect(screen.getByTestId('quality-gate-before').getAttribute('data-decision')).toBe('abstain'));
+    fireEvent.click(screen.getByTestId('browser-flames-confirm-sequence').querySelector('input') as HTMLInputElement);
+    fireEvent.click(screen.getByTestId('quality-gate-attest').querySelector('input') as HTMLInputElement);
+    const run = screen.getByRole('button', { name: /Segment in this browser/ });
+    await waitFor(() => expect(run).not.toBeDisabled());
+    fireEvent.click(run);
+    await waitFor(() => expect(h.flames.run).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByTestId('quality-gate-before').getAttribute('data-decision')).toBe('pending'));
+  });
+});
+
 describe('U2: a rate-limited or unavailable answer is retried by itself, with a countdown', () => {
   it('rc126 before the run: the wait is shown, the check is repeated, and Run becomes possible', async () => {
     flames('idle');
