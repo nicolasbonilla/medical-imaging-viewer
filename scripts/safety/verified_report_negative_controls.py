@@ -79,6 +79,7 @@ TESTS = [
     "tests/unit/test_verified_report_review5.py",       # fifth independent review of PR #78, V1-V10
     "tests/unit/test_verified_report_review6.py",       # sixth independent review of PR #78, W1-W7
     "tests/unit/test_verified_report_scenario_matrix.py",   # seventh review: invariants I1-I8 over 1128 cases
+    "tests/unit/test_verified_report_review10.py",      # tenth independent review of PR #78, I16-I19
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -246,7 +247,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M6_provider_failure_propagates": ([(BRS, "            except Exception as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is\n",
                                          "            except ValueError as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is\n")],
                                        "a provider failure fails the report instead of giving the measurements only"),
-    "M7_no_time_budget": ([(VR, "        if remaining <= 0:\n", "        if False:\n")], "the 25 s budget of a report is not enforced"),
+    # (re-anchored with the tenth review of PR #78, I18: the minimum budget of every request)
+    "M7_no_time_budget": ([(VR, "        if remaining < MIN_LLM_BUDGET_S:\n", "        if False:\n")], "the 25 s budget of a report is not enforced"),
     "M8_long_call_timeout": ([(BRS, "timeout=max(1.0, float(timeout_s)))", "timeout=600.0)")],
                              "one call may wait ten minutes (the SDK default)"),
     "M9_404_not_recognised": ([(BRS, '    if getattr(exc, "status_code", None) == 404 or name == "NotFoundError":\n', "    if False:\n")],
@@ -444,16 +446,16 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "P10_provider_payload_on_every_draft": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n",
                                               "            payload = provider_payload(rendered_findings, rendered_volumetry, None)   # (ninth review, I14)\n")],
                                             "I14: the provider payload is built with nothing to send"),
+    # (re-anchored with the tenth review of PR #78, finding 8: the time left is computed once, just before the call)
     "M24_budget_from_the_first_decision": ([(BRS, "                left = (verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S\n"
-                                                  "                        - (verified_report.now() - started))\n"
-                                                  "                budget = min(verified_report.LLM_DEADLINE_S, left)\n"
-                                                  "            if reason is None and left < verified_report.MIN_LLM_BUDGET_S:\n",
-                                             "            if reason is None and left < verified_report.MIN_LLM_BUDGET_S:\n")],
-                                           "finding 1: the model gets the budget left before the record and the word list were read"),
-    "C43_evidence_read_on_every_record": ([(LCS, "@functools.lru_cache(maxsize=4)\n", "")],
+                                                  "                        - (verified_report.now() - started))\n",
+                                             "                left = verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S\n")],
+                                           "finding 1: the model gets a budget that ignores the time the record and the word list took"),
+    # (C43, C44 re-anchored with the tenth review of PR #78, finding 7: a store of successful reads only)
+    "C43_evidence_read_on_every_record": ([(LCS, "    _EVIDENCE_FILES[path_str] = asset\n", "")],
                                           "finding 7: the evidence JSON is read from disk for every record"),
     "C44_rule_check_served_from_the_cache": ([(LCS, "def load_false_candidate_evidence(path: Optional[Path] = None) -> Optional[Dict[str, Any]]:\n",
-                                               "@functools.lru_cache(maxsize=4)\n"
+                                               "@__import__(\"functools\").lru_cache(maxsize=4)\n"
                                                "def load_false_candidate_evidence(path: Optional[Path] = None) -> Optional[Dict[str, Any]]:\n")],
                                              "finding 7 done wrongly: the rate is served from a cache after the rule in force changed"),
     "F33_frozen_check_without_the_range": ([(STR, "    res = V.verify(authored, delivered, as_the_frozen_check_reads_it(view))\n",
@@ -462,6 +464,42 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                            "comment from 20 lesions upward"),
     "F34_range_placeholder_dropped": ([(VR, '    elif cat and cat != "exact":\n        vals["total_count"] = cat\n', "")],
                                       "I12 done wrongly: from 20 lesions the {total_count} placeholder is no longer available"),
+    # ── tenth independent review of PR #78: I16-I19 and findings 5, 7, 9 (DRAFT, PENDING owner approval) ──
+    "C45_implausible_without_its_code": ([(RT, '        raise ReportError("implausible_measurement", status.HTTP_422_UNPROCESSABLE_ENTITY,\n',
+                                           '        raise ReportError("report_failed", status.HTTP_422_UNPROCESSABLE_ENTITY,\n')],
+                                         "I16: the implausible measurement leaves without its own code (the panel cannot name it)"),
+    "C46_shared_check_uncoded": ([(RT, "                raise _coded(e) from e\n", "                raise\n")],
+                                 "I16: a shared check's HTTP error (authorization, the store) leaves without a code"),
+    "C47_implausible_asks_to_correct_the_input": ([(RT, "{e.field or 'unknown'}. No draft was written; re-run the analysis or check the segmentation.\",\n",
+                                                    "{e.field or 'unknown'}. Correct the input; no draft was written.\",\n")],
+                                                  "I16: the physician is asked to correct an input the server computed itself"),
+    "A8_privacy_passed_before_the_checks": ([(BRS, '            privacy = "not_run"\n', '            privacy = "passed"\n')],
+                                            "I17: the record says the privacy check passed although it did not run"),
+    "A9_cancelled_call_not_recorded": ([(VR, "        except asyncio.CancelledError:\n", "        except ZeroDivisionError:\n")],
+                                       "I17: a model call cancelled in flight is not counted"),
+    "A10_cancelled_request_not_audited": ([(BRS, "        except BaseException as e:  # noqa: BLE001 — every exit is audited",
+                                            "        except Exception as e:  # noqa: BLE001 — every exit is audited")],
+                                          "I17: a cancelled request writes no verification record"),
+    "M25_retry_below_the_minimum_budget": ([(VR, "        if remaining < MIN_LLM_BUDGET_S:\n", "        if remaining <= 0:\n")],
+                                           "I18: a retry is sent with less than the minimum budget left"),
+    "M26_skipped_retry_as_timeout": ([(VR, "            if attempt:\n                return measurements_only(view, lang, REASON_BLOCKED, attempts, outcome=OUTCOME_WITHHELD,\n",
+                                       "            if attempt:\n                return measurements_only(view, lang, REASON_TIMEOUT, attempts, outcome=OUTCOME_WITHHELD,\n")],
+                                     "I18: a retry skipped for lack of time is reported as an AI-service timeout"),
+    "M27_cut_retry_as_timeout": ([(VR, "            if attempt and e.reason == REASON_TIMEOUT:\n", "            if False:\n")],
+                                 "I18: a retry cut by the time budget is reported as an AI-service timeout"),
+    "F35_nothing_to_report_before_the_substitutions": ([(RT, "    if not verified_report.renderable(findings, request.volumetry):\n"
+                                                            "        raise ReportError(\"nothing_to_report\", status.HTTP_422_UNPROCESSABLE_ENTITY, NOTHING_TO_REPORT_DETAIL)\n", "")],
+                                                       "I19: a block that held only a dropped reader decision gives a draft of the limitations alone"),
+    "P11_patient_number_as_503": ([(BRS, "                except IdentifierInPrompt:\n", "                except ZeroDivisionError:\n")],
+                                  "finding 5: a measurement equal to a patient number ends in a 503 without a draft"),
+    "P12_projected_payload_not_checked": ([(GRD, "        if is_patient_number(n, forms):       # (tenth review, finding 9: the projection's own rule)\n",
+                                            "        if False:\n")],
+                                          "finding 9: the patient's own numbers are not looked for in the projected payload"),
+    "C48_failed_read_cached": ([(LCS, "    kept = _EVIDENCE_FILES.get(path_str)\n    if kept is not None:\n        return kept\n",
+                                 "    if path_str in _EVIDENCE_FILES:\n        return _EVIDENCE_FILES[path_str]\n"),
+                                (LCS, '        logger.warning(f"[RC-061] evidence asset unreadable: {e}")\n        return None\n',
+                                 '        logger.warning(f"[RC-061] evidence asset unreadable: {e}")\n        _EVIDENCE_FILES[path_str] = None\n        return None\n')],
+                               "finding 7: a transient read error withholds the rate until the server restarts"),
     "F32_format_rule_twice": ([(RT, "        # (ninth review of PR #78, finding 8: CAPA-014's format-character rule runs once, inside neutralised_model_text\n",
                                 '        result = {**result, "content": without_format_characters(result["content"])}\n'
                                 "        # (ninth review of PR #78, finding 8: CAPA-014's format-character rule runs once, inside neutralised_model_text\n")],

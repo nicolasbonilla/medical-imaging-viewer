@@ -164,7 +164,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "P20_confidence_in_percent_refused": ([(G, "required=False,\n                                                     outside=None))\n",
                                             "required=False))\n")],
                                           "a confidence given in percent refuses the report"),
-    "P21_patient_numbers_not_checked": ([(G, "        if n == int(n) and str(abs(int(n))) in self.patient_numbers:\n", "        if False:\n")],
+    # (re-anchored with the tenth review of PR #78, finding 9: ONE rule, used by the projection and by the check on
+    # the projected payload)
+    "P21_patient_numbers_not_checked": ([(G, "    return n == int(n) and str(abs(int(n))) in forms\n", "    return False\n")],
                                         "the patient's record number sent as '1234567 voxels'"),
     "P22_synthetic_dis_without_state": ([(BRS, '        "dis_assessment": {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 1,\n',
                                           '        "dis_assessment": {"dis_met": True, "regions_with_lesions": 1,\n')],
@@ -240,7 +242,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                   "a patient named Deep White blocks every draft ('Deep White Matter')"),
     "T27_device_joined_words_reported": ([(G, "any(w in joined and w not in safe_words for w in unique)", "any(w in joined for w in unique)")],
                                          "a patient named Juxta Cortical blocks every draft ('Juxtacortical')"),
-    "F1_route_needs_no_segmentation": ([(AIR, "    if not request.segmentation_id:\n        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SUBJECT_REQUIRED_DETAIL)\n", "")],
+    "F1_route_needs_no_segmentation": ([(AIR, "    if not request.segmentation_id:\n        raise ReportError(\"segmentation_required\", status.HTTP_400_BAD_REQUEST, SUBJECT_REQUIRED_DETAIL)\n", "")],
                                        "a request without patient reference reaches the provider"),
     "F2_route_does_not_authorize": ([(AIR, "    patient_id = await authorize_segmentation_id(request.segmentation_id, current_user)\n",
                                       "    from app.security.resource_access import resolve_segmentation_patient_id, _segmentation_service\n"
@@ -306,14 +308,16 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                                  "the copied text shows a second clinician's entry or application note"),
     "M18_zero_width_space_joins_words": ([(G, '    text = text.replace("\\u200b", " ")\n', "")],
                                          "'zero\u200bwidth' becomes 'zerowidth'"),
-    "L1_raw_findings_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},\n',
-                                 '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld, "findings": findings},\n')],
+    # (L1-L3 re-anchored with the tenth review of PR #78, I17: the record is written after the checks, with the state
+    # that ran)
+    "L1_raw_findings_logged": ([(BRS, '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld})\n',
+                                 '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld, "findings": findings})\n')],
                                "the request's findings written to the log"),
-    "L2_prompt_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},\n',
-                           '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld, "prompt": verified_report.first_user_message(view, lang)},\n')],
+    "L2_prompt_logged": ([(BRS, '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld})\n',
+                           '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld, "prompt": verified_report.first_user_message(view, lang)})\n')],
                          "the prompt written to the log"),
-    "L3_counts_not_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},\n',
-                               '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": {}},\n')],
+    "L3_counts_not_logged": ([(BRS, '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld})\n',
+                               '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": {}})\n')],
                              "no record of what was withheld"),
     "C1_false_header_claim": ([(BRS, "Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):\n",
                                 "HIPAA compliance: patient data is de-identified before sending to Claude API.\n"

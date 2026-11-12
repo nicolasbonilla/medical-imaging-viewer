@@ -201,16 +201,17 @@ M = {
           '                     and findings["dis_assessment"].get("evaluation_status") == "evaluated")\n')],
         [R3_TEST],
         "the route decides 'evaluated' by the status alone while the prompt and template need a conclusion (as on 6d1fde2)"),
+    # (I11, I12 re-anchored with the tenth review of PR #78, I16: the panel maps the server's code, not its phrase)
     "I11_panel_shows_no_measurements_for_a_geometry_422": (
-        [(PANEL, "                    ? (serverMessage(generateMutation.error).startsWith(GEOMETRY_UNREADABLE_PHRASE)\n",
-          "                    ? (false\n")],
+        [(PANEL, "  geometry_unreadable: ['report.geometryUnreadable', ",
+          "  geometry_unreadable_unmapped: ['report.geometryUnreadable', ")],
         [PANEL_TEST],
         "the report panel shows 'no measurements' for an unreadable image geometry (review item 6)"),
     "I12_geometry_422_without_its_phrase": (
-        [(AIR, '                detail=(f"{GEOMETRY_UNREADABLE_PHRASE}: the lesion measurements of segmentation {segmentation_id} "\n',
-          '                detail=(f"The lesion measurements of segmentation {segmentation_id} "\n')],
+        [(AIR, '                "geometry_unreadable", status.HTTP_422_UNPROCESSABLE_ENTITY,\n',
+          '                "lesion_table_failed", status.HTTP_422_UNPROCESSABLE_ENTITY,\n')],
         [R6_TEST],
-        "the server's geometry 422 no longer starts with the phrase the panel recognises"),
+        "the server's geometry 422 no longer carries its own code (the panel would show another failure)"),
     # ── browser capture session of the release build (2026-10-28): F08, F09, F10, F04 ──
     "I13_classification_labels_not_applied_to_the_viewer": (
         [(DASH, "        useSegmentationStore.getState().applyServerLabels(segmentationId, result.labels ?? MAGNIMS_LESION_LABELS);\n",
