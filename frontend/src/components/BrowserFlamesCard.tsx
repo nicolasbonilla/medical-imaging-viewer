@@ -75,8 +75,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   // selected one never acts. One request at a time: Run is disabled while it is in flight.
   const currentFile = useRef(flairFileId);
   currentFile.current = flairFileId;
-  const attestedNow = useRef(attested);
-  attestedNow.current = attested;
+  const attestedNow = useRef(false);                          // the attestation in effect at the last render
   const selection = useRef(0);                                // M1: bumped on every file change
   const [busy, setBusy] = useState(false);                   // O5 (twelfth review): the one "request in flight" state
   // M1 (thirteenth review): what a run follows is held per RUN — its attestation, the version and the run token of the
@@ -85,6 +84,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const usedTokens = useRef(new Set<string>());
   const requests = useRef(0);
   const newest = useRef<Record<string, { seq: number; version: string }>>({});
+  const [, setVersionsSeen] = useState(0);                   // re-render when a newer version is named
   // M1: the decision of the Run consultation WITH the attestation, for this file; shown and used only while ticked
   const [attestedDecision, setAttestedDecision] = useState<ServerGateResponse | null>(null);
   useEffect(() => { setAttested(false); setAttestedDecision(null); selection.current += 1; }, [flairFileId]);
@@ -97,7 +97,10 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     return requestQualityGate(file, attestation, skull, token).then((r) => {
       const f = r.subject?.file_id;
       const v = r.subject?.version;
-      if (typeof f === 'string' && typeof v === 'string' && seq > (newest.current[f]?.seq ?? -1)) newest.current[f] = { seq, version: v };
+      if (typeof f === 'string' && typeof v === 'string' && seq > (newest.current[f]?.seq ?? -1)) {
+        if (newest.current[f]?.version !== v) setVersionsSeen((n) => n + 1);
+        newest.current[f] = { seq, version: v };
+      }
       return { ...r, asked_at: askedAt };
     });
   };
@@ -119,9 +122,20 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const preflightStuck = gateOn && preflight !== null && before.settled && askable(preflight);
   // P5: the attestation is offered when the server says the file (unattested) is attestable — also after a run
   const canAttest = gateOn && (preflight?.attestable_visits ?? []).includes('study');
-  // P3: the "before" panel shows the attested decision only while the attestation is ticked, else the unattested one
-  const attestedShown = attested && attestedDecision?.subject?.file_id === flairFileId ? attestedDecision : null;
-  const shownBefore = attestedShown ?? preflight;
+  // P1 / P3: the ONE attestation in effect — ticked AND offered; what the panel shows is what a Run would send
+  const attestationOn = canAttest && attested;
+  attestedNow.current = attestationOn;
+  // P3: the "before" panel shows the attested decision only while the attestation is in effect and only for the newest
+  // version the server named, else the unattested one (the attested decision is asked again on Run); an unattested
+  // decision for an older version is never shown either (it is asked again instead)
+  const newestVersion = newest.current[flairFileId]?.version;
+  const attestedShown = attestationOn && attestedDecision?.subject?.file_id === flairFileId
+    && attestedDecision.subject?.version === newestVersion ? attestedDecision : null;
+  const preflightStale = !!preflight && typeof preflight.subject?.version === 'string' && newestVersion !== undefined
+    && preflight.subject.version !== newestVersion;
+  const shownBefore = attestedShown ?? (preflightStale ? null : preflight);
+  const refresh = before.again;
+  useEffect(() => { if (gateOn && preflightStale) refresh(); }, [gateOn, preflightStale, refresh]);
   // U3: the final decision belongs to the RUN (its result object), never to the file: a re-run of the same file never
   // shows the previous run's decision, not even on its first render. G17: the server decides (and audits) the
   // releasing decision with the skull outcome reported here. G27: the server's answer is shown as it is; no answer of
@@ -140,7 +154,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     (f) => (f.retry ? retryAfterSeconds(f.gate) : null));
   const finalGate = final.answer ? final.answer.gate : null;
   const finalStuck = final.answer !== null && final.settled && final.answer.retry && askable(final.answer.gate);
-  const gateAllowsRun = !gateOn || (attested && canAttest ? attestedShown?.ai_may_run !== false
+  const gateAllowsRun = !gateOn || (attestationOn ? attestedShown?.ai_may_run !== false
     : preflight?.ai_may_run === true);
   const gateAllowsOutput = !gateOn || (finalGate?.ai_output_allowed === true && doneResult?.fileId === flairFileId);
 
@@ -170,7 +184,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     }
     if (busy) return;                                                // G18: one request per click
     // The attestation reaches the backend (and its audit, with the clinician) only on Run, deliberately.
-    const attestation = canAttest && attested;
+    const attestation = attestationOn;
     const fileAtClick = flairFileId;
     const selectionAtClick = selection.current;
     const start = (decision: ServerGateResponse) => {

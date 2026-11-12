@@ -10,7 +10,7 @@
  * The subject is what the answer belongs to (the selected file before the run; the run's result for the final
  * consultation): a new subject starts afresh, and an answer is exposed only for the subject it was asked for (G18, U3).
  */
-import { useEffect, useReducer, useRef, useState, type Reducer } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState, type Reducer } from 'react';
 import { MAX_AUTOMATIC_RETRIES } from '@/services/qualityGate/gate';
 
 interface State<T> {
@@ -39,7 +39,9 @@ function reducer<T>(s: State<T>, a: Action<T>): State<T> {
     case 'answer':
       if (a.seq !== null && a.seq !== s.seq) return s;          // the answer to an older request never acts
       return {
-        ...s, inFlight: a.seq === null ? s.inFlight : false, answer: a.answer,
+        // M1 (thirteenth review): an answer shown from elsewhere (a newer consultation) supersedes the request in
+        // flight — its older answer can never overwrite this one
+        ...s, seq: a.seq === null ? s.seq + 1 : s.seq, inFlight: false, answer: a.answer,
         wait: a.base !== null && s.attempt < MAX_AUTOMATIC_RETRIES ? a.base * 2 ** s.attempt : null,
       };
     default:
@@ -111,13 +113,14 @@ export function useGateConsultation<T>(subject: unknown, ask: (subject: unknown)
     return () => clearTimeout(id);
   }, [state.seq, state.inFlight, state.wait, state.answer]);
 
+  const again = useCallback(() => dispatch({ type: 'again' }), []);    // stable: safe in an effect's dependencies
   const own = state.subject === subject && subject !== null;
   const left = useCountdown(own && !state.inFlight ? state.wait : null, state.answer);
   return {
     answer: own ? state.answer : null,
     left: own && !state.inFlight && state.wait !== null ? left : null,
     settled: own && !state.inFlight && state.answer !== null && state.wait === null,
-    again: () => dispatch({ type: 'again' }),
+    again,
     show: (answer: T) => dispatch({ type: 'answer', seq: null, answer, base: baseRef.current(answer) }),
   };
 }
