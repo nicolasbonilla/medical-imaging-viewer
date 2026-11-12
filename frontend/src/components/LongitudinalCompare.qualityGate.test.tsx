@@ -155,3 +155,23 @@ describe('F2: the SEL search and the gate', () => {
     expect(panel.textContent).toContain(i18n.t('qualityGate.codes.gate_switched_off.message'));
   });
 });
+
+describe('U1 (sixth review): the attestations given for a pair add up', () => {
+  it('rc122 tp1 then tp2: both visits are attested', async () => {
+    const stopTp1 = { ...STOPPED, quality_gate: { ...gate(false, 'sequence_missing', 'tp1'), attestable_visits: ['tp1'] } };
+    const stopTp2 = { ...STOPPED, quality_gate: { ...gate(false, 'sequence_unknown', 'tp2'), attestable_visits: ['tp2'] } };
+    compareLongitudinal.mockResolvedValueOnce(stopTp1).mockResolvedValueOnce(stopTp2).mockResolvedValue(ALLOWED);
+    await pick();
+    fireEvent.click(screen.getByRole('button', { name: COMPARE }));
+    await waitFor(() => expect(screen.getByTestId('quality-gate-attest-tp1')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('quality-gate-attest-tp1').querySelector('input') as HTMLInputElement);
+    fireEvent.click(screen.getByTestId('quality-gate-attest-again'));
+    await waitFor(() => expect(compareLongitudinal).toHaveBeenCalledTimes(2));
+    expect(compareLongitudinal.mock.calls[1][2]).toEqual({ tp1: true, tp2: false });
+    await waitFor(() => expect(screen.getByTestId('quality-gate-attest-tp2')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('quality-gate-attest-tp2').querySelector('input') as HTMLInputElement);
+    fireEvent.click(screen.getByTestId('quality-gate-attest-again'));
+    await waitFor(() => expect(compareLongitudinal).toHaveBeenCalledTimes(3));
+    expect(compareLongitudinal.mock.calls[2][2]).toEqual({ tp1: true, tp2: true });
+  });
+});

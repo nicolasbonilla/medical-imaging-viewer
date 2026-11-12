@@ -109,3 +109,15 @@ describe('G19 extension: gate ON keeps every base FLAIR acceptance except the do
     expect([...(v.weak_other_words ?? [])].sort()).toEqual([...WEAK].sort());
   });
 });
+
+describe('G27 (sixth review): with the gate on, RC-049 takes the class the SERVER returned', () => {
+  it('rc122 the verdict follows the server class, never a local reading of the header text', () => {
+    const on = (text: string, cls: string) => headerContrastEvidence([text], {}, null, { qualityGate: true, serverSequenceClass: cls });
+    expect(on('Sag T1 MPRAGE', 'FLAIR').verdict).toBe('supports');
+    expect(on('AX T2 FLAIR', 'T1').verdict).toBe('contradicts');
+    expect(on('AX T2 FLAIR', 'other').verdict).toBe('contradicts');
+    expect(on('AX T2 FLAIR', 'unknown').verdict).toBe('none');
+    expect(on('AX T2 FLAIR', 'FLAIR').sequenceClass).toBe('FLAIR');
+    expect(on('AX T2 FLAIR', 'T1').reasons.some((r) => r.includes('names another sequence'))).toBe(false);
+  });
+});

@@ -76,3 +76,17 @@ describe('QualityGatePanel (REQ-FUNC-118, RC-127)', () => {
     expect(screen.getByTestId('quality-gate-panel-decision').textContent).toBe('All checks passed');
   });
 });
+
+describe('G27 (sixth review): what to do comes from the server answer, not from a policy in the browser', () => {
+  it('rc127 the action named by the answer is shown', async () => {
+    await i18n.changeLanguage('en');
+    const result = {
+      gate_version: 'quality-gate/1', policy_version: 'x', mode: null, decision: 'abstain', ai_may_run: false,
+      ai_output_allowed: false, codes: ['sequence_unknown'], actions: { sequence_unknown: 'action_comparison' },
+      checks: [{ check: 'sequence', visit: 'tp1', status: 'abstain', code: 'sequence_unknown', params: {} }],
+    } as unknown as GateResult;
+    render(<QualityGatePanel result={result} />);
+    expect(screen.getByTestId('quality-gate-panel-check').textContent)
+      .toContain(i18n.t('qualityGate.codes.sequence_unknown.action_comparison'));
+  });
+});
