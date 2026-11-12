@@ -1034,9 +1034,11 @@ All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/unit/test_quality_
 |---|---|---|---|
 | HAZ-025 | S4 / P2 | ALARP *(proposed)* | the sequence of an image without a descriptive header rests on the physician's confirmation (D-QG-3) and on RC-049's content check; thickness only warns until the v3 evidence (D-QG-4); the browser's final check trusts the worker's provenance; OFF until the owner enables it (D-QG-2) |
 
-### C.5 Verification record
+### C.5 Verification record (draft PR #81)
 
-*(Filled in by the implementation commits; see the PR.)*
+**Failing first** (commit `efad1cf`, the matrix against a baseline that models the app today — no single gate, every AI step proceeds): 18 tests failed, 5 passed. Cases failing per invariant, of 3 200: G1 2 560; G3 3 168 (+ 22 of 22 odd inputs); G5 3 200 (checks) and 3 200 (trace and audit); G6 3 200 for each of the 5 platform states, and 5 of 5 real-platform cases; G8 1 800; G11 200; G2 141 texts missing (per case vacuous); G4 fixture absent; G7 the v3 hook wrong for 2 of 6 licences (per case vacuous); G9 and G10 passed vacuously (constant output).
+
+**After the implementation**: matrix 23 of 23; wiring 25 of 25; CAPA-009 route table 53 of 53; agent platform registry 58, tracing 32, cards 13 (+1 skipped); risk-control manifest 692. Browser rule checked against the shared fixture under Node (scratch copy): 3 200 cases, same SHA-256, 79 of 79 samples. vitest and the full suites run in GitHub Actions.
 
 *End of Risk Management File*
 
