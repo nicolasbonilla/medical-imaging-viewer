@@ -1042,6 +1042,21 @@ All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/unit/test_quality_
 
 **Negative controls** (`scripts/safety/quality_gate_negative_controls.py`, record `QUALITY-GATE_negative_controls_2026-11-12.json`): 41 mutations, one at a time in a throwaway copy (never the worktree), every anchor exactly once, each mutant compiled and imported (or parsed / loaded under Node) before its kill counted: **38 of 38 run detected, 0 survived, 0 invalid**; 3 component mutations (V1–V3) need vitest and were not run locally (no `node_modules`; vitest runs in GitHub Actions). Per control: RC-122 12/12, RC-123 6/6, RC-124 4/4, RC-125 6/6, RC-126 10/10, RC-127 7/7. Baseline and restored copy: backend 48 passed / 0 failed, browser harness 10 / 0.
 
+### C.6 First independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| S1 | `\b` regexes treat `_` as a word character: AX_DWI_B1000, SAG_STIR, 3D_DIR, ep_tof read as "unknown", which a confirmation could lift | RC-122 | the description is split into tokens on every non-alphanumeric character (camelCase split, `*` = star, `+C` = post-contrast); vocabulary in the policy, one source for backend and browser | G12: shared corpus of 123 descriptions (Siemens, GE, Philips, Canon) |
+| S2 | FLAIR_T1_SAG, "FLAIR T1W" passed as FLAIR | RC-122 | a T1 weighting with a FLAIR name, or any non-FLAIR token, is "other" and always abstains | G12 |
+| S3 | The run checkbox sent the FLAIR attestation implicitly | RC-122, RC-126 | a separate control, shown only for unknown/missing, unticked, reset per file; sent only on Run and before the result; StrictBool on the route; recorded in the `agent.run` audit with the clinician | G13 |
+| S4 | The V-mutants were written to the copy but vitest ran in the real frontend | — | every test command runs inside the throwaway copy; the mutated file is asserted to lie under the run's directory; without node_modules the V-mutants are "not run" | — |
+| C1 | A comparison asked the physician to confirm a FLAIR it cannot take | RC-127 | the attestation exists only in a single study (`confirmation_modes`); comparisons show a mode-specific action | G14 |
+| C2 | The comparison gate ran after loading, registration and the atlas | RC-123 | the gate decides from the stored records before anything is loaded; early abstention (as SEL) | wiring |
+| C3 | The gate overwrote RC-062's caveat, with raw codes | RC-123 | plain reasons (`gate_caveat`) appended to RC-062's | wiring |
+| E1–E3 | Full decode on every consultation; second read of the acquisition records; deep copy of the policy per call | — | header only (pydicom `stop_before_pixels`, lazy NIfTI header) in a worker thread, cached per file version; one debounced consultation per file; records read once; thin limit a parameter | wiring |
+
+Failing first (commit `3990365`): G12 55 of 123 descriptions misclassified, 46 non-FLAIR names let the AI run after a confirmation; G13 480 of 3 200 cases; G14 480 of 3 200 cases; 7 wiring tests failed. After the fixes: matrix 28 of 28, wiring 31 of 31, CAPA-013 52 of 52.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

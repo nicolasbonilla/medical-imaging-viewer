@@ -21,7 +21,7 @@ It is a code-only agent: no language model, no tool, no network call. It is regi
 |---|---|---|---|
 | Acquisition geometry (RC-054, REQ-FUNC-099, REQ-SAFE-034) | `backend/app/services/acquisition_geometry.py` → `ImageMetadata.acquisition_geometry` | thickness of the original acquisition: `native` / `at_least` / `not_determinable` with a reason; never a default | **The gate reads it.** Its thickness check takes `state` and `effective_mm` and the module's `THIN_LIMIT_MM` (1.5 mm). Not re-derived. |
 | Spacing utilities | `backend/app/utils/spacing_utils.py` | voxel spacing of masks and images (grid, not acquisition) | Not a gate input: the grid is not the acquisition thickness (RC-054). Used by RC-062's voxel comparison, untouched. |
-| Sequence from free text | `backend/app/services/dataset_inventory.py` `detect_sequence` | FLAIR / T1 / T2 / PD / SWI from a series description | **The gate calls it** to derive the backend sequence of an image from its series description (never the file name). |
+| Sequence from free text | `backend/app/services/dataset_inventory.py` `detect_sequence` | FLAIR / T1 / T2 / PD / SWI from a series description | **Not used by the gate any more** (first review of PR #81, S1/S2): its word-boundary patterns read AX_DWI_B1000 or FLAIR_T1_SAG wrongly. The gate classifies from tokens with the vocabulary of its policy (section 3a); the inventory, a research tool, is unchanged. |
 | Metadata extraction (Class C, read only) | `backend/app/utils/dicom_utils.py`, `backend/app/services/imaging_service.py` | series description, manufacturer into `ImageMetadata` | Source of the gate's inputs; not modified. |
 | Stored study records | `backend/app/services/study_service_firestore.py` (series `series_description`; instance `acquisition` written at PACS import) | — | Source of the inputs of a comparison (read the same way as `read_source_acquisition`). |
 | Frontend sequence detection | `frontend/src/utils/sequenceDetection.ts` | sequence from BIDS **file names**, to place images in viewer panels | **Not used by the gate**: a file name is not evidence (RC-049). |
@@ -51,12 +51,18 @@ Checks, in this order (a check that does not apply does not run and is not recor
 | Check | Runs | pass | warn | pending | abstain |
 |---|---|---|---|---|---|
 | `platform` | always, first | the agent is approved and both switches read `on` | — | — | `gate_not_approved`, `gate_switched_off`, `gate_unavailable` (anything else, incl. unreachable). **Nothing else runs.** |
-| `sequence` | per visit | `FLAIR` | `sequence_confirmed_by_physician` (unknown/missing + confirmation) | — | `sequence_not_flair` (T1, T2, other — a confirmation never overrides a header that names another sequence), `sequence_unknown`, `sequence_missing` |
+| `sequence` | per visit | `FLAIR` | `sequence_confirmed_by_physician` (unknown/missing + the physician's attestation, single study only) | — | `sequence_not_flair` (T1, T2, other — a confirmation never overrides a header that names another sequence), `sequence_unknown`, `sequence_missing` |
 | `thickness` | per visit | `native` and ≤ 1.5 mm | `thickness_thick` (native > 1.5), `thickness_at_least` (lower bound only), `thickness_unknown` (not determinable, missing, invalid) | — | **none in this release** (REQ-SAFE-053): `thickness_out_of_range` only through the v3 evidence hook |
 | `scanner` | comparison only, once | manufacturer, model and field strength recorded for both visits and equal (RC-062 tolerances) | — | — | `scanner_changed` (fields named), `scanner_unknown` (fields missing) |
 | `skull` | single study only (the comparison works on stored masks and normalises intensities inside the brain mask) | `stripped` | — | `skull_pending` (the image has not been read yet) | `skull_present`, `skull_unknown` |
 
 Decision: any abstain → `abstain`; else any pending → `pending` (the AI may START, its output may not be shown); else any warn → `proceed_with_warnings`; else `proceed`. `ai_may_run` = decision ≠ abstain; `ai_output_allowed` = decision ∈ {proceed, proceed_with_warnings}.
+
+### 3a. Sequence from the series description (first review of PR #81)
+
+The description is split into tokens on every non-alphanumeric character, after splitting camelCase and reading `*` as `star` and `+C` as `postcontrast`. Any token of `other_words` (DWI, ADC, TRACE, STIR, DIR, PSIR, SWI, GRE, FFE, TOF, localizers, MPR/MIP/derived/subtraction, contrast, PD, …) or a T1 weighting together with a FLAIR name gives **other**, which always abstains whatever the physician confirms. A FLAIR, T2-FLAIR or dark-fluid name gives **FLAIR**. T1 / T2 weightings alone give T1 / T2; names such as SPACE, CUBE, VISTA, TIRM or IR alone give **unknown**, which only a physician's attestation can lift, in a single study. An inversion time below 1 400 ms gives other. Corpus: `frontend/src/config/qualityGate.sequences.v1.json` (G12, read by pytest and vitest).
+
+The physician's attestation is a separate control in the card, offered only when the sequence is unknown or missing, unticked, reset per file, sent only on Run and before the result, a strict boolean on the route, recorded in the `agent.run` audit code with the clinician. A comparison offers no attestation: its action says to compare visually (G14).
 
 The rule and its parameters live in a policy file, identical on both sides: `backend/app/services/quality_gate_policy.json` and `frontend/src/config/qualityGatePolicy.v1.json` (a test requires them equal, and the registry entry records its SHA-256).
 
@@ -64,7 +70,7 @@ The rule and its parameters live in a policy file, identical on both sides: `bac
 
 - **Backend** `app/services/quality_gate.py`: `evaluate()` (pure), `run_quality_gate()` (platform check, one trace with one child span per check that ran, one `agent.run` audit record), input derivation from stored metadata, and `apply_to_comparison()` (withholds the same fields as RC-062).
 - **Backend route** `POST /api/v1/clinical/quality-gate` (in `clinical_tools.py`, CAPA-009 `_authorized_inputs`): the single-study gate before the AI, inputs derived on the server from the stored file.
-- **Longitudinal routes**: when `QUALITY_GATE_ENFORCED` is true, the comparison response carries `quality_gate`, and an abstention withholds the candidates and quantities.
+- **Longitudinal routes**: when `QUALITY_GATE_ENFORCED` is true, the gate decides from the stored records BEFORE any mask, image, registration or atlas is loaded, and an abstention returns at once with every quantity withheld; the acquisition records are read once and reused by RC-062; the gate's plain reasons are appended to RC-062's caveat.
 - **Frontend** `src/services/qualityGate/gate.ts`: the same rule. The card asks the backend before the run (skull `pending`) and re-evaluates locally with the worker's provenance (sequence evidence, skull) before any AI output is shown. `QualityGatePanel` shows the result; all text comes from the i18n files (en/es/de), keyed by code. Behind `VITE_ENABLE_QUALITY_GATE` (OFF).
 
 ## 5. Invariants (closed by the combinatorial matrix, `backend/tests/unit/test_quality_gate_matrix.py`)
@@ -81,6 +87,10 @@ Matrix: sequence {FLAIR, T1, T2, unknown, missing} × physician confirmation {no
 - **G8** The gate never lets through what RC-062 withholds for a scanner reason (the scanner check calls `compare_acquisitions`).
 - **G9** Deterministic, and independent of what does not apply (a single study ignores the scanner; a comparison ignores the skull).
 - **G10** Monotone: making one input worse never turns an abstention into a run.
+- **G11** No output while a check is pending.
+- **G12** Shared corpus of series descriptions: each gets its class in backend and browser; a non-FLAIR name always abstains.
+- **G13** The attestation lifts only unknown/missing, only in a single study, and is never sent implicitly.
+- **G14** Every suggested action is possible in its mode.
 
 ## 6. Data rule and the v3 hook (REQ-SAFE-053)
 
@@ -102,3 +112,5 @@ Published OFF: `VITE_ENABLE_QUALITY_GATE` and `QUALITY_GATE_ENFORCED` default to
 | D-QG-4 | Thickness: warning only until the paper-1 controlled-thickness asset (v3, commercial data) lands; then decide whether any band abstains. |
 | D-QG-5 | A change of scanner model alone (same vendor, same field) abstains, as RC-062 today; confirm or relax. |
 | D-QG-6 | Identifier numbering if PR #78 or PR #79 take REQ-FUNC-117/118, REQ-SAFE-052..054, HAZ-025 or RC-122..127 first. |
+| D-QG-7 | Post-contrast, reformatted (MPR, MIP) and derived or subtracted FLAIRs are "other" and always abstain; confirm, or allow some of them. |
+| D-QG-8 | A comparison offers no attestation, so visits whose header names no sequence are never compared automatically; confirm, or ask for a per-visit attestation in the comparison screen. |

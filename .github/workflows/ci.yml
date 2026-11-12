@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
-    # feat/agent-platform: pull requests stacked on PR #79 (e.g. the quality gate) are verified too
-    branches: [main, feat/agent-platform]
+    # 'feat/**': stacked pull requests (one feature branch on another) are verified too
+    branches: [main, 'feat/**']
 
 jobs:
   frontend-typecheck:
