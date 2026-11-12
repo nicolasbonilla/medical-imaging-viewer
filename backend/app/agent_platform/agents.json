@@ -350,10 +350,17 @@
       "parameters": {}
     },
     "quality-gate": {
-      "purpose": "Single quality gate at study opening and visit comparison (function 2; deterministic, no model)",
+      "purpose": "Single quality gate before every AI step and its output: FLAIR, slice thickness, scanner change between visits, skull (function 2; deterministic code, no model, no tool; REQ-FUNC-117, REQ-SAFE-052..054, RC-122..RC-127)",
       "approval": {
-        "status": "planned",
-        "ref": "agents plan, December 2026"
+        "status": "pending",
+        "ref": "feat/quality-gate (stacked on PR #79): entry to be approved by the owner (D-QG-1)"
+      },
+      "policy": {
+        "$comment": "No model and no prompt, so no model/prompt card: the gate's card is its policy, bound here by the SHA-256 of its canonical JSON (hashing.sha256_text); a policy change without this record fails CI (test_quality_gate_matrix.py, G4).",
+        "path": "backend/app/services/quality_gate_policy.json",
+        "frontend_copy": "frontend/src/config/qualityGatePolicy.v1.json",
+        "policy_version": "1.0.0-draft",
+        "sha256": "597395f1d1e41a72988ce321d7a55271f10373f3d480d12a3e35d8100faccb54"
       },
       "model_control": "none",
       "allowed_models": [],

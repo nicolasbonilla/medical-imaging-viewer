@@ -1486,5 +1486,123 @@
     "storing": "Almacenando resultado...",
     "completed": "Completado",
     "failed": "Fallido"
+  },
+  "qualityGate": {
+    "title": "Control de calidad antes de la IA",
+    "draft": "Borrador — pendiente de aprobación",
+    "aiHidden": "El resultado de la IA no se muestra, porque el control de calidad no lo permite.",
+    "decision": {
+      "abstain": "La IA no se ejecuta en este paso",
+      "pending": "La IA puede empezar; su resultado solo se muestra tras la última comprobación",
+      "proceed": "Todas las comprobaciones son correctas",
+      "proceed_with_warnings": "La IA puede ejecutarse; lea los avisos"
+    },
+    "check": {
+      "input": "Información",
+      "platform": "Control de calidad",
+      "sequence": "Secuencia",
+      "thickness": "Grosor de corte",
+      "scanner": "Equipo",
+      "skull": "Cráneo"
+    },
+    "status": {
+      "pass": "Correcto",
+      "warn": "Aviso",
+      "pending": "Aún sin comprobar",
+      "abstain": "Detenido"
+    },
+    "visit": {
+      "study": "",
+      "tp1": "primera visita",
+      "tp2": "segunda visita"
+    },
+    "band": {
+      "B1": "1,5 mm o menos",
+      "B2": "1,5–4,5 mm",
+      "B3": "4,5–6,5 mm",
+      "B4": "más de 6,5 mm"
+    },
+    "field": {
+      "manufacturer": "fabricante",
+      "manufacturer_model_name": "modelo del equipo",
+      "magnetic_field_strength_t": "intensidad de campo"
+    },
+    "sequenceName": {
+      "T1": "potenciada en T1",
+      "T2": "potenciada en T2",
+      "other": "distinta de FLAIR",
+      "unknown": "desconocida",
+      "missing": "sin registrar"
+    },
+    "codes": {
+      "gate_not_approved": {
+        "message": "El control de calidad aún no está aprobado para su uso, así que la IA no se ejecuta.",
+        "action": "Lea usted las imágenes como siempre. La IA podrá usarse cuando se apruebe el control de calidad."
+      },
+      "gate_switched_off": {
+        "message": "El control de calidad está apagado, así que la IA no se ejecuta.",
+        "action": "Lea usted las imágenes como siempre. Pida al administrador que vuelva a encender el control de calidad."
+      },
+      "gate_unavailable": {
+        "message": "No se pudo completar el control de calidad, así que la IA no se ejecuta.",
+        "action": "Vuelva a intentarlo en unos minutos. Si sigue ocurriendo, avise al administrador."
+      },
+      "gate_input_invalid": {
+        "message": "Falta información para comprobar esta imagen, así que la IA no se ejecuta.",
+        "action": "Abra de nuevo el estudio y vuelva a intentarlo. Si sigue ocurriendo, avise al administrador."
+      },
+      "sequence_not_flair": {
+        "message": "La cabecera de la imagen indica que es una imagen {{sequence}}, no una FLAIR. La IA solo funciona con imágenes FLAIR.",
+        "action": "Seleccione la imagen FLAIR de este estudio y empiece de nuevo."
+      },
+      "sequence_unknown": {
+        "message": "La cabecera de la imagen no indica qué secuencia es, así que la aplicación no puede saber si es una FLAIR.",
+        "action": "Si está seguro de que es una FLAIR potenciada en T2, marque la casilla de confirmación. Si no, seleccione la imagen FLAIR."
+      },
+      "sequence_missing": {
+        "message": "La imagen no trae información de secuencia, así que la aplicación no puede saber si es una FLAIR.",
+        "action": "Si está seguro de que es una FLAIR potenciada en T2, marque la casilla de confirmación. Si no, seleccione la imagen FLAIR."
+      },
+      "sequence_confirmed_by_physician": {
+        "message": "Usted confirmó que esta imagen es una FLAIR; su cabecera no lo indica. Su confirmación queda registrada con el resultado.",
+        "action": "Compare el resultado de la IA con la imagen con especial cuidado."
+      },
+      "thickness_thick": {
+        "message": "Los cortes de esta adquisición miden {{band}}. Entre cortes gruesos se pueden escapar lesiones pequeñas.",
+        "action": "Use el resultado de la IA solo como borrador. Para buscar lesiones pequeñas se recomienda una FLAIR 3D con cortes de 1,5 mm o menos."
+      },
+      "thickness_at_least": {
+        "message": "Los cortes de esta adquisición miden {{band}} o más (el archivo no muestra el grosor original). Se pueden escapar lesiones pequeñas.",
+        "action": "Use el resultado de la IA solo como borrador. Para buscar lesiones pequeñas se recomienda una FLAIR 3D con cortes de 1,5 mm o menos."
+      },
+      "thickness_unknown": {
+        "message": "No se puede leer en este archivo el grosor de corte de la adquisición original. Si los cortes eran gruesos, se pueden escapar lesiones pequeñas.",
+        "action": "Revise el protocolo de adquisición. Tome el resultado de la IA como borrador y busque usted las lesiones pequeñas."
+      },
+      "thickness_out_of_range": {
+        "message": "Los cortes de esta adquisición ({{band}}) son más gruesos que el rango en el que se ha demostrado que la IA funciona, así que la IA no se ejecuta.",
+        "action": "Lea usted las imágenes, o use una adquisición con cortes más finos."
+      },
+      "scanner_changed": {
+        "message": "Las dos visitas se adquirieron en equipos distintos (cambió: {{fields}}). Las diferencias entre equipos pueden parecer lesiones nuevas o desaparecidas.",
+        "action": "Compare usted las imágenes con la superposición. Para este par no se muestran resultados automáticos de cambio."
+      },
+      "scanner_unknown": {
+        "message": "La aplicación no puede saber si las dos visitas se adquirieron en el mismo equipo (sin registrar: {{fields}}).",
+        "action": "Compare usted las imágenes con la superposición. Para este par no se muestran resultados automáticos de cambio."
+      },
+      "skull_present": {
+        "message": "La imagen aún tiene el cráneo y no se pudo quitar. La IA solo funciona con imágenes sin cráneo.",
+        "action": "Vuelva a intentarlo más tarde. Si sigue ocurriendo, avise al administrador."
+      },
+      "skull_unknown": {
+        "message": "La aplicación no puede confirmar que se quitó el cráneo de la imagen que leyó la IA, así que el resultado no se muestra.",
+        "action": "Vuelva a ejecutar el análisis. Si sigue ocurriendo, avise al administrador."
+      },
+      "skull_pending": {
+        "message": "El cráneo se comprueba, y se quita si hace falta, al empezar el análisis. El resultado solo se muestra tras esta comprobación.",
+        "action": "Empiece el análisis; esta comprobación se hace sola."
+      }
+    }
   }
 }
