@@ -1055,7 +1055,9 @@ All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/unit/test_quality_
 | C3 | The gate overwrote RC-062's caveat, with raw codes | RC-123 | plain reasons (`gate_caveat`) appended to RC-062's | wiring |
 | E1–E3 | Full decode on every consultation; second read of the acquisition records; deep copy of the policy per call | — | header only (pydicom `stop_before_pixels`, lazy NIfTI header) in a worker thread, cached per file version; one debounced consultation per file; records read once; thin limit a parameter | wiring |
 
-Failing first (commit `3990365`): G12 55 of 123 descriptions misclassified, 46 non-FLAIR names let the AI run after a confirmation; G13 480 of 3 200 cases; G14 480 of 3 200 cases; 7 wiring tests failed. After the fixes: matrix 28 of 28, wiring 31 of 31, CAPA-013 52 of 52.
+Failing first (commit `3990365`): G12 55 of 123 descriptions misclassified, 46 non-FLAIR names let the AI run after a confirmation; G13 480 of 3 200 cases; G14 480 of 3 200 cases; 7 wiring tests failed. After the fixes: matrix 28 of 28, wiring 31 of 31, CAPA-013 52 of 52; GitHub Actions run 43155668899 (head `e6296fc`): all 8 jobs green, the new vitest tests (G12 parity, S3 attestation, G14 panel) among them.
+
+Negative controls, re-run with every test command inside the throwaway copy (S4): 62 mutations, **56 of 56 run detected, 0 survived, 0 invalid**; 6 component mutations (V1–V6) not run (no node_modules). Per control: RC-122 23/23, RC-123 10/10, RC-124 5/5, RC-125 6/6, RC-126 12/12, RC-127 11/11. Baseline and restored copy: backend 59 / 0, browser harness 12 / 0.
 
 *End of Risk Management File*
 
