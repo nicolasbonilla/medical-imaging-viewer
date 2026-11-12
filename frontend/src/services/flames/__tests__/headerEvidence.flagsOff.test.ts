@@ -25,11 +25,11 @@ const dicomOf = (c: Entry) => ({
 });
 
 describe('G26 (a): flag off = the base RC-049 header evidence', () => {
-  it('the flag is off in the tests, as in production today', () => {
+  it('rc122 the flag is off in the tests, as in production today', () => {
     expect(FEATURES.QUALITY_GATE).toBe(false);
   });
 
-  it('every generated entry: same verdict and same reasons as the base', () => {
+  it('rc122 every generated entry: same verdict and same reasons as the base', () => {
     expect(CORPUS.length).toBeGreaterThanOrEqual(2000);
     const bad = CORPUS.map((c, i) => [c, headerContrastEvidence([c.text], dicomOf(c), null), BASE[i]] as const)
       .filter(([, e, base]) => e.verdict !== base[0] || digest(e.reasons) !== base[1])
@@ -37,13 +37,13 @@ describe('G26 (a): flag off = the base RC-049 header evidence', () => {
     expect(bad.length, JSON.stringify(bad.slice(0, 6))).toBe(0);
   });
 
-  it('the reviewer cases support, as on the base', () => {
+  it('rc122 the reviewer cases support, as on the base', () => {
     for (const text of ['AX FLAIR CAL', 'FLAIR loc', 'sag_flair_dir-AP']) {
       expect(headerContrastEvidence([text], {}, null).verdict, text).toBe('supports');
     }
   });
 
-  it('with the flag off, the evidence carries no gate class (the base shape)', () => {
+  it('rc122 with the flag off, the evidence carries no gate class (the base shape)', () => {
     expect(headerContrastEvidence(['AX T2 FLAIR'], {}, null)).not.toHaveProperty('sequenceClass');
   });
 });
@@ -73,7 +73,7 @@ function documentedLoss(c: Entry): string {
 }
 
 describe('G19 extension: gate ON keeps every base FLAIR acceptance except the documented decisions', () => {
-  it('no undocumented loss on the generated corpus', () => {
+  it('rc122 no undocumented loss on the generated corpus', () => {
     const lost = CORPUS.filter((c, i) => BASE[i][0] === 'supports')
       .filter((c) => ['other', 'T1', 'T2'].includes(headerContrastEvidence([c.text], dicomOf(c), null, { qualityGate: true }).sequenceClass ?? ''))
       .filter((c) => !documentedLoss(c))
@@ -81,7 +81,7 @@ describe('G19 extension: gate ON keeps every base FLAIR acceptance except the do
     expect(lost.length, JSON.stringify(lost.slice(0, 8))).toBe(0);
   });
 
-  it('a weak word alone never turns a FLAIR into other; without a FLAIR name it still does', () => {
+  it('rc122 a weak word alone never turns a FLAIR into other; without a FLAIR name it still does', () => {
     for (const text of ['AX FLAIR CAL', 'FLAIR loc', 'sag_flair_dir-AP', 'FLAIR mag', 'AX_FLAIR_LOC', 'T2-FLAIR dir-PA']) {
       expect(classifyFields({ description: text }).class, text).toBe('FLAIR');
       expect(headerContrastEvidence([text], {}, null, { qualityGate: true }).verdict, text).toBe('supports');
@@ -91,7 +91,7 @@ describe('G19 extension: gate ON keeps every base FLAIR acceptance except the do
     }
   });
 
-  it('F5: a text is reported by its words alone; a short inversion time has its own reason', () => {
+  it('rc127 F5: a text is reported by its words alone; a short inversion time has its own reason', () => {
     for (const ti of [900, 150]) {
       const e = headerContrastEvidence(['AX T2 FLAIR'], { inversionTimeMs: ti }, null, { qualityGate: true });
       expect(e.verdict).toBe('contradicts');
@@ -104,7 +104,7 @@ describe('G19 extension: gate ON keeps every base FLAIR acceptance except the do
     expect(inText.verdict).toBe('contradicts');
   });
 
-  it('every word of the other list has a documented decision', () => {
+  it('rc122 every word of the other list has a documented decision', () => {
     const v = QUALITY_GATE_POLICY.sequence.vocabulary as { other_words: string[]; weak_other_words?: string[] };
     expect([...(v.weak_other_words ?? [])].sort()).toEqual([...WEAK].sort());
   });
