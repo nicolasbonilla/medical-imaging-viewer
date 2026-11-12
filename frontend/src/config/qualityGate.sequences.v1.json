@@ -3,8 +3,9 @@
    "G12 corpus of the single quality gate (RC-122; REQ-SAFE-052): realistic series descriptions and the class the gate must give. DRAFT, PENDING owner approval.",
    "Read by backend/tests/unit/test_quality_gate_matrix.py (sequence_from_header) AND frontend/src/services/qualityGate/gate.test.ts (sequenceFromHeader): both rules must give these classes (G4).",
    "Classes: FLAIR (only an unambiguous FLAIR, T2-FLAIR or dark-fluid name), T1, T2, other (any token naming a non-FLAIR sequence, a T1 weighting with FLAIR, a localizer, a derived/reformatted/contrast image, or an inversion time < 1400 ms: ALWAYS abstains, whatever the physician confirms), unknown (names no sequence: confirmable in a single study), missing (nothing recorded).",
-   "Second review of PR #81 (G15): ONE classifier for the product — the gate (backend and browser), dataset_inventory.detect_sequence and the RC-049 header evidence of the in-browser AI all give these classes; TIRM is a FLAIR (as RC-049 already read it), 'TI=' / 'TI:' in the text is an inversion time (seconds below 10).",
-   "Third review of PR #81 (G19): classification is FIELD-AWARE. 'text' is the description (SeriesDescription, ProtocolName, NIfTI descrip); 'sequence_name' is the DICOM SequenceName, a vendor internal code read by its own table ('*' is a Siemens prefix there, never 'T2*'; an unlisted code says nothing); 'image_type' is the DICOM ImageType (a reformatted, projected, subtracted or parametric image is 'other', D-QG-7; anything else says nothing)."
+   "Second review of PR #81 (G15, restated in the fifth): with the gate ON, ONE classifier — the gate (backend and browser) and the RC-049 header evidence of the in-browser AI give these classes (with the gate off RC-049 keeps its base rules, and the research inventory always does, G26); TIRM is a FLAIR (as RC-049 already read it), 'TI=' / 'TI:' in the text is an inversion time (seconds below 10).",
+   "Third review of PR #81 (G19): classification is FIELD-AWARE. 'text' is the description (SeriesDescription, ProtocolName, NIfTI descrip); 'sequence_name' is the DICOM SequenceName, a vendor internal code read by its own table ('*' is a Siemens prefix there, never 'T2*'; an unlisted code says nothing); 'image_type' is the DICOM ImageType (a reformatted, projected, subtracted or parametric image is 'other', D-QG-7; anything else says nothing).",
+   "Fifth review of PR #81 (D-QG-12): the weak words cal, loc, dir and mag make an image other only when the description names no FLAIR; pha, pc, epi, trace and every other word of the other list always do."
  ],
  "cases": [
   {"vendor": "Siemens", "text": "t2_tirm_tra_dark-fluid", "inversion_time_ms": null, "expected": "FLAIR"},
@@ -187,6 +188,21 @@
   {"vendor": "Canon", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "FE"},
   {"vendor": "Canon", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "EPI"},
   {"vendor": "any", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "image_type": "ORIGINAL\\PRIMARY\\M\\ND"},
-  {"vendor": "any", "text": null, "inversion_time_ms": null, "expected": "other", "image_type": "DERIVED\\PRIMARY\\DIFFUSION\\ADC"}
+  {"vendor": "any", "text": null, "inversion_time_ms": null, "expected": "other", "image_type": "DERIVED\\PRIMARY\\DIFFUSION\\ADC"},
+  {"vendor": "GE", "text": "AX FLAIR CAL", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "any", "text": "FLAIR loc", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "any", "text": "sag_flair_dir-AP", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "any", "text": "T2-FLAIR dir-PA", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "t2_tirm_tra_dark-fluid_MAG", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "GE", "text": "AX_FLAIR_LOC", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "any", "text": "FLAIR_CAL_SAG", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "GE", "text": "AX LOC", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "any", "text": "cal", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "any", "text": "dir-AP", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "Siemens", "text": "SWI_mag", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "any", "text": "FLAIR_pha", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "any", "text": "FLAIR pc", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "any", "text": "TRA-FLAIR-EPI", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "any", "text": "flair-trace-ax", "inversion_time_ms": null, "expected": "other"}
  ]
 }

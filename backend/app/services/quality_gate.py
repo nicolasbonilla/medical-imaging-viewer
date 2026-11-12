@@ -6,9 +6,10 @@ DRAFT, PENDING owner approval. Design and survey: docs/iec62304/agent_platform/Q
 ONE deterministic rule decides, before an AI step runs and again before its output is shown, whether it may
 proceed. It consolidates checks that exist elsewhere and CALLS them rather than copying them:
 
-- sequence   from the series description with the gate's token classifier — the ONE sequence classifier of the
-             product (second review of PR #81, G15): ``dataset_inventory.detect_sequence`` and the RC-049 header
-             evidence of the in-browser AI route to it; never the file name;
+- sequence   from the series description with the gate's token classifier — with the gate on, the ONE sequence
+             classifier of the product (G15, restated in the fifth review of PR #81): the RC-049 header evidence of
+             the in-browser AI uses it while VITE_ENABLE_QUALITY_GATE is on (its base rules while off, G26); the
+             research inventory keeps its own base heuristic; never the file name;
 - thickness  from ``acquisition_geometry`` (RC-054): native / at_least / not_determinable;
 - scanner    of two visits through ``longitudinal_candidate_safety.compare_acquisitions`` (RC-062);
 - skull      the outcome of the skull gates / skull removal of the in-browser AI (RC-101).
@@ -254,24 +255,62 @@ def _weighted(token: str, prefix: str) -> bool:
     return token.startswith(prefix) and _LETTERS.fullmatch(token[len(prefix):]) is not None
 
 
-def _classify_tokens(tokens: List[str], vocab: Dict[str, Any]) -> str:
-    other = set(vocab["other_words"])
-    flair_word = vocab["flair_substring"]
-    is_other = any({t, t.rstrip("0123456789")} & other for t in tokens)
-    flair = (any(flair_word in t for t in tokens) or any(t in vocab["flair_compounds"] for t in tokens)
-             or any(t in vocab["flair_words"] for t in tokens)
-             or any([a, b] in vocab["flair_pairs"] for a, b in zip(tokens, tokens[1:])))
-    t1 = (any(_weighted(t, vocab["t1_prefix"]) or t in vocab["t1_words"] for t in tokens)
-          or any(flair_word in t and vocab["t1_prefix"] in t.replace(flair_word, "") for t in tokens))
-    t2 = any(_weighted(t, vocab["t2_prefix"]) for t in tokens)
+_COMPILED: Dict[int, tuple] = {}
+
+
+def _compiled(vocab: Dict[str, Any]) -> Dict[str, Any]:
+    """The vocabulary's word sets and its inversion-time regex, built ONCE per policy (fifth review of PR #81,
+    cleanup): the shipped policy's at import, a test's own policy on first use."""
+    hit = _COMPILED.get(id(vocab))
+    if hit is not None and hit[0] is vocab:
+        return hit[1]
+    c = {
+        "other": frozenset(vocab["other_words"]),
+        "weak": frozenset(vocab.get("weak_other_words", ())),
+        "flair_word": vocab["flair_substring"],
+        "flair_names": frozenset(vocab["flair_words"]) | frozenset(vocab["flair_compounds"]),
+        "flair_pairs": frozenset(tuple(p) for p in vocab["flair_pairs"]),
+        "t1_prefix": vocab["t1_prefix"], "t2_prefix": vocab["t2_prefix"],
+        "t1_words": frozenset(vocab["t1_words"]),
+        "swi": frozenset(vocab["swi_family"]), "pd": frozenset(vocab["pd_family"]),
+        "image_type_other": frozenset(vocab["image_type_other"]),
+        "ti": re.compile(vocab["ti_text_pattern"], re.IGNORECASE),
+    }
+    _COMPILED[id(vocab)] = (vocab, c)
+    return c
+
+
+_compiled(_policy()["sequence"]["vocabulary"])     # the shipped policy's word sets: built once, at import
+
+
+def _classify_tokens(tokens: List[str], vocab: Dict[str, Any]) -> tuple:
+    """(class, T1-weighted, T2-weighted) of one description's tokens — the ONE weighting routine (fifth review of
+    PR #81, cleanup; classify_fields reuses it). D-QG-12: a WEAK word (weak_other_words: cal, loc, dir, mag — also a
+    calibration, a location, a phase-encoding direction, a magnitude image) makes the image 'other' only when the
+    description names no FLAIR; every other word of other_words does so always."""
+    c = _compiled(vocab)
+    flair_word = c["flair_word"]
+    flair = (any(flair_word in t or t in c["flair_names"] for t in tokens)
+             or any((a, b) in c["flair_pairs"] for a, b in zip(tokens, tokens[1:])))
+    hits = {w for t in tokens for w in (t, t.rstrip("0123456789")) if w in c["other"]}
+    is_other = bool(hits - c["weak"]) or (bool(hits) and not flair)
+    t1 = (any(_weighted(t, c["t1_prefix"]) or t in c["t1_words"] for t in tokens)
+          or any(flair_word in t and c["t1_prefix"] in t.replace(flair_word, "") for t in tokens))
+    t2 = any(_weighted(t, c["t2_prefix"]) for t in tokens)
     if is_other or (flair and t1):          # a non-FLAIR name, or a T1-weighted FLAIR: ALWAYS abstains
-        return "other"
+        return "other", t1, t2
     if flair:
-        return "FLAIR"
-    return "T1" if t1 else "T2" if t2 else "unknown"
+        return "FLAIR", t1, t2
+    return ("T1" if t1 else "T2" if t2 else "unknown"), t1, t2
 
 
-_TI_PATTERNS: Dict[str, Any] = {}
+def classify_text(text: Any, policy: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    """The class ONE description names by its words alone — never by an inversion time (fifth review of PR #81,
+    F5); None for no words. Same as gate.ts classifyText."""
+    tokens = sequence_tokens(text) if isinstance(text, str) else []
+    if not tokens:
+        return None
+    return _classify_tokens(tokens, (policy if policy is not None else _policy())["sequence"]["vocabulary"])[0]
 
 
 def text_inversion_time_ms(text: Any, policy: Optional[Dict[str, Any]] = None) -> Optional[float]:
@@ -279,10 +318,7 @@ def text_inversion_time_ms(text: Any, policy: Optional[Dict[str, Any]] = None) -
     vocab = (policy if policy is not None else _policy())["sequence"]["vocabulary"]
     if not isinstance(text, str):
         return None
-    pattern = _TI_PATTERNS.get(vocab["ti_text_pattern"])
-    if pattern is None:
-        pattern = _TI_PATTERNS[vocab["ti_text_pattern"]] = re.compile(vocab["ti_text_pattern"], re.IGNORECASE)
-    m = pattern.search(text)
+    m = _compiled(vocab)["ti"].search(text)
     if not m:
         return None
     v = float(m.group(1))
@@ -310,7 +346,7 @@ def _image_type_class(value: Any, vocab: Dict[str, Any]) -> Optional[str]:
     tokens = {t for v in values for t in _NON_ALNUM.split(str(v).lower()) if t}
     if not tokens:
         return None
-    return "other" if tokens & set(vocab["image_type_other"]) else "unknown"
+    return "other" if tokens & _compiled(vocab)["image_type_other"] else "unknown"
 
 
 def classify_fields(fields: Dict[str, Any], inversion_time_ms: Any = None,
@@ -330,16 +366,14 @@ def classify_fields(fields: Dict[str, Any], inversion_time_ms: Any = None,
     ti = ti if ti is not None and ti > 0 else next(
         (v for v in (text_inversion_time_ms(t, policy) for t in texts) if v is not None), None)
     tokens_per_text = [sequence_tokens(t) for t in texts]
-    classes = [_classify_tokens(tk, vocab) for tk in tokens_per_text if tk]
+    per_text = [_classify_tokens(tk, vocab) for tk in tokens_per_text if tk]       # one weighting routine
+    classes = [cls for cls, _, _ in per_text]
     classes += [c for c in (_sequence_name_class(fields.get("sequence_name"), vocab),
                             _image_type_class(fields.get("image_type"), vocab)) if c]
-    tokens = [t for tk in tokens_per_text for t in tk]
-    flair_word = vocab["flair_substring"]
-    t1 = (any(_weighted(t, vocab["t1_prefix"]) or t in vocab["t1_words"] for t in tokens)
-          or any(flair_word in t and vocab["t1_prefix"] in t.replace(flair_word, "") for t in tokens))
-    weighting = "T1" if t1 else "T2" if any(_weighted(t, vocab["t2_prefix"]) for t in tokens) else None
-    family = ("SWI" if set(tokens) & set(vocab["swi_family"]) else "PD" if set(tokens) & set(vocab["pd_family"])
-              else None)
+    words = _compiled(vocab)
+    tokens = {t for tk in tokens_per_text for t in tk}
+    weighting = "T1" if any(t1 for _, t1, _ in per_text) else "T2" if any(t2 for _, _, t2 in per_text) else None
+    family = "SWI" if tokens & words["swi"] else "PD" if tokens & words["pd"] else None
     if not classes and ti is None:
         cls = "missing"
     elif ti is not None and ti < rules["min_flair_inversion_time_ms"]:
@@ -744,15 +778,6 @@ def present_gated_comparison(result: Dict[str, Any], *, acquisition_check: Dict[
                                        binding=binding, stored_review=stored_review, visit_check=visit_check,
                                        review_read_failed=review_read_failed)
     return apply_to_comparison(presented, gate) if gate is not None else presented
-
-
-def comparison_withheld(acquisition_check: Dict[str, Any], visit_check, gate=None) -> Dict[str, bool]:
-    """G25: the ONE comparability verdict of a pair, for compare_longitudinal and the SEL search: RC-062's own
-    decision (present_comparison, as on the base branch) or the gate's abstention."""
-    rc062 = lcs.present_comparison({}, acquisition_check=acquisition_check, evidence=None, binding=None,
-                                   stored_review=None, visit_check=visit_check).get("abstained") is True
-    stops = gate is not None and gate.get("ai_output_allowed") is not True
-    return {"withheld": rc062 or stops, "rc062": rc062, "gate": stops}
 
 
 # C3: plain reasons for the report and the assistant (never a raw code). The UI shows the en/es/de texts of the

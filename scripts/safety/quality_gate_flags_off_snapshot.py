@@ -107,7 +107,8 @@ def base_routes(work):
     shutil.rmtree(empty, ignore_errors=True)
     if p.returncode != 0:
         raise SystemExit(p.stderr[-2000:])
-    return json.loads(p.stdout.strip().splitlines()[-1])
+    line = next(x for x in p.stdout.splitlines() if x.startswith("G26-ROUTES:"))
+    return json.loads(line[len("G26-ROUTES:"):])
 
 
 def main():

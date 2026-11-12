@@ -88,9 +88,9 @@ const evidenceOf = (c: Case) => headerContrastEvidence(c.text ? [c.text] : [], {
   ...(c.inversion_time_ms ? { inversionTimeMs: c.inversion_time_ms } : {}),
   ...(c.sequence_name ? { sequenceName: c.sequence_name } : {}),
   ...(c.image_type ? { imageType: c.image_type.split('\\') } : {}),
-}, null);
+}, null, { qualityGate: true });   // gate ON (G15 restated); gate off = the base, headerEvidence.flagsOff.test.ts
 
-describe('G19: no FLAIR accepted before PR #81 is lost', () => {
+describe('G19: with the gate on, no FLAIR accepted before PR #81 is lost', () => {
   it('rc122 every pre-PR RC-049 acceptance is still accepted, except the documented changes', () => {
     const cases = Object.fromEntries((CORPUS.cases as Case[]).map((c) => [key(c), c]));
     const lost = (SNAPSHOT.rc049_accepted_as_flair as string[])
@@ -111,7 +111,7 @@ describe('G12: the series-description corpus, shared with pytest', () => {
     expect(CORPUS.cases.length).toBeGreaterThanOrEqual(80);
     expect(bad).toEqual([]);
   });
-  it('rc122 G15 the RC-049 header evidence of the in-browser AI gives the same class', () => {
+  it('rc122 G15 with the gate on, the RC-049 header evidence of the in-browser AI gives the same class', () => {
     const bad = (CORPUS.cases as Case[]).filter((c) => {
       const h = evidenceOf(c);
       const contradicts = ['other', 'T1', 'T2'].includes(c.expected);

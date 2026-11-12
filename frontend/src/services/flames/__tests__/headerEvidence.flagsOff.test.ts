@@ -91,6 +91,19 @@ describe('G19 extension: gate ON keeps every base FLAIR acceptance except the do
     }
   });
 
+  it('F5: a text is reported by its words alone; a short inversion time has its own reason', () => {
+    for (const ti of [900, 150]) {
+      const e = headerContrastEvidence(['AX T2 FLAIR'], { inversionTimeMs: ti }, null, { qualityGate: true });
+      expect(e.verdict).toBe('contradicts');
+      expect(e.reasons).toContain('header says "AX T2 FLAIR"');
+      expect(e.reasons.some((r) => r.includes('names another sequence'))).toBe(false);
+      expect(e.reasons.some((r) => r.startsWith(`inversion time ${ti} ms is too short`))).toBe(true);
+    }
+    const inText = headerContrastEvidence(['FLAIR TI=900'], {}, null, { qualityGate: true });
+    expect(inText.reasons.some((r) => r.includes('names another sequence'))).toBe(false);
+    expect(inText.verdict).toBe('contradicts');
+  });
+
   it('every word of the other list has a documented decision', () => {
     const v = QUALITY_GATE_POLICY.sequence.vocabulary as { other_words: string[]; weak_other_words?: string[] };
     expect([...(v.weak_other_words ?? [])].sort()).toEqual([...WEAK].sort());

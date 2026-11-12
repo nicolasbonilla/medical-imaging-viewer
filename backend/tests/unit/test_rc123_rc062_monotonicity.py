@@ -96,7 +96,8 @@ def test_rc123_g24_the_gate_never_relaxes_rc062_exhaustive():
 
 
 def _sel_verdict(check, visit, gate):
-    return qg.comparison_withheld(check, visit, gate)["withheld"]
+    """The SEL search's two steps: the gate's early abstention, then RC-062's one predicate."""
+    return gate.get("ai_output_allowed") is not True or lcs.rc062_withholds(check, visit)
 
 
 def test_rc123_g25_compare_and_sel_give_one_comparability_verdict():
@@ -105,8 +106,11 @@ def test_rc123_g25_compare_and_sel_give_one_comparability_verdict():
     assert not bad, f"G25: compare and SEL disagree on {len(bad)} pairs; first: {bad[:4]}"
     sel = inspect.getsource(sa.detect_slowly_expanding_lesions)
     compare = inspect.getsource(sa.compare_longitudinal)
-    assert "comparison_withheld(" in sel and "present_gated_comparison(" in compare, "one shared function"
+    assert "lcs.rc062_withholds(" in sel and "present_gated_comparison(" in compare, "one shared predicate"
+    assert "rc062_withholds(" in inspect.getsource(lcs.present_comparison), "present_comparison uses the predicate"
     assert "lcs.present_comparison(" not in compare and 'acquisition_check["status"] != "same"' not in sel
+    assert sel.index("_gate_before_loading(") < sel.index("lcs.rc062_withholds("), "the gate decides first"
+    assert not hasattr(qg, "comparison_withheld"), "one predicate, no second copy (fifth review, cleanup)"
 
 
 def test_rc123_g24_rc062_is_the_base_rule_whether_the_gate_is_on_or_off():
@@ -163,5 +167,4 @@ def test_rc123_g25_the_gate_alone_withholds_in_compare_and_sel():
         assert gate["ai_output_allowed"] is False
         assert qg.present_gated_comparison(dict(RESULT), acquisition_check=check, evidence=None, binding=BINDING,
                                            stored_review=REVIEW, visit_check=visit, gate=gate)["abstained"] is True
-        verdict = qg.comparison_withheld(check, visit, gate)
-        assert verdict == {"withheld": True, "rc062": False, "gate": True}, verdict
+        assert lcs.rc062_withholds(check, visit) is False and _sel_verdict(check, visit, gate) is True

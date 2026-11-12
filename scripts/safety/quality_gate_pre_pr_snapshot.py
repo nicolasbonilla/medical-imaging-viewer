@@ -37,6 +37,10 @@ def reason(c):
         return "S2 (first review of PR #81): a T1-weighted FLAIR is not a T2-FLAIR"
     if "ti=9" in t or (c.get("inversion_time_ms") or 9999) < 1400:
         return "an inversion time below 1400 ms is not a FLAIR's (as RC-049 already read a DICOM inversion time)"
+    words = set(t.replace("_", " ").replace("-", " ").split())
+    if words & {"pha", "pc", "epi", "trace"}:
+        return ("D-QG-12 (fifth review of PR #81): a phase, phase-contrast, echo-planar or diffusion-trace FLAIR is "
+                "'other' (abstains)")
     return None
 
 

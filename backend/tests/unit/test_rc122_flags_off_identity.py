@@ -100,7 +100,9 @@ def test_rc122_g26_c_compare_and_sel_are_the_base_with_the_gate_off():
 def test_rc122_g26_c_a_malformed_attestation_is_ignored_with_the_gate_off():
     from tests.unit._flags_off_harness import route_snapshot
     got = route_snapshot()
-    assert not [k for k, (status, _) in got.items() if status == 400 and "|bad_" in k]
+    differ = [k for k in got if "|bad_" in k or "|attested" in k
+              if got[k] != got[k.rsplit("|", 1)[0] + "|plain"]]
+    assert not differ, f"with the gate off, an attestation (valid or not) changed {len(differ)} answers: {differ[:6]}"
 
 
 # ----------------------------------------------------------------------------- G19 extension (gate ON)

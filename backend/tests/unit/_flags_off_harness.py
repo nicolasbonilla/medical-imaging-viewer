@@ -33,7 +33,13 @@ BODIES = {
     "bad_value": {"quality_gate_attestation": {"tp1": "true"}},
     "bad_list": {"quality_gate_attestation": ["tp1"]},
     "bad_key": {"quality_gate_attestation": {"tp3": True}},
+    # SEL only: where it checks its input type (the base order, G26). Not sent to compare: an instance mask there
+    # is read from the instance store, which a test never reaches.
+    "tp2_instance": {"tp2": {"type": "instance", "id": "s2"}},
+    "tp1_unknown_tp2_instance": {"tp1": {"type": "segmentation", "id": "nope"}, "tp2": {"type": "instance", "id": "s2"}},
+    "no_tp2": {"tp2": None},
 }
+SEL_ONLY = ("tp2_instance", "tp1_unknown_tp2_instance")
 ROUTES = {"compare": "/api/v1/segmentation/longitudinal/compare", "sel": "/api/v1/segmentation/longitudinal/sel"}
 
 
@@ -107,6 +113,8 @@ def route_snapshot():
                 state.update(acq=acq, order=order)
                 for body_name, extra in BODIES.items():
                     for route_name, path in ROUTES.items():
+                        if route_name == "compare" and body_name in SEL_ONLY:
+                            continue
                         body = {"tp1": {"type": "segmentation", "id": "s1"}, "tp2": {"type": "segmentation", "id": "s2"},
                                 **extra}
                         r = client.post(path, json=body)
@@ -128,4 +136,4 @@ def route_snapshot():
 
 
 if __name__ == "__main__":  # pragma: no cover — used by the snapshot script on the base code
-    print(json.dumps(route_snapshot()))
+    print("G26-ROUTES:" + json.dumps(route_snapshot()), flush=True)   # marked: the app may log to stdout too

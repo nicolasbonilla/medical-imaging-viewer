@@ -22,6 +22,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import itertools
+import inspect
 import json
 import re
 import sys
@@ -666,22 +667,20 @@ def test_rc127_g14_every_suggested_action_is_possible_in_its_mode(results):
 
 
 # ----------------------------------------------------------------------------- second review of PR #81
-def test_rc122_g15_one_flair_classifier_for_the_whole_product():
-    """dataset_inventory.detect_sequence is routed to the gate's classifier: same FLAIR decision, same weighting,
-    for every corpus entry (the browser's gate.ts and RC-049 headerEvidence.ts are checked by vitest)."""
+def test_rc122_g15_with_the_gate_on_one_classifier():
+    """G15, restated in the fifth review of PR #81: WITH THE GATE ON there is one sequence classifier — the gate's
+    (quality_gate.classify_fields here; gate.ts classifyFields and the RC-049 header evidence with the gate on, checked by
+    vitest on the same corpus). With the gate off the RC-049 header evidence keeps its base rules, and dataset_inventory
+    (a research inventory outside the gate) always keeps its base heuristic (G26, test_rc122_flags_off_identity.py)."""
     from app.services import dataset_inventory as inv
-    bad = []
     for c in _corpus():
-        if c["inversion_time_ms"] is not None or c.get("sequence_name") or c.get("image_type"):
-            continue                                   # the inventory reads the description text only
-        gate = QG.sequence_from_header(c["text"], None)
-        label = inv.detect_sequence(c["text"] or "")
-        expected = {"FLAIR": "FLAIR", "T1": "T1", "T2": "T2", "unknown": None, "missing": None}.get(gate)
-        if (label == "FLAIR") != (gate == "FLAIR") or (gate != "other" and label != expected):
-            bad.append((c["text"], gate, label))
-    assert not hasattr(inv, "_SEQUENCE_PATTERNS"), "the inventory keeps its own sequence patterns"
-    assert "with ``dataset_inventory.detect_sequence``" not in (QG.__doc__ or ""), "the docstring names a classifier the gate does not use"
-    assert not bad, f"G15: {len(bad)} corpus entries classified differently by the inventory; first: {bad[:6]}"
+        fields = {"description": c["text"], "sequence_name": c.get("sequence_name"), "image_type": c.get("image_type")}
+        assert QG.classify_fields(fields, c["inversion_time_ms"])["class"] == c["expected"], c
+        if not c.get("sequence_name") and not c.get("image_type"):
+            assert QG.sequence_from_header(c["text"], c["inversion_time_ms"]) == c["expected"], c
+    assert hasattr(inv, "_SEQUENCE_PATTERNS"), "the inventory keeps its base patterns (G26)"
+    assert "quality_gate" not in inspect.getsource(inv), "the inventory does not route to the gate (G26)"
+    assert "dataset_inventory.detect_sequence" not in (QG.__doc__ or ""), "the docstring names a router that is gone"
 
 
 if __name__ == "__main__":  # pragma: no cover — maintainer tool
@@ -714,7 +713,7 @@ def test_rc122_g19_no_flair_accepted_before_this_pr_is_lost():
     for key in snap["inventory_flair"]:
         if inv.detect_sequence(cases[key]["text"] or "") != "FLAIR" and key not in snap["exceptions"]:
             bad.append(("inventory", key))
-    undocumented = [k for k, why in snap["exceptions"].items() if not any(d in why for d in ("D-QG-7", "S2", "inversion time"))]
+    undocumented = [k for k, why in snap["exceptions"].items() if not any(d in why for d in ("D-QG-7", "D-QG-12", "S2", "inversion time"))]
     assert not undocumented, f"exceptions without a documented decision: {undocumented}"
     assert not bad, f"G19: {len(bad)} pre-PR FLAIR acceptances lost; first: {bad[:6]}"
 

@@ -74,6 +74,8 @@ export interface GatePolicy {
       t2_prefix: string;
       t1_words: string[];
       other_words: string[];
+      /** D-QG-12: other only when the description names no FLAIR */
+      weak_other_words?: string[];
       swi_family: string[];
       pd_family: string[];
       ti_text_pattern: string;
@@ -266,18 +268,53 @@ export function sequenceTokens(text: string): string[] {
 
 const weighted = (t: string, prefix: string) => t.startsWith(prefix) && /^[a-z]*$/.test(t.slice(prefix.length));
 
-function classifyTokens(tokens: string[], v: GatePolicy['sequence']['vocabulary']): string {
-  const other = new Set(v.other_words);
-  const isOther = tokens.some((t) => other.has(t) || other.has(t.replace(/[0-9]+$/, '')));
-  const flair = tokens.some((t) => t.includes(v.flair_substring)) || tokens.some((t) => v.flair_compounds.includes(t))
-    || tokens.some((t) => v.flair_words.includes(t))
-    || tokens.slice(1).some((b, i) => v.flair_pairs.some(([x, y]) => x === tokens[i] && y === b));
-  const t1 = tokens.some((t) => weighted(t, v.t1_prefix) || v.t1_words.includes(t))
+type Vocab = GatePolicy['sequence']['vocabulary'];
+interface Words {
+  other: Set<string>; weak: Set<string>; flairNames: Set<string>; flairPairs: Set<string>; t1Words: Set<string>;
+  swi: Set<string>; pd: Set<string>; imageTypeOther: Set<string>; ti: RegExp;
+}
+const COMPILED = new WeakMap<Vocab, Words>();
+
+/** The vocabulary's word sets and inversion-time regex, built ONCE per policy (fifth review of PR #81, cleanup): the
+ *  shipped policy's at import, a test's own policy on first use. As quality_gate._compiled. */
+function words(v: Vocab): Words {
+  let w = COMPILED.get(v);
+  if (!w) {
+    w = {
+      other: new Set(v.other_words), weak: new Set(v.weak_other_words ?? []),
+      flairNames: new Set([...v.flair_words, ...v.flair_compounds]),
+      flairPairs: new Set(v.flair_pairs.map(([a, b]) => `${a} ${b}`)), t1Words: new Set(v.t1_words),
+      swi: new Set(v.swi_family), pd: new Set(v.pd_family), imageTypeOther: new Set(v.image_type_other),
+      ti: new RegExp(v.ti_text_pattern, 'i'),
+    };
+    COMPILED.set(v, w);
+  }
+  return w;
+}
+
+/** (class, T1-weighted, T2-weighted) of one description's tokens — the ONE weighting routine, as
+ *  quality_gate._classify_tokens. D-QG-12: a weak word (cal, loc, dir, mag) is 'other' only without a FLAIR name. */
+function classifyTokens(tokens: string[], v: Vocab): { cls: string; t1: boolean; t2: boolean } {
+  const w = words(v);
+  const flair = tokens.some((t) => t.includes(v.flair_substring) || w.flairNames.has(t))
+    || tokens.slice(1).some((b, i) => w.flairPairs.has(`${tokens[i]} ${b}`));
+  const hits = tokens.flatMap((t) => [t, t.replace(/[0-9]+$/, '')]).filter((x) => w.other.has(x));
+  const isOther = hits.some((x) => !w.weak.has(x)) || (hits.length > 0 && !flair);
+  const t1 = tokens.some((t) => weighted(t, v.t1_prefix) || w.t1Words.has(t))
     || tokens.some((t) => t.includes(v.flair_substring) && t.split(v.flair_substring).join('').includes(v.t1_prefix));
   const t2 = tokens.some((t) => weighted(t, v.t2_prefix));
-  if (isOther || (flair && t1)) return 'other';                // a non-FLAIR name, or a T1-weighted FLAIR: ALWAYS abstains
-  if (flair) return 'FLAIR';
-  return t1 ? 'T1' : t2 ? 'T2' : 'unknown';
+  // a non-FLAIR name, or a T1-weighted FLAIR: ALWAYS abstains
+  const cls = isOther || (flair && t1) ? 'other' : flair ? 'FLAIR' : t1 ? 'T1' : t2 ? 'T2' : 'unknown';
+  return { cls, t1, t2 };
+}
+
+words(QUALITY_GATE_POLICY.sequence.vocabulary);   // the shipped policy's word sets: built once, at import
+
+/** The class ONE description names by its words alone — never by an inversion time (fifth review of PR #81, F5);
+ *  null for no words. As quality_gate.classify_text. */
+export function classifyText(text: unknown, policy: GatePolicy = QUALITY_GATE_POLICY): string | null {
+  const tokens = typeof text === 'string' ? sequenceTokens(text) : [];
+  return tokens.length ? classifyTokens(tokens, policy.sequence.vocabulary).cls : null;
 }
 
 /** An inversion time written in the text ('TI=2500', 'TI: 2.5' — seconds below ti_seconds_below), as
@@ -285,7 +322,7 @@ function classifyTokens(tokens: string[], v: GatePolicy['sequence']['vocabulary'
 export function textInversionTimeMs(text: unknown, policy: GatePolicy = QUALITY_GATE_POLICY): number | null {
   if (typeof text !== 'string') return null;
   const v = policy.sequence.vocabulary;
-  const m = new RegExp(v.ti_text_pattern, 'i').exec(text);
+  const m = words(v).ti.exec(text);
   const x = m ? parseFloat(m[1]) : NaN;
   if (!Number.isFinite(x) || x <= 0) return null;
   return x < v.ti_seconds_below ? x * 1000 : x;
@@ -313,7 +350,7 @@ function imageTypeClass(value: unknown, v: GatePolicy['sequence']['vocabulary'])
   const values = Array.isArray(value) ? value : typeof value === 'string' ? value.split('\\') : [];
   const tokens = new Set(values.flatMap((x) => String(x).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)));
   if (!tokens.size) return null;
-  return v.image_type_other.some((w) => tokens.has(w)) ? 'other' : 'unknown';
+  return [...tokens].some((t) => words(v).imageTypeOther.has(t)) ? 'other' : 'unknown';
 }
 
 /** The ONE sequence classifier of the product, FIELD-AWARE (G15, G19), as quality_gate.classify_fields: the
@@ -333,7 +370,7 @@ export function classifyFields(fields: SequenceFields, inversionTimeMs: unknown 
       if (x !== null) { ti = x; break; }
     }
   }
-  const classes = texts.map((t) => sequenceTokens(t)).filter((tk) => tk.length).map((tk) => classifyTokens(tk, v));
+  const classes = texts.map((t) => sequenceTokens(t)).filter((tk) => tk.length).map((tk) => classifyTokens(tk, v).cls);
   for (const c of [sequenceNameClass(fields.sequence_name, v), imageTypeClass(fields.image_type, v)]) if (c) classes.push(c);
   if (!classes.length && ti === null) return { class: 'missing' };
   if (ti !== null && ti < rules.min_flair_inversion_time_ms) return { class: 'other' };

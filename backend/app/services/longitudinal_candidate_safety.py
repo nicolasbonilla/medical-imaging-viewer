@@ -456,6 +456,14 @@ ABSTAINED_NULL_FIELDS = (
 )
 
 
+def rc062_withholds(acquisition_check: dict, visit_check: Optional[dict]) -> bool:
+    """RC-062 (CAPA-013, HAZ-007): a pair is withheld unless both visits share one acquisition and their order is
+    known. The ONE comparability predicate of compare_longitudinal (through present_comparison) and of the SEL search
+    (fifth review of PR #81, G25); the same rule as before, only named."""
+    visit_check = visit_check or {"status": "unknown"}
+    return acquisition_check.get("status") != "same" or visit_check.get("status") != "ok"
+
+
 def present_comparison(result: dict, *, acquisition_check: dict, evidence: Optional[dict],
                        binding: Optional[Dict[str, str]], stored_review: Optional[dict],
                        visit_check: Optional[dict] = None, review_read_failed: bool = False) -> dict:
@@ -466,7 +474,7 @@ def present_comparison(result: dict, *, acquisition_check: dict, evidence: Optio
     out["visit_check"] = visit_check
     out["false_candidate_evidence"] = evidence
 
-    if acquisition_check.get("status") != "same" or visit_check.get("status") != "ok":   # RC-062
+    if rc062_withholds(acquisition_check, visit_check):   # RC-062
         out.update({"abstained": True, "changes": []})
         out.update({k: None for k in ABSTAINED_NULL_FIELDS})
         out["caveat"] = _abstention_caveat(acquisition_check, visit_check)

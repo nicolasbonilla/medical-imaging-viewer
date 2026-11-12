@@ -563,7 +563,9 @@ def test_rc123_the_metadata_is_read_once_per_visit_and_one_type_check(compare, m
     client.post("/api/v1/segmentation/longitudinal/sel", json=PAIR)
     assert sorted(calls) == ["s1", "s2"]
     src = inspect.getsource(sa.detect_slowly_expanding_lesions)
-    assert src.count("SEL detection requires segmentation-type inputs") == 1
+    # one message; checked where the base checked it with the gate off (G26), and before the gate with it on
+    assert inspect.getsource(sa).count("SEL detection requires segmentation-type inputs") == 1
+    assert src.count("_sel_input_type_error()") == 2 and "settings.QUALITY_GATE_ENFORCED and any(" in src
 
 
 def test_rc126_no_policy_copy_per_consultation(monkeypatch):
