@@ -4,7 +4,7 @@ Runs the PRE-PR classifiers exactly as they were on the base of PR #81 (``feat/a
 - the RC-049 header evidence of the in-browser AI (frontend/src/services/flames/headerEvidence.ts), under Node's
   type stripping, with the description as header text and the SequenceName as DICOM evidence;
 - dataset_inventory.detect_sequence (backend/app/services/dataset_inventory.py), on the description.
-It writes frontend/src/config/qualityGate.pre_pr_snapshot.v1.json: every corpus entry each one accepted as FLAIR, and
+It writes backend/tests/fixtures/quality_gate/pre_pr_snapshot.v1.json: every corpus entry each one accepted as FLAIR, and
 the documented exceptions — entries the product now deliberately stops accepting, each with its decision. The tests
 (test_quality_gate_matrix.py, gate.test.ts) assert that every other pre-PR acceptance is still accepted.
 
@@ -19,8 +19,8 @@ import tempfile
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 BASE = "origin/feat/agent-platform"
-CORPUS = os.path.join(ROOT, "frontend/src/config/qualityGate.sequences.v1.json")
-OUT = os.path.join(ROOT, "frontend/src/config/qualityGate.pre_pr_snapshot.v1.json")
+CORPUS = os.path.join(ROOT, "backend/tests/fixtures/quality_gate/sequences.v1.json")   # server test data (G27)
+OUT = os.path.join(ROOT, "backend/tests/fixtures/quality_gate/pre_pr_snapshot.v1.json")
 
 
 def key(c):

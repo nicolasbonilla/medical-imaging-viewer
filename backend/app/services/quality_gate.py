@@ -14,8 +14,10 @@ proceed. It consolidates checks that exist elsewhere and CALLS them rather than 
 - scanner    of two visits through ``longitudinal_candidate_safety.compare_acquisitions`` (RC-062);
 - skull      the outcome of the skull gates / skull removal of the in-browser AI (RC-101).
 
-The same rule is implemented in ``frontend/src/services/qualityGate/gate.ts`` from the same policy file; the
-shared fixture ``frontend/src/config/qualityGate.cases.v1.json`` pins both (G4). Unknown never passes (G3).
+ONE implementation (sixth review of PR #81, G27): the rule, the policy and the sequence classifier exist only here.
+The browser sends its inputs (the file, the physician's attestation, the skull outcome its worker reports) and shows
+this module's answer as it is; the answer names the attestable visits and the action of each code. Unknown never
+passes (G3).
 
 DATA RULE (REQ-SAFE-053, RC-124): the thickness check WARNS and never abstains until the v3 evidence asset of
 paper 1 (commercial data only) is set in ``policy["thickness"]["evidence_asset"]`` — see ``_thickness_check``.
@@ -27,6 +29,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import hashlib
 import io
 import json
 import math
@@ -196,7 +199,20 @@ def _result(checks: List[Dict[str, Any]], policy, mode=None) -> Dict[str, Any]:
         "ai_output_allowed": decision in ("proceed", "proceed_with_warnings"),
         "codes": sorted({c["code"] for c in checks if c["code"]}),
         "checks": checks,
+        # Sixth review of PR #81 (G27): the browser holds no policy, so the answer names what it shows — the visits
+        # whose FLAIR the physician may attest in this mode, and the i18n action of each code in this mode.
+        "attestable_visits": [c["visit"] for c in checks if c["check"] == "sequence"
+                              and c["code"] in ("sequence_unknown", "sequence_missing")
+                              and mode in policy["sequence"]["confirmation_modes"]],
+        "actions": {c["code"]: _action_key(policy, mode, c["code"]) for c in checks if c["code"]},
     }
+
+
+def _action_key(policy, mode, code) -> str:
+    """G14: the i18n action of a code in a mode (policy.mode_actions), else 'action'."""
+    table = (policy.get("mode_actions") or {}).get(mode) if isinstance(mode, str) else None
+    key = table.get(code) if isinstance(table, dict) else None
+    return key if isinstance(key, str) else "action"
 
 
 def _evaluate(inputs, policy) -> Dict[str, Any]:
@@ -459,7 +475,8 @@ def study_of(file_id) -> Optional[str]:
     return m.group(1) if m else None
 
 
-_NO_HEADER = {"series_description": None, "inversion_time_ms": None, "thickness": None}
+_NO_HEADER = {"descriptions": [], "protocol_name": None, "sequence_name": None, "image_type": None,
+              "inversion_time_ms": None, "thickness": None}
 _HEADER_CACHE: "OrderedDict[tuple, Dict[str, Any]]" = OrderedDict()
 HEADER_CACHE_MAX = 256
 
@@ -474,24 +491,82 @@ def _nifti_header_image(data: bytes):
     return klass.from_file_map({"header": holder, "image": holder})
 
 
+def _dicom_fields(ds) -> Dict[str, Any]:
+    text = lambda k: (str(ds.get(k, "") or "").strip() or None)
+    image_type = getattr(ds, "ImageType", None)
+    return {"descriptions": [t for t in (text("SeriesDescription"),) if t], "protocol_name": text("ProtocolName"),
+            "sequence_name": text("SequenceName"),
+            "image_type": [str(v) for v in image_type] if image_type is not None and not isinstance(image_type, str)
+            else image_type,
+            "inversion_time_ms": lcs._number(getattr(ds, "InversionTime", None))}
+
+
+def _printable_runs(payload: bytes, cap: int = 65536) -> List[str]:
+    """Printable ASCII runs of at least 4 characters of an extension payload (as the browser's RC-049 read them)."""
+    return [m.group(0).strip() for m in re.finditer(rb"[\x20-\x7e]{4,}", payload[:cap]) if m.group(0).strip()
+            and len(m.group(0).strip()) >= 4]
+
+
+def _nifti_fields(img) -> Dict[str, Any]:
+    """A1 (sixth review of PR #81): everything the browser's RC-049 read from a NIfTI — descrip, aux_file,
+    intent_name, db_name, the printable text of its extensions, and the DICOM attributes of a DICOM extension
+    (SeriesDescription, ProtocolName, SequenceName, InversionTime, ImageType)."""
+    hdr = img.header
+    texts = []
+    for key in ("descrip", "aux_file", "intent_name", "db_name"):
+        try:
+            value = hdr[key]
+        except Exception:  # noqa: BLE001 — a field this header version lacks
+            continue
+        value = value.item() if hasattr(value, "item") else value
+        value = value.decode("latin-1", "replace") if isinstance(value, (bytes, bytearray)) else str(value or "")
+        value = "".join(ch if 32 <= ord(ch) < 127 else " " for ch in value.split("\x00", 1)[0]).strip()
+        if value:
+            texts.append(value)
+    out = {**_NO_HEADER, "descriptions": texts}
+    for ext in list(getattr(hdr, "extensions", []) or []):
+        code = ext.get_code() if hasattr(ext, "get_code") else getattr(ext, "code", None)
+        content = ext.get_content() if hasattr(ext, "get_content") else getattr(ext, "_content", b"")
+        payload = content if isinstance(content, (bytes, bytearray)) else bytes(getattr(ext, "_raw_content", b"") or b"")
+        if code == 2:
+            try:
+                import pydicom
+                ds = content if hasattr(content, "get") and not isinstance(content, (bytes, bytearray)) else \
+                    pydicom.dcmread(io.BytesIO(payload), force=True)
+                d = _dicom_fields(ds)
+                out["descriptions"] = out["descriptions"] + d["descriptions"]
+                for key in ("protocol_name", "sequence_name", "image_type", "inversion_time_ms"):
+                    out[key] = d[key] if d[key] is not None else out[key]
+            except Exception:  # noqa: BLE001 — an unreadable DICOM extension adds nothing
+                pass
+        else:
+            out["descriptions"] = out["descriptions"] + [r.decode("ascii") for r in _printable_runs(bytes(payload))]
+    return out
+
+
+def header_classifier_fields(fields: Dict[str, Any], stored_description: Any = None) -> Dict[str, Any]:
+    """The classifier's fields of one image: its header descriptions (and the series description stored for it,
+    as the browser's RC-049 also read the app's), ProtocolName, SequenceName and ImageType (field-aware, G19)."""
+    texts = list(fields.get("descriptions") or [])
+    if isinstance(stored_description, str) and stored_description.strip():
+        texts.append(stored_description)
+    return {"description": texts, "protocol_name": fields.get("protocol_name"),
+            "sequence_name": fields.get("sequence_name"), "image_type": fields.get("image_type")}
+
+
 def read_header_fields(data: bytes, name: str, imaging_service) -> Dict[str, Any]:
     """Header only (E1): pydicom with stop_before_pixels, a lazy NIfTI header — no voxel is decoded, normalised
-    or summarised. Series description and inversion time (DICOM), RC-054 thickness (both)."""
+    or summarised. Descriptions, ProtocolName, SequenceName, ImageType and inversion time (DICOM, and NIfTI with
+    its text fields and extensions — A1), RC-054 thickness (both)."""
     from app.services.acquisition_geometry import derive_from_dicom_dataset, derive_from_nifti_image
     fmt = sniff_format(data)                         # magic bytes, never the file name (third review, other 1)
     if fmt == "dicom":
         import pydicom
         ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True, force=True)
-        text = lambda k: (str(ds.get(k, "") or "").strip() or None)
-        image_type = getattr(ds, "ImageType", None)
-        return {"series_description": text("SeriesDescription"), "protocol_name": text("ProtocolName"),
-                "sequence_name": text("SequenceName"),
-                "image_type": [str(v) for v in image_type] if image_type is not None and not isinstance(image_type, str)
-                else image_type,
-                "inversion_time_ms": lcs._number(getattr(ds, "InversionTime", None)),
-                "thickness": thickness_from_geometry(derive_from_dicom_dataset(ds))}
+        return {**_dicom_fields(ds), "thickness": thickness_from_geometry(derive_from_dicom_dataset(ds))}
     if fmt == "nifti":
-        return {**_NO_HEADER, "thickness": thickness_from_geometry(derive_from_nifti_image(_nifti_header_image(data)))}
+        img = _nifti_header_image(data)
+        return {**_nifti_fields(img), "thickness": thickness_from_geometry(derive_from_nifti_image(img))}
     return {**_NO_HEADER, "unreadable": True}
 
 
@@ -590,17 +665,10 @@ async def file_version_key(storage_service, bucket: str, file_path: str) -> Opti
 _NOT_GIVEN = object()
 
 
-async def single_study_inputs(file_path: str, storage_service, imaging_service, *, bucket: str,
-                              physician_confirmed_flair: bool = False, skull: str = "pending",
-                              version_key: Any = _NOT_GIVEN):
-    """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file: its header's
-    series description and inversion time (else the stored series and acquisition records), the RC-054
-    geometry. Header only, parsed off the event loop, cached per file version (E1). The skull is 'pending': the
-    browser's skull gates and the app's removal decide it before the output (RC-125). Anything unreadable stays
-    unknown, so the gate warns or abstains; it never raises. Returns (inputs, file version or None).
-
-    ``skull``: 'pending' before the run; at the final consultation the outcome the browser reports ('stripped' /
-    'unknown'), so the decision that releases or withholds the output is decided and audited here (G17)."""
+async def visit_header_fields(storage_service, bucket: str, file_path: str, imaging_service=None, *,
+                              version_key: Any = _NOT_GIVEN) -> Dict[str, Any]:
+    """The header fields of one stored image, cached per file version (E1); an unreadable header is an explicit
+    'unreadable' (never 'missing'). Used by the single study AND by each visit of a comparison (A1)."""
     # the route passes the version it already read for the cache key (F3): one metadata read per consultation
     key = version_key if version_key is not _NOT_GIVEN else await _file_version(storage_service, bucket, file_path)
     fields = _HEADER_CACHE.get(key) if key else None
@@ -616,21 +684,53 @@ async def single_study_inputs(file_path: str, storage_service, imaging_service, 
                     _HEADER_CACHE.popitem(last=False)
     else:
         _HEADER_CACHE.move_to_end(key)
-    acq, stored = await asyncio.to_thread(
-        lambda: (lcs.read_source_acquisition(file_path), read_source_series_description(file_path)))
-    description = fields["series_description"] or stored
-    ti = fields["inversion_time_ms"] if fields["inversion_time_ms"] is not None else (acq or {}).get("inversion_time_ms")
-    sequence = classify_fields({"description": description, "protocol_name": fields.get("protocol_name"),
-                                "sequence_name": fields.get("sequence_name"), "image_type": fields.get("image_type")},
-                               ti)["class"]
-    return {"mode": "single", "visits": [{
+    return fields
+
+
+def visit_inputs(fields: Dict[str, Any], acquisition: Optional[dict], stored_description: Any, *,
+                 physician_confirmed_flair: bool = False, skull: str = "unknown", with_scanner: bool = False,
+                 policy: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """The gate inputs of ONE image, the same way in a single study and in each visit of a comparison (A1, sixth
+    review of PR #81): the sequence from its header (and the stored series description), its inversion time from
+    the header else the acquisition record; the RC-054 thickness from its header else the acquisition record (a
+    lower bound); the scanner from the acquisition record (comparison only)."""
+    policy = policy if policy is not None else _policy()
+    acq = acquisition if isinstance(acquisition, dict) else None
+    ti = fields.get("inversion_time_ms") if fields.get("inversion_time_ms") is not None else (acq or {}).get("inversion_time_ms")
+    thickness = fields.get("thickness")
+    if not isinstance(thickness, dict):
+        thickness = thickness_from_acquisition_record(acq, policy["thickness"]["thin_limit_mm"])
+    return {
         **({"header": "unreadable"} if fields.get("unreadable") else {}),
-        "sequence": sequence,
+        "sequence": classify_fields(header_classifier_fields(fields, stored_description), ti, policy)["class"],
         "physician_confirmed_flair": physician_confirmed_flair is True,
-        "thickness": dict(fields["thickness"]) if isinstance(fields["thickness"], dict) else None,
-        "scanner": None,
+        "thickness": dict(thickness) if isinstance(thickness, dict) else None,
+        "scanner": scanner_from_acquisition_record(acq) if with_scanner else None,
         "skull": skull,
-    }]}, (":".join(str(v) for v in key[1:]) if key else None)
+    }
+
+
+def stored_records(file_path: str):
+    """(acquisition record, stored series description) of a source image; never raises (unknown = None)."""
+    return lcs.read_source_acquisition(file_path), read_source_series_description(file_path)
+
+
+async def single_study_inputs(file_path: str, storage_service, imaging_service, *, bucket: str,
+                              physician_confirmed_flair: bool = False, skull: str = "pending",
+                              version_key: Any = _NOT_GIVEN, records: Any = None):
+    """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file (visit_inputs):
+    its header, else the stored series and acquisition records, and the RC-054 geometry. Header only, parsed off the
+    event loop, cached per file version (E1). Anything unreadable stays unknown, so the gate warns or abstains; it
+    never raises. Returns (inputs, file version or None).
+
+    ``skull``: 'pending' before the run; at the final consultation the outcome the browser reports ('stripped' /
+    'unknown'), so the decision that releases or withholds the output is decided and audited here (G17).
+    ``records``: the (acquisition, stored description) pair the route already read for the cache key (A3)."""
+    key = version_key if version_key is not _NOT_GIVEN else await _file_version(storage_service, bucket, file_path)
+    fields = await visit_header_fields(storage_service, bucket, file_path, imaging_service, version_key=key)
+    acq, stored = records if records is not None else await asyncio.to_thread(stored_records, file_path)
+    visit = visit_inputs(fields, acq, stored, physician_confirmed_flair=physician_confirmed_flair, skull=skull)
+    return {"mode": "single", "visits": [visit]}, (":".join(str(v) for v in key[1:]) if key else None)
 
 
 def actor_for(user, request=None):
@@ -642,25 +742,6 @@ def actor_for(user, request=None):
 
 
 _UNREAD = object()
-
-
-def visit_from_stored_records(file_id, *, acquisition: Any = _UNREAD, skull: str = "unknown",
-                              physician_confirmed_flair: bool = False, study_service=None,
-                              policy: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Gate inputs of one visit from the records stored with its source image (comparison mode). The caller passes
-    the acquisition record it already read (E2); it is read here only when not given."""
-    policy = policy if policy is not None else _policy()
-    if acquisition is _UNREAD:
-        acquisition = lcs.read_source_acquisition(file_id, study_service) if file_id else None
-    acq = acquisition if isinstance(acquisition, dict) else None
-    description = read_source_series_description(file_id, study_service) if file_id else None
-    return {
-        "sequence": sequence_from_header(description, (acq or {}).get("inversion_time_ms"), policy),
-        "physician_confirmed_flair": physician_confirmed_flair is True,
-        "thickness": thickness_from_acquisition_record(acq, policy["thickness"]["thin_limit_mm"]),
-        "scanner": scanner_from_acquisition_record(acq),
-        "skull": skull,
-    }
 
 
 # ----------------------------------------------------------------------------- through the platform
@@ -716,13 +797,19 @@ CONSULTATION_CACHE_MAX = 512
 _CONSULTATIONS: "OrderedDict[tuple, tuple]" = OrderedDict()
 
 
-def consultation_key(version_key: Optional[tuple], physician_confirmed_flair: bool, skull: str) -> Optional[tuple]:
+def consultation_key(version_key: Optional[tuple], physician_confirmed_flair: bool, skull: str,
+                     records: Any = None, user_id: Optional[str] = None) -> Optional[tuple]:
     """The cache key of a consultation, or None when it must be evaluated: the file's version is unknown, or the
     consultation would release an AI output (a skull outcome other than 'pending' — the final consultation, whose
-    decision is always decided and audited again, F4)."""
+    decision is always decided and audited again, F4). Sixth review of PR #81: the key names EVERY input the
+    decision is made from (A3: the file version, a digest of the stored series and acquisition records, the
+    attestation, the skull outcome, the policy version) and, when the physician attests, the clinician (A2: an
+    attestation is always evaluated and audited under the clinician who gave it)."""
     if not version_key or skull != "pending":
         return None
-    return (*version_key, physician_confirmed_flair is True, skull, _policy()["policy_version"])
+    digest = hashlib.sha256(json.dumps(records, sort_keys=True, default=str).encode("utf-8")).hexdigest()
+    attested = physician_confirmed_flair is True
+    return (*version_key, attested, skull, _policy()["policy_version"], digest, user_id if attested else None)
 
 
 def cached_consultation(key: Optional[tuple]) -> Optional[tuple]:
@@ -835,27 +922,25 @@ def present_gated_comparison(result: Dict[str, Any], *, acquisition_check: Dict[
 
 # C3: plain reasons for the report and the assistant (never a raw code). The UI shows the en/es/de texts of the
 # i18n files through QualityGatePanel; these are the backend's English sentences for text consumers.
-CAVEAT_REASONS = {
-    "gate_not_approved": "the quality gate is not yet approved for use",
-    "gate_switched_off": "the quality gate is switched off",
-    "gate_unavailable": "the quality gate could not be completed",
-    "gate_input_invalid": "the information needed to check the images is incomplete",
-    "sequence_not_flair": "an image is not a FLAIR (its header names another sequence)",
-    "sequence_unknown": "an image header does not say which sequence it is",
-    "sequence_missing": "an image carries no sequence information",
-    "sequence_confirmed_by_physician": "a physician confirmed as FLAIR an image whose header does not say so",
-    "thickness_thick": "the slices are thick, so small lesions can be missed",
-    "thickness_at_least": "the slices are thicker than 1.5 mm (only a lower bound is known), so small lesions can be missed",
-    "thickness_unknown": "the original slice thickness cannot be read",
-    "thickness_out_of_range": "the slices are thicker than the range in which the AI has been shown to work",
-    "scanner_changed": "the two visits were acquired on different scanners",
-    "scanner_unknown": "it cannot be established that the two visits were acquired on the same scanner",
-    "skull_present": "an image still has its skull",
-    "skull_unknown": "it cannot be confirmed that the skull was removed",
-    "skull_pending": "the skull has not been checked yet",
-    "scanner_not_recorded": "the scanners of the two visits are not recorded",
-    "header_unreadable": "an image header could not be read",
-}
+REASONS_PATH = Path(__file__).with_name("quality_gate_reasons.json")
+_REASONS: Dict[str, Any] = json.loads(REASONS_PATH.read_text(encoding="utf-8"))
+
+
+def reason_sentence(code: str, lang: str = "en") -> str:
+    """A4 (sixth review of PR #81): the ONE table of reason sentences (quality_gate_reasons.json) — the caveat the
+    assistant reads (en) and the code-written report notice (en/es/de) take their sentences from it."""
+    row = _REASONS["reasons"].get(code) or {"en": "a quality check did not pass", "es": "un control de calidad no se superó",
+                                            "de": "eine Qualitätsprüfung wurde nicht bestanden"}
+    return row.get(lang) or row["en"]
+
+
+def reason_lead(name: str, lang: str = "en") -> str:
+    row = _REASONS["leads"][name]
+    return row.get(lang) or row["en"]
+
+
+# C3: plain reasons for the report and the assistant (never a raw code), from the one table (A4).
+CAVEAT_REASONS = {code: row["en"] for code, row in _REASONS["reasons"].items()}
 
 
 def audit_code(result: Dict[str, Any]) -> str:
@@ -884,13 +969,20 @@ def abstained_comparison(gate: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
-def comparison_gate(source_tp1, source_tp2, *, acquisitions=None, attestation=(False, False), user=None,
-                    request=None) -> Dict[str, Any]:
-    """The gate on two visits from their stored records (RC-123), through the platform (RC-126). ``acquisitions``:
-    the two records the route already read (E2); read here only when not given."""
-    given = list(acquisitions) if acquisitions is not None else [_UNREAD, _UNREAD]
-    visits = [visit_from_stored_records(s, acquisition=a, physician_confirmed_flair=att is True)
-              for s, a, att in zip((source_tp1, source_tp2), given, attestation)]
+def comparison_gate(source_tp1, source_tp2, *, headers=None, acquisitions=None, attestation=(False, False),
+                    user=None, request=None) -> Dict[str, Any]:
+    """The gate on two visits (RC-123), through the platform (RC-126). Sixth review of PR #81 (A1): each visit is
+    derived exactly as a single study (visit_inputs) from its stored image header (``headers``, read by the route),
+    its stored series description and its acquisition record (``acquisitions``: the records the route already read
+    for RC-062, E2). A visit whose header was not read is 'unreadable' and abstains."""
+    given_acq = list(acquisitions) if acquisitions is not None else [_UNREAD, _UNREAD]
+    given_hdr = list(headers) if headers is not None else [None, None]
+    visits = []
+    for s, a, h, att in zip((source_tp1, source_tp2), given_acq, given_hdr, attestation):
+        acq = (lcs.read_source_acquisition(s) if s else None) if a is _UNREAD else a
+        fields = h if isinstance(h, dict) else {**_NO_HEADER, "unreadable": True}
+        stored = read_source_series_description(s) if s else None
+        visits.append(visit_inputs(fields, acq, stored, physician_confirmed_flair=att is True, with_scanner=True))
     return run_quality_gate({"mode": "comparison", "visits": visits},
                             study_key=study_of(source_tp2) or study_of(source_tp1) or "",
                             actor=actor_for(user, request) if user is not None else None)

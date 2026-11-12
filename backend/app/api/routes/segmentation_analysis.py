@@ -138,7 +138,8 @@ def _attestation(body) -> tuple:
     return (raw.get("tp1") is True, raw.get("tp2") is True)
 
 
-async def _gate_before_loading(specs, segmentation_service, current_user, request, acq_memo, metas, body=None):
+async def _gate_before_loading(specs, segmentation_service, current_user, request, acq_memo, metas, body=None,
+                               storage_service=None):
     """C2 (first review of PR #81; REQ-FUNC-117): the single quality gate decides from the STORED records before
     any mask, image, registration or atlas is loaded. None when the gate is not enforced (QUALITY_GATE_ENFORCED).
     Second review, findings 2 and 4: each segmentation's metadata is read ONCE here and kept in ``metas`` for the
@@ -160,7 +161,10 @@ async def _gate_before_loading(specs, segmentation_service, current_user, reques
             metas[spec.get("id")] = meta
         sources.append(getattr(meta, "file_id", None))   # an instance mask has no source image: the gate abstains
     acquisitions = [_memo_acquisition(s, acq_memo) for s in sources]
-    return await asyncio.to_thread(qg.comparison_gate, *sources, acquisitions=acquisitions, attestation=attestation,
+    # A1 (sixth review of PR #81): each visit's stored image header is read exactly as for a single study
+    headers = [await qg.visit_header_fields(storage_service, settings.GCS_BUCKET_NAME, s) if s else None for s in sources]
+    return await asyncio.to_thread(qg.comparison_gate, *sources, headers=headers, acquisitions=acquisitions,
+                                   attestation=attestation,
                                    user=current_user, request=request)
 
 
@@ -766,7 +770,7 @@ async def compare_longitudinal(
         acq_memo: dict = {}
         metas: dict = {}
         gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo,
-                                          metas, body)
+                                          metas, body, storage_service)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             return qg.abstained_comparison(gate)
 
@@ -1103,7 +1107,7 @@ async def detect_slowly_expanding_lesions(
         acq_memo: dict = {}
         metas: dict = {}
         gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo,
-                                          metas, body)
+                                          metas, body, storage_service)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate), "sels": [], "n_existing": 0,
                     "n_sel": 0, "registration_verified": False, "adjudication_required": True, "quality_gate": gate}

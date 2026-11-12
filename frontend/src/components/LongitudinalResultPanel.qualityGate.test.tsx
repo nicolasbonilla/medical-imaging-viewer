@@ -10,7 +10,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import '@/i18n/config';
 import { LongitudinalResultPanel } from './LongitudinalResultPanel';
-import { QUALITY_GATE_POLICY, type GateCheckName, type GateResult } from '@/services/qualityGate/gate';
+import type { GateCheckName, GateResult } from '@/services/qualityGate/gate';
+
+// G27: the browser holds no policy; the test reads the server's policy file (test data)
+const POLICY = JSON.parse(readFileSync(join(__dirname, '..', '..', '..', 'backend', 'app', 'services', 'quality_gate_policy.json'),
+  'utf-8')) as { codes: Record<string, string> };
 
 afterEach(cleanup);
 
@@ -23,7 +27,7 @@ const ABSTAINED = {
 const checkOf = (code: string): GateCheckName => (code === 'gate_input_invalid' ? 'input'
   : code.startsWith('gate_') ? 'platform' : (code.split('_')[0] as GateCheckName));
 const gateFor = (code: string, allowed = false): GateResult => ({
-  gate_version: 'quality-gate/1', policy_version: QUALITY_GATE_POLICY.policy_version, mode: 'comparison',
+  gate_version: 'quality-gate/1', policy_version: 'p', mode: 'comparison',
   decision: allowed ? 'proceed_with_warnings' : 'abstain', ai_may_run: allowed, ai_output_allowed: allowed, codes: [code],
   checks: [{ check: checkOf(code), visit: null, status: allowed ? 'warn' : 'abstain', code, params: {} }],
 });
@@ -31,7 +35,7 @@ const show = (result: Record<string, unknown>) =>
   render(<LongitudinalResultPanel result={result as never} tp1SegId="s1" tp2SegId="s2" onReviewed={() => undefined} />);
 
 describe('G16: the reason shown is the gate\'s reason', () => {
-  const codes = Object.entries(QUALITY_GATE_POLICY.codes).filter(([, st]) => st === 'abstain').map(([c]) => c);
+  const codes = Object.entries(POLICY.codes).filter(([, st]) => st === 'abstain').map(([c]) => c);
   it('rc127 every abstaining gate code shows the gate panel and never the RC-062 box', () => {
     expect(codes).toEqual(expect.arrayContaining(['gate_not_approved', 'gate_switched_off', 'scanner_changed']));
     const bad: string[] = [];
@@ -78,7 +82,9 @@ describe('F1: the per-visit FLAIR attestation of a comparison', () => {
   const stopped = (checks: { visit: string; code: string }[]) => ({
     ...ABSTAINED,
     quality_gate: { ...gateFor('sequence_missing'), codes: checks.map((c) => c.code),
-      checks: checks.map((c) => ({ check: 'sequence', visit: c.visit, status: 'abstain', code: c.code, params: {} })) },
+      checks: checks.map((c) => ({ check: 'sequence', visit: c.visit, status: 'abstain', code: c.code, params: {} })),
+      // G27: the server names the attestable visits (unknown / missing in a comparison)
+      attestable_visits: checks.filter((c) => c.code === 'sequence_unknown' || c.code === 'sequence_missing').map((c) => c.visit) },
   });
   it('rc122 offered per visit only for unknown or missing, unticked, sent only on purpose', () => {
     const onAttest = vi.fn();

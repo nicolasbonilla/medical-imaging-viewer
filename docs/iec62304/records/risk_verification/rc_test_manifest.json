@@ -1391,7 +1391,8 @@
         "frontend/src/services/qualityGate/gate.test.ts",
         "tests/unit/test_rc122_flags_off_identity.py",
         "frontend/src/services/flames/__tests__/headerEvidence.flagsOff.test.ts",
-        "frontend/src/components/LongitudinalCompare.qualityGate.test.tsx"
+        "frontend/src/components/LongitudinalCompare.qualityGate.test.tsx",
+        "tests/unit/test_rc122_one_gate.py"
       ],
       "requirement": "REQ-FUNC-117, REQ-SAFE-052",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate stacked on draft PR #79; not merged, not deployed; OFF behind VITE_ENABLE_QUALITY_GATE and QUALITY_GATE_ENFORCED)",
@@ -1406,7 +1407,8 @@
       "tests": [
         "tests/unit/test_rc123_rc062_monotonicity.py",
         "tests/unit/test_rc122_quality_gate_wiring.py",
-        "frontend/src/components/LongitudinalCompare.qualityGate.test.tsx"
+        "frontend/src/components/LongitudinalCompare.qualityGate.test.tsx",
+        "tests/unit/test_rc122_one_gate.py"
       ],
       "requirement": "REQ-SAFE-052",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
@@ -1419,8 +1421,7 @@
       "status": "implemented",
       "implementation": "backend/app/services/quality_gate_policy.json (thickness.evidence_asset: null); quality_gate.py (_evidence_abstain_bands); frontend/src/services/qualityGate/gate.ts",
       "tests": [
-        "tests/unit/test_quality_gate_matrix.py",
-        "frontend/src/services/qualityGate/gate.test.ts"
+        "tests/unit/test_quality_gate_matrix.py"
       ],
       "requirement": "REQ-SAFE-053",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
@@ -1449,7 +1450,9 @@
       "tests": [
         "tests/unit/test_quality_gate_matrix.py",
         "tests/unit/test_rc122_quality_gate_wiring.py",
-        "frontend/src/services/qualityGate/api.test.ts"
+        "frontend/src/services/qualityGate/api.test.ts",
+        "tests/unit/test_rc122_one_gate.py",
+        "frontend/src/components/BrowserFlamesCard.serverDecides.test.tsx"
       ],
       "requirement": "REQ-SAFE-054",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
@@ -1465,7 +1468,7 @@
         "tests/unit/test_quality_gate_matrix.py",
         "frontend/src/services/qualityGate/gate.test.ts",
         "frontend/src/components/QualityGatePanel.test.tsx",
-        "frontend/src/services/flames/__tests__/headerEvidence.flagsOff.test.ts"
+        "tests/unit/test_rc122_one_gate.py"
       ],
       "requirement": "REQ-FUNC-118, REQ-SAFE-054",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",

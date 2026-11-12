@@ -34,8 +34,8 @@ type Attestation = { tp1: boolean; tp2: boolean };
 function ComparisonAttestation({ gate, onAttest }: { gate: GateResult; onAttest: (a: Attestation) => void }) {
   const { t } = useTranslation();
   const [ticked, setTicked] = useState<Attestation>({ tp1: false, tp2: false });
-  const visits = (['tp1', 'tp2'] as const).filter((v) => (gate.checks ?? []).some((c) => c.check === 'sequence' && c.visit === v
-    && (c.code === 'sequence_unknown' || c.code === 'sequence_missing')));
+  // G27: the server names the visits that may be attested; the browser holds no rule
+  const visits = (['tp1', 'tp2'] as const).filter((v) => (gate.attestable_visits ?? []).includes(v));
   if (!visits.length) return null;
   return (
     <div className="rounded border border-sky-500/50 bg-sky-950/20 p-1.5 space-y-1 text-[9px]" data-testid="quality-gate-attest-comparison">

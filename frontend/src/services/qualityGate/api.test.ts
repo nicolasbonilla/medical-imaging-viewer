@@ -13,7 +13,7 @@ vi.mock('@/services/apiClient', () => ({ apiClient: { post: (...a: unknown[]) =>
 import i18n from '@/i18n/config';
 import { QualityGatePanel } from '@/components/QualityGatePanel';
 import { requestQualityGate } from './api';
-import { confirmServerDecision } from './gate';
+import { retryAfterSeconds } from './gate';
 
 afterEach(() => { cleanup(); post.mockReset(); });
 
@@ -29,7 +29,7 @@ describe('F3: too many checks', () => {
     expect(r.ai_may_run).toBe(false);
     expect(r.ai_output_allowed).toBe(false);
     expect(r.subject?.file_id).toBe('file-1');
-    expect(confirmServerDecision(r, 'stripped').codes).toEqual(['gate_rate_limited']);   // final: same reason, no output
+    expect(retryAfterSeconds(r)).toBe(42);                                       // U2: asked again after the wait
   });
 
   it('rc126 any other failure is still unavailable', async () => {

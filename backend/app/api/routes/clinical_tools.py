@@ -138,7 +138,10 @@ async def quality_gate(
     paths = await _authorized_inputs([body.file_id], None, None, current_user)
     bucket = get_settings().GCS_BUCKET_NAME
     version_key = await qg.file_version_key(storage_service, bucket, paths[0])
-    key = qg.consultation_key(version_key, body.physician_confirmed_flair, body.skull)
+    # A3 (sixth review): the stored records the decision is made from are read first, and their digest is part of
+    # the cache key; A2: so is the clinician when the physician attests
+    records = await asyncio.to_thread(qg.stored_records, paths[0])
+    key = qg.consultation_key(version_key, body.physician_confirmed_flair, body.skull, records=records, user_id=user_id)
     cached = qg.cached_consultation(key)
     if cached is not None:                         # F3: the same answer again, not counted, not re-audited
         answer, version = cached
@@ -148,7 +151,7 @@ async def quality_gate(
         return limited
     inputs, version = await qg.single_study_inputs(paths[0], storage_service, imaging_service, bucket=bucket,
                                                    physician_confirmed_flair=body.physician_confirmed_flair,
-                                                   skull=body.skull, version_key=version_key)
+                                                   skull=body.skull, version_key=version_key, records=records)
     result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)
     answer = {**result, "inputs": inputs}
     qg.store_consultation(key, answer, version)

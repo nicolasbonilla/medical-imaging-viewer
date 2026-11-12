@@ -1,8 +1,9 @@
 /**
  * BrowserFlamesCard with the single quality gate ON (REQ-FUNC-117/118; RC-122, RC-125, RC-126, RC-127). DRAFT.
  *  - before the run: the backend's decision is shown, and an abstention keeps the run button disabled;
- *  - before the result: nothing of it is shown until the final consultation (backend's fresh answer + the
- *    worker's skull outcome) allows it; a switch turned off during the run, or an unknown skull, hides it.
+ *  - before the result: nothing of it is shown until the final consultation (the backend's answer, decided with
+ *    the worker's skull outcome) allows it; a switch turned off during the run, or an unknown skull, hides it.
+ * Sixth review (G27): the server decides; these tests play the server with fixed answers.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -29,14 +30,34 @@ vi.mock('@/config/features', async (importOriginal) => {
 
 import { BrowserFlamesCard } from './BrowserFlamesCard';
 import { useViewerStore } from '@/store/useViewerStore';
-import { evaluateGate, type GatePlatform } from '@/services/qualityGate/gate';
+import type { GatePlatform } from '@/services/qualityGate/gate';
 
 const FILE = 'patients/p/studies/s/flair.nii.gz';
 const VISIT = { sequence: 'FLAIR', physician_confirmed_flair: false, thickness: { state: 'native', effective_mm: 1 }, scanner: null };
 const ON: GatePlatform = { allowed: true, code: null };
+type Check = { check: string; visit: string | null; status: string; code: string | null; params: Record<string, unknown> };
+/** The server's answer for these inputs, as the server sends it (sixth review, G27: the browser decides nothing, so
+ *  the test plays the server with fixed answers for the cases it uses). */
 const server = (visit: Record<string, unknown>, platform: GatePlatform, fileId = FILE, skull = 'pending') => {
   const inputs = { mode: 'single', visits: [{ ...visit, skull }] };
-  return { ...evaluateGate({ ...inputs, platform }), inputs, platform, subject: { file_id: fileId, version: 'v1' } };
+  const mk = (check: string, status: string, code: string | null): Check => ({ check, visit: check === 'platform' ? null : 'study', status, code, params: {} });
+  const checks: Check[] = [];
+  if (!platform.allowed) checks.push(mk('platform', 'abstain', platform.code === 'agent_switched_off' ? 'gate_switched_off' : 'gate_not_approved'));
+  else {
+    const seq = visit.sequence as string;
+    if (seq === 'FLAIR') checks.push(mk('sequence', 'pass', null));
+    else if ((seq === 'missing' || seq === 'unknown') && visit.physician_confirmed_flair === true) checks.push(mk('sequence', 'warn', 'sequence_confirmed_by_physician'));
+    else checks.push(mk('sequence', 'abstain', seq === 'missing' || seq === 'unknown' ? `sequence_${seq}` : 'sequence_not_flair'));
+    checks.push(skull === 'stripped' ? mk('skull', 'pass', null) : skull === 'pending' ? mk('skull', 'pending', 'skull_pending')
+      : mk('skull', 'abstain', 'skull_unknown'));
+  }
+  const st = new Set(checks.map((c) => c.status));
+  const decision = st.has('abstain') ? 'abstain' : st.has('pending') ? 'pending' : st.has('warn') ? 'proceed_with_warnings' : 'proceed';
+  return { gate_version: 'quality-gate/1', policy_version: 'p', mode: 'single', decision, ai_may_run: decision !== 'abstain',
+    ai_output_allowed: decision === 'proceed' || decision === 'proceed_with_warnings',
+    codes: checks.filter((c) => c.code).map((c) => c.code), checks, actions: {},
+    attestable_visits: checks.some((c) => c.code === 'sequence_missing' || c.code === 'sequence_unknown') ? ['study'] : [],
+    inputs, platform, subject: { file_id: fileId, version: 'v1' } };
 };
 const idle = () => Object.assign(h.flames, {
   status: 'idle', fraction: 0, message: '', error: null, startedAt: null, result: null, run: vi.fn(), cancel: vi.fn(), reset: vi.fn(),
@@ -100,7 +121,7 @@ describe('the physician attestation (S3, G13)', () => {
     fireEvent.click(attest());
     fireEvent.click(attest());
     fireEvent.click(attest());
-    expect(h.calls).toEqual([[FILE, false]]);          // toggles are evaluated locally, the backend is not called
+    expect(h.calls).toEqual([[FILE, false]]);          // toggles call nothing; the server decides on Run
     await waitFor(() => expect(run).not.toBeDisabled());
     fireEvent.click(run);
     await waitFor(() => expect(h.calls).toEqual([[FILE, false], [FILE, true]]));
@@ -173,10 +194,10 @@ describe('the server decides the output, and no stale answer acts (G17, G18)', (
     expect(h.skulls).toContain('stripped');
   });
 
-  it('rc126 G17 an answer that the same rule does not reproduce shows nothing', async () => {
+  it('rc126 G27 the final decision shown is the server answer for this run, as it is', async () => {
     done('skull-removed');
-    const forged = (f: string) => ({ ...server(VISIT, ON, f, 'stripped'), inputs: { mode: 'single', visits: [{ ...VISIT, skull: 'unknown' }] } });
-    h.answer = (f) => Promise.resolve(forged(f));
+    h.answer = (f) => Promise.resolve({ ...server(VISIT, ON, f, 'stripped'), decision: 'abstain', ai_may_run: false,
+      ai_output_allowed: false, codes: ['skull_unknown'] });
     render(<BrowserFlamesCard flairFileId={FILE} />);
     expect(await screen.findByTestId('quality-gate-output-hidden')).toBeInTheDocument();
     expect(screen.queryByText(/AI draft ready/)).not.toBeInTheDocument();

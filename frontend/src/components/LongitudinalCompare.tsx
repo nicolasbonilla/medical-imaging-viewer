@@ -111,7 +111,11 @@ export function LongitudinalCompare({
   const attested = useRef<{ pair: string; value: Attestation } | null>(null);
   const pairKey = `${tp1SegId}|${tp2SegId}`;
   const attestationFor = useCallback((given?: unknown): Attestation | undefined => {
-    if (isAttestation(given)) attested.current = { pair: pairKey, value: given };
+    if (isAttestation(given)) {
+      // U1 (sixth review): a visit attested once stays attested for the pair; a new attestation adds, never replaces
+      const before = attested.current?.pair === pairKey ? attested.current.value : { tp1: false, tp2: false };
+      attested.current = { pair: pairKey, value: { tp1: before.tp1 || given.tp1, tp2: before.tp2 || given.tp2 } };
+    }
     return attested.current?.pair === pairKey ? attested.current.value : undefined;
   }, [pairKey]);
 

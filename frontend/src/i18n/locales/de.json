@@ -1473,6 +1473,7 @@
     "title": "Qualitätsprüfung vor der KI",
     "draft": "Entwurf — Freigabe ausstehend",
     "aiHidden": "Das KI-Ergebnis wird nicht angezeigt, weil die Qualitätsprüfung es nicht zulässt.",
+    "retrying": "Wird in {{seconds}} s automatisch erneut geprüft.",
     "checking": "Das Bild wird vor der KI geprüft …",
     "attest": "Ich bestätige in eigener Verantwortung, dass dieses Bild ein T2-FLAIR ist. Der Bildkopf sagt das nicht; meine Bestätigung wird mit meinem Namen im Prüfprotokoll gespeichert.",
     "decision": {

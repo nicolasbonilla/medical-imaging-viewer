@@ -11,13 +11,12 @@
  * image-content check (contrastGate.ts) is always run as well, and can still refuse.
  *
  * Fifth review of PR #81 (G26): with VITE_ENABLE_QUALITY_GATE OFF this is the base code path of RC-049, unchanged
- * (baseHeaderContrastEvidence below is the pre-PR function verbatim). Only with the gate ON does RC-049 use the single
- * quality gate's classifier (G15, restated: with the gate on, one classifier).
+ * (baseHeaderContrastEvidence below is the pre-PR function verbatim). With the gate ON, RC-049 takes the class the
+ * quality gate's server returned (sixth review, G27: one implementation, on the server).
  */
 import type { DicomEvidence } from './nifti';
 
 import { FEATURES } from '@/config/features';
-import { classifyFields, classifyText, QUALITY_GATE_POLICY, textInversionTimeMs } from '@/services/qualityGate/gate';
 
 export type HeaderVerdict = 'contradicts' | 'supports' | 'none';
 
@@ -25,14 +24,12 @@ export interface HeaderEvidence {
   verdict: HeaderVerdict;
   reasons: string[];
   inversionTimeMs?: number;
-  /** Gate ON only (G15): the class of the single quality gate's sequence classifier */
+  /** Gate ON only (G27): the class the quality gate's SERVER derived for this file */
   sequenceClass?: string;
 }
 
 /** FLAIR inversion times are ~1600-2800 ms (1.5-3 T, 2D and 3D); T1 IR / MPRAGE ~400-1200, STIR ~150-250. */
 export const MIN_FLAIR_TI_MS = 1400;
-/** Gate ON: the policy's limit (equal today; a test pins the two together). */
-const GATE_MIN_FLAIR_TI_MS = QUALITY_GATE_POLICY.sequence.min_flair_inversion_time_ms;
 
 // ----------------------------------------------------------------------------- base code path (gate OFF), verbatim
 const FLAIR = /(FLAIR|DARK[ _-]?FLUID|DARKFLUID|TIRM|FLUID[ _-]?ATTENUATED)/;
@@ -97,71 +94,32 @@ function baseHeaderContrastEvidence(
   return { verdict: contradicts ? 'contradicts' : supports ? 'supports' : 'none', reasons, inversionTimeMs: ti };
 }
 
-// ----------------------------------------------------------------------------- gate ON: the single classifier
+// ----------------------------------------------------------------------------- gate ON: the server's class
 const NOT_FLAIR = new Set(['other', 'T1', 'T2']);
 
 /**
- * Gate ON (G15, G19): the single quality gate's FIELD-AWARE classifier (gate.ts classifyFields, the same rules as the
- * backend's quality_gate.classify_fields): the descriptions by their tokens, the SequenceName by the vendor-code table
- * ('*' is a Siemens prefix there), the ImageType by its own list — never one text blob. F5 (fifth review): each text's
- * reason comes from its WORDS alone; an inversion time has its own reason and never makes a FLAIR text read as
- * "another sequence".
+ * Gate ON (sixth review of PR #81, G27): the browser classifies nothing. RC-049 takes the sequence class the SERVER
+ * derived for this file in its gate answer (from everything its header says), as it is: another sequence refuses, a
+ * FLAIR supports, anything else says nothing. The inversion time of a DICOM extension is passed on as data.
  */
-function gatedHeaderContrastEvidence(
-  headerText: string[],
-  dicom: DicomEvidence,
-  seriesDescription?: string | null,
-): HeaderEvidence {
-  const texts = [
-    ...headerText,
-    dicom.seriesDescription,
-    dicom.protocolName,
-    seriesDescription ?? undefined,
-  ].filter((t): t is string => Boolean(t && t.trim()));
-  const reasons: string[] = [];
-
-  let ti = dicom.inversionTimeMs;
-  if (ti === undefined) {
-    for (const t of texts) {
-      const found = textInversionTimeMs(t);
-      if (found !== null) {
-        ti = found;
-        break;
-      }
-    }
-  }
-  if (ti !== undefined && ti > 0) {
-    reasons.push(ti < GATE_MIN_FLAIR_TI_MS
-      ? `inversion time ${ti.toFixed(0)} ms is too short for a FLAIR (>= ${GATE_MIN_FLAIR_TI_MS} ms)`
-      : `inversion time ${ti.toFixed(0)} ms is compatible with a FLAIR`);
-  }
-
-  for (const raw of texts) {
-    const cls = classifyText(raw);                     // F5: the words alone, never the inversion time
-    if (cls === 'FLAIR') reasons.push(`header says "${raw.slice(0, 60)}"`);
-    else if (cls !== null && NOT_FLAIR.has(cls)) reasons.push(`header names another sequence: "${raw.slice(0, 60)}"`);
-  }
-  if (dicom.sequenceName && NOT_FLAIR.has(classifyFields({ sequence_name: dicom.sequenceName }).class)) {
-    reasons.push(`sequence code "${dicom.sequenceName.slice(0, 40)}" is another sequence`);
-  }
-  const sequenceClass = classifyFields({ description: texts, sequence_name: dicom.sequenceName ?? null,
-    image_type: dicom.imageType ?? null }, ti ?? null).class;
-  const verdict: HeaderVerdict = NOT_FLAIR.has(sequenceClass) ? 'contradicts'
-    : sequenceClass === 'FLAIR' || (ti !== undefined && ti >= GATE_MIN_FLAIR_TI_MS) ? 'supports' : 'none';
-  return { verdict, reasons, inversionTimeMs: ti, sequenceClass };
+function gatedHeaderContrastEvidence(serverSequenceClass: string | null | undefined, dicom: DicomEvidence): HeaderEvidence {
+  const cls = typeof serverSequenceClass === 'string' && serverSequenceClass ? serverSequenceClass : 'missing';
+  const verdict: HeaderVerdict = NOT_FLAIR.has(cls) ? 'contradicts' : cls === 'FLAIR' ? 'supports' : 'none';
+  return { verdict, reasons: [`the quality gate's server classified the image as ${cls}`],
+    inversionTimeMs: dicom.inversionTimeMs, sequenceClass: cls };
 }
 
 /**
- * RC-049 header evidence: the base code path while VITE_ENABLE_QUALITY_GATE is off (G26), the single quality gate's
- * classifier while it is on. ``options.qualityGate`` overrides the flag (tests, and the worker's job when it carries it).
+ * RC-049 header evidence: the base code path while the gate is off (G26), the server's class while it is on (G27).
+ * ``options.qualityGate`` overrides the flag (the card passes it to the worker with the server's class).
  */
 export function headerContrastEvidence(
   headerText: string[],
   dicom: DicomEvidence,
   seriesDescription?: string | null,
-  options: { qualityGate?: boolean } = {},
+  options: { qualityGate?: boolean; serverSequenceClass?: string | null } = {},
 ): HeaderEvidence {
   return (options.qualityGate ?? FEATURES.QUALITY_GATE)
-    ? gatedHeaderContrastEvidence(headerText, dicom, seriesDescription)
+    ? gatedHeaderContrastEvidence(options.serverSequenceClass, dicom)
     : baseHeaderContrastEvidence(headerText, dicom, seriesDescription);
 }

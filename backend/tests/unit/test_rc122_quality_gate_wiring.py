@@ -228,7 +228,11 @@ def compare(monkeypatch):
     monkeypatch.setattr(qg, "read_source_series_description", lambda fid, svc=None: records["desc"].get(fid))
     app.dependency_overrides[get_current_active_user] = _user
     app.dependency_overrides[get_segmentation_service] = lambda: seg
-    app.dependency_overrides[get_storage_service] = lambda: object()
+    # sixth review (A1): each visit's stored image header is read, as for a single study — here an uploaded NIfTI
+    # whose header names no sequence (3 mm grid: a lower bound for the thickness)
+    header = nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 3.0, 1.0])).to_bytes()
+    monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_Storage(header))
     yield TestClient(app), records, (f1, f2)
     for dep in (get_current_active_user, get_segmentation_service, get_storage_service):
         app.dependency_overrides.pop(dep, None)
@@ -264,7 +268,7 @@ def test_rc123_flag_on_same_scanner_flair_shows_candidates_with_the_gate_attache
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     res = _post(client)
     gate = res["quality_gate"]
-    assert gate["decision"] == "proceed_with_warnings" and gate["codes"] == ["thickness_unknown"]
+    assert gate["decision"] == "proceed_with_warnings" and gate["codes"] == ["thickness_at_least"]   # from the header (A1)
     assert res["abstained"] is False and res["change_candidates"]["total"] == 1
 
 

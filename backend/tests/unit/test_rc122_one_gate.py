@@ -132,6 +132,7 @@ def test_rc122_a1_the_server_reads_nifti_extensions_and_the_dicom_image_type():
 
 def test_rc122_a1_the_single_route_classifies_a_nifti_by_its_descrip(single, monkeypatch):
     client, _ = single
+    monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(_nifti("Sag T1 MPRAGE")))
     body = client.post(URL, json={"file_id": FILE}).json()
@@ -172,6 +173,7 @@ def test_rc126_a2_each_clinician_s_attestation_is_audited_under_that_clinician(s
     monkeypatch.setattr(qg, "_REGISTRY", reg)
     monkeypatch.setattr(qg, "_LIMITER", None)
     monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
+    monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())   # a fresh header cache per test
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(_nifti()))
     for user in _users():
         app.dependency_overrides[get_current_active_user] = (lambda u: (lambda: u))(user)
@@ -185,6 +187,7 @@ def test_rc126_a3_correcting_the_series_description_invalidates_the_cached_decis
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     monkeypatch.setattr(qg, "_LIMITER", None)
     monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
+    monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())   # a fresh header cache per test
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(_nifti()))
     desc = {"value": "Sag T1 MPRAGE"}
     monkeypatch.setattr(qg, "read_source_series_description", lambda fid, svc=None: desc["value"])

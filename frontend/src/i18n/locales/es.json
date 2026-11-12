@@ -1491,6 +1491,7 @@
     "title": "Control de calidad antes de la IA",
     "draft": "Borrador — pendiente de aprobación",
     "aiHidden": "El resultado de la IA no se muestra, porque el control de calidad no lo permite.",
+    "retrying": "Se vuelve a comprobar solo en {{seconds}} s.",
     "checking": "Comprobando la imagen antes de la IA…",
     "attest": "Confirmo, bajo mi responsabilidad, que esta imagen es una FLAIR potenciada en T2. Su cabecera no lo indica; mi confirmación queda registrada en la auditoría con mi nombre.",
     "decision": {

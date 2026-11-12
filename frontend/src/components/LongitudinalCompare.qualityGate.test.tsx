@@ -35,7 +35,7 @@ vi.mock('@/api/study', () => ({
 
 import i18n from '@/i18n/config';
 import { LongitudinalCompare } from './LongitudinalCompare';
-import { QUALITY_GATE_POLICY, type GateResult } from '@/services/qualityGate/gate';
+import type { GateResult } from '@/services/qualityGate/gate';
 
 const STUDIES = [
   { id: 'st1', study_date: '2024-01-10', study_description: 'Brain MRI', modality: 'MR' },
@@ -47,10 +47,12 @@ const ATTESTED = { tp1: true, tp2: false };
 const COMPARE = /^(compare visits|comparar visitas|untersuchungen vergleichen)$/i;
 
 const gate = (allowed: boolean, code: string | null, visit: 'tp1' | 'tp2' | null = 'tp1'): GateResult => ({
-  gate_version: 'quality-gate/1', policy_version: QUALITY_GATE_POLICY.policy_version, mode: 'comparison',
+  gate_version: 'quality-gate/1', policy_version: 'p', mode: 'comparison',
   decision: allowed ? (code ? 'proceed_with_warnings' : 'proceed') : 'abstain', ai_may_run: allowed,
   ai_output_allowed: allowed, codes: code ? [code] : [],
   checks: code ? [{ check: code.split('_')[0] as never, visit, status: allowed ? 'warn' : 'abstain', code, params: {} }] : [],
+  // G27: the server names the attestable visits
+  attestable_visits: !allowed && visit && (code === 'sequence_missing' || code === 'sequence_unknown') ? [visit] : [],
 });
 const STOPPED = {
   changes: [], abstained: true, total_lesions_tp1: null, total_lesions_tp2: null, burden_tp1_mm3: null, burden_tp2_mm3: null,
