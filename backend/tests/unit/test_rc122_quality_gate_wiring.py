@@ -121,6 +121,9 @@ def single(monkeypatch):
     monkeypatch.setattr(ct, "_authorized_inputs", _authorized)
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     monkeypatch.setattr(qg, "_LIMITER", None)
+    # each test starts with empty server caches (a file of the same path and size in another test is another file)
+    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
+    monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
     monkeypatch.setattr(lcs, "read_source_acquisition", lambda fid, svc=None: None)
     monkeypatch.setattr(qg, "read_source_series_description", lambda fid, svc=None: None)
     app.dependency_overrides[get_current_active_user] = _user
