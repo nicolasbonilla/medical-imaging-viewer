@@ -74,11 +74,12 @@ async def _voxel_spacing_from_source_image(file_id, storage_service, context: st
         raise VoxelSpacingUnavailableError(
             f"{context}: could not read voxel geometry from source image {file_id}: {e}"
         )
-    if len(zooms) < 3 or not all(float(z) > 0 for z in zooms):
+    spacing = lcs.voxel_spacing(img)                 # the ONE rule (eleventh review of PR #81)
+    if spacing is None:
         raise VoxelSpacingUnavailableError(
             f"{context}: source image {file_id} has no usable voxel spacing (zooms={zooms})."
         )
-    return (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+    return spacing
 
 
 async def _load_source_intensity(file_id, storage_service, context: str):
@@ -179,8 +180,9 @@ async def _gate_setup(specs, body, segmentation_service, storage_service, curren
         return acq, desc
 
     sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]
-    visit_check = await _visit_check(specs[0], specs[1], sources[0], sources[1])
-    records, headers = await asyncio.gather(
+    # the visit check (a 400 for the same mask, visit or a reversed order: G35) and the reads, in ONE gather
+    visit_check, records, headers = await asyncio.gather(
+        _visit_check(specs[0], specs[1], sources[0], sources[1]),
         asyncio.gather(*(_records(s) for s in sources)), asyncio.gather(*(_header(s) for s in sources)))
     gate = await asyncio.to_thread(qg.comparison_gate, *sources, headers=headers, records=list(records),
                                    attestation=attestation, visit_ok=visit_check.get("status") == "ok",
@@ -353,14 +355,10 @@ async def compare_masks(
                     mask = np.transpose(mask, (2, 0, 1))  # RC-031: native (a0,a1,k) -> internal (k,a0,a1)
                 loaded_masks.append({"mask": mask, "label": label})
                 if resolved_spacing is None:
-                    zooms = img.header.get_zooms()[:3]
-                    if len(zooms) == 3 and all(float(z) > 0 for z in zooms):
-                        # Mask is transposed to internal (k,a0,a1) above, so spacing must be
-                        # (zk,za0,za1)=(zooms[2],zooms[0],zooms[1]) — NOT (zk,za1,za0). The
-                        # a0/a1 swap fed anisotropic in-plane spacing to distance_transform_edt
-                        # -> wrong Hausdorff/ASSD on non-square pixels (audit). Match the
-                        # canonical _voxel_spacing_from_source_image + the longitudinal branch.
-                        resolved_spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+                    # Mask is transposed to internal (k,a0,a1) above, so spacing must be (zk,za0,za1) — NOT
+                    # (zk,za1,za0): the a0/a1 swap fed anisotropic in-plane spacing to distance_transform_edt ->
+                    # wrong Hausdorff/ASSD on non-square pixels (audit). The ONE rule: lcs.voxel_spacing.
+                    resolved_spacing = lcs.voxel_spacing(img)
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
 
@@ -833,14 +831,7 @@ async def compare_longitudinal(
                 mask = (data > 0).astype(np.uint8)
                 if mask.ndim == 3:
                     mask = np.transpose(mask, (2, 0, 1))  # RC-031: native (a0,a1,k) -> internal (k,a0,a1)
-                spacing = None
-                try:
-                    zooms = img.header.get_zooms()[:3]
-                    if len(zooms) >= 3 and all(float(z) > 0 for z in zooms):
-                        # native (za0, za1, zk) -> internal (k, a0, a1) spacing order
-                        spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
-                except Exception:  # noqa: BLE001 — spacing is best-effort
-                    spacing = None
+                spacing = lcs.voxel_spacing(img)     # native (za0, za1, zk) -> internal (k, a0, a1); best-effort
                 # Instance-type input IS a binary mask image (data>0), not an
                 # intensity MRI, so it carries no FLAIR to register — disable
                 # registration for this timepoint (index-aligned fallback). It has no

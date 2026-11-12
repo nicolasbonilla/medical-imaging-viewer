@@ -310,20 +310,18 @@ class _Projector:
         return o
 
     def longitudinal(self, lng: dict) -> dict:
-        # G30 / tenth review: ONE account of the gate (explain): causes of a stop, warnings of a pair it let through —
-        # fixed codes only (R4), never free text of the request
-        from app.services.quality_gate import explain
-        gate = lng.get("quality_gate")
-        account = explain(gate) if isinstance(gate, dict) else {"causes": [], "warnings": []}
-        stopped = isinstance(gate, dict) and gate.get("ai_output_allowed") is not True
+        # I1 (eleventh review): the gate's account comes from the SERVER's record of its decision (report_account), never
+        # from the client's copy; G30: the same account as the code-written notice — causes of a stop (or "not
+        # established"), warnings of a pair it let through; fixed codes only (R4)
+        from app.services.quality_gate import report_account
+        account = report_account(lng)
+        warnings = account["warnings"] if account else []
+        if account and account["stopped"]:
+            return {"abstained": True, "abstained_by": "quality_gate", "causes": account["causes"]}
         if lng.get("abstained") is True:
-            # WHO withheld it and why — the report model gives the same cause as the code-written notice (never
-            # "acquisition not comparable" for a gate stop, and a stopped pair states its causes only)
-            o = {"abstained": True, "abstained_by": "quality_gate" if stopped else "rc062"}
-            if stopped:
-                o["causes"] = account["causes"]
-            elif account["warnings"]:
-                o["quality_gate_warnings"] = account["warnings"]
+            o = {"abstained": True, "abstained_by": "rc062"}
+            if warnings:
+                o["quality_gate_warnings"] = warnings
             return o
         o: dict = {key: self.number(lng.get(key), key, 0, _LESION_ML_MAX) for key in ("burden_tp1_ml", "burden_tp2_ml")}
         for key in ("total_lesions_tp1", "total_lesions_tp2"):
@@ -334,8 +332,8 @@ class _Projector:
         sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
         o["status_counts"] = {k: self.count(sc.get(k), "status_counts")
                               for k in ("new", "enlarged", "resolved", "shrunk", "stable")}
-        if account["warnings"]:
-            o["quality_gate_warnings"] = account["warnings"]
+        if warnings:
+            o["quality_gate_warnings"] = warnings
         return o
 
     def zone_stats(self, zs: dict) -> dict:

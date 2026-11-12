@@ -209,24 +209,26 @@ def test_rc126_a3_correcting_the_series_description_invalidates_the_cached_decis
 
 
 # ----------------------------------------------------------------------------- A4
-def _stopped(code):
+def _stopped(code, monkeypatch):
+    from tests.unit.test_rc122_review11 import served           # I1 (eleventh review): the server's record
     gate = qg.evaluate({"mode": "comparison", "platform": {"allowed": True, "code": None}, "visits": [
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
         {"sequence": "T1", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
     assert code in gate["codes"]
-    return qg.abstained_comparison(gate)
+    return qg.abstained_comparison(served(gate, monkeypatch))
 
 
 @pytest.mark.parametrize("lang", ["en", "es", "de"])
-def test_rc127_a4_the_report_notice_gives_the_gate_s_reason_when_the_gate_stops(lang):
+def test_rc127_a4_the_report_notice_gives_the_gate_s_reason_when_the_gate_stops(lang, monkeypatch):
     from app.api.routes.ai_report import LONGITUDINAL_NOTICE, longitudinal_notice
-    notice = longitudinal_notice(_stopped("sequence_not_flair"), lang)
+    notice = longitudinal_notice(_stopped("sequence_not_flair", monkeypatch), lang)
     assert notice and LONGITUDINAL_NOTICE[lang]["abstained"] not in notice, "RC-062's reason for a gate stop"
     assert qg.reason_sentence("sequence_not_flair", lang) in notice
 
 
-def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report():
+def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report(monkeypatch):
     from app.api.routes.ai_report import longitudinal_notice
+    from tests.unit.test_rc122_review11 import served           # I1 (eleventh review): the server's record
     codes = qg.load_policy()["codes"]
     for code in codes:
         assert qg.CAVEAT_REASONS[code] == qg.reason_sentence(code, "en"), code
@@ -235,7 +237,8 @@ def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report():
         for lang in ("es", "de"):
             assert qg.reason_sentence(code, lang) and qg.reason_sentence(code, lang) != qg.reason_sentence(code, "en"), (code, lang)
     warned = {"abstained": False, "change_candidates": {"new": 0, "enlarging": 0},
-              "quality_gate": {"ai_output_allowed": True, "codes": ["thickness_at_least"]}}
+              "quality_gate": served({"mode": "comparison", "ai_output_allowed": True, "codes": ["thickness_at_least"]},
+                                     monkeypatch)}
     for lang in ("en", "es", "de"):
         assert qg.reason_sentence("thickness_at_least", lang) in longitudinal_notice(warned, lang)
     assert qg.CAVEAT_REASONS["thickness_at_least"] in longitudinal_notice(warned, "en"), "the drifted sentence"

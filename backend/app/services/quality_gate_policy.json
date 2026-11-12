@@ -6,7 +6,7 @@
     "DATA RULE (REQ-SAFE-053, RC-124): no threshold or figure here may come from non-commercial data. The thickness band limits are the limits pre-registered in the Paper A v0.3 protocol and only NAME the band in a warning. Until a v3 evidence asset with a licence on commercial_licence_allowlist is set in thickness.evidence_asset (the hook, null today), the thickness check warns and never abstains."
   ],
   "policy_id": "quality-gate",
-  "policy_version": "1.10.0-draft",
+  "policy_version": "1.11.0-draft",
   "status": "DRAFT, PENDING owner approval",
   "modes": {
     "single": { "visits": ["study"], "checks": ["platform", "sequence", "thickness", "skull"] },
@@ -103,6 +103,7 @@
     "skull_pending": "pending",
     "scanner_not_recorded": "warn",
     "header_unreadable": "abstain",
-    "source_image_missing": "abstain"
+    "source_image_missing": "abstain",
+    "gate_not_established": "abstain"
   }
 }

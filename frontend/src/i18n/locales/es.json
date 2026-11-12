@@ -1558,6 +1558,11 @@
         "message": "No se encontró la imagen, o usted no tiene acceso a ella, así que la IA no se ejecuta.",
         "action": "Compruebe que la imagen sigue en el estudio y que puede abrirla; después vuelva a seleccionarla."
       },
+      "gate_not_established": {
+        "message": "No se pudo confirmar en el servidor la decisión del control de calidad para esta pareja, así que no se da ningún resultado automático de cambio.",
+        "action": "Compare de nuevo las dos visitas.",
+        "action_comparison": "Compare de nuevo las dos visitas."
+      },
       "source_image_missing": {
         "message": "Una máscara de esta comparación no tiene imagen de origen, así que no se pueden comprobar su secuencia ni su grosor de corte y la IA no la compara.",
         "action": "Compare dos segmentaciones hechas sobre imágenes guardadas, o compare las imágenes visualmente con la superposición.",

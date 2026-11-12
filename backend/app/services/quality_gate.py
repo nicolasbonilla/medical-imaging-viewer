@@ -811,6 +811,48 @@ def rate_limited_response(wait: int):
         "details": {"code": "gate_rate_limited", "retry_after_s": wait}}})
 
 
+# Eleventh review of PR #81 (I1): the server's OWN record of every gate decision it returned, by trace id — the report
+# path reads the decision from here and never from the client's copy. Bounded; per server instance (a decision made on
+# another instance, or before a restart, is "not established", never trusted).
+DECISION_STORE_MAX = 4096
+_DECISIONS: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
+_TRACE_ID = re.compile(r"[0-9a-f]{32}")
+
+
+def _remember(result: Dict[str, Any]) -> None:
+    trace = result.get("trace_id")
+    if isinstance(trace, str) and _TRACE_ID.fullmatch(trace):
+        _DECISIONS[trace] = copy.deepcopy(result)
+        while len(_DECISIONS) > DECISION_STORE_MAX:
+            _DECISIONS.popitem(last=False)
+
+
+def stored_decision(block: Any) -> Optional[Dict[str, Any]]:
+    """The decision the server returned for a comparison, looked up by the trace id of a (client-sent) gate block; None
+    when the trace id is missing, malformed, unknown, or names a decision that was not a comparison's."""
+    trace = block.get("trace_id") if isinstance(block, dict) else None
+    decision = _DECISIONS.get(trace) if isinstance(trace, str) and _TRACE_ID.fullmatch(trace) else None
+    return decision if decision is not None and decision.get("mode") == "comparison" else None
+
+
+def report_account(longitudinal: Any) -> Optional[Dict[str, Any]]:
+    """I1: the gate's account of a report's longitudinal block, from the SERVER's record only — the decision, its causes
+    and its warnings; the client's copy is used only for its trace id. None while the gate is not enforced (the base
+    report). A missing, unknown or mismatched trace id: comparability NOT established by the gate — treated as a stop,
+    with a plain note (gate_not_established), never as a clean comparison. The ONE hook of the report path (when PR #78
+    lands, the notice built from it moves into the verified report's code-written notices)."""
+    from app.core.config import get_settings
+    if not get_settings().QUALITY_GATE_ENFORCED or not isinstance(longitudinal, dict):
+        return None
+    decision = stored_decision(longitudinal.get("quality_gate"))
+    if decision is None:
+        return {"established": False, "stopped": True, "causes": ["gate_not_established"], "warnings": []}
+    account = explain(decision)
+    stopped = decision.get("ai_output_allowed") is not True
+    return {"established": True, "stopped": stopped, "causes": account["causes"] if stopped else [],
+            "warnings": account["warnings"]}
+
+
 def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None, releases_output: bool = True,
                      trace_id: Optional[str] = None) -> Dict[str, Any]:
     """The gate as the registered agent ``quality-gate`` (RC-126): the platform's approval and kill switches are
@@ -869,6 +911,7 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
             # S3: the physician's attestation is recorded with the run's actor (the authenticated clinician)
             reg.audit("success", audit_code(result), event=event, agent_id=AGENT_ID,
                       study_key=study_key or None, trace_id=state["trace_id"], details=details)
+    _remember(result)                                 # I1: the report reads this record, never the client's copy
     return result
 
 
@@ -935,13 +978,15 @@ def explain(gate: Any) -> Dict[str, Any]:
     all take them from here), and the visits the physician attested. A client-supplied result is read defensively: checks of the
     right shape, else codes with their policy status; anything else is ignored."""
     statuses = _policy()["codes"]
+    text = lambda v: v if isinstance(v, str) else None  # noqa: E731 — I2 (eleventh review): anything else is ignored
     checks = gate.get("checks") if isinstance(gate, dict) and isinstance(gate.get("checks"), list) else None
-    if checks is not None and all(isinstance(c, dict) for c in checks):
+    if checks is not None:
         # known codes only (R4): a client-supplied result never brings free text into a report or an audit record
-        pairs = [(c.get("code"), c.get("status"), c.get("visit")) for c in checks if c.get("code") in statuses]
+        pairs = [(text(c.get("code")), text(c.get("status")), text(c.get("visit"))) for c in checks
+                 if isinstance(c, dict) and text(c.get("code")) in statuses]
     else:
         codes = gate.get("codes") if isinstance(gate, dict) and isinstance(gate.get("codes"), list) else []
-        pairs = [(c, statuses.get(c), None) for c in codes if isinstance(c, str) and c in statuses]
+        pairs = [(c, statuses[c], None) for c in codes if isinstance(c, str) and c in statuses]
     unique = lambda xs: list(dict.fromkeys(xs))  # noqa: E731
     causes = unique(c for c, st, _ in pairs if st == "abstain")
     if not causes and isinstance(gate, dict) and gate.get("ai_output_allowed") is not True:

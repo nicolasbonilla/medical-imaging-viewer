@@ -245,7 +245,8 @@ def test_rc127_one_gate_warnings_block_in_the_report_model_text():
 def test_rc127_one_warnings_story():
     assert not hasattr(qg, "warning_codes"), "warnings come from explain() only"
     assert 'reason_lead("warned"' in inspect.getsource(qg.apply_to_comparison)
-    assert inspect.getsource(air.longitudinal_notice).count("explain(") == 1
+    src = inspect.getsource(air.longitudinal_notice)                 # eleventh review (I1): the server's record
+    assert src.count("report_account(") == 1 and "explain(" not in src
 
 
 def test_rc126_one_rate_limit_helper_and_one_429_builder():

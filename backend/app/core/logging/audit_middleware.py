@@ -104,6 +104,10 @@ ROUTE_ACTIONS: Dict[Tuple[str, str], Tuple[AuditEventType, str]] = {
 STDOUT_ONLY_ROUTES = frozenset({("POST", "/api/v1/auth/captcha")})
 
 # Small JSON routes whose BODY names the objects acted on (read only up to 64 KiB, ids only).
+# Routes whose handler writes the one authoritative audit record of each request (eleventh review of PR #81, I5): the
+# middleware adds none of its own, except for an authentication failure or a server error.
+SELF_AUDITED_ROUTES = frozenset({("POST", "/api/v1/clinical/quality-gate")})
+
 BODY_ID_ROUTES = frozenset({
     "/api/v1/segmentation/longitudinal/review",
     "/api/v1/segmentation/longitudinal/compare",
@@ -322,6 +326,10 @@ class AuditMiddleware(BaseHTTPMiddleware):
         if path.startswith(AUTH_PREFIX) and ctx.explicit and status < 500:
             # the route recorded its own, richer event (review M3: every OTHER /auth request — passkey
             # registration and deletion, user list and detail reads, any 5xx — is recorded below)
+            return None, False
+        if (method, template) in SELF_AUDITED_ROUTES and status < 500 and status not in (401, 403):
+            # I5 (eleventh review of PR #81): the route writes the ONE authoritative record of each consultation (a
+            # releasing one as CLINICAL_AI_RUN); a 404 (gate not enabled) or a 429 consulted nothing and is not one
             return None, False
 
         mapped = ROUTE_ACTIONS.get((method, template)) if template else None

@@ -29,6 +29,15 @@ COUNTS = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.5, "total_lesions_tp1": 3, "t
           "status_counts": {"new": 1, "enlarged": 0, "resolved": 0, "shrunk": 0, "stable": 3}}
 
 
+def served(gate, monkeypatch):
+    """A gate decision as the SERVER returned and recorded it (I1): the gate enforced, the decision kept under its trace
+    id — what every report test feeds the report path with, since the report trusts nothing else."""
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    gate = {**gate, "trace_id": uuid.uuid4().hex}
+    qg._remember(gate)
+    return gate
+
+
 def _decision(visit, monkeypatch):
     """A comparison decision the SERVER made and returned (with its trace id)."""
     monkeypatch.setattr(qg, "_REGISTRY", _registry())

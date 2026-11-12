@@ -272,18 +272,29 @@ def _spacing(s) -> Optional[List[float]]:
     return vals if len(vals) == 3 and all(math.isfinite(x) and x > 0 for x in vals) else None
 
 
-def rc062_voxel_spacing(img) -> Optional[tuple]:
-    """RC-062's voxel spacing of a source image, in the mask's internal axis order (k, a0, a1) — the ONE helper for the
-    run time (the image the NIfTI loader returned, _load_source_intensity) and for the quality gate's prediction (the
-    NIfTI header alone; tenth review of PR #81, S3): a 3-D image whose three zooms are positive, else None (not
-    established, so RC-062 withholds)."""
+def voxel_spacing(img) -> Optional[tuple]:
+    """The voxel spacing of a NIfTI image in the mask's internal axis order (k, a0, a1) = (zooms[2], zooms[0], zooms[1])
+    — the ONE place of that rule (eleventh review of PR #81): every route that turns zooms into a mask's spacing calls
+    it. None unless its first three zooms are positive."""
     try:
         zooms = img.header.get_zooms()[:3]
-        if len(img.shape) != 3 or len(zooms) < 3 or not all(float(z) > 0 for z in zooms):
+        if len(zooms) < 3 or not all(float(z) > 0 for z in zooms):
             return None
         return (float(zooms[2]), float(zooms[0]), float(zooms[1]))
     except Exception:  # noqa: BLE001 — not established
         return None
+
+
+def rc062_voxel_spacing(img) -> Optional[tuple]:
+    """RC-062's voxel spacing of a source image — the same helper at run time (the image the NIfTI loader returned,
+    _load_source_intensity) and for the quality gate's prediction (the NIfTI header alone; tenth review, S3): RC-062
+    loads 3-D sources only, so anything else is None (not established, so RC-062 withholds)."""
+    try:
+        if len(img.shape) != 3:
+            return None
+    except Exception:  # noqa: BLE001 — not established
+        return None
+    return voxel_spacing(img)
 
 
 def compare_acquisitions(acq_tp1: Optional[dict], acq_tp2: Optional[dict],

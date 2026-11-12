@@ -220,15 +220,17 @@ describe('the server decides the output, and no stale answer acts (G17, G18)', (
   });
 
   it('rc122 G18 one request per click, Run disabled meanwhile, and no run of A once B is selected', async () => {
+    // I6 (eleventh review): only an attested run asks again on Run (without one, the preflight answer is used)
     idle();
     const queue: Pending[] = [];
     h.answer = deferred(queue);
     const B = 'patients/p/studies/s/b.nii.gz';
     const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
     await waitFor(() => expect(queue.length).toBe(1));
-    queue[0].resolve(server(VISIT, ON, FILE));
+    queue[0].resolve(server({ ...VISIT, sequence: 'unknown' }, ON, FILE));
     await screen.findByTestId('quality-gate-before');
     fireEvent.click(screen.getByTestId('browser-flames-confirm-sequence').querySelector('input') as HTMLInputElement);
+    fireEvent.click(screen.getByTestId('quality-gate-attest').querySelector('input') as HTMLInputElement);
     const run = screen.getByRole('button', { name: /Segment in this browser/ });
     await waitFor(() => expect(run).not.toBeDisabled());
     fireEvent.click(run);

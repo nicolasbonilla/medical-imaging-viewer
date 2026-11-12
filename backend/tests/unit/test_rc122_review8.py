@@ -67,7 +67,7 @@ def test_rc127_g30_reviewer_case_thickness_thick_is_never_a_cause():
 
 
 @pytest.mark.parametrize("lang", ["en", "es", "de"])
-def test_rc127_g30_reviewer_case_the_report_model_and_the_notice_give_the_same_cause(lang):
+def test_rc127_g30_reviewer_case_the_report_model_and_the_notice_give_the_same_cause(lang, monkeypatch):
     """A gate stop reaches the report model as the gate's causes — never as 'acquisition not comparable'."""
     from app.api.routes.ai_report import LONGITUDINAL_NOTICE, longitudinal_notice
     from app.services.brain_report_service import BrainReportService
@@ -75,7 +75,8 @@ def test_rc127_g30_reviewer_case_the_report_model_and_the_notice_give_the_same_c
     gate = qg.evaluate({"mode": "comparison", "platform": PLATFORM_ON, "visits": [
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
         {"sequence": "T1", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
-    lng = qg.abstained_comparison(gate)
+    from tests.unit.test_rc122_review11 import served           # I1 (eleventh review): the server's record
+    lng = qg.abstained_comparison(served(gate, monkeypatch))
     guarded = _Projector().longitudinal(lng)
     assert guarded.get("abstained_by") == "quality_gate" and guarded.get("causes") == ["sequence_not_flair"]
     prompt = BrainReportService()._build_findings_prompt({"longitudinal": guarded}, language=lang)
@@ -87,21 +88,22 @@ def test_rc127_g30_reviewer_case_the_report_model_and_the_notice_give_the_same_c
     assert qg.reason_sentence("scanner_not_recorded", lang) not in notice.split(qg.reason_lead("warned", lang))[0]
 
 
-def test_rc127_g30_rc062_s_reason_only_when_rc062_withheld():
+def test_rc127_g30_rc062_s_reason_only_when_rc062_withheld(monkeypatch):
     from app.api.routes.ai_report import LONGITUDINAL_NOTICE, longitudinal_notice
+    from tests.unit.test_rc122_review11 import served           # I1 (eleventh review): the server's record
     warned = qg.evaluate({"mode": "comparison", "platform": PLATFORM_ON, "visits": [
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
     assert warned["ai_output_allowed"] is True
     rc062 = qg.apply_to_comparison(lcs.present_comparison({"changes": []}, acquisition_check={"status": "not_established",
                                    "missing": [], "differing": []}, evidence=None, binding=None, stored_review=None,
-                                   visit_check={"status": "ok"}), warned)
+                                   visit_check={"status": "ok"}), served(warned, monkeypatch))
     notice = longitudinal_notice(rc062, "en")
     assert LONGITUDINAL_NOTICE["en"]["abstained"] in notice
     assert qg.reason_sentence("scanner_not_recorded") in notice            # a warning, stated as a warning
-    stopped = longitudinal_notice(qg.abstained_comparison({**warned, "ai_output_allowed": False, "decision": "abstain",
+    stopped = longitudinal_notice(qg.abstained_comparison(served({**warned, "ai_output_allowed": False, "decision": "abstain",
         "codes": ["scanner_changed"], "checks": [{"check": "scanner", "visit": None, "status": "abstain",
-                                                  "code": "scanner_changed", "params": {}}]}), "en")
+                                                  "code": "scanner_changed", "params": {}}]}, monkeypatch)), "en")
     assert LONGITUDINAL_NOTICE["en"]["abstained"] not in stopped
 
 

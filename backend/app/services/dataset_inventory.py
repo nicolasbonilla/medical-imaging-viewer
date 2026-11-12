@@ -142,10 +142,18 @@ _ID_TOKEN = re.compile(r"^(?=.*[0-9])[0-9a-f]{4,}$|^[0-9a-f]{8,}$")
 
 def descriptive_name(value) -> str:
     """The descriptive part of a file id: its file name without directories or extension, without UUID / hex / numeric
-    identifier tokens (G20)."""
+    identifier tokens (G20). Eleventh review of PR #81 (I3): ONLY those tokens go — every other character, the sequence
+    punctuation included ('*' of T2*, '+' of +C, '-'), is kept as written, so 'AX_T2*' still reads as T2* (SWI)."""
     base = str(value or "").replace("\\", "/").rsplit("/", 1)[-1]
     base = re.sub(r"\.(nii\.gz|nii|dcm|gz)$", "", base, flags=re.IGNORECASE)
-    return " ".join(t for t in re.split(r"[^A-Za-z0-9]+", base) if t and not _ID_TOKEN.match(t.lower()))
+    kept = []
+    for part in re.split(r"([A-Za-z0-9]+)", base):
+        if part[:1].isalnum() and _ID_TOKEN.match(part.lower()):
+            if kept:                                  # with the separator before it, never a sequence mark
+                kept[-1] = kept[-1].rstrip("-_. ")
+            continue
+        kept.append(part)
+    return "".join(kept).strip("-_. ")
 
 
 def detect_sequence(*texts: str) -> Optional[str]:

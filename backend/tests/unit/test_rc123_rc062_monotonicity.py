@@ -136,13 +136,14 @@ def test_rc123_r4_a_warned_comparison_says_so_in_the_caveat():
     assert qg.CAVEAT_REASONS["thickness_at_least"] in out["caveat"]
 
 
-def test_rc123_r4_the_report_draft_states_the_gate_warnings():
+def test_rc123_r4_the_report_draft_states_the_gate_warnings(monkeypatch):
     from app.api.routes.ai_report import longitudinal_notice
+    from tests.unit.test_rc122_review11 import served           # I1 (eleventh review): the server's record
     from app.services.brain_report_service import BrainReportService
     from app.services.report_payload_guard import _Projector
     lng = qg.apply_to_comparison(lcs.present_comparison(
         dict(RESULT), acquisition_check={"status": "same", "missing": [], "differing": []}, evidence=None,
-        binding=None, stored_review=None, visit_check={"status": "ok"}), WARNED)
+        binding=None, stored_review=None, visit_check={"status": "ok"}), served(WARNED, monkeypatch))
     guarded = _Projector().longitudinal(lng)
     assert guarded.get("quality_gate_warnings") == ["thickness_at_least"]
     prompt = BrainReportService()._build_findings_prompt({"longitudinal": guarded}, language="en")

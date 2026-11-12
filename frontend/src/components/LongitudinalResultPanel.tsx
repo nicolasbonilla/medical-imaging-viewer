@@ -275,7 +275,14 @@ export function LongitudinalResultPanel({
       {/* Single quality gate (RC-123/RC-127; DRAFT): present only when the backend enforces it. */}
       {result.quality_gate && !rc062Governs && <QualityGatePanel result={result.quality_gate} testId="longitudinal-quality-gate" />}
       {result.quality_gate && rc062Governs && (
-        <p className="text-[9px] text-gray-400" data-testid="longitudinal-quality-gate-governed">{t('qualityGate.governedByRc062')}</p>
+        <div className="text-[9px] text-gray-400 space-y-0.5">
+          <p data-testid="longitudinal-quality-gate-governed">{t('qualityGate.governedByRc062')}</p>
+          {/* I4 (eleventh review of PR #81): the gate's warnings for this pair stay visible, as in the report notice */}
+          {(result.quality_gate.checks ?? []).filter((c) => c.status === 'warn' && c.code).map((c, i) => (
+            <p key={`${c.code}-${c.visit ?? ''}-${i}`} className="text-amber-200" data-testid="longitudinal-quality-gate-warning"
+              data-code={c.code ?? ''}>{t(`qualityGate.codes.${c.code}.message`)}</p>
+          ))}
+        </div>
       )}
       {gateStopped && onAttest && result.quality_gate && (
         <ComparisonAttestation key={`${tp1SegId}|${tp2SegId}`} gate={result.quality_gate} onAttest={onAttest} />

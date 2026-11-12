@@ -1547,6 +1547,11 @@
         "message": "The image was not found, or you have no access to it, so the AI does not run.",
         "action": "Check that the image is still in the study and that you may open it; then select it again."
       },
+      "gate_not_established": {
+        "message": "The quality check's decision for this pair could not be confirmed on the server, so no automatic change result is given.",
+        "action": "Compare the two visits again.",
+        "action_comparison": "Compare the two visits again."
+      },
       "source_image_missing": {
         "message": "A mask of this comparison has no source image, so its sequence and slice thickness cannot be checked and the AI does not compare it.",
         "action": "Compare two segmentations made on stored images, or compare the images visually with the overlay.",

@@ -1540,6 +1540,11 @@
         "message": "Das Bild wurde nicht gefunden, oder Sie haben keinen Zugriff darauf, daher läuft die KI nicht.",
         "action": "Prüfen Sie, ob das Bild noch in der Untersuchung ist und Sie es öffnen dürfen; wählen Sie es dann erneut."
       },
+      "gate_not_established": {
+        "message": "Die Entscheidung der Qualitätsprüfung für dieses Paar ließ sich auf dem Server nicht bestätigen, daher wird kein automatisches Veränderungsergebnis angegeben.",
+        "action": "Vergleichen Sie die beiden Besuche erneut.",
+        "action_comparison": "Vergleichen Sie die beiden Besuche erneut."
+      },
       "source_image_missing": {
         "message": "Zu einer Maske dieses Vergleichs gibt es kein Ursprungsbild, daher lassen sich Sequenz und Schichtdicke nicht prüfen und die KI vergleicht sie nicht.",
         "action": "Vergleichen Sie zwei Segmentierungen auf gespeicherten Bildern, oder vergleichen Sie die Bilder visuell mit der Überlagerung.",

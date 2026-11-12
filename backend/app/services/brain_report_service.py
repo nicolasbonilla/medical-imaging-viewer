@@ -743,7 +743,7 @@ class BrainReportService:
                 # G30 (eighth review of PR #81): the quality gate stopped the pair before anything was computed —
                 # its causes, from the one table, never RC-062's "not comparable"
                 from app.services.quality_gate import CAVEAT_REASONS
-                causes = [CAVEAT_REASONS[c] for c in (lng.get("causes") or []) if c in CAVEAT_REASONS] \
+                causes = [CAVEAT_REASONS[c] for c in (lng.get("causes") or []) if isinstance(c, str) and c in CAVEAT_REASONS] \
                     or [CAVEAT_REASONS["gate_unavailable"]]
                 parts.append(
                     "  Automatic change candidates were NOT computed: the quality gate stopped the comparison "

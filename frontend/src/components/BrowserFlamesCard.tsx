@@ -135,11 +135,20 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       return;
     }
     if (inFlight.current) return;                                    // G18: one request per click
-    inFlight.current = true;
-    setBusy(true);
     // The attestation reaches the backend (and its audit, with the clinician) only now, deliberately.
     const attestation = canAttest && attested;
     const fileAtClick = flairFileId;
+    // I6 (eleventh review of PR #81): without an attestation nothing has changed since the preflight answer for this
+    // file, so Run uses it — two consultations per run (before and after), not three
+    if (!attestation && preflight?.ai_may_run === true && preflight.subject?.file_id === fileAtClick) {
+      attestedAtRun.current = false;
+      runVersion.current = preflight.subject?.version ?? null;
+      void flames.run(fileAtClick, { seriesDescription, clinicianConfirmedFlair: true, qualityGate: true,
+        gateSequenceClass: serverSequenceClass(preflight) });
+      return;
+    }
+    inFlight.current = true;
+    setBusy(true);
     void requestQualityGate(fileAtClick, attestation).then((fresh) => {
       inFlight.current = false;
       setBusy(false);
