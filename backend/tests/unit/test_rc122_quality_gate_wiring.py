@@ -267,13 +267,13 @@ def test_rc123_flag_on_same_scanner_flair_shows_candidates_with_the_gate_attache
 
 
 def test_rc123_a_scanner_change_stops_the_comparison_in_the_gate_and_in_rc062(compare, monkeypatch):
-    client, records, (_, f2) = compare
+    client, records, (f1, f2) = compare
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     records["acq"][f2]["manufacturer"] = "GE MEDICAL SYSTEMS"
     res = _post(client)
     assert "scanner_changed" in res["quality_gate"]["codes"] and res["abstained"] is True
-    assert res["acquisition_check"]["status"] == "differs"
+    assert lcs.compare_acquisitions(records["acq"][f1], records["acq"][f2], None, None)["status"] == "differs"
 
 
 def test_rc123_the_gate_is_stricter_than_rc062_on_the_sequence(compare, monkeypatch):
@@ -283,7 +283,157 @@ def test_rc123_the_gate_is_stricter_than_rc062_on_the_sequence(compare, monkeypa
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     records["desc"][f2] = "t1_mprage_sag"
     res = _post(client)
-    assert res["acquisition_check"]["status"] == "same"
+    assert lcs.compare_acquisitions(records["acq"][f1], records["acq"][f2], None, None)["status"] == "same"
     assert "sequence_not_flair" in res["quality_gate"]["codes"]
     assert res["abstained"] is True and res["change_candidates"] is None and res["burden_tp2_mm3"] is None
-    assert "sequence_not_flair" in res["caveat"]
+    assert "not a FLAIR" in res["caveat"] and "sequence_not_flair" not in res["caveat"]
+
+
+# ----------------------------------------------------------------------------- first review of PR #81
+def test_rc123_c2_the_gate_decides_before_any_mask_or_image_is_loaded(compare, monkeypatch):
+    client, *_ = compare
+    loads = []
+
+    async def _source(file_id, storage_service, context):
+        loads.append(file_id)
+        return None, (1.0, 1.0, 1.0), None
+
+    monkeypatch.setattr(sa, "_load_source_intensity", _source)
+    seg = app.dependency_overrides[get_segmentation_service]()
+    masks = []
+    monkeypatch.setattr(seg, "get_mask", lambda sid: masks.append(sid))
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry.load(REGISTRY, audit=lambda e: None))
+    res = _post(client)
+    assert res["abstained"] is True and res["quality_gate"]["codes"] == ["gate_not_approved"]
+    assert loads == [] and masks == [], "nothing is loaded, registered or mapped before the gate allows it"
+    sel = _post(client, "/api/v1/segmentation/longitudinal/sel")
+    assert sel["abstained"] is True and loads == [] and masks == []
+
+
+def test_rc123_c3_the_caveat_keeps_rc062_reasons_and_adds_plain_gate_reasons():
+    result = {"abstained": True, "changes": [], "caveat": "the dates of the two visits could not be established."}
+    gate = {"ai_output_allowed": False, "codes": ["scanner_changed", "sequence_unknown"]}
+    out = qg.apply_to_comparison(result, gate)
+    assert out["caveat"].startswith("the dates of the two visits could not be established.")
+    assert "different scanners" in out["caveat"] and "does not say which sequence" in out["caveat"]
+    for code in qg.load_policy()["codes"]:
+        text = qg.gate_caveat({"codes": [code]})
+        assert text and code not in text and "_" not in text, code
+
+
+def test_rc123_e2_the_acquisition_records_are_read_once(compare, monkeypatch):
+    client, records, _ = compare
+    reads, stream = [], []
+    monkeypatch.setattr(sa, "_source_acquisition", lambda fid: reads.append(fid) or records["acq"].get(fid),
+                        raising=False)
+    monkeypatch.setattr(lcs, "read_source_acquisition", lambda fid, svc=None: stream.append(fid))
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    res = _post(client)
+    assert res["abstained"] is False and len(reads) == 2 and stream == []
+
+
+def test_rc122_e3_the_thin_limit_is_the_evaluated_policy_s(monkeypatch):
+    monkeypatch.setattr(qg, "load_policy", lambda: 1 / 0)
+    rec = {**ACQ, "slice_thickness_mm": 1.8}
+    assert qg.thickness_from_acquisition_record(rec, thin_limit_mm=2.0)["state"] == "not_determinable"
+    assert qg.thickness_from_acquisition_record(rec, thin_limit_mm=1.5) == {"state": "at_least", "effective_mm": 1.8}
+
+
+class _CountingStorage(_Storage):
+    def __init__(self, data):
+        super().__init__(data)
+        self.downloads = 0
+
+    async def download_file(self, bucket, path):
+        self.downloads += 1
+        return self.data
+
+    async def get_file_metadata(self, bucket, path):
+        from app.core.interfaces.storage_interface import StorageObject
+        return StorageObject(bucket=bucket, name=path, size=len(self.data), content_type="application/octet-stream",
+                             checksum_sha256="v1", created_at="2026-11-12")
+
+
+class _NoPixelImaging(ImagingService):
+    def load_nifti(self, data):
+        raise AssertionError("the gate must not decode the image")
+
+    def load_dicom(self, data):
+        raise AssertionError("the gate must not decode the image")
+
+
+def _dicom_bytes():
+    import io
+    import pydicom
+    from pydicom.dataset import FileDataset, FileMetaDataset
+    from pydicom.uid import ExplicitVRLittleEndian, generate_uid
+    meta = FileMetaDataset()
+    meta.MediaStorageSOPClassUID = "1.2.840.10008.5.1.4.1.1.4"
+    meta.MediaStorageSOPInstanceUID = generate_uid()
+    meta.TransferSyntaxUID = ExplicitVRLittleEndian
+    ds = FileDataset("x.dcm", {}, file_meta=meta, preamble=b"\0" * 128)
+    ds.SOPClassUID, ds.SOPInstanceUID, ds.Modality = meta.MediaStorageSOPClassUID, meta.MediaStorageSOPInstanceUID, "MR"
+    ds.SeriesDescription, ds.InversionTime, ds.ImageType = "Ax T2 FLAIR", 2200, ["ORIGINAL", "PRIMARY"]
+    ds.SliceThickness, ds.SpacingBetweenSlices, ds.MRAcquisitionType = 3.0, 3.0, "2D"
+    ds.Rows = ds.Columns = 4
+    ds.BitsAllocated, ds.BitsStored, ds.HighBit, ds.PixelRepresentation, ds.SamplesPerPixel = 16, 16, 15, 0, 1
+    ds.PhotometricInterpretation, ds.PixelData = "MONOCHROME2", b"\0" * 32
+    buf = io.BytesIO()
+    pydicom.dcmwrite(buf, ds, write_like_original=False)
+    return buf.getvalue()
+
+
+def test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version(single, monkeypatch):
+    import asyncio
+    client, _ = single
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    threads = []
+    parse = qg.read_header_fields
+
+    def _spy(data, name, imaging_service):
+        try:
+            asyncio.get_running_loop()
+            threads.append("event loop")
+        except RuntimeError:
+            threads.append("worker")
+        return parse(data, name, imaging_service)
+
+    monkeypatch.setattr(qg, "read_header_fields", _spy)
+    app.dependency_overrides[get_imaging_service] = lambda: _NoPixelImaging()
+    for data, name, expected in ((_dicom_bytes(), "patients/p/studies/s/series/se/x.dcm", ("FLAIR", "native", 3.0)),
+                                 (None, FILE, ("missing", "at_least", 5.0))):
+        storage = _CountingStorage(data) if data is not None else None
+        if storage is None:
+            img = nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0]))
+            storage = _CountingStorage(img.to_bytes())
+        app.dependency_overrides[get_storage_service] = lambda s=storage: s
+        monkeypatch.setattr(ct, "_authorized_inputs", lambda *a, n=name: _as_coro([n]))
+        for _ in range(2):
+            body = client.post("/api/v1/clinical/quality-gate", json={"file_id": name}).json()
+            visit = body["inputs"]["visits"][0]
+            assert (visit["sequence"], visit["thickness"]["state"], visit["thickness"]["effective_mm"]) == expected
+        assert storage.downloads == 1, "the second consultation of the same file version is served from the cache"
+    assert threads and set(threads) == {"worker"}
+
+
+async def _as_coro(value):
+    return value
+
+
+def test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user(single, monkeypatch):
+    client, _ = single
+    for value in ("true", 1, "yes"):
+        r = client.post("/api/v1/clinical/quality-gate", json={"file_id": FILE, "physician_confirmed_flair": value})
+        assert r.status_code == 422, value
+    records = []
+    reg = _registry()
+    reg._audit = lambda e: records.append((e, R.current_actor().user_id))
+    monkeypatch.setattr(qg, "_REGISTRY", reg)
+    client.post("/api/v1/clinical/quality-gate", json={"file_id": FILE})
+    client.post("/api/v1/clinical/quality-gate", json={"file_id": FILE, "physician_confirmed_flair": True})
+    (plain, u1), (attested, u2) = records
+    assert "physician_attested" not in plain["code"] and "physician_attested" in attested["code"]
+    assert u1 == u2 == "id-dr_rev"

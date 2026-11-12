@@ -580,6 +580,94 @@ def test_rc125_g11_no_ai_output_while_a_check_is_pending_or_abstains(results):
     assert not bad, _report("G11", bad)
 
 
+# ----------------------------------------------------------------------------- first review of PR #81 (S1-S3, C1)
+CORPUS = REPO / "frontend" / "src" / "config" / "qualityGate.sequences.v1.json"
+REQUIRED_NAMES = ("DWI", "ADC", "TRACE", "STIR", "DIR", "PSIR", "SWI", "GRE", "T2*", "TOF", "MPRAGE", "SPACE",
+                  "CUBE", "VISTA", "FFE", "T1_FLAIR", "FLAIR_T1", "T1W_FLAIR", "FLAIR T1W", "T2_FLAIR", "3D_FLAIR",
+                  "FLAIR_3D", "FLAIR_FS", "DARK_FLUID", "DarkFluid", "dark-fluid", "localizer", "Scout", "MPR",
+                  "MIP", "Derived")
+
+
+def _corpus():
+    return json.loads(CORPUS.read_text(encoding="utf-8"))["cases"]
+
+
+def test_rc122_g12_the_corpus_is_broad_enough():
+    cases = _corpus()
+    texts = " | ".join(str(c["text"]) for c in cases)
+    assert len(cases) >= 80
+    assert {"Siemens", "GE", "Philips", "Canon"} <= {c["vendor"] for c in cases}
+    assert [n for n in REQUIRED_NAMES if n not in texts] == []
+    assert {"", None} <= {c["text"] for c in cases}
+    assert {c["expected"] for c in cases} == {"FLAIR", "T1", "T2", "other", "unknown", "missing"}
+
+
+def test_rc122_g12_every_series_description_gets_its_class():
+    bad = [(c["text"], c["expected"], QG.sequence_from_header(c["text"], c["inversion_time_ms"]))
+           for c in _corpus() if QG.sequence_from_header(c["text"], c["inversion_time_ms"]) != c["expected"]]
+    assert not bad, f"G12 failed for {len(bad)} of {len(_corpus())} descriptions; first: {bad[:6]}"
+
+
+def test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed():
+    bad = []
+    for c in _corpus():
+        if c["expected"] not in ("other", "T1", "T2"):
+            continue
+        seq = QG.sequence_from_header(c["text"], c["inversion_time_ms"])
+        visit = {**BASE_VISIT, "sequence": seq, "physician_confirmed_flair": True}
+        if QG.evaluate({"mode": "single", "visits": [visit], "platform": PLATFORM_ON}).get("ai_may_run") is not False:
+            bad.append(c["text"])
+    assert not bad, f"G12: {len(bad)} non-FLAIR names let the AI run after a confirmation: {bad[:6]}"
+
+
+def _confirmation_modes():
+    # The product offers the physician's attestation only in the single-study card (S3; C1).
+    return _policy()["sequence"].get("confirmation_modes", ["single"])
+
+
+def test_rc122_g13_a_confirmation_lifts_only_unknown_or_missing_and_only_where_it_is_offered(results):
+    bad = []
+    for key, values, inp, out in results:
+        confirmed = [v for v in inp["visits"] if v["physician_confirmed_flair"] is True]
+        if not confirmed:
+            continue
+        lifted = "sequence_confirmed_by_physician" in out.get("codes", [])
+        if lifted and inp["mode"] not in _confirmation_modes():
+            bad.append(key)
+        if any(v["sequence"] in ("T1", "T2", "other") for v in confirmed) and out.get("ai_may_run") is not False:
+            bad.append(key)
+    for seq in ("other", "T1", "T2"):
+        for mode, visits in (("single", [{**BASE_VISIT, "sequence": seq, "physician_confirmed_flair": True}]),
+                             ("comparison", [BASE_VISIT, {**BASE_VISIT, "sequence": seq, "physician_confirmed_flair": True}])):
+            if QG.evaluate({"mode": mode, "visits": visits, "platform": PLATFORM_ON}).get("ai_may_run") is not False:
+                bad.append(f"{mode}:{seq}")
+    assert not bad, _report("G13", bad)
+
+
+def _action_key(policy, mode, code):
+    return ((policy.get("mode_actions") or {}).get(mode) or {}).get(code, "action")
+
+
+def test_rc127_g14_every_suggested_action_is_possible_in_its_mode(results):
+    """An action that asks for the physician's attestation is shown only where the product offers it."""
+    policy = _policy()
+    texts = {lang: (_locale(lang).get("qualityGate") or {}).get("codes") or {} for lang in LOCALES}
+    asks = re.compile(r"confirmation box|casilla de confirmación|Bestätigungshäkchen", re.IGNORECASE)
+    bad = []
+    for key, _, inp, out in results:
+        for c in out.get("checks", []):
+            if c.get("status") == "pass" or not c.get("code"):
+                continue
+            action = _action_key(policy, inp["mode"], c["code"])
+            for lang in LOCALES:
+                text = (texts[lang].get(c["code"]) or {}).get(action)
+                if not isinstance(text, str) or len(text.strip()) < 12:
+                    bad.append(key)
+                elif asks.search(text) and inp["mode"] not in _confirmation_modes():
+                    bad.append(key)
+    assert not bad, _report("G14", bad)
+
+
 if __name__ == "__main__":  # pragma: no cover — maintainer tool
     if "--write-fixture" in sys.argv:
         FIXTURE.write_text(json.dumps(build_fixture(), indent=1, ensure_ascii=False) + "\n", encoding="utf-8",

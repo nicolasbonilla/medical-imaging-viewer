@@ -15,6 +15,7 @@ import {
   finalBrowserGate,
   gateUnavailable,
   QUALITY_GATE_POLICY,
+  sequenceFromHeader,
   skullFromProvenance,
   type GatePolicy,
   type ServerGateResponse,
@@ -71,6 +72,28 @@ describe('G4: one decision, backend and browser', () => {
     expect(cases.length).toBe(3200);
     const lines = cases.map((c) => `${c.key}=${canonicalGate(evaluateGate(c.input))}`).join('\n');
     expect(createHash('sha256').update(lines, 'utf8').digest('hex')).toBe(FIXTURE.matrix_sha256);
+  });
+});
+
+describe('G12: the series-description corpus, shared with pytest', () => {
+  const CORPUS = read('frontend/src/config/qualityGate.sequences.v1.json');
+  it('rc122 every description gets the same class in the browser', () => {
+    type Case = { text: string | null; inversion_time_ms: number | null; expected: string };
+    const bad = (CORPUS.cases as Case[]).filter((c) => sequenceFromHeader(c.text, c.inversion_time_ms) !== c.expected)
+      .map((c) => `${c.text} -> ${sequenceFromHeader(c.text, c.inversion_time_ms)} (expected ${c.expected})`);
+    expect(CORPUS.cases.length).toBeGreaterThanOrEqual(80);
+    expect(bad).toEqual([]);
+  });
+  it('rc122 a confirmation never lifts a non-FLAIR name, and never in a comparison', () => {
+    const base = FIXTURE.matrix.base_visit;
+    const on = { allowed: true, code: null };
+    for (const sequence of ['other', 'T1', 'T2']) {
+      expect(evaluateGate({ mode: 'single', visits: [{ ...base, sequence, physician_confirmed_flair: true }], platform: on }).ai_may_run).toBe(false);
+    }
+    const cmp = evaluateGate({ mode: 'comparison', platform: on,
+      visits: [base, { ...base, sequence: 'unknown', physician_confirmed_flair: true }] });
+    expect(cmp.ai_may_run).toBe(false);
+    expect(cmp.codes).toContain('sequence_unknown');
   });
 });
 

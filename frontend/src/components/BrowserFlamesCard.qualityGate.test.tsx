@@ -64,7 +64,45 @@ describe('before the run (RC-122)', () => {
     const panel = await screen.findByTestId('quality-gate-before');
     await waitFor(() => expect(panel.getAttribute('data-decision')).toBe('abstain'));
     expect(screen.getByRole('button', { name: /Segment in this browser/ })).toBeDisabled();
-    expect(h.calls[h.calls.length - 1]).toEqual([FILE, true]);
+    expect(h.calls).toEqual([[FILE, false]]);          // one call per file; the run checkbox is no attestation
+    expect(screen.queryByTestId('quality-gate-attest')).not.toBeInTheDocument();
+  });
+});
+
+describe('the physician attestation (S3, G13)', () => {
+  const attest = () => screen.getByTestId('quality-gate-attest').querySelector('input') as HTMLInputElement;
+  it('rc122 offered only for an unknown or missing sequence, unticked, and never for another sequence', async () => {
+    for (const [sequence, offered] of [['missing', true], ['unknown', true], ['other', false], ['T2', false], ['FLAIR', false]] as const) {
+      idle();
+      h.answer = () => Promise.resolve(server({ ...VISIT, sequence }, ON));
+      const { unmount } = render(<BrowserFlamesCard flairFileId={FILE} />);
+      await screen.findByTestId('quality-gate-before');
+      if (offered) expect(attest().checked).toBe(false);
+      else expect(screen.queryByTestId('quality-gate-attest')).not.toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it('rc122 sent only when ticked, on Run, never on a toggle; reset on a file change', async () => {
+    idle();
+    h.answer = (_f, confirmed) => Promise.resolve(server({ ...VISIT, sequence: 'missing', physician_confirmed_flair: confirmed }, ON));
+    const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
+    await screen.findByTestId('quality-gate-before');
+    const run = screen.getByRole('button', { name: /Segment in this browser/ });
+    fireEvent.click(screen.getByTestId('browser-flames-confirm-sequence').querySelector('input') as HTMLInputElement);
+    expect(run).toBeDisabled();                        // the run confirmation alone does not lift 'missing'
+    fireEvent.click(attest());
+    fireEvent.click(attest());
+    fireEvent.click(attest());
+    expect(h.calls).toEqual([[FILE, false]]);          // toggles are evaluated locally, the backend is not called
+    await waitFor(() => expect(run).not.toBeDisabled());
+    fireEvent.click(run);
+    await waitFor(() => expect(h.calls).toEqual([[FILE, false], [FILE, true]]));
+    await waitFor(() => expect(h.flames.run).toHaveBeenCalledTimes(1));
+    const OTHER = 'patients/p/studies/s/other.nii.gz';
+    rerender(<BrowserFlamesCard flairFileId={OTHER} />);
+    await waitFor(() => expect(h.calls[h.calls.length - 1]).toEqual([OTHER, false]));
+    expect(attest().checked).toBe(false);
   });
 
   it('rc126 the agent switched off: the run stays disabled and the reason is shown', async () => {

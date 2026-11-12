@@ -57,6 +57,15 @@ describe('QualityGatePanel (REQ-FUNC-118, RC-127)', () => {
     expect(panel.textContent).toContain('La IA no se ejecuta en este paso');
   });
 
+  it('rc127 G14 a comparison never asks for a confirmation it cannot take', () => {
+    const unknown = { ...BASE, sequence: 'unknown' };
+    const { unmount } = render(<QualityGatePanel result={evaluateGate({ mode: 'comparison', platform: ON, visits: [BASE, unknown] })} />);
+    expect(screen.getByTestId('quality-gate-panel').textContent).not.toMatch(/confirmation box/);
+    unmount();
+    render(<QualityGatePanel result={evaluateGate({ mode: 'single', platform: ON, visits: [unknown] })} />);
+    expect(screen.getByTestId('quality-gate-panel').textContent).toMatch(/confirmation box/);
+  });
+
   it('rc127 a thick acquisition warns with its band; a passing gate lists no reason', () => {
     const thick = evaluateGate({ mode: 'single', platform: ON, visits: [{ ...BASE, thickness: { state: 'native', effective_mm: 5 } }] });
     const { unmount } = render(<QualityGatePanel result={thick} />);
