@@ -1074,6 +1074,8 @@ Negative controls, re-run with every test command inside the throwaway copy (S4)
 
 Failing first (commit `e5e3f0f`, CI run 43158533290): G15 the inventory disagreed with the corpus in 40 of 144 entries, RC-049 in 56 of 151 (no shared class in 151 of 151), the gate in 10 of 151 (+2 short-TI names lifted by a confirmation); G16 12 of 12 abstaining codes showed the RC-062 box; G17 the final consultation reported only "pending"; G18 a double click sent two requests; backend wiring 4 failed and 9 errors.
 
+After the fixes: matrix 29 of 29, wiring 38 of 38, CAPA-013 52 of 52, CAPA-009 53 of 53, inventory 28 of 28; GitHub Actions run on `84e432c`: all 8 jobs green. Negative controls (every test run inside the throwaway copy): 81 mutations, **71 of 71 run detected, 0 survived, 0 invalid**; 10 component mutations not run (no node_modules). Per control: RC-122 30/30, RC-123 11/11, RC-124 5/5, RC-125 6/6, RC-126 19/19, RC-127 11/11. Baseline and restored copy: backend 67 / 0, browser harness 14 / 0.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
