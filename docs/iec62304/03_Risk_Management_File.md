@@ -1195,6 +1195,25 @@ Negative controls: 152 mutations in a throwaway copy (baseline and restored copy
 
 **HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** the over-blocking of real FLAIRs is removed without letting a non-acquisition image through (S1 of the seventh review still holds: SECONDARY, MPR, projections, subtraction, localizers and screen saves stay 'other').
 
+### C.15 Tenth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+No non-FLAIR image passes any more; the remaining findings were availability, an over-block case and audit truncation, several of them from extra moving parts. This round SIMPLIFIES.
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| S1 | A transient storage error was remembered: the consultation cache kept the "unreadable" answer | RC-122, RC-126 | the consultation cache and its key are removed; every consultation is evaluated and audited; the header cache never keeps a failed read; one limit before any read | S1 |
+| S2 | A GE exam-level ProtocolName ("BRAIN W WO CONTRAST") stopped a FLAIR series with no way out | RC-122 | exam-level fields never veto (vendor table, D-QG-16) | S2 |
+| S3 | The RC-062 prediction used another spacing source than RC-062 (a DICOM source predicted comparable) | RC-123 | one helper `lcs.rc062_voxel_spacing`; undeterminable = "will withhold" (D-QG-18) | S3 |
+| S4 | The real audit record dropped the gate's details and cut the reason at 64 characters | RC-126 | short code by construction; structured details kept by the durable record | S4 |
+| U1 | Retry wait derived during render from a mutable ref: overlapping timers, "Check again" before the last answer | RC-126 | retries as state in one hook | U1 |
+| One place | duplicated warnings blocks, two warnings sources, two limiters and two 429s, duplicated gate set-up and source lookups | RC-123, RC-126, RC-127 | one of each | unit |
+
+Failing first (commit `ab58e25`, on the code of cb8ac63): backend `test_rc122_review10.py` **23 of 29 failed** — S1 2, S2 11, S3 3, S4 2, one place 5; the labelled corpus' 576 FLAIR series under an exam-level ProtocolName: **486 dead ends**; browser (GitHub Actions run 43232333704): **2 of 2** U1 cases failed — the final consultation for the defect itself (an extra request while the retry was in flight), the before-the-run case at a test step whose timing was then corrected (commit `ab51787`: React renders a retry when the step that fired its timer ends); the corrected step was not re-measured on the old code. After the fixes: 0 dead ends, all pass (GitHub Actions run 43235569996, 8 of 8 jobs). Product code: backend −102 lines net, browser card −49, one new hook +122.
+
+Negative controls: 151 mutations in a throwaway copy (baseline and restored copy: backend 241 / 0, RC-049 browser harness 4 / 0): 126 run, 125 detected, 1 survived — AC3_dicom_spacing_predicted (the bound DICOM/NIfTI pair differed once put in the mask's axis order, so the mutant also predicted 'withheld'); a DICOM and a NIfTI source of the same isotropic 1 mm voxel size were added (commit `1eaa5fa`) and the re-run detected it — so **0 survived**, 0 invalid; 25 component mutations not run locally (no node_modules; vitest runs in CI). **9 retired** with their reason, because the part they mutated was removed (the consultation cache and its key: W11-W14, Y4, Y5, AB8; the second limiter: AB7; the packed deciding code: S5); 17 re-anchored; 8 new (AC1 a transient read error remembered, AC2 an exam-level protocol vetoes, AC3 a DICOM spacing predicted, AC4 RC-062's 3-D check dropped, AC5 the durable record drops the details, AC6 the reason cut, AC7 the limit after the reads, V30 'Check again' while in flight). Per control: RC-122 52 / 52, RC-123 25 / 25, RC-124 6 / 6, RC-125 4 / 4, RC-126 28 / 28, RC-127 18 / 18. CAPA-013 A16 re-anchored (moved by the ninth review). Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (retired, follow_up).
+
+**HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a transient read error no longer blocks a study until the cache expires; an exam-level field no longer blocks a real FLAIR; the audit keeps every attested visit.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
