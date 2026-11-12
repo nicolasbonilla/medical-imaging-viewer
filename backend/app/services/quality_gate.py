@@ -6,7 +6,9 @@ DRAFT, PENDING owner approval. Design and survey: docs/iec62304/agent_platform/Q
 ONE deterministic rule decides, before an AI step runs and again before its output is shown, whether it may
 proceed. It consolidates checks that exist elsewhere and CALLS them rather than copying them:
 
-- sequence   from the series description with ``dataset_inventory.detect_sequence`` (never the file name);
+- sequence   from the series description with the gate's token classifier — the ONE sequence classifier of the
+             product (second review of PR #81, G15): ``dataset_inventory.detect_sequence`` and the RC-049 header
+             evidence of the in-browser AI route to it; never the file name;
 - thickness  from ``acquisition_geometry`` (RC-054): native / at_least / not_determinable;
 - scanner    of two visits through ``longitudinal_candidate_safety.compare_acquisitions`` (RC-062);
 - skull      the outcome of the skull gates / skull removal of the in-browser AI (RC-101).
@@ -250,6 +252,7 @@ def _classify_tokens(tokens: List[str], vocab: Dict[str, Any]) -> str:
     flair_word = vocab["flair_substring"]
     is_other = any({t, t.rstrip("0123456789")} & other for t in tokens)
     flair = (any(flair_word in t for t in tokens) or any(t in vocab["flair_compounds"] for t in tokens)
+             or any(t in vocab["flair_words"] for t in tokens)
              or any([a, b] in vocab["flair_pairs"] for a, b in zip(tokens, tokens[1:])))
     t1 = (any(_weighted(t, vocab["t1_prefix"]) or t in vocab["t1_words"] for t in tokens)
           or any(flair_word in t and vocab["t1_prefix"] in t.replace(flair_word, "") for t in tokens))
@@ -261,6 +264,51 @@ def _classify_tokens(tokens: List[str], vocab: Dict[str, Any]) -> str:
     return "T1" if t1 else "T2" if t2 else "unknown"
 
 
+_TI_PATTERNS: Dict[str, Any] = {}
+
+
+def text_inversion_time_ms(text: Any, policy: Optional[Dict[str, Any]] = None) -> Optional[float]:
+    """An inversion time written in the text ('TI=2500', 'TI: 2.5' — seconds below ti_seconds_below), or None."""
+    vocab = (policy if policy is not None else _policy())["sequence"]["vocabulary"]
+    if not isinstance(text, str):
+        return None
+    pattern = _TI_PATTERNS.get(vocab["ti_text_pattern"])
+    if pattern is None:
+        pattern = _TI_PATTERNS[vocab["ti_text_pattern"]] = re.compile(vocab["ti_text_pattern"], re.IGNORECASE)
+    m = pattern.search(text)
+    if not m:
+        return None
+    v = float(m.group(1))
+    if not math.isfinite(v) or v <= 0:
+        return None
+    return v * 1000.0 if v < vocab["ti_seconds_below"] else v
+
+
+def classify_sequence(series_description: Any, inversion_time_ms: Any = None,
+                      policy: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[str]]:
+    """The ONE sequence classifier of the product (G15): the gate's class, plus the weighting (T1/T2) and family
+    (SWI/PD) that the dataset inventory reports. Same rules as gate.ts and headerEvidence.ts (both route to it)."""
+    policy = policy if policy is not None else _policy()
+    rules = policy["sequence"]
+    vocab = rules["vocabulary"]
+    tokens = sequence_tokens(series_description) if isinstance(series_description, str) else []
+    ti = _number(inversion_time_ms)
+    ti = ti if ti is not None and ti > 0 else text_inversion_time_ms(series_description, policy)
+    flair_word = vocab["flair_substring"]
+    t1 = (any(_weighted(t, vocab["t1_prefix"]) or t in vocab["t1_words"] for t in tokens)
+          or any(flair_word in t and vocab["t1_prefix"] in t.replace(flair_word, "") for t in tokens))
+    weighting = "T1" if t1 else "T2" if any(_weighted(t, vocab["t2_prefix"]) for t in tokens) else None
+    family = ("SWI" if set(tokens) & set(vocab["swi_family"]) else "PD" if set(tokens) & set(vocab["pd_family"])
+              else None)
+    if not tokens and ti is None:
+        cls = "missing"
+    elif ti is not None and ti < rules["min_flair_inversion_time_ms"]:
+        cls = "other"
+    else:
+        cls = _classify_tokens(tokens, vocab) if tokens else "unknown"
+    return {"class": cls, "weighting": weighting, "family": family}
+
+
 def sequence_from_header(series_description: Any, inversion_time_ms: Any = None,
                          policy: Optional[Dict[str, Any]] = None) -> str:
     """Sequence of an image from its header text (series description) and inversion time — never the file name.
@@ -268,15 +316,7 @@ def sequence_from_header(series_description: Any, inversion_time_ms: Any = None,
     FLAIR (only an unambiguous FLAIR, T2-FLAIR or dark-fluid name) / T1 / T2 / other (any token naming a
     non-FLAIR sequence, a T1 weighting with FLAIR, a localizer, a derived or contrast image, an inversion time
     too short for a FLAIR) / unknown (names no sequence, or only a FLAIR-compatible inversion time) / missing."""
-    rules = (policy if policy is not None else _policy())["sequence"]
-    tokens = sequence_tokens(series_description) if isinstance(series_description, str) else []
-    ti = _number(inversion_time_ms)
-    ti = ti if ti is not None and ti > 0 else None
-    if not tokens and ti is None:
-        return "missing"
-    if ti is not None and ti < rules["min_flair_inversion_time_ms"]:
-        return "other"
-    return _classify_tokens(tokens, rules["vocabulary"]) if tokens else "unknown"
+    return classify_sequence(series_description, inversion_time_ms, policy)["class"]
 
 
 def thickness_from_geometry(geometry: Any) -> Optional[Dict[str, Any]]:
@@ -367,6 +407,49 @@ def read_header_fields(data: bytes, name: str, imaging_service) -> Dict[str, Any
     return dict(_NO_HEADER)
 
 
+HEADER_PREFIX_NIFTI = 4096        # compressed bytes: the 348-byte header (+ extensions) of a NIfTI
+HEADER_PREFIX_DICOM = 65536       # a bounded DICOM prefix, read with stop_before_pixels
+HEADER_PREFIX_MAX = 4 * 1024 * 1024
+_PIXEL_DATA_TAGS = (b"\xe0\x7f\x10\x00", b"\x7f\xe0\x00\x10")
+
+
+def _header_complete(data: bytes, name: str, imaging_service) -> bool:
+    """Does this prefix hold the whole header? DICOM: the pixel data starts inside it; NIfTI: 348 bytes plus the
+    extensions up to vox_offset (after decompressing the prefix)."""
+    import struct
+    import zlib
+    fmt = getattr(imaging_service.detect_format(data, name), "value", None)
+    if fmt == "dicom":
+        return any(tag in data for tag in _PIXEL_DATA_TAGS)
+    if fmt != "nifti":
+        return True
+    try:
+        raw = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(data, 1 << 20) if data[:2] == b"\x1f\x8b" else data
+    except zlib.error:
+        return False
+    if len(raw) < 352:
+        return False
+    endian = "<" if struct.unpack("<i", raw[:4])[0] == 348 else ">"
+    vox_offset = struct.unpack(endian + "f", raw[108:112])[0]
+    return raw[348] == 0 or len(raw) >= vox_offset
+
+
+async def _read_header_fields(storage_service, bucket: str, file_path: str, imaging_service) -> Dict[str, Any]:
+    """E1 / second review, finding 3: the header only, through bounded byte ranges (retried larger while the header
+    runs longer), parsed in a worker thread. A storage without ranges is read whole (as displayed_image_check)."""
+    name = file_path.rsplit("/", 1)[-1]
+    ranged = getattr(storage_service, "download_file_range", None)
+    if ranged is None:
+        data = await storage_service.download_file(bucket, file_path)
+        return await asyncio.to_thread(read_header_fields, data, name, imaging_service)
+    size = HEADER_PREFIX_NIFTI if name.lower().endswith((".nii", ".nii.gz")) else HEADER_PREFIX_DICOM
+    while True:
+        data = await ranged(bucket, file_path, 0, size - 1)
+        if len(data) < size or size >= HEADER_PREFIX_MAX or _header_complete(data, name, imaging_service):
+            return await asyncio.to_thread(read_header_fields, data, name, imaging_service)
+        size *= 4
+
+
 async def _file_version(storage_service, bucket: str, file_path: str) -> Optional[tuple]:
     try:
         meta = await storage_service.get_file_metadata(bucket, file_path)
@@ -377,18 +460,20 @@ async def _file_version(storage_service, bucket: str, file_path: str) -> Optiona
 
 
 async def single_study_inputs(file_path: str, storage_service, imaging_service, *, bucket: str,
-                              physician_confirmed_flair: bool = False) -> Dict[str, Any]:
+                              physician_confirmed_flair: bool = False, skull: str = "pending"):
     """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file: its header's
     series description and inversion time (else the stored series and acquisition records), the RC-054
     geometry. Header only, parsed off the event loop, cached per file version (E1). The skull is 'pending': the
     browser's skull gates and the app's removal decide it before the output (RC-125). Anything unreadable stays
-    unknown, so the gate warns or abstains; it never raises."""
+    unknown, so the gate warns or abstains; it never raises. Returns (inputs, file version or None).
+
+    ``skull``: 'pending' before the run; at the final consultation the outcome the browser reports ('stripped' /
+    'unknown'), so the decision that releases or withholds the output is decided and audited here (G17)."""
     key = await _file_version(storage_service, bucket, file_path)
     fields = _HEADER_CACHE.get(key) if key else None
     if fields is None:
         try:
-            data = await storage_service.download_file(bucket, file_path)
-            fields = await asyncio.to_thread(read_header_fields, data, file_path.rsplit("/", 1)[-1], imaging_service)
+            fields = await _read_header_fields(storage_service, bucket, file_path, imaging_service)
         except Exception:  # noqa: BLE001 — unknown header: sequence missing, thickness unknown (not cached)
             fields = dict(_NO_HEADER)
         else:
@@ -405,10 +490,10 @@ async def single_study_inputs(file_path: str, storage_service, imaging_service, 
     return {"mode": "single", "visits": [{
         "sequence": sequence_from_header(description, ti),
         "physician_confirmed_flair": physician_confirmed_flair is True,
-        "thickness": copy.deepcopy(fields["thickness"]),
+        "thickness": dict(fields["thickness"]) if isinstance(fields["thickness"], dict) else None,
         "scanner": None,
-        "skull": "pending",
-    }]}
+        "skull": skull,
+    }]}, (":".join(str(v) for v in key[1:]) if key else None)
 
 
 def actor_for(user, request=None):
@@ -454,6 +539,35 @@ def default_registry():
     return _REGISTRY
 
 
+def platform_allows(registry=None) -> bool:
+    """Approval and both kill switches, read now, WITHOUT an audit record of its own: the route asks it before any
+    I/O, and a refusal is then audited once by run_quality_gate (second review of PR #81, finding 1)."""
+    from app.agent_platform import registry as R
+    reg = registry if registry is not None else default_registry()
+    with R.within_run():
+        return reg.check_agent(AGENT_ID).allowed is True
+
+
+RATE_LIMIT_PER_MINUTE = 30
+_LIMITER = None
+
+
+def new_rate_limiter():
+    from app.core.security.rate_limiter import RateLimiter
+    return RateLimiter(redis_client=None, default_limit=RATE_LIMIT_PER_MINUTE, default_window=60)
+
+
+def allow_consultation(user_id: str) -> bool:
+    """Per-user bound on consultations (each may read a file header), with the platform's rate limiter."""
+    global _LIMITER
+    from app.core.security.rate_limiter import RateLimitScope
+    if _LIMITER is None:
+        _LIMITER = new_rate_limiter()
+    allowed, _ = _LIMITER.check_rate_limit(f"quality_gate:{user_id}", limit=RATE_LIMIT_PER_MINUTE, window=60,
+                                           scope=RateLimitScope.PER_USER, user_id=user_id)
+    return bool(allowed)
+
+
 def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None,
                      trace_id: Optional[str] = None) -> Dict[str, Any]:
     """The gate as the registered agent ``quality-gate`` (RC-126): the platform's approval and kill switches are
@@ -464,7 +578,7 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
 
     reg = registry if registry is not None else default_registry()
     tr = tracer if tracer is not None else T.Tracer()
-    policy = load_policy()
+    policy = _policy()                 # cached, read only (finding 6)
     state: Dict[str, Any] = {}
     with R.audit_actor(actor), R.within_run():
         try:
@@ -503,24 +617,17 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
                       study_key=study_key or None, trace_id=state["trace_id"])
         else:
             # S3: the physician's attestation is recorded with the run's actor (the authenticated clinician)
-            attested = any(c["code"] == "sequence_confirmed_by_physician" for c in result["checks"])
-            reg.audit("success", f"quality_gate.{result['decision']}" + (".physician_attested" if attested else ""),
-                      event="agent.run", agent_id=AGENT_ID, study_key=study_key or None, trace_id=state["trace_id"])
+            reg.audit("success", audit_code(result), event="agent.run", agent_id=AGENT_ID,
+                      study_key=study_key or None, trace_id=state["trace_id"])
     return result
 
 
 # ----------------------------------------------------------------------------- comparison wiring
 def apply_to_comparison(result: Dict[str, Any], gate: Dict[str, Any]) -> Dict[str, Any]:
     """Attach the gate to a longitudinal comparison; when it abstains, withhold exactly what RC-062 withholds."""
-    out = dict(result)
-    out["quality_gate"] = gate
-    if gate.get("ai_output_allowed") is not True:
-        out.update({"abstained": True, "changes": []})
-        out.update({k: None for k in lcs.ABSTAINED_NULL_FIELDS})
-        out["reader_confirmed_activity"] = None
-        previous = out.get("caveat")       # C3: RC-062's reasons (visit dates, acquisition fields) are kept
-        out["caveat"] = (previous.rstrip() + " " if isinstance(previous, str) and previous.strip() else "") + gate_caveat(gate)
-    return out
+    if gate.get("ai_output_allowed") is not True:      # ONE abstention path (second review, finding 5)
+        return abstained_comparison(gate)
+    return {**result, "quality_gate": gate}
 
 
 # C3: plain reasons for the report and the assistant (never a raw code). The UI shows the en/es/de texts of the
@@ -544,6 +651,17 @@ CAVEAT_REASONS = {
     "skull_unknown": "it cannot be confirmed that the skull was removed",
     "skull_pending": "the skull has not been checked yet",
 }
+
+
+def audit_code(result: Dict[str, Any]) -> str:
+    """G17: the decision and the code that decided it (the first abstaining, else pending, check), plus '.attested'
+    when the physician's attestation was used — shown and withheld outputs leave distinguishable records (the
+    server log keeps 64 characters: 'agent.run:' + this)."""
+    decision = result.get("decision")
+    deciding = next((c["code"] for st in ("abstain", "pending") for c in result.get("checks", [])
+                     if c.get("status") == st and c.get("code")), None) if decision in ("abstain", "pending") else None
+    attested = any(c.get("code") == "sequence_confirmed_by_physician" for c in result.get("checks", []))
+    return f"quality_gate.{decision}" + (f".{deciding}" if deciding else "") + (".attested" if attested else "")
 
 
 def gate_caveat(gate: Dict[str, Any]) -> str:

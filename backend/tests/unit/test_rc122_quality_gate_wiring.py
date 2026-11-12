@@ -137,7 +137,7 @@ def test_rc126_the_single_study_route_is_refused_while_the_agent_is_not_approved
     r = client.post("/api/v1/clinical/quality-gate", json={"file_id": "anything"})
     assert r.status_code == 200, r.text
     body = r.json()
-    assert state["paths"] == [["anything"]], "the file is authorized before anything is read"
+    assert state["paths"] == [], "a refusal authorizes, reads and downloads nothing (second review, finding 1)"
     assert body["decision"] == "abstain" and body["ai_may_run"] is False and body["codes"] == ["gate_not_approved"]
     assert len(body["trace_id"]) == 32
 
@@ -507,7 +507,8 @@ def test_rc122_the_header_is_read_with_a_bounded_range(single, monkeypatch):
             self.ranges.append((start, end))
             return self.data[start:end + 1]
 
-    img = nib.Nifti1Image(np.zeros((64, 64, 40), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()
+    rng = np.random.default_rng(0)           # incompressible voxels: the gzip file is large too
+    img = nib.Nifti1Image(rng.random((64, 64, 40)).astype(np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()
     cases = ((img, FILE, 5.0, 1), (gzip.compress(img), FILE + ".gz", 5.0, 1),
              (_dicom_bytes(rows=512), "patients/p/studies/s/series/se/a.dcm", 3.0, 1),
              (_dicom_bytes(rows=512, comment_bytes=200_000), "patients/p/studies/s/series/se/b.dcm", 3.0, 2))

@@ -6,7 +6,7 @@
     "DATA RULE (REQ-SAFE-053, RC-124): no threshold or figure here may come from non-commercial data. The thickness band limits are the limits pre-registered in the Paper A v0.3 protocol and only NAME the band in a warning. Until a v3 evidence asset with a licence on commercial_licence_allowlist is set in thickness.evidence_asset (the hook, null today), the thickness check warns and never abstains."
   ],
   "policy_id": "quality-gate",
-  "policy_version": "1.1.0-draft",
+  "policy_version": "1.2.0-draft",
   "status": "DRAFT, PENDING owner approval",
   "modes": {
     "single": { "visits": ["study"], "checks": ["platform", "sequence", "thickness", "skull"] },
@@ -19,20 +19,25 @@
     "confirmation_modes": ["single"],
     "min_flair_inversion_time_ms": 1400,
     "vocabulary": {
-      "$comment": "First review of PR #81 (S1, S2): the series description is split into tokens on every non-alphanumeric character (after splitting camelCase, '*' read as 'star', '+C' as 'postcontrast'); the class comes from the tokens, never from word-boundary regexes. Any other_words token, or a T1 weighting with a FLAIR name, is 'other' and ALWAYS abstains. Only a FLAIR, T2-FLAIR or dark-fluid name is FLAIR. Corpus: frontend/src/config/qualityGate.sequences.v1.json (G12).",
+      "$comment": "First review of PR #81 (S1, S2): the series description is split into tokens on every non-alphanumeric character (after splitting camelCase, '*' read as 'star', '+C' as 'postcontrast'); the class comes from the tokens, never from word-boundary regexes. Any other_words token, or a T1 weighting with a FLAIR name, is 'other' and ALWAYS abstains. Only a FLAIR, T2-FLAIR or dark-fluid name is FLAIR. Corpus: frontend/src/config/qualityGate.sequences.v1.json (G12). Second review (G15): this is the ONE sequence classifier of the product - dataset_inventory.detect_sequence and the RC-049 header evidence of the in-browser AI route to it; TIRM is a FLAIR name; 'TI=' / 'TI:' in the text is an inversion time (seconds below ti_seconds_below).",
       "flair_substring": "flair",
+      "flair_words": ["tirm"],
       "flair_compounds": ["darkfluid", "fluidattenuated"],
       "flair_pairs": [["dark", "fluid"], ["fluid", "attenuated"]],
       "t1_prefix": "t1",
       "t2_prefix": "t2",
       "t1_words": ["mprage", "mp2rage", "bravo", "spgr", "fspgr", "tfl", "tfl3d", "tfe"],
       "other_words": ["dwi", "dti", "adc", "trace", "diff", "diffusion", "resolve", "ep2d", "epi", "bold", "fmri",
-        "stir", "dir", "psir", "swi", "swip", "swan", "qsm", "pha", "phase", "mag", "magnitude", "gre", "fgre", "ffe",
+        "stir", "dir", "psir", "swi", "swip", "swan", "qsm", "pha", "mag", "magnitude", "gre", "fgre", "ffe",
         "flash", "fl2d", "fl3d", "vibe", "medic", "merge", "hemo", "t2star", "star", "fsbb", "tof", "mra", "angio",
         "pc", "venc", "localizer", "localiser", "loc", "locator", "scout", "survey", "aahead", "aascout",
         "calibration", "cal", "mpr", "mip", "minip", "mpvr", "reformat", "derived", "subtraction", "pd", "pdw",
         "proton", "perfusion", "perf", "dsc", "dce", "asl", "pasl", "pcasl", "mrs", "svs", "csi", "gd", "gad", "gado",
-        "contrast", "postcontrast", "post", "ce", "dixon"]
+        "contrast", "postcontrast", "post", "ce", "dixon"],
+      "swi_family": ["swi", "swip", "swan", "qsm", "pha", "mag", "magnitude", "gre", "fgre", "t2star", "star", "medic", "merge", "hemo"],
+      "pd_family": ["pd", "pdw", "proton"],
+      "ti_text_pattern": "(?:^|[^A-Za-z0-9])TI\\s*[=:]\\s*([0-9]+(?:\\.[0-9]+)?)",
+      "ti_seconds_below": 10
     }
   },
   "mode_actions": {

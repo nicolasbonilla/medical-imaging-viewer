@@ -127,22 +127,26 @@ def _memo_acquisition(file_id, memo):
     return memo[file_id]
 
 
-async def _gate_before_loading(specs, segmentation_service, current_user, request, acq_memo):
+async def _gate_before_loading(specs, segmentation_service, current_user, request, acq_memo, metas):
     """C2 (first review of PR #81; REQ-FUNC-117): the single quality gate decides from the STORED records before
-    any mask, image, registration or atlas is loaded. None when the gate is not enforced (QUALITY_GATE_ENFORCED)."""
+    any mask, image, registration or atlas is loaded. None when the gate is not enforced (QUALITY_GATE_ENFORCED).
+    Second review, findings 2 and 4: each segmentation's metadata is read ONCE here and kept in ``metas`` for the
+    loaders; missing or unreadable metadata is an unknown source, so the gate ABSTAINS with its reason (as
+    load_mask did, D5) — never a 404 or a 500."""
     if not settings.QUALITY_GATE_ENFORCED:
         return None
     import asyncio
     from app.services import quality_gate as qg
     sources = []
     for spec in specs:
+        meta = None
         if spec.get("type") == "segmentation":
-            meta = await segmentation_service.get_metadata(spec.get("id"))
-            if meta is None:
-                raise HTTPException(status_code=404, detail=f"Segmentation {spec.get('id')} not found")
-            sources.append(getattr(meta, "file_id", None))
-        else:
-            sources.append(None)            # a binary mask instance has no source image: the gate abstains
+            try:
+                meta = await segmentation_service.get_metadata(spec.get("id"))
+            except Exception as e:  # noqa: BLE001 — unknown source: the gate abstains with its reason
+                logger.warning("Segmentation metadata unreadable for the quality gate", extra={"error": str(e)})
+            metas[spec.get("id")] = meta
+        sources.append(getattr(meta, "file_id", None))   # an instance mask has no source image: the gate abstains
     acquisitions = [_memo_acquisition(s, acq_memo) for s in sources]
     return await asyncio.to_thread(qg.comparison_gate, *sources, acquisitions=acquisitions,
                                    user=current_user, request=request)
@@ -742,7 +746,9 @@ async def compare_longitudinal(
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
         acq_memo: dict = {}
-        gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo)
+        metas: dict = {}
+        gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo,
+                                          metas)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             from app.services import quality_gate as qg
             return qg.abstained_comparison(gate)
@@ -765,7 +771,7 @@ async def compare_longitudinal(
                 nib_img = None
                 file_id = None
                 try:
-                    meta = await segmentation_service.get_metadata(mask_id)
+                    meta = metas[mask_id] if mask_id in metas else await segmentation_service.get_metadata(mask_id)
                     file_id = getattr(meta, "file_id", None)
                     # One download resolves the spacing, the registration intensities,
                     # AND the nib image (for MSMask atlas region mapping); all best-effort.
@@ -1082,21 +1088,19 @@ async def detect_slowly_expanding_lesions(
                                 detail="SEL detection requires segmentation-type inputs "
                                        "(needs the source FLAIR intensities).")
         acq_memo: dict = {}
-        gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo)
+        metas: dict = {}
+        gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo,
+                                          metas)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             from app.services import quality_gate as qg
             return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate), "sels": [], "n_existing": 0,
                     "n_sel": 0, "registration_verified": False, "adjudication_required": True, "quality_gate": gate}
 
-        async def _load(spec):
-            if spec.get("type") != "segmentation":
-                raise HTTPException(status_code=400,
-                                    detail="SEL detection requires segmentation-type inputs "
-                                           "(needs the source FLAIR intensities).")
+        async def _load(spec):           # the input type was checked once, above
             mask = segmentation_service.get_mask(spec["id"])
             if mask is None:
                 raise HTTPException(status_code=404, detail=f"Segmentation {spec['id']} not found")
-            meta = await segmentation_service.get_metadata(spec["id"])
+            meta = metas[spec["id"]] if spec["id"] in metas else await segmentation_service.get_metadata(spec["id"])
             file_id = getattr(meta, "file_id", None)
             intensity, spacing, _img = await _load_source_intensity(
                 file_id, storage_service, f"sel/{spec['id']}")

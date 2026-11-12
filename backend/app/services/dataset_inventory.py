@@ -123,33 +123,21 @@ SEQ_T2 = "T2"
 SEQ_PD = "PD"
 SEQ_SWI = "SWI"  # susceptibility family: SWI / GRE / T2* / phase / QSM
 
-# Ordered — the first matching family wins. Order resolves overlaps:
-# FLAIR before T2 (FLAIR is T2-weighted but distinct); the susceptibility family
-# before T2 (T2* is not T2); T1 (incl. MPRAGE) before T2.
-_SEQUENCE_PATTERNS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    (SEQ_FLAIR, (r"flair",)),
-    (SEQ_SWI, (r"swi", r"swan", r"qsm", r"phase", r"t2\s*\*", r"t2star", r"\bgre\b", r"\bmedic\b")),
-    (SEQ_T1, (r"mp\s*-?\s*rage", r"\bmprage\b", r"\bbravo\b", r"\bfspgr\b", r"\bspgr\b", r"\bt1\b", r"t1w", r"t1-?weighted")),
-    (SEQ_PD, (r"\bpd\b", r"pdw", r"proton")),
-    (SEQ_T2, (r"\bt2\b", r"t2w", r"t2-?weighted", r"\btse\b", r"\bfse\b")),
-)
-
-
 def detect_sequence(*texts: str) -> Optional[str]:
-    """Best-effort MRI sequence from free text (series_description / filename).
+    """MRI sequence from free text (series_description / filename): FLAIR/T1/T2/PD/SWI or None.
 
-    Returns one of FLAIR/T1/T2/PD/SWI or None. HEURISTIC — the data model has no
-    sequence field, so this reads whatever a human typed. Ordered so FLAIR and the
-    susceptibility family are not swallowed by the generic T2 match.
-    """
-    blob = " ".join(t for t in texts if t).lower()
+    ROUTED to the ONE sequence classifier of the product, the single quality gate's (second review of PR #81, G15;
+    app.services.quality_gate.classify_sequence; the RC-049 header evidence of the in-browser AI uses the same rules):
+    FLAIR exactly when the gate says FLAIR; otherwise the family (SWI, PD) or the weighting (T1, T2) it reports.
+    HEURISTIC for this research inventory — the data model has no sequence field."""
+    from app.services.quality_gate import classify_sequence
+    blob = " ".join(t for t in texts if t)
     if not blob.strip():
         return None
-    for label, patterns in _SEQUENCE_PATTERNS:
-        for pat in patterns:
-            if re.search(pat, blob):
-                return label
-    return None
+    found = classify_sequence(blob)
+    if found["class"] == SEQ_FLAIR:
+        return SEQ_FLAIR
+    return found["family"] or found["weighting"]
 
 
 def sequences_available(instance_texts: Iterable[str]) -> set[str]:

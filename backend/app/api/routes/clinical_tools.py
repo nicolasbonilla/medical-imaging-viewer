@@ -14,7 +14,7 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field, StrictBool
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 
 from app.security import get_current_active_user
 from app.security.models import User
@@ -88,6 +88,9 @@ async def skull_strip(
 class QualityGateRequest(BaseModel):
     file_id: str = Field(..., min_length=1, max_length=500)
     physician_confirmed_flair: StrictBool = False   # S3: a deliberate attestation, never coerced from "true"/1
+    # G17: 'pending' before the run; at the final consultation the outcome the browser reports for the image the
+    # AI read, so the decision that releases or withholds the output is decided and audited here.
+    skull: Literal["pending", "stripped", "unknown"] = "pending"
 
 
 @router.post("/quality-gate")
@@ -101,18 +104,29 @@ async def quality_gate(
     """The single quality gate before the in-browser AI (REQ-FUNC-117, REQ-SAFE-052/054; RC-122, RC-126).
     Read only, nothing stored. The inputs are derived here from the stored file (never from the client, never
     from the file name); the decision comes through the agent platform (approval, kill switches: fail closed).
-    The response carries the derived inputs so the browser re-evaluates the SAME rule (gate.ts) with the skull
-    outcome before any AI output is shown."""
+    The response carries the derived inputs (the browser re-checks the decision with the same rule, gate.ts) and
+    its subject — the file id it was made for and the file's version (G18: a stale answer never acts).
+
+    Second review of PR #81, finding 1: behind QUALITY_GATE_ENFORCED; the approval and both kill switches are read
+    BEFORE any I/O (a refusal reads, authorizes and downloads nothing); a per-user rate limit bounds the reads."""
     from app.core.config import get_settings
     from app.services import quality_gate as qg
 
+    if not get_settings().QUALITY_GATE_ENFORCED:
+        raise HTTPException(status_code=404, detail="Not Found")
+    actor = qg.actor_for(current_user, request)
+    if not qg.platform_allows():
+        refused = qg.run_quality_gate({"mode": "single", "visits": []}, actor=actor)
+        return {**refused, "subject": {"file_id": body.file_id, "version": None}}
+    if not qg.allow_consultation(str(getattr(current_user, "id", ""))):
+        raise HTTPException(status_code=429, detail="Too many quality-gate consultations; try again in a minute")
     paths = await _authorized_inputs([body.file_id], None, None, current_user)
-    inputs = await qg.single_study_inputs(paths[0], storage_service, imaging_service,
-                                          bucket=get_settings().GCS_BUCKET_NAME,
-                                          physician_confirmed_flair=body.physician_confirmed_flair)
-    result = qg.run_quality_gate(inputs, study_key=qg.study_of(paths[0]) or paths[0],
-                                 actor=qg.actor_for(current_user, request))
-    return {**result, "inputs": inputs}
+    inputs, version = await qg.single_study_inputs(paths[0], storage_service, imaging_service,
+                                                   bucket=get_settings().GCS_BUCKET_NAME,
+                                                   physician_confirmed_flair=body.physician_confirmed_flair,
+                                                   skull=body.skull)
+    result = qg.run_quality_gate(inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)
+    return {**result, "inputs": inputs, "subject": {"file_id": body.file_id, "version": version}}
 
 
 @router.get("/tools", response_model=List[Dict[str, Any]])

@@ -359,8 +359,8 @@
         "$comment": "No model and no prompt, so no model/prompt card: the gate's card is its policy, bound here by the SHA-256 of its canonical JSON (hashing.sha256_text); a policy change without this record fails CI (test_quality_gate_matrix.py, G4).",
         "path": "backend/app/services/quality_gate_policy.json",
         "frontend_copy": "frontend/src/config/qualityGatePolicy.v1.json",
-        "policy_version": "1.1.0-draft",
-        "sha256": "e0e5db1c5498a204ef2a5de0aca28148145e5084bdb4078297b822e0a28a7a9e"
+        "policy_version": "1.2.0-draft",
+        "sha256": "e8869b64f936f121610be19cf7aadfea653fde01e6b4ac5a7e5d51bdc49d6dbe"
       },
       "model_control": "none",
       "allowed_models": [],

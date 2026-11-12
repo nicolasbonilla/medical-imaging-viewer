@@ -683,7 +683,7 @@ def test_rc122_g15_one_flair_classifier_for_the_whole_product():
         if (label == "FLAIR") != (gate == "FLAIR") or (gate != "other" and label != expected):
             bad.append((c["text"], gate, label))
     assert not hasattr(inv, "_SEQUENCE_PATTERNS"), "the inventory keeps its own sequence patterns"
-    assert "detect_sequence" not in (QG.__doc__ or ""), "the gate's docstring names a classifier it does not use"
+    assert "with ``dataset_inventory.detect_sequence``" not in (QG.__doc__ or ""), "the docstring names a classifier the gate does not use"
     assert not bad, f"G15: {len(bad)} corpus entries classified differently by the inventory; first: {bad[:6]}"
 
 
