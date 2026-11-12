@@ -67,12 +67,17 @@ export interface GatePolicy {
     min_flair_inversion_time_ms: number;
     vocabulary: {
       flair_substring: string;
+      flair_words: string[];
       flair_compounds: string[];
       flair_pairs: [string, string][];
       t1_prefix: string;
       t2_prefix: string;
       t1_words: string[];
       other_words: string[];
+      swi_family: string[];
+      pd_family: string[];
+      ti_text_pattern: string;
+      ti_seconds_below: number;
     };
   };
   mode_actions?: Record<string, unknown>;
@@ -255,6 +260,7 @@ function classifyTokens(tokens: string[], v: GatePolicy['sequence']['vocabulary'
   const other = new Set(v.other_words);
   const isOther = tokens.some((t) => other.has(t) || other.has(t.replace(/[0-9]+$/, '')));
   const flair = tokens.some((t) => t.includes(v.flair_substring)) || tokens.some((t) => v.flair_compounds.includes(t))
+    || tokens.some((t) => v.flair_words.includes(t))
     || tokens.slice(1).some((b, i) => v.flair_pairs.some(([x, y]) => x === tokens[i] && y === b));
   const t1 = tokens.some((t) => weighted(t, v.t1_prefix) || v.t1_words.includes(t))
     || tokens.some((t) => t.includes(v.flair_substring) && t.split(v.flair_substring).join('').includes(v.t1_prefix));
@@ -264,12 +270,24 @@ function classifyTokens(tokens: string[], v: GatePolicy['sequence']['vocabulary'
   return t1 ? 'T1' : t2 ? 'T2' : 'unknown';
 }
 
-/** Sequence from a series description and inversion time, as quality_gate.sequence_from_header (G12, G4). */
+/** An inversion time written in the text ('TI=2500', 'TI: 2.5' — seconds below ti_seconds_below), as
+ *  quality_gate.text_inversion_time_ms; null when none. */
+export function textInversionTimeMs(text: unknown, policy: GatePolicy = QUALITY_GATE_POLICY): number | null {
+  if (typeof text !== 'string') return null;
+  const v = policy.sequence.vocabulary;
+  const m = new RegExp(v.ti_text_pattern, 'i').exec(text);
+  const x = m ? parseFloat(m[1]) : NaN;
+  if (!Number.isFinite(x) || x <= 0) return null;
+  return x < v.ti_seconds_below ? x * 1000 : x;
+}
+
+/** Sequence from a series description and inversion time: the ONE classifier of the product (G15), as
+ *  quality_gate.classify_sequence — the RC-049 header evidence of the in-browser AI routes to it too. */
 export function sequenceFromHeader(text: unknown, inversionTimeMs: unknown = null, policy: GatePolicy = QUALITY_GATE_POLICY): string {
   const rules = policy.sequence;
   const tokens = typeof text === 'string' ? sequenceTokens(text) : [];
   const n = num(inversionTimeMs);
-  const ti = n !== null && n > 0 ? n : null;
+  const ti = n !== null && n > 0 ? n : textInversionTimeMs(text, policy);
   if (!tokens.length && ti === null) return 'missing';
   if (ti !== null && ti < rules.min_flair_inversion_time_ms) return 'other';
   return tokens.length ? classifyTokens(tokens, rules.vocabulary) : 'unknown';
@@ -317,6 +335,8 @@ export function gateUnavailable(): GateResult {
 export interface ServerGateResponse extends GateResult {
   inputs?: GateInput;
   platform?: GatePlatform;
+  /** G18: the file the answer was made for, and its version on the server (null when unknown) */
+  subject?: { file_id: string; version: string | null };
 }
 
 export function isGateResult(v: unknown): v is GateResult {
@@ -329,6 +349,20 @@ export function isGateResult(v: unknown): v is GateResult {
 export function skullFromProvenance(provenance: { inputPreparation?: unknown } | null | undefined): 'stripped' | 'unknown' {
   const prep = provenance?.inputPreparation;
   return prep === 'as-uploaded' || prep === 'skull-removed' ? 'stripped' : 'unknown';
+}
+
+/** G17: the final decision is the SERVER's, made with the skull outcome the browser reported. It is used only when
+ *  the same rule reproduces it from the answer's own inputs and those inputs carry the reported skull outcome;
+ *  anything else is unavailable, so nothing is shown. */
+export function confirmServerDecision(server: ServerGateResponse | null | undefined, reportedSkull: string): GateResult {
+  if (!server || !isGateResult(server) || !isObj(server.inputs) || !Array.isArray(server.inputs.visits)
+    || !isObj(server.platform)) {
+    return gateUnavailable();
+  }
+  const visits = server.inputs.visits as unknown[];
+  if (!visits.length || !visits.every((v) => isObj(v) && v.skull === reportedSkull)) return gateUnavailable();
+  const again = evaluateGate({ mode: server.inputs.mode, visits, platform: server.platform });
+  return canonicalGate(again) === canonicalGate(server) ? server : gateUnavailable();
 }
 
 /** The final consultation before an in-browser AI output is shown: the backend's fresh answer (platform state and

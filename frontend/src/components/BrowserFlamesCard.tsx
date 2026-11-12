@@ -31,7 +31,10 @@ import { currentEnvironment, estimateDuration, formatElapsed } from '@/services/
 import { FEATURES } from '@/config/features';
 import { QualityGatePanel } from './QualityGatePanel';
 import { requestQualityGate } from '@/services/qualityGate/api';
-import { attestable, finalBrowserGate, withAttestation, type GateResult, type ServerGateResponse } from '@/services/qualityGate/gate';
+import {
+  attestable, confirmServerDecision, gateUnavailable, skullFromProvenance, withAttestation,
+  type GateResult, type ServerGateResponse,
+} from '@/services/qualityGate/gate';
 
 interface BrowserFlamesCardProps {
   flairFileId: string;
@@ -64,13 +67,22 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const [attested, setAttested] = useState(false);
   const attestedAtRun = useRef(false);
   const [finalGate, setFinalGate] = useState<GateResult | null>(null);
+  // G18: every answer and every run carries the file it was made for; an answer for a file that is no longer the
+  // selected one never acts. One request at a time: Run is disabled while it is in flight.
+  const currentFile = useRef(flairFileId);
+  currentFile.current = flairFileId;
+  const inFlight = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const runVersion = useRef<string | null>(null);
   useEffect(() => {
     setAttested(false);
     if (!gateOn || !flairFileId) return;
     let live = true;
     setPreflight(null);
     const timer = setTimeout(() => {
-      void requestQualityGate(flairFileId, false).then((r) => { if (live) setPreflight(r); });
+      void requestQualityGate(flairFileId, false).then((r) => {
+        if (live && r.subject?.file_id === currentFile.current) setPreflight(r);
+      });
     }, 250);
     return () => { live = false; clearTimeout(timer); };
   }, [gateOn, flairFileId]);
@@ -82,12 +94,18 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     setFinalGate(null);
     if (!doneResult) return;
     let live = true;
-    void requestQualityGate(doneResult.fileId, attestedAtRun.current)
-      .then((r) => { if (live) setFinalGate(finalBrowserGate(r, doneResult.provenance)); });
+    if (doneResult.fileId !== currentFile.current) return;          // a result for another file: nothing
+    // G17: the server decides (and audits) the releasing decision with the skull outcome reported here
+    const skull = skullFromProvenance(doneResult.provenance);
+    void requestQualityGate(doneResult.fileId, attestedAtRun.current, skull).then((r) => {
+      if (!live || r.subject?.file_id !== doneResult.fileId || doneResult.fileId !== currentFile.current) return;
+      const changed = runVersion.current !== null && r.subject?.version != null && r.subject.version !== runVersion.current;
+      setFinalGate(changed ? gateUnavailable() : confirmServerDecision(r, skull));
+    });
     return () => { live = false; };
   }, [gateOn, doneResult]);
   const gateAllowsRun = !gateOn || gateBefore?.ai_may_run === true;
-  const gateAllowsOutput = !gateOn || finalGate?.ai_output_allowed === true;
+  const gateAllowsOutput = !gateOn || (finalGate?.ai_output_allowed === true && doneResult?.fileId === flairFileId);
 
   const running = flames.status === 'running';
   const estimate = useMemo(() => estimateDuration(currentEnvironment()), []);
@@ -113,15 +131,23 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
       return;
     }
+    if (inFlight.current) return;                                    // G18: one request per click
+    inFlight.current = true;
+    setBusy(true);
     // The attestation reaches the backend (and its audit, with the clinician) only now, deliberately.
     const attestation = canAttest && attested;
-    void requestQualityGate(flairFileId, attestation).then((fresh) => {
+    const fileAtClick = flairFileId;
+    void requestQualityGate(fileAtClick, attestation).then((fresh) => {
+      inFlight.current = false;
+      setBusy(false);
+      if (currentFile.current !== fileAtClick || fresh.subject?.file_id !== fileAtClick) return;   // stale: never runs
       if (!fresh.ai_may_run) {
         setPreflight(fresh);
         return;
       }
       attestedAtRun.current = attestation;
-      void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
+      runVersion.current = fresh.subject?.version ?? null;
+      void flames.run(fileAtClick, { seriesDescription, clinicianConfirmedFlair: true });
     });
   };
 
@@ -202,7 +228,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
           )}
           <button
             onClick={handleRun}
-            disabled={!flairFileId || !sequenceConfirmed || !gateAllowsRun}
+            disabled={!flairFileId || !sequenceConfirmed || !gateAllowsRun || busy}
             className="w-full px-3 py-1.5 bg-amber-700 hover:bg-amber-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-[11px] font-medium transition-colors"
           >
             {t('clinical.browserFlames.run', 'Segment in this browser')}

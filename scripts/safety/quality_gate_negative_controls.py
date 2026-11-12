@@ -52,7 +52,7 @@ COPY_TREES = ["backend/app", "backend/data"]
 COPY_FILES = ["backend/pytest.ini", "backend/tests/__init__.py", "backend/tests/conftest.py",
               "backend/tests/unit/__init__.py", *("backend/" + t for t in BACKEND_TESTS),
               "frontend/src/config/qualityGatePolicy.v1.json", "frontend/src/config/qualityGate.cases.v1.json",
-              "frontend/src/config/qualityGate.sequences.v1.json",
+              "frontend/src/config/qualityGate.sequences.v1.json", "frontend/src/services/flames/headerEvidence.ts",
               "frontend/src/i18n/locales/en.json", "frontend/src/i18n/locales/es.json",
               "frontend/src/i18n/locales/de.json", "frontend/src/services/qualityGate/gate.ts"]
 IMPORT_PROBE = ("import sys; sys.path.insert(0, 'backend'); import app.services.quality_gate, app.agent_platform.registry, "
@@ -68,7 +68,10 @@ TS = "frontend/src/services/qualityGate/gate.ts"
 FPOL = "frontend/src/config/qualityGatePolicy.v1.json"
 CARD = "frontend/src/components/BrowserFlamesCard.tsx"
 PANEL = "frontend/src/components/QualityGatePanel.tsx"
+LRP = "frontend/src/components/LongitudinalResultPanel.tsx"
 CT = "backend/app/api/routes/clinical_tools.py"
+DI = "backend/app/services/dataset_inventory.py"
+HE = "frontend/src/services/flames/headerEvidence.ts"
 EN = "frontend/src/i18n/locales/en.json"
 CMP_ACTION = ("In a comparison the sequence cannot be confirmed by hand. Compare the images visually with the overlay, "
               "or compare visits whose FLAIR header names the sequence.")
@@ -104,8 +107,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Q8_unknown_scanner_passes": ([(QG, '    if missing:\n        return _check("scanner", None, "abstain", "scanner_unknown", fields=[f for f in fields if f in missing])\n',
         '    if missing:\n        return _check("scanner", None, "pass")\n')],
         "an unrecorded scanner is taken as the same scanner", "backend", "RC-123"),
-    "Q9_abstention_does_not_withhold": ([(QG, '        out.update({k: None for k in lcs.ABSTAINED_NULL_FIELDS})\n        out["reader_confirmed_activity"] = None\n',
-        '        pass\n')],
+    "Q9_abstention_does_not_withhold": ([(QG, '        return abstained_comparison(gate)\n    return {**result, "quality_gate": gate}\n',
+        '        return {**result, "quality_gate": gate}\n    return {**result, "quality_gate": gate}\n')],
         "a comparison the gate stops still carries lesion counts and loads", "backend", "RC-123"),
     "Q10_route_ignores_the_gate": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            from app.services import quality_gate as qg\n            return qg.abstained_comparison(gate)\n', '        pass\n'),
         (SA, '            result = qg.apply_to_comparison(result, gate)\n', '            pass\n')],
@@ -126,7 +129,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Q15_skull_not_checked": ([(QG, '        if "skull" in spec["checks"] and mode in policy["skull"]["required_in_modes"]:\n',
         '        if False:\n')],
         "the single-study gate never checks the skull", "backend", "RC-125"),
-    "Q16_server_says_skull_stripped": ([(QG, '        "skull": "pending",\n    }]}\n', '        "skull": "stripped",\n    }]}\n')],
+    "Q16_server_says_skull_stripped": ([(QG, '        "skull": skull,\n    }]}, (', '        "skull": "stripped",\n    }]}, (')],
         "the server claims a skull-free image before it was read", "backend", "RC-125"),
     # ── RC-126: platform, trace, audit ──
     "Q17_platform_off_continues": ([(QG, '    if platform["status"] != "pass":                                   # G6: nothing else runs\n',
@@ -140,8 +143,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the approval and the kill switches are not read", "backend", "RC-126"),
     "Q20_trace_omits_checks": ([(QG, '                for c in result["checks"]:\n', '                for c in result["checks"][:1]:\n')],
         "the trace records only the first check", "backend", "RC-126"),
-    "Q21_success_not_audited": ([(QG, '            reg.audit("success", f"quality_gate.{result[\'decision\']}"',
-        '            (lambda *a, **k: None)("success", f"quality_gate.{result[\'decision\']}"')],
+    "Q21_success_not_audited": ([(QG, '            reg.audit("success", audit_code(result), event="agent.run", agent_id=AGENT_ID,\n',
+        '            (lambda *a, **k: None)("success", audit_code(result), event="agent.run", agent_id=AGENT_ID,\n')],
         "a consultation that lets the AI run leaves no audit record", "backend", "RC-126"),
     "Q22_trace_attribute_dropped": ([(TR, '    "mstool.gate.status": lambda v: v in ("pass", "warn", "pending", "abstain"),\n', '')],
         "the trace allow-list loses the check status", "backend", "RC-126"),
@@ -157,7 +160,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Q26_t1_flair_accepted": ([(QG, '    if is_other or (flair and t1):          # a non-FLAIR name, or a T1-weighted FLAIR: ALWAYS abstains\n',
         '    if is_other:\n')],
         "a T1-weighted FLAIR is taken as a T2 FLAIR", "backend", "RC-122"),
-    "Q27_short_inversion_time_ignored": ([(QG, '    if ti is not None and ti < rules["min_flair_inversion_time_ms"]:\n', '    if False:\n')],
+    "Q27_short_inversion_time_ignored": ([(QG, '    elif ti is not None and ti < rules["min_flair_inversion_time_ms"]:\n', '    elif False:\n')],
         "an inversion time too short for a FLAIR is ignored", "backend", "RC-122"),
     "Q28_record_called_native": ([(QG, '        return {"state": "at_least", "effective_mm": mm}\n', '        return {"state": "native", "effective_mm": mm}\n')],
         "a stored acquisition record (not provably original) reported as native thickness", "backend", "RC-122, RC-124"),
@@ -180,16 +183,13 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "R5_lax_attestation_boolean": ([(CT, '    physician_confirmed_flair: StrictBool = False   # S3: a deliberate attestation, never coerced from "true"/1\n',
         '    physician_confirmed_flair: bool = False\n')],
         "'true' or 1 accepted as the physician's attestation", "backend", "RC-122, RC-126"),
-    "R6_attestation_not_audited": ([(QG, '+ (".physician_attested" if attested else "")', '+ ""')],
+    "R6_attestation_not_audited": ([(QG, '+ (".attested" if attested else "")', '+ ""')],
         "the physician's attestation leaves no audit trace", "backend", "RC-126"),
     "R7_comparison_asks_for_a_confirmation": ([(EN, '        "action_comparison": "' + CMP_ACTION + '"\n      },\n      "sequence_confirmed_by_physician"',
         '        "action_comparison": "If you are sure it is a T2-FLAIR, tick the confirmation box."\n      },\n      "sequence_confirmed_by_physician"')],
         "a comparison asks for an attestation it cannot take", "backend", "RC-127"),
     "R8_gate_after_loading": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            from app.services import quality_gate as qg\n            return qg.abstained_comparison(gate)\n', '        pass\n')],
         "the comparison loads masks, images, registration and atlas before the gate stops it", "backend", "RC-123"),
-    "R9_caveat_overwritten": ([(QG, '        out["caveat"] = (previous.rstrip() + " " if isinstance(previous, str) and previous.strip() else "") + gate_caveat(gate)\n',
-        '        out["caveat"] = gate_caveat(gate)\n')],
-        "RC-062's reasons are lost from the caveat", "backend", "RC-123"),
     "R10_raw_codes_in_caveat": ([(QG, '    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in (gate.get("codes") or ["gate_unavailable"])]\n',
         '    reasons = list(gate.get("codes") or ["gate_unavailable"])\n')],
         "the caveat shows raw codes instead of plain reasons", "backend", "RC-123, RC-127"),
@@ -199,8 +199,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "R12_header_cache_off": ([(QG, '            if key:\n                _HEADER_CACHE[key] = fields\n',
         '            if False:\n                _HEADER_CACHE[key] = fields\n')],
         "every consultation downloads and parses the file again", "backend", "RC-122"),
-    "R13_parsed_on_the_event_loop": ([(QG, '            fields = await asyncio.to_thread(read_header_fields, data, file_path.rsplit("/", 1)[-1], imaging_service)\n',
-        '            fields = read_header_fields(data, file_path.rsplit("/", 1)[-1], imaging_service)\n')],
+    "R13_parsed_on_the_event_loop": ([(QG, '        data = await storage_service.download_file(bucket, file_path)\n        return await asyncio.to_thread(read_header_fields, data, name, imaging_service)\n',
+        '        data = await storage_service.download_file(bucket, file_path)\n        return read_header_fields(data, name, imaging_service)\n')],
         "the header is parsed on the event loop", "backend", "RC-122"),
     "R14_acquisition_read_twice": ([(SA, '    if file_id not in memo:\n        memo[file_id] = _source_acquisition(file_id)\n    return memo[file_id]\n',
         '    return _source_acquisition(file_id)\n')],
@@ -216,6 +216,48 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "F12_ts_confirmation_in_a_comparison": ([(TS, "    if (visit.physician_confirmed_flair === true && policy.sequence.confirmation_modes.includes(mode)) {\n",
         "    if (visit.physician_confirmed_flair === true) {\n")],
         "the browser lets a confirmation lift an unknown sequence in a comparison", "node", "RC-122"),
+    # ── second review of PR #81 ──
+    "S1_inventory_not_routed": ([(DI, '    if found["class"] == SEQ_FLAIR:\n', '    if found["class"] in (SEQ_FLAIR, "unknown"):\n')],
+        "the dataset inventory calls an unnamed image a FLAIR (a second, disagreeing classifier)", "backend", "RC-122"),
+    "S2_tirm_not_a_flair_name": ([(POL, '      "flair_words": ["tirm"],\n', '      "flair_words": [],\n')],
+        "a Siemens TIRM FLAIR is not recognised (the gate and RC-049 disagree)", "backend", "RC-122"),
+    "S3_text_inversion_time_ignored": ([(QG, '    ti = ti if ti is not None and ti > 0 else text_inversion_time_ms(series_description, policy)\n',
+        '    ti = ti if ti is not None and ti > 0 else None\n')],
+        "'FLAIR TI=900' in the text taken as a FLAIR", "backend", "RC-122"),
+    "S4_server_ignores_the_skull_outcome": ([(CT, '                                                   skull=body.skull)\n', '                                                   skull="pending")\n')],
+        "the server never decides the releasing decision (the browser alone does)", "backend", "RC-126"),
+    "S5_audit_without_the_deciding_code": ([(QG, '    return f"quality_gate.{decision}" + (f".{deciding}" if deciding else "") + (".attested" if attested else "")\n',
+        '    return f"quality_gate.{decision}" + (".attested" if attested else "")\n')],
+        "shown and withheld outputs are not told apart in the audit", "backend", "RC-126"),
+    "S6_endpoint_not_behind_the_flag": ([(CT, '    if not get_settings().QUALITY_GATE_ENFORCED:\n        raise HTTPException(status_code=404, detail="Not Found")\n',
+        '    if False:\n        raise HTTPException(status_code=404, detail="Not Found")\n')],
+        "the endpoint answers while the gate is not enforced", "backend", "RC-126"),
+    "S7_platform_after_the_io": ([(CT, '    if not qg.platform_allows():\n', '    if False:\n')],
+        "a refused gate still authorizes and downloads the file", "backend", "RC-126"),
+    "S8_no_rate_limit": ([(CT, '    if not qg.allow_consultation(str(getattr(current_user, "id", ""))):\n', '    if False:\n')],
+        "the endpoint can trigger unbounded downloads", "backend", "RC-126"),
+    "S9_whole_file_downloaded": ([(QG, '    ranged = getattr(storage_service, "download_file_range", None)\n    if ranged is None:\n',
+        '    ranged = None\n    if ranged is None:\n')],
+        "the header check downloads the whole image", "backend", "RC-122"),
+    "S10_no_range_retry": ([(QG, '        if len(data) < size or size >= HEADER_PREFIX_MAX or _header_complete(data, name, imaging_service):\n',
+        '        if True:\n')],
+        "a header longer than the first range is read truncated", "backend", "RC-122"),
+    "S11_unreadable_metadata_is_a_500": ([(SA, '            except Exception as e:  # noqa: BLE001 — unknown source: the gate abstains with its reason\n',
+        '            except ZeroDivisionError as e:  # noqa: BLE001\n')],
+        "unreadable segmentation metadata breaks the comparison instead of abstaining", "backend", "RC-123"),
+    "S12_metadata_read_twice": ([(SA, '                    meta = metas[mask_id] if mask_id in metas else await segmentation_service.get_metadata(mask_id)\n',
+        '                    meta = await segmentation_service.get_metadata(mask_id)\n')],
+        "each visit's metadata is read again by the loader", "backend", "RC-123"),
+    "S13_policy_copied_per_consultation": ([(QG, '    policy = _policy()                 # cached, read only (finding 6)\n', '    policy = load_policy()\n')],
+        "a deep copy of the policy on every consultation", "backend", "RC-126"),
+    "F13_ts_rc049_not_routed": ([(HE, "  const classes = texts.map((raw) => [raw, sequenceFromHeader(raw, ti ?? null)] as const);\n",
+        "  const classes = texts.map((raw) => [raw, /flair/i.test(raw) ? 'FLAIR' : 'unknown'] as const);\n")],
+        "the RC-049 header evidence keeps its own FLAIR rule", "node", "RC-122"),
+    "F14_ts_text_inversion_time_ignored": ([(TS, "  const ti = n !== null && n > 0 ? n : textInversionTimeMs(text, policy);\n",
+        "  const ti = n !== null && n > 0 ? n : null;\n")],
+        "the browser ignores 'TI=900' in the text", "node", "RC-122"),
+    "F15_ts_server_answer_trusted": ([(TS, "  return canonicalGate(again) === canonicalGate(server) ? server : gateUnavailable();\n", "  return server;\n")],
+        "the browser shows an output the same rule does not reproduce", "node", "RC-126"),
     # ── browser rule (G4 parity harness under Node) ──
     "F1_ts_confirmation_overrides_another_sequence": ([(TS, "  return mk('sequence', label, 'abstain', 'sequence_not_flair', { sequence: seq });\n",
         "  return visit.physician_confirmed_flair === true ? mk('sequence', label, 'warn', 'sequence_confirmed_by_physician', { sequence: seq })\n"
@@ -247,7 +289,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "      {flames.status === 'done' && flames.result && (\n")],
         "the card shows the AI result whatever the final gate says", "vitest", "RC-127"),
     "V2_card_runs_despite_an_abstention": ([(CARD, "    if (!sequenceConfirmed || !gateAllowsRun) return;\n", "    if (!sequenceConfirmed) return;\n"),
-        (CARD, "            disabled={!flairFileId || !sequenceConfirmed || !gateAllowsRun}\n", "            disabled={!flairFileId || !sequenceConfirmed}\n")],
+        (CARD, "            disabled={!flairFileId || !sequenceConfirmed || !gateAllowsRun || busy}\n", "            disabled={!flairFileId || !sequenceConfirmed || busy}\n")],
         "the run button ignores the gate's abstention", "vitest", "RC-122"),
     "V3_panel_hides_the_reasons": ([(PANEL, "  const notOk = (result.checks ?? []).filter((c) => c.status !== 'pass' && c.code);\n",
         "  const notOk: GateCheck[] = [];\n")],
@@ -259,12 +301,22 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the backend is called on every toggle", "vitest", "RC-122"),
     "V6_panel_ignores_the_mode": ([(PANEL, "${actionKey(result.mode, c.code as string)}", "action")],
         "the panel asks a comparison for an attestation", "vitest", "RC-127"),
+    "V7_rc062_box_for_a_gate_stop": ([(LRP, "      {abstained ? (gateStopped ? null : abstentionBox()) : (\n", "      {abstained ? abstentionBox() : (\n")],
+        "the physician reads 'change of scanner or protocol' when the gate stopped the comparison", "vitest", "RC-127"),
+    "V8_stale_preflight_applies": ([(CARD, "        if (live && r.subject?.file_id === currentFile.current) setPreflight(r);\n", "        setPreflight(r);\n")],
+        "the answer for file A is shown once B is selected", "vitest", "RC-122"),
+    "V9_stale_run_starts": ([(CARD, "      if (currentFile.current !== fileAtClick || fresh.subject?.file_id !== fileAtClick) return;   // stale: never runs\n", "")],
+        "a run of A starts while B is selected", "vitest", "RC-122"),
+    "V10_final_consultation_without_the_skull": ([(CARD, "    void requestQualityGate(doneResult.fileId, attestedAtRun.current, skull).then((r) => {\n",
+        "    void requestQualityGate(doneResult.fileId, attestedAtRun.current).then((r) => {\n")],
+        "the server never sees the skull outcome that releases the output", "vitest", "RC-126"),
 }
 
 HARNESS = r"""
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { canonicalGate, evaluateGate, finalBrowserGate, gateUnavailable, QUALITY_GATE_POLICY, sequenceFromHeader } from './gate.ts';
+import { canonicalGate, confirmServerDecision, evaluateGate, finalBrowserGate, gateUnavailable, QUALITY_GATE_POLICY, sequenceFromHeader } from './gate.ts';
+import { headerContrastEvidence } from './headerEvidence.ts';
 const F = JSON.parse(readFileSync(process.env.QG_FIXTURE, 'utf-8'));
 const BACKEND_POLICY = JSON.parse(readFileSync(process.env.QG_BACKEND_POLICY, 'utf-8'));
 const failures = [];
@@ -307,7 +359,15 @@ const CORPUS = JSON.parse(readFileSync(process.env.QG_CORPUS, 'utf-8'));
 fail('g12_corpus', CORPUS.cases.every((c) => sequenceFromHeader(c.text, c.inversion_time_ms) === c.expected));
 fail('g13_no_confirmation_in_a_comparison', evaluateGate({ mode: 'comparison', platform: { allowed: true, code: null },
   visits: [F.matrix.base_visit, { ...F.matrix.base_visit, sequence: 'unknown', physician_confirmed_flair: true }] }).ai_may_run === false);
-console.log(JSON.stringify({ failures, checks: 12 }));
+fail('g15_rc049_same_class', CORPUS.cases.every((c) => {
+  const e = headerContrastEvidence(c.text ? [c.text] : [], c.inversion_time_ms ? { inversionTimeMs: c.inversion_time_ms } : {}, null);
+  const contra = ['other', 'T1', 'T2'].includes(c.expected);
+  return e.sequenceClass === c.expected && (e.verdict === 'contradicts') === contra && (c.expected !== 'FLAIR' || e.verdict === 'supports');
+}));
+const forged = { ...evaluateGate({ mode: 'single', visits: [{ ...F.matrix.base_visit, skull: 'stripped' }], platform: { allowed: true, code: null } }),
+  inputs: { mode: 'single', visits: [{ ...F.matrix.base_visit, sequence: 'T1', skull: 'stripped' }] }, platform: { allowed: true, code: null } };
+fail('g17_forged_answer_not_used', confirmServerDecision(forged, 'stripped').ai_output_allowed === false);
+console.log(JSON.stringify({ failures, checks: 14 }));
 """
 
 
@@ -373,6 +433,10 @@ def node_files(copy):
                             "const POLICY_JSON = JSON.parse(readFileSync(process.env.QG_POLICY as string, 'utf-8'));")
     with open(os.path.join(work, "gate.ts"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(src)
+    he = open(os.path.join(copy, HE), encoding="utf-8").read()
+    assert he.count("from '@/services/qualityGate/gate'") == 1, "the gate import of headerEvidence.ts changed"
+    with open(os.path.join(work, "headerEvidence.ts"), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(he.replace("from '@/services/qualityGate/gate'", "from './gate.ts'"))
     with open(os.path.join(work, "package.json"), "w", encoding="utf-8") as fh:
         fh.write('{"type": "module"}\n')
     with open(os.path.join(work, "harness.mjs"), "w", encoding="utf-8", newline="\n") as fh:

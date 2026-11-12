@@ -99,6 +99,9 @@ export function LongitudinalResultPanel({
   }, [lang]);
 
   const abstained = result.abstained === true;
+  // G16 (second review of PR #81): when the single quality gate stopped the comparison, its panel gives the reason;
+  // RC-062's "change of scanner or protocol" box belongs to genuine RC-062 abstentions only.
+  const gateStopped = result.quality_gate != null && result.quality_gate.ai_output_allowed !== true;
   const cc = result.change_candidates;
   const evidence = result.false_candidate_evidence;
   const confirmedBox = result.reader_confirmed_activity;
@@ -238,7 +241,7 @@ export function LongitudinalResultPanel({
       {/* Single quality gate (RC-123/RC-127; DRAFT): present only when the backend enforces it. */}
       {result.quality_gate && <QualityGatePanel result={result.quality_gate} testId="longitudinal-quality-gate" />}
 
-      {abstained ? abstentionBox() : (
+      {abstained ? (gateStopped ? null : abstentionBox()) : (
         <>
           {/* RC-060 + RC-061: unconfirmed candidates, the review state and the measured rate. */}
           <div

@@ -12,30 +12,28 @@
  */
 import type { DicomEvidence } from './nifti';
 
+import { QUALITY_GATE_POLICY, sequenceFromHeader, textInversionTimeMs } from '@/services/qualityGate/gate';
+
 export type HeaderVerdict = 'contradicts' | 'supports' | 'none';
 
 export interface HeaderEvidence {
   verdict: HeaderVerdict;
   reasons: string[];
   inversionTimeMs?: number;
+  /** G15: the class of the ONE sequence classifier of the product (the single quality gate's) */
+  sequenceClass?: string;
 }
 
 /** FLAIR inversion times are ~1600-2800 ms (1.5-3 T, 2D and 3D); T1 IR / MPRAGE ~400-1200, STIR ~150-250. */
-export const MIN_FLAIR_TI_MS = 1400;
+export const MIN_FLAIR_TI_MS = QUALITY_GATE_POLICY.sequence.min_flair_inversion_time_ms;
 
-const FLAIR = /(FLAIR|DARK[ _-]?FLUID|DARKFLUID|TIRM|FLUID[ _-]?ATTENUATED)/;
-const T1_FLAIR = /(T1[ _-]*W?[ _-]*FLAIR|FLAIR[ _-]*T1\b)/;
-const OTHER =
-  /\b(T1|T1W|T1-W|T1[ _-]?WEIGHTED|MPRAGE|MP[ _-]?RAGE|SPGR|FSPGR|BRAVO|TFE|T2|T2W|T2[ _-]?WEIGHTED|PD|PDW|PROTON[ _-]?DENSITY|DWI|DTI|ADC|TRACE|SWI|SWAN|T2STAR|T2\*|STIR|DIR|PSIR|MRA|TOF|GD|GADO|POSTGD|POST[ _-]?CONTRAST|LOCALI[SZ]ER|SCOUT)\b/;
+const NOT_FLAIR = new Set(['other', 'T1', 'T2']);
 
-function tiFromText(text: string): number | undefined {
-  const m = /\bTI\s*[=:]\s*([0-9]+(?:\.[0-9]+)?)/i.exec(text);
-  if (!m) return undefined;
-  const v = parseFloat(m[1]);
-  if (!Number.isFinite(v) || v <= 0) return undefined;
-  return v < 10 ? v * 1000 : v; // seconds written as e.g. "TI=2.5"
-}
-
+/**
+ * Second review of PR #81 (G15): ROUTED to the single quality gate's classifier (gate.ts sequenceFromHeader, the same
+ * rules as the backend's quality_gate.classify_sequence). A text whose class is other, T1 or T2 contradicts; a FLAIR
+ * name, or an inversion time compatible with a FLAIR, supports; anything else says nothing.
+ */
 export function headerContrastEvidence(
   headerText: string[],
   dicom: DicomEvidence,
@@ -49,38 +47,33 @@ export function headerContrastEvidence(
     seriesDescription ?? undefined,
   ].filter((t): t is string => Boolean(t && t.trim()));
   const reasons: string[] = [];
-  let contradicts = false;
-  let supports = false;
 
   let ti = dicom.inversionTimeMs;
   if (ti === undefined) {
     for (const t of texts) {
-      ti = tiFromText(t);
-      if (ti !== undefined) break;
+      const found = textInversionTimeMs(t);
+      if (found !== null) {
+        ti = found;
+        break;
+      }
     }
   }
   if (ti !== undefined && ti > 0) {
-    if (ti < MIN_FLAIR_TI_MS) {
-      contradicts = true;
-      reasons.push(`inversion time ${ti.toFixed(0)} ms is too short for a FLAIR (>= ${MIN_FLAIR_TI_MS} ms)`);
-    } else {
-      supports = true;
-      reasons.push(`inversion time ${ti.toFixed(0)} ms is compatible with a FLAIR`);
-    }
+    reasons.push(ti < MIN_FLAIR_TI_MS
+      ? `inversion time ${ti.toFixed(0)} ms is too short for a FLAIR (>= ${MIN_FLAIR_TI_MS} ms)`
+      : `inversion time ${ti.toFixed(0)} ms is compatible with a FLAIR`);
   }
 
-  for (const raw of texts) {
-    const t = raw.toUpperCase();
-    if (T1_FLAIR.test(t)) {
-      contradicts = true;
-      reasons.push(`header says "${raw.slice(0, 60)}" (a T1-weighted FLAIR is not a T2 FLAIR)`);
-    } else if (FLAIR.test(t)) {
-      supports = true;
-      reasons.push(`header says "${raw.slice(0, 60)}"`);
-    } else if (OTHER.test(t)) {
-      contradicts = true;
-      reasons.push(`header names another sequence: "${raw.slice(0, 60)}"`);
-    }
+  const classes = texts.map((raw) => [raw, sequenceFromHeader(raw, ti ?? null)] as const);
+  for (const [raw, cls] of classes) {
+    if (cls === 'FLAIR') reasons.push(`header says "${raw.slice(0, 60)}"`);
+    else if (NOT_FLAIR.has(cls)) reasons.push(`header names another sequence: "${raw.slice(0, 60)}"`);
   }
-  return { verdict: contradicts ? 'contradicts' : supports ? 'supports' : 'none', reasons, inversionTimeMs: ti };
+  const contradicting = classes.find(([, cls]) => NOT_FLAIR.has(cls));
+  const sequenceClass = contradicting ? contradicting[1]
+    : classes.some(([, cls]) => cls === 'FLAIR') ? 'FLAIR'
+      : classes.some(([, cls]) => cls === 'unknown') ? 'unknown' : sequenceFromHeader(null, ti ?? null);
+  const verdict: HeaderVerdict = NOT_FLAIR.has(sequenceClass) ? 'contradicts'
+    : sequenceClass === 'FLAIR' || (ti !== undefined && ti >= MIN_FLAIR_TI_MS) ? 'supports' : 'none';
+  return { verdict, reasons, inversionTimeMs: ti, sequenceClass };
 }

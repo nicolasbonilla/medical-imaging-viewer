@@ -5,14 +5,21 @@
 import { apiClient } from '@/services/apiClient';
 import { gateUnavailable, isGateResult, type ServerGateResponse } from './gate';
 
-export async function requestQualityGate(fileId: string, physicianConfirmedFlair: boolean): Promise<ServerGateResponse> {
+export type ReportedSkull = 'pending' | 'stripped' | 'unknown';
+
+/** G18: the answer always names the file it was made for; an answer for another file is unavailable. */
+export async function requestQualityGate(fileId: string, physicianConfirmedFlair: boolean,
+  skull: ReportedSkull = 'pending'): Promise<ServerGateResponse> {
+  const unavailable = (): ServerGateResponse => ({ ...gateUnavailable(), subject: { file_id: fileId, version: null } });
   try {
     const { data } = await apiClient.post('/api/v1/clinical/quality-gate', {
       file_id: fileId,
       physician_confirmed_flair: physicianConfirmedFlair === true,
+      skull,
     });
-    return isGateResult(data) ? (data as ServerGateResponse) : gateUnavailable();
+    const answer = data as ServerGateResponse;
+    return isGateResult(answer) && answer.subject?.file_id === fileId ? answer : unavailable();
   } catch {
-    return gateUnavailable();
+    return unavailable();
   }
 }
