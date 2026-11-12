@@ -70,43 +70,78 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   // unticked by default, reset on every file change, never implied by the run checkbox.
   const gateOn = FEATURES.QUALITY_GATE;
   const [attested, setAttested] = useState(false);
-  const attestedAtRun = useRef(false);
   const doneResult = flames.status === 'done' ? flames.result : null;
   // G18: every answer and every run carries the file it was made for; an answer for a file that is no longer the
   // selected one never acts. One request at a time: Run is disabled while it is in flight.
   const currentFile = useRef(flairFileId);
   currentFile.current = flairFileId;
+  const attestedNow = useRef(attested);
+  attestedNow.current = attested;
+  const selection = useRef(0);                                // M1: bumped on every file change
   const [busy, setBusy] = useState(false);                   // O5 (twelfth review): the one "request in flight" state
-  const runVersion = useRef<string | null>(null);
-  const runToken = useRef<string | null>(null);               // K5: the token of the consultation that allowed the run
-  useEffect(() => setAttested(false), [flairFileId]);
-  // E1: ONE (debounced) consultation per file before the run. U1 (tenth review): its automatic retries are state —
-  // one timer per rate-limited answer, none while in flight, at most 3 (G29), "Check again" after the last answer.
+  // M1 (thirteenth review): what a run follows is held per RUN — its attestation, the version and the run token of the
+  // decision that allowed it; a run token is used by ONE run only; the newest version the server named, per file
+  const runOf = useRef<{ attested: boolean; version: string | null; token: string | null }>({ attested: false, version: null, token: null });
+  const usedTokens = useRef(new Set<string>());
+  const requests = useRef(0);
+  const newest = useRef<Record<string, { seq: number; version: string }>>({});
+  // M1: the decision of the Run consultation WITH the attestation, for this file; shown and used only while ticked
+  const [attestedDecision, setAttestedDecision] = useState<ServerGateResponse | null>(null);
+  useEffect(() => { setAttested(false); setAttestedDecision(null); selection.current += 1; }, [flairFileId]);
+  /** Every consultation goes through here: the answer is stamped with the time it was ASKED (its run token was issued
+   *  later, so its lifetime is counted from no later than its real start), and the version the server names is kept
+   *  when the request is the newest for its file (a late answer never lowers it). */
+  const ask = (file: string, attestation: boolean, skull?: 'pending' | 'stripped' | 'unknown', token?: string | null) => {
+    const seq = (requests.current += 1);
+    const askedAt = Date.now();
+    return requestQualityGate(file, attestation, skull, token).then((r) => {
+      const f = r.subject?.file_id;
+      const v = r.subject?.version;
+      if (typeof f === 'string' && typeof v === 'string' && seq > (newest.current[f]?.seq ?? -1)) newest.current[f] = { seq, version: v };
+      return { ...r, asked_at: askedAt };
+    });
+  };
+  /** P1 / P2: a decision a run may start from — for this file, its newest version and this attestation, with a run token
+   *  no run has used and that has not expired (one minute of margin). */
+  const startable = (r: ServerGateResponse | null, file: string, attestation: boolean): r is ServerGateResponse =>
+    !!r && r.ai_may_run === true && r.subject?.file_id === file && typeof r.subject?.version === 'string'
+    && r.subject.version === newest.current[file]?.version
+    && (r.inputs?.visits?.[0]?.physician_confirmed_flair === true) === attestation
+    && typeof r.run_token === 'string' && !usedTokens.current.has(r.run_token)
+    && Date.now() < (r.asked_at ?? 0) + (r.run_token_ttl_s ?? 0) * 1000 - 60_000;
+  // E1: ONE (debounced) consultation per file before the run — without the attestation. U1 (tenth review): its
+  // automatic retries are state — one timer per rate-limited answer, none while in flight, at most 3 (G29).
   const before = useGateConsultation<ServerGateResponse>(
     gateOn && flairFileId ? flairFileId : null,
-    () => requestQualityGate(flairFileId, false).then((r) => (r.subject?.file_id === currentFile.current ? r : null)),
+    () => ask(flairFileId, false).then((r) => (r.subject?.file_id === currentFile.current ? r : null)),
     retryAfterSeconds, 250);
   const preflight = before.answer;
   const preflightStuck = gateOn && preflight !== null && before.settled && askable(preflight);
+  // P5: the attestation is offered when the server says the file (unattested) is attestable — also after a run
   const canAttest = gateOn && (preflight?.attestable_visits ?? []).includes('study');
+  // P3: the "before" panel shows the attested decision only while the attestation is ticked, else the unattested one
+  const attestedShown = attested && attestedDecision?.subject?.file_id === flairFileId ? attestedDecision : null;
+  const shownBefore = attestedShown ?? preflight;
   // U3: the final decision belongs to the RUN (its result object), never to the file: a re-run of the same file never
   // shows the previous run's decision, not even on its first render. G17: the server decides (and audits) the
   // releasing decision with the skull outcome reported here. G27: the server's answer is shown as it is; no answer of
   // the right shape, or a file changed since the run, is unavailable (and a changed file is not asked again).
   const final = useGateConsultation<{ gate: GateResult; retry: boolean }>(
     gateOn && doneResult && doneResult.fileId === flairFileId ? doneResult : null,
-    () => {
-      const run = doneResult as NonNullable<typeof doneResult>;
-      return requestQualityGate(run.fileId, attestedAtRun.current, skullFromProvenance(run.provenance), runToken.current).then((r) => {
+    (subject) => {
+      const run = subject as NonNullable<typeof doneResult>;           // the run this request is for (M1)
+      const of = runOf.current;
+      return ask(run.fileId, of.attested, skullFromProvenance(run.provenance), of.token).then((r) => {
         if (r.subject?.file_id !== run.fileId || run.fileId !== currentFile.current) return null;
-        const changed = runVersion.current !== null && r.subject?.version != null && r.subject.version !== runVersion.current;
+        const changed = of.version !== null && r.subject?.version != null && r.subject.version !== of.version;
         return { gate: !changed && isGateResult(r) ? r : gateUnavailable(), retry: !changed };
       });
     },
     (f) => (f.retry ? retryAfterSeconds(f.gate) : null));
   const finalGate = final.answer ? final.answer.gate : null;
   const finalStuck = final.answer !== null && final.settled && final.answer.retry && askable(final.answer.gate);
-  const gateAllowsRun = !gateOn || preflight?.ai_may_run === true || (canAttest && attested);
+  const gateAllowsRun = !gateOn || (attested && canAttest ? attestedShown?.ai_may_run !== false
+    : preflight?.ai_may_run === true);
   const gateAllowsOutput = !gateOn || (finalGate?.ai_output_allowed === true && doneResult?.fileId === flairFileId);
 
   const running = flames.status === 'running';
@@ -134,31 +169,34 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       return;
     }
     if (busy) return;                                                // G18: one request per click
-    // The attestation reaches the backend (and its audit, with the clinician) only now, deliberately.
+    // The attestation reaches the backend (and its audit, with the clinician) only on Run, deliberately.
     const attestation = canAttest && attested;
     const fileAtClick = flairFileId;
-    // I6 (eleventh review of PR #81): without an attestation nothing has changed since the preflight answer for this
-    // file, so Run uses it — two consultations per run (before and after), not three
-    if (!attestation && preflight?.ai_may_run === true && preflight.subject?.file_id === fileAtClick) {
-      attestedAtRun.current = false;
-      runVersion.current = preflight.subject?.version ?? null;
-      runToken.current = preflight.run_token ?? null;
+    const selectionAtClick = selection.current;
+    const start = (decision: ServerGateResponse) => {
+      runOf.current = { attested: attestation, version: decision.subject?.version ?? null, token: decision.run_token ?? null };
+      if (decision.run_token) usedTokens.current.add(decision.run_token);       // P2: never used by a second run
+      // G27: RC-049 in the worker takes the sequence class the server derived for this file
       void flames.run(fileAtClick, { seriesDescription, clinicianConfirmedFlair: true, qualityGate: true,
-        gateSequenceClass: serverSequenceClass(preflight) });
+        gateSequenceClass: serverSequenceClass(decision) });
+    };
+    // I6 (eleventh review): the decision already held for EXACTLY these inputs, with an unused, unexpired run token,
+    // starts the run — two consultations per run; anything else (a re-run, an expired or used token, a newer version,
+    // a changed attestation) asks the server again (M1, thirteenth review)
+    const held = attestation ? attestedShown : preflight;
+    if (startable(held, fileAtClick, attestation)) {
+      start(held);
       return;
     }
     setBusy(true);
-    void requestQualityGate(fileAtClick, attestation).then((fresh) => {
+    void ask(fileAtClick, attestation).then((fresh) => {
       setBusy(false);
-      if (currentFile.current !== fileAtClick || fresh.subject?.file_id !== fileAtClick) return;   // stale: never runs
-      before.show(fresh);              // O3 (twelfth review): the "before" panel shows the decision the run follows
-      if (!fresh.ai_may_run) return;
-      attestedAtRun.current = attestation;
-      runVersion.current = fresh.subject?.version ?? null;
-      runToken.current = fresh.run_token ?? null;
-      // G27: RC-049 in the worker takes the sequence class the server derived for this file
-      void flames.run(fileAtClick, { seriesDescription, clinicianConfirmedFlair: true, qualityGate: true,
-        gateSequenceClass: serverSequenceClass(fresh) });
+      // P1 / P3: an answer for inputs that are no longer the current ones never acts (file, selection, attestation)
+      if (selection.current !== selectionAtClick || currentFile.current !== fileAtClick
+        || fresh.subject?.file_id !== fileAtClick || attestedNow.current !== attestation) return;
+      if (attestation && fresh.inputs) setAttestedDecision(fresh);
+      else before.show(fresh);         // O3: the "before" panel shows the decision the run follows
+      if (startable(fresh, fileAtClick, attestation)) start(fresh);
     });
   };
 
@@ -229,7 +267,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
               <span className="text-gray-400 break-all">{flairFileId ? `(${flairName ?? flairFileId.split('/').pop()})` : ''}</span>
             </span>
           </label>
-          {gateOn && (preflight ? <QualityGatePanel result={preflight} testId="quality-gate-before" />
+          {gateOn && (shownBefore ? <QualityGatePanel result={shownBefore} testId="quality-gate-before" />
             : <p className="text-[9px] text-gray-400" data-testid="quality-gate-checking">{t('qualityGate.checking')}</p>)}
           {gateOn && before.left !== null && (
             <p className="text-[9px] text-sky-200" role="status" data-testid="quality-gate-retry">
@@ -242,7 +280,10 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
           )}
           {gateOn && canAttest && (
             <label className="flex items-start gap-1 text-[9px] text-sky-100" data-testid="quality-gate-attest">
-              <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} />
+              <input type="checkbox" checked={attested} onChange={(e) => {
+                setAttested(e.target.checked);
+                if (!e.target.checked) setAttestedDecision(null);       // P1: a rescinded attestation leaves nothing usable
+              }} />
               <span>{t('qualityGate.attest')}</span>
             </label>
           )}

@@ -256,8 +256,8 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
       }
     }
     const after = screen.queryByTestId('quality-gate-after') ? h.panels['quality-gate-after'] : null;
-    if (after) {
-      if (after.subject?.file_id !== world.file) world.violate('P3', 'the "final" panel shows a decision for another file');
+    if (after && after.subject) {                       // the browser's own 'unavailable' names no subject
+      if (after.subject.file_id !== world.file) world.violate('P3', 'the "final" panel shows a decision for another file');
       const run = after.trace_id ? world.answerRun.get(after.trace_id) : undefined;
       if (run !== undefined && run !== (world.doneRun?.id ?? null)) world.violate('P3', `the "final" panel shows the decision of run ${run}`);
     }
@@ -282,6 +282,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
     await sync(400);
     await click(confirmBox());
     const steps = actions ?? Array.from({ length: 10 + Math.floor(rng() * 16) }, () => pick(rng));
+    if (process.env.QG_MODEL_TRACE) console.log('steps', seed, steps.join(' '));
     for (const a of steps) {
       switch (a) {
         case 'selectA': case 'selectB': {
@@ -328,19 +329,24 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
     if (h.flames.status === 'done' && (h.flames.result as Json)?.fileId === world.file && !screen.queryByTestId('quality-gate-after')) {
       world.violate('P4', 'settled, the finished run still has no final decision');
     }
-    if (confirmBox() && !confirmBox()!.checked) await click(confirmBox());
-    if (world.file === A && attestBox() && !attestBox()!.checked) await click(attestBox());
-    const b = runButton();
-    if (!b || b.disabled) {
-      world.violate('P4', `settled, Run is disabled though the server allows a run of ${world.file === A ? 'A (attested)' : 'B'}`);
-    } else {
+    // a fresh run the server allows must reach a released output — at the latest on the second attempt: a version
+    // stored after the card's last consultation is not observable before the next answer names it (the first run's
+    // final consultation does, and the server refuses to release that run)
+    let released = false;
+    for (let attempt = 0; attempt < 2 && !released; attempt += 1) {
+      if (confirmBox() && !confirmBox()!.checked) await click(confirmBox());
+      if (world.file === A && attestBox() && !attestBox()!.checked) await click(attestBox());
+      const b = runButton();
+      if (!b || b.disabled) {
+        world.violate('P4', `settled, Run is disabled though the server allows a run of ${world.file === A ? 'A (attested)' : 'B'}`);
+        break;
+      }
       await click(b);
       await settle();
       check();
-      if (!(world.doneRun && world.released.has(world.doneRun.id) && screen.queryByText(/AI draft ready/))) {
-        world.violate('P4', 'a fresh run the server allows does not reach a released output');
-      }
+      released = !!(world.doneRun && world.released.has(world.doneRun.id) && screen.queryByText(/AI draft ready/));
     }
+    if (!released && !world.violations.P4) world.violate('P4', 'a fresh run the server allows does not reach a released output');
   } catch (error) {
     // a crash of the card is the worst liveness failure: it never reaches a decided state again
     world.violate('P4', `the card crashed: ${String((error as Error)?.message ?? error).slice(0, 120)}`);
@@ -366,7 +372,11 @@ describe('M1: model-based test of the card and its consultations', () => {
       }
     };
     for (const [name, actions] of Object.entries(CORPUS)) record(`corpus ${name}`, await play(actions, 1));
-    for (let i = 0; i < runs; i += 1) record(`seed ${20261113 + i}`, await play(null, 20261113 + i));
+    const only = process.env.QG_MODEL_SEED ? [Number(process.env.QG_MODEL_SEED)] : null;
+    for (let i = 0; i < (only ? 1 : runs); i += 1) {
+      const seed = only ? only[0] : 20261113 + i;
+      record(`seed ${seed}`, await play(null, seed));
+    }
     // the counts per property, and the first example of each, are the test's report
     expect({ counts, examples, sequences: runs + Object.keys(CORPUS).length })
       .toEqual({ counts: { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0 }, examples: {}, sequences: runs + Object.keys(CORPUS).length });

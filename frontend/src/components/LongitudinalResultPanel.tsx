@@ -24,9 +24,9 @@ import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { LongitudinalOverlayLegend } from './LongitudinalOverlayLegend';
 import { QualityGatePanel } from './QualityGatePanel';
-import type { GateResult } from '@/services/qualityGate/gate';
+import type { GateResult, PairAttestation } from '@/services/qualityGate/gate';
 
-type Attestation = { tp1: boolean; tp2: boolean };
+type Attestation = PairAttestation;
 
 /** F1 (third review of PR #81): the physician's per-visit FLAIR attestation, as S3 / G13 — explicit, unticked, only for a
  *  visit whose sequence is unknown or missing (never another sequence), reset when the pair changes (the parent keys it),

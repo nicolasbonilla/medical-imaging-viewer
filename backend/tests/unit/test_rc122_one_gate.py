@@ -31,6 +31,7 @@ from app.main import app
 from app.security import get_current_active_user
 from app.services import longitudinal_candidate_safety as lcs
 from app.services import quality_gate as qg
+from tests.unit.test_rc122_review11 import TEST_USER  # noqa: E402 — M3: the report's clinician
 from tests.unit.test_rc122_quality_gate_wiring import (  # noqa: F401 — fixtures
     ACQ, FILE, PAIR, REGISTRY, URL, _CountingStorage, _dicom_bytes, _registry, _user, compare, single,
 )
@@ -221,7 +222,7 @@ def _stopped(code, monkeypatch):
 @pytest.mark.parametrize("lang", ["en", "es", "de"])
 def test_rc127_a4_the_report_notice_gives_the_gate_s_reason_when_the_gate_stops(lang, monkeypatch):
     from app.api.routes.ai_report import LONGITUDINAL_NOTICE, longitudinal_notice
-    notice = longitudinal_notice(_stopped("sequence_not_flair", monkeypatch), lang)
+    notice = longitudinal_notice(_stopped("sequence_not_flair", monkeypatch), lang, TEST_USER)
     assert notice and LONGITUDINAL_NOTICE[lang]["abstained"] not in notice, "RC-062's reason for a gate stop"
     assert qg.reason_sentence("sequence_not_flair", lang) in notice
 
@@ -240,5 +241,5 @@ def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report(monkeypatch
               "quality_gate": served({"mode": "comparison", "ai_output_allowed": True, "codes": ["thickness_at_least"]},
                                      monkeypatch)}
     for lang in ("en", "es", "de"):
-        assert qg.reason_sentence("thickness_at_least", lang) in longitudinal_notice(warned, lang)
-    assert qg.CAVEAT_REASONS["thickness_at_least"] in longitudinal_notice(warned, "en"), "the drifted sentence"
+        assert qg.reason_sentence("thickness_at_least", lang) in longitudinal_notice(warned, lang, TEST_USER)
+    assert qg.CAVEAT_REASONS["thickness_at_least"] in longitudinal_notice(warned, "en", TEST_USER), "the drifted sentence"

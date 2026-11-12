@@ -1489,7 +1489,8 @@
       "sequence": "Sequenz",
       "thickness": "Schichtdicke",
       "scanner": "Gerät",
-      "skull": "Schädel"
+      "skull": "Schädel",
+      "run": "Lauf"
     },
     "status": {
       "pass": "In Ordnung",
@@ -1539,6 +1540,11 @@
       "gate_no_access": {
         "message": "Das Bild wurde nicht gefunden, oder Sie haben keinen Zugriff darauf, daher läuft die KI nicht.",
         "action": "Prüfen Sie, ob das Bild noch in der Untersuchung ist und Sie es öffnen dürfen; wählen Sie es dann erneut."
+      },
+      "run_not_confirmed": {
+        "message": "Der Server konnte den Lauf dieses Ergebnisses nicht bestätigen (seine Laufberechtigung fehlte, war schon verwendet oder abgelaufen), daher wird das Ergebnis nicht angezeigt.",
+        "action": "Führen Sie die Analyse erneut aus.",
+        "action_comparison": "Führen Sie die Analyse erneut aus."
       },
       "gate_not_established": {
         "message": "Die Entscheidung der Qualitätsprüfung für dieses Paar ließ sich auf dem Server nicht bestätigen, daher wird kein automatisches Veränderungsergebnis angegeben.",

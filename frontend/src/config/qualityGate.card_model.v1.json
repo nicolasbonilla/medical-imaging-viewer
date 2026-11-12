@@ -7,7 +7,7 @@
  "decisions": {
   "missing|false|pending": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "abstain",
    "ai_may_run": false,
@@ -56,7 +56,7 @@
   },
   "missing|false|stripped|true": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "abstain",
    "ai_may_run": false,
@@ -103,12 +103,13 @@
   },
   "missing|false|stripped|false": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "abstain",
    "ai_may_run": false,
    "ai_output_allowed": false,
    "codes": [
+    "run_not_confirmed",
     "sequence_missing"
    ],
    "checks": [
@@ -139,18 +140,24 @@
      "status": "pass",
      "code": null,
      "params": {}
+    },
+    {
+     "check": "run",
+     "visit": "study",
+     "status": "abstain",
+     "code": "run_not_confirmed",
+     "params": {}
     }
    ],
-   "attestable_visits": [
-    "study"
-   ],
+   "attestable_visits": [],
    "actions": {
-    "sequence_missing": "action"
+    "sequence_missing": "action",
+    "run_not_confirmed": "action"
    }
   },
   "missing|true|pending": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "pending",
    "ai_may_run": true,
@@ -199,7 +206,7 @@
   },
   "missing|true|stripped|true": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "proceed_with_warnings",
    "ai_may_run": true,
@@ -246,12 +253,13 @@
   },
   "missing|true|stripped|false": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
-   "decision": "proceed_with_warnings",
-   "ai_may_run": true,
-   "ai_output_allowed": true,
+   "decision": "abstain",
+   "ai_may_run": false,
+   "ai_output_allowed": false,
    "codes": [
+    "run_not_confirmed",
     "sequence_confirmed_by_physician"
    ],
    "checks": [
@@ -284,16 +292,24 @@
      "status": "pass",
      "code": null,
      "params": {}
+    },
+    {
+     "check": "run",
+     "visit": "study",
+     "status": "abstain",
+     "code": "run_not_confirmed",
+     "params": {}
     }
    ],
    "attestable_visits": [],
    "actions": {
-    "sequence_confirmed_by_physician": "action"
+    "sequence_confirmed_by_physician": "action",
+    "run_not_confirmed": "action"
    }
   },
   "FLAIR|false|pending": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "pending",
    "ai_may_run": true,
@@ -338,7 +354,7 @@
   },
   "FLAIR|false|stripped|true": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "proceed",
    "ai_may_run": true,
@@ -379,12 +395,14 @@
   },
   "FLAIR|false|stripped|false": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
-   "decision": "proceed",
-   "ai_may_run": true,
-   "ai_output_allowed": true,
-   "codes": [],
+   "decision": "abstain",
+   "ai_may_run": false,
+   "ai_output_allowed": false,
+   "codes": [
+    "run_not_confirmed"
+   ],
    "checks": [
     {
      "check": "platform",
@@ -413,14 +431,23 @@
      "status": "pass",
      "code": null,
      "params": {}
+    },
+    {
+     "check": "run",
+     "visit": "study",
+     "status": "abstain",
+     "code": "run_not_confirmed",
+     "params": {}
     }
    ],
    "attestable_visits": [],
-   "actions": {}
+   "actions": {
+    "run_not_confirmed": "action"
+   }
   },
   "FLAIR|true|pending": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "pending",
    "ai_may_run": true,
@@ -465,7 +492,7 @@
   },
   "FLAIR|true|stripped|true": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
    "decision": "proceed",
    "ai_may_run": true,
@@ -506,12 +533,14 @@
   },
   "FLAIR|true|stripped|false": {
    "gate_version": "quality-gate/1",
-   "policy_version": "1.11.0-draft",
+   "policy_version": "1.12.0-draft",
    "mode": "single",
-   "decision": "proceed",
-   "ai_may_run": true,
-   "ai_output_allowed": true,
-   "codes": [],
+   "decision": "abstain",
+   "ai_may_run": false,
+   "ai_output_allowed": false,
+   "codes": [
+    "run_not_confirmed"
+   ],
    "checks": [
     {
      "check": "platform",
@@ -540,10 +569,19 @@
      "status": "pass",
      "code": null,
      "params": {}
+    },
+    {
+     "check": "run",
+     "visit": "study",
+     "status": "abstain",
+     "code": "run_not_confirmed",
+     "params": {}
     }
    ],
    "attestable_visits": [],
-   "actions": {}
+   "actions": {
+    "run_not_confirmed": "action"
+   }
   }
  }
 }

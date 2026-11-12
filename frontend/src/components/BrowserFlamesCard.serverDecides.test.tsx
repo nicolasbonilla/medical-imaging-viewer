@@ -18,13 +18,28 @@ const h = vi.hoisted(() => ({
   panels: [] as string[],
 }));
 vi.mock('@/hooks/useBrowserFlames', () => ({ useBrowserFlames: () => h.flames }));
-vi.mock('@/services/qualityGate/api', () => ({
-  requestQualityGate: (fileId: string, confirmed: boolean, skull = 'pending', runToken?: string | null) => {
-    h.calls.push([fileId, confirmed, skull]);
-    h.tokens.push(runToken ?? null);
-    return h.answer(fileId, confirmed, skull);
-  },
-}));
+vi.mock('@/services/qualityGate/api', () => {
+  // thirteenth review (M1): the fields the real server adds to every answer — the attestation it decided with, and
+  // for a consultation that allows a run, a single-use run token and its lifetime
+  let tokens = 0;
+  const serve = (a: unknown, confirmed: boolean, skull: string): unknown => {
+    if (!a || typeof a !== 'object') return a;
+    const out = { ...(a as Record<string, unknown>) } as Record<string, any>;  // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (out.inputs?.visits) {
+      out.inputs = { ...out.inputs, visits: out.inputs.visits.map((v: Record<string, unknown>) => ({ ...v, physician_confirmed_flair: confirmed })) };
+    }
+    if (skull === 'pending' && out.ai_may_run === true && out.run_token === undefined) out.run_token = `rt-${(tokens += 1)}`;
+    if (out.run_token !== undefined && out.run_token_ttl_s === undefined) out.run_token_ttl_s = 7200;
+    return out;
+  };
+  return {
+    requestQualityGate: (fileId: string, confirmed: boolean, skull = 'pending', runToken?: string | null) => {
+      h.calls.push([fileId, confirmed, skull]);
+      h.tokens.push(runToken ?? null);
+      return h.answer(fileId, confirmed, skull).then((a) => serve(a, confirmed, skull));
+    },
+  };
+});
 vi.mock('@/config/features', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@/config/features')>();
   return { ...mod, FEATURES: { ...mod.FEATURES, QUALITY_GATE: true } };

@@ -142,11 +142,14 @@ async def quality_gate(
     user_id = str(getattr(current_user, "id", ""))
     ran = body.skull != "pending" and qg.spend_run_token(body.run_token, file_id=paths[0], version=version,
                                                          user_id=user_id, attested=body.physician_confirmed_flair)
+    if body.skull != "pending":
+        inputs["run_confirmed"] = ran                 # M1 (thirteenth review, P2): no confirmed run, no released output
     result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor,
                                      releases_output=ran)
     answer = {**result, "inputs": inputs, "subject": {"file_id": body.file_id, "version": version}}
     if body.skull == "pending" and result.get("ai_may_run") is True:
         answer["run_token"] = qg.run_token(paths[0], version, user_id, body.physician_confirmed_flair)
+        answer["run_token_ttl_s"] = qg.RUN_TOKEN_TTL_S
     return answer
 
 

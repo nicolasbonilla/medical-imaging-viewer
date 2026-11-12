@@ -54,12 +54,16 @@ export interface GatePlatform {
 
 /** What the backend's POST /clinical/quality-gate returns. */
 export interface ServerGateResponse extends GateResult {
-  inputs?: { mode?: string; visits?: { sequence?: string }[] };
+  inputs?: { mode?: string; visits?: { sequence?: string; physician_confirmed_flair?: boolean }[] };
   platform?: GatePlatform;
   /** G18: the file the answer was made for, and its version on the server (null when unknown) */
   subject?: { file_id: string; version: string | null };
   /** K5 (twelfth review): the single-use token of a consultation that allows a run, sent back with the final one */
   run_token?: string;
+  /** M1 (thirteenth review): how long the run token stays valid, in seconds (2 h) */
+  run_token_ttl_s?: number;
+  /** set by the browser: when this consultation was ASKED (its run token's lifetime started no earlier) */
+  asked_at?: number;
 }
 
 type Obj = Record<string, unknown>;
@@ -122,6 +126,10 @@ export function serverSequenceClass(r: ServerGateResponse | null | undefined): s
   const v = r?.inputs?.visits?.[0]?.sequence;
   return typeof v === 'string' ? v : null;
 }
+
+/** F1 (third review of PR #81): the physician's per-visit FLAIR attestation of a comparison — the ONE type of the
+ *  browser (thirteenth review), as the server's one validator (qg.PairAttestation). */
+export type PairAttestation = { tp1: boolean; tp2: boolean };
 
 /** RC-125 input: what the worker says the model read — the file after the skull gates passed, or after the app
  *  removed the skull; anything else is unknown. CLIENT-REPORTED (twelfth review, K4): the browser reports it and the

@@ -296,6 +296,7 @@ DETAIL_KEYS = frozenset({
     # the single quality gate (tenth review of PR #81, S4): its codes, visit labels and flags reach the durable record
     "causes", "warnings", "attested_visits", "decision", "mode", "released", "withheld_by",
     "skull_report",            # K4 (twelfth review): the skull outcome as the browser reported it, labelled as such
+    "full_reason",             # A2 (thirteenth review): a reason longer than the code field, kept whole
 })
 
 # Review m10: identifiers that must not be stored (typed login names, file names, MRNs, accession
@@ -377,10 +378,32 @@ def _safe_ids(ids: Optional[Dict[str, Any]]) -> Dict[str, str]:
     return out
 
 
+_LONG_CODE_KEYS = frozenset({"full_reason"})
+
+
+def _long_code(value: Any) -> str:
+    return re.sub(r"[^A-Za-z0-9_.:-]", "_", str(value))[:512]
+
+
+def _reason(value: Any) -> tuple:
+    """A2 (thirteenth review of PR #81): the reason as a valid code of at most 64 characters — itself when it fits, else
+    its start and a stable hash of the whole — and the whole reason when it was shortened (never dropped)."""
+    if value is None:
+        return None, None
+    whole = value.value if isinstance(value, Enum) else str(value)
+    if _CODE.match(whole):
+        return whole, None
+    full = _long_code(whole)
+    return f"{full[:51]}-{hashlib.sha256(whole.encode('utf-8')).hexdigest()[:12]}", full
+
+
 def _safe_details(details: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     out: Dict[str, Any] = {}
     for k, v in (details or {}).items():
         if k not in DETAIL_KEYS:
+            continue
+        if k in _LONG_CODE_KEYS:
+            out[k] = _long_code(v)
             continue
         if isinstance(v, bool) or (isinstance(v, (int, float)) and not isinstance(v, bool)):
             out[k] = v
@@ -398,6 +421,8 @@ def build_audit_record(event: AuditEvent) -> Dict[str, Any]:
     """The allow-listed, identifier-only audit record of an event (schema v1)."""
     role = event.user_role.value if isinstance(event.user_role, Enum) else event.user_role
     endpoint = event.endpoint if event.endpoint and _ENDPOINT.match(event.endpoint) else None
+    reason, full_reason = _reason(event.reason)
+    details = {**(event.details or {}), **({"full_reason": full_reason} if full_reason else {})}
     record = {
         "schema_version": RECORD_SCHEMA_VERSION,
         "event_id": event.event_id,
@@ -421,8 +446,8 @@ def build_audit_record(event: AuditEvent) -> Dict[str, Any]:
         "resource_type": _code(event.resource_type),
         "resource_ids": _safe_ids({**({"resource_id": event.resource_id} if event.resource_id else {}),
                                    **(event.resource_ids or {})}),
-        "reason": _code(event.reason),
-        "details": _safe_details(event.details),
+        "reason": reason,
+        "details": _safe_details(details),
         "service_revision": _code(os.environ.get("K_REVISION")),
         "checksum": event.checksum,
     }
@@ -552,10 +577,11 @@ def emit_audit(
             trace_id=trace_id_of(request),
             source="explicit",
         )
-        return get_audit_logger().log_event(event)
+        get_audit_logger().log_event(event)
+        return True                    # thirteenth review of PR #81 (A1): the caller learns that the record was written
     except Exception as e:  # noqa: BLE001 — auditing must never break the request
         logger.error(f"Failed to emit audit event: {e}", exc_info=True)
-        return None
+        return False
 
 
 class AuditLogger:

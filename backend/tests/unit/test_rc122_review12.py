@@ -57,13 +57,13 @@ def _signed(pair, monkeypatch, visit=WARNED):
 # ----------------------------------------------------------------------------- K1, K2
 def test_rc127_k1_the_report_reads_the_signed_decision_for_its_own_pair(monkeypatch):
     gate = _signed(PAIR_A, monkeypatch)
-    account = qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate})
+    account = qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev")
     assert account["established"] is True and account["warnings"] == qg.explain(gate)["warnings"]
 
 
 def test_rc127_k2_the_decision_of_pair_a_in_a_report_for_pair_b_is_not_established(monkeypatch):
     gate = _signed(PAIR_A, monkeypatch)
-    account = qg.report_account({**COUNTS, "pair": PAIR_B, "quality_gate": gate})
+    account = qg.report_account({**COUNTS, "pair": PAIR_B, "quality_gate": gate}, "id-dr_rev")
     assert account["established"] is False and account["causes"] == ["gate_not_established"]
 
 
@@ -72,7 +72,7 @@ def test_rc127_k1_a_second_instance_accepts_the_same_token(monkeypatch):
     spec = importlib.util.spec_from_file_location("quality_gate_second_instance", qg.__file__)
     fresh = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(fresh)                    # a fresh module state: nothing remembered from the first one
-    assert fresh.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate})["established"] is True
+    assert fresh.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev")["established"] is True
     assert not hasattr(qg, "_DECISIONS"), "the per-instance decision store is retired"
 
 
@@ -81,9 +81,9 @@ def test_rc127_k1_a_tampered_or_expired_token_is_rejected(monkeypatch):
     head, body, sig = gate["token"].split(".")
     flipped = body[:-2] + ("A" if body[-2] != "A" else "B") + body[-1]
     for token in (f"{head}.{flipped}.{sig}", f"{head}.{body}.{sig[:-1]}x", "", None, ["x"], "qg1.e30.e30"):
-        assert qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": {**gate, "token": token}})["established"] is False
+        assert qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": {**gate, "token": token}}, "id-dr_rev")["established"] is False
     monkeypatch.setattr(qg, "_now", lambda: 10 ** 11)                           # far after the expiry
-    assert qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate})["established"] is False
+    assert qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev")["established"] is False
 
 
 def test_rc123_k2_the_comparison_answers_with_its_pair_and_a_signed_decision(compare, monkeypatch):
@@ -92,9 +92,9 @@ def test_rc123_k2_the_comparison_answers_with_its_pair_and_a_signed_decision(com
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     res = client.post("/api/v1/segmentation/longitudinal/compare", json=PAIR).json()
     assert [res["pair"][t]["id"] for t in ("tp1", "tp2")] == ["s1", "s2"]
-    assert qg.report_account(res)["established"] is True
+    assert qg.report_account(res, "id-dr_rev")["established"] is True
     other = {**res, "pair": {**res["pair"], "tp2": {**res["pair"]["tp2"], "id": "s3"}}}
-    assert qg.report_account(other)["established"] is False
+    assert qg.report_account(other, "id-dr_rev")["established"] is False
 
 
 # ----------------------------------------------------------------------------- K3
@@ -147,7 +147,9 @@ def test_rc126_k5_only_a_real_run_is_recorded_as_a_release(single, monkeypatch):
     img = nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 1.0, 1.0])).to_bytes()
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(img))
     final = {"file_id": FILE, "physician_confirmed_flair": True, "skull": "stripped"}
-    assert client.post(URL, json=final).json()["ai_output_allowed"] is True
+    unrun = client.post(URL, json=final).json()
+    # thirteenth review (M1, P2): with no run confirmed, nothing is released either (run_not_confirmed)
+    assert unrun["ai_output_allowed"] is False and "run_not_confirmed" in unrun["codes"]
     assert A.AuditEventType.CLINICAL_AI_RUN not in seen, "no run, yet recorded as an AI run"
     run = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True}).json()
     assert run["ai_may_run"] is True and isinstance(run.get("run_token"), str)

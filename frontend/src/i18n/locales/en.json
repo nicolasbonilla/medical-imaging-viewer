@@ -1496,7 +1496,8 @@
       "sequence": "Sequence",
       "thickness": "Slice thickness",
       "scanner": "Scanner",
-      "skull": "Skull"
+      "skull": "Skull",
+      "run": "Run"
     },
     "status": {
       "pass": "OK",
@@ -1546,6 +1547,11 @@
       "gate_no_access": {
         "message": "The image was not found, or you have no access to it, so the AI does not run.",
         "action": "Check that the image is still in the study and that you may open it; then select it again."
+      },
+      "run_not_confirmed": {
+        "message": "The server could not confirm the run of this result (its run permission was missing, already used or expired), so the result is not shown.",
+        "action": "Run the analysis again.",
+        "action_comparison": "Run the analysis again."
       },
       "gate_not_established": {
         "message": "The quality check's decision for this pair could not be confirmed on the server, so no automatic change result is given.",

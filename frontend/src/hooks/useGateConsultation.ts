@@ -74,11 +74,11 @@ export interface GateConsultation<T> {
 
 /**
  * @param subject  what the answer belongs to; null = nothing to ask
- * @param ask      the request; resolves to null for an answer that must not act (another file)
+ * @param ask      the request for the given subject; resolves to null for an answer that must not act (another file)
  * @param baseOf   the server's wait in seconds when the answer is rate limited, else null
  * @param debounceMs  delay before each request
  */
-export function useGateConsultation<T>(subject: unknown, ask: () => Promise<T | null>,
+export function useGateConsultation<T>(subject: unknown, ask: (subject: unknown) => Promise<T | null>,
   baseOf: (answer: T) => number | null, debounceMs = 0): GateConsultation<T> {
   const [state, dispatch] = useReducer<Reducer<State<T>, Action<T>>>(reducer,
     { subject: null, seq: 0, attempt: 0, inFlight: false, answer: null, wait: null });
@@ -94,8 +94,9 @@ export function useGateConsultation<T>(subject: unknown, ask: () => Promise<T | 
     if (!state.inFlight || state.subject === null) return undefined;
     let live = true;
     const seq = state.seq;
+    const asked = state.subject;                   // M1 (thirteenth review): the subject this request is for
     const send = () => {
-      void askRef.current().then((answer) => {
+      void askRef.current(asked).then((answer) => {
         if (live && answer !== null) dispatch({ type: 'answer', seq, answer, base: baseRef.current(answer) });
       });
     };

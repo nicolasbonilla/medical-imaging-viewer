@@ -331,7 +331,7 @@ def drop_unverifiable_decisions(longitudinal: Any) -> Any:
     return out
 
 
-def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
+def longitudinal_notice(longitudinal: Any, language: str, user_id: Any = None) -> Optional[str]:
     """The fixed notice for a draft that received a longitudinal comparison, or None."""
     if not isinstance(longitudinal, dict) or not longitudinal:
         return None
@@ -340,7 +340,7 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
     texts = LONGITUDINAL_NOTICE.get(language, LONGITUDINAL_NOTICE["en"])
     from app.services import quality_gate as qg
     # I1 (eleventh review): the SERVER's record of the gate's decision, read once — never the client's copy
-    account = qg.report_account(longitudinal)
+    account = qg.report_account(longitudinal, user_id)
     warnings = account["warnings"] if account else []
     if account and account["stopped"]:
         # A4 (sixth review of PR #81): when the GATE stopped the comparison (or its decision is not established), the
@@ -681,6 +681,7 @@ async def generate_report(
             volumetry=request.volumetry,
             language=request.language,
             identifiers=identifiers,
+            report_user=str(getattr(current_user, "id", "") or ""),
         )
         # Release 2026-10-25 (integration review of PR #69, item 2): CAPA-014's format-character rule (zero-width
         # space -> space, every other format character removed) is applied to the MODEL's text before the DIS check,
@@ -703,7 +704,8 @@ async def generate_report(
         # model, as fields of their own; they were never sent.
         unlisted = result.pop("unlisted_labels", None)
         parts = draft_parts(result["content"], request.language, request.findings, unlisted)
-        notice = longitudinal_notice(request.findings.get("longitudinal"), request.language)
+        notice = longitudinal_notice(request.findings.get("longitudinal"), request.language,
+                                     str(getattr(current_user, "id", "") or ""))
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
         dis_text = dis_notice(findings, request.language, replaced)

@@ -13,6 +13,7 @@ import app.api.routes.segmentation_analysis as sa
 from app.agent_platform import registry as R
 from app.services import longitudinal_candidate_safety as lcs
 from app.services import quality_gate as qg
+from tests.unit.test_rc122_review11 import TEST_USER  # noqa: E402 — M3: the report's clinician
 from tests.unit.test_quality_gate_matrix import PLATFORM_ON, build_cases
 from tests.unit.test_rc122_quality_gate_wiring import (  # noqa: F401 — fixtures
     ACQ, FILE, PAIR, URL, _registry, compare, single,
@@ -77,12 +78,12 @@ def test_rc127_g30_reviewer_case_the_report_model_and_the_notice_give_the_same_c
         {"sequence": "T1", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
     from tests.unit.test_rc122_review11 import paired, served   # I1 / K2: the server's signed, pair-bound decision
     lng = paired(qg.abstained_comparison(served(gate, monkeypatch)))
-    guarded = _Projector().longitudinal(lng)
+    guarded = _Projector(report_user=TEST_USER).longitudinal(lng)
     assert guarded.get("abstained_by") == "quality_gate" and guarded.get("causes") == ["sequence_not_flair"]
     prompt = BrainReportService()._build_findings_prompt({"longitudinal": guarded}, language=lang)
     assert "could not be established as comparable" not in prompt
     assert qg.reason_sentence("sequence_not_flair") in prompt
-    notice = longitudinal_notice(lng, lang)
+    notice = longitudinal_notice(lng, lang, TEST_USER)
     assert LONGITUDINAL_NOTICE[lang]["abstained"] not in notice
     assert qg.reason_sentence("sequence_not_flair", lang) in notice
     assert qg.reason_sentence("scanner_not_recorded", lang) not in notice.split(qg.reason_lead("warned", lang))[0]
@@ -98,12 +99,12 @@ def test_rc127_g30_rc062_s_reason_only_when_rc062_withheld(monkeypatch):
     rc062 = paired(qg.apply_to_comparison(lcs.present_comparison({"changes": []}, acquisition_check={"status": "not_established",
                                    "missing": [], "differing": []}, evidence=None, binding=None, stored_review=None,
                                    visit_check={"status": "ok"}), served(warned, monkeypatch)))
-    notice = longitudinal_notice(rc062, "en")
+    notice = longitudinal_notice(rc062, "en", TEST_USER)
     assert LONGITUDINAL_NOTICE["en"]["abstained"] in notice
     assert qg.reason_sentence("scanner_not_recorded") in notice            # a warning, stated as a warning
     stopped = longitudinal_notice(paired(qg.abstained_comparison(served({**warned, "ai_output_allowed": False, "decision": "abstain",
         "codes": ["scanner_changed"], "checks": [{"check": "scanner", "visit": None, "status": "abstain",
-                                                  "code": "scanner_changed", "params": {}}]}, monkeypatch))), "en")
+                                                  "code": "scanner_changed", "params": {}}]}, monkeypatch))), "en", TEST_USER)
     assert LONGITUDINAL_NOTICE["en"]["abstained"] not in stopped
 
 

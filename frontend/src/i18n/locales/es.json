@@ -1507,7 +1507,8 @@
       "sequence": "Secuencia",
       "thickness": "Grosor de corte",
       "scanner": "Equipo",
-      "skull": "Cráneo"
+      "skull": "Cráneo",
+      "run": "Ejecución"
     },
     "status": {
       "pass": "Correcto",
@@ -1557,6 +1558,11 @@
       "gate_no_access": {
         "message": "No se encontró la imagen, o usted no tiene acceso a ella, así que la IA no se ejecuta.",
         "action": "Compruebe que la imagen sigue en el estudio y que puede abrirla; después vuelva a seleccionarla."
+      },
+      "run_not_confirmed": {
+        "message": "El servidor no pudo confirmar la ejecución de este resultado (su permiso de ejecución faltaba, ya se había usado o caducó), así que el resultado no se muestra.",
+        "action": "Ejecute de nuevo el análisis.",
+        "action_comparison": "Ejecute de nuevo el análisis."
       },
       "gate_not_established": {
         "message": "No se pudo confirmar en el servidor la decisión del control de calidad para esta pareja, así que no se da ningún resultado automático de cambio.",

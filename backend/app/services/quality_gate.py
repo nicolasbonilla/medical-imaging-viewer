@@ -34,17 +34,22 @@ import hashlib
 import hmac
 import io
 import json
+import logging
 import math
+import os
 import re
 import secrets
-import threading
 import time
 from collections import OrderedDict
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel, ConfigDict, StrictBool
+
 from app.services import longitudinal_candidate_safety as lcs
+
+logger = logging.getLogger(__name__)
 
 GATE_VERSION = "quality-gate/1"
 AGENT_ID = "quality-gate"
@@ -268,6 +273,9 @@ def _evaluate(inputs, policy) -> Dict[str, Any]:
             checks.append(_skull_check(visit, label))
     if "scanner" in spec["checks"]:
         checks.append(_scanner_check(visits, policy))
+    if mode == "single" and inputs.get("run_confirmed") is False:
+        # thirteenth review (M1, P2): a final consultation that presents no valid run token of THIS run releases nothing
+        checks.append(_check("run", "study", policy["codes"]["run_not_confirmed"], "run_not_confirmed"))
     return _result(checks, policy, mode, rc062_withholds=rc062)
 
 
@@ -882,9 +890,25 @@ def rate_limited_response(wait: int):
 TOKEN_PREFIX = "qg1"
 DECISION_TOKEN_TTL_S = 24 * 3600
 RUN_TOKEN_TTL_S = 2 * 3600
-RUN_TOKENS_SPENT_MAX = 8192
-_RUN_TOKENS_SPENT: "OrderedDict[str, float]" = OrderedDict()
-_RUN_TOKENS_LOCK = threading.Lock()
+# M2 (thirteenth review): a spent run token is recorded in the SAME single-use store as the agent scope's confirmation
+# tickets (PR #79, T1): a Firestore document per token (create() fails when it exists) — survives restarts and
+# instances; QUALITY_GATE_RUN_TOKEN_STORE=memory (offline tests only) keeps them in a bounded memory store that never
+# forgets an unexpired token. Full or unreachable: FAIL CLOSED — no release is recorded (a consultation instead).
+RUN_TOKEN_COLLECTION = "quality_gate_run_tokens"
+RUN_TOKENS_SPENT_MAX = 100_000
+_RUN_TOKEN_MEMORY = None
+
+
+def _run_token_store():
+    from app.security.agent_scope import FirestoreTicketStore, MemoryTicketStore
+    global _RUN_TOKEN_MEMORY
+    if os.environ.get("QUALITY_GATE_RUN_TOKEN_STORE") == "memory":
+        if _RUN_TOKEN_MEMORY is None:
+            _RUN_TOKEN_MEMORY = MemoryTicketStore(max_entries=RUN_TOKENS_SPENT_MAX)
+        return _RUN_TOKEN_MEMORY
+    store = FirestoreTicketStore()
+    store.COLLECTION = RUN_TOKEN_COLLECTION
+    return store
 
 
 def _now() -> float:
@@ -948,18 +972,20 @@ def decision_token(gate: Dict[str, Any], pair: Dict[str, Any], user_id: Any) -> 
                        "iat": now, "exp": now + DECISION_TOKEN_TTL_S})
 
 
-def report_account(longitudinal: Any) -> Optional[Dict[str, Any]]:
+def report_account(longitudinal: Any, user_id: Any) -> Optional[Dict[str, Any]]:
     """I1 / K1 / K2: the gate's account of a report's longitudinal block, from the SIGNED decision only — its
     decision, causes and warnings; the client's copy gives nothing else. None while the gate is not enforced (the base
-    report). A missing, forged, expired or tampered token, or one signed for another pair than the block's: the
-    comparability is NOT established by the gate — a stop with a plain note (gate_not_established), never a clean
-    comparison. The ONE hook of the report path (when PR #78 lands, its notice moves into the verified report)."""
+    report). A missing, forged, expired or tampered token, one signed for another pair than the block's, or (M3,
+    thirteenth review) for another clinician than the one requesting the report: the comparability is NOT established
+    by the gate — a stop with a plain note (gate_not_established), never a clean comparison. The ONE hook of the report
+    path (when PR #78 lands, its notice moves into the verified report)."""
     from app.core.config import get_settings
     if not get_settings().QUALITY_GATE_ENFORCED or not isinstance(longitudinal, dict):
         return None
     block = longitudinal.get("quality_gate")
     payload = verify_token(block.get("token") if isinstance(block, dict) else None, "decision")
-    if payload is None or not isinstance(payload.get("pair"), dict) or payload["pair"] != longitudinal.get("pair"):
+    if (payload is None or not isinstance(payload.get("pair"), dict) or payload["pair"] != longitudinal.get("pair")
+            or not str(user_id or "") or payload.get("user") != str(user_id or "")):
         return {"established": False, "stopped": True, "causes": ["gate_not_established"], "warnings": []}
     codes = lambda v: [c for c in v if isinstance(c, str)] if isinstance(v, list) else []  # noqa: E731
     stopped = payload.get("ai_output_allowed") is not True
@@ -975,23 +1001,23 @@ def run_token(file_id: str, version: Optional[str], user_id: Any, attested: bool
 
 
 def spend_run_token(token: Any, *, file_id: str, version: Optional[str], user_id: Any, attested: bool) -> bool:
-    """K5: True ONCE for a run token this server issued for exactly this file, version, clinician and attestation (it
-    is spent by the first final consultation that presents it). KNOWN LIMITATION: the spent set is per server instance."""
+    """K5 / M2: True ONCE for a run token this server issued for exactly this file, version, clinician and attestation,
+    before its expiry — spent in the durable single-use store (_run_token_store), so a replay is refused after a
+    restart or on another instance. A full or unreachable store fails CLOSED: False, logged (no release recorded)."""
     payload = verify_token(token, "run")
     if (payload is None or payload.get("file") != file_id or payload.get("version") != version
-            or payload.get("user") != str(user_id or "") or payload.get("attested") is not (attested is True)):
+            or payload.get("user") != str(user_id or "") or payload.get("attested") is not (attested is True)
+            or not isinstance(payload.get("nonce"), str)):
         return False
-    nonce = payload.get("nonce")
-    with _RUN_TOKENS_LOCK:
-        now = _now()
-        while _RUN_TOKENS_SPENT and next(iter(_RUN_TOKENS_SPENT.values())) <= now:
-            _RUN_TOKENS_SPENT.popitem(last=False)                       # expired: can never verify again anyway
-        if not isinstance(nonce, str) or nonce in _RUN_TOKENS_SPENT:
-            return False
-        _RUN_TOKENS_SPENT[nonce] = payload["exp"]
-        while len(_RUN_TOKENS_SPENT) > RUN_TOKENS_SPENT_MAX:
-            _RUN_TOKENS_SPENT.popitem(last=False)
-    return True
+    try:
+        fresh = _run_token_store().consume(f"run-{payload['nonce']}", int(payload["exp"]))
+    except Exception as exc:  # noqa: BLE001 — full or unreachable: fail closed, never a release
+        logger.warning("Quality gate: the run token store refused a run token (%s); the release is not recorded",
+                       type(exc).__name__)
+        return False
+    if not fresh:
+        logger.warning("Quality gate: a run token was presented again; the release is not recorded")
+    return fresh is True
 
 
 def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None, releases_output: bool = True,
@@ -1150,6 +1176,25 @@ def gate_caveat(gate: Dict[str, Any]) -> str:
     reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in explain(gate)["causes"]]
     return ("No automatic change candidates and no lesion load or count comparison for this pair: the quality gate "
             "stopped it, because " + "; ".join(reasons) + ". Compare the images visually with the overlay.")
+
+
+def abstained_sel(gate: Optional[Dict[str, Any]], *, pair: Any = None, reason: Optional[str] = None,
+                  **extra: Any) -> Dict[str, Any]:
+    """The SEL search's answer when it is withheld — by the gate (its causes) or by RC-062 (its reason, with its own
+    checks in ``extra``) — the ONE shape (thirteenth review). Every quantity withheld; the candidate firewall kept."""
+    out = {"ok": False, "abstained": True, "reason": reason if reason is not None else gate_caveat(gate), "sels": [],
+           "n_existing": 0, "n_sel": 0, **extra, "registration_verified": False, "adjudication_required": True}
+    if gate is not None:
+        out.update({"quality_gate": gate, "pair": pair})
+    return out
+
+
+class PairAttestation(BaseModel):
+    """The physician's per-visit FLAIR attestation of a comparison (F1): strict booleans only, no other key — the ONE
+    validator of the compare and SEL routes (thirteenth review), as the single study's StrictBool."""
+    model_config = ConfigDict(extra="forbid")
+    tp1: StrictBool = False
+    tp2: StrictBool = False
 
 
 def abstained_comparison(gate: Dict[str, Any]) -> Dict[str, Any]:

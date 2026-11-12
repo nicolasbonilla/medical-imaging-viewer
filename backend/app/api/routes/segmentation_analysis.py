@@ -127,13 +127,17 @@ def _memo_acquisition(file_id, memo):
 
 
 def _attestation(body) -> tuple:
-    """F1 (third review of PR #81): the physician's per-visit FLAIR attestation of a comparison, strict booleans only."""
+    """F1 (third review of PR #81): the physician's per-visit FLAIR attestation of a comparison — validated by the ONE
+    pydantic model qg.PairAttestation (strict booleans, no other key; thirteenth review)."""
+    from pydantic import ValidationError
     raw = body.get("quality_gate_attestation") if isinstance(body, dict) else None
     if raw is None:
         return (False, False)
-    if not isinstance(raw, dict) or set(raw) - {"tp1", "tp2"} or not all(isinstance(v, bool) for v in raw.values()):
+    try:
+        a = qg.PairAttestation.model_validate(raw)
+    except ValidationError:
         raise HTTPException(status_code=400, detail="quality_gate_attestation must map tp1/tp2 to true or false")
-    return (raw.get("tp1") is True, raw.get("tp2") is True)
+    return (a.tp1, a.tp2)
 
 
 async def _gate_setup(specs, body, segmentation_service, storage_service, current_user, request):
@@ -1129,9 +1133,7 @@ async def detect_slowly_expanding_lesions(
         gate, metas, acq_memo, gate_visit_check, pair = await _gate_setup(
             [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
         if gate is not None and gate.get("ai_output_allowed") is not True:
-            return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate), "sels": [], "n_existing": 0,
-                    "n_sel": 0, "registration_verified": False, "adjudication_required": True, "quality_gate": gate,
-                    "pair": pair}
+            return qg.abstained_sel(gate, pair=pair)
 
         async def _load(spec):
             if spec.get("type") != "segmentation":   # gate off: where the base branch checked it (G26)
@@ -1159,14 +1161,9 @@ async def detect_slowly_expanding_lesions(
         if lcs.rc062_withholds(acquisition_check, visit_check):   # G25: RC-062's one predicate (the gate stopped above)
             qg.audit_comparison_outcome(gate, released=False, withheld_by="rc062", user=current_user, request=request,
                                         study_key=qg.study_of(source_tp2) or "")       # G31
-            return {
-                "ok": False, "abstained": True,
-                "reason": lcs._abstention_caveat(acquisition_check, visit_check),
-                "sels": [], "n_existing": 0, "n_sel": 0,
-                "acquisition_check": acquisition_check, "visit_check": visit_check,
-                "registration_verified": False, "adjudication_required": True,
-                **({"quality_gate": gate, "pair": pair, "withheld_by": "rc062"} if gate is not None else {}),
-            }
+            return qg.abstained_sel(gate, pair=pair, reason=lcs._abstention_caveat(acquisition_check, visit_check),
+                                    acquisition_check=acquisition_check, visit_check=visit_check,
+                                    **({"withheld_by": "rc062"} if gate is not None else {}))
         if intensity_tp1 is None or intensity_tp2 is None:
             raise HTTPException(status_code=422,
                                 detail="Source FLAIR intensities unavailable for one or both "

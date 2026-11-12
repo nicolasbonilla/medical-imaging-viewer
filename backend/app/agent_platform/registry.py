@@ -479,11 +479,7 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
         actor = current_actor()
         etype = (AuditEventType.QUALITY_GATE_CONSULTATION if event.get("event") == "agent.consultation"
                  else AuditEventType.CLINICAL_AI_RUN)
-        if actor.request is not None:
-            # twelfth review of PR #81 (K3): the request's own marker that its route wrote the authoritative record —
-            # the audit middleware then adds none (and only then)
-            actor.request.state.audit_recorded = True
-        emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
+        written = emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
                    # G31 (eighth review of PR #81) / S4 (tenth): structured details, kept whole by the durable record
                    details=event.get("details"),
@@ -492,6 +488,10 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
                    # cut — every code the platform writes is short by construction (test_rc122_review10.py)
                    reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}",
                    resource_type="agent_run", resource_ids=ids)
+        if written is True and actor.request is not None:
+            # twelfth review of PR #81 (K3) / thirteenth (A1): the request's own marker that its route WROTE the
+            # authoritative record — set only after it was written, so a failed write leaves the middleware's record
+            actor.request.state.audit_recorded = True
     except Exception:  # noqa: BLE001 — auditing never breaks the caller
         pass
 

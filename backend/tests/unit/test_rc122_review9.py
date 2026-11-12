@@ -15,6 +15,7 @@ from app.core.container import get_storage_service
 from app.main import app
 from app.services import longitudinal_candidate_safety as lcs
 from app.services import quality_gate as qg
+from tests.unit.test_rc122_review11 import TEST_USER  # noqa: E402 — M3: the report's clinician
 from tests.unit.test_quality_gate_matrix import PLATFORM_ON, build_cases
 from tests.unit.test_rc122_quality_gate_wiring import (  # noqa: F401 — fixtures
     ACQ, FILE, PAIR, URL, _CountingStorage, _registry, _user, compare, single,
@@ -128,8 +129,8 @@ def test_rc127_g30_rc062_withholding_a_warned_pair_tells_the_model_the_same_warn
         lng = paired(qg.apply_to_comparison(lcs.present_comparison({"changes": []}, acquisition_check={
             "status": "not_established", "missing": [], "differing": []}, evidence=None, binding=None,
             stored_review=None, visit_check={"status": "ok"}), served(gate, monkeypatch)))
-        prompt = BrainReportService()._build_findings_prompt({"longitudinal": _Projector().longitudinal(lng)}, language="en")
-        notice = longitudinal_notice(lng, "en")
+        prompt = BrainReportService()._build_findings_prompt({"longitudinal": _Projector(report_user=TEST_USER).longitudinal(lng)}, language="en")
+        notice = longitudinal_notice(lng, "en", TEST_USER)
         if any(qg.reason_sentence(w) not in prompt or qg.reason_sentence(w) not in notice for w in warnings):
             bad.append(key)
         if seen > 400 and not bad:

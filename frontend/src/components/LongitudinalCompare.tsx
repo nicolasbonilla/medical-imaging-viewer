@@ -18,10 +18,11 @@ import { studyAPI } from '@/api/study';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { LongitudinalResult, StudySummary, SegmentationResponse, SELResult } from '@/types';
+import type { PairAttestation } from '@/services/qualityGate/gate';
 import { LongitudinalResultPanel } from './LongitudinalResultPanel';
 import { QualityGatePanel } from './QualityGatePanel';
 
-type Attestation = { tp1: boolean; tp2: boolean };
+type Attestation = PairAttestation;
 const isAttestation = (a: unknown): a is Attestation => typeof a === 'object' && a !== null
   && typeof (a as { tp1?: unknown }).tp1 === 'boolean' && typeof (a as { tp2?: unknown }).tp2 === 'boolean';
 

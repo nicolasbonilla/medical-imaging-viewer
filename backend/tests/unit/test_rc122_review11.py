@@ -29,6 +29,7 @@ COUNTS = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.5, "total_lesions_tp1": 3, "t
 
 
 TEST_PAIR = {"tp1": {"id": "s1", "source": None, "version": None}, "tp2": {"id": "s2", "source": None, "version": None}}
+TEST_USER = "reader-14"            # the clinician who compared AND requests the report (M3: the decision is bound to them)
 
 
 def served(gate, monkeypatch):
@@ -36,7 +37,7 @@ def served(gate, monkeypatch):
     SIGNED token for the test pair — what every report test feeds the report path with; the report trusts nothing
     else. The longitudinal block names the same pair (paired)."""
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
-    return {**gate, "token": qg.decision_token(gate, TEST_PAIR, "id-dr_rev")}
+    return {**gate, "token": qg.decision_token(gate, TEST_PAIR, TEST_USER)}
 
 
 def paired(lng):

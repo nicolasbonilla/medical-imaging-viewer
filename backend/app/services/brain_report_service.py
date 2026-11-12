@@ -817,9 +817,11 @@ class BrainReportService:
         volumetry: Optional[Dict[str, Any]] = None,
         language: str = "en",
         identifiers: Optional[PatientIdentifiers] = None,
+        report_user: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Generate a structured brain MRI report.
+        Generate a structured brain MRI report. ``report_user``: the clinician requesting it (a quality-gate decision
+        is used only when it was made for this clinician; thirteenth review of PR #81, M3).
 
         Args:
             template_type: Report template (general, ms_activity, ms_lesion_burden)
@@ -851,7 +853,7 @@ class BrainReportService:
 
         system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
         # RC-064: structured payload only — measurements, fixed labels, sex, age band; no free text.
-        payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)
+        payload = provider_payload(findings, volumetry, identifiers, report_user=report_user)   # R2; M3
         # PRB-003 (RC-070; review of PR #68, finding 4): no DIS instruction in the template unless DIS was
         # evaluated on a classified, radiologist-confirmed segmentation (state set by the report route).
         # Release 2026-10-25 integration (PR #67 + PR #68): the variant is chosen on the DIS block the model

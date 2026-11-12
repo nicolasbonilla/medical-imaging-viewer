@@ -22,6 +22,7 @@ import pytest
 import app.api.routes.segmentation_analysis as sa
 from app.services import longitudinal_candidate_safety as lcs
 from app.services import quality_gate as qg
+from tests.unit.test_rc122_review11 import TEST_USER  # noqa: E402 — M3: the report's clinician
 
 pytestmark = pytest.mark.unit
 
@@ -144,12 +145,12 @@ def test_rc123_r4_the_report_draft_states_the_gate_warnings(monkeypatch):
     lng = paired(qg.apply_to_comparison(lcs.present_comparison(
         dict(RESULT), acquisition_check={"status": "same", "missing": [], "differing": []}, evidence=None,
         binding=None, stored_review=None, visit_check={"status": "ok"}), served(WARNED, monkeypatch)))
-    guarded = _Projector().longitudinal(lng)
+    guarded = _Projector(report_user=TEST_USER).longitudinal(lng)
     assert guarded.get("quality_gate_warnings") == ["thickness_at_least"]
     prompt = BrainReportService()._build_findings_prompt({"longitudinal": guarded}, language="en")
     assert qg.CAVEAT_REASONS["thickness_at_least"] in prompt
     for lang, word in (("en", "Quality"), ("es", "calidad"), ("de", "Qualität")):
-        notice = longitudinal_notice(lng, lang)
+        notice = longitudinal_notice(lng, lang, TEST_USER)
         assert notice and word in notice, (lang, notice)
 
 

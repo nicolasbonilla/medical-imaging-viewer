@@ -121,6 +121,9 @@ def single(monkeypatch):
     monkeypatch.setattr(ct, "_authorized_inputs", _authorized)
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     monkeypatch.setattr(qg, "_LIMITER", None)
+    # thirteenth review (M2): the run tokens in the bounded memory store, never Firestore (PRB-002)
+    monkeypatch.setenv("QUALITY_GATE_RUN_TOKEN_STORE", "memory")
+    monkeypatch.setattr(qg, "_RUN_TOKEN_MEMORY", None)
     # each test starts with an empty header cache (a file of the same path and size in another test is another file)
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
     monkeypatch.setattr(lcs, "read_source_acquisition", lambda fid, svc=None: None)
@@ -464,8 +467,13 @@ def test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records(
     reg = _registry()
     reg._audit = records.append
     monkeypatch.setattr(qg, "_REGISTRY", reg)
-    shown = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "stripped"}).json()
-    hidden = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "unknown"}).json()
+    # K5 / M1 (twelfth, thirteenth review): each final consultation presents the run token of its own run
+    tokens = [client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True}).json()["run_token"] for _ in range(2)]
+    records.clear()
+    shown = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "stripped",
+                                   "run_token": tokens[0]}).json()
+    hidden = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "unknown",
+                                    "run_token": tokens[1]}).json()
     assert shown["ai_output_allowed"] is True and hidden["ai_output_allowed"] is False
     assert [r["code"] for r in records] == ["quality_gate.proceed_with_warnings.attested", "quality_gate.abstain.attested"]
     assert records[1]["details"]["causes"] == ["skull_unknown"]       # S4: the cause as a structured field
