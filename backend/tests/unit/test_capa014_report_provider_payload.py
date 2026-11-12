@@ -774,7 +774,10 @@ def test_rc066_logs_say_the_check_ran_with_counts_never_the_payload(route):
     for word in ("juan", "perez", "rrms", "lucia", "300 123 4567"):
         assert word not in everything, word
     # the prompt itself is not logged either (REQ-SEC-023 a), even though it carries no identifier
-    for line in ("total lesions:", "added to the draft by the application", "patient age band"):
+    # (amended with the tenth review of PR #78: the verified report's own prompt markers — the retired templates'
+    # lines alone no longer saw a logged prompt, and control L2 survived its re-run)
+    for line in ("total lesions:", "added to the draft by the application", "patient age band",
+                 "measurement record:", "[findings_comment]", "report_language"):
         assert line not in everything, line
 
 
