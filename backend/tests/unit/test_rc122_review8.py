@@ -162,6 +162,19 @@ def test_rc122_g32_an_attestation_only_when_the_end_to_end_result_would_change()
     assert offered > 0
 
 
+def test_rc122_g32_rc062_s_own_fields_decide_too():
+    """RC-062 withholds on fields the gate does not check (2D / 3D, slice thickness, an unknown visit order): the
+    scanner check passes, yet no attestation may be offered."""
+    scanner = {"manufacturer": "SIEMENS", "manufacturer_model_name": "Prisma", "magnetic_field_strength_t": 3.0}
+    visit = {"sequence": "unknown", "physician_confirmed_flair": False, "thickness": None, "scanner": scanner, "skull": "unknown"}
+    a, b = {**ACQ}, {**ACQ, "mr_acquisition_type": "2D" if ACQ["mr_acquisition_type"] != "2D" else "3D"}
+    rc062 = lcs.rc062_withholds(lcs.compare_acquisitions(a, b, (1.0, 1.0, 3.0), (1.0, 1.0, 3.0)), {"status": "ok"})
+    assert rc062 is True
+    gate = {"mode": "comparison", "platform": PLATFORM_ON, "visits": [visit, dict(visit)]}
+    assert qg.evaluate({**gate, "rc062_withholds": rc062})["attestable_visits"] == []
+    assert qg.evaluate({**gate, "rc062_withholds": False})["attestable_visits"] == ["tp1", "tp2"]
+
+
 # ----------------------------------------------------------------------------- U1
 def test_rc126_u1_the_server_says_explicitly_that_the_gate_is_not_enabled(single, monkeypatch):
     client, _ = single
