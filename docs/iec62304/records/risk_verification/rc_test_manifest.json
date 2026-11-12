@@ -1392,7 +1392,7 @@
       ],
       "requirement": "REQ-FUNC-117, REQ-SAFE-052",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate stacked on draft PR #79; not merged, not deployed; OFF behind VITE_ENABLE_QUALITY_GATE and QUALITY_GATE_ENFORCED)",
-      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "negative_control": "12 of 12 mutations detected in a throwaway copy, 2026-11-12 (Q1_confirmation_overrides_another_sequence, Q2_unknown_sequence_passes, Q3_confirmation_leaves_no_warning, Q4_unknown_thickness_passes, Q5_lower_bound_taken_as_thin, Q6_gate_fault_passes, Q25_file_name_as_evidence, Q26_t1_flair_accepted, Q27_short_inversion_time_ignored, Q28_record_called_native, F1_ts_confirmation_overrides_another_sequence, F2_ts_unknown_thickness_passes); 1 vitest-only not run locally (V2_card_runs_despite_an_abstention), vitest runs in CI; restored copy: backend 48 passed / 0 failed, browser harness 10 / 0. Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
       "failing_first": "commit efad1cf (3200-case matrix against a no-gate baseline: 18 failed, 5 passed)"
     },
     "RC-123": {
@@ -1406,7 +1406,7 @@
       ],
       "requirement": "REQ-SAFE-052",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
-      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "negative_control": "6 of 6 mutations detected in a throwaway copy, 2026-11-12 (Q7_scanner_change_ignored, Q8_unknown_scanner_passes, Q9_abstention_does_not_withhold, Q10_route_ignores_the_gate, F3_ts_field_tolerance_ignored, F4_ts_scanner_text_not_normalised); restored copy: backend 48 passed / 0 failed, browser harness 10 / 0. Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
       "failing_first": "commit efad1cf"
     },
     "RC-124": {
@@ -1420,7 +1420,7 @@
       ],
       "requirement": "REQ-SAFE-053",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
-      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "negative_control": "4 of 4 mutations detected in a throwaway copy, 2026-11-12 (Q4_unknown_thickness_passes, Q11_hook_ignores_the_licence, Q12_thickness_abstains_on_bands, Q28_record_called_native); restored copy: backend 48 passed / 0 failed, browser harness 10 / 0. Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
       "failing_first": "commit efad1cf"
     },
     "RC-125": {
@@ -1434,7 +1434,7 @@
       ],
       "requirement": "REQ-SAFE-052",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
-      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "negative_control": "6 of 6 mutations detected in a throwaway copy, 2026-11-12 (Q13_unknown_skull_passes, Q14_pending_allows_output, Q15_skull_not_checked, Q16_server_says_skull_stripped, F5_ts_pending_allows_output, F7_ts_final_check_ignores_skull); restored copy: backend 48 passed / 0 failed, browser harness 10 / 0. Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
       "failing_first": "commit efad1cf"
     },
     "RC-126": {
@@ -1448,7 +1448,7 @@
       ],
       "requirement": "REQ-SAFE-054",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
-      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "negative_control": "10 of 10 mutations detected in a throwaway copy, 2026-11-12 (Q17_platform_off_continues, Q18_malformed_switch_accepted, Q19_registry_not_consulted, Q20_trace_omits_checks, Q21_success_not_audited, Q22_trace_attribute_dropped, Q23_registry_entry_approved, Q24_policy_changed_silently, F6_ts_malformed_switch_accepted, F8_ts_unreachable_backend_allows); restored copy: backend 48 passed / 0 failed, browser harness 10 / 0. Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
       "failing_first": "commit efad1cf"
     },
     "RC-127": {
@@ -1463,7 +1463,7 @@
       ],
       "requirement": "REQ-FUNC-118, REQ-SAFE-054",
       "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
-      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "negative_control": "7 of 7 mutations detected in a throwaway copy, 2026-11-12 (Q24_policy_changed_silently, Q29_spanish_message_missing, F1_ts_confirmation_overrides_another_sequence, F2_ts_unknown_thickness_passes, F3_ts_field_tolerance_ignored, F4_ts_scanner_text_not_normalised, F9_ts_policy_copy_drifts); 2 vitest-only not run locally (V1_card_shows_output_without_the_final_check, V3_panel_hides_the_reasons), vitest runs in CI; restored copy: backend 48 passed / 0 failed, browser harness 10 / 0. Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
       "failing_first": "commit efad1cf"
     }
   },
