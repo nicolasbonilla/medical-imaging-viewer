@@ -58,3 +58,21 @@ describe('G27 (sixth review): with the gate on, RC-049 takes the class the SERVE
     expect(on('AX T2 FLAIR', 'T1').reasons.some((r) => r.includes('names another sequence'))).toBe(false);
   });
 });
+
+describe('S1 (eighth review): with the gate on and no server class, RC-049 fails closed', () => {
+  it('rc122 a call without the server class refuses, never "none"', async () => {
+    const { decideFlairContrast } = await import('../contrastGate');
+    for (const text of ['Sag T1 MPRAGE', 'AX DWI', 'AX T2 FLAIR']) {
+      const e = headerContrastEvidence([text], {}, null, { qualityGate: true });
+      expect(e.verdict, text).toBe('no_server_decision');
+      const nan = Number.NaN;
+      const features = { darkFraction: nan, rimBrightFraction: nan, tissueMode: nan, uOverMedian: nan } as never;
+      expect(decideFlairContrast(features, e, { clinicianConfirmedFlair: true }).ok, text).toBe(false);
+    }
+  });
+
+  it('rc122 the inversion time written in the text is kept on every path', () => {
+    expect(headerContrastEvidence(['TI=2500'], {}, null, { qualityGate: true, serverSequenceClass: 'unknown' }).inversionTimeMs).toBe(2500);
+    expect(headerContrastEvidence(['TI=2500'], {}, null, { qualityGate: true }).inversionTimeMs).toBe(2500);
+  });
+});

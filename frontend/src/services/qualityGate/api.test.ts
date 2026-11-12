@@ -33,10 +33,18 @@ describe('F3: too many checks', () => {
   });
 
   it('rc126 G29 a 404 (browser gate on, server gate off) says the gate is not enabled on the server', async () => {
-    post.mockRejectedValue({ response: { status: 404, data: { error: { code: 'HTTP_404', message: 'Not Found' } } } });
+    post.mockRejectedValue({ response: { status: 404, headers: { 'x-quality-gate-code': 'gate_not_enabled' },
+      data: { error: { code: 'HTTP_404', message: 'Not Found' } } } });
     const r = await requestQualityGate('file-1', false);
     expect(r.codes).toEqual(['gate_not_enabled']);
     expect(r.ai_may_run).toBe(false);
+    expect(retryAfterSeconds(r)).toBeNull();
+  });
+
+  it.each([404, 403])('rc126 U1 (eighth review) a %s that is not the gate code is "not found or no access", never retried', async (status) => {
+    post.mockRejectedValue({ response: { status, headers: {}, data: { error: { code: `HTTP_${status}`, message: 'Not Found' } } } });
+    const r = await requestQualityGate('file-1', false);
+    expect(r.codes).toEqual(['gate_no_access']);
     expect(retryAfterSeconds(r)).toBeNull();
   });
 

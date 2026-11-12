@@ -107,3 +107,10 @@ describe('F1: the per-visit FLAIR attestation of a comparison', () => {
     expect((screen.getByTestId('quality-gate-attest-tp1').querySelector('input') as HTMLInputElement).checked).toBe(false);
   });
 });
+
+describe('G30 (eighth review): no step that never happened is claimed', () => {
+  it('rc127 a pair the gate stopped before loading claims no alignment', () => {
+    show({ ...ABSTAINED, quality_gate: gateFor('sequence_not_flair') });
+    expect(document.body.textContent).not.toMatch(/Index-aligned|co-registered|Coregistered/i);
+  });
+});
