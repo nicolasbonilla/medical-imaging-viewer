@@ -6,7 +6,7 @@
     "DATA RULE (REQ-SAFE-053, RC-124): no threshold or figure here may come from non-commercial data. The thickness band limits are the limits pre-registered in the Paper A v0.3 protocol and only NAME the band in a warning. Until a v3 evidence asset with a licence on commercial_licence_allowlist is set in thickness.evidence_asset (the hook, null today), the thickness check warns and never abstains."
   ],
   "policy_id": "quality-gate",
-  "policy_version": "1.2.0-draft",
+  "policy_version": "1.3.0-draft",
   "status": "DRAFT, PENDING owner approval",
   "modes": {
     "single": { "visits": ["study"], "checks": ["platform", "sequence", "thickness", "skull"] },
@@ -16,10 +16,10 @@
     "values": ["FLAIR", "T1", "T2", "other", "unknown", "missing"],
     "accepted": ["FLAIR"],
     "confirmable_by_physician": ["unknown", "missing"],
-    "confirmation_modes": ["single"],
+    "confirmation_modes": ["single", "comparison"],
     "min_flair_inversion_time_ms": 1400,
     "vocabulary": {
-      "$comment": "First review of PR #81 (S1, S2): the series description is split into tokens on every non-alphanumeric character (after splitting camelCase, '*' read as 'star', '+C' as 'postcontrast'); the class comes from the tokens, never from word-boundary regexes. Any other_words token, or a T1 weighting with a FLAIR name, is 'other' and ALWAYS abstains. Only a FLAIR, T2-FLAIR or dark-fluid name is FLAIR. Corpus: frontend/src/config/qualityGate.sequences.v1.json (G12). Second review (G15): this is the ONE sequence classifier of the product - dataset_inventory.detect_sequence and the RC-049 header evidence of the in-browser AI route to it; TIRM is a FLAIR name; 'TI=' / 'TI:' in the text is an inversion time (seconds below ti_seconds_below).",
+      "$comment": "First review of PR #81 (S1, S2): the series description is split into tokens on every non-alphanumeric character (after splitting camelCase, '*' read as 'star', '+C' as 'postcontrast'); the class comes from the tokens, never from word-boundary regexes. Any other_words token, or a T1 weighting with a FLAIR name, is 'other' and ALWAYS abstains. Only a FLAIR, T2-FLAIR or dark-fluid name is FLAIR. Third review (G19): FIELD-AWARE - the description (SeriesDescription, ProtocolName, NIfTI descrip) by these tokens; the DICOM SequenceName by sequence_name_codes on its letters after a leading '*' (a Siemens prefix there, never T2*; an unlisted code says nothing); the DICOM ImageType by image_type_other (anything else says nothing). Corpus: frontend/src/config/qualityGate.sequences.v1.json (G12). Second review (G15): this is the ONE sequence classifier of the product - dataset_inventory.detect_sequence and the RC-049 header evidence of the in-browser AI route to it; TIRM is a FLAIR name; 'TI=' / 'TI:' in the text is an inversion time (seconds below ti_seconds_below).",
       "flair_substring": "flair",
       "flair_words": ["tirm"],
       "flair_compounds": ["darkfluid", "fluidattenuated"],
@@ -37,12 +37,17 @@
       "swi_family": ["swi", "swip", "swan", "qsm", "pha", "mag", "magnitude", "gre", "fgre", "t2star", "star", "medic", "merge", "hemo"],
       "pd_family": ["pd", "pdw", "proton"],
       "ti_text_pattern": "(?:^|[^A-Za-z0-9])TI\\s*[=:]\\s*([0-9]+(?:\\.[0-9]+)?)",
-      "ti_seconds_below": 10
+      "ti_seconds_below": 10,
+      "sequence_name_codes": {"tfl": "T1", "tfe": "T1", "fl": "other", "fgre": "other", "efgre": "other", "gre": "other",
+        "ffe": "other", "fe": "other", "swi": "other", "ep": "other", "epi": "other", "epse": "other", "epfid": "other"},
+      "image_type_other": ["mpr", "mip", "minip", "projection", "reformatted", "reformat", "subtraction", "adc", "trace",
+        "tracew", "fa", "colfa", "diffusion", "perfusion", "exp"]
     }
   },
   "mode_actions": {
     "$comment": "G14 (first review of PR #81, C1): the physician's attestation is offered only in the modes of sequence.confirmation_modes; elsewhere the panel shows the action named here.",
-    "comparison": { "sequence_unknown": "action_comparison", "sequence_missing": "action_comparison" }
+    "comparison": { "sequence_unknown": "action_comparison", "sequence_missing": "action_comparison" },
+    "$comment_comparison": "Third review of PR #81 (F1): the attestation is offered per visit in the comparison panel, so the comparison action points to it."
   },
   "thickness": {
     "thin_limit_mm": 1.5,
@@ -62,6 +67,8 @@
   "scanner": {
     "fields": ["manufacturer", "manufacturer_model_name", "magnetic_field_strength_t"],
     "field_strength_tolerance_t": 0.05,
+    "unrecorded_in_both": "warn",
+    "unrecorded_in_both_comment": "F1 (third review of PR #81; owner decision D-QG-10): when NEITHER visit has a scanner record (two uploads), the gate warns (scanner_not_recorded) instead of abstaining, and RC-062 then shows the candidates with the same warning; a partial or one-sided record still abstains (scanner_unknown).",
     "source": "RC-062 compare_acquisitions (backend/app/services/longitudinal_candidate_safety.py): text fields compared upper-cased with whitespace collapsed, field strength within 0.05 T"
   },
   "skull": { "values": ["stripped", "not_stripped", "unknown", "pending"], "required_in_modes": ["single"] },
@@ -87,6 +94,8 @@
     "scanner_unknown": "abstain",
     "skull_present": "abstain",
     "skull_unknown": "abstain",
-    "skull_pending": "pending"
+    "skull_pending": "pending",
+    "scanner_not_recorded": "warn",
+    "header_unreadable": "abstain"
   }
 }

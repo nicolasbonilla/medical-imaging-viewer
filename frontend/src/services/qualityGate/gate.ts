@@ -78,6 +78,8 @@ export interface GatePolicy {
       pd_family: string[];
       ti_text_pattern: string;
       ti_seconds_below: number;
+      sequence_name_codes: Record<string, string>;
+      image_type_other: string[];
     };
   };
   mode_actions?: Record<string, unknown>;
@@ -88,7 +90,7 @@ export interface GatePolicy {
     evidence_asset: unknown;
     commercial_licence_allowlist: string[];
   };
-  scanner: { fields: string[]; field_strength_tolerance_t: number };
+  scanner: { fields: string[]; field_strength_tolerance_t: number; unrecorded_in_both?: string };
   skull: { required_in_modes: string[] };
   platform: { codes: Record<string, string>; otherwise: string };
   codes: Record<string, GateStatus>;
@@ -195,6 +197,10 @@ function scannerCheck(visits: Obj[], policy: GatePolicy): GateCheck {
       ? Math.abs(a - b) > policy.scanner.field_strength_tolerance_t : a !== b) differing.push(field);
   }
   if (differing.length) return mk('scanner', null, 'abstain', 'scanner_changed', { fields: differing });
+  const unrecorded = visits.every((v) => policy.scanner.fields.every((f) => scannerValue(v, f) === null));
+  if (missing.length && unrecorded && policy.scanner.unrecorded_in_both === 'warn') {
+    return mk('scanner', null, policy.codes.scanner_not_recorded, 'scanner_not_recorded');   // F1, D-QG-10
+  }
   if (missing.length) return mk('scanner', null, 'abstain', 'scanner_unknown', { fields: missing });
   return mk('scanner', null, 'pass');
 }
@@ -228,6 +234,9 @@ function evaluateUnsafe(inputs: unknown, policy: GatePolicy): GateResult {
   const checks: GateCheck[] = [platform];
   spec.visits.forEach((label, i) => {
     const visit = visits[i] as Obj;
+    if (visit.header === 'unreadable') {          // the header could not be read at all (third review)
+      checks.push(mk('input', label as GateVisitLabel, policy.codes.header_unreadable, 'header_unreadable'));
+    }
     checks.push(sequenceCheck(visit, label as GateVisitLabel, policy, mode as string));
     checks.push(thicknessCheck(visit, label as GateVisitLabel, policy));
     if (spec.checks.includes('skull') && policy.skull.required_in_modes.includes(mode as string)) {
@@ -281,16 +290,59 @@ export function textInversionTimeMs(text: unknown, policy: GatePolicy = QUALITY_
   return x < v.ti_seconds_below ? x * 1000 : x;
 }
 
-/** Sequence from a series description and inversion time: the ONE classifier of the product (G15), as
- *  quality_gate.classify_sequence — the RC-049 header evidence of the in-browser AI routes to it too. */
-export function sequenceFromHeader(text: unknown, inversionTimeMs: unknown = null, policy: GatePolicy = QUALITY_GATE_POLICY): string {
+export interface SequenceFields {
+  description?: string | (string | null | undefined)[] | null;
+  protocol_name?: string | null;
+  sequence_name?: string | null;
+  image_type?: string | string[] | null;
+}
+
+/** G19: the DICOM SequenceName is a vendor internal code: a leading '*' is a Siemens prefix (never 'T2*'); its letters
+ *  are looked up; an unlisted code says nothing. As quality_gate._sequence_name_class. */
+function sequenceNameClass(value: unknown, v: GatePolicy['sequence']['vocabulary']): string | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const code = value.trim().toLowerCase().replace(/^\*+/, '');
+  if (code.includes(v.flair_substring)) return 'FLAIR';
+  const letters = (/^[a-z]*/.exec(code) as RegExpExecArray)[0];
+  return has(v.sequence_name_codes, letters) ? v.sequence_name_codes[letters] : 'unknown';
+}
+
+/** G19: the DICOM ImageType: a reformatted, projected, subtracted or parametric image is other (D-QG-7). */
+function imageTypeClass(value: unknown, v: GatePolicy['sequence']['vocabulary']): string | null {
+  const values = Array.isArray(value) ? value : typeof value === 'string' ? value.split('\\') : [];
+  const tokens = new Set(values.flatMap((x) => String(x).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)));
+  if (!tokens.size) return null;
+  return v.image_type_other.some((w) => tokens.has(w)) ? 'other' : 'unknown';
+}
+
+/** The ONE sequence classifier of the product, FIELD-AWARE (G15, G19), as quality_gate.classify_fields: the
+ *  description by its tokens, the SequenceName by the vendor-code table, the ImageType by its own list. */
+export function classifyFields(fields: SequenceFields, inversionTimeMs: unknown = null,
+  policy: GatePolicy = QUALITY_GATE_POLICY): { class: string } {
   const rules = policy.sequence;
-  const tokens = typeof text === 'string' ? sequenceTokens(text) : [];
+  const v = rules.vocabulary;
+  const d = fields.description;
+  const texts = (Array.isArray(d) ? d : [d]).filter((t): t is string => typeof t === 'string');
+  if (typeof fields.protocol_name === 'string') texts.push(fields.protocol_name);
   const n = num(inversionTimeMs);
-  const ti = n !== null && n > 0 ? n : textInversionTimeMs(text, policy);
-  if (!tokens.length && ti === null) return 'missing';
-  if (ti !== null && ti < rules.min_flair_inversion_time_ms) return 'other';
-  return tokens.length ? classifyTokens(tokens, rules.vocabulary) : 'unknown';
+  let ti = n !== null && n > 0 ? n : null;
+  if (ti === null) {
+    for (const t of texts) {
+      const x = textInversionTimeMs(t, policy);
+      if (x !== null) { ti = x; break; }
+    }
+  }
+  const classes = texts.map((t) => sequenceTokens(t)).filter((tk) => tk.length).map((tk) => classifyTokens(tk, v));
+  for (const c of [sequenceNameClass(fields.sequence_name, v), imageTypeClass(fields.image_type, v)]) if (c) classes.push(c);
+  if (!classes.length && ti === null) return { class: 'missing' };
+  if (ti !== null && ti < rules.min_flair_inversion_time_ms) return { class: 'other' };
+  const contra = classes.find((c) => c === 'other' || c === 'T1' || c === 'T2');
+  return { class: contra ?? (classes.includes('FLAIR') ? 'FLAIR' : 'unknown') };
+}
+
+/** The description alone (G15), as quality_gate.sequence_from_header. */
+export function sequenceFromHeader(text: unknown, inversionTimeMs: unknown = null, policy: GatePolicy = QUALITY_GATE_POLICY): string {
+  return classifyFields({ description: typeof text === 'string' ? text : null }, inversionTimeMs, policy).class;
 }
 
 /** The i18n action key a check shows in a mode (G14): only where the attestation is offered may it be asked for. */

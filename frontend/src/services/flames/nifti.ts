@@ -43,6 +43,8 @@ export interface DicomEvidence {
   protocolName?: string;
   sequenceName?: string;
   scanningSequence?: string;
+  /** DICOM ImageType values, when known (G19: read by its own rule) */
+  imageType?: string[];
 }
 
 function cString(bytes: Uint8Array, offset: number, length: number): string {

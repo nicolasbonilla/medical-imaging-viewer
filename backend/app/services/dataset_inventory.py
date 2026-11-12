@@ -123,6 +123,17 @@ SEQ_T2 = "T2"
 SEQ_PD = "PD"
 SEQ_SWI = "SWI"  # susceptibility family: SWI / GRE / T2* / phase / QSM
 
+_ID_TOKEN = re.compile(r"^(?=.*[0-9])[0-9a-f]{4,}$|^[0-9a-f]{8,}$")
+
+
+def descriptive_name(value) -> str:
+    """The descriptive part of a file id: its file name without directories or extension, without UUID / hex / numeric
+    identifier tokens (G20)."""
+    base = str(value or "").replace("\\", "/").rsplit("/", 1)[-1]
+    base = re.sub(r"\.(nii\.gz|nii|dcm|gz)$", "", base, flags=re.IGNORECASE)
+    return " ".join(t for t in re.split(r"[^A-Za-z0-9]+", base) if t and not _ID_TOKEN.match(t.lower()))
+
+
 def detect_sequence(*texts: str) -> Optional[str]:
     """MRI sequence from free text (series_description / filename): FLAIR/T1/T2/PD/SWI or None.
 
@@ -131,7 +142,9 @@ def detect_sequence(*texts: str) -> Optional[str]:
     FLAIR exactly when the gate says FLAIR; otherwise the family (SWI, PD) or the weighting (T1, T2) it reports.
     HEURISTIC for this research inventory — the data model has no sequence field."""
     from app.services.quality_gate import classify_sequence
-    blob = " ".join(t for t in texts if t)
+    # G20 (third review of PR #81): only descriptive text is classified. The first text is the description; any
+    # further one (a file id) is reduced to its file name without extension, without identifier tokens.
+    blob = " ".join(t for t in [texts[0] if texts else ""] + [descriptive_name(t) for t in texts[1:]] if t)
     if not blob.strip():
         return None
     found = classify_sequence(blob)

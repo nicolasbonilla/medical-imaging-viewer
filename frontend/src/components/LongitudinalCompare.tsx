@@ -147,7 +147,10 @@ export function LongitudinalCompare({
   }, [tp1StudyId, tp2StudyId, sortedStudies]);
   const canCompare = Boolean(tp1SegId && tp2SegId && !visitOrderProblem);
 
-  const handleCompare = useCallback(async () => {
+  const handleCompare = useCallback(async (attestation?: unknown) => {
+    // F1: the per-visit FLAIR attestation comes only from the result panel's own button (never a click event)
+    const att = typeof attestation === 'object' && attestation !== null && typeof (attestation as { tp1?: unknown }).tp1 === 'boolean'
+      && typeof (attestation as { tp2?: unknown }).tp2 === 'boolean' ? attestation as { tp1: boolean; tp2: boolean } : undefined;
     if (!canCompare) return;
     setIsLoading(true);
     setError(null);
@@ -159,6 +162,7 @@ export function LongitudinalCompare({
         segmentationAPI.compareLongitudinal(
           { type: 'segmentation', id: tp1SegId },
           { type: 'segmentation', id: tp2SegId },
+          att,
         ),
       ]);
 
@@ -317,6 +321,7 @@ export function LongitudinalCompare({
             tp2SegId={tp2SegId}
             onNavigateToSlice={onNavigateToSlice}
             onReviewed={handleCompare}
+            onAttest={(a) => void handleCompare(a)}
           />
 
           {/* SEL (slowly-expanding lesion) detection — vanguard smoldering-disease

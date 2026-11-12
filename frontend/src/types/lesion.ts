@@ -427,6 +427,8 @@ export interface LongitudinalResult {
   /** Single quality gate (RC-123/RC-126; DRAFT): sent only when the backend enforces it (QUALITY_GATE_ENFORCED);
    *  when it does not allow the output, the comparison is abstained as for RC-062. */
   quality_gate?: import('@/services/qualityGate/gate').GateResult;
+  /** F1 / D-QG-10: neither visit records its acquisition (two uploads); shown with a warning */
+  acquisition_unrecorded?: boolean;
   acquisition_check?: LongitudinalAcquisitionCheck;
   /** Visit 2 later than visit 1 and a different visit; "unknown" makes the comparison abstain. */
   visit_check?: LongitudinalVisitCheck;

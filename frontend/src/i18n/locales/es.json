@@ -1559,12 +1559,12 @@
       "sequence_unknown": {
         "message": "La cabecera de la imagen no indica qué secuencia es, así que la aplicación no puede saber si es una FLAIR.",
         "action": "Si está seguro de que es una FLAIR potenciada en T2, marque la casilla de confirmación. Si no, seleccione la imagen FLAIR.",
-        "action_comparison": "En una comparación la secuencia no se puede confirmar a mano. Compare usted las imágenes con la superposición, o compare visitas cuya FLAIR indique la secuencia en la cabecera."
+        "action_comparison": "Si está seguro de que la imagen de esta visita es una FLAIR potenciada en T2, marque su casilla de confirmación aquí abajo y compare de nuevo. Si no, compare usted las imágenes con la superposición."
       },
       "sequence_missing": {
         "message": "La imagen no trae información de secuencia, así que la aplicación no puede saber si es una FLAIR.",
         "action": "Si está seguro de que es una FLAIR potenciada en T2, marque la casilla de confirmación. Si no, seleccione la imagen FLAIR.",
-        "action_comparison": "En una comparación la secuencia no se puede confirmar a mano. Compare usted las imágenes con la superposición, o compare visitas cuya FLAIR indique la secuencia en la cabecera."
+        "action_comparison": "Si está seguro de que la imagen de esta visita es una FLAIR potenciada en T2, marque su casilla de confirmación aquí abajo y compare de nuevo. Si no, compare usted las imágenes con la superposición."
       },
       "sequence_confirmed_by_physician": {
         "message": "Usted confirmó que esta imagen es una FLAIR; su cabecera no lo indica. Su confirmación queda registrada con el resultado.",
@@ -1605,7 +1605,19 @@
       "skull_pending": {
         "message": "El cráneo se comprueba, y se quita si hace falta, al empezar el análisis. El resultado solo se muestra tras esta comprobación.",
         "action": "Empiece el análisis; esta comprobación se hace sola."
+      },
+      "scanner_not_recorded": {
+        "message": "No consta el equipo de ninguna de las dos visitas (ambas imágenes se subieron como archivos). Las diferencias entre equipos pueden parecer lesiones nuevas o desaparecidas.",
+        "action": "Asegúrese de que las dos visitas se adquirieron en el mismo equipo y con el mismo protocolo antes de fiarse de los candidatos de cambio."
+      },
+      "header_unreadable": {
+        "message": "No se pudo leer la cabecera de esta imagen, así que la aplicación no puede comprobarla.",
+        "action": "Abra o suba de nuevo la imagen. Si sigue ocurriendo, avise al administrador."
       }
-    }
+    },
+    "attestVisit": "Confirmo, bajo mi responsabilidad, que la imagen de la {{visit}} es una FLAIR potenciada en T2. Su cabecera no lo indica; mi confirmación queda registrada en la auditoría con mi nombre.",
+    "attestAgain": "Comparar de nuevo con mi confirmación",
+    "governedByRc062": "El control de calidad dio por buena esta pareja; la comprobación de la adquisición de abajo detiene los resultados automáticos, y su motivo es el que vale.",
+    "acquisitionUnrecorded": "Ninguna visita registra su equipo (ambas imágenes se subieron como archivos): trate los candidatos de cambio con especial cuidado."
   }
 }

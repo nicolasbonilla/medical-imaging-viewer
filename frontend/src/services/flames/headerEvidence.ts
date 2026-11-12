@@ -12,7 +12,7 @@
  */
 import type { DicomEvidence } from './nifti';
 
-import { QUALITY_GATE_POLICY, sequenceFromHeader, textInversionTimeMs } from '@/services/qualityGate/gate';
+import { classifyFields, QUALITY_GATE_POLICY, textInversionTimeMs } from '@/services/qualityGate/gate';
 
 export type HeaderVerdict = 'contradicts' | 'supports' | 'none';
 
@@ -39,11 +39,13 @@ export function headerContrastEvidence(
   dicom: DicomEvidence,
   seriesDescription?: string | null,
 ): HeaderEvidence {
+  // G19 (third review of PR #81): FIELD-AWARE. The descriptions (NIfTI text, SeriesDescription, ProtocolName, the app's
+  // series description) by their tokens; the SequenceName by the vendor-code table ('*' is a Siemens prefix there);
+  // the ImageType by its own list — never one text blob.
   const texts = [
     ...headerText,
     dicom.seriesDescription,
     dicom.protocolName,
-    dicom.sequenceName,
     seriesDescription ?? undefined,
   ].filter((t): t is string => Boolean(t && t.trim()));
   const reasons: string[] = [];
@@ -64,15 +66,16 @@ export function headerContrastEvidence(
       : `inversion time ${ti.toFixed(0)} ms is compatible with a FLAIR`);
   }
 
-  const classes = texts.map((raw) => [raw, sequenceFromHeader(raw, ti ?? null)] as const);
+  const classes = texts.map((raw) => [raw, classifyFields({ description: raw }, ti ?? null).class] as const);
   for (const [raw, cls] of classes) {
     if (cls === 'FLAIR') reasons.push(`header says "${raw.slice(0, 60)}"`);
     else if (NOT_FLAIR.has(cls)) reasons.push(`header names another sequence: "${raw.slice(0, 60)}"`);
   }
-  const contradicting = classes.find(([, cls]) => NOT_FLAIR.has(cls));
-  const sequenceClass = contradicting ? contradicting[1]
-    : classes.some(([, cls]) => cls === 'FLAIR') ? 'FLAIR'
-      : classes.some(([, cls]) => cls === 'unknown') ? 'unknown' : sequenceFromHeader(null, ti ?? null);
+  if (dicom.sequenceName && NOT_FLAIR.has(classifyFields({ sequence_name: dicom.sequenceName }).class)) {
+    reasons.push(`sequence code "${dicom.sequenceName.slice(0, 40)}" is another sequence`);
+  }
+  const sequenceClass = classifyFields({ description: texts, sequence_name: dicom.sequenceName ?? null,
+    image_type: dicom.imageType ?? null }, ti ?? null).class;
   const verdict: HeaderVerdict = NOT_FLAIR.has(sequenceClass) ? 'contradicts'
     : sequenceClass === 'FLAIR' || (ti !== undefined && ti >= MIN_FLAIR_TI_MS) ? 'supports' : 'none';
   return { verdict, reasons, inversionTimeMs: ti, sequenceClass };

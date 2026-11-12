@@ -24,6 +24,35 @@ import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { LongitudinalOverlayLegend } from './LongitudinalOverlayLegend';
 import { QualityGatePanel } from './QualityGatePanel';
+import type { GateResult } from '@/services/qualityGate/gate';
+
+type Attestation = { tp1: boolean; tp2: boolean };
+
+/** F1 (third review of PR #81): the physician's per-visit FLAIR attestation, as S3 / G13 — explicit, unticked, only for a
+ *  visit whose sequence is unknown or missing (never another sequence), reset when the pair changes (the parent keys it),
+ *  sent only by its own button and audited per visit with the user by the server. */
+function ComparisonAttestation({ gate, onAttest }: { gate: GateResult; onAttest: (a: Attestation) => void }) {
+  const { t } = useTranslation();
+  const [ticked, setTicked] = useState<Attestation>({ tp1: false, tp2: false });
+  const visits = (['tp1', 'tp2'] as const).filter((v) => (gate.checks ?? []).some((c) => c.check === 'sequence' && c.visit === v
+    && (c.code === 'sequence_unknown' || c.code === 'sequence_missing')));
+  if (!visits.length) return null;
+  return (
+    <div className="rounded border border-sky-500/50 bg-sky-950/20 p-1.5 space-y-1 text-[9px]" data-testid="quality-gate-attest-comparison">
+      {visits.map((v) => (
+        <label key={v} className="flex items-start gap-1" data-testid={`quality-gate-attest-${v}`}>
+          <input type="checkbox" checked={ticked[v]} onChange={(e) => setTicked((s) => ({ ...s, [v]: e.target.checked }))} />
+          <span>{t('qualityGate.attestVisit', { visit: t(`qualityGate.visit.${v}`) })}</span>
+        </label>
+      ))}
+      <button type="button" data-testid="quality-gate-attest-again" disabled={!visits.some((v) => ticked[v])}
+        className="px-2 py-0.5 rounded bg-sky-800 disabled:opacity-50 text-white"
+        onClick={() => onAttest({ tp1: visits.includes('tp1') && ticked.tp1, tp2: visits.includes('tp2') && ticked.tp2 })}>
+        {t('qualityGate.attestAgain')}
+      </button>
+    </div>
+  );
+}
 import type { LongitudinalResult, LesionChange } from '@/types';
 
 const REGION_CODES: Record<string, string> = {
@@ -73,10 +102,12 @@ interface LongitudinalResultPanelProps {
   onNavigateToSlice?: (sliceIndex: number) => void;
   /** Called after a decision was recorded: the parent compares again (the server applies it). */
   onReviewed: () => void;
+  /** F1: compare again with the physician's per-visit FLAIR attestation */
+  onAttest?: (attestation: Attestation) => void;
 }
 
 export function LongitudinalResultPanel({
-  result, tp1SegId, tp2SegId, onNavigateToSlice, onReviewed,
+  result, tp1SegId, tp2SegId, onNavigateToSlice, onReviewed, onAttest,
 }: LongitudinalResultPanelProps) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language || 'en';
@@ -102,6 +133,8 @@ export function LongitudinalResultPanel({
   // G16 (second review of PR #81): when the single quality gate stopped the comparison, its panel gives the reason;
   // RC-062's "change of scanner or protocol" box belongs to genuine RC-062 abstentions only.
   const gateStopped = result.quality_gate != null && result.quality_gate.ai_output_allowed !== true;
+  // G21: one verdict. The gate allowed the pair but RC-062 abstains -> RC-062's reason governs, the gate panel steps aside.
+  const rc062Governs = abstained && !gateStopped;
   const cc = result.change_candidates;
   const evidence = result.false_candidate_evidence;
   const confirmedBox = result.reader_confirmed_activity;
@@ -239,7 +272,16 @@ export function LongitudinalResultPanel({
       </div>
 
       {/* Single quality gate (RC-123/RC-127; DRAFT): present only when the backend enforces it. */}
-      {result.quality_gate && <QualityGatePanel result={result.quality_gate} testId="longitudinal-quality-gate" />}
+      {result.quality_gate && !rc062Governs && <QualityGatePanel result={result.quality_gate} testId="longitudinal-quality-gate" />}
+      {result.quality_gate && rc062Governs && (
+        <p className="text-[9px] text-gray-400" data-testid="longitudinal-quality-gate-governed">{t('qualityGate.governedByRc062')}</p>
+      )}
+      {gateStopped && onAttest && result.quality_gate && (
+        <ComparisonAttestation key={`${tp1SegId}|${tp2SegId}`} gate={result.quality_gate} onAttest={onAttest} />
+      )}
+      {result.acquisition_unrecorded && (
+        <p className="text-[9px] text-amber-300" data-testid="longitudinal-acquisition-unrecorded">{t('qualityGate.acquisitionUnrecorded')}</p>
+      )}
 
       {abstained ? (gateStopped ? null : abstentionBox()) : (
         <>

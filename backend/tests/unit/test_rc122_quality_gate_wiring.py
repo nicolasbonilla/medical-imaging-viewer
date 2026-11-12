@@ -643,7 +643,7 @@ def test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop(single, mon
 
     img = nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()
     for data, name, expect in ((img, "patients/p/studies/s/series/se/scan.img", ("at_least", None)),
-                               (_dicom_bytes(), "patients/p/studies/s/series/se/IM0001", ("native", None)),
+                               (_dicom_bytes(rows=512), "patients/p/studies/s/series/se/IM0001", ("native", None)),
                                (b"\x00" * 4096, "patients/p/studies/s/series/se/blob.bin", (None, "header_unreadable"))):
         storage = _Ranged(data)
         app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(storage)

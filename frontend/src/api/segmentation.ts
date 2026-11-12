@@ -239,10 +239,11 @@ export const segmentationAPI = {
   async compareLongitudinal(
     tp1: { type: 'segmentation' | 'instance'; id: string },
     tp2: { type: 'segmentation' | 'instance'; id: string },
+    qualityGateAttestation?: { tp1: boolean; tp2: boolean },
   ): Promise<LongitudinalResult> {
     const response = await apiClient.post<LongitudinalResult>(
       `${API_PREFIX}/segmentation/longitudinal/compare`,
-      { tp1, tp2 }
+      { tp1, tp2, ...(qualityGateAttestation ? { quality_gate_attestation: qualityGateAttestation } : {}) }
     );
     return response.data;
   },

@@ -1541,12 +1541,12 @@
       "sequence_unknown": {
         "message": "Der Bildkopf nennt keine Sequenz, daher kann die Anwendung nicht erkennen, ob es ein FLAIR ist.",
         "action": "Wenn Sie sicher sind, dass es ein T2-FLAIR ist, setzen Sie das Bestätigungshäkchen. Sonst wählen Sie das FLAIR-Bild.",
-        "action_comparison": "Bei einem Vergleich kann die Sequenz nicht von Hand bestätigt werden. Vergleichen Sie die Bilder selbst mit der Überlagerung oder vergleichen Sie Untersuchungen, deren FLAIR-Bildkopf die Sequenz nennt."
+        "action_comparison": "Wenn Sie sicher sind, dass das Bild dieser Untersuchung ein T2-FLAIR ist, setzen Sie unten ihr Bestätigungshäkchen und vergleichen Sie erneut. Sonst vergleichen Sie die Bilder selbst mit der Überlagerung."
       },
       "sequence_missing": {
         "message": "Das Bild enthält keine Angaben zur Sequenz, daher kann die Anwendung nicht erkennen, ob es ein FLAIR ist.",
         "action": "Wenn Sie sicher sind, dass es ein T2-FLAIR ist, setzen Sie das Bestätigungshäkchen. Sonst wählen Sie das FLAIR-Bild.",
-        "action_comparison": "Bei einem Vergleich kann die Sequenz nicht von Hand bestätigt werden. Vergleichen Sie die Bilder selbst mit der Überlagerung oder vergleichen Sie Untersuchungen, deren FLAIR-Bildkopf die Sequenz nennt."
+        "action_comparison": "Wenn Sie sicher sind, dass das Bild dieser Untersuchung ein T2-FLAIR ist, setzen Sie unten ihr Bestätigungshäkchen und vergleichen Sie erneut. Sonst vergleichen Sie die Bilder selbst mit der Überlagerung."
       },
       "sequence_confirmed_by_physician": {
         "message": "Sie haben bestätigt, dass dieses Bild ein FLAIR ist; der Bildkopf sagt das nicht. Ihre Bestätigung wird mit dem Ergebnis gespeichert.",
@@ -1587,7 +1587,19 @@
       "skull_pending": {
         "message": "Der Schädel wird beim Start der Analyse geprüft und bei Bedarf entfernt. Das Ergebnis erscheint erst nach dieser Prüfung.",
         "action": "Starten Sie die Analyse; diese Prüfung läuft von selbst."
+      },
+      "scanner_not_recorded": {
+        "message": "Die Geräte der beiden Untersuchungen sind nicht erfasst (beide Bilder wurden als Dateien hochgeladen). Unterschiede zwischen Geräten können wie neue oder verschwundene Läsionen aussehen.",
+        "action": "Stellen Sie sicher, dass beide Untersuchungen am selben Gerät mit demselben Protokoll aufgenommen wurden, bevor Sie sich auf die Veränderungskandidaten verlassen."
+      },
+      "header_unreadable": {
+        "message": "Der Bildkopf dieses Bildes konnte nicht gelesen werden, daher kann die Anwendung das Bild nicht prüfen.",
+        "action": "Öffnen oder laden Sie das Bild erneut. Wenn es weiter auftritt, informieren Sie die Administration."
       }
-    }
+    },
+    "attestVisit": "Ich bestätige in eigener Verantwortung, dass das Bild der {{visit}} ein T2-FLAIR ist. Der Bildkopf sagt das nicht; meine Bestätigung wird mit meinem Namen im Prüfprotokoll gespeichert.",
+    "attestAgain": "Mit meiner Bestätigung erneut vergleichen",
+    "governedByRc062": "Die Qualitätsprüfung hat dieses Paar zugelassen; die Aufnahmeprüfung unten hält die automatischen Ergebnisse an, und ihr Grund gilt.",
+    "acquisitionUnrecorded": "Keine Untersuchung erfasst ihr Gerät (beide Bilder wurden als Dateien hochgeladen): behandeln Sie die Veränderungskandidaten besonders vorsichtig."
   }
 }

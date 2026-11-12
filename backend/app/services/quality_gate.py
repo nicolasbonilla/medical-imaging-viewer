@@ -172,6 +172,9 @@ def _scanner_check(visits, policy) -> Dict[str, Any]:
     missing = [d["field"] for d in result["missing"] if d["field"] in fields]
     if differing:
         return _check("scanner", None, "abstain", "scanner_changed", fields=[f for f in fields if f in differing])
+    unrecorded = all(all(v is None for v in _scanner_record(visit, policy).values()) for visit in visits)
+    if missing and unrecorded and policy["scanner"].get("unrecorded_in_both") == "warn":
+        return _check("scanner", None, policy["codes"]["scanner_not_recorded"], "scanner_not_recorded")
     if missing:
         return _check("scanner", None, "abstain", "scanner_unknown", fields=[f for f in fields if f in missing])
     return _check("scanner", None, "pass")
@@ -206,6 +209,8 @@ def _evaluate(inputs, policy) -> Dict[str, Any]:
         return _result([platform, _check("input", None, "abstain", "gate_input_invalid")], policy)
     checks = [platform]
     for label, visit in zip(spec["visits"], visits):
+        if visit.get("header") == "unreadable":        # the header could not be read at all (third review)
+            checks.append(_check("input", label, policy["codes"]["header_unreadable"], "header_unreadable"))
         checks.append(_sequence_check(visit, label, policy, mode))
         checks.append(_thickness_check(visit, label, policy))
         if "skull" in spec["checks"] and mode in policy["skull"]["required_in_modes"]:
@@ -284,29 +289,70 @@ def text_inversion_time_ms(text: Any, policy: Optional[Dict[str, Any]] = None) -
     return v * 1000.0 if v < vocab["ti_seconds_below"] else v
 
 
-def classify_sequence(series_description: Any, inversion_time_ms: Any = None,
-                      policy: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[str]]:
-    """The ONE sequence classifier of the product (G15): the gate's class, plus the weighting (T1/T2) and family
-    (SWI/PD) that the dataset inventory reports. Same rules as gate.ts and headerEvidence.ts (both route to it)."""
+def _sequence_name_class(value: Any, vocab: Dict[str, Any]) -> Optional[str]:
+    """G19: the DICOM SequenceName is a vendor internal code ('*tir2d1rr18', 'fgre', 'TFE'): a leading '*' is a Siemens
+    prefix (never 'T2*'); the leading letters are looked up; an unlisted code says nothing (unknown)."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    code = value.strip().lower().lstrip("*")
+    if vocab["flair_substring"] in code:
+        return "FLAIR"
+    letters = re.match(r"[a-z]*", code).group(0)
+    return vocab["sequence_name_codes"].get(letters, "unknown")
+
+
+def _image_type_class(value: Any, vocab: Dict[str, Any]) -> Optional[str]:
+    """G19: the DICOM ImageType: a reformatted, projected, subtracted or parametric image is other (D-QG-7);
+    anything else says nothing."""
+    values = value if isinstance(value, (list, tuple)) else str(value).split("\\") if isinstance(value, str) else []
+    tokens = {t for v in values for t in _NON_ALNUM.split(str(v).lower()) if t}
+    if not tokens:
+        return None
+    return "other" if tokens & set(vocab["image_type_other"]) else "unknown"
+
+
+def classify_fields(fields: Dict[str, Any], inversion_time_ms: Any = None,
+                    policy: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[str]]:
+    """The ONE sequence classifier of the product, FIELD-AWARE (third review of PR #81, G19): the description
+    (``description``: a text or a list — SeriesDescription, ProtocolName, NIfTI descrip; also ``protocol_name``) by
+    its tokens, ``sequence_name`` by the vendor-code table, ``image_type`` by its own list. Any field naming a
+    non-FLAIR sequence decides (other / T1 / T2); else a FLAIR name; else unknown; nothing at all = missing."""
     policy = policy if policy is not None else _policy()
     rules = policy["sequence"]
     vocab = rules["vocabulary"]
-    tokens = sequence_tokens(series_description) if isinstance(series_description, str) else []
+    desc = fields.get("description")
+    texts = [t for t in (desc if isinstance(desc, (list, tuple)) else [desc]) if isinstance(t, str)]
+    if isinstance(fields.get("protocol_name"), str):
+        texts.append(fields["protocol_name"])
     ti = _number(inversion_time_ms)
-    ti = ti if ti is not None and ti > 0 else text_inversion_time_ms(series_description, policy)
+    ti = ti if ti is not None and ti > 0 else next(
+        (v for v in (text_inversion_time_ms(t, policy) for t in texts) if v is not None), None)
+    tokens_per_text = [sequence_tokens(t) for t in texts]
+    classes = [_classify_tokens(tk, vocab) for tk in tokens_per_text if tk]
+    classes += [c for c in (_sequence_name_class(fields.get("sequence_name"), vocab),
+                            _image_type_class(fields.get("image_type"), vocab)) if c]
+    tokens = [t for tk in tokens_per_text for t in tk]
     flair_word = vocab["flair_substring"]
     t1 = (any(_weighted(t, vocab["t1_prefix"]) or t in vocab["t1_words"] for t in tokens)
           or any(flair_word in t and vocab["t1_prefix"] in t.replace(flair_word, "") for t in tokens))
     weighting = "T1" if t1 else "T2" if any(_weighted(t, vocab["t2_prefix"]) for t in tokens) else None
     family = ("SWI" if set(tokens) & set(vocab["swi_family"]) else "PD" if set(tokens) & set(vocab["pd_family"])
               else None)
-    if not tokens and ti is None:
+    if not classes and ti is None:
         cls = "missing"
     elif ti is not None and ti < rules["min_flair_inversion_time_ms"]:
         cls = "other"
     else:
-        cls = _classify_tokens(tokens, vocab) if tokens else "unknown"
+        cls = next((c for c in classes if c in ("other", "T1", "T2")), None) or (
+            "FLAIR" if "FLAIR" in classes else "unknown")
     return {"class": cls, "weighting": weighting, "family": family}
+
+
+def classify_sequence(series_description: Any, inversion_time_ms: Any = None,
+                      policy: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[str]]:
+    """The description field alone through classify_fields (G15): the class, plus the weighting (T1/T2) and family
+    (SWI/PD) the dataset inventory reports. Same rules as gate.ts and headerEvidence.ts (both route to it)."""
+    return classify_fields({"description": series_description}, inversion_time_ms, policy)
 
 
 def sequence_from_header(series_description: Any, inversion_time_ms: Any = None,
@@ -388,23 +434,29 @@ def _nifti_header_image(data: bytes):
     import nibabel as nib
     stream = gzip.GzipFile(fileobj=io.BytesIO(data)) if data[:2] == b"\x1f\x8b" else io.BytesIO(data)
     holder = nib.FileHolder(fileobj=stream)
-    return nib.Nifti1Image.from_file_map({"header": holder, "image": holder})
+    klass = nib.Nifti2Image if _nifti_sizeof_hdr(_nifti_prefix(data))[0] == 540 else nib.Nifti1Image
+    return klass.from_file_map({"header": holder, "image": holder})
 
 
 def read_header_fields(data: bytes, name: str, imaging_service) -> Dict[str, Any]:
     """Header only (E1): pydicom with stop_before_pixels, a lazy NIfTI header — no voxel is decoded, normalised
     or summarised. Series description and inversion time (DICOM), RC-054 thickness (both)."""
     from app.services.acquisition_geometry import derive_from_dicom_dataset, derive_from_nifti_image
-    fmt = getattr(imaging_service.detect_format(data, name), "value", None)
+    fmt = sniff_format(data)                         # magic bytes, never the file name (third review, other 1)
     if fmt == "dicom":
         import pydicom
-        ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True)
-        return {"series_description": str(ds.get("SeriesDescription", "") or "") or None,
+        ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True, force=True)
+        text = lambda k: (str(ds.get(k, "") or "").strip() or None)
+        image_type = getattr(ds, "ImageType", None)
+        return {"series_description": text("SeriesDescription"), "protocol_name": text("ProtocolName"),
+                "sequence_name": text("SequenceName"),
+                "image_type": [str(v) for v in image_type] if image_type is not None and not isinstance(image_type, str)
+                else image_type,
                 "inversion_time_ms": lcs._number(getattr(ds, "InversionTime", None)),
                 "thickness": thickness_from_geometry(derive_from_dicom_dataset(ds))}
     if fmt == "nifti":
         return {**_NO_HEADER, "thickness": thickness_from_geometry(derive_from_nifti_image(_nifti_header_image(data)))}
-    return dict(_NO_HEADER)
+    return {**_NO_HEADER, "unreadable": True}
 
 
 HEADER_PREFIX_NIFTI = 4096        # compressed bytes: the 348-byte header (+ extensions) of a NIfTI
@@ -413,39 +465,73 @@ HEADER_PREFIX_MAX = 4 * 1024 * 1024
 _PIXEL_DATA_TAGS = (b"\xe0\x7f\x10\x00", b"\x7f\xe0\x00\x10")
 
 
-def _header_complete(data: bytes, name: str, imaging_service) -> bool:
-    """Does this prefix hold the whole header? DICOM: the pixel data starts inside it; NIfTI: 348 bytes plus the
-    extensions up to vox_offset (after decompressing the prefix)."""
-    import struct
+def _nifti_prefix(data: bytes) -> bytes:
     import zlib
-    fmt = getattr(imaging_service.detect_format(data, name), "value", None)
+    if data[:2] != b"\x1f\x8b":
+        return data
+    try:
+        return zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(data, 1 << 20)
+    except zlib.error:
+        return b""
+
+
+def _nifti_sizeof_hdr(raw: bytes):
+    import struct
+    if len(raw) < 4:
+        return None, None
+    for endian in ("<", ">"):
+        size = struct.unpack(endian + "i", raw[:4])[0]
+        if size in (348, 540):
+            return size, endian
+    return None, None
+
+
+def sniff_format(data: bytes) -> Optional[str]:
+    """The format from MAGIC BYTES only (third review, other 1): NIfTI sizeof_hdr 348/540 (raw or gzip), DICOM 'DICM' at
+    128 or a preamble-less file starting with an explicit-VR group 0002/0008 element. None = not determinable."""
+    if _nifti_sizeof_hdr(_nifti_prefix(data))[0]:
+        return "nifti"
+    if data[128:132] == b"DICM":
+        return "dicom"
+    if len(data) >= 8 and data[0:2] in (b"\x02\x00", b"\x08\x00") and data[4:6].isalpha() and data[4:6].isupper():
+        return "dicom"
+    return None
+
+
+def _header_complete(data: bytes) -> bool:
+    """Does this prefix hold the whole header? DICOM: the pixel data starts inside it; NIfTI: the header plus the
+    extensions up to vox_offset (after decompressing the prefix). Magic bytes only; run in a worker thread."""
+    import struct
+    fmt = sniff_format(data)
     if fmt == "dicom":
         return any(tag in data for tag in _PIXEL_DATA_TAGS)
     if fmt != "nifti":
+        return False
+    raw = _nifti_prefix(data)
+    size, endian = _nifti_sizeof_hdr(raw)
+    if len(raw) < size + 4:
+        return False
+    if raw[size] == 0:
         return True
-    try:
-        raw = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(data, 1 << 20) if data[:2] == b"\x1f\x8b" else data
-    except zlib.error:
-        return False
-    if len(raw) < 352:
-        return False
-    endian = "<" if struct.unpack("<i", raw[:4])[0] == 348 else ">"
-    vox_offset = struct.unpack(endian + "f", raw[108:112])[0]
-    return raw[348] == 0 or len(raw) >= vox_offset
+    vox_offset = (struct.unpack(endian + "f", raw[108:112])[0] if size == 348
+                  else struct.unpack(endian + "q", raw[168:176])[0])
+    return len(raw) >= vox_offset
 
 
 async def _read_header_fields(storage_service, bucket: str, file_path: str, imaging_service) -> Dict[str, Any]:
     """E1 / second review, finding 3: the header only, through bounded byte ranges (retried larger while the header
     runs longer), parsed in a worker thread. A storage without ranges is read whole (as displayed_image_check)."""
+    from app.core.interfaces.storage_interface import IStorageService
     name = file_path.rsplit("/", 1)[-1]
     ranged = getattr(storage_service, "download_file_range", None)
-    if ranged is None:
+    if ranged is None or getattr(type(storage_service), "download_file_range", None) is IStorageService.download_file_range:
+        # no real ranges (the interface default downloads the whole file per call): ONE full download at most
         data = await storage_service.download_file(bucket, file_path)
         return await asyncio.to_thread(read_header_fields, data, name, imaging_service)
     size = HEADER_PREFIX_NIFTI if name.lower().endswith((".nii", ".nii.gz")) else HEADER_PREFIX_DICOM
     while True:
         data = await ranged(bucket, file_path, 0, size - 1)
-        if len(data) < size or size >= HEADER_PREFIX_MAX or _header_complete(data, name, imaging_service):
+        if len(data) < size or size >= HEADER_PREFIX_MAX or await asyncio.to_thread(_header_complete, data):
             return await asyncio.to_thread(read_header_fields, data, name, imaging_service)
         size *= 4
 
@@ -474,10 +560,10 @@ async def single_study_inputs(file_path: str, storage_service, imaging_service, 
     if fields is None:
         try:
             fields = await _read_header_fields(storage_service, bucket, file_path, imaging_service)
-        except Exception:  # noqa: BLE001 — unknown header: sequence missing, thickness unknown (not cached)
-            fields = dict(_NO_HEADER)
+        except Exception:  # noqa: BLE001 — the header could not be read: an explicit code, never 'missing'
+            fields = {**_NO_HEADER, "unreadable": True}
         else:
-            if key:
+            if key and not fields.get("unreadable"):
                 _HEADER_CACHE[key] = fields
                 while len(_HEADER_CACHE) > HEADER_CACHE_MAX:
                     _HEADER_CACHE.popitem(last=False)
@@ -487,8 +573,12 @@ async def single_study_inputs(file_path: str, storage_service, imaging_service, 
         lambda: (lcs.read_source_acquisition(file_path), read_source_series_description(file_path)))
     description = fields["series_description"] or stored
     ti = fields["inversion_time_ms"] if fields["inversion_time_ms"] is not None else (acq or {}).get("inversion_time_ms")
+    sequence = classify_fields({"description": description, "protocol_name": fields.get("protocol_name"),
+                                "sequence_name": fields.get("sequence_name"), "image_type": fields.get("image_type")},
+                               ti)["class"]
     return {"mode": "single", "visits": [{
-        "sequence": sequence_from_header(description, ti),
+        **({"header": "unreadable"} if fields.get("unreadable") else {}),
+        "sequence": sequence,
         "physician_confirmed_flair": physician_confirmed_flair is True,
         "thickness": dict(fields["thickness"]) if isinstance(fields["thickness"], dict) else None,
         "scanner": None,
@@ -650,6 +740,8 @@ CAVEAT_REASONS = {
     "skull_present": "an image still has its skull",
     "skull_unknown": "it cannot be confirmed that the skull was removed",
     "skull_pending": "the skull has not been checked yet",
+    "scanner_not_recorded": "the scanners of the two visits are not recorded",
+    "header_unreadable": "an image header could not be read",
 }
 
 
@@ -660,8 +752,9 @@ def audit_code(result: Dict[str, Any]) -> str:
     decision = result.get("decision")
     deciding = next((c["code"] for st in ("abstain", "pending") for c in result.get("checks", [])
                      if c.get("status") == st and c.get("code")), None) if decision in ("abstain", "pending") else None
-    attested = any(c.get("code") == "sequence_confirmed_by_physician" for c in result.get("checks", []))
-    return f"quality_gate.{decision}" + (f".{deciding}" if deciding else "") + (".attested" if attested else "")
+    visits = [c.get("visit") for c in result.get("checks", []) if c.get("code") == "sequence_confirmed_by_physician"]
+    attested = "" if not visits else ".attested" if visits == ["study"] else ".attested_" + "_".join(visits)
+    return f"quality_gate.{decision}" + (f".{deciding}" if deciding else "") + attested
 
 
 def gate_caveat(gate: Dict[str, Any]) -> str:
@@ -678,11 +771,13 @@ def abstained_comparison(gate: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
-def comparison_gate(source_tp1, source_tp2, *, acquisitions=None, user=None, request=None) -> Dict[str, Any]:
+def comparison_gate(source_tp1, source_tp2, *, acquisitions=None, attestation=(False, False), user=None,
+                    request=None) -> Dict[str, Any]:
     """The gate on two visits from their stored records (RC-123), through the platform (RC-126). ``acquisitions``:
     the two records the route already read (E2); read here only when not given."""
     given = list(acquisitions) if acquisitions is not None else [_UNREAD, _UNREAD]
-    visits = [visit_from_stored_records(s, acquisition=a) for s, a in zip((source_tp1, source_tp2), given)]
+    visits = [visit_from_stored_records(s, acquisition=a, physician_confirmed_flair=att is True)
+              for s, a, att in zip((source_tp1, source_tp2), given, attestation)]
     return run_quality_gate({"mode": "comparison", "visits": visits},
                             study_key=study_of(source_tp2) or study_of(source_tp1) or "",
                             actor=actor_for(user, request) if user is not None else None)

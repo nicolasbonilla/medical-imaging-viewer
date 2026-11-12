@@ -66,7 +66,9 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const [preflight, setPreflight] = useState<ServerGateResponse | null>(null);
   const [attested, setAttested] = useState(false);
   const attestedAtRun = useRef(false);
-  const [finalGate, setFinalGate] = useState<GateResult | null>(null);
+  // G23: the final decision is kept WITH the file it was made for; any other selection shows none of it
+  const [finalState, setFinalState] = useState<{ fileId: string; gate: GateResult } | null>(null);
+  const finalGate = finalState && finalState.fileId === flairFileId ? finalState.gate : null;
   // G18: every answer and every run carries the file it was made for; an answer for a file that is no longer the
   // selected one never acts. One request at a time: Run is disabled while it is in flight.
   const currentFile = useRef(flairFileId);
@@ -90,20 +92,18 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const gateBefore = useMemo(() => withAttestation(preflight, canAttest && attested), [preflight, canAttest, attested]);
   const doneResult = flames.status === 'done' ? flames.result : null;
   useEffect(() => {
-    if (!gateOn) return;
-    setFinalGate(null);
-    if (!doneResult) return;
+    if (!gateOn || !doneResult || doneResult.fileId !== flairFileId) return;   // another file: nothing
+    setFinalState(null);                                             // (re)selected: consulted again (G23)
     let live = true;
-    if (doneResult.fileId !== currentFile.current) return;          // a result for another file: nothing
     // G17: the server decides (and audits) the releasing decision with the skull outcome reported here
     const skull = skullFromProvenance(doneResult.provenance);
     void requestQualityGate(doneResult.fileId, attestedAtRun.current, skull).then((r) => {
       if (!live || r.subject?.file_id !== doneResult.fileId || doneResult.fileId !== currentFile.current) return;
       const changed = runVersion.current !== null && r.subject?.version != null && r.subject.version !== runVersion.current;
-      setFinalGate(changed ? gateUnavailable() : confirmServerDecision(r, skull));
+      setFinalState({ fileId: doneResult.fileId, gate: changed ? gateUnavailable() : confirmServerDecision(r, skull) });
     });
     return () => { live = false; };
-  }, [gateOn, doneResult]);
+  }, [gateOn, doneResult, flairFileId]);
   const gateAllowsRun = !gateOn || gateBefore?.ai_may_run === true;
   const gateAllowsOutput = !gateOn || (finalGate?.ai_output_allowed === true && doneResult?.fileId === flairFileId);
 

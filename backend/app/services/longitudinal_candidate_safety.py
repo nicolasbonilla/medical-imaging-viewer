@@ -456,17 +456,34 @@ ABSTAINED_NULL_FIELDS = (
 )
 
 
+def unrecorded_in_both(acquisition_check: dict) -> bool:
+    """Nothing of the acquisition is recorded for EITHER visit (two uploads), while the voxel size of both images is
+    known and nothing differs (third review of PR #81, F1)."""
+    missing = acquisition_check.get("missing") or []
+    return (acquisition_check.get("status") == "not_established" and bool(missing)
+            and all(m.get("field") != "voxel_spacing_mm" and sorted(m.get("timepoints") or []) == ["tp1", "tp2"]
+                    for m in missing))
+
+
 def present_comparison(result: dict, *, acquisition_check: dict, evidence: Optional[dict],
                        binding: Optional[Dict[str, str]], stored_review: Optional[dict],
-                       visit_check: Optional[dict] = None, review_read_failed: bool = False) -> dict:
-    """What the view, the report generator and the assistant receive (RC-060, RC-061, RC-062)."""
+                       visit_check: Optional[dict] = None, review_read_failed: bool = False,
+                       unrecorded_in_both_warns: bool = False) -> dict:
+    """What the view, the report generator and the assistant receive (RC-060, RC-061, RC-062).
+
+    ``unrecorded_in_both_warns`` (DRAFT, owner decision D-QG-10; False unless the single quality gate is enforced and
+    its policy says so): when nothing is recorded for either visit, the candidates are shown with a warning
+    (``acquisition_unrecorded``) instead of withheld; a partial or one-sided record still withholds them."""
     out = {k: v for k, v in result.items() if k not in LEGACY_FLAG_KEYS}
     visit_check = visit_check or {"status": "unknown"}
     out["acquisition_check"] = acquisition_check
     out["visit_check"] = visit_check
     out["false_candidate_evidence"] = evidence
+    unrecorded = unrecorded_in_both_warns and unrecorded_in_both(acquisition_check)
+    if unrecorded:
+        out["acquisition_unrecorded"] = True
 
-    if acquisition_check.get("status") != "same" or visit_check.get("status") != "ok":   # RC-062
+    if (acquisition_check.get("status") != "same" and not unrecorded) or visit_check.get("status") != "ok":   # RC-062
         out.update({"abstained": True, "changes": []})
         out.update({k: None for k in ABSTAINED_NULL_FIELDS})
         out["caveat"] = _abstention_caveat(acquisition_check, visit_check)

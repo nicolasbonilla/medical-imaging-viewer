@@ -114,18 +114,19 @@ async def quality_gate(
 
     if not get_settings().QUALITY_GATE_ENFORCED:
         raise HTTPException(status_code=404, detail="Not Found")
+    import asyncio
     actor = qg.actor_for(current_user, request)
-    if not qg.platform_allows():
-        refused = qg.run_quality_gate({"mode": "single", "visits": []}, actor=actor)
-        return {**refused, "subject": {"file_id": body.file_id, "version": None}}
-    if not qg.allow_consultation(str(getattr(current_user, "id", ""))):
+    if not qg.allow_consultation(str(getattr(current_user, "id", ""))):   # first: refused calls are limited too
         raise HTTPException(status_code=429, detail="Too many quality-gate consultations; try again in a minute")
+    if not qg.platform_allows():
+        refused = await asyncio.to_thread(qg.run_quality_gate, {"mode": "single", "visits": []}, actor=actor)
+        return {**refused, "subject": {"file_id": body.file_id, "version": None}}
     paths = await _authorized_inputs([body.file_id], None, None, current_user)
     inputs, version = await qg.single_study_inputs(paths[0], storage_service, imaging_service,
                                                    bucket=get_settings().GCS_BUCKET_NAME,
                                                    physician_confirmed_flair=body.physician_confirmed_flair,
                                                    skull=body.skull)
-    result = qg.run_quality_gate(inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)
+    result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)
     return {**result, "inputs": inputs, "subject": {"file_id": body.file_id, "version": version}}
 
 
