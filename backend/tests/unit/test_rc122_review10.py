@@ -36,6 +36,15 @@ def _cls(**fields):
     return qg.classify_fields(fields, None)["class"]
 
 
+def _run(coro):
+    """Its own event loop: asyncio.run would leave the next test of the session without one."""
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+
+
 # ----------------------------------------------------------------------------- S1
 class _FlakyRanged(_CountingStorage):
     """A storage whose FIRST ranged read fails (a transient error); every later read succeeds."""
@@ -89,7 +98,7 @@ def test_rc122_s1_the_header_cache_never_keeps_a_failed_or_unreadable_read(monke
 
     for reader in (fails, unreadable):
         monkeypatch.setattr(qg, "_read_header_fields", reader)
-        fields = asyncio.run(qg.visit_header_fields(None, "bucket", FILE, version_key=key))
+        fields = _run(qg.visit_header_fields(None, "bucket", FILE, version_key=key))
         assert fields.get("unreadable") is True and key not in qg._HEADER_CACHE, reader.__name__
 
 
@@ -168,7 +177,7 @@ S3_PAIRS = {
 def test_rc123_s3_the_rc062_prediction_is_what_rc062_does_at_run_time(name, monkeypatch):
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     d1, d2 = S3_PAIRS[name]
-    runtime = [asyncio.run(sa._load_source_intensity(f, _CountingStorage(d), "s3"))[1] for f, d in ((F1, d1), (F2, d2))]
+    runtime = [_run(sa._load_source_intensity(f, _CountingStorage(d), "s3"))[1] for f, d in ((F1, d1), (F2, d2))]
     withholds = lcs.rc062_withholds(lcs.compare_acquisitions(dict(ACQ), dict(ACQ), *runtime), {"status": "ok"})
     predicted = []
     original = qg.run_quality_gate

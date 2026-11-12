@@ -76,8 +76,10 @@ async function exactlyThreeRetries(counted: (calls: string[]) => number, againId
     expect(screen.queryByTestId('quality-gate-retry')).not.toBeInTheDocument();
     await act(async () => { held[i](limited(2)); await Promise.resolve(); });
     if (i < 3) {
-      // ONE timer for this answer: the next request after the wait (with backoff), and only one
-      await advance(2000 * 2 ** i + 400);
+      // ONE timer for this answer: the next request after the wait (with backoff), and only one. React renders the
+      // retry when the step that fired the timer ends, so the request (after its debounce) comes in the next step.
+      await advance(2000 * 2 ** i);
+      await advance(400);
       expect(counted(h.calls)).toBe(i + 2);
     }
   }
