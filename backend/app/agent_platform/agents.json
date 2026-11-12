@@ -360,7 +360,7 @@
         "path": "backend/app/services/quality_gate_policy.json",
         "frontend_copy": "frontend/src/config/qualityGatePolicy.v1.json",
         "policy_version": "1.5.0-draft",
-        "sha256": "af1f4287ef8510e38b9c3261236e425ac9a15994dde8c2e546e19d477c212303"
+        "sha256": "400d5c58f4ac2fae3c4b490eb4e453505145d568475a1b3567516cdea44f4fad"
       },
       "model_control": "none",
       "allowed_models": [],

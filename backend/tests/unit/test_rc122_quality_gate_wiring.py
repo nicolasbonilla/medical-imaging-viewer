@@ -94,7 +94,7 @@ def test_rc126_a_fault_inside_the_gate_is_an_abstention_audited_as_a_failure(mon
     monkeypatch.setattr(qg, "evaluate", lambda *a, **k: 1 / 0)
     out = qg.run_quality_gate({"mode": "single", "visits": []}, registry=reg, study_key="s")
     assert out["ai_may_run"] is False and out["codes"] == ["gate_unavailable"]
-    assert [(e["event"], e["outcome"], e["code"]) for e in audit] == [("agent.run", "failure", "run_internal_error")]
+    assert [(e["event"], e["outcome"], e["code"]) for e in audit] == [("agent.consultation", "failure", "run_internal_error")]   # F4: releases nothing
 
 
 # ----------------------------------------------------------------------------- single-study route
@@ -717,3 +717,119 @@ def test_rc123_f1_an_attestation_never_lifts_another_sequence_in_a_comparison(co
     res = client.post("/api/v1/segmentation/longitudinal/compare",
                       json={**PAIR, "quality_gate_attestation": {"tp1": True, "tp2": True}}).json()
     assert res["abstained"] is True and "sequence_not_flair" in res["quality_gate"]["codes"]
+
+
+# ----------------------------------------------------------------------------- fifth review of PR #81: F3, F4
+def _spy_runs(monkeypatch):
+    runs = []
+    original = qg.run_quality_gate
+
+    def _spy(*a, **k):
+        runs.append(a[0])
+        return original(*a, **k)
+
+    monkeypatch.setattr(qg, "run_quality_gate", _spy)
+    return runs
+
+
+def test_rc126_f3_repeated_consultations_come_from_the_cache_and_are_not_counted(single, monkeypatch):
+    """Per (file, version, attestation, skull, policy version): a repeated pre-run consultation is served from the
+    server's cache and does not count against the limit; only real evaluations count."""
+    client, _ = single
+    app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(
+        nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()))
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    monkeypatch.setattr(qg, "RATE_LIMIT_PER_MINUTE", 2)
+    monkeypatch.setattr(qg, "_LIMITER", qg.new_rate_limiter())
+    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
+    runs = _spy_runs(monkeypatch)
+    first = [client.post(URL, json={"file_id": FILE}) for _ in range(6)]
+    assert [r.status_code for r in first] == [200] * 6 and len(runs) == 1
+    assert all(r.json() == first[0].json() for r in first)
+    assert client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True}).status_code == 200
+    assert len(runs) == 2                                     # another attestation: a real evaluation, counted
+    limited = client.post(URL, json={"file_id": FILE, "skull": "stripped"})
+    assert limited.status_code == 429 and len(runs) == 2      # the third real evaluation is over the limit
+    details = limited.json()["error"]["details"]
+    assert details["code"] == "gate_rate_limited" and isinstance(details["retry_after_s"], int)
+    assert 0 < details["retry_after_s"] <= 60 and limited.headers["Retry-After"] == str(details["retry_after_s"])
+    assert client.post(URL, json={"file_id": FILE}).status_code == 200   # still served from the cache
+
+
+def test_rc126_f3_a_releasing_consultation_is_never_served_from_the_cache(single, monkeypatch):
+    client, _ = single
+    app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(
+        nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()))
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    monkeypatch.setattr(qg, "_LIMITER", None)
+    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
+    runs = _spy_runs(monkeypatch)
+    for _ in range(3):
+        assert client.post(URL, json={"file_id": FILE, "skull": "stripped"}).status_code == 200
+    assert len(runs) == 3, "each final consultation is decided and audited again"
+
+
+def test_rc126_f3_the_kill_switch_applies_to_a_cached_answer(single, monkeypatch):
+    client, _ = single
+    app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(
+        nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()))
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    monkeypatch.setattr(qg, "_LIMITER", None)
+    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
+    assert client.post(URL, json={"file_id": FILE}).json()["platform"]["allowed"] is True
+    monkeypatch.setattr(qg, "_REGISTRY", _registry(on=False))
+    assert client.post(URL, json={"file_id": FILE}).json()["codes"] == ["gate_switched_off"]
+
+
+def test_rc126_f4_opening_ten_images_records_no_ai_run(single, monkeypatch):
+    """A consultation is not an AI run: ten images opened (ten pre-run consultations) record ten consultations and
+    no CLINICAL_AI_RUN; only a decision that releases an AI output is linked to the AI run."""
+    from app.core.logging import audit as A
+    client, _ = single
+    monkeypatch.setattr(qg, "_REGISTRY", None)
+    monkeypatch.setattr(R.AgentRegistry, "load", classmethod(lambda cls, *a, **k: _registry_with_sink()))
+    monkeypatch.setattr(qg, "_LIMITER", None)
+    seen = []
+    monkeypatch.setattr(A.AuditLogger, "log_event", lambda self, event, durable=True: seen.append(event.event_type))
+    for i in range(10):
+        monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
+        assert client.post(URL, json={"file_id": f"{FILE}-{i}"}).status_code == 200
+    assert A.AuditEventType.CLINICAL_AI_RUN not in seen, seen
+    assert seen.count(A.AuditEventType.QUALITY_GATE_CONSULTATION) >= 10
+
+
+def _registry_with_sink():
+    data = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    data["agents"]["quality-gate"]["approval"]["status"] = "approved"     # IN MEMORY, for the test only
+    return R.AgentRegistry(data, switches=R.InMemoryKillSwitches({"quality-gate": True}), audit=R.default_audit_sink)
+
+
+def test_rc126_f4_only_a_releasing_decision_is_an_ai_run():
+    from app.core.logging import audit as A
+    events = []
+    reg = _registry()
+    reg._audit = events.append
+    flair = {"sequence": "FLAIR", "physician_confirmed_flair": False, "scanner": None,
+             "thickness": {"state": "native", "effective_mm": 1.0}}
+    qg.run_quality_gate({"mode": "single", "visits": [{**flair, "skull": "pending"}]}, registry=reg)
+    qg.run_quality_gate({"mode": "single", "visits": [{**flair, "skull": "stripped"}]}, registry=reg)
+    qg.run_quality_gate({"mode": "single", "visits": [{**flair, "skull": "unknown"}]}, registry=reg)
+    assert [e["event"] for e in events] == ["agent.consultation", "agent.run", "agent.consultation"]
+    assert all(e["event"] in R.AUDIT_EVENT_TYPES for e in events)
+    emitted = []
+    import app.core.logging.audit as audit_module
+    original = audit_module.emit_audit
+    try:
+        audit_module.emit_audit = lambda event_type, outcome, **k: emitted.append(event_type)
+        for e in events:
+            R.default_audit_sink(e)
+    finally:
+        audit_module.emit_audit = original
+    assert emitted == [A.AuditEventType.QUALITY_GATE_CONSULTATION, A.AuditEventType.CLINICAL_AI_RUN,
+                       A.AuditEventType.QUALITY_GATE_CONSULTATION]
+
+
+def test_rc126_f4_the_route_is_audited_as_a_consultation():
+    import app.core.logging.audit_middleware as am
+    from app.core.logging.audit import AuditEventType
+    assert am.ROUTE_ACTIONS[("POST", URL)][0] == AuditEventType.QUALITY_GATE_CONSULTATION

@@ -1530,6 +1530,10 @@
         "message": "Die Qualitätsprüfung konnte nicht abgeschlossen werden, daher läuft die KI nicht.",
         "action": "Versuchen Sie es in einigen Minuten erneut. Wenn es weiter auftritt, informieren Sie die Administration."
       },
+      "gate_rate_limited": {
+        "message": "Zu viele Qualitätsprüfungen in kurzer Zeit, daher läuft die KI noch nicht. Warten Sie {{seconds}} s.",
+        "action": "Warten Sie {{seconds}} Sekunden und versuchen Sie es erneut; die Prüfung wird beim erneuten Auswählen des Bildes wiederholt."
+      },
       "gate_input_invalid": {
         "message": "Die Angaben zur Prüfung dieses Bildes sind unvollständig, daher läuft die KI nicht.",
         "action": "Öffnen Sie die Untersuchung erneut und versuchen Sie es noch einmal. Wenn es weiter auftritt, informieren Sie die Administration."

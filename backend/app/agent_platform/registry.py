@@ -160,7 +160,9 @@ FAILURE_CODES = frozenset({RefusalCode.MODEL_CALL_FAILED, RefusalCode.TOOL_FAILE
 #                         agent, model (when one was chosen), tool (when the run stopped at a tool call),
 #                         pseudonymised study, trace id, actor; the server log reason is "agent.run:<code>";
 # - agent.signoff_linked  the radiologist's sign-off linked to the run's trace.
-AUDIT_EVENT_TYPES = frozenset({"agent.decision", "agent.run", "agent.signoff_linked"})
+# "agent.consultation" (fifth review of PR #81, F4): a run of a code-only agent (the single quality gate) whose
+# decision releases no AI output; audited as a consultation, never as an AI run.
+AUDIT_EVENT_TYPES = frozenset({"agent.decision", "agent.run", "agent.signoff_linked", "agent.consultation"})
 _IN_RUN: "contextvars.ContextVar[bool]" = contextvars.ContextVar("mstool_agent_in_run", default=False)
 
 
@@ -475,7 +477,9 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
             event.get("outcome"), AuditOutcome.FAILURE)
         ids = {k: event[k] for k in ("agent_id", "model_id", "tool", "trace_id", "study_key") if event.get(k)}
         actor = current_actor()
-        emit_audit(AuditEventType.CLINICAL_AI_RUN, outcome, request=actor.request, user_id=actor.user_id,
+        etype = (AuditEventType.QUALITY_GATE_CONSULTATION if event.get("event") == "agent.consultation"
+                 else AuditEventType.CLINICAL_AI_RUN)
+        emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
                    # fourth review of PR #79, finding 7: the reason is "<event type>:<code>", so the server log
                    # keeps which record of AUDIT_EVENT_TYPES this is (e.g. "agent.run:agent_not_approved")

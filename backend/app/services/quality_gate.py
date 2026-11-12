@@ -581,8 +581,18 @@ async def _file_version(storage_service, bucket: str, file_path: str) -> Optiona
     return (file_path, *version) if meta is not None and version[0] is not None and any(version[1:]) else None
 
 
+async def file_version_key(storage_service, bucket: str, file_path: str) -> Optional[tuple]:
+    """(file, size, checksum, created) of the stored file, or None when its version is unknown (then nothing is
+    cached for it)."""
+    return await _file_version(storage_service, bucket, file_path)
+
+
+_NOT_GIVEN = object()
+
+
 async def single_study_inputs(file_path: str, storage_service, imaging_service, *, bucket: str,
-                              physician_confirmed_flair: bool = False, skull: str = "pending"):
+                              physician_confirmed_flair: bool = False, skull: str = "pending",
+                              version_key: Any = _NOT_GIVEN):
     """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file: its header's
     series description and inversion time (else the stored series and acquisition records), the RC-054
     geometry. Header only, parsed off the event loop, cached per file version (E1). The skull is 'pending': the
@@ -591,7 +601,8 @@ async def single_study_inputs(file_path: str, storage_service, imaging_service, 
 
     ``skull``: 'pending' before the run; at the final consultation the outcome the browser reports ('stripped' /
     'unknown'), so the decision that releases or withholds the output is decided and audited here (G17)."""
-    key = await _file_version(storage_service, bucket, file_path)
+    # the route passes the version it already read for the cache key (F3): one metadata read per consultation
+    key = version_key if version_key is not _NOT_GIVEN else await _file_version(storage_service, bucket, file_path)
     fields = _HEADER_CACHE.get(key) if key else None
     if fields is None:
         try:
@@ -683,15 +694,53 @@ def new_rate_limiter():
     return RateLimiter(redis_client=None, default_limit=RATE_LIMIT_PER_MINUTE, default_window=60)
 
 
-def allow_consultation(user_id: str) -> bool:
-    """Per-user bound on consultations (each may read a file header), with the platform's rate limiter."""
+def rate_limit_evaluation(user_id: str) -> Optional[int]:
+    """Per-user bound on REAL evaluations (each may read a file header and writes an audit record), with the
+    platform's rate limiter: None when allowed, else the seconds to wait (fifth review of PR #81, F3). A
+    consultation served from the cache is not counted. KNOWN LIMITATION: the limiter and the cache are per server
+    instance (in memory), so N instances allow up to N times the limit (Quality_Gate_Design.md)."""
     global _LIMITER
     from app.core.security.rate_limiter import RateLimitScope
     if _LIMITER is None:
         _LIMITER = new_rate_limiter()
-    allowed, _ = _LIMITER.check_rate_limit(f"quality_gate:{user_id}", limit=RATE_LIMIT_PER_MINUTE, window=60,
-                                           scope=RateLimitScope.PER_USER, user_id=user_id)
-    return bool(allowed)
+    allowed, meta = _LIMITER.check_rate_limit(f"quality_gate:{user_id}", limit=RATE_LIMIT_PER_MINUTE, window=60,
+                                              scope=RateLimitScope.PER_USER, user_id=user_id)
+    if allowed:
+        return None
+    wait = _number((meta or {}).get("retry_after")) if isinstance(meta, dict) else None
+    return max(1, min(60, int(math.ceil(wait)))) if wait is not None and wait > 0 else 60
+
+
+# F3: the gate's answers to pre-run consultations, per (file, version, attestation, skull, policy version)
+CONSULTATION_CACHE_MAX = 512
+_CONSULTATIONS: "OrderedDict[tuple, tuple]" = OrderedDict()
+
+
+def consultation_key(version_key: Optional[tuple], physician_confirmed_flair: bool, skull: str) -> Optional[tuple]:
+    """The cache key of a consultation, or None when it must be evaluated: the file's version is unknown, or the
+    consultation would release an AI output (a skull outcome other than 'pending' — the final consultation, whose
+    decision is always decided and audited again, F4)."""
+    if not version_key or skull != "pending":
+        return None
+    return (*version_key, physician_confirmed_flair is True, skull, _policy()["policy_version"])
+
+
+def cached_consultation(key: Optional[tuple]) -> Optional[tuple]:
+    """(answer, file version) of an earlier evaluation of the same consultation, or None."""
+    if key is None or key not in _CONSULTATIONS:
+        return None
+    _CONSULTATIONS.move_to_end(key)
+    return _CONSULTATIONS[key]
+
+
+def store_consultation(key: Optional[tuple], answer: Dict[str, Any], version: Optional[str]) -> None:
+    """Only an answer the platform allowed is kept (a refusal or a fault is never served again); the platform is
+    read again before every cached answer is served, so a kill switch applies at once."""
+    if key is None or (answer.get("platform") or {}).get("allowed") is not True:
+        return
+    _CONSULTATIONS[key] = (answer, version)
+    while len(_CONSULTATIONS) > CONSULTATION_CACHE_MAX:
+        _CONSULTATIONS.popitem(last=False)
 
 
 def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None,
@@ -734,16 +783,20 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
             result = _result([_check("platform", None, "abstain", policy["platform"]["otherwise"])], policy)
             result["platform"] = {"allowed": False, "code": str(R.RefusalCode.RUN_INTERNAL_ERROR)}
             result["trace_id"] = state.get("trace_id")
-            reg.audit("failure", R.RefusalCode.RUN_INTERNAL_ERROR, event="agent.run", agent_id=AGENT_ID,
+            reg.audit("failure", R.RefusalCode.RUN_INTERNAL_ERROR, event="agent.consultation", agent_id=AGENT_ID,
                       study_key=study_key or None, trace_id=state.get("trace_id"))
             return result
         result["trace_id"] = state["trace_id"]
+        # F4 (fifth review of PR #81): a consultation is not an AI run. Only a decision that releases an AI output
+        # (ai_output_allowed: the final consultation of a single study, or a comparison allowed) is linked to the AI
+        # run ("agent.run" -> CLINICAL_AI_RUN); every other one is a consultation ("agent.consultation").
+        event = "agent.run" if result.get("ai_output_allowed") is True else "agent.consultation"
         if state["refusal"]:
-            reg.audit("denied", state["refusal"], event="agent.run", agent_id=AGENT_ID,
+            reg.audit("denied", state["refusal"], event=event, agent_id=AGENT_ID,
                       study_key=study_key or None, trace_id=state["trace_id"])
         else:
             # S3: the physician's attestation is recorded with the run's actor (the authenticated clinician)
-            reg.audit("success", audit_code(result), event="agent.run", agent_id=AGENT_ID,
+            reg.audit("success", audit_code(result), event=event, agent_id=AGENT_ID,
                       study_key=study_key or None, trace_id=state["trace_id"])
     return result
 

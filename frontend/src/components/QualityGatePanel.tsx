@@ -24,6 +24,7 @@ interface QualityGatePanelProps {
 export const QualityGatePanel: React.FC<QualityGatePanelProps> = ({ result, testId = 'quality-gate-panel' }) => {
   const { t } = useTranslation();
   const params = (c: GateCheck) => ({
+    seconds: c.params?.seconds ?? '',
     band: c.params?.band ? t(`qualityGate.band.${c.params.band}`) : '',
     fields: (c.params?.fields ?? []).map((f) => t(`qualityGate.field.${f}`)).join(', '),
     sequence: c.params?.sequence ? t(`qualityGate.sequenceName.${c.params.sequence}`) : '',

@@ -91,6 +91,8 @@ class AuditEventType(str, Enum):
     CLINICAL_LONGITUDINAL_REVIEW = "clinical.longitudinal.review"
     CLINICAL_AI_REPORT_GENERATE = "clinical.ai_report.generate"
     CLINICAL_AI_RUN = "clinical.ai.run"
+    # Fifth review of PR #81 (F4; DRAFT): a consultation of the single quality gate is not an AI run
+    QUALITY_GATE_CONSULTATION = "clinical.quality_gate.consultation"
 
     # System Events (A.12.4.1)
     SYSTEM_STARTUP = "system.startup"

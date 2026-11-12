@@ -274,10 +274,12 @@ export const segmentationAPI = {
   async detectSELs(
     tp1: { type: 'segmentation'; id: string },
     tp2: { type: 'segmentation'; id: string },
+    qualityGateAttestation?: { tp1: boolean; tp2: boolean },
   ): Promise<SELResult> {
     const response = await apiClient.post<SELResult>(
       `${API_PREFIX}/segmentation/longitudinal/sel`,
-      { tp1, tp2 }
+      // F2 (fifth review of PR #81): the pair's attestation, as for the comparison; the base body without one
+      { tp1, tp2, ...(qualityGateAttestation ? { quality_gate_attestation: qualityGateAttestation } : {}) }
     );
     return response.data;
   },

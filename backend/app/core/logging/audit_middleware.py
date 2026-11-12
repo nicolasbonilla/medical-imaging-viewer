@@ -87,7 +87,7 @@ ROUTE_ACTIONS: Dict[Tuple[str, str], Tuple[AuditEventType, str]] = {
     ("POST", "/api/v1/ai/anomaly/detect"): (E.CLINICAL_AI_RUN, "image"),
     ("POST", "/api/v1/clinical/flames/segment"): (E.CLINICAL_AI_RUN, "image"),
     ("POST", "/api/v1/clinical/skull-strip"): (E.CLINICAL_AI_RUN, "image"),   # REQ-FUNC-115: the image goes to the worker
-    ("POST", "/api/v1/clinical/quality-gate"): (E.CLINICAL_AI_RUN, "image"),  # G22 (DRAFT): reads the header, records the attestation
+    ("POST", "/api/v1/clinical/quality-gate"): (E.QUALITY_GATE_CONSULTATION, "image"),  # G22, F4 (DRAFT): a consultation, not an AI run
     ("POST", "/api/v1/clinical/lst-ai/segment"): (E.CLINICAL_AI_RUN, "image"),
     ("POST", "/api/v1/clinical/synthseg/parcellate"): (E.CLINICAL_AI_RUN, "image"),
     ("GET", "/api/v1/segmentation/{segmentation_id}/export/dicom-seg"): (E.DATA_EXPORT, "segmentation"),

@@ -82,6 +82,7 @@
     "gate_not_approved": "abstain",
     "gate_switched_off": "abstain",
     "gate_unavailable": "abstain",
+    "gate_rate_limited": "abstain",
     "gate_input_invalid": "abstain",
     "sequence_not_flair": "abstain",
     "sequence_unknown": "abstain",

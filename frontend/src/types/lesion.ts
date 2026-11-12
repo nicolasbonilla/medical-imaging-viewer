@@ -321,6 +321,9 @@ export interface SELResult {
   adjudication_required?: boolean;
   method?: string;
   caveat?: string;
+  /** F2 (fifth review of PR #81): the single quality gate's decision, sent only when the backend enforces it. */
+  quality_gate?: import('@/services/qualityGate/gate').GateResult;
+  abstained?: boolean;
 }
 
 export interface LongitudinalReaderReview {

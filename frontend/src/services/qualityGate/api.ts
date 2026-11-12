@@ -3,7 +3,7 @@
  * Any failure — network, status, an answer of another shape — is the gate being unavailable: fail closed (G6).
  */
 import { apiClient } from '@/services/apiClient';
-import { gateUnavailable, isGateResult, type ServerGateResponse } from './gate';
+import { gateRateLimited, gateUnavailable, isGateResult, type ServerGateResponse } from './gate';
 
 export type ReportedSkull = 'pending' | 'stripped' | 'unknown';
 
@@ -19,7 +19,15 @@ export async function requestQualityGate(fileId: string, physicianConfirmedFlair
     });
     const answer = data as ServerGateResponse;
     return isGateResult(answer) && answer.subject?.file_id === fileId ? answer : unavailable();
-  } catch {
+  } catch (err: unknown) {
+    // F3 (fifth review of PR #81): over the per-user limit the answer says how long to wait (never "unavailable")
+    const response = (err as { response?: { status?: number; data?: unknown; headers?: Record<string, unknown> } })?.response;
+    if (response?.status === 429) {
+      const details = (response.data as { error?: { details?: { retry_after_s?: unknown } } } | undefined)?.error?.details;
+      const header = Number(response.headers?.['retry-after']);
+      const seconds = typeof details?.retry_after_s === 'number' ? details.retry_after_s : header;
+      return { ...gateRateLimited(seconds), subject: { file_id: fileId, version: null } };
+    }
     return unavailable();
   }
 }

@@ -1548,6 +1548,10 @@
         "message": "No se pudo completar el control de calidad, así que la IA no se ejecuta.",
         "action": "Vuelva a intentarlo en unos minutos. Si sigue ocurriendo, avise al administrador."
       },
+      "gate_rate_limited": {
+        "message": "Demasiados controles de calidad en poco tiempo, así que la IA todavía no se ejecuta. Espere {{seconds}} s.",
+        "action": "Espere {{seconds}} segundos y vuelva a intentarlo; el control se repite solo al volver a seleccionar la imagen."
+      },
       "gate_input_invalid": {
         "message": "Falta información para comprobar esta imagen, así que la IA no se ejecuta.",
         "action": "Abra de nuevo el estudio y vuelva a intentarlo. Si sigue ocurriendo, avise al administrador."

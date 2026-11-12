@@ -8,7 +8,7 @@
  ],
  "fixture_version": "1",
  "policy_version": "1.5.0-draft",
- "policy_sha256": "af1f4287ef8510e38b9c3261236e425ac9a15994dde8c2e546e19d477c212303",
+ "policy_sha256": "400d5c58f4ac2fae3c4b490eb4e453505145d568475a1b3567516cdea44f4fad",
  "matrix": {
   "base_visit": {
    "sequence": "FLAIR",

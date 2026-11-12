@@ -217,7 +217,9 @@ def test_rc127_g2_every_code_has_a_plain_message_and_an_action_in_en_es_de():
                     missing.append(f"{lang}:{code}.{part}")
                 else:
                     texts[(lang, code, part)] = text
-                    if set(re.findall(r"\{\{(\w+)\}\}", text)) - {"band", "fields", "mm", "sequence"}:
+                    # "seconds": F3 (fifth review), only for gate_rate_limited
+                    allowed = {"band", "fields", "mm", "sequence"} | ({"seconds"} if code == "gate_rate_limited" else set())
+                    if set(re.findall(r"\{\{(\w+)\}\}", text)) - allowed:
                         missing.append(f"{lang}:{code}.{part} has an unknown placeholder")
         for group, names in (("decision", ("abstain", "pending", "proceed", "proceed_with_warnings")),
                              ("check", ("platform", "sequence", "thickness", "scanner", "skull")),
@@ -426,7 +428,9 @@ def test_rc126_g5_the_trace_and_the_audit_record_exactly_the_checks_that_ran(res
         if (len(roots) != 1 or roots[0].attributes.get("gen_ai.agent.id") != "quality-gate" or recorded != expected
                 or not expected or out.get("trace_id") != roots[0].trace_id
                 or any("mstool.trace.dropped_attributes" in s.attributes for s in spans)
-                or len(records) != 1 or records[0].get("event") != "agent.run"
+                or len(records) != 1
+                # F4 (fifth review): an AI run only when the decision releases an output, else a consultation
+                or records[0].get("event") != ("agent.run" if out.get("ai_output_allowed") is True else "agent.consultation")
                 or records[0].get("agent_id") != "quality-gate" or records[0].get("trace_id") != roots[0].trace_id):
             bad.append(key)
     assert not bad, _report("G5 (trace/audit)", bad)

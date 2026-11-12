@@ -19,6 +19,8 @@ export type GateCheckName = 'input' | 'platform' | 'sequence' | 'thickness' | 's
 export type GateVisitLabel = 'study' | 'tp1' | 'tp2';
 
 export interface GateParams {
+  /** F3: the seconds to wait after a refused consultation (gate_rate_limited) */
+  seconds?: number;
   band?: string;
   mm?: number;
   fields?: string[];
@@ -421,6 +423,17 @@ export function gateUnavailable(): GateResult {
   return evaluateGate({ platform: null });
 }
 
+/** F3 (fifth review of PR #81): the backend refused a consultation because the per-user limit of real evaluations
+ *  was reached. Abstain (fail closed) with the seconds to wait — a specific reason, never "unavailable". */
+export function gateRateLimited(seconds: unknown): GateResult {
+  const s = typeof seconds === 'number' && Number.isFinite(seconds) && seconds > 0 ? Math.min(60, Math.ceil(seconds)) : 60;
+  return { ...gateUnavailable(), codes: ['gate_rate_limited'],
+    checks: [{ check: 'platform', visit: null, status: 'abstain', code: 'gate_rate_limited', params: { seconds: s } }] };
+}
+
+const isRateLimited = (r: GateResult) => r.codes.length === 1 && r.codes[0] === 'gate_rate_limited'
+  && r.ai_may_run === false && r.ai_output_allowed === false;
+
 /** What the backend's POST /clinical/quality-gate returns. */
 export interface ServerGateResponse extends GateResult {
   inputs?: GateInput;
@@ -445,6 +458,7 @@ export function skullFromProvenance(provenance: { inputPreparation?: unknown } |
  *  the same rule reproduces it from the answer's own inputs and those inputs carry the reported skull outcome;
  *  anything else is unavailable, so nothing is shown. */
 export function confirmServerDecision(server: ServerGateResponse | null | undefined, reportedSkull: string): GateResult {
+  if (server && isGateResult(server) && isRateLimited(server)) return server;   // F3: an abstention with its own reason
   if (!server || !isGateResult(server) || !isObj(server.inputs) || !Array.isArray(server.inputs.visits)
     || !isObj(server.platform)) {
     return gateUnavailable();
