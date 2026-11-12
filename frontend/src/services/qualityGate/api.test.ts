@@ -32,6 +32,19 @@ describe('F3: too many checks', () => {
     expect(retryAfterSeconds(r)).toBe(42);                                       // U2: asked again after the wait
   });
 
+  it('rc126 G29 a 404 (browser gate on, server gate off) says the gate is not enabled on the server', async () => {
+    post.mockRejectedValue({ response: { status: 404, data: { error: { code: 'HTTP_404', message: 'Not Found' } } } });
+    const r = await requestQualityGate('file-1', false);
+    expect(r.codes).toEqual(['gate_not_enabled']);
+    expect(r.ai_may_run).toBe(false);
+    expect(retryAfterSeconds(r)).toBeNull();
+  });
+
+  it('rc126 G29 an unavailable answer is never retried by itself', async () => {
+    post.mockRejectedValue({ response: { status: 500, data: {} } });
+    expect(retryAfterSeconds(await requestQualityGate('file-1', false))).toBeNull();
+  });
+
   it('rc126 any other failure is still unavailable', async () => {
     post.mockRejectedValue({ response: { status: 500, data: {} } });
     expect((await requestQualityGate('file-1', false)).codes).toEqual(['gate_unavailable']);
