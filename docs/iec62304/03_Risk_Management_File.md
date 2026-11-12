@@ -1122,7 +1122,7 @@ Negative controls (every test run inside the throwaway copy): 106 mutations, **9
 
 Failing first (commit `d005590`, on the code of f4f33b5), with both flags off: **(a) RC-049: 1 634 of 2 400 generated entries differed** (1 164 verdicts, 470 reasons only); **(b) inventory: 1 176 of 2 400 `detect_sequence` answers and 641 of 800 group answers differed**; **(c) routes: 192 of 288 answers differed** (216 of 384 after the route corpus was extended with the SEL input-type order); **G19 extension: 194 base FLAIR acceptances lost without a documented decision**. After the fixes: 0 / 0 / 0 and 0.
 
-Negative controls: NC_RESULT_PLACEHOLDER
+Negative controls (every test run inside the throwaway copy; record `QUALITY-GATE_negative_controls_2026-11-12.json`, full run on `26c9e79`): 128 mutations (22 new for this review: G26 a/b/c, D-QG-12, F1-F5, the shared RC-062 predicate; 8 moved anchors), **110 run, 109 detected, 1 survived, 0 invalid**; 18 component mutations not run (no node_modules; vitest runs in GitHub Actions). The survivor, R12 (header cache off), was hidden from its test by the new consultation cache (F3); the test now makes the second consultation a real evaluation (commit `bcdd4e0`) and the re-run detected it: **0 survived after the follow-up**. Per control: RC-122 47/47, RC-123 19/19, RC-124 5/5, RC-125 6/6, RC-126 28/28, RC-127 17/17. Baseline and restored copy: backend 109 / 0, browser harness 18 / 0.
 
 **HAZ-007 residual:** unchanged (RC-062's rule is the base branch's; its predicate is only named and shared).
 
