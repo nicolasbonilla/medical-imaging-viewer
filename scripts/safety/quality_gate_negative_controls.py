@@ -409,8 +409,8 @@ fail('g12_corpus', CORPUS.cases.every((c) => classifyFields({ description: c.tex
 const SNAP = JSON.parse(readFileSync(process.env.QG_SNAPSHOT, 'utf-8'));
 const BYKEY = Object.fromEntries(CORPUS.cases.map((c) => [keyOf(c), c]));
 fail('g19_rc049_pre_pr_acceptances', SNAP.rc049_accepted_as_flair.every((k) => evOf(BYKEY[k]).verdict === 'supports' || k in SNAP.exceptions));
-fail('g13_no_confirmation_in_a_comparison', evaluateGate({ mode: 'comparison', platform: { allowed: true, code: null },
-  visits: [F.matrix.base_visit, { ...F.matrix.base_visit, sequence: 'unknown', physician_confirmed_flair: true }] }).ai_may_run === false);
+fail('g13_confirmation_never_lifts_another_sequence_in_a_comparison', evaluateGate({ mode: 'comparison', platform: { allowed: true, code: null },
+  visits: [F.matrix.base_visit, { ...F.matrix.base_visit, sequence: 'T1', physician_confirmed_flair: true }] }).ai_may_run === false);
 fail('g15_rc049_same_class', CORPUS.cases.every((c) => {
   const e = evOf(c);
   const contra = ['other', 'T1', 'T2'].includes(c.expected);

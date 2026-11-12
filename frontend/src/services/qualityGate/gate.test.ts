@@ -120,7 +120,7 @@ describe('G12: the series-description corpus, shared with pytest', () => {
     }).map((c) => c.text);
     expect(bad).toEqual([]);
   });
-  it('rc122 a confirmation never lifts a non-FLAIR name, and never in a comparison', () => {
+  it('rc122 a confirmation never lifts a non-FLAIR name; in a comparison it lifts an unknown visit (F1)', () => {
     const base = FIXTURE.matrix.base_visit;
     const on = { allowed: true, code: null };
     for (const sequence of ['other', 'T1', 'T2']) {
@@ -128,8 +128,11 @@ describe('G12: the series-description corpus, shared with pytest', () => {
     }
     const cmp = evaluateGate({ mode: 'comparison', platform: on,
       visits: [base, { ...base, sequence: 'unknown', physician_confirmed_flair: true }] });
-    expect(cmp.ai_may_run).toBe(false);
-    expect(cmp.codes).toContain('sequence_unknown');
+    expect(cmp.ai_may_run).toBe(true);
+    expect(cmp.codes).toContain('sequence_confirmed_by_physician');
+    const other = evaluateGate({ mode: 'comparison', platform: on,
+      visits: [base, { ...base, sequence: 'other', physician_confirmed_flair: true }] });
+    expect(other.ai_may_run).toBe(false);
   });
 });
 

@@ -57,10 +57,10 @@ describe('QualityGatePanel (REQ-FUNC-118, RC-127)', () => {
     expect(panel.textContent).toContain('La IA no se ejecuta en este paso');
   });
 
-  it('rc127 G14 a comparison never asks for a confirmation it cannot take', () => {
+  it('rc127 G14 each mode points to the confirmation it offers (single: the card; comparison: the per-visit box)', () => {
     const unknown = { ...BASE, sequence: 'unknown' };
     const { unmount } = render(<QualityGatePanel result={evaluateGate({ mode: 'comparison', platform: ON, visits: [BASE, unknown] })} />);
-    expect(screen.getByTestId('quality-gate-panel').textContent).not.toMatch(/confirmation box/);
+    expect(screen.getByTestId('quality-gate-panel').textContent).toMatch(/confirmation box below and compare again/);
     unmount();
     render(<QualityGatePanel result={evaluateGate({ mode: 'single', platform: ON, visits: [unknown] })} />);
     expect(screen.getByTestId('quality-gate-panel').textContent).toMatch(/confirmation box/);
