@@ -476,7 +476,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 |---|---|---|---|---|
 | REQ-FUNC-117 | HAZ-025 | RC-122, RC-123, RC-125 | `backend/app/services/quality_gate.py`, `quality_gate_policy.json`, `frontend/src/services/qualityGate/gate.ts` | `test_quality_gate_matrix.py`, `gate.test.ts` |
 | REQ-FUNC-118 | HAZ-025 | RC-127 | `QualityGatePanel.tsx`, `BrowserFlamesCard.tsx`, `LongitudinalResultPanel.tsx`, i18n `qualityGate.*` | `QualityGatePanel.test.tsx`, `test_quality_gate_matrix.py` (G2) |
-| REQ-SAFE-052 | HAZ-025, HAZ-007, HAZ-001 | RC-122, RC-123, RC-125 | `quality_gate.py` (calls `compare_acquisitions`, `detect_sequence`, reads `acquisition_geometry`) | `test_quality_gate_matrix.py` (G1, G3, G8, G10), `test_rc122_quality_gate_wiring.py` |
+| REQ-SAFE-052 | HAZ-025, HAZ-007, HAZ-001 | RC-122, RC-123, RC-125 | `quality_gate.py` (calls `compare_acquisitions`, `detect_sequence`, reads `acquisition_geometry`) | `test_quality_gate_matrix.py` (G1, G3, G10), `test_rc123_rc062_monotonicity.py` (G24, G25, R4), `test_rc122_quality_gate_wiring.py` |
 | REQ-SAFE-053 | HAZ-025, HAZ-015 | RC-124 | `quality_gate_policy.json` (`thickness.evidence_asset`) | `test_quality_gate_matrix.py` (G7) |
 | REQ-SAFE-054 | HAZ-025, HAZ-020 | RC-126, RC-127 | `agents.json` (`quality-gate`), `tracing.py`, `quality_gate.py` (`run_quality_gate`), `qualityGate.cases.v1.json` | `test_quality_gate_matrix.py` (G4, G5, G6), `gate.test.ts`, `test_rc122_quality_gate_wiring.py` |
 

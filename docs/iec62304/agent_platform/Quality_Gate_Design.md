@@ -53,7 +53,7 @@ Checks, in this order (a check that does not apply does not run and is not recor
 | `platform` | always, first | the agent is approved and both switches read `on` | — | — | `gate_not_approved`, `gate_switched_off`, `gate_unavailable` (anything else, incl. unreachable). **Nothing else runs.** |
 | `sequence` | per visit | `FLAIR` | `sequence_confirmed_by_physician` (unknown/missing + the physician's attestation, single study only) | — | `sequence_not_flair` (T1, T2, other — a confirmation never overrides a header that names another sequence), `sequence_unknown`, `sequence_missing` |
 | `thickness` | per visit | `native` and ≤ 1.5 mm | `thickness_thick` (native > 1.5), `thickness_at_least` (lower bound only), `thickness_unknown` (not determinable, missing, invalid) | — | **none in this release** (REQ-SAFE-053): `thickness_out_of_range` only through the v3 evidence hook |
-| `scanner` | comparison only, once | manufacturer, model and field strength recorded for both visits and equal (RC-062 tolerances) | — | — | `scanner_changed` (fields named), `scanner_unknown` (fields missing) |
+| `scanner` | comparison only, once | manufacturer, model and field strength recorded for both visits and equal (RC-062 tolerances) | `scanner_not_recorded` (nothing recorded in either visit: RC-062 then decides and abstains) | — | `scanner_changed` (fields named), `scanner_unknown` (one-sided or partial record) |
 | `skull` | single study only (the comparison works on stored masks and normalises intensities inside the brain mask) | `stripped` | — | `skull_pending` (the image has not been read yet) | `skull_present`, `skull_unknown` |
 
 Decision: any abstain → `abstain`; else any pending → `pending` (the AI may START, its output may not be shown); else any warn → `proceed_with_warnings`; else `proceed`. `ai_may_run` = decision ≠ abstain; `ai_output_allowed` = decision ∈ {proceed, proceed_with_warnings}.
@@ -84,7 +84,7 @@ Matrix: sequence {FLAIR, T1, T2, unknown, missing} × physician confirmation {no
 - **G5** The trace records exactly the checks that ran, with their status and code (one child span each), and one audit record per consultation.
 - **G6** Kill switch off, agent not approved, registry or switch unreadable, backend unreachable → no AI step proceeds, and the reason is shown.
 - **G7** (data rule) The thickness check never abstains while no evidence asset with a commercial licence (CC0-1.0, CC-BY-4.0) is set; the shipped policy has none and names no non-commercial dataset.
-- **G8** The gate never lets through what RC-062 withholds for a scanner reason (the scanner check calls `compare_acquisitions`).
+- **G8** *(replaced by G24, fourth review of PR #81.)*
 - **G9** Deterministic, and independent of what does not apply (a single study ignores the scanner; a comparison ignores the skull).
 - **G10** Monotone: making one input worse never turns an abstention into a run.
 - **G11** No output while a check is pending.
@@ -100,6 +100,8 @@ Matrix: sequence {FLAIR, T1, T2, unknown, missing} × physician confirmation {no
 - **G21** One coherent verdict per gate decision × RC-062 status.
 - **G22** Every clinical / analysis POST route is audited (generic test).
 - **G23** The card always reaches a decided state for the selected file.
+- **G24** Monotone with respect to RC-062, exhaustive: over every combination of the six RC-062 acquisition facts and the visit order (31 250 pairs), the comparison with the gate ON is never more permissive than RC-062 alone; RC-062 (`longitudinal_candidate_safety.py`) is byte-identical to the base branch.
+- **G25** One comparability verdict per pair for compare and SEL (`comparison_withheld`).
 
 ## 6. Data rule and the v3 hook (REQ-SAFE-053)
 
@@ -124,5 +126,5 @@ Published OFF: `VITE_ENABLE_QUALITY_GATE` and `QUALITY_GATE_ENFORCED` default to
 | D-QG-7 | Post-contrast, reformatted (MPR, MIP) and derived or subtracted FLAIRs are "other" and always abstain; confirm, or allow some of them. |
 | D-QG-9 | TIRM names count as FLAIR (as RC-049 already read them); a short-TI TIRM (a STIR) is caught only when its inversion time is recorded in the header or the text; confirm. |
 | D-QG-8 | *Superseded by F1 (third review of PR #81):* the comparison now offers a per-visit attestation. |
-| D-QG-10 | When NEITHER visit records its scanner (two uploads), the gate warns (`scanner_not_recorded`) and RC-062 shows the candidates with a warning, only while the gate is enforced; a one-sided or partial record still abstains. Confirm, or keep RC-062's abstention for uploads. |
+| D-QG-10 | *(Not implemented — fourth review of PR #81.)* Whether a FUTURE, separate change should let RC-062 compare two uploads that record no acquisition. It would need its own risk assessment of the HAZ-007 residual; this PR leaves RC-062 exactly as on the base branch. |
 | D-QG-11 | A DICOM ImageType naming a reformatted, projected, subtracted or parametric image (MPR, MIP, ADC, …) makes the image 'other' (an extension of D-QG-7); confirm. |

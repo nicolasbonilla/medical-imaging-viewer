@@ -45,7 +45,8 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT = os.path.join(ROOT, "docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json")
 PY = sys.executable
 
-BACKEND_TESTS = ["tests/unit/test_quality_gate_matrix.py", "tests/unit/test_rc122_quality_gate_wiring.py"]
+BACKEND_TESTS = ["tests/unit/test_quality_gate_matrix.py", "tests/unit/test_rc122_quality_gate_wiring.py",
+                 "tests/unit/test_rc123_rc062_monotonicity.py"]
 VITEST_TESTS = ["src/components/BrowserFlamesCard.qualityGate.test.tsx", "src/components/QualityGatePanel.test.tsx",
                 "src/services/qualityGate/gate.test.ts"]
 COPY_TREES = ["backend/app", "backend/data"]
@@ -74,6 +75,9 @@ CT = "backend/app/api/routes/clinical_tools.py"
 DI = "backend/app/services/dataset_inventory.py"
 HE = "frontend/src/services/flames/headerEvidence.ts"
 AM = "backend/app/core/logging/audit_middleware.py"
+RPG = "backend/app/services/report_payload_guard.py"
+BRS = "backend/app/services/brain_report_service.py"
+AIR = "backend/app/api/routes/ai_report.py"
 EN = "frontend/src/i18n/locales/en.json"
 CMP_ACTION = ("If you are sure this visit's image is a T2-FLAIR, tick its confirmation box below and compare again. "
               "Otherwise compare the images visually with the overlay.")
@@ -109,11 +113,11 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Q8_unknown_scanner_passes": ([(QG, '    if missing:\n        return _check("scanner", None, "abstain", "scanner_unknown", fields=[f for f in fields if f in missing])\n',
         '    if missing:\n        return _check("scanner", None, "pass")\n')],
         "an unrecorded scanner is taken as the same scanner", "backend", "RC-123"),
-    "Q9_abstention_does_not_withhold": ([(QG, '        return abstained_comparison(gate)\n    return {**result, "quality_gate": gate}\n',
-        '        return {**result, "quality_gate": gate}\n    return {**result, "quality_gate": gate}\n')],
+    "Q9_abstention_does_not_withhold": ([(QG, '    if gate.get("ai_output_allowed") is not True:      # ONE abstention path (second review, finding 5)\n',
+        '    if False:\n')],
         "a comparison the gate stops still carries lesion counts and loads", "backend", "RC-123"),
-    "Q10_route_ignores_the_gate": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            from app.services import quality_gate as qg\n            return qg.abstained_comparison(gate)\n', '        pass\n'),
-        (SA, '            result = qg.apply_to_comparison(result, gate)\n', '            pass\n')],
+    "Q10_route_ignores_the_gate": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            return qg.abstained_comparison(gate)\n', '        pass\n'),
+        (SA, '            visit_check=visit_check, review_read_failed=review_read_failed, gate=gate,\n', '            visit_check=visit_check, review_read_failed=review_read_failed, gate=None,\n')],
         "the longitudinal route consults the gate but shows the candidates anyway", "backend", "RC-123"),
     # ── RC-124: data rule ──
     "Q11_hook_ignores_the_licence": ([(QG, '    if not isinstance(asset, dict) or asset.get("licence") not in rules["commercial_licence_allowlist"]:\n',
@@ -190,7 +194,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "R7_comparison_action_missing": ([(EN, '        "action_comparison": "' + CMP_ACTION + '"\n      },\n      "sequence_confirmed_by_physician"',
         '        "action_comparison": ""\n      },\n      "sequence_confirmed_by_physician"')],
         "a comparison stopped on the sequence says nothing about what to do", "backend", "RC-127"),
-    "R8_gate_after_loading": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            from app.services import quality_gate as qg\n            return qg.abstained_comparison(gate)\n', '        pass\n')],
+    "R8_gate_after_loading": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            return qg.abstained_comparison(gate)\n', '        pass\n')],
         "the comparison loads masks, images, registration and atlas before the gate stops it", "backend", "RC-123"),
     "R10_raw_codes_in_caveat": ([(QG, '    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in (gate.get("codes") or ["gate_unavailable"])]\n',
         '    reasons = list(gate.get("codes") or ["gate_unavailable"])\n')],
@@ -268,11 +272,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the inventory classifies file ids and paths (UUID fragments turn FLAIR into other)", "backend", "RC-122"),
     "U4_route_not_audited": ([(AM, '    "/api/v1/clinical/quality-gate",   # G22 (DRAFT)\n', '')],
         "the quality-gate route is missing from the audit middleware", "backend", "RC-126"),
-    "U5_unrecorded_scanners_abstain": ([(QG, '    if missing and unrecorded and policy["scanner"].get("unrecorded_in_both") == "warn":\n', '    if False:\n')],
-        "two uploads are never comparable (scanner_unknown)", "backend", "RC-123"),
-    "U6_rc062_withholds_unrecorded_pairs": ([(SA, '            unrecorded_in_both_warns=gate is not None and "scanner_not_recorded" in (gate.get("codes") or []),\n',
-        '            unrecorded_in_both_warns=False,\n')],
-        "RC-062 withholds a pair of uploads although the gate warned", "backend", "RC-123"),
+    "U5_unrecorded_scanners_abstain_in_the_gate": ([(QG, '    if missing and unrecorded:\n', '    if False:\n')],
+        "the gate stops two uploads itself, so the physician reads the gate's reason instead of RC-062's", "backend", "RC-123"),
     "U7_comparison_attestation_ignored": ([(QG, '    visits = [visit_from_stored_records(s, acquisition=a, physician_confirmed_flair=att is True)\n',
         '    visits = [visit_from_stored_records(s, acquisition=a, physician_confirmed_flair=False)\n')],
         "the per-visit attestation of a comparison is dropped", "backend", "RC-122"),
@@ -296,6 +297,32 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "F16_ts_sequence_name_read_as_a_description": ([(HE, "    dicom.protocolName,\n    seriesDescription ?? undefined,\n  ].filter",
         "    dicom.protocolName,\n    dicom.sequenceName,\n    seriesDescription ?? undefined,\n  ].filter")],
         "the in-browser AI rejects Siemens FLAIR ('*tir...' read as T2*), even with the gate off", "node", "RC-122"),
+    # ── fourth review of PR #81 ──
+    "X1_rc062_relaxed_for_unrecorded_pairs": ([(QG, '    presented = lcs.present_comparison(result, acquisition_check=acquisition_check, evidence=evidence,\n',
+        '    presented = lcs.present_comparison(result, acquisition_check=({**acquisition_check, "status": "same"} if gate is not None '
+        'and "scanner_not_recorded" in (gate.get("codes") or []) else acquisition_check), evidence=evidence,\n')],
+        "the D-QG-10 relaxation of RC-062 reintroduced (HAZ-007)", "backend", "RC-123"),
+    "X2_a_warned_gate_lifts_rc062": ([(QG, '    out = {**result, "quality_gate": gate}\n', '    out = {**result, "quality_gate": gate, "abstained": False}\n')],
+        "a gate that only warns lifts an RC-062 abstention", "backend", "RC-123"),
+    "X3_sel_keeps_its_own_rule": ([(SA, '        if qg.comparison_withheld(acquisition_check, visit_check, gate)["withheld"]:   # G25: one verdict\n',
+        '        if acquisition_check["status"] != "same":\n')],
+        "SEL decides comparability with its own rule", "backend", "RC-123"),
+    "X4_shared_verdict_ignores_the_gate": ([(QG, '    stops = gate is not None and gate.get("ai_output_allowed") is not True\n', '    stops = False\n')],
+        "the shared comparability verdict ignores the gate's abstention", "backend", "RC-123"),
+    "X5_shared_verdict_ignores_visit_order": ([(QG, '                                   stored_review=None, visit_check=visit_check).get("abstained") is True\n',
+        '                                   stored_review=None, visit_check={"status": "ok"}).get("abstained") is True\n')],
+        "the shared comparability verdict ignores an unknown visit order", "backend", "RC-123"),
+    "X6_warnings_not_in_the_caveat": ([(QG, '    if reasons:                                       # R4: a warned comparison says so (the assistant reads this)\n',
+        '    if False:\n')],
+        "a warned comparison looks clean to the assistant", "backend", "RC-127"),
+    "X7_warnings_dropped_from_the_report_payload": ([(RPG, '        if warnings:\n            o["quality_gate_warnings"] = warnings\n',
+        '        if False:\n            o["quality_gate_warnings"] = warnings\n')],
+        "the report never receives the gate's warnings", "backend", "RC-127"),
+    "X8_report_prompt_silent": ([(BRS, '                if gate_warnings:\n', '                if False:\n')],
+        "the report draft presents a warned comparison as clean", "backend", "RC-127"),
+    "X9_report_notice_silent": ([(AIR, '    if reasons:\n        lines.append(gw["lead"] + " " + "; ".join(reasons) + ".")\n',
+        '    if False:\n        lines.append(gw["lead"] + " " + "; ".join(reasons) + ".")\n')],
+        "the code-written notice of the draft omits the gate's warnings", "backend", "RC-127"),
     # ── browser rule (G4 parity harness under Node) ──
     "F1_ts_confirmation_overrides_another_sequence": ([(TS, "  return mk('sequence', label, 'abstain', 'sequence_not_flair', { sequence: seq });\n",
         "  return visit.physician_confirmed_flair === true ? mk('sequence', label, 'warn', 'sequence_confirmed_by_physician', { sequence: seq })\n"
