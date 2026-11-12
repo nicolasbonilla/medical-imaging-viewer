@@ -153,12 +153,12 @@ def _visit_labels(inp):
     return ["study"] if inp["mode"] == "single" else ["tp1", "tp2"]
 
 
-def test_matrix_size_is_the_full_cross_product():
+def test_rc122_matrix_size_is_the_full_cross_product():
     assert N == 5 * 2 * 5 * 4 * 4 * 4 == 3200
 
 
 # ----------------------------------------------------------------------------- G1
-def test_g1_the_ai_never_runs_on_a_non_flair_or_unknown_sequence(results):
+def test_rc122_g1_the_ai_never_runs_on_a_non_flair_or_unknown_sequence(results):
     bad = []
     for key, _, inp, out in results:
         if out.get("ai_output_allowed") and not out.get("ai_may_run"):
@@ -180,7 +180,7 @@ def _policy():
     return json.loads(BACKEND_POLICY.read_text(encoding="utf-8"))
 
 
-def test_g2_every_non_pass_check_carries_a_known_code_with_its_status(results):
+def test_rc127_g2_every_non_pass_check_carries_a_known_code_with_its_status(results):
     codes = _policy()["codes"]
     bad = []
     for key, _, _, out in results:
@@ -202,7 +202,7 @@ def _locale(lang):
     return json.loads(LOCALES[lang].read_text(encoding="utf-8"))
 
 
-def test_g2_every_code_has_a_plain_message_and_an_action_in_en_es_de():
+def test_rc127_g2_every_code_has_a_plain_message_and_an_action_in_en_es_de():
     codes = _policy()["codes"]
     missing = []
     texts = {}
@@ -243,7 +243,7 @@ def _scanner_same(inp):
     return all(a.get(f) is not None and a.get(f) == b.get(f) for f in fields)
 
 
-def test_g3_no_pass_from_an_unknown_value_and_proceed_only_when_everything_is_known_and_good(results):
+def test_rc122_g3_no_pass_from_an_unknown_value_and_proceed_only_when_everything_is_known_and_good(results):
     bad = []
     for key, _, inp, out in results:
         labels = _visit_labels(inp)
@@ -270,7 +270,7 @@ def test_g3_no_pass_from_an_unknown_value_and_proceed_only_when_everything_is_kn
     assert not bad, _report("G3", bad)
 
 
-def test_g3_values_outside_the_known_set_never_pass():
+def test_rc122_g3_values_outside_the_known_set_never_pass():
     odd = [
         {"sequence": "flair"}, {"sequence": None}, {"sequence": 7}, {"physician_confirmed_flair": "yes", "sequence": "unknown"},
         {"thickness": {"state": "native", "effective_mm": float("nan")}}, {"thickness": {"state": "native", "effective_mm": 0}},
@@ -355,7 +355,7 @@ def build_fixture(evaluated=None) -> dict:
     }
 
 
-def test_g4_the_shared_fixture_pins_the_backend_decision_of_every_case(results):
+def test_rc127_g4_the_shared_fixture_pins_the_backend_decision_of_every_case(results):
     assert FIXTURE.exists(), "G4 failed in all cases: the shared fixture does not exist"
     fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
     assert fixture["matrix"] == MATRIX, "the fixture's matrix differs from the test's"
@@ -366,7 +366,7 @@ def test_g4_the_shared_fixture_pins_the_backend_decision_of_every_case(results):
     assert not bad, f"G4 failed on {len(bad)} explicit samples: {bad[:4]}"
 
 
-def test_g4_backend_and_frontend_policies_are_the_same_and_the_registry_records_it():
+def test_rc126_g4_backend_and_frontend_policies_are_the_same_and_the_registry_records_it():
     backend = json.loads(BACKEND_POLICY.read_text(encoding="utf-8"))
     assert FRONTEND_POLICY.exists(), "the frontend copy of the policy is missing"
     assert json.loads(FRONTEND_POLICY.read_text(encoding="utf-8")) == backend
@@ -392,7 +392,7 @@ def _expected_checks(inp):
     return out
 
 
-def test_g5_exactly_the_applicable_checks_run_and_are_recorded(results):
+def test_rc126_g5_exactly_the_applicable_checks_run_and_are_recorded(results):
     bad = [key for key, _, inp, out in results
            if [(c.get("check"), c.get("visit")) for c in out.get("checks", [])] != _expected_checks(inp)]
     assert not bad, _report("G5", bad)
@@ -405,7 +405,7 @@ def _approved_registry(switches=None, audit=None, data=None):
                            audit=audit.append if audit is not None else (lambda e: None))
 
 
-def test_g5_the_trace_and_the_audit_record_exactly_the_checks_that_ran(results):
+def test_rc126_g5_the_trace_and_the_audit_record_exactly_the_checks_that_ran(results):
     audit = []
     exporter = T.InMemoryExporter()
     tracer = T.Tracer(exporter)
@@ -433,7 +433,7 @@ def test_g5_the_trace_and_the_audit_record_exactly_the_checks_that_ran(results):
 
 # ----------------------------------------------------------------------------- G6
 @pytest.mark.parametrize("state", sorted(PLATFORM_STATES))
-def test_g6_platform_not_on_means_no_ai_step_and_the_reason(state):
+def test_rc126_g6_platform_not_on_means_no_ai_step_and_the_reason(state):
     bad = []
     for key, _, inp in build_cases(platform=PLATFORM_STATES[state]):
         out = QG.evaluate(inp)
@@ -445,7 +445,7 @@ def test_g6_platform_not_on_means_no_ai_step_and_the_reason(state):
     assert not bad, _report(f"G6 ({state})", bad)
 
 
-def test_g6_the_real_registry_and_switches_fail_closed():
+def test_rc126_g6_the_real_registry_and_switches_fail_closed():
     inp = {"mode": "single", "visits": [BASE_VISIT]}
     tracer = T.Tracer(T.InMemoryExporter())
 
@@ -476,7 +476,7 @@ def test_g6_the_real_registry_and_switches_fail_closed():
     assert not bad, f"G6 (real platform): {bad}"
 
 
-def test_g6_the_registry_entry_is_code_only_and_not_approved():
+def test_rc126_g6_the_registry_entry_is_code_only_and_not_approved():
     entry = json.loads(REGISTRY.read_text(encoding="utf-8"))["agents"]["quality-gate"]
     assert entry["approval"]["status"] == "pending", "registered, awaiting the owner (never 'approved' here)"
     assert entry["model_control"] == "none" and entry["allowed_models"] == [] and entry["allowed_tools"] == []
@@ -484,7 +484,7 @@ def test_g6_the_registry_entry_is_code_only_and_not_approved():
 
 
 # ----------------------------------------------------------------------------- G7 (data rule)
-def test_g7_thickness_never_abstains_without_commercial_evidence(results):
+def test_rc124_g7_thickness_never_abstains_without_commercial_evidence(results):
     bad = [key for key, _, _, out in results if any(c.get("status") == "abstain" for c in _checks(out, "thickness"))]
     assert not bad, _report("G7", bad)
     policy = _policy()
@@ -495,7 +495,7 @@ def test_g7_thickness_never_abstains_without_commercial_evidence(results):
         assert word not in text, f"the shipped policy mentions {word!r}"
 
 
-def test_g7_the_v3_hook_abstains_only_with_a_commercial_licence():
+def test_rc124_g7_the_v3_hook_abstains_only_with_a_commercial_licence():
     thick = {"mode": "single", "visits": [{**BASE_VISIT, "thickness": {"state": "native", "effective_mm": 7.0}}],
              "platform": PLATFORM_ON}
     bad = []
@@ -515,7 +515,7 @@ def test_g7_the_v3_hook_abstains_only_with_a_commercial_licence():
 
 
 # ----------------------------------------------------------------------------- G8
-def test_g8_the_gate_never_lets_through_what_rc062_withholds_for_a_scanner_reason(results):
+def test_rc123_g8_the_gate_never_lets_through_what_rc062_withholds_for_a_scanner_reason(results):
     bad = []
     for key, _, inp, out in results:
         if inp["mode"] != "comparison":
@@ -530,7 +530,7 @@ def test_g8_the_gate_never_lets_through_what_rc062_withholds_for_a_scanner_reaso
 
 
 # ----------------------------------------------------------------------------- G9
-def test_g9_deterministic_and_independent_of_what_does_not_apply(results):
+def test_rc122_g9_deterministic_and_independent_of_what_does_not_apply(results):
     bad = []
     groups = {}
     for key, values, inp, out in results:
@@ -553,7 +553,7 @@ RANK = {
 }
 
 
-def test_g10_making_one_input_worse_never_turns_an_abstention_into_a_run(results):
+def test_rc122_g10_making_one_input_worse_never_turns_an_abstention_into_a_run(results):
     by_key = {key: out for key, _, _, out in results}
     names = [d[0] for d in MATRIX["dimensions"]]
     bad = []
@@ -571,7 +571,7 @@ def test_g10_making_one_input_worse_never_turns_an_abstention_into_a_run(results
 
 
 # ----------------------------------------------------------------------------- G11
-def test_g11_no_ai_output_while_a_check_is_pending_or_abstains(results):
+def test_rc125_g11_no_ai_output_while_a_check_is_pending_or_abstains(results):
     bad = [key for key, _, _, out in results
            if out.get("ai_output_allowed") and any(c.get("status") in ("pending", "abstain") for c in out.get("checks", []))]
     bad += [key for key, values, _, out in results
