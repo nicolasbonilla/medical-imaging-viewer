@@ -177,3 +177,24 @@ describe('U1 (sixth review): the attestations given for a pair add up', () => {
     expect(compareLongitudinal.mock.calls[2][2]).toEqual({ tp1: true, tp2: true });
   });
 });
+
+describe('G30 extended (ninth review): the SEL search states its own failure', () => {
+  const outcomes = {
+    rc062: { ok: false, abstained: true, reason: 'RC-062 REASON', sels: [], n_existing: 0, n_sel: 0 },
+    sel: { ok: false, withheld_by: 'sel', reason: 'SEL NOISE FLOOR UNRELIABLE', sels: [], n_existing: 3, n_sel: 0 },
+  } as const;
+  it.each([
+    ['proceed', 'rc062'], ['proceed', 'sel'], ['proceed_with_warnings', 'rc062'], ['proceed_with_warnings', 'sel'],
+  ] as const)('rc127 gate %s, withheld by %s: the right reason, the governed note only for RC-062', async (decision, by) => {
+    const allowed = gate(true, decision === 'proceed' ? null : 'thickness_unknown');
+    detectSELs.mockResolvedValue({ ...outcomes[by], quality_gate: allowed });
+    compareLongitudinal.mockResolvedValue(ALLOWED);
+    await pick();
+    fireEvent.click(screen.getByRole('button', { name: COMPARE }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /SEL/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /SEL/ }));
+    await waitFor(() => expect(detectSELs).toHaveBeenCalled());
+    await waitFor(() => expect(document.body.textContent).toContain(outcomes[by].reason));
+    expect(Boolean(screen.queryByTestId('sel-quality-gate-governed'))).toBe(by === 'rc062');
+  });
+});

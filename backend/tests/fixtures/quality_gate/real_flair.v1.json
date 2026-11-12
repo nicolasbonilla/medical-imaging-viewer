@@ -1,0 +1,5402 @@
+{
+ "$comment": [
+  "Ninth review of PR #81 (G33): a LABELLED corpus of real FLAIR series - protocol and series names across vendors and",
+  "software versions, each with the ImageType values of an original acquisition and of on-scanner corrections",
+  "(NORM, DIS2D, DIS3D, FILTERED, MFSPLIT), and Siemens SequenceName codes. Every entry is a real FLAIR: the gate must",
+  "pass it or offer the physician's attestation, never stop it with an unliftable 'other'. A deliberate exception",
+  "must be listed in 'owner_decisions' with its decision id. DRAFT, PENDING owner approval."
+ ],
+ "owner_decisions": {},
+ "cases": [
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_da-fl_tra_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark-fluid_sag_p2_iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_space_dark_fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2_SPACE_DARKFLUID",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_tirm_tra_dark-fluid",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_flair_sag_p2",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spcir_da-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_dark-fl_tra",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "T2 FLAIR SPACE",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": null,
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": null,
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": null,
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": null,
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcir2_282ns",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*tir2d1_16",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Siemens",
+   "text": "t2_spc_ns_dark-fl_sag",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": "*spcR_282",
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag CUBE FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX T2 FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "3D FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Ax T2 FLAIR fs",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "Sag 3D FLAIR CUBE",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "GE",
+   "text": "AX FLAIR PROPELLER",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_Brain_VIEW_FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "FLAIR_longTR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "3D_FLAIR_SPIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "VISTA FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Philips",
+   "text": "T2W_FLAIR_SENSE",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR 3D",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D-FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "FLAIR_AX",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "Ax FLAIR",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": null,
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "ORIGINAL\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\ND\\NORM",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "DERIVED\\PRIMARY",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS2D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\NORM\\DIS3D",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "DERIVED\\PRIMARY\\FILTERED",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "DERIVED\\PRIMARY\\M\\ND\\MFSPLIT",
+   "sequence_name": null,
+   "label": "FLAIR"
+  },
+  {
+   "vendor": "Canon",
+   "text": "3D FLAIR iso",
+   "image_type": "ORIGINAL\\PRIMARY\\OTHER",
+   "sequence_name": null,
+   "label": "FLAIR"
+  }
+ ]
+}
