@@ -2,7 +2,8 @@
  "$comment": [
   "G21 (third review of PR #81): gate decision x RC-062 status -> the ONE verdict the comparison panel shows.",
   "Read by frontend/src/components/LongitudinalResultPanel.qualityGate.test.tsx. DRAFT, PENDING owner approval.",
-  "Fourth review of PR #81 (R1): two uploads with no acquisition record abstain by RC-062 even when the gate only warns."
+  "Fourth review of PR #81 (R1): two uploads with no acquisition record abstain by RC-062 even when the gate only warns.",
+  "Eleventh review of PR #81 (I4): 'warnings' = the gate warnings the panel lists next to RC-062's line when RC-062 withholds a pair the gate let through - the same codes as the report notice (explain())."
  ],
  "states": [
   {
@@ -51,7 +52,8 @@
    "expect": {
     "gate_panel": true,
     "rc062_box": false,
-    "governed": false
+    "governed": false,
+    "warnings": []
    }
   },
   {
@@ -115,7 +117,10 @@
    "expect": {
     "gate_panel": false,
     "rc062_box": true,
-    "governed": true
+    "governed": true,
+    "warnings": [
+     "thickness_unknown"
+    ]
    }
   },
   {
@@ -180,7 +185,10 @@
    "expect": {
     "gate_panel": false,
     "rc062_box": true,
-    "governed": true
+    "governed": true,
+    "warnings": [
+     "thickness_unknown"
+    ]
    }
   },
   {
@@ -238,7 +246,10 @@
    "expect": {
     "gate_panel": false,
     "rc062_box": true,
-    "governed": true
+    "governed": true,
+    "warnings": [
+     "thickness_unknown"
+    ]
    }
   },
   {
@@ -312,7 +323,8 @@
    "expect": {
     "gate_panel": true,
     "rc062_box": false,
-    "governed": false
+    "governed": false,
+    "warnings": []
    }
   },
   {
@@ -378,7 +390,10 @@
    "expect": {
     "gate_panel": false,
     "rc062_box": true,
-    "governed": true
+    "governed": true,
+    "warnings": [
+     "scanner_not_recorded"
+    ]
    }
   },
   {
@@ -422,7 +437,8 @@
    "expect": {
     "gate_panel": false,
     "rc062_box": true,
-    "governed": false
+    "governed": false,
+    "warnings": []
    }
   },
   {
@@ -476,7 +492,8 @@
    "expect": {
     "gate_panel": false,
     "rc062_box": false,
-    "governed": false
+    "governed": false,
+    "warnings": []
    }
   }
  ]

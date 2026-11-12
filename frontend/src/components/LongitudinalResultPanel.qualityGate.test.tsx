@@ -71,7 +71,21 @@ describe('G21: one coherent verdict per gate decision x RC-062 status', () => {
         rc062_box: Boolean(screen.queryByTestId('longitudinal-abstained')),
         governed: Boolean(screen.queryByTestId('longitudinal-quality-gate-governed')),
       };
-      if (JSON.stringify(seen) !== JSON.stringify(st.expect) || (seen.gate_panel && seen.rc062_box)) bad.push(`${st.name}: ${JSON.stringify(seen)}`);
+      const want = { gate_panel: st.expect.gate_panel, rc062_box: st.expect.rc062_box, governed: st.expect.governed };
+      if (JSON.stringify(seen) !== JSON.stringify(want) || (seen.gate_panel && seen.rc062_box)) bad.push(`${st.name}: ${JSON.stringify(seen)}`);
+      unmount();
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('I4 (eleventh review): RC-062 withholds a pair the gate let through with warnings', () => {
+  it('rc127 the panel shows RC-062\'s line AND the gate\'s warnings, the same codes as the report notice', () => {
+    const bad: string[] = [];
+    for (const st of UI_STATES.states as { name: string; result: Record<string, unknown>; expect: { warnings: string[] } }[]) {
+      const { unmount } = show(st.result);
+      const shown = screen.queryAllByTestId('longitudinal-quality-gate-warning').map((el) => el.getAttribute('data-code'));
+      if (JSON.stringify(shown) !== JSON.stringify(st.expect.warnings)) bad.push(`${st.name}: ${JSON.stringify(shown)}`);
       unmount();
     }
     expect(bad).toEqual([]);

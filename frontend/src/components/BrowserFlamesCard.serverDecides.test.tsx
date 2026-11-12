@@ -93,6 +93,26 @@ describe('A1: the card shows the server answer as it is', () => {
   });
 });
 
+describe('I6 (eleventh review): two consultations per run, not three', () => {
+  it('rc126 a run without an attestation uses the preflight answer: at most 2 requests per run', async () => {
+    flames('idle');
+    h.answer = (f, _c, skull) => Promise.resolve(skull === 'pending' ? answer('pending', ['skull_pending'], {}, f)
+      : answer('proceed', [], {}, f));
+    const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
+    await waitFor(() => expect(h.calls.length).toBe(1));
+    fireEvent.click(screen.getByTestId('browser-flames-confirm-sequence').querySelector('input') as HTMLInputElement);
+    const run = screen.getByRole('button', { name: /Segment in this browser/ });
+    await waitFor(() => expect(run).not.toBeDisabled());
+    fireEvent.click(run);
+    await waitFor(() => expect(h.flames.run).toHaveBeenCalledTimes(1));
+    flames('done', result());
+    rerender(<BrowserFlamesCard flairFileId={FILE} />);
+    expect(await screen.findByText(/AI draft ready/)).toBeInTheDocument();
+    expect(h.calls.length).toBeLessThanOrEqual(2);
+    expect(h.calls.map((c) => c[2])).toEqual(['pending', 'stripped']);
+  });
+});
+
 describe('U2: a rate-limited or unavailable answer is retried by itself, with a countdown', () => {
   it('rc126 before the run: the wait is shown, the check is repeated, and Run becomes possible', async () => {
     flames('idle');

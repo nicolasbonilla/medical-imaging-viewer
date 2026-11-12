@@ -56,6 +56,27 @@ def generate(n=2400, seed=26):
     return out
 
 
+# Eleventh review of PR #81 (I3): FILE NAMES with sequence punctuation ('*' of T2*, '+' of +C, '-'), each with and
+# without an identifier token; the base read the whole file id, the branch reads its descriptive name (G20), which may
+# only drop identifier tokens (UUIDs, hex runs, numeric ids), directories and the extension.
+FILE_SEQ = ["T2*", "t2*", "T2*_GRE", "AX_T2*", "T2star", "SWI", "T1+C", "T1+c_MPRAGE", "T1-post", "t1-mprage", "T2-FLAIR",
+            "FLAIR+C", "PD-T2", "T2-TSE", "dark-fluid", "GRE-T2*", "T1w", "T2w", "FLAIR", "T2"]
+FILE_PREFIX = ["", "AX_", "SAG-", "sub-01_", "3D_"]
+FILE_IDS = ["", "_7a3f9e21-0c4d-4b1e-9a7f-2b6c1d0e8f11", "_00012345", "-a1b2c3d4e5f6"]
+FILE_EXT = [".nii.gz", ".nii", ".dcm"]
+FILE_TEXTS = ["", "AX T2 FLAIR", "Sag T1 MPRAGE"]
+
+
+def generate_filenames():
+    out = []
+    for i, (prefix, seq) in enumerate((p, q) for p in FILE_PREFIX for q in FILE_SEQ):
+        ident = FILE_IDS[i % len(FILE_IDS)]
+        ext = FILE_EXT[i % len(FILE_EXT)]
+        out.append({"text": FILE_TEXTS[i % len(FILE_TEXTS)], "file": f"{prefix}{seq}{ident}{ext}",
+                    "without_id": f"{prefix}{seq}{ext}"})
+    return out
+
+
 def _digest(value) -> str:
     """SHA-256 of the reasons as JavaScript's JSON.stringify writes them, so gate.test.ts recomputes it."""
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8")).hexdigest()[:16]
@@ -91,6 +112,16 @@ def base_inventory(cases):
             [[sorted(ns["sequences_available"](g)), ns["is_lst_ai_ready"](ns["sequences_available"](g))] for g in groups])
 
 
+def base_inventory_filenames(cases):
+    """The base answer for each file name: on the whole name when it holds no identifier token, else on the same name
+    without it (the documented G20 removal)."""
+    src = subprocess.run(["git", "show", f"{BASE}:backend/app/services/dataset_inventory.py"], cwd=ROOT,
+                         capture_output=True, text=True, encoding="utf-8", check=True).stdout
+    ns = {"__name__": "base_inventory"}
+    exec(compile(src, "base_inventory", "exec"), ns)
+    return [ns["detect_sequence"](c["text"], c["without_id"]) for c in cases]
+
+
 def base_routes(work):
     """The compare / SEL answers of the BASE backend, extracted from git into a throwaway folder."""
     data = subprocess.run(["git", "archive", "--format=tar", BASE, "backend/app", "backend/data"], cwd=ROOT,
@@ -111,7 +142,19 @@ def base_routes(work):
     return json.loads(line[len("G26-ROUTES:"):])
 
 
+def filenames_only():
+    """Add (or refresh) only the file-name part of the snapshot, from the base code (no Node, no route harness)."""
+    snap = json.loads(open(OUT, encoding="utf-8").read())
+    names = generate_filenames()
+    snap["filename_corpus"] = names
+    snap["inventory_filenames"] = base_inventory_filenames(names)
+    open(OUT, "w", encoding="utf-8", newline="\n").write(json.dumps(snap, ensure_ascii=False, separators=(",", ":")) + "\n")
+    print(f"file names {len(names)}")
+
+
 def main():
+    if "--filenames-only" in sys.argv:
+        return filenames_only()
     cases = generate()
     with tempfile.TemporaryDirectory(prefix="qg_flags_off_") as work:
         rc049 = base_rc049(cases, work)
@@ -128,6 +171,8 @@ def main():
         "inventory_detect": detect,
         "inventory_groups": groups,
         "routes": routes,
+        "filename_corpus": generate_filenames(),
+        "inventory_filenames": base_inventory_filenames(generate_filenames()),
     }
     open(OUT, "w", encoding="utf-8", newline="\n").write(json.dumps(snap, ensure_ascii=False, separators=(",", ":")) + "\n")
     print(f"corpus {len(cases)}, rc049 supports {sum(v == 'supports' for v, _ in rc049)}, routes {len(routes)}")
