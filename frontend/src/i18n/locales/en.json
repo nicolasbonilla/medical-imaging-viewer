@@ -1543,6 +1543,10 @@
         "message": "The quality check is not enabled on the server, so the AI does not run.",
         "action": "Ask the administrator to enable the quality check on the server, or to switch it off in the app."
       },
+      "gate_no_access": {
+        "message": "The image was not found, or you have no access to it, so the AI does not run.",
+        "action": "Check that the image is still in the study and that you may open it; then select it again."
+      },
       "gate_rate_limited": {
         "message": "Too many quality checks in a short time, so the AI does not run yet. Wait {{seconds}} s.",
         "action": "Wait {{seconds}} seconds and try again; the check is repeated automatically when you select the image again."

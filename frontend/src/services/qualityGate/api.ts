@@ -3,7 +3,7 @@
  * Any failure — network, status, an answer of another shape — is the gate being unavailable: fail closed (G6).
  */
 import { apiClient } from '@/services/apiClient';
-import { gateNotEnabled, gateRateLimited, gateUnavailable, isGateResult, type ServerGateResponse } from './gate';
+import { gateNoAccess, gateNotEnabled, gateRateLimited, gateUnavailable, isGateResult, type ServerGateResponse } from './gate';
 
 export type ReportedSkull = 'pending' | 'stripped' | 'unknown';
 
@@ -23,7 +23,11 @@ export async function requestQualityGate(fileId: string, physicianConfirmedFlair
     // F3 (fifth review of PR #81): over the per-user limit the answer says how long to wait (never "unavailable")
     const response = (err as { response?: { status?: number; data?: unknown; headers?: Record<string, unknown> } })?.response;
     // G29: the browser gate is on while the server's is off (the route is not enabled): said as such, never retried
-    if (response?.status === 404) return { ...gateNotEnabled(), subject: { file_id: fileId, version: null } };
+    // U1 (eighth review): only the server's explicit code means "not enabled"; any other 404 / 403 is the image not
+    // found or no access (CAPA-009) — said as such, never retried
+    const code = String(response?.headers?.['x-quality-gate-code'] ?? '');
+    if (response?.status === 404 && code === 'gate_not_enabled') return { ...gateNotEnabled(), subject: { file_id: fileId, version: null } };
+    if (response?.status === 404 || response?.status === 403) return { ...gateNoAccess(), subject: { file_id: fileId, version: null } };
     if (response?.status === 429) {
       const details = (response.data as { error?: { details?: { retry_after_s?: unknown } } } | undefined)?.error?.details;
       const header = Number(response.headers?.['retry-after']);

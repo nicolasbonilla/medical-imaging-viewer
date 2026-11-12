@@ -32,7 +32,7 @@ def _record(visit):
 
 def _predicted_rc062(inp):
     a, b = (_record(v) for v in inp["visits"])
-    return lcs.rc062_withholds(lcs.compare_acquisitions(a, b, None, None), {"status": "ok"})
+    return lcs.rc062_withholds(lcs.compare_acquisitions(a, b, (1.0, 1.0, 3.0), (1.0, 1.0, 3.0)), {"status": "ok"})
 
 
 # ----------------------------------------------------------------------------- G30
@@ -113,7 +113,7 @@ def test_rc126_g31_a_comparison_rc062_withholds_is_recorded_as_withheld_never_re
     reg._audit = events.append
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     monkeypatch.setattr(qg, "_REGISTRY", reg)
-    records["acq"][f2]["mr_acquisition_type"] = "3D"                      # the gate passes; RC-062 withholds
+    records["acq"][f2]["mr_acquisition_type"] = "2D"                      # the gate passes; RC-062 withholds
     res = client.post("/api/v1/segmentation/longitudinal/compare", json=PAIR).json()
     assert res["quality_gate"]["ai_output_allowed"] is True and res["abstained"] is True
     assert not [e for e in events if e.get("event") == "agent.run"], events

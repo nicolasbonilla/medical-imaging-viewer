@@ -67,7 +67,7 @@ def test_rc122_g28_reviewer_cases():
     changed = {"mode": "comparison", "platform": {"allowed": True, "code": None}, "visits": [
         {**visit, "scanner": scanner}, {**visit, "scanner": {**scanner, "manufacturer": "GE MEDICAL SYSTEMS"}}]}
     assert qg.evaluate(changed)["attestable_visits"] == []
-    same = {**changed, "visits": [{**visit, "scanner": scanner}, {**visit, "scanner": scanner}]}
+    same = {**changed, "rc062_withholds": False, "visits": [{**visit, "scanner": scanner}, {**visit, "scanner": scanner}]}
     assert qg.evaluate(same)["attestable_visits"] == ["tp1", "tp2"]
 
 
@@ -180,7 +180,7 @@ def test_rc123_e2_the_comparison_reads_both_visits_concurrently(compare, monkeyp
 
 # ----------------------------------------------------------------------------- cleanup
 def test_rc126_cleanup_no_unused_parameters_and_one_lookup():
-    assert list(inspect.signature(qg.read_header_fields).parameters) == ["data"]
+    assert list(inspect.signature(qg.read_header_fields).parameters) == ["data", "decoded"]   # decoded: E1 (eighth)
     assert "imaging_service" not in inspect.signature(ct.quality_gate).parameters
     assert not hasattr(qg, "file_version_key")
     assert "lcs.source_series_ref(" in inspect.getsource(qg.read_source_series_description)

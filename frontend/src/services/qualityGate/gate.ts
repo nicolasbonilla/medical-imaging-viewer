@@ -89,6 +89,12 @@ export function gateNotEnabled(): GateResult {
   return stopped('gate_not_enabled');
 }
 
+/** U1 (eighth review): the image was not found, or the user has no access to it (an ordinary 404 / 403 of CAPA-009) —
+ *  said as such, never retried. */
+export function gateNoAccess(): GateResult {
+  return stopped('gate_no_access');
+}
+
 /** G29 (seventh review): ONLY a rate-limited answer is asked again, after the server's wait (the card adds backoff and
  *  a cap); an unavailable answer is a real decision, shown and never retried; null for anything else. */
 export function retryAfterSeconds(r: GateResult | null | undefined): number | null {

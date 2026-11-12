@@ -14,7 +14,7 @@ const SOURCE = readFileSync(join(__dirname, 'gate.ts'), 'utf-8');
 describe('G27: the browser holds no rule', () => {
   it('rc127 gate.ts exports only display and request helpers', () => {
     const functions = Object.entries(gate).filter(([, v]) => typeof v === 'function').map(([k]) => k).sort();
-    expect(functions).toEqual(['actionOf', 'gateNotEnabled', 'gateRateLimited', 'gateUnavailable', 'isGateResult',
+    expect(functions).toEqual(['actionOf', 'gateNoAccess', 'gateNotEnabled', 'gateRateLimited', 'gateUnavailable', 'isGateResult',
       'retryAfterSeconds', 'serverSequenceClass', 'skullFromProvenance']);
     expect(SOURCE).not.toMatch(/\.json'|other_words|min_flair_inversion_time_ms|confirmation_modes|evaluateGate|classify/);
   });

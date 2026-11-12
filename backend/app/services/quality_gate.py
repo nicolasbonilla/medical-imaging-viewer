@@ -184,7 +184,7 @@ def _scanner_check(visits, policy) -> Dict[str, Any]:
     return _check("scanner", None, "pass")
 
 
-def _result(checks: List[Dict[str, Any]], policy, mode=None) -> Dict[str, Any]:
+def _result(checks: List[Dict[str, Any]], policy, mode=None, rc062_withholds: Any = None) -> Dict[str, Any]:
     statuses = {c["status"] for c in checks}
     decision = ("abstain" if "abstain" in statuses or not checks else "pending" if "pending" in statuses
                 else "proceed_with_warnings" if "warn" in statuses else "proceed")
@@ -199,16 +199,19 @@ def _result(checks: List[Dict[str, Any]], policy, mode=None) -> Dict[str, Any]:
         "checks": checks,
         # Sixth review of PR #81 (G27): the browser holds no policy, so the answer names what it shows — the visits
         # whose FLAIR the physician may attest in this mode, and the i18n action of each code in this mode.
-        "attestable_visits": _attestable_visits(checks, policy, mode),
+        "attestable_visits": _attestable_visits(checks, policy, mode, rc062_withholds),
         "actions": {c["code"]: _action_key(policy, mode, c["code"]) for c in checks if c["code"]},
     }
 
 
-def _attestable_visits(checks: List[Dict[str, Any]], policy, mode) -> List[str]:
+def _attestable_visits(checks: List[Dict[str, Any]], policy, mode, rc062_withholds: Any = None) -> List[str]:
     """G28 (seventh review of PR #81): the visits whose FLAIR the physician may attest — offered ONLY when the
     attestation changes the decision: every abstaining check is a sequence check that the attestation lifts
     (unknown / missing, in a mode where it is offered). Anything else that abstains (an unreadable header, a scanner
     change, a skull, the platform) makes an attestation futile, so none is offered and no useless record is written."""
+    if mode == "comparison" and (rc062_withholds is not False
+                                 or any(c["code"] == "scanner_not_recorded" for c in checks)):
+        return []      # G32 (eighth review): RC-062 will withhold the pair anyway, or its verdict is not predicted
     abstaining = [c for c in checks if c["status"] == "abstain"]
     liftable = [c for c in abstaining if c["check"] == "sequence" and c["code"] in ("sequence_unknown", "sequence_missing")
                 and mode in policy["sequence"]["confirmation_modes"]]
@@ -228,6 +231,7 @@ def _evaluate(inputs, policy) -> Dict[str, Any]:
     platform = _platform_check(inputs.get("platform"), policy)
     if platform["status"] != "pass":                                   # G6: nothing else runs
         return _result([platform], policy, inputs.get("mode") if isinstance(inputs.get("mode"), str) else None)
+    rc062 = inputs.get("rc062_withholds")
     mode, visits = inputs.get("mode"), inputs.get("visits")
     spec = policy["modes"].get(mode) if isinstance(mode, str) else None
     if (spec is None or not isinstance(visits, list) or len(visits) != len(spec["visits"])
@@ -243,7 +247,7 @@ def _evaluate(inputs, policy) -> Dict[str, Any]:
             checks.append(_skull_check(visit, label))
     if "scanner" in spec["checks"]:
         checks.append(_scanner_check(visits, policy))
-    return _result(checks, policy, mode)
+    return _result(checks, policy, mode, rc062_withholds=rc062)
 
 
 def evaluate(inputs, policy: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -477,18 +481,18 @@ def study_of(file_id) -> Optional[str]:
 
 
 _NO_HEADER = {"descriptions": [], "protocol_name": None, "sequence_name": None, "image_type": None,
-              "inversion_time_ms": None, "thickness": None}
+              "inversion_time_ms": None, "thickness": None, "voxel_spacing_mm": None}
 _HEADER_CACHE: "OrderedDict[tuple, Dict[str, Any]]" = OrderedDict()
 HEADER_CACHE_MAX = 256
 
 
-def _nifti_header_image(data: bytes):
-    """A NIfTI image whose header is read and whose voxels are NOT (nibabel's lazy array proxy)."""
-    import gzip
+def _nifti_header_image(data: bytes, decoded: Optional[bytes] = None):
+    """A NIfTI image whose header is read and whose voxels are NOT (nibabel's lazy array proxy). ``decoded``: the
+    prefix already decompressed by the reader (E1, eighth review: one decompression per round)."""
     import nibabel as nib
-    stream = gzip.GzipFile(fileobj=io.BytesIO(data)) if data[:2] == b"\x1f\x8b" else io.BytesIO(data)
-    holder = nib.FileHolder(fileobj=stream)
-    klass = nib.Nifti2Image if _nifti_sizeof_hdr(_nifti_prefix(data))[0] == 540 else nib.Nifti1Image
+    raw = decoded if decoded is not None else _nifti_prefix(data)
+    holder = nib.FileHolder(fileobj=io.BytesIO(raw))
+    klass = nib.Nifti2Image if _nifti_sizeof_hdr(raw)[0] == 540 else nib.Nifti1Image
     return klass.from_file_map({"header": holder, "image": holder})
 
 
@@ -555,19 +559,24 @@ def header_classifier_fields(fields: Dict[str, Any], stored_description: Any = N
             "sequence_name": fields.get("sequence_name"), "image_type": fields.get("image_type")}
 
 
-def read_header_fields(data: bytes) -> Dict[str, Any]:
+def read_header_fields(data: bytes, decoded: Optional[bytes] = None) -> Dict[str, Any]:
     """Header only (E1): pydicom with stop_before_pixels, a lazy NIfTI header — no voxel is decoded, normalised
     or summarised. Descriptions, ProtocolName, SequenceName, ImageType and inversion time (DICOM, and NIfTI with
     its text fields and extensions — A1), RC-054 thickness (both)."""
     from app.services.acquisition_geometry import derive_from_dicom_dataset, derive_from_nifti_image
-    fmt = sniff_format(data)                         # magic bytes, never the file name (third review, other 1)
+    fmt = sniff_format(data, decoded)                # magic bytes, never the file name (third review, other 1)
     if fmt == "dicom":
         import pydicom
         ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True, force=True)
-        return {**_dicom_fields(ds), "thickness": thickness_from_geometry(derive_from_dicom_dataset(ds))}
+        spacing = [lcs._number(v) for v in list(getattr(ds, "PixelSpacing", []) or [])[:2]] + \
+            [lcs._number(getattr(ds, "SpacingBetweenSlices", None)) or lcs._number(getattr(ds, "SliceThickness", None))]
+        return {**_dicom_fields(ds), "thickness": thickness_from_geometry(derive_from_dicom_dataset(ds)),
+                "voxel_spacing_mm": spacing if len(spacing) == 3 and all(spacing) else None}
     if fmt == "nifti":
-        img = _nifti_header_image(data)
-        return {**_nifti_fields(img), "thickness": thickness_from_geometry(derive_from_nifti_image(img))}
+        img = _nifti_header_image(data, decoded)
+        zooms = [lcs._number(float(z)) for z in img.header.get_zooms()[:3]]
+        return {**_nifti_fields(img), "thickness": thickness_from_geometry(derive_from_nifti_image(img)),
+                "voxel_spacing_mm": zooms if len(zooms) == 3 and all(zooms) else None}
     return {**_NO_HEADER, "unreadable": True}
 
 
@@ -598,10 +607,11 @@ def _nifti_sizeof_hdr(raw: bytes):
     return None, None
 
 
-def sniff_format(data: bytes) -> Optional[str]:
+def sniff_format(data: bytes, decoded: Optional[bytes] = None) -> Optional[str]:
     """The format from MAGIC BYTES only (third review, other 1): NIfTI sizeof_hdr 348/540 (raw or gzip), DICOM 'DICM' at
-    128 or a preamble-less file starting with an explicit-VR group 0002/0008 element. None = not determinable."""
-    if _nifti_sizeof_hdr(_nifti_prefix(data))[0]:
+    128 or a preamble-less file starting with an explicit-VR group 0002/0008 element. None = not determinable.
+    ``decoded``: the prefix the reader already decompressed (E1, eighth review: never decompressed twice)."""
+    if _nifti_sizeof_hdr(decoded if decoded is not None else _nifti_prefix(data))[0]:
         return "nifti"
     if data[128:132] == b"DICM":
         return "dicom"
@@ -610,42 +620,42 @@ def sniff_format(data: bytes) -> Optional[str]:
     return None
 
 
-def _header_complete(data: bytes) -> bool:
-    """Does this prefix hold the whole header? DICOM: the pixel data starts inside it; NIfTI: the header plus the
-    extensions up to vox_offset (after decompressing the prefix). Magic bytes only; run in a worker thread."""
+def _inspect_header_prefix(data: bytes):
+    """One round of the ranged reader (E1, eighth review): decompress the prefix ONCE and say whether it holds the
+    whole header — DICOM: the pixel data starts inside it; NIfTI: the header plus the extensions up to vox_offset.
+    Returns (complete, (prefix, decompressed NIfTI prefix or None)) so the parser never decompresses again."""
     import struct
-    fmt = sniff_format(data)
+    raw = _nifti_prefix(data)                        # the ONE decompression of this round
+    fmt = sniff_format(data, raw)
     if fmt == "dicom":
-        return any(tag in data for tag in _PIXEL_DATA_TAGS)
+        return any(tag in data for tag in _PIXEL_DATA_TAGS), (data, None)
     if fmt != "nifti":
-        return False
-    raw = _nifti_prefix(data)
+        return False, (data, raw)
     size, endian = _nifti_sizeof_hdr(raw)
-    if len(raw) < size + 4:
-        return False
+    if size is None or len(raw) < size + 4:
+        return False, (data, raw)
     if raw[size] == 0:
-        return True
+        return True, (data, raw)
     vox_offset = (struct.unpack(endian + "f", raw[108:112])[0] if size == 348
                   else struct.unpack(endian + "q", raw[168:176])[0])
-    return len(raw) >= vox_offset
+    return len(raw) >= vox_offset, (data, raw)
+
+
+def _header_complete(data: bytes) -> bool:
+    return _inspect_header_prefix(data)[0]
 
 
 async def _read_header_fields(storage_service, bucket: str, file_path: str) -> Dict[str, Any]:
-    """E1 / second review, finding 3: the header only, through bounded byte ranges (retried larger while the header
-    runs longer), parsed in a worker thread. A storage without ranges is read whole (as displayed_image_check)."""
-    from app.core.interfaces.storage_interface import IStorageService
+    """E1 / second review, finding 3 / eighth review: the header only, through the ONE ranged header reader of the
+    app (displayed_image_check.read_header_prefix: bounded ranges, retried larger while the header runs longer, one
+    full download from a storage without real ranges); each round is decompressed once, in a worker thread, and the
+    decompressed bytes are passed down to the parser."""
+    from app.services.displayed_image_check import read_header_prefix
     name = file_path.rsplit("/", 1)[-1]
-    ranged = getattr(storage_service, "download_file_range", None)
-    if ranged is None or getattr(type(storage_service), "download_file_range", None) is IStorageService.download_file_range:
-        # no real ranges (the interface default downloads the whole file per call): ONE full download at most
-        data = await storage_service.download_file(bucket, file_path)
-        return await asyncio.to_thread(read_header_fields, data)
-    size = HEADER_PREFIX_NIFTI if name.lower().endswith((".nii", ".nii.gz")) else HEADER_PREFIX_DICOM
-    while True:
-        data = await ranged(bucket, file_path, 0, size - 1)
-        if len(data) < size or size >= HEADER_PREFIX_MAX or await asyncio.to_thread(_header_complete, data):
-            return await asyncio.to_thread(read_header_fields, data)
-        size *= 4
+    first = HEADER_PREFIX_NIFTI if name.lower().endswith((".nii", ".nii.gz")) else HEADER_PREFIX_DICOM
+    data, decoded = await read_header_prefix(storage_service, bucket, file_path, _inspect_header_prefix,
+                                             first=first, largest=HEADER_PREFIX_MAX, in_thread=True)
+    return await asyncio.to_thread(read_header_fields, data, decoded)
 
 
 async def file_version(storage_service, bucket: str, file_path: str) -> Optional[tuple]:
@@ -830,7 +840,7 @@ def store_consultation(key: Optional[tuple], answer: Dict[str, Any], version: Op
         _CONSULTATIONS.popitem(last=False)
 
 
-def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None,
+def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None, releases_output: bool = True,
                      trace_id: Optional[str] = None) -> Dict[str, Any]:
     """The gate as the registered agent ``quality-gate`` (RC-126): the platform's approval and kill switches are
     read now (fail closed); one trace (one child span per check that ran) and one ``agent.run`` audit record.
@@ -877,14 +887,17 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
         # F4 (fifth review of PR #81): a consultation is not an AI run. Only a decision that releases an AI output
         # (ai_output_allowed: the final consultation of a single study, or a comparison allowed) is linked to the AI
         # run ("agent.run" -> CLINICAL_AI_RUN); every other one is a consultation ("agent.consultation").
-        event = "agent.run" if result.get("ai_output_allowed") is True else "agent.consultation"
+        # G31 (eighth review): a comparison's gate decision releases nothing by itself (RC-062 and SEL come after; the
+        # route records the outcome); structured details keep every cause and attested visit
+        event = "agent.run" if releases_output and result.get("ai_output_allowed") is True else "agent.consultation"
+        details = {**explain(result), "decision": result.get("decision"), "mode": result.get("mode")}
         if state["refusal"]:
             reg.audit("denied", state["refusal"], event=event, agent_id=AGENT_ID,
-                      study_key=study_key or None, trace_id=state["trace_id"])
+                      study_key=study_key or None, trace_id=state["trace_id"], details=details)
         else:
             # S3: the physician's attestation is recorded with the run's actor (the authenticated clinician)
             reg.audit("success", audit_code(result), event=event, agent_id=AGENT_ID,
-                      study_key=study_key or None, trace_id=state["trace_id"])
+                      study_key=study_key or None, trace_id=state["trace_id"], details=details)
     return result
 
 
@@ -894,7 +907,7 @@ def apply_to_comparison(result: Dict[str, Any], gate: Dict[str, Any]) -> Dict[st
     if gate.get("ai_output_allowed") is not True:      # ONE abstention path (second review, finding 5)
         return abstained_comparison(gate)
     out = {**result, "quality_gate": gate}
-    reasons = [CAVEAT_REASONS[c] for c in warning_codes(gate)]
+    reasons = [CAVEAT_REASONS[c] for c in explain(gate)["warnings"]]
     if reasons:                                       # R4: a warned comparison says so (the assistant reads this)
         previous = out.get("caveat") if isinstance(out.get("caveat"), str) else ""
         out["caveat"] = (previous.rstrip() + " " if previous.strip() else "") + (
@@ -954,8 +967,30 @@ def audit_code(result: Dict[str, Any]) -> str:
     return f"quality_gate.{decision}" + (f".{deciding}" if deciding else "") + attested
 
 
+def explain(gate: Any) -> Dict[str, Any]:
+    """G30 (eighth review of PR #81): the ONE account of a gate result that every text is built from — CAUSES are
+    exactly the checks that stopped it (abstained; for a pending result, the pending checks), WARNINGS the checks that
+    only warned, and the visits the physician attested. A client-supplied result is read defensively: checks of the
+    right shape, else codes with their policy status; anything else is ignored."""
+    statuses = _policy()["codes"]
+    checks = gate.get("checks") if isinstance(gate, dict) and isinstance(gate.get("checks"), list) else None
+    if checks is not None and all(isinstance(c, dict) for c in checks):
+        pairs = [(c.get("code"), c.get("status"), c.get("visit")) for c in checks if isinstance(c.get("code"), str)]
+    else:
+        codes = gate.get("codes") if isinstance(gate, dict) and isinstance(gate.get("codes"), list) else []
+        pairs = [(c, statuses.get(c), None) for c in codes if isinstance(c, str) and c in statuses]
+    unique = lambda xs: list(dict.fromkeys(xs))  # noqa: E731
+    causes = unique(c for c, st, _ in pairs if st == "abstain")
+    if not causes and isinstance(gate, dict) and gate.get("ai_output_allowed") is not True:
+        causes = unique(c for c, st, _ in pairs if st == "pending") or ["gate_unavailable"]
+    return {"causes": causes,
+            "warnings": unique(c for c, st, _ in pairs if st == "warn"),
+            "attested_visits": unique(v for c, _, v in pairs if c == "sequence_confirmed_by_physician" and v)}
+
+
 def gate_caveat(gate: Dict[str, Any]) -> str:
-    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in (gate.get("codes") or ["gate_unavailable"])]
+    """The comparison caveat of a pair the gate stopped: its CAUSES only (G30), never a warning."""
+    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in explain(gate)["causes"]]
     return ("No automatic change candidates and no lesion load or count comparison for this pair: the quality gate "
             "stopped it, because " + "; ".join(reasons) + ". Compare the images visually with the overlay.")
 
@@ -968,20 +1003,42 @@ def abstained_comparison(gate: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
-def comparison_gate(source_tp1, source_tp2, *, headers=None, acquisitions=None, attestation=(False, False),
-                    user=None, request=None) -> Dict[str, Any]:
-    """The gate on two visits (RC-123), through the platform (RC-126). Sixth review of PR #81 (A1): each visit is
-    derived exactly as a single study (visit_inputs) from its stored image header (``headers``, read by the route),
-    its stored series description and its acquisition record (``acquisitions``: the records the route already read
-    for RC-062, E2). A visit whose header was not read is 'unreadable' and abstains."""
-    given_acq = list(acquisitions) if acquisitions is not None else [_UNREAD, _UNREAD]
+def comparison_gate(source_tp1, source_tp2, *, headers=None, records=None, attestation=(False, False),
+                    visit_ok: Optional[bool] = None, user=None, request=None) -> Dict[str, Any]:
+    """The gate on two visits (RC-123), through the platform (RC-126). Each visit is derived exactly as a single study
+    (visit_inputs, A1) from its stored image header (``headers``) and its stored records (``records``: the
+    (acquisition, series description) pairs the route read concurrently with stored_records — E2, eighth review).
+    G32: RC-062's verdict on the pair is PREDICTED here (lcs.rc062_withholds on the stored acquisitions and the visit
+    order) so that an attestation is offered only when the end-to-end result could change. The gate's own record is a
+    decision (agent.consultation); the route records what the user finally received (audit_comparison_outcome, G31)."""
+    given_rec = list(records) if records is not None else [None, None]
     given_hdr = list(headers) if headers is not None else [None, None]
-    visits = []
-    for s, a, h, att in zip((source_tp1, source_tp2), given_acq, given_hdr, attestation):
-        acq = (lcs.read_source_acquisition(s) if s else None) if a is _UNREAD else a
+    visits, acqs, spacings = [], [], []
+    for s, rec, h, att in zip((source_tp1, source_tp2), given_rec, given_hdr, attestation):
+        acq, stored = rec if isinstance(rec, tuple) else (stored_records(s) if s else (None, None))
         fields = h if isinstance(h, dict) else {**_NO_HEADER, "unreadable": True}
-        stored = read_source_series_description(s) if s else None
+        acqs.append(acq if isinstance(acq, dict) else None)
+        spacings.append(tuple(fields["voxel_spacing_mm"]) if fields.get("voxel_spacing_mm") else None)
         visits.append(visit_inputs(fields, acq, stored, physician_confirmed_flair=att is True, with_scanner=True))
-    return run_quality_gate({"mode": "comparison", "visits": visits},
+    rc062 = lcs.rc062_withholds(lcs.compare_acquisitions(acqs[0], acqs[1], spacings[0], spacings[1]),
+                                {"status": "ok" if visit_ok is True else "unknown"})
+    return run_quality_gate({"mode": "comparison", "visits": visits, "rc062_withholds": rc062},
                             study_key=study_of(source_tp2) or study_of(source_tp1) or "",
-                            actor=actor_for(user, request) if user is not None else None)
+                            actor=actor_for(user, request) if user is not None else None, releases_output=False)
+
+
+def audit_comparison_outcome(gate: Any, *, released: bool, withheld_by: Optional[str] = None, user=None, request=None,
+                             study_key: str = "", registry=None) -> None:
+    """G31 (eighth review of PR #81): what the user FINALLY received for a pair the gate allowed — released (an AI
+    run, CLINICAL_AI_RUN) only when the comparison or SEL output was actually delivered; withheld otherwise, with the
+    deciding control (rc062). Structured details, never a packed string."""
+    if not isinstance(gate, dict) or gate.get("ai_output_allowed") is not True:
+        return                                       # the gate's own record already says it stopped the pair
+    from app.agent_platform import registry as R
+    reg = registry if registry is not None else default_registry()
+    details = {**explain(gate), "decision": gate.get("decision"), "mode": gate.get("mode"),
+               "released": released is True, "withheld_by": None if released else (withheld_by or "unknown")}
+    with R.audit_actor(actor_for(user, request) if user is not None else None):
+        reg.audit("success", "quality_gate.released" if released else f"quality_gate.withheld.{details['withheld_by']}",
+                  event="agent.run" if released else "agent.consultation", agent_id=AGENT_ID,
+                  study_key=study_key or None, trace_id=gate.get("trace_id"), details=details)

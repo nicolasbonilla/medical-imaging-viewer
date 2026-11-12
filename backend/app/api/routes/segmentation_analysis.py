@@ -167,12 +167,28 @@ async def _gate_before_loading(specs, segmentation_service, current_user, reques
     async def _header(source):
         return await qg.visit_header_fields(storage_service, settings.GCS_BUCKET_NAME, source) if source else None
 
+    async def _records(source):
+        if not source:
+            return None, None
+        acq, desc = await asyncio.to_thread(qg.stored_records, source)   # E2 (eighth review): one read of each record
+        acq_memo[source] = acq                                            # RC-062 reuses it (E2, first review)
+        return acq, desc
+
+    async def _visit_order(src_tp1, src_tp2):
+        """G32: RC-062's visit order, predicted without refusing (the route refuses later, as on the base)."""
+        async def visit(file_id):
+            if not file_id:
+                return None
+            v = _source_visit(file_id)
+            return await v if inspect.isawaitable(v) else v
+        return lcs.check_visit_order(await visit(src_tp1), await visit(src_tp2))["status"] == "ok"
+
     sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]
-    acquisitions, headers = await asyncio.gather(
-        asyncio.gather(*(asyncio.to_thread(_memo_acquisition, s, acq_memo) for s in sources)),
-        asyncio.gather(*(_header(s) for s in sources)))
-    return await asyncio.to_thread(qg.comparison_gate, *sources, headers=headers, acquisitions=acquisitions,
-                                   attestation=attestation,
+    records, headers, visit_ok = await asyncio.gather(
+        asyncio.gather(*(_records(s) for s in sources)), asyncio.gather(*(_header(s) for s in sources)),
+        _visit_order(*sources))
+    return await asyncio.to_thread(qg.comparison_gate, *sources, headers=headers, records=list(records),
+                                   attestation=attestation, visit_ok=visit_ok,
                                    user=current_user, request=request)
 
 
@@ -973,6 +989,9 @@ async def compare_longitudinal(
             binding=binding, stored_review=stored_review,
             visit_check=visit_check, review_read_failed=review_read_failed, gate=gate,
         )
+        # G31 (eighth review): what the user finally received — released only when the comparison is shown
+        qg.audit_comparison_outcome(gate, released=result.get("abstained") is not True, withheld_by="rc062",
+                                    user=current_user, request=request, study_key=qg.study_of(source_tp2) or "")
 
         logger.info("Longitudinal comparison completed (unconfirmed candidates, registration unverified)", extra={
             "new": status_counts.get("new"),
@@ -1144,6 +1163,8 @@ async def detect_slowly_expanding_lesions(
             spacing_tp1, _sp2,
         )
         if lcs.rc062_withholds(acquisition_check, visit_check):   # G25: RC-062's one predicate (the gate stopped above)
+            qg.audit_comparison_outcome(gate, released=False, withheld_by="rc062", user=current_user, request=request,
+                                        study_key=qg.study_of(source_tp2) or "")       # G31
             return {
                 "ok": False, "abstained": True,
                 "reason": lcs._abstention_caveat(acquisition_check, visit_check),
@@ -1167,6 +1188,8 @@ async def detect_slowly_expanding_lesions(
         logger.info("SEL detection completed", extra={
             "ok": sel.ok, "n_existing": sel.n_existing, "n_sel": sel.n_sel, "reason": sel.reason,
         })
+        qg.audit_comparison_outcome(gate, released=sel.ok is True, withheld_by="sel", user=current_user, request=request,
+                                    study_key=qg.study_of(source_tp2) or "")           # G31
         return {
             "ok": sel.ok,
             "reason": sel.reason,

@@ -85,9 +85,10 @@ def test_rc127_g27_the_answer_carries_what_the_browser_shows():
     single = qg.evaluate({"mode": "single", "platform": {"allowed": True, "code": None}, "visits": [
         {"sequence": "missing", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "pending"}]})
     assert single["attestable_visits"] == ["study"] and single["actions"]["sequence_missing"] == "action"
-    cmp = qg.evaluate({"mode": "comparison", "platform": {"allowed": True, "code": None}, "visits": [
-        {"sequence": "unknown", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
-        {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
+    same = {"manufacturer": "SIEMENS", "manufacturer_model_name": "Prisma", "magnetic_field_strength_t": 3.0}
+    cmp = qg.evaluate({"mode": "comparison", "platform": {"allowed": True, "code": None}, "rc062_withholds": False, "visits": [
+        {"sequence": "unknown", "physician_confirmed_flair": False, "thickness": None, "scanner": same, "skull": "unknown"},
+        {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": same, "skull": "unknown"}]})
     assert cmp["attestable_visits"] == ["tp1"] and cmp["actions"]["sequence_unknown"] == "action_comparison"
     # G28 (seventh review): with visit 2 a T1 the attestation of visit 1 changes nothing, so none is offered
     futile = qg.evaluate({"mode": "comparison", "platform": {"allowed": True, "code": None}, "visits": [
@@ -231,7 +232,8 @@ def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report():
     codes = qg.load_policy()["codes"]
     for code in codes:
         assert qg.CAVEAT_REASONS[code] == qg.reason_sentence(code, "en"), code
-        assert qg.CAVEAT_REASONS[code] in qg.gate_caveat({"codes": [code]})
+        if qg.load_policy()["codes"][code] == "abstain":      # G30 (eighth review): a caveat gives CAUSES only
+            assert qg.CAVEAT_REASONS[code] in qg.gate_caveat({"codes": [code]})
         for lang in ("es", "de"):
             assert qg.reason_sentence(code, lang) and qg.reason_sentence(code, lang) != qg.reason_sentence(code, "en"), (code, lang)
     warned = {"abstained": False, "change_candidates": {"new": 0, "enlarging": 0},

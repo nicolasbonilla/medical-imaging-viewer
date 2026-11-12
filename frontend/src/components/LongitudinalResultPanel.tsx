@@ -258,7 +258,8 @@ export function LongitudinalResultPanel({
           {t('longitudinal.spacingFallback')}
         </div>
       )}
-      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+      {/* G30 (eighth review): a pair the gate stopped before loading was neither registered nor aligned — no claim */}
+      {!gateStopped && <div className="flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
         <span className={`w-1.5 h-1.5 rounded-full ${result.registration_applied ? 'bg-sky-500' : 'bg-gray-400'}`} />
         {result.registration_applied ? (
           <span>
@@ -269,7 +270,7 @@ export function LongitudinalResultPanel({
         ) : (
           <span>{t('longitudinal.indexAligned')}</span>
         )}
-      </div>
+      </div>}
 
       {/* Single quality gate (RC-123/RC-127; DRAFT): present only when the backend enforces it. */}
       {result.quality_gate && !rc062Governs && <QualityGatePanel result={result.quality_gate} testId="longitudinal-quality-gate" />}

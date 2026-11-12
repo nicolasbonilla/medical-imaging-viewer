@@ -481,12 +481,30 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
                  else AuditEventType.CLINICAL_AI_RUN)
         emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
+                   details=event.get("details"),   # G31 (eighth review of PR #81): structured, never cut
                    # fourth review of PR #79, finding 7: the reason is "<event type>:<code>", so the server log
                    # keeps which record of AUDIT_EVENT_TYPES this is (e.g. "agent.run:agent_not_approved")
                    reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}"[:64],
                    resource_type="agent_run", resource_ids=ids)
     except Exception:  # noqa: BLE001 — auditing never breaks the caller
         pass
+
+
+def _plain_details(details: Any) -> Optional[Dict[str, Any]]:
+    """Structured audit details: short keys with strings, booleans, None or lists of short strings — nothing else
+    (no free text from a request reaches the trail)."""
+    if not isinstance(details, dict):
+        return None
+    ok = lambda v: v is None or isinstance(v, bool) or (isinstance(v, str) and len(v) <= 64)  # noqa: E731
+    out = {}
+    for k, v in details.items():
+        if not isinstance(k, str) or len(k) > 32:
+            continue
+        if ok(v):
+            out[k] = v
+        elif isinstance(v, (list, tuple)) and all(isinstance(x, str) and len(x) <= 64 for x in v) and len(v) <= 32:
+            out[k] = list(v)
+    return out or None
 
 
 _UNSET = object()
@@ -680,7 +698,8 @@ class AgentRegistry:
 
     # -------------------------------------------------------------- audit
     def audit(self, outcome: str, code: str, *, agent_id: Any = _UNSET, model_id: Any = _UNSET, tool: Any = _UNSET,
-              study_key: Optional[str] = None, trace_id: Optional[str] = None, event: str = "agent.decision") -> None:
+              study_key: Optional[str] = None, trace_id: Optional[str] = None, event: str = "agent.decision",
+              details: Optional[Dict[str, Any]] = None) -> None:
         record = {
             "event": event, "outcome": outcome, "code": str(code),
             "agent_id": _safe_id(agent_id, _AGENT_ID),
@@ -690,6 +709,8 @@ class AgentRegistry:
             "trace_id": trace_id if isinstance(trace_id, str) and re.fullmatch(r"[0-9a-f]{32}", trace_id) else None,
             "registry_version": self.version[:64],
             "reason": REASONS.get(code) if isinstance(code, RefusalCode) else None,
+            # eighth review of PR #81 (G31): structured fields (codes, visit labels, booleans), never truncated
+            "details": _plain_details(details),
         }
         record = {k: v for k, v in record.items() if v is not None}
         try:

@@ -18,7 +18,8 @@ import type { DicomEvidence } from './nifti';
 
 import { FEATURES } from '@/config/features';
 
-export type HeaderVerdict = 'contradicts' | 'supports' | 'none';
+/** 'no_server_decision' (eighth review of PR #81, S1): the gate is on but no server class reached this call — refuse. */
+export type HeaderVerdict = 'contradicts' | 'supports' | 'none' | 'no_server_decision';
 
 export interface HeaderEvidence {
   verdict: HeaderVerdict;
@@ -102,11 +103,25 @@ const NOT_FLAIR = new Set(['other', 'T1', 'T2']);
  * derived for this file in its gate answer (from everything its header says), as it is: another sequence refuses, a
  * FLAIR supports, anything else says nothing. The inversion time of a DICOM extension is passed on as data.
  */
-function gatedHeaderContrastEvidence(serverSequenceClass: string | null | undefined, dicom: DicomEvidence): HeaderEvidence {
-  const cls = typeof serverSequenceClass === 'string' && serverSequenceClass ? serverSequenceClass : 'missing';
+function gatedHeaderContrastEvidence(
+  serverSequenceClass: string | null | undefined, headerText: string[], dicom: DicomEvidence,
+): HeaderEvidence {
+  // the inversion time stays evidence on every path (tiFromText is the base RC-049 reader of a written TI)
+  let ti = dicom.inversionTimeMs;
+  if (ti === undefined) {
+    for (const t of headerText) {
+      ti = tiFromText(t);
+      if (ti !== undefined) break;
+    }
+  }
+  if (typeof serverSequenceClass !== 'string' || !serverSequenceClass) {
+    // S1 (eighth review): FAIL CLOSED — with the gate on, a call without the server's class never runs the AI
+    return { verdict: 'no_server_decision', reasons: ["no decision of the quality gate's server reached this run"],
+      inversionTimeMs: ti };
+  }
+  const cls = serverSequenceClass;
   const verdict: HeaderVerdict = NOT_FLAIR.has(cls) ? 'contradicts' : cls === 'FLAIR' ? 'supports' : 'none';
-  return { verdict, reasons: [`the quality gate's server classified the image as ${cls}`],
-    inversionTimeMs: dicom.inversionTimeMs, sequenceClass: cls };
+  return { verdict, reasons: [`the quality gate's server classified the image as ${cls}`], inversionTimeMs: ti, sequenceClass: cls };
 }
 
 /**
@@ -120,6 +135,6 @@ export function headerContrastEvidence(
   options: { qualityGate?: boolean; serverSequenceClass?: string | null } = {},
 ): HeaderEvidence {
   return (options.qualityGate ?? FEATURES.QUALITY_GATE)
-    ? gatedHeaderContrastEvidence(options.serverSequenceClass, dicom)
+    ? gatedHeaderContrastEvidence(options.serverSequenceClass, headerText, dicom)
     : baseHeaderContrastEvidence(headerText, dicom, seriesDescription);
 }

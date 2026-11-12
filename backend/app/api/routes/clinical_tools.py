@@ -115,7 +115,11 @@ async def quality_gate(
     from app.services import quality_gate as qg
 
     if not get_settings().QUALITY_GATE_ENFORCED:
-        raise HTTPException(status_code=404, detail="Not Found")
+        # U1 (eighth review of PR #81): the body is the app's ordinary 404 (as if the route did not exist, flags off =
+        # the base); an explicit machine code in a header tells the browser that the gate is not enabled here
+        return JSONResponse(status_code=404, content={"error": {"code": "HTTP_404", "message": "Not Found", "details": {}}},
+                            headers={"X-Quality-Gate-Code": "gate_not_enabled",
+                                     "Access-Control-Expose-Headers": "X-Quality-Gate-Code"})
     import asyncio
     actor = qg.actor_for(current_user, request)
     user_id = str(getattr(current_user, "id", ""))

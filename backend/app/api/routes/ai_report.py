@@ -343,13 +343,14 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
     if longitudinal.get("abstained"):
         # A4 (sixth review of PR #81): when the GATE stopped the comparison, the gate's reasons — never RC-062's
         # "the acquisition differs" — from the one table of reason sentences
+        account = qg.explain(gate)                   # G30: ONE account (client data read defensively, R1)
         if isinstance(gate, dict) and gate.get("ai_output_allowed") is not True:
-            # R1 (seventh review): the body is client data — only a list of known code strings is read
-            codes = [c for c in gate.get("codes") if isinstance(c, str)] if isinstance(gate.get("codes"), list) else []
-            reasons = [qg.reason_sentence(c, language) for c in (codes or ["gate_unavailable"])]
+            reasons = [qg.reason_sentence(c, language) for c in account["causes"]]
             return (qg.reason_lead("stopped", language) + " " + "; ".join(reasons) + ". "
                     + qg.reason_lead("stopped_tail", language))
-        return texts["abstained"]
+        warned = [qg.reason_sentence(c, language) for c in account["warnings"]]
+        return texts["abstained"] + ((" " + qg.reason_lead("warned", language) + " " + "; ".join(warned) + ".")
+                                     if warned else "")
     cc = longitudinal.get("change_candidates")
     if isinstance(cc, dict):
         new, enl = _int(cc.get("new")), _int(cc.get("enlarging"))
@@ -366,7 +367,7 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
             pct=false_share_percent(ev), source=ev["source"], date=ev["measured_on"]))
     else:
         lines.append(texts["no_evidence"])
-    reasons = [qg.reason_sentence(c, language) for c in qg.warning_codes(gate)]
+    reasons = [qg.reason_sentence(c, language) for c in qg.explain(gate)["warnings"]]
     if reasons:
         lines.append(qg.reason_lead("warned", language) + " " + "; ".join(reasons) + ".")
     return " ".join(lines)

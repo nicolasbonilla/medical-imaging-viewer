@@ -311,7 +311,18 @@ class _Projector:
 
     def longitudinal(self, lng: dict) -> dict:
         if lng.get("abstained") is True:
-            return {"abstained": True}
+            # G30 (eighth review): WHO withheld it and why, as fixed codes — the report model must give the same cause
+            # as the code-written notice (never "acquisition not comparable" for a gate stop)
+            from app.services.quality_gate import explain
+            gate = lng.get("quality_gate")
+            account = explain(gate) if isinstance(gate, dict) else {"causes": [], "warnings": []}
+            stopped = isinstance(gate, dict) and gate.get("ai_output_allowed") is not True
+            o = {"abstained": True, "abstained_by": "quality_gate" if stopped else "rc062"}
+            if stopped:
+                o["causes"] = account["causes"]
+            if account["warnings"]:
+                o["quality_gate_warnings"] = account["warnings"]
+            return o
         o: dict = {key: self.number(lng.get(key), key, 0, _LESION_ML_MAX) for key in ("burden_tp1_ml", "burden_tp2_ml")}
         for key in ("total_lesions_tp1", "total_lesions_tp2"):
             o[key] = self.count(lng.get(key), key)

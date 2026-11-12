@@ -333,14 +333,15 @@ def test_rc123_c3_one_abstention_path_with_plain_reasons():
 
 def test_rc123_e2_the_acquisition_records_are_read_once(compare, monkeypatch):
     client, records, _ = compare
-    reads, stream = [], []
+    reads = []
     monkeypatch.setattr(sa, "_source_acquisition", lambda fid: reads.append(fid) or records["acq"].get(fid),
                         raising=False)
-    monkeypatch.setattr(lcs, "read_source_acquisition", lambda fid, svc=None: stream.append(fid))
+    monkeypatch.setattr(lcs, "read_source_acquisition", lambda fid, svc=None: reads.append(fid) or copy.deepcopy(records["acq"].get(fid)))
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     res = _post(client)
-    assert res["abstained"] is False and len(reads) == 2 and stream == []
+    # one read per visit in all (the gate's stored_records, reused by RC-062 through the memo; E2, eighth review)
+    assert res["abstained"] is False and sorted(reads) == sorted(set(reads)) and len(reads) == 2
 
 
 def test_rc122_e3_the_thin_limit_is_the_evaluated_policy_s(monkeypatch):
@@ -404,13 +405,13 @@ def test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version(si
     threads = []
     parse = qg.read_header_fields
 
-    def _spy(data):
+    def _spy(data, decoded=None):
         try:
             asyncio.get_running_loop()
             threads.append("event loop")
         except RuntimeError:
             threads.append("worker")
-        return parse(data)
+        return parse(data, decoded)
 
     monkeypatch.setattr(qg, "read_header_fields", _spy)
     app.dependency_overrides[get_imaging_service] = lambda: _NoPixelImaging()
@@ -636,7 +637,7 @@ def test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop(single, mon
 
     app.dependency_overrides[get_imaging_service] = lambda: _NoDetect()
     threads = []
-    complete = qg._header_complete
+    complete = qg._inspect_header_prefix          # eighth review (E1): one inspection per round, in a worker thread
 
     def _spy(*a, **k):
         try:
@@ -646,7 +647,7 @@ def test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop(single, mon
             threads.append("worker")
         return complete(*a, **k)
 
-    monkeypatch.setattr(qg, "_header_complete", _spy)
+    monkeypatch.setattr(qg, "_inspect_header_prefix", _spy)
 
     class _Ranged(_CountingStorage):
         async def download_file_range(self, bucket, path, start, end):
@@ -712,7 +713,12 @@ def test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestati
     assert gate["ai_output_allowed"] is True and "scanner_not_recorded" in gate["codes"], gate["codes"]
     assert res["abstained"] is True and res["change_candidates"] is None and "acquisition_unrecorded" not in res
     assert res["acquisition_check"]["status"] == "not_established"
-    assert audit[-1]["code"].endswith(".attested_tp1_tp2")
+    # G31 (eighth review): the gate's decision keeps both attested visits in structured details; the outcome record
+    # says RC-062 withheld the pair
+    decision = [e for e in audit if (e.get("details") or {}).get("attested_visits") == ["tp1", "tp2"]
+                and not e["code"].startswith("quality_gate.withheld")]
+    assert decision and decision[-1]["code"].endswith(".attested_tp1_tp2")
+    assert (audit[-1].get("details") or {}).get("withheld_by") == "rc062"
     for bad in ({"tp1": "true", "tp2": True}, {"tp1": 1}, ["tp1"], {"tp3": True}):
         r = client.post("/api/v1/segmentation/longitudinal/compare", json={**PAIR, "quality_gate_attestation": bad})
         assert r.status_code in (400, 422), bad

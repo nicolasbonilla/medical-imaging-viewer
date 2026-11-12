@@ -739,7 +739,19 @@ class BrainReportService:
             # caller-provided registration_verified=true (adversarial finding D4), and never
             # pass an activity or DIT flag: the candidates are unconfirmed (CAPA-013, RC-060).
             parts.append(f"\nLongitudinal comparison data:")
-            if lng.get("abstained"):
+            if lng.get("abstained") and lng.get("abstained_by") == "quality_gate":
+                # G30 (eighth review of PR #81): the quality gate stopped the pair before anything was computed —
+                # its causes, from the one table, never RC-062's "not comparable"
+                from app.services.quality_gate import CAVEAT_REASONS
+                causes = [CAVEAT_REASONS[c] for c in (lng.get("causes") or []) if c in CAVEAT_REASONS] \
+                    or [CAVEAT_REASONS["gate_unavailable"]]
+                parts.append(
+                    "  Automatic change candidates were NOT computed: the quality gate stopped the comparison "
+                    "before any image was loaded, because " + "; ".join(causes) + ". Report no new, enlarging or "
+                    "resolved figure and no lesion load of either visit; state that the change between the visits "
+                    "must be assessed visually by the radiologist."
+                )
+            elif lng.get("abstained"):
                 # RC-062: acquisition or visit order not established as comparable — no change
                 # result and no lesion load or count of either visit (review of PR #63, blocker 2).
                 parts.append(

@@ -1536,6 +1536,10 @@
         "message": "Die Qualitätsprüfung ist auf dem Server nicht aktiviert, daher läuft die KI nicht.",
         "action": "Bitten Sie die Administration, die Qualitätsprüfung auf dem Server zu aktivieren oder in der App auszuschalten."
       },
+      "gate_no_access": {
+        "message": "Das Bild wurde nicht gefunden, oder Sie haben keinen Zugriff darauf, daher läuft die KI nicht.",
+        "action": "Prüfen Sie, ob das Bild noch in der Untersuchung ist und Sie es öffnen dürfen; wählen Sie es dann erneut."
+      },
       "gate_rate_limited": {
         "message": "Zu viele Qualitätsprüfungen in kurzer Zeit, daher läuft die KI noch nicht. Warten Sie {{seconds}} s.",
         "action": "Warten Sie {{seconds}} Sekunden und versuchen Sie es erneut; die Prüfung wird beim erneuten Auswählen des Bildes wiederholt."

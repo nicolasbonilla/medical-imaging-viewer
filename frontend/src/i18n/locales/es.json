@@ -1554,6 +1554,10 @@
         "message": "El control de calidad no está activado en el servidor, así que la IA no se ejecuta.",
         "action": "Pida al administrador que active el control de calidad en el servidor, o que lo desactive en la aplicación."
       },
+      "gate_no_access": {
+        "message": "No se encontró la imagen, o usted no tiene acceso a ella, así que la IA no se ejecuta.",
+        "action": "Compruebe que la imagen sigue en el estudio y que puede abrirla; después vuelva a seleccionarla."
+      },
       "gate_rate_limited": {
         "message": "Demasiados controles de calidad en poco tiempo, así que la IA todavía no se ejecuta. Espere {{seconds}} s.",
         "action": "Espere {{seconds}} segundos y vuelva a intentarlo; el control se repite solo al volver a seleccionar la imagen."
