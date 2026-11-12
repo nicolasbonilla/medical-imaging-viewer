@@ -168,6 +168,8 @@ S3_PAIRS = {
     "two NIfTI, same anisotropic in-plane spacing": (_nifti((0.5, 0.9, 3.0)), _nifti((0.5, 0.9, 3.0))),
     "two NIfTI, in-plane spacing swapped": (_nifti((0.5, 0.9, 3.0)), _nifti((0.9, 0.5, 3.0))),
     "DICOM and NIfTI, anisotropic in-plane spacing": (_dicom((0.5, 0.9), 3.0), _nifti((0.5, 0.9, 3.0))),
+    # the same voxel size in any axis order: a DICOM source (RC-062 cannot load it) must not be predicted comparable
+    "DICOM and NIfTI, isotropic 1 mm": (_dicom((1.0, 1.0), 1.0), _nifti((1.0, 1.0, 1.0))),
     "a 4-D NIfTI (RC-062 cannot load it)": (_nifti((0.5, 0.9, 3.0), shape=(8, 8, 6, 2)), _nifti((0.5, 0.9, 3.0))),
     "not an image": (b"\0" * 400, _nifti((0.5, 0.9, 3.0))),
 }
