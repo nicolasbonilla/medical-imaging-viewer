@@ -1,0 +1,383 @@
+{
+  "executed": "2026-11-12T02:16:05",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "dd0a0afe200cce580e48b355d021218af105d37b57d1804fd424d233235735c2",
+    "backend/app/services/brain_report_service.py": "04011849fc9b3917c821f82fec1b204df0b23e22d54e30a7529ebaa143fcccfa",
+    "backend/app/services/longitudinal_candidate_safety.py": "245879a436c230b581fa55b5f5b6f384d013bd5eab2ea78a7981e8c070508eb8",
+    "backend/app/services/report_payload_guard.py": "5096b995b0fe20528617349cd25b8862bf12774a933cfc37380b7037798a3b66",
+    "backend/app/services/verified_report.py": "cc5aa671bfdea0f9b444cd35fbf5f95a225e6aa0209b5925828bdd14ce8cd21b"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "972dad4635c7a083fa2f54e1b4411693239b0a2b99e8cf4e430c0f35677281e4",
+    "tests/unit/test_rc103_verified_report_loop.py": "98e37933215b1a96512f14b5aec8f2b0dc8a629ff8bd11815d29fad191925170",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "fd42d0309ee427ed4dd3d5e1bf36b9b2d8ceb2fb242f2e37576c6d900a969aa2",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "480b15a5466eb0292ae3caa3bf23d1b188698b466a17dc5e1fcde074fdecec3f",
+    "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8",
+    "tests/unit/test_verified_report_review1.py": "340a9c7202c598cdd82f24ccccc15d0f79e97df923001ffd6c48715c0032bbc2",
+    "tests/unit/test_verified_report_review2.py": "364f8daf280113d7001cbee6ff4ff99169f06bae5264d27df94126b214a188cb",
+    "tests/unit/test_verified_report_review2_dis.py": "cac14a7e8dfe21d7c3c399199e5089a5020f9d08bbe9bbcfbb80cfd6ee957a1a",
+    "tests/unit/test_verified_report_review3.py": "469f2d6e947ac1cb6c61cc404b45d598cfff79e1544cd95c3968661cc35dc948",
+    "tests/unit/test_verified_report_review4.py": "66dc5c7568c6d1f3e2f7f8f1c5c57a08ed3dee470a5f9f166780cfb46a3bce43",
+    "tests/unit/test_verified_report_review5.py": "e1c36b6cd65e9be62f94058d01896222b1111473d400d260e49baf9190bca244",
+    "tests/unit/test_verified_report_review6.py": "d488840a4f9a2ed435028e7b0a14208746b1b76fd7db4770fb25fb5f35d5a299",
+    "tests/unit/test_verified_report_scenario_matrix.py": "2b7e75e9a14ebfc8e85905c60e913ae3c955185d27319ecc38c4c8ca2b6e4e95",
+    "tests/unit/test_verified_report_review10.py": "52eb24c9f20516f88498660468d1867b6f3c994238590f75c030098de73b90e8"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py",
+    "tests/unit/test_verified_report_review5.py",
+    "tests/unit/test_verified_report_review6.py",
+    "tests/unit/test_verified_report_scenario_matrix.py",
+    "tests/unit/test_verified_report_review10.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 852,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "mutations": {
+    "M7_no_time_budget": {
+      "exit": 1,
+      "failed": 7,
+      "passed": 845,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_t2_nothing_sent_is_still_not_requested",
+        "test_rc106_all_calls_of_one_report_share_the_time_budget",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[15.0]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[19.9]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[20.5]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[22.0]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[24.0]"
+      ],
+      "reintroduces": "the 25 s budget of a report is not enforced",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T02:17:30",
+      "detected": true
+    },
+    "M24_budget_from_the_first_decision": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 846,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_w7_too_little_time_is_measurements_only_and_audited",
+        "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[too_little_time]",
+        "test_rc106_a_slow_record_and_word_list_never_exceed_the_request_budget",
+        "test_rc106_finding8_the_budget_is_computed_once",
+        "test_rc106_w7_a_slow_lesion_table_leaves_no_time_for_the_model",
+        "test_rc106_w7_the_model_gets_what_is_left_of_the_request_budget"
+      ],
+      "reintroduces": "finding 1: the model gets a budget that ignores the time the record and the word list took",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T02:18:14",
+      "detected": true
+    },
+    "C43_evidence_read_on_every_record": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 851,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_the_false_candidate_evidence_is_read_once"
+      ],
+      "reintroduces": "finding 7: the evidence JSON is read from disk for every record",
+      "files": [
+        "backend/app/services/longitudinal_candidate_safety.py"
+      ],
+      "executed": "2026-11-12T02:18:58",
+      "detected": true
+    },
+    "C44_rule_check_served_from_the_cache": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 850,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc061_finding7_a_transient_read_error_does_not_retire_the_rate",
+        "test_rc102_the_false_candidate_evidence_is_read_once"
+      ],
+      "reintroduces": "finding 7 done wrongly: the rate is served from a cache after the rule in force changed",
+      "files": [
+        "backend/app/services/longitudinal_candidate_safety.py"
+      ],
+      "executed": "2026-11-12T02:19:40",
+      "detected": true
+    },
+    "C45_implausible_without_its_code": {
+      "exit": 1,
+      "failed": 7,
+      "passed": 845,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[False-lesion_analysis.regions.Periventricular.lesion_count--1]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[False-lesion_analysis.total_burden_mm3-19751109]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[False-lesion_analysis.total_count-20240304]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[True-lesion_analysis.regions.Periventricular.lesion_count--1]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[True-lesion_analysis.total_burden_mm3-19751109]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[True-lesion_analysis.total_count-20240304]",
+        "test_rc103_i16_every_report_error_carries_its_code[implausible_measurement]"
+      ],
+      "reintroduces": "I16: the implausible measurement leaves without its own code (the panel cannot name it)",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-12T02:20:24",
+      "detected": true
+    },
+    "C46_shared_check_uncoded": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 850,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_i16_every_report_error_carries_its_code[request_invalid]",
+        "test_rc103_i16_every_report_error_carries_its_code[segmentation_not_found]"
+      ],
+      "reintroduces": "I16: a shared check's HTTP error (authorization, the store) leaves without a code",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-12T02:21:07",
+      "detected": true
+    },
+    "C47_implausible_asks_to_correct_the_input": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 846,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[False-lesion_analysis.regions.Periventricular.lesion_count--1]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[False-lesion_analysis.total_burden_mm3-19751109]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[False-lesion_analysis.total_count-20240304]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[True-lesion_analysis.regions.Periventricular.lesion_count--1]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[True-lesion_analysis.total_burden_mm3-19751109]",
+        "test_rc103_i16_an_implausible_measurement_names_it_and_where_it_comes_from[True-lesion_analysis.total_count-20240304]"
+      ],
+      "reintroduces": "I16: the physician is asked to correct an input the server computed itself",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-12T02:21:51",
+      "detected": true
+    },
+    "A8_privacy_passed_before_the_checks": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 850,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc066_i17_privacy_passed_is_recorded_only_after_the_checks_ran[False]",
+        "test_rc066_i17_privacy_passed_is_recorded_only_after_the_checks_ran[True]"
+      ],
+      "reintroduces": "I17: the record says the privacy check passed although it did not run",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T02:22:34",
+      "detected": true
+    },
+    "A9_cancelled_call_not_recorded": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 851,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_i17_a_model_call_cancelled_in_flight_still_writes_the_verification_record"
+      ],
+      "reintroduces": "I17: a model call cancelled in flight is not counted",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T02:23:18",
+      "detected": true
+    },
+    "A10_cancelled_request_not_audited": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 851,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_i17_a_model_call_cancelled_in_flight_still_writes_the_verification_record"
+      ],
+      "reintroduces": "I17: a cancelled request writes no verification record",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T02:24:01",
+      "detected": true
+    },
+    "M25_retry_below_the_minimum_budget": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 849,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[20.5]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[22.0]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[24.0]"
+      ],
+      "reintroduces": "I18: a retry is sent with less than the minimum budget left",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T02:24:45",
+      "detected": true
+    },
+    "M26_skipped_retry_as_timeout": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 846,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc106_all_calls_of_one_report_share_the_time_budget",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[15.0]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[19.9]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[20.5]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[22.0]",
+        "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[24.0]"
+      ],
+      "reintroduces": "I18: a retry skipped for lack of time is reported as an AI-service timeout",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T02:25:29",
+      "detected": true
+    },
+    "M27_cut_retry_as_timeout": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 850,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[timeout_after_an_attempt]",
+        "test_rc106_i18_a_retry_cut_by_the_time_budget_is_a_failed_check_not_a_timeout"
+      ],
+      "reintroduces": "I18: a retry cut by the time budget is reported as an AI-service timeout",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T02:26:13",
+      "detected": true
+    },
+    "F35_nothing_to_report_before_the_substitutions": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 851,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_capa008_i19_nothing_to_report_is_decided_after_the_routes_substitutions"
+      ],
+      "reintroduces": "I19: a block that held only a dropped reader decision gives a draft of the limitations alone",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-12T02:26:57",
+      "detected": true
+    },
+    "P11_patient_number_as_503": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 850,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc065_finding5_a_measurement_equal_to_a_patient_number_gives_a_measurements_only_draft",
+        "test_rc065_v5_when_a_request_will_be_sent_the_identifiers_are_still_required"
+      ],
+      "reintroduces": "finding 5: a measurement equal to a patient number ends in a 503 without a draft",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T02:27:41",
+      "detected": true
+    },
+    "P12_projected_payload_not_checked": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 849,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc065_finding5_a_measurement_equal_to_a_patient_number_gives_a_measurements_only_draft",
+        "test_rc065_finding9_one_patient_number_rule",
+        "test_rc065_v5_when_a_request_will_be_sent_the_identifiers_are_still_required"
+      ],
+      "reintroduces": "finding 9: the patient's own numbers are not looked for in the projected payload",
+      "files": [
+        "backend/app/services/report_payload_guard.py"
+      ],
+      "executed": "2026-11-12T02:28:24",
+      "detected": true
+    },
+    "C48_failed_read_cached": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 851,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc061_finding7_a_transient_read_error_does_not_retire_the_rate"
+      ],
+      "reintroduces": "finding 7: a transient read error withholds the rate until the server restarts",
+      "files": [
+        "backend/app/services/longitudinal_candidate_safety.py"
+      ],
+      "executed": "2026-11-12T02:29:08",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 852,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 17,
+    "detected": 17,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "c5d4631fc8b1cfa13b9095d09088bb917f2b2618",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}
