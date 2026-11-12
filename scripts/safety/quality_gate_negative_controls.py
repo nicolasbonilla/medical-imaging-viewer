@@ -347,7 +347,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "W13_release_decision_cached": ([(QG, '    if not version_key or skull != "pending":\n', '    if not version_key:\n')],
         "a decision that releases the AI output is served from the cache, not decided and audited again (F3, F4)", "backend", "RC-126"),
     "W14_cache_ignores_the_attestation": ([(QG, '    return (*version_key, attested, skull, _policy()["policy_version"], digest, user_id if attested else None)\n',
-        '    return (*version_key, skull, _policy()["policy_version"], digest, user_id if attested else None)\n')],
+        '    return (*version_key, skull, _policy()["policy_version"], digest, None)\n')],
+        # sixth review (A2): the clinician in the key also tells an attested consultation apart, so dropping only the
+        # flag became an equivalent mutant; the defect is a key that tells neither the attestation nor the clinician
         "the answer without the physician's attestation is served after the attestation (F3)", "backend", "RC-122, RC-126"),
     "W17_retry_seconds_dropped": ([(CT, '"details": {"code": "gate_rate_limited", "retry_after_s": wait}}})',
         '"details": {"code": "gate_rate_limited"}}})')],
