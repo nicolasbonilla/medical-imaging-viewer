@@ -1090,6 +1090,8 @@ After the fixes: matrix 29 of 29, wiring 38 of 38, CAPA-013 52 of 52, CAPA-009 5
 
 Failing first (commit `50ec58f`, CI run 43163086468): **G19 4 of 71 pre-PR RC-049 FLAIR acceptances lost** (all Siemens FLAIR with "*tir…" / "*spcir…" SequenceName); G20 identifiers changed the inventory's class in 8 cases; G21 3 of 8 UI states showed two verdicts; G22 1 POST route not audited; G23 no second consultation after A → B → A; F1 two uploads never comparable; backend wiring 5 failed, matrix 5 failed.
 
+After the fixes: matrix 32 of 32, wiring 44 of 44, inventory 28 of 28, CAPA-013 52 of 52, CAPA-015 30 of 30, skull strip 14 of 14, longitudinal guards 22 of 22; GitHub Actions on `9586f80`: all 8 jobs green (a range-read test that left the next test without an event loop was fixed first). Negative controls (every test run inside the throwaway copy): 98 mutations, **85 of 85 run detected, 0 survived, 0 invalid**; 13 component mutations not run (no node_modules). Per control: RC-122 40/40, RC-123 13/13, RC-124 5/5, RC-125 6/6, RC-126 21/21, RC-127 11/11. Baseline and restored copy: backend 76 / 0, browser harness 15 / 0.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
