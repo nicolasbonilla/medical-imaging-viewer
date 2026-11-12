@@ -496,7 +496,10 @@ _FIXED_NUMBERS = re.compile(r"MAGNIMS 2021|<100|100-1000|>1000|\"false_candidate
 
 def _shows(text, n, cat):
     text = _FIXED_NUMBERS.sub(" ", text.replace(cat, " ") if cat else text)
-    return re.search(rf"(?<![\d.,]){n}(?![\d.,])", text) is not None
+    # (strengthened after controls F30/F31 survived: the first pattern refused a following comma or full stop, so a
+    # count in the record's JSON — `"total_count":37,` — was never seen; a decimal such as 37.5 or 37,5 is still not a
+    # count)
+    return re.search(rf"(?<!\d)(?<!\d[.,]){n}(?!\d)(?![.,]\d)", text) is not None
 
 
 @pytest.mark.parametrize("lang", VR.LANGUAGES)
@@ -515,6 +518,12 @@ def test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown(lang):
             for name, text in (("draft", draft), ("record", record)):
                 if _shows(text, n, cat):
                     bad.append((n, name))
+            # and in the record's structure: no exact count for the visit, nor for either visit of the comparison
+            lng_view = view.get("longitudinal") or {}
+            for where, block in (("lesions", view["lesions"]), ("visit_1", lng_view.get("visit_1") or {}),
+                                 ("visit_2", lng_view.get("visit_2") or {})):
+                if block.get("total_count") is not None:
+                    bad.append((n, f"record {where}.total_count"))
         elif VR.T[lang]["count_exact"].format(n=n) not in draft:
             bad.append((n, "exact count missing below 20"))
     assert not bad, f"I12 ({lang}): {len(bad)} cases; first: {bad[:6]}"
