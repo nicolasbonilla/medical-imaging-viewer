@@ -673,7 +673,11 @@ def test_rc122_a_storage_without_real_ranges_is_read_once():
             return self.data
 
     storage = _DefaultRanges(_dicom_bytes(rows=512, comment_bytes=200_000))
-    fields = asyncio.run(qg._read_header_fields(storage, "b", "patients/p/studies/s/series/se/b.dcm", ImagingService()))
+    loop = asyncio.new_event_loop()          # own loop: asyncio.run would leave the next test without one
+    try:
+        fields = loop.run_until_complete(qg._read_header_fields(storage, "b", "patients/p/studies/s/series/se/b.dcm", ImagingService()))
+    finally:
+        loop.close()
     assert storage.downloads == 1 and fields["thickness"]["effective_mm"] == 3.0
 
 
