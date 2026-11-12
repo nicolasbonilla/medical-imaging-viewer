@@ -4,8 +4,10 @@
  * abstentions. Every abstaining gate code of the policy, including gate_not_approved and gate_switched_off.
  * DRAFT, PENDING owner approval.
  */
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import '@/i18n/config';
 import { LongitudinalResultPanel } from './LongitudinalResultPanel';
 import { QUALITY_GATE_POLICY, type GateCheckName, type GateResult } from '@/services/qualityGate/gate';
@@ -50,5 +52,52 @@ describe('G16: the reason shown is the gate\'s reason', () => {
     unmount();
     show({ ...rc062, quality_gate: gateFor('thickness_unknown', true) });
     expect(screen.getByTestId('longitudinal-abstained')).toBeInTheDocument();
+  });
+});
+
+const UI_STATES = JSON.parse(readFileSync(join(__dirname, '..', 'config', 'qualityGate.ui_states.v1.json'), 'utf-8'));
+
+describe('G21: one coherent verdict per gate decision x RC-062 status', () => {
+  it('rc127 every state of the shared fixture shows exactly its one verdict', () => {
+    const bad: string[] = [];
+    for (const st of UI_STATES.states as { name: string; result: Record<string, unknown>; expect: Record<string, boolean> }[]) {
+      const { unmount } = show(st.result);
+      const seen = {
+        gate_panel: Boolean(screen.queryByTestId('longitudinal-quality-gate')),
+        rc062_box: Boolean(screen.queryByTestId('longitudinal-abstained')),
+        governed: Boolean(screen.queryByTestId('longitudinal-quality-gate-governed')),
+      };
+      if (JSON.stringify(seen) !== JSON.stringify(st.expect) || (seen.gate_panel && seen.rc062_box)) bad.push(`${st.name}: ${JSON.stringify(seen)}`);
+      unmount();
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('F1: the per-visit FLAIR attestation of a comparison', () => {
+  const stopped = (checks: { visit: string; code: string }[]) => ({
+    ...ABSTAINED,
+    quality_gate: { ...gateFor('sequence_missing'), codes: checks.map((c) => c.code),
+      checks: checks.map((c) => ({ check: 'sequence', visit: c.visit, status: 'abstain', code: c.code, params: {} })) },
+  });
+  it('rc122 offered per visit only for unknown or missing, unticked, sent only on purpose', () => {
+    const onAttest = vi.fn();
+    render(<LongitudinalResultPanel result={stopped([{ visit: 'tp1', code: 'sequence_missing' }, { visit: 'tp2', code: 'sequence_not_flair' }]) as never}
+      tp1SegId="s1" tp2SegId="s2" onReviewed={() => undefined} onAttest={onAttest} />);
+    const tp1 = screen.getByTestId('quality-gate-attest-tp1').querySelector('input') as HTMLInputElement;
+    expect(tp1.checked).toBe(false);
+    expect(screen.queryByTestId('quality-gate-attest-tp2')).not.toBeInTheDocument();      // never for another sequence
+    const again = screen.getByTestId('quality-gate-attest-again');
+    expect(again).toBeDisabled();
+    fireEvent.click(tp1);
+    fireEvent.click(again);
+    expect(onAttest).toHaveBeenCalledWith({ tp1: true, tp2: false });
+  });
+  it('rc122 reset when the compared pair changes', () => {
+    const r = stopped([{ visit: 'tp1', code: 'sequence_unknown' }, { visit: 'tp2', code: 'sequence_missing' }]) as never;
+    const { rerender } = render(<LongitudinalResultPanel result={r} tp1SegId="s1" tp2SegId="s2" onReviewed={() => undefined} onAttest={vi.fn()} />);
+    fireEvent.click(screen.getByTestId('quality-gate-attest-tp1').querySelector('input') as HTMLInputElement);
+    rerender(<LongitudinalResultPanel result={r} tp1SegId="s1" tp2SegId="s3" onReviewed={() => undefined} onAttest={vi.fn()} />);
+    expect((screen.getByTestId('quality-gate-attest-tp1').querySelector('input') as HTMLInputElement).checked).toBe(false);
   });
 });

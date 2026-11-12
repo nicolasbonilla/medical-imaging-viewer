@@ -602,9 +602,16 @@ def test_rc122_g12_the_corpus_is_broad_enough():
     assert {c["expected"] for c in cases} == {"FLAIR", "T1", "T2", "other", "unknown", "missing"}
 
 
+def _fields(c):
+    return {"description": c["text"], "sequence_name": c.get("sequence_name"), "image_type": c.get("image_type")}
+
+
+def _klass(c):
+    return QG.classify_fields(_fields(c), c["inversion_time_ms"])["class"]
+
+
 def test_rc122_g12_every_series_description_gets_its_class():
-    bad = [(c["text"], c["expected"], QG.sequence_from_header(c["text"], c["inversion_time_ms"]))
-           for c in _corpus() if QG.sequence_from_header(c["text"], c["inversion_time_ms"]) != c["expected"]]
+    bad = [(_fields(c), c["expected"], _klass(c)) for c in _corpus() if _klass(c) != c["expected"]]
     assert not bad, f"G12 failed for {len(bad)} of {len(_corpus())} descriptions; first: {bad[:6]}"
 
 
@@ -613,7 +620,7 @@ def test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed():
     for c in _corpus():
         if c["expected"] not in ("other", "T1", "T2"):
             continue
-        seq = QG.sequence_from_header(c["text"], c["inversion_time_ms"])
+        seq = _klass(c)
         visit = {**BASE_VISIT, "sequence": seq, "physician_confirmed_flair": True}
         if QG.evaluate({"mode": "single", "visits": [visit], "platform": PLATFORM_ON}).get("ai_may_run") is not False:
             bad.append(c["text"])
@@ -675,8 +682,8 @@ def test_rc122_g15_one_flair_classifier_for_the_whole_product():
     from app.services import dataset_inventory as inv
     bad = []
     for c in _corpus():
-        if c["inversion_time_ms"] is not None:
-            continue                                   # the inventory reads text only
+        if c["inversion_time_ms"] is not None or c.get("sequence_name") or c.get("image_type"):
+            continue                                   # the inventory reads the description text only
         gate = QG.sequence_from_header(c["text"], None)
         label = inv.detect_sequence(c["text"] or "")
         expected = {"FLAIR": "FLAIR", "T1": "T1", "T2": "T2", "unknown": None, "missing": None}.get(gate)
@@ -692,3 +699,62 @@ if __name__ == "__main__":  # pragma: no cover — maintainer tool
         FIXTURE.write_text(json.dumps(build_fixture(), indent=1, ensure_ascii=False) + "\n", encoding="utf-8",
                            newline="\n")
         print(f"wrote {FIXTURE}")
+
+
+# ----------------------------------------------------------------------------- third review of PR #81
+SNAPSHOT = REPO / "frontend" / "src" / "config" / "qualityGate.pre_pr_snapshot.v1.json"
+
+
+def _corpus_by_key():
+    return {json.dumps([c.get("text"), c.get("sequence_name"), c.get("image_type"), c.get("inversion_time_ms")]): c
+            for c in _corpus()}
+
+
+def test_rc122_g19_no_flair_accepted_before_this_pr_is_lost():
+    """What the pre-PR RC-049 header evidence and inventory accepted as FLAIR is still FLAIR for the gate and the
+    inventory, except the documented changes (D-QG-7, S2, a short inversion time)."""
+    from app.services import dataset_inventory as inv
+    snap = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+    cases = _corpus_by_key()
+    bad = []
+    for key in snap["rc049_accepted_as_flair"]:
+        c = cases[key]
+        if _klass(c) in ("other", "T1", "T2") and key not in snap["exceptions"]:
+            bad.append(("gate", key))
+    for key in snap["inventory_flair"]:
+        if inv.detect_sequence(cases[key]["text"] or "") != "FLAIR" and key not in snap["exceptions"]:
+            bad.append(("inventory", key))
+    undocumented = [k for k, why in snap["exceptions"].items() if not any(d in why for d in ("D-QG-7", "S2", "inversion time"))]
+    assert not undocumented, f"exceptions without a documented decision: {undocumented}"
+    assert not bad, f"G19: {len(bad)} pre-PR FLAIR acceptances lost; first: {bad[:6]}"
+
+
+def test_rc122_g19_star_is_a_siemens_prefix_in_sequence_name():
+    for code in ("*tir2d1rr18", "*spcir_278", "*tse2d1_15"):
+        got = QG.classify_fields({"description": "t2_tirm_tra_dark-fluid", "sequence_name": code}, None)["class"]
+        assert got == "FLAIR", (code, got)
+    assert QG.classify_fields({"description": "Ax T2* GRE"}, None)["class"] == "other"    # in a description, T2*
+
+
+def test_rc122_g20_identifiers_never_change_the_class():
+    """Only descriptive text is classified: random UUID or hex fragments in ids or paths never change the class."""
+    import random
+    import uuid
+    from app.services import dataset_inventory as inv
+    rng = random.Random(81)
+    bad = []
+    for c in _corpus():
+        if c.get("sequence_name") or c.get("image_type") or c["inversion_time_ms"] is not None:
+            continue
+        text = c["text"] or ""
+        alone = inv.detect_sequence(text)
+        for _ in range(12):
+            u = [str(uuid.UUID(int=rng.getrandbits(128))) for _ in range(4)]
+            frag = "%08x" % rng.getrandbits(32)
+            ids = (f"patients/{u[0]}/studies/{u[1]}/series/{u[2]}/{u[3]}.nii.gz",
+                   f"patients/{u[0]}/studies/{u[1]}/series/{u[2]}/{frag}_{u[3][:8]}.nii.gz",
+                   f"{u[0]}-{frag[:4]}")
+            for fid in ids:
+                if inv.detect_sequence(text, fid) != alone:
+                    bad.append((text, fid))
+    assert not bad, f"G20: identifiers changed the class in {len(bad)} cases; first: {bad[:3]}"

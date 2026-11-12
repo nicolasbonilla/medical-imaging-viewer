@@ -220,3 +220,24 @@ describe('the server decides the output, and no stale answer acts (G17, G18)', (
     expect(h.flames.run).not.toHaveBeenCalled();
   });
 });
+
+describe('G23: the card always reaches a decided state for the selected file', () => {
+  type Pending = { f: string; resolve: (v: unknown) => void };
+  it('rc122 A -> B -> A during the final consultation ends decided for A, never stuck on checking', async () => {
+    done('skull-removed');
+    const queue: Pending[] = [];
+    h.answer = (f, _c, skull) => (skull === 'pending' ? Promise.resolve(server(VISIT, ON, f))
+      : new Promise((resolve) => queue.push({ f, resolve: (v) => resolve(v ?? server(VISIT, ON, f, skull)) })));
+    const B = 'patients/p/studies/s/b.nii.gz';
+    const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
+    await waitFor(() => expect(queue.length).toBe(1));
+    rerender(<BrowserFlamesCard flairFileId={B} />);
+    queue[0].resolve(undefined);                       // A's answer arrives while B is selected: discarded
+    await new Promise((r) => setTimeout(r, 50));
+    rerender(<BrowserFlamesCard flairFileId={FILE} />);
+    await waitFor(() => expect(queue.length).toBe(2)); // back on A: consulted again
+    queue[1].resolve(undefined);
+    expect(await screen.findByTestId('quality-gate-after')).toBeInTheDocument();
+    expect(await screen.findByText(/AI draft ready/)).toBeInTheDocument();
+  });
+});

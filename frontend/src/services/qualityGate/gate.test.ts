@@ -16,6 +16,7 @@ import {
   finalBrowserGate,
   gateUnavailable,
   QUALITY_GATE_POLICY,
+  classifyFields,
   sequenceFromHeader,
   skullFromProvenance,
   type GatePolicy,
@@ -76,19 +77,43 @@ describe('G4: one decision, backend and browser', () => {
   });
 });
 
+type Case = { text: string | null; inversion_time_ms: number | null; expected: string; sequence_name?: string; image_type?: string };
+const CORPUS = read('frontend/src/config/qualityGate.sequences.v1.json');
+const SNAPSHOT = read('frontend/src/config/qualityGate.pre_pr_snapshot.v1.json');
+/** the corpus key, written as Python's json.dumps writes it */
+const key = (c: Case) => '[' + [c.text ?? null, c.sequence_name ?? null, c.image_type ?? null, c.inversion_time_ms ?? null]
+  .map((x) => JSON.stringify(x)).join(', ') + ']';
+const fieldsOf = (c: Case) => ({ description: c.text, sequence_name: c.sequence_name ?? null, image_type: c.image_type ?? null });
+const evidenceOf = (c: Case) => headerContrastEvidence(c.text ? [c.text] : [], {
+  ...(c.inversion_time_ms ? { inversionTimeMs: c.inversion_time_ms } : {}),
+  ...(c.sequence_name ? { sequenceName: c.sequence_name } : {}),
+  ...(c.image_type ? { imageType: c.image_type.split('\\') } : {}),
+}, null);
+
+describe('G19: no FLAIR accepted before PR #81 is lost', () => {
+  it('rc122 every pre-PR RC-049 acceptance is still accepted, except the documented changes', () => {
+    const cases = Object.fromEntries((CORPUS.cases as Case[]).map((c) => [key(c), c]));
+    const lost = (SNAPSHOT.rc049_accepted_as_flair as string[])
+      .filter((k) => evidenceOf(cases[k]).verdict !== 'supports' && !(k in SNAPSHOT.exceptions));
+    expect(lost).toEqual([]);
+  });
+  it('rc122 a Siemens SequenceName never reads as T2*', () => {
+    for (const code of ['*tir2d1rr18', '*spcir_278', '*tse2d1_15']) {
+      expect(evidenceOf({ text: 't2_tirm_tra_dark-fluid', sequence_name: code, inversion_time_ms: null, expected: 'FLAIR' }).verdict).toBe('supports');
+    }
+  });
+});
+
 describe('G12: the series-description corpus, shared with pytest', () => {
-  const CORPUS = read('frontend/src/config/qualityGate.sequences.v1.json');
   it('rc122 every description gets the same class in the browser', () => {
-    type Case = { text: string | null; inversion_time_ms: number | null; expected: string };
-    const bad = (CORPUS.cases as Case[]).filter((c) => sequenceFromHeader(c.text, c.inversion_time_ms) !== c.expected)
-      .map((c) => `${c.text} -> ${sequenceFromHeader(c.text, c.inversion_time_ms)} (expected ${c.expected})`);
+    const bad = (CORPUS.cases as Case[]).filter((c) => classifyFields(fieldsOf(c), c.inversion_time_ms).class !== c.expected)
+      .map((c) => `${key(c)} -> ${classifyFields(fieldsOf(c), c.inversion_time_ms).class} (expected ${c.expected})`);
     expect(CORPUS.cases.length).toBeGreaterThanOrEqual(80);
     expect(bad).toEqual([]);
   });
   it('rc122 G15 the RC-049 header evidence of the in-browser AI gives the same class', () => {
-    type Case = { text: string | null; inversion_time_ms: number | null; expected: string };
     const bad = (CORPUS.cases as Case[]).filter((c) => {
-      const h = headerContrastEvidence(c.text ? [c.text] : [], c.inversion_time_ms ? { inversionTimeMs: c.inversion_time_ms } : {}, null);
+      const h = evidenceOf(c);
       const contradicts = ['other', 'T1', 'T2'].includes(c.expected);
       return (h as { sequenceClass?: string }).sequenceClass !== c.expected
         || (h.verdict === 'contradicts') !== contradicts || (c.expected === 'FLAIR' && h.verdict !== 'supports');

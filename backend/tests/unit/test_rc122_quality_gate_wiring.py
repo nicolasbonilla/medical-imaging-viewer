@@ -572,3 +572,141 @@ def test_rc126_no_policy_copy_per_consultation(monkeypatch):
              "thickness": {"state": "native", "effective_mm": 1.0}}
     out = qg.run_quality_gate({"mode": "single", "visits": [visit]}, registry=_registry(), study_key="s")
     assert out["decision"] == "proceed"
+
+
+# ----------------------------------------------------------------------------- third review of PR #81
+def test_rc126_g22_every_clinical_and_analysis_post_route_is_audited():
+    """GENERIC: every POST route of the clinical tools and segmentation-analysis routers is registered in the audit
+    middleware, so the audit names what it read or recorded (no new route can be missed)."""
+    from fastapi.routing import APIRoute
+    from app.core.logging import audit_middleware as am
+    prefix = "/api/v1"
+    paths = {prefix + r.path for router in (ct.router, sa.router) for r in router.routes
+             if isinstance(r, APIRoute) and "POST" in r.methods}
+    missing = sorted(p for p in paths if p not in am.BODY_ID_ROUTES and ("POST", p) not in am.ROUTE_ACTIONS)
+    assert not missing, f"G22: POST routes not registered in the audit middleware: {missing}"
+    assert "/api/v1/clinical/quality-gate" in am.BODY_ID_ROUTES
+
+
+def test_rc126_the_rate_limit_comes_first_and_the_gate_runs_off_the_loop(single, monkeypatch):
+    import asyncio
+    client, _ = single
+    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry.load(REGISTRY, audit=lambda e: None))    # refused
+    monkeypatch.setattr(qg, "RATE_LIMIT_PER_MINUTE", 2)
+    monkeypatch.setattr(qg, "_LIMITER", qg.new_rate_limiter())
+    assert [client.post(URL, json={"file_id": FILE}).status_code for _ in range(4)] == [200, 200, 429, 429]
+    where = []
+    original = qg.run_quality_gate
+
+    def _spy(*a, **k):
+        try:
+            asyncio.get_running_loop()
+            where.append("event loop")
+        except RuntimeError:
+            where.append("worker")
+        return original(*a, **k)
+
+    monkeypatch.setattr(qg, "run_quality_gate", _spy)
+    monkeypatch.setattr(qg, "_LIMITER", None)
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    client.post(URL, json={"file_id": FILE})
+    assert where == ["worker"]
+
+
+def test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop(single, monkeypatch):
+    import asyncio
+    client, _ = single
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+
+    class _NoDetect(ImagingService):
+        def detect_format(self, data, name):
+            raise AssertionError("the gate must detect the format from magic bytes")
+
+    app.dependency_overrides[get_imaging_service] = lambda: _NoDetect()
+    threads = []
+    complete = qg._header_complete
+
+    def _spy(*a, **k):
+        try:
+            asyncio.get_running_loop()
+            threads.append("event loop")
+        except RuntimeError:
+            threads.append("worker")
+        return complete(*a, **k)
+
+    monkeypatch.setattr(qg, "_header_complete", _spy)
+
+    class _Ranged(_CountingStorage):
+        async def download_file_range(self, bucket, path, start, end):
+            return self.data[start:end + 1]
+
+    img = nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()
+    for data, name, expect in ((img, "patients/p/studies/s/series/se/scan.img", ("at_least", None)),
+                               (_dicom_bytes(), "patients/p/studies/s/series/se/IM0001", ("native", None)),
+                               (b"\x00" * 4096, "patients/p/studies/s/series/se/blob.bin", (None, "header_unreadable"))):
+        storage = _Ranged(data)
+        app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(storage)
+        monkeypatch.setattr(ct, "_authorized_inputs", lambda *a, n=name: _as_coro([n]))
+        body = client.post(URL, json={"file_id": name, "physician_confirmed_flair": True}).json()
+        visit = body["inputs"]["visits"][0]
+        state, code = expect
+        if state:
+            assert visit["thickness"]["state"] == state, (name, visit)
+        else:
+            assert code in body["codes"] and body["ai_may_run"] is False, (name, body["codes"])
+    assert threads and set(threads) == {"worker"}
+
+
+def test_rc122_a_storage_without_real_ranges_is_read_once():
+    import asyncio
+    from app.core.interfaces.storage_interface import IStorageService
+
+    class _DefaultRanges:
+        download_file_range = IStorageService.download_file_range       # the interface default: whole file, sliced
+
+        def __init__(self, data):
+            self.data, self.downloads = data, 0
+
+        async def download_file(self, bucket, path):
+            self.downloads += 1
+            return self.data
+
+    storage = _DefaultRanges(_dicom_bytes(rows=512, comment_bytes=200_000))
+    fields = asyncio.run(qg._read_header_fields(storage, "b", "patients/p/studies/s/series/se/b.dcm", ImagingService()))
+    assert storage.downloads == 1 and fields["thickness"]["effective_mm"] == 3.0
+
+
+def test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation(compare, monkeypatch):
+    """F1: no acquisition record and no description for either visit (two uploads). Without the attestation the gate
+    abstains per visit with its reason; with it (per visit, strict booleans, audited with the user), the unrecorded
+    scanners WARN (policy) and the comparison shows its candidates."""
+    client, records, (f1, f2) = compare
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    audit = []
+    reg = _registry()
+    reg._audit = audit.append
+    monkeypatch.setattr(qg, "_REGISTRY", reg)
+    records["acq"].clear()
+    records["desc"].clear()
+    res = _post(client)
+    assert res["abstained"] is True and {"sequence_missing"} <= set(res["quality_gate"]["codes"])
+    body = {**PAIR, "quality_gate_attestation": {"tp1": True, "tp2": True}}
+    res = client.post("/api/v1/segmentation/longitudinal/compare", json=body).json()
+    gate = res["quality_gate"]
+    assert gate["ai_output_allowed"] is True and "scanner_not_recorded" in gate["codes"], gate["codes"]
+    assert res["abstained"] is False and res["change_candidates"]["total"] == 1 and res["acquisition_unrecorded"] is True
+    assert audit[-1]["code"].endswith(".attested_tp1_tp2")
+    for bad in ({"tp1": "true", "tp2": True}, {"tp1": 1}, ["tp1"], {"tp3": True}):
+        r = client.post("/api/v1/segmentation/longitudinal/compare", json={**PAIR, "quality_gate_attestation": bad})
+        assert r.status_code in (400, 422), bad
+
+
+def test_rc123_f1_an_attestation_never_lifts_another_sequence_in_a_comparison(compare, monkeypatch):
+    client, records, (f1, f2) = compare
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    records["desc"][f2] = "Ax DWI B1000"
+    res = client.post("/api/v1/segmentation/longitudinal/compare",
+                      json={**PAIR, "quality_gate_attestation": {"tp1": True, "tp2": True}}).json()
+    assert res["abstained"] is True and "sequence_not_flair" in res["quality_gate"]["codes"]

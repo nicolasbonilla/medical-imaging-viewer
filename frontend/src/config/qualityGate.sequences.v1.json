@@ -3,7 +3,8 @@
    "G12 corpus of the single quality gate (RC-122; REQ-SAFE-052): realistic series descriptions and the class the gate must give. DRAFT, PENDING owner approval.",
    "Read by backend/tests/unit/test_quality_gate_matrix.py (sequence_from_header) AND frontend/src/services/qualityGate/gate.test.ts (sequenceFromHeader): both rules must give these classes (G4).",
    "Classes: FLAIR (only an unambiguous FLAIR, T2-FLAIR or dark-fluid name), T1, T2, other (any token naming a non-FLAIR sequence, a T1 weighting with FLAIR, a localizer, a derived/reformatted/contrast image, or an inversion time < 1400 ms: ALWAYS abstains, whatever the physician confirms), unknown (names no sequence: confirmable in a single study), missing (nothing recorded).",
-   "Second review of PR #81 (G15): ONE classifier for the product — the gate (backend and browser), dataset_inventory.detect_sequence and the RC-049 header evidence of the in-browser AI all give these classes; TIRM is a FLAIR (as RC-049 already read it), 'TI=' / 'TI:' in the text is an inversion time (seconds below 10)."
+   "Second review of PR #81 (G15): ONE classifier for the product — the gate (backend and browser), dataset_inventory.detect_sequence and the RC-049 header evidence of the in-browser AI all give these classes; TIRM is a FLAIR (as RC-049 already read it), 'TI=' / 'TI:' in the text is an inversion time (seconds below 10).",
+   "Third review of PR #81 (G19): classification is FIELD-AWARE. 'text' is the description (SeriesDescription, ProtocolName, NIfTI descrip); 'sequence_name' is the DICOM SequenceName, a vendor internal code read by its own table ('*' is a Siemens prefix there, never 'T2*'; an unlisted code says nothing); 'image_type' is the DICOM ImageType (a reformatted, projected, subtracted or parametric image is 'other', D-QG-7; anything else says nothing)."
  ],
  "cases": [
   {"vendor": "Siemens", "text": "t2_tirm_tra_dark-fluid", "inversion_time_ms": null, "expected": "FLAIR"},
@@ -156,6 +157,36 @@
   {"vendor": "any", "text": "TI: 2.5", "inversion_time_ms": null, "expected": "unknown"},
   {"vendor": "any", "text": "FLAIR TI=900", "inversion_time_ms": null, "expected": "other"},
   {"vendor": "any", "text": "TE=81;Time=101112.000;phase=1", "inversion_time_ms": null, "expected": "unknown"},
-  {"vendor": "any", "text": "2020601_flair1_clo", "inversion_time_ms": null, "expected": "FLAIR"}
+  {"vendor": "any", "text": "2020601_flair1_clo", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "t2_tirm_tra_dark-fluid", "inversion_time_ms": null, "expected": "FLAIR", "sequence_name": "*tir2d1rr18"},
+  {"vendor": "Siemens", "text": "t2_space_dark-fluid_sag_p2_iso", "inversion_time_ms": null, "expected": "FLAIR", "sequence_name": "*spcir_278"},
+  {"vendor": "Siemens", "text": "t2_flair_tra", "inversion_time_ms": null, "expected": "FLAIR", "sequence_name": "*tir2d1_16"},
+  {"vendor": "Siemens", "text": "t2_tirm_tra", "inversion_time_ms": 2500, "expected": "FLAIR", "sequence_name": "*tir2d1rr18"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": null, "expected": "unknown", "sequence_name": "*tir2d1rr18"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": null, "expected": "unknown", "sequence_name": "*spcir_278"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": 150, "expected": "other", "sequence_name": "*tir2d1_7"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": null, "expected": "T1", "sequence_name": "*tfl3d1_16ns"},
+  {"vendor": "Siemens", "text": "t1_mprage_sag_p2_iso", "inversion_time_ms": null, "expected": "T1", "sequence_name": "*tfl3d1_16ns"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "*fl3d1r"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "*epse2d1_128"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "*ep_b1000t"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "*swi3d1r"},
+  {"vendor": "Siemens", "text": null, "inversion_time_ms": null, "expected": "unknown", "sequence_name": "*tse2d1_15"},
+  {"vendor": "Siemens", "text": "t2_tse_tra", "inversion_time_ms": null, "expected": "T2", "sequence_name": "*tse2d1_15"},
+  {"vendor": "Siemens", "text": "t2_tirm_tra_dark-fluid", "inversion_time_ms": null, "expected": "FLAIR", "image_type": "ORIGINAL\\PRIMARY\\M\\NORM\\DIS2D"},
+  {"vendor": "GE", "text": "Ax T2 FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "sequence_name": "fsepr2d"},
+  {"vendor": "GE", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "fgre"},
+  {"vendor": "GE", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "efgre3d"},
+  {"vendor": "GE", "text": "Ax T2 FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "image_type": "ORIGINAL\\PRIMARY\\OTHER"},
+  {"vendor": "GE", "text": "Ax T2 FLAIR", "inversion_time_ms": null, "expected": "other", "image_type": "DERIVED\\PRIMARY\\PROJECTION IMAGE"},
+  {"vendor": "Philips", "text": "T2W_FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "sequence_name": "TSE"},
+  {"vendor": "Philips", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "FFE"},
+  {"vendor": "Philips", "text": null, "inversion_time_ms": null, "expected": "T1", "sequence_name": "TFE"},
+  {"vendor": "Philips", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "other", "image_type": "DERIVED\\SECONDARY\\MPR"},
+  {"vendor": "Canon", "text": "FLAIR_tra", "inversion_time_ms": null, "expected": "FLAIR", "sequence_name": "FSE"},
+  {"vendor": "Canon", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "FE"},
+  {"vendor": "Canon", "text": null, "inversion_time_ms": null, "expected": "other", "sequence_name": "EPI"},
+  {"vendor": "any", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "image_type": "ORIGINAL\\PRIMARY\\M\\ND"},
+  {"vendor": "any", "text": null, "inversion_time_ms": null, "expected": "other", "image_type": "DERIVED\\PRIMARY\\DIFFUSION\\ADC"}
  ]
 }
