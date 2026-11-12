@@ -668,6 +668,25 @@ def test_rc127_g14_every_suggested_action_is_possible_in_its_mode(results):
     assert not bad, _report("G14", bad)
 
 
+# ----------------------------------------------------------------------------- second review of PR #81
+def test_rc122_g15_one_flair_classifier_for_the_whole_product():
+    """dataset_inventory.detect_sequence is routed to the gate's classifier: same FLAIR decision, same weighting,
+    for every corpus entry (the browser's gate.ts and RC-049 headerEvidence.ts are checked by vitest)."""
+    from app.services import dataset_inventory as inv
+    bad = []
+    for c in _corpus():
+        if c["inversion_time_ms"] is not None:
+            continue                                   # the inventory reads text only
+        gate = QG.sequence_from_header(c["text"], None)
+        label = inv.detect_sequence(c["text"] or "")
+        expected = {"FLAIR": "FLAIR", "T1": "T1", "T2": "T2", "unknown": None, "missing": None}.get(gate)
+        if (label == "FLAIR") != (gate == "FLAIR") or (gate != "other" and label != expected):
+            bad.append((c["text"], gate, label))
+    assert not hasattr(inv, "_SEQUENCE_PATTERNS"), "the inventory keeps its own sequence patterns"
+    assert "detect_sequence" not in (QG.__doc__ or ""), "the gate's docstring names a classifier it does not use"
+    assert not bad, f"G15: {len(bad)} corpus entries classified differently by the inventory; first: {bad[:6]}"
+
+
 if __name__ == "__main__":  # pragma: no cover — maintainer tool
     if "--write-fixture" in sys.argv:
         FIXTURE.write_text(json.dumps(build_fixture(), indent=1, ensure_ascii=False) + "\n", encoding="utf-8",

@@ -1,8 +1,9 @@
 {
  "$comment": [
-  "G12 corpus of the single quality gate (RC-122; REQ-SAFE-052): realistic series descriptions and the class the gate must give. DRAFT, PENDING owner approval.",
-  "Read by backend/tests/unit/test_quality_gate_matrix.py (sequence_from_header) AND frontend/src/services/qualityGate/gate.test.ts (sequenceFromHeader): both rules must give these classes (G4).",
-  "Classes: FLAIR (only an unambiguous FLAIR, T2-FLAIR or dark-fluid name), T1, T2, other (any token naming a non-FLAIR sequence, a T1 weighting with FLAIR, a localizer, a derived/reformatted/contrast image, or an inversion time < 1400 ms: ALWAYS abstains, whatever the physician confirms), unknown (names no sequence: confirmable in a single study), missing (nothing recorded)."
+   "G12 corpus of the single quality gate (RC-122; REQ-SAFE-052): realistic series descriptions and the class the gate must give. DRAFT, PENDING owner approval.",
+   "Read by backend/tests/unit/test_quality_gate_matrix.py (sequence_from_header) AND frontend/src/services/qualityGate/gate.test.ts (sequenceFromHeader): both rules must give these classes (G4).",
+   "Classes: FLAIR (only an unambiguous FLAIR, T2-FLAIR or dark-fluid name), T1, T2, other (any token naming a non-FLAIR sequence, a T1 weighting with FLAIR, a localizer, a derived/reformatted/contrast image, or an inversion time < 1400 ms: ALWAYS abstains, whatever the physician confirms), unknown (names no sequence: confirmable in a single study), missing (nothing recorded).",
+   "Second review of PR #81 (G15): ONE classifier for the product — the gate (backend and browser), dataset_inventory.detect_sequence and the RC-049 header evidence of the in-browser AI all give these classes; TIRM is a FLAIR (as RC-049 already read it), 'TI=' / 'TI:' in the text is an inversion time (seconds below 10)."
  ],
  "cases": [
   {"vendor": "Siemens", "text": "t2_tirm_tra_dark-fluid", "inversion_time_ms": null, "expected": "FLAIR"},
@@ -14,9 +15,9 @@
   {"vendor": "Siemens", "text": "t1_se_tra", "inversion_time_ms": null, "expected": "T1"},
   {"vendor": "Siemens", "text": "t2_tse_tra", "inversion_time_ms": null, "expected": "T2"},
   {"vendor": "Siemens", "text": "t2_space_sag_p2_iso", "inversion_time_ms": null, "expected": "T2"},
-  {"vendor": "Siemens", "text": "t2_tirm_cor", "inversion_time_ms": null, "expected": "T2"},
+  {"vendor": "Siemens", "text": "t2_tirm_cor", "inversion_time_ms": null, "expected": "FLAIR"},
   {"vendor": "Siemens", "text": "t2_de3d_we_cor_iso", "inversion_time_ms": null, "expected": "T2"},
-  {"vendor": "Siemens", "text": "tirm_tra", "inversion_time_ms": null, "expected": "unknown"},
+  {"vendor": "Siemens", "text": "tirm_tra", "inversion_time_ms": null, "expected": "FLAIR"},
   {"vendor": "Siemens", "text": "SPACE_sag", "inversion_time_ms": null, "expected": "unknown"},
   {"vendor": "Siemens", "text": "ep2d_diff_mddw_20_p2", "inversion_time_ms": null, "expected": "other"},
   {"vendor": "Siemens", "text": "ep2d_diff_tra_TRACEW", "inversion_time_ms": null, "expected": "other"},
@@ -127,6 +128,34 @@
   {"vendor": "any", "text": "AX FLAIR", "inversion_time_ms": 2200, "expected": "FLAIR"},
   {"vendor": "any", "text": "", "inversion_time_ms": 2500, "expected": "unknown"},
   {"vendor": "any", "text": "", "inversion_time_ms": 800, "expected": "other"},
-  {"vendor": "any", "text": "T1 IR", "inversion_time_ms": 800, "expected": "other"}
+  {"vendor": "any", "text": "T1 IR", "inversion_time_ms": 800, "expected": "other"},
+  {"vendor": "Siemens", "text": "t2_tirm_tra", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "T2-TIRM", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "TIRM", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "tirm_cor_dark-fluid", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "tir_tra_dark-fluid", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "t1_tir_tra", "inversion_time_ms": null, "expected": "T1"},
+  {"vendor": "Siemens", "text": "TIR", "inversion_time_ms": null, "expected": "unknown"},
+  {"vendor": "Siemens", "text": "t2_tirm_tra TI=150", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "Siemens", "text": "t2_tse_dark-fluid_tra", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "SPACE_DARK_FLUID", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "t2_tirm_tra", "inversion_time_ms": 2500, "expected": "FLAIR"},
+  {"vendor": "Siemens", "text": "TIRM", "inversion_time_ms": 160, "expected": "other"},
+  {"vendor": "GE", "text": "Ax T2 FLAIR PROPELLER", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "GE", "text": "Sag 3D FLAIR CUBE", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "GE", "text": "AX T2 FLAIR TI=2200", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "GE", "text": "PU:Sag CUBE FLAIR", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Philips", "text": "VISTA_FLAIR", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Philips", "text": "BrainView_FLAIR", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Philips", "text": "3D_FLAIR_SENSE", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Philips", "text": "T2W_FLAIR_SENSE TI: 2.8", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Canon", "text": "FLAIR_3D_iso", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "Canon", "text": "T2W_FLAIR_FS", "inversion_time_ms": null, "expected": "FLAIR"},
+  {"vendor": "any", "text": "TI=2500", "inversion_time_ms": null, "expected": "unknown"},
+  {"vendor": "any", "text": "TI=900", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "any", "text": "TI: 2.5", "inversion_time_ms": null, "expected": "unknown"},
+  {"vendor": "any", "text": "FLAIR TI=900", "inversion_time_ms": null, "expected": "other"},
+  {"vendor": "any", "text": "TE=81;Time=101112.000;phase=1", "inversion_time_ms": null, "expected": "unknown"},
+  {"vendor": "any", "text": "2020601_flair1_clo", "inversion_time_ms": null, "expected": "FLAIR"}
  ]
 }

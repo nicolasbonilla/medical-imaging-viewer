@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { describe, it, expect } from 'vitest';
+import { headerContrastEvidence } from '@/services/flames/headerEvidence';
 import {
   canonicalGate,
   evaluateGate,
@@ -82,6 +83,16 @@ describe('G12: the series-description corpus, shared with pytest', () => {
     const bad = (CORPUS.cases as Case[]).filter((c) => sequenceFromHeader(c.text, c.inversion_time_ms) !== c.expected)
       .map((c) => `${c.text} -> ${sequenceFromHeader(c.text, c.inversion_time_ms)} (expected ${c.expected})`);
     expect(CORPUS.cases.length).toBeGreaterThanOrEqual(80);
+    expect(bad).toEqual([]);
+  });
+  it('rc122 G15 the RC-049 header evidence of the in-browser AI gives the same class', () => {
+    type Case = { text: string | null; inversion_time_ms: number | null; expected: string };
+    const bad = (CORPUS.cases as Case[]).filter((c) => {
+      const h = headerContrastEvidence(c.text ? [c.text] : [], c.inversion_time_ms ? { inversionTimeMs: c.inversion_time_ms } : {}, null);
+      const contradicts = ['other', 'T1', 'T2'].includes(c.expected);
+      return (h as { sequenceClass?: string }).sequenceClass !== c.expected
+        || (h.verdict === 'contradicts') !== contradicts || (c.expected === 'FLAIR' && h.verdict !== 'supports');
+    }).map((c) => c.text);
     expect(bad).toEqual([]);
   });
   it('rc122 a confirmation never lifts a non-FLAIR name, and never in a comparison', () => {

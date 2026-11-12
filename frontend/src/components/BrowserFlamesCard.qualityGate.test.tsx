@@ -10,12 +10,17 @@ import '@/i18n/config';
 
 const h = vi.hoisted(() => ({
   flames: {} as Record<string, unknown>,
-  answer: (() => Promise.resolve(null)) as (fileId: string, confirmed: boolean) => Promise<unknown>,
+  answer: (() => Promise.resolve(null)) as (fileId: string, confirmed: boolean, skull: string) => Promise<unknown>,
   calls: [] as [string, boolean][],
+  skulls: [] as string[],
 }));
 vi.mock('@/hooks/useBrowserFlames', () => ({ useBrowserFlames: () => h.flames }));
 vi.mock('@/services/qualityGate/api', () => ({
-  requestQualityGate: (fileId: string, confirmed: boolean) => { h.calls.push([fileId, confirmed]); return h.answer(fileId, confirmed); },
+  requestQualityGate: (fileId: string, confirmed: boolean, skull = 'pending') => {
+    h.calls.push([fileId, confirmed]);
+    h.skulls.push(skull);
+    return h.answer(fileId, confirmed, skull);
+  },
 }));
 vi.mock('@/config/features', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@/config/features')>();
@@ -29,9 +34,9 @@ import { evaluateGate, type GatePlatform } from '@/services/qualityGate/gate';
 const FILE = 'patients/p/studies/s/flair.nii.gz';
 const VISIT = { sequence: 'FLAIR', physician_confirmed_flair: false, thickness: { state: 'native', effective_mm: 1 }, scanner: null };
 const ON: GatePlatform = { allowed: true, code: null };
-const server = (visit: Record<string, unknown>, platform: GatePlatform) => {
-  const inputs = { mode: 'single', visits: [{ ...visit, skull: 'pending' }] };
-  return { ...evaluateGate({ ...inputs, platform }), inputs, platform };
+const server = (visit: Record<string, unknown>, platform: GatePlatform, fileId = FILE, skull = 'pending') => {
+  const inputs = { mode: 'single', visits: [{ ...visit, skull }] };
+  return { ...evaluateGate({ ...inputs, platform }), inputs, platform, subject: { file_id: fileId, version: 'v1' } };
 };
 const idle = () => Object.assign(h.flames, {
   status: 'idle', fraction: 0, message: '', error: null, startedAt: null, result: null, run: vi.fn(), cancel: vi.fn(), reset: vi.fn(),
@@ -50,6 +55,7 @@ const done = (inputPreparation?: string) => Object.assign(h.flames, {
 beforeEach(() => {
   for (const k of Object.keys(h.flames)) delete h.flames[k];
   h.calls.length = 0;
+  h.skulls.length = 0;
   useViewerStore.setState({
     currentSeries: { id: 's', name: 'flair', format: 'nifti', file_id: FILE, total_slices: 4, metadata: { rows: 3, columns: 2 } },
   } as never);
@@ -85,7 +91,7 @@ describe('the physician attestation (S3, G13)', () => {
 
   it('rc122 sent only when ticked, on Run, never on a toggle; reset on a file change', async () => {
     idle();
-    h.answer = (_f, confirmed) => Promise.resolve(server({ ...VISIT, sequence: 'missing', physician_confirmed_flair: confirmed }, ON));
+    h.answer = (f, confirmed) => Promise.resolve(server({ ...VISIT, sequence: 'missing', physician_confirmed_flair: confirmed }, ON, f));
     const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
     await screen.findByTestId('quality-gate-before');
     const run = screen.getByRole('button', { name: /Segment in this browser/ });
@@ -107,7 +113,7 @@ describe('the physician attestation (S3, G13)', () => {
 
   it('rc126 the agent switched off: the run stays disabled and the reason is shown', async () => {
     idle();
-    h.answer = () => Promise.resolve(server(VISIT, { allowed: false, code: 'agent_switched_off' }));
+    h.answer = (f, _c, skull) => Promise.resolve(server(VISIT, { allowed: false, code: 'agent_switched_off' }, f, skull));
     render(<BrowserFlamesCard flairFileId={FILE} />);
     fireEvent.click(screen.getByTestId('browser-flames-confirm-sequence').querySelector('input') as HTMLInputElement);
     await waitFor(() => expect(screen.getByTestId('quality-gate-before').textContent).toMatch(/switched off/));
@@ -127,7 +133,7 @@ describe('before the result (RC-125, RC-126, RC-127)', () => {
 
   it('rc126 a switch turned off during the run hides the result and says why', async () => {
     done('skull-removed');
-    h.answer = () => Promise.resolve(server(VISIT, { allowed: false, code: 'agent_switched_off' }));
+    h.answer = (f, _c, skull) => Promise.resolve(server(VISIT, { allowed: false, code: 'agent_switched_off' }, f, skull));
     render(<BrowserFlamesCard flairFileId={FILE} />);
     expect(await screen.findByTestId('quality-gate-output-hidden')).toBeInTheDocument();
     expect(screen.getByTestId('quality-gate-after').getAttribute('data-decision')).toBe('abstain');
@@ -137,7 +143,7 @@ describe('before the result (RC-125, RC-126, RC-127)', () => {
 
   it('rc125 an unknown skull outcome hides the result', async () => {
     done(undefined);
-    h.answer = () => Promise.resolve(server(VISIT, ON));
+    h.answer = (f, _c, skull) => Promise.resolve(server(VISIT, ON, f, skull));
     render(<BrowserFlamesCard flairFileId={FILE} />);
     expect(await screen.findByTestId('quality-gate-output-hidden')).toBeInTheDocument();
     expect(screen.getByTestId('quality-gate-after').textContent).toMatch(/cannot confirm that the skull was removed/);
@@ -146,10 +152,71 @@ describe('before the result (RC-125, RC-126, RC-127)', () => {
 
   it('rc127 the final check allows it: the result appears after the panel', async () => {
     done('skull-removed');
-    h.answer = () => Promise.resolve(server(VISIT, ON));
+    h.answer = (f, _c, skull) => Promise.resolve(server(VISIT, ON, f, skull));
     render(<BrowserFlamesCard flairFileId={FILE} />);
     expect(await screen.findByText(/AI draft ready/)).toBeInTheDocument();
     expect(screen.getByTestId('quality-gate-after').getAttribute('data-decision')).toBe('proceed');
     expect(screen.queryByTestId('quality-gate-output-hidden')).not.toBeInTheDocument();
+  });
+});
+
+describe('the server decides the output, and no stale answer acts (G17, G18)', () => {
+  type Pending = { f: string; skull: string; resolve: (v: unknown) => void };
+  const deferred = (queue: Pending[]) => (f: string, _c: boolean, skull: string) =>
+    new Promise((resolve) => queue.push({ f, skull, resolve }));
+
+  it('rc126 G17 the final consultation reports the skull outcome and the server decides', async () => {
+    done('skull-removed');
+    h.answer = (f, _c, skull) => Promise.resolve(server(VISIT, ON, f, skull));
+    render(<BrowserFlamesCard flairFileId={FILE} />);
+    expect(await screen.findByText(/AI draft ready/)).toBeInTheDocument();
+    expect(h.skulls).toContain('stripped');
+  });
+
+  it('rc126 G17 an answer that the same rule does not reproduce shows nothing', async () => {
+    done('skull-removed');
+    const forged = (f: string) => ({ ...server(VISIT, ON, f, 'stripped'), inputs: { mode: 'single', visits: [{ ...VISIT, skull: 'unknown' }] } });
+    h.answer = (f) => Promise.resolve(forged(f));
+    render(<BrowserFlamesCard flairFileId={FILE} />);
+    expect(await screen.findByTestId('quality-gate-output-hidden')).toBeInTheDocument();
+    expect(screen.queryByText(/AI draft ready/)).not.toBeInTheDocument();
+  });
+
+  it('rc122 G18 the answer for A never applies once B is selected', async () => {
+    idle();
+    const queue: Pending[] = [];
+    h.answer = deferred(queue);
+    const B = 'patients/p/studies/s/b.nii.gz';
+    const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
+    await waitFor(() => expect(queue.length).toBe(1));
+    rerender(<BrowserFlamesCard flairFileId={B} />);
+    queue[0].resolve(server(VISIT, ON, FILE));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByTestId('quality-gate-before')).not.toBeInTheDocument();
+    await waitFor(() => expect(queue.length).toBe(2));
+    queue[1].resolve(server({ ...VISIT, sequence: 'T1' }, ON, B));
+    await waitFor(() => expect(screen.getByTestId('quality-gate-before').getAttribute('data-decision')).toBe('abstain'));
+  });
+
+  it('rc122 G18 one request per click, Run disabled meanwhile, and no run of A once B is selected', async () => {
+    idle();
+    const queue: Pending[] = [];
+    h.answer = deferred(queue);
+    const B = 'patients/p/studies/s/b.nii.gz';
+    const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
+    await waitFor(() => expect(queue.length).toBe(1));
+    queue[0].resolve(server(VISIT, ON, FILE));
+    await screen.findByTestId('quality-gate-before');
+    fireEvent.click(screen.getByTestId('browser-flames-confirm-sequence').querySelector('input') as HTMLInputElement);
+    const run = screen.getByRole('button', { name: /Segment in this browser/ });
+    await waitFor(() => expect(run).not.toBeDisabled());
+    fireEvent.click(run);
+    fireEvent.click(run);
+    expect(queue.length).toBe(2);
+    expect(run).toBeDisabled();
+    rerender(<BrowserFlamesCard flairFileId={B} />);
+    queue[1].resolve(server(VISIT, ON, FILE));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(h.flames.run).not.toHaveBeenCalled();
   });
 });

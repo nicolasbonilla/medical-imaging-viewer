@@ -82,7 +82,7 @@ def test_rc123_apply_to_comparison_withholds_exactly_what_rc062_withholds():
     stopped = qg.apply_to_comparison(result, {"ai_output_allowed": False, "codes": ["scanner_changed"]})
     assert stopped["abstained"] is True and stopped["changes"] == []
     assert all(stopped[k] is None for k in lcs.ABSTAINED_NULL_FIELDS)
-    assert stopped["caveat"].startswith("x ") and "different scanners" in stopped["caveat"]
+    assert "different scanners" in stopped["caveat"]
     allowed = qg.apply_to_comparison(result, {"ai_output_allowed": True, "codes": []})
     assert allowed["changes"] == [{"status": "new"}] and allowed["quality_gate"]["ai_output_allowed"] is True
 
@@ -119,6 +119,8 @@ def single(monkeypatch):
         return [FILE]
 
     monkeypatch.setattr(ct, "_authorized_inputs", _authorized)
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    monkeypatch.setattr(qg, "_LIMITER", None)
     monkeypatch.setattr(lcs, "read_source_acquisition", lambda fid, svc=None: None)
     monkeypatch.setattr(qg, "read_source_series_description", lambda fid, svc=None: None)
     app.dependency_overrides[get_current_active_user] = _user
@@ -311,11 +313,11 @@ def test_rc123_c2_the_gate_decides_before_any_mask_or_image_is_loaded(compare, m
     assert sel["abstained"] is True and loads == [] and masks == []
 
 
-def test_rc123_c3_the_caveat_keeps_rc062_reasons_and_adds_plain_gate_reasons():
-    result = {"abstained": True, "changes": [], "caveat": "the dates of the two visits could not be established."}
+def test_rc123_c3_one_abstention_path_with_plain_reasons():
+    result = {"abstained": False, "changes": [{"status": "new"}], "caveat": "x"}
     gate = {"ai_output_allowed": False, "codes": ["scanner_changed", "sequence_unknown"]}
     out = qg.apply_to_comparison(result, gate)
-    assert out["caveat"].startswith("the dates of the two visits could not be established.")
+    assert out == qg.abstained_comparison(gate), "one abstention path (second review, finding 5)"
     assert "different scanners" in out["caveat"] and "does not say which sequence" in out["caveat"]
     for code in qg.load_policy()["codes"]:
         text = qg.gate_caveat({"codes": [code]})
@@ -364,7 +366,7 @@ class _NoPixelImaging(ImagingService):
         raise AssertionError("the gate must not decode the image")
 
 
-def _dicom_bytes():
+def _dicom_bytes(rows=4, comment_bytes=0):
     import io
     import pydicom
     from pydicom.dataset import FileDataset, FileMetaDataset
@@ -377,9 +379,11 @@ def _dicom_bytes():
     ds.SOPClassUID, ds.SOPInstanceUID, ds.Modality = meta.MediaStorageSOPClassUID, meta.MediaStorageSOPInstanceUID, "MR"
     ds.SeriesDescription, ds.InversionTime, ds.ImageType = "Ax T2 FLAIR", 2200, ["ORIGINAL", "PRIMARY"]
     ds.SliceThickness, ds.SpacingBetweenSlices, ds.MRAcquisitionType = 3.0, 3.0, "2D"
-    ds.Rows = ds.Columns = 4
+    ds.Rows = ds.Columns = rows
+    if comment_bytes:
+        ds.ImageComments = "c" * comment_bytes
     ds.BitsAllocated, ds.BitsStored, ds.HighBit, ds.PixelRepresentation, ds.SamplesPerPixel = 16, 16, 15, 0, 1
-    ds.PhotometricInterpretation, ds.PixelData = "MONOCHROME2", b"\0" * 32
+    ds.PhotometricInterpretation, ds.PixelData = "MONOCHROME2", b"\0" * (rows * rows * 2)
     buf = io.BytesIO()
     pydicom.dcmwrite(buf, ds, write_like_original=False)
     return buf.getvalue()
@@ -435,5 +439,135 @@ def test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_u
     client.post("/api/v1/clinical/quality-gate", json={"file_id": FILE})
     client.post("/api/v1/clinical/quality-gate", json={"file_id": FILE, "physician_confirmed_flair": True})
     (plain, u1), (attested, u2) = records
-    assert "physician_attested" not in plain["code"] and "physician_attested" in attested["code"]
+    assert plain["code"] == "quality_gate.abstain.sequence_missing"
+    assert attested["code"] == "quality_gate.pending.skull_pending.attested"
     assert u1 == u2 == "id-dr_rev"
+
+
+# ----------------------------------------------------------------------------- second review of PR #81
+URL = "/api/v1/clinical/quality-gate"
+
+
+def test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records(single, monkeypatch):
+    """The decision that releases or withholds the AI output is decided and audited ON THE SERVER, with the skull
+    outcome the browser reports; the browser only re-checks it with the same rule."""
+    client, _ = single
+    records = []
+    reg = _registry()
+    reg._audit = records.append
+    monkeypatch.setattr(qg, "_REGISTRY", reg)
+    shown = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "stripped"}).json()
+    hidden = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "unknown"}).json()
+    assert shown["ai_output_allowed"] is True and hidden["ai_output_allowed"] is False
+    assert [r["code"] for r in records] == ["quality_gate.proceed_with_warnings.attested",
+                                            "quality_gate.abstain.skull_unknown.attested"]
+    assert shown["subject"]["file_id"] == FILE and "version" in shown["subject"]
+    for bad in ("not_stripped", "STRIPPED", 1, None):
+        assert client.post(URL, json={"file_id": FILE, "skull": bad}).status_code in (400, 422), bad
+
+
+def test_rc126_behind_the_flag_and_refused_before_any_io(single, monkeypatch):
+    client, state = single
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", False)
+    assert client.post(URL, json={"file_id": FILE}).status_code == 404
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    storage = _CountingStorage(b"x")
+    app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(storage)
+    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry.load(REGISTRY, audit=lambda e: None))      # pending
+    state["paths"].clear()
+    body = client.post(URL, json={"file_id": FILE}).json()
+    assert body["codes"] == ["gate_not_approved"] and body["subject"]["file_id"] == FILE
+    assert storage.downloads == 0 and state["paths"] == [], "nothing is authorized, read or downloaded"
+
+
+def test_rc126_a_per_user_rate_limit_bounds_the_reads(single, monkeypatch):
+    client, _ = single
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    monkeypatch.setattr(qg, "RATE_LIMIT_PER_MINUTE", 3)
+    monkeypatch.setattr(qg, "_LIMITER", qg.new_rate_limiter())
+    codes = [client.post(URL, json={"file_id": FILE}).status_code for _ in range(5)]
+    assert codes == [200, 200, 200, 429, 429]
+
+
+def test_rc122_the_header_is_read_with_a_bounded_range(single, monkeypatch):
+    import gzip
+    client, _ = single
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+
+    class _Ranged(_CountingStorage):
+        def __init__(self, data):
+            super().__init__(data)
+            self.ranges = []
+
+        async def download_file(self, bucket, path):
+            raise AssertionError("the whole file was downloaded")
+
+        async def download_file_range(self, bucket, path, start, end):
+            self.ranges.append((start, end))
+            return self.data[start:end + 1]
+
+    img = nib.Nifti1Image(np.zeros((64, 64, 40), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()
+    cases = ((img, FILE, 5.0, 1), (gzip.compress(img), FILE + ".gz", 5.0, 1),
+             (_dicom_bytes(rows=512), "patients/p/studies/s/series/se/a.dcm", 3.0, 1),
+             (_dicom_bytes(rows=512, comment_bytes=200_000), "patients/p/studies/s/series/se/b.dcm", 3.0, 2))
+    for data, name, mm, min_ranges in cases:
+        storage = _Ranged(data)
+        app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(storage)
+        monkeypatch.setattr(ct, "_authorized_inputs", lambda *a, n=name: _as_coro([n]))
+        visit = client.post(URL, json={"file_id": name}).json()["inputs"]["visits"][0]
+        read = sum(e - s + 1 for s, e in storage.ranges)
+        assert visit["thickness"]["effective_mm"] == mm, name
+        assert len(storage.ranges) >= min_ranges and read < len(data), (name, storage.ranges, len(data))
+
+
+async def _no_metadata(sid):
+    return None
+
+
+async def _broken_metadata(sid):
+    raise RuntimeError("segmentation store unreadable")
+
+
+def test_rc123_missing_or_unreadable_metadata_abstains_with_a_reason(compare, monkeypatch):
+    client, *_ = compare
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    seg = app.dependency_overrides[get_segmentation_service]()
+    for broken in (_no_metadata, _broken_metadata):
+        monkeypatch.setattr(seg, "get_metadata", broken)
+        for path, reason in (("/api/v1/segmentation/longitudinal/compare", "caveat"),
+                             ("/api/v1/segmentation/longitudinal/sel", "reason")):
+            r = client.post(path, json=PAIR)
+            assert r.status_code == 200, (broken.__name__, path, r.status_code)
+            assert r.json()["abstained"] is True and r.json()[reason], (broken.__name__, path)
+
+
+def test_rc123_the_metadata_is_read_once_per_visit_and_one_type_check(compare, monkeypatch):
+    import inspect
+    client, *_ = compare
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
+    seg = app.dependency_overrides[get_segmentation_service]()
+    calls, original = [], seg.get_metadata
+
+    async def _counting(sid):
+        calls.append(sid)
+        return await original(sid)
+
+    monkeypatch.setattr(seg, "get_metadata", _counting)
+    _post(client)
+    assert sorted(calls) == ["s1", "s2"]
+    calls.clear()
+    client.post("/api/v1/segmentation/longitudinal/sel", json=PAIR)
+    assert sorted(calls) == ["s1", "s2"]
+    src = inspect.getsource(sa.detect_slowly_expanding_lesions)
+    assert src.count("SEL detection requires segmentation-type inputs") == 1
+
+
+def test_rc126_no_policy_copy_per_consultation(monkeypatch):
+    monkeypatch.setattr(qg, "load_policy", lambda: 1 / 0)
+    visit = {"sequence": "FLAIR", "physician_confirmed_flair": False, "skull": "stripped", "scanner": None,
+             "thickness": {"state": "native", "effective_mm": 1.0}}
+    out = qg.run_quality_gate({"mode": "single", "visits": [visit]}, registry=_registry(), study_key="s")
+    assert out["decision"] == "proceed"
