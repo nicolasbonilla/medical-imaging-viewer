@@ -14,8 +14,8 @@ const SOURCE = readFileSync(join(__dirname, 'gate.ts'), 'utf-8');
 describe('G27: the browser holds no rule', () => {
   it('rc127 gate.ts exports only display and request helpers', () => {
     const functions = Object.entries(gate).filter(([, v]) => typeof v === 'function').map(([k]) => k).sort();
-    expect(functions).toEqual(['actionOf', 'gateRateLimited', 'gateUnavailable', 'isGateResult', 'retryAfterSeconds',
-      'serverSequenceClass', 'skullFromProvenance']);
+    expect(functions).toEqual(['actionOf', 'gateNotEnabled', 'gateRateLimited', 'gateUnavailable', 'isGateResult',
+      'retryAfterSeconds', 'serverSequenceClass', 'skullFromProvenance']);
     expect(SOURCE).not.toMatch(/\.json'|other_words|min_flair_inversion_time_ms|confirmation_modes|evaluateGate|classify/);
   });
 });
@@ -29,9 +29,11 @@ describe('fail closed and say why (G6, F3)', () => {
     expect(gate.gateRateLimited('x').checks[0].params.seconds).toBe(60);
   });
 
-  it('rc126 U2 a rate-limited or unavailable answer is retried after its wait; a decision is never retried', () => {
+  it('rc126 G29 only a rate-limited answer is retried, after its wait; unavailable and not enabled never are', () => {
     expect(gate.retryAfterSeconds(gate.gateRateLimited(5))).toBe(5);
-    expect(gate.retryAfterSeconds(gate.gateUnavailable())).toBe(gate.UNAVAILABLE_RETRY_SECONDS);
+    expect(gate.retryAfterSeconds(gate.gateUnavailable())).toBeNull();
+    expect(gate.retryAfterSeconds(gate.gateNotEnabled())).toBeNull();
+    expect(gate.MAX_AUTOMATIC_RETRIES).toBe(3);
     const decided = { ...gate.gateUnavailable(), codes: ['sequence_not_flair'] };
     expect(gate.retryAfterSeconds(decided)).toBeNull();
     expect(gate.retryAfterSeconds({ ...gate.gateUnavailable(), ai_may_run: true })).toBeNull();

@@ -83,14 +83,20 @@ export function gateRateLimited(seconds: unknown): GateResult {
   return stopped('gate_rate_limited', { seconds: s });
 }
 
-/** U2 (sixth review): an answer the browser retries by itself, and after how many seconds; null for a decision. */
-export function retryAfterSeconds(r: GateResult | null | undefined): number | null {
-  if (!r || r.ai_may_run || r.codes.length !== 1) return null;
-  if (r.codes[0] === 'gate_rate_limited') return r.checks[0]?.params?.seconds ?? 60;
-  if (r.codes[0] === 'gate_unavailable') return UNAVAILABLE_RETRY_SECONDS;
-  return null;
+/** G29 (seventh review): the browser gate is on while the server's is off (the route answers 404): said as such,
+ *  never retried. */
+export function gateNotEnabled(): GateResult {
+  return stopped('gate_not_enabled');
 }
-export const UNAVAILABLE_RETRY_SECONDS = 10;
+
+/** G29 (seventh review): ONLY a rate-limited answer is asked again, after the server's wait (the card adds backoff and
+ *  a cap); an unavailable answer is a real decision, shown and never retried; null for anything else. */
+export function retryAfterSeconds(r: GateResult | null | undefined): number | null {
+  if (!r || r.ai_may_run || r.codes.length !== 1 || r.codes[0] !== 'gate_rate_limited') return null;
+  return r.checks[0]?.params?.seconds ?? 60;
+}
+/** G29: at most this many automatic retries per file (before the run) and per run (before the result). */
+export const MAX_AUTOMATIC_RETRIES = 3;
 
 export function isGateResult(v: unknown): v is GateResult {
   return isObj(v) && typeof v.decision === 'string' && Array.isArray(v.checks) && Array.isArray(v.codes)

@@ -75,11 +75,9 @@ def _check(check: str, visit: Optional[str], status: str, code: Optional[str] = 
 
 
 def _number(v) -> Optional[float]:
-    """A finite number that is not a boolean, else None (strict: no strings — inputs are normalised)."""
-    if isinstance(v, bool) or not isinstance(v, (int, float)):
-        return None
-    v = float(v)
-    return v if math.isfinite(v) else None
+    """A positive finite number, through the ONE number parser (lcs._number), strict on types: the gate's inputs are
+    normalised, so a text or a boolean is never a number here (seventh review of PR #81, cleanup)."""
+    return lcs._number(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else None
 
 
 def _platform_check(platform, policy) -> Dict[str, Any]:
@@ -201,11 +199,20 @@ def _result(checks: List[Dict[str, Any]], policy, mode=None) -> Dict[str, Any]:
         "checks": checks,
         # Sixth review of PR #81 (G27): the browser holds no policy, so the answer names what it shows — the visits
         # whose FLAIR the physician may attest in this mode, and the i18n action of each code in this mode.
-        "attestable_visits": [c["visit"] for c in checks if c["check"] == "sequence"
-                              and c["code"] in ("sequence_unknown", "sequence_missing")
-                              and mode in policy["sequence"]["confirmation_modes"]],
+        "attestable_visits": _attestable_visits(checks, policy, mode),
         "actions": {c["code"]: _action_key(policy, mode, c["code"]) for c in checks if c["code"]},
     }
+
+
+def _attestable_visits(checks: List[Dict[str, Any]], policy, mode) -> List[str]:
+    """G28 (seventh review of PR #81): the visits whose FLAIR the physician may attest — offered ONLY when the
+    attestation changes the decision: every abstaining check is a sequence check that the attestation lifts
+    (unknown / missing, in a mode where it is offered). Anything else that abstains (an unreadable header, a scanner
+    change, a skull, the platform) makes an attestation futile, so none is offered and no useless record is written."""
+    abstaining = [c for c in checks if c["status"] == "abstain"]
+    liftable = [c for c in abstaining if c["check"] == "sequence" and c["code"] in ("sequence_unknown", "sequence_missing")
+                and mode in policy["sequence"]["confirmation_modes"]]
+    return [c["visit"] for c in liftable] if abstaining and len(liftable) == len(abstaining) else []
 
 
 def _action_key(policy, mode, code) -> str:
@@ -452,17 +459,11 @@ def scanner_from_acquisition_record(acq: Optional[dict]) -> Optional[Dict[str, A
 
 def read_source_series_description(file_id, study_service=None) -> Optional[str]:
     """The series description stored for a source image's series (PACS import), or None. Never raises."""
-    m = lcs._FILE_ID_RE.fullmatch(str(file_id or ""))
-    if not m:
-        return None
     try:
-        if study_service is None:
-            from app.core.container import get_study_service
-            study_service = get_study_service()
-        db = getattr(study_service, "db", None)
-        if db is None:
+        series = lcs.source_series_ref(file_id, study_service)
+        if series is None:
             return None
-        doc = db.collection("studies").document(m.group(1)).collection("series").document(m.group(2)).get()
+        doc = series.get()
         value = (doc.to_dict() or {}).get("series_description") if getattr(doc, "exists", False) else None
         return value if isinstance(value, str) and value.strip() else None
     except Exception:  # noqa: BLE001 — unknown description: the sequence is "missing", the gate abstains
@@ -554,7 +555,7 @@ def header_classifier_fields(fields: Dict[str, Any], stored_description: Any = N
             "sequence_name": fields.get("sequence_name"), "image_type": fields.get("image_type")}
 
 
-def read_header_fields(data: bytes, name: str, imaging_service) -> Dict[str, Any]:
+def read_header_fields(data: bytes) -> Dict[str, Any]:
     """Header only (E1): pydicom with stop_before_pixels, a lazy NIfTI header — no voxel is decoded, normalised
     or summarised. Descriptions, ProtocolName, SequenceName, ImageType and inversion time (DICOM, and NIfTI with
     its text fields and extensions — A1), RC-054 thickness (both)."""
@@ -629,7 +630,7 @@ def _header_complete(data: bytes) -> bool:
     return len(raw) >= vox_offset
 
 
-async def _read_header_fields(storage_service, bucket: str, file_path: str, imaging_service) -> Dict[str, Any]:
+async def _read_header_fields(storage_service, bucket: str, file_path: str) -> Dict[str, Any]:
     """E1 / second review, finding 3: the header only, through bounded byte ranges (retried larger while the header
     runs longer), parsed in a worker thread. A storage without ranges is read whole (as displayed_image_check)."""
     from app.core.interfaces.storage_interface import IStorageService
@@ -638,16 +639,17 @@ async def _read_header_fields(storage_service, bucket: str, file_path: str, imag
     if ranged is None or getattr(type(storage_service), "download_file_range", None) is IStorageService.download_file_range:
         # no real ranges (the interface default downloads the whole file per call): ONE full download at most
         data = await storage_service.download_file(bucket, file_path)
-        return await asyncio.to_thread(read_header_fields, data, name, imaging_service)
+        return await asyncio.to_thread(read_header_fields, data)
     size = HEADER_PREFIX_NIFTI if name.lower().endswith((".nii", ".nii.gz")) else HEADER_PREFIX_DICOM
     while True:
         data = await ranged(bucket, file_path, 0, size - 1)
         if len(data) < size or size >= HEADER_PREFIX_MAX or await asyncio.to_thread(_header_complete, data):
-            return await asyncio.to_thread(read_header_fields, data, name, imaging_service)
+            return await asyncio.to_thread(read_header_fields, data)
         size *= 4
 
 
-async def _file_version(storage_service, bucket: str, file_path: str) -> Optional[tuple]:
+async def file_version(storage_service, bucket: str, file_path: str) -> Optional[tuple]:
+    """(file, size, checksum, created) of the stored file, or None when its version is unknown (nothing is cached)."""
     try:
         meta = await storage_service.get_file_metadata(bucket, file_path)
     except Exception:  # noqa: BLE001 — no version known: no cache
@@ -656,25 +658,19 @@ async def _file_version(storage_service, bucket: str, file_path: str) -> Optiona
     return (file_path, *version) if meta is not None and version[0] is not None and any(version[1:]) else None
 
 
-async def file_version_key(storage_service, bucket: str, file_path: str) -> Optional[tuple]:
-    """(file, size, checksum, created) of the stored file, or None when its version is unknown (then nothing is
-    cached for it)."""
-    return await _file_version(storage_service, bucket, file_path)
-
-
 _NOT_GIVEN = object()
 
 
-async def visit_header_fields(storage_service, bucket: str, file_path: str, imaging_service=None, *,
+async def visit_header_fields(storage_service, bucket: str, file_path: str, *,
                               version_key: Any = _NOT_GIVEN) -> Dict[str, Any]:
     """The header fields of one stored image, cached per file version (E1); an unreadable header is an explicit
     'unreadable' (never 'missing'). Used by the single study AND by each visit of a comparison (A1)."""
     # the route passes the version it already read for the cache key (F3): one metadata read per consultation
-    key = version_key if version_key is not _NOT_GIVEN else await _file_version(storage_service, bucket, file_path)
+    key = version_key if version_key is not _NOT_GIVEN else await file_version(storage_service, bucket, file_path)
     fields = _HEADER_CACHE.get(key) if key else None
     if fields is None:
         try:
-            fields = await _read_header_fields(storage_service, bucket, file_path, imaging_service)
+            fields = await _read_header_fields(storage_service, bucket, file_path)
         except Exception:  # noqa: BLE001 — the header could not be read: an explicit code, never 'missing'
             fields = {**_NO_HEADER, "unreadable": True}
         else:
@@ -698,8 +694,10 @@ def visit_inputs(fields: Dict[str, Any], acquisition: Optional[dict], stored_des
     acq = acquisition if isinstance(acquisition, dict) else None
     ti = fields.get("inversion_time_ms") if fields.get("inversion_time_ms") is not None else (acq or {}).get("inversion_time_ms")
     thickness = fields.get("thickness")
-    if not isinstance(thickness, dict):
-        thickness = thickness_from_acquisition_record(acq, policy["thickness"]["thin_limit_mm"])
+    if not isinstance(thickness, dict) or thickness.get("state") == "not_determinable":
+        # R2 (seventh review): the record's thickness (a lower bound) when the header cannot tell
+        recorded = thickness_from_acquisition_record(acq, policy["thickness"]["thin_limit_mm"])
+        thickness = recorded if recorded is not None else thickness
     return {
         **({"header": "unreadable"} if fields.get("unreadable") else {}),
         "sequence": classify_fields(header_classifier_fields(fields, stored_description), ti, policy)["class"],
@@ -710,12 +708,14 @@ def visit_inputs(fields: Dict[str, Any], acquisition: Optional[dict], stored_des
     }
 
 
-def stored_records(file_path: str):
-    """(acquisition record, stored series description) of a source image; never raises (unknown = None)."""
-    return lcs.read_source_acquisition(file_path), read_source_series_description(file_path)
+def stored_records(file_path: str, study_service=None):
+    """(acquisition record, stored series description) of a source image; never raises (unknown = None). Two
+    document reads (E1, seventh review): one instance document by query, and the series document."""
+    return (lcs.read_source_acquisition(file_path, study_service),
+            read_source_series_description(file_path, study_service))
 
 
-async def single_study_inputs(file_path: str, storage_service, imaging_service, *, bucket: str,
+async def single_study_inputs(file_path: str, storage_service, *, bucket: str,
                               physician_confirmed_flair: bool = False, skull: str = "pending",
                               version_key: Any = _NOT_GIVEN, records: Any = None):
     """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file (visit_inputs):
@@ -726,8 +726,8 @@ async def single_study_inputs(file_path: str, storage_service, imaging_service, 
     ``skull``: 'pending' before the run; at the final consultation the outcome the browser reports ('stripped' /
     'unknown'), so the decision that releases or withholds the output is decided and audited here (G17).
     ``records``: the (acquisition, stored description) pair the route already read for the cache key (A3)."""
-    key = version_key if version_key is not _NOT_GIVEN else await _file_version(storage_service, bucket, file_path)
-    fields = await visit_header_fields(storage_service, bucket, file_path, imaging_service, version_key=key)
+    key = version_key if version_key is not _NOT_GIVEN else await file_version(storage_service, bucket, file_path)
+    fields = await visit_header_fields(storage_service, bucket, file_path, version_key=key)
     acq, stored = records if records is not None else await asyncio.to_thread(stored_records, file_path)
     visit = visit_inputs(fields, acq, stored, physician_confirmed_flair=physician_confirmed_flair, skull=skull)
     return {"mode": "single", "visits": [visit]}, (":".join(str(v) for v in key[1:]) if key else None)
@@ -788,7 +788,7 @@ def rate_limit_evaluation(user_id: str) -> Optional[int]:
                                               scope=RateLimitScope.PER_USER, user_id=user_id)
     if allowed:
         return None
-    wait = _number((meta or {}).get("retry_after")) if isinstance(meta, dict) else None
+    wait = lcs._number((meta or {}).get("retry_after")) if isinstance(meta, dict) else None
     return max(1, min(60, int(math.ceil(wait)))) if wait is not None and wait > 0 else 60
 
 
@@ -920,8 +920,8 @@ def present_gated_comparison(result: Dict[str, Any], *, acquisition_check: Dict[
     return apply_to_comparison(presented, gate) if gate is not None else presented
 
 
-# C3: plain reasons for the report and the assistant (never a raw code). The UI shows the en/es/de texts of the
-# i18n files through QualityGatePanel; these are the backend's English sentences for text consumers.
+# C3 / A4: plain reasons for the report and the assistant (never a raw code), from ONE table (en/es/de). The UI shows
+# the physician-facing texts of the i18n files through QualityGatePanel.
 REASONS_PATH = Path(__file__).with_name("quality_gate_reasons.json")
 _REASONS: Dict[str, Any] = json.loads(REASONS_PATH.read_text(encoding="utf-8"))
 
@@ -939,7 +939,6 @@ def reason_lead(name: str, lang: str = "en") -> str:
     return row.get(lang) or row["en"]
 
 
-# C3: plain reasons for the report and the assistant (never a raw code), from the one table (A4).
 CAVEAT_REASONS = {code: row["en"] for code, row in _REASONS["reasons"].items()}
 
 

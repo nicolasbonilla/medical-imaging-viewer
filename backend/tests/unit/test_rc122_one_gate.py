@@ -87,8 +87,13 @@ def test_rc127_g27_the_answer_carries_what_the_browser_shows():
     assert single["attestable_visits"] == ["study"] and single["actions"]["sequence_missing"] == "action"
     cmp = qg.evaluate({"mode": "comparison", "platform": {"allowed": True, "code": None}, "visits": [
         {"sequence": "unknown", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
-        {"sequence": "T1", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
+        {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
     assert cmp["attestable_visits"] == ["tp1"] and cmp["actions"]["sequence_unknown"] == "action_comparison"
+    # G28 (seventh review): with visit 2 a T1 the attestation of visit 1 changes nothing, so none is offered
+    futile = qg.evaluate({"mode": "comparison", "platform": {"allowed": True, "code": None}, "visits": [
+        {"sequence": "unknown", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
+        {"sequence": "T1", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
+    assert futile["attestable_visits"] == []
 
 
 # ----------------------------------------------------------------------------- A1
@@ -118,15 +123,15 @@ def _dicom_payload(**attrs):
 
 @pytest.mark.parametrize("descrip, expected", [("Sag T1 MPRAGE", "T1"), ("AX T2 FLAIR", "FLAIR"), ("TE=81;TI=900", "other")])
 def test_rc122_a1_the_server_reads_the_nifti_descrip(descrip, expected):
-    fields = qg.read_header_fields(_nifti(descrip=descrip), "x.nii", None)
+    fields = qg.read_header_fields(_nifti(descrip=descrip))
     assert qg.classify_fields(qg.header_classifier_fields(fields), fields.get("inversion_time_ms"))["class"] == expected
 
 
 def test_rc122_a1_the_server_reads_nifti_extensions_and_the_dicom_image_type():
     payload = _dicom_payload(SeriesDescription="AX T2 FLAIR", ImageType=["DERIVED", "SECONDARY", "MPR"])
-    fields = qg.read_header_fields(_nifti(dicom=payload), "x.nii", None)
+    fields = qg.read_header_fields(_nifti(dicom=payload))
     assert qg.classify_fields(qg.header_classifier_fields(fields), None)["class"] == "other"
-    fields = qg.read_header_fields(_nifti(text="series: Sag T1 MPRAGE"), "x.nii", None)
+    fields = qg.read_header_fields(_nifti(text="series: Sag T1 MPRAGE"))
     assert qg.classify_fields(qg.header_classifier_fields(fields), None)["class"] == "T1"
 
 

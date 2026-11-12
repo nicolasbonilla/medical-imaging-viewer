@@ -1492,6 +1492,7 @@
     "draft": "Borrador — pendiente de aprobación",
     "aiHidden": "El resultado de la IA no se muestra, porque el control de calidad no lo permite.",
     "retrying": "Se vuelve a comprobar solo en {{seconds}} s.",
+    "checkAgain": "Comprobar de nuevo",
     "checking": "Comprobando la imagen antes de la IA…",
     "attest": "Confirmo, bajo mi responsabilidad, que esta imagen es una FLAIR potenciada en T2. Su cabecera no lo indica; mi confirmación queda registrada en la auditoría con mi nombre.",
     "decision": {
@@ -1548,6 +1549,10 @@
       "gate_unavailable": {
         "message": "No se pudo completar el control de calidad, así que la IA no se ejecuta.",
         "action": "Vuelva a intentarlo en unos minutos. Si sigue ocurriendo, avise al administrador."
+      },
+      "gate_not_enabled": {
+        "message": "El control de calidad no está activado en el servidor, así que la IA no se ejecuta.",
+        "action": "Pida al administrador que active el control de calidad en el servidor, o que lo desactive en la aplicación."
       },
       "gate_rate_limited": {
         "message": "Demasiados controles de calidad en poco tiempo, así que la IA todavía no se ejecuta. Espere {{seconds}} s.",

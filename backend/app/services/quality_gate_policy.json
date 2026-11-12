@@ -6,7 +6,7 @@
     "DATA RULE (REQ-SAFE-053, RC-124): no threshold or figure here may come from non-commercial data. The thickness band limits are the limits pre-registered in the Paper A v0.3 protocol and only NAME the band in a warning. Until a v3 evidence asset with a licence on commercial_licence_allowlist is set in thickness.evidence_asset (the hook, null today), the thickness check warns and never abstains."
   ],
   "policy_id": "quality-gate",
-  "policy_version": "1.6.0-draft",
+  "policy_version": "1.7.0-draft",
   "status": "DRAFT, PENDING owner approval",
   "modes": {
     "single": { "visits": ["study"], "checks": ["platform", "sequence", "thickness", "skull"] },
@@ -42,8 +42,10 @@
       "ti_seconds_below": 10,
       "sequence_name_codes": {"tfl": "T1", "tfe": "T1", "fl": "other", "fgre": "other", "efgre": "other", "gre": "other",
         "ffe": "other", "fe": "other", "swi": "other", "ep": "other", "epi": "other", "epse": "other", "epfid": "other"},
-      "image_type_other": ["mpr", "mip", "minip", "projection", "reformatted", "reformat", "subtraction", "adc", "trace",
-        "tracew", "fa", "colfa", "diffusion", "perfusion", "exp"]
+      "image_type_other": ["derived", "secondary", "mpr", "mip", "minip", "projection", "reformatted", "reformat",
+        "resampled", "subtraction", "localizer", "screen", "adc", "trace", "tracew", "fa", "colfa", "diffusion",
+        "perfusion", "exp"],
+      "$comment_image_type": "Seventh review of PR #81 (S1; D-QG-7, D-QG-11): an ImageType value that says the image is NOT an original acquisition makes it other (abstains): DERIVED (value 1: computed from other images), SECONDARY (value 2: made after the examination, a secondary capture), MPR / reformatted / RESAMPLED (re-sliced: interpolated voxels), MIP / minIP / PROJECTION IMAGE (projections), SUBTRACTION, LOCALIZER, SCREEN SAVE, and parametric maps (ADC, TRACEW, FA, perfusion, exponential). ORIGINAL / PRIMARY and the vendor flags of an original acquisition (M, ND, NORM, DIS2D, OTHER, M_SE) say nothing."
     }
   },
   "mode_actions": {
@@ -83,6 +85,7 @@
     "gate_switched_off": "abstain",
     "gate_unavailable": "abstain",
     "gate_rate_limited": "abstain",
+    "gate_not_enabled": "abstain",
     "gate_input_invalid": "abstain",
     "sequence_not_flair": "abstain",
     "sequence_unknown": "abstain",

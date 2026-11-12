@@ -32,7 +32,7 @@ import { FEATURES } from '@/config/features';
 import { QualityGatePanel } from './QualityGatePanel';
 import { requestQualityGate } from '@/services/qualityGate/api';
 import {
-  gateUnavailable, isGateResult, retryAfterSeconds, serverSequenceClass, skullFromProvenance,
+  gateUnavailable, isGateResult, MAX_AUTOMATIC_RETRIES, retryAfterSeconds, serverSequenceClass, skullFromProvenance,
   type GateResult, type ServerGateResponse,
 } from '@/services/qualityGate/gate';
 
@@ -106,14 +106,22 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     }, 250);
     return () => { live = false; clearTimeout(timer); };
   }, [gateOn, flairFileId, preflightTry]);
-  useEffect(() => setPreflightTry(0), [flairFileId]);
+  // G29 (seventh review): at most MAX_AUTOMATIC_RETRIES automatic retries per file, with backoff, and ONLY for a
+  // rate-limited answer; then (and for an unavailable answer) the physician may ask again with one click
+  const preflightRetries = useRef(0);
+  useEffect(() => { setPreflightTry(0); preflightRetries.current = 0; }, [flairFileId]);
   // U2: a rate-limited or unavailable answer is asked again by itself after the server's wait (never disabled forever)
-  const preflightWait = gateOn ? retryAfterSeconds(preflight) : null;
+  const preflightBase = gateOn ? retryAfterSeconds(preflight) : null;
+  const preflightWait = preflightBase !== null && preflightRetries.current < MAX_AUTOMATIC_RETRIES
+    ? preflightBase * 2 ** preflightRetries.current : null;
   useEffect(() => {
     if (preflightWait === null) return undefined;
-    const id = setTimeout(() => setPreflightTry((n) => n + 1), preflightWait * 1000);
+    const id = setTimeout(() => { preflightRetries.current += 1; setPreflightTry((n) => n + 1); }, preflightWait * 1000);
     return () => clearTimeout(id);
   }, [preflight, preflightWait]);
+  const checkPreflightAgain = () => { preflightRetries.current = 0; setPreflightTry((n) => n + 1); };
+  const preflightStuck = gateOn && preflight !== null && preflightWait === null
+    && (preflightBase !== null || (preflight.codes.length === 1 && preflight.codes[0] === 'gate_unavailable'));
   const preflightLeft = useCountdown(preflightWait, preflight);
   const canAttest = gateOn && (preflight?.attestable_visits ?? []).includes('study');
   const gateBefore: GateResult | null = preflight;
@@ -132,12 +140,21 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     return () => { live = false; };
   }, [gateOn, doneResult, flairFileId, finalTry]);
   // U2: a rate-limited or unavailable final answer is asked again by itself (a finished result is never hidden forever)
-  const finalWait = ownFinal && ownFinal.retry ? retryAfterSeconds(ownFinal.gate) : null;
+  const finalRetries = useRef<{ run: unknown; n: number }>({ run: null, n: 0 });
+  const finalRetryCount = finalRetries.current.run === doneResult ? finalRetries.current.n : 0;
+  const finalBase = ownFinal && ownFinal.retry ? retryAfterSeconds(ownFinal.gate) : null;
+  const finalWait = finalBase !== null && finalRetryCount < MAX_AUTOMATIC_RETRIES ? finalBase * 2 ** finalRetryCount : null;
   useEffect(() => {
     if (finalWait === null) return undefined;
-    const id = setTimeout(() => setFinalTry((n) => n + 1), finalWait * 1000);
+    const id = setTimeout(() => {
+      finalRetries.current = { run: doneResult, n: finalRetryCount + 1 };
+      setFinalTry((n) => n + 1);
+    }, finalWait * 1000);
     return () => clearTimeout(id);
-  }, [ownFinal, finalWait]);
+  }, [ownFinal, finalWait, doneResult, finalRetryCount]);
+  const checkFinalAgain = () => { finalRetries.current = { run: doneResult, n: 0 }; setFinalTry((n) => n + 1); };
+  const finalStuck = ownFinal !== null && ownFinal.retry && finalWait === null
+    && (finalBase !== null || (ownFinal.gate.codes.length === 1 && ownFinal.gate.codes[0] === 'gate_unavailable'));
   const finalLeft = useCountdown(finalWait, ownFinal);
   const gateAllowsRun = !gateOn || preflight?.ai_may_run === true || (canAttest && attested);
   const gateAllowsOutput = !gateOn || (finalGate?.ai_output_allowed === true && doneResult?.fileId === flairFileId);
@@ -262,6 +279,10 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
               {t('qualityGate.retrying', { seconds: preflightLeft })}
             </p>
           )}
+          {preflightStuck && (
+            <button type="button" onClick={checkPreflightAgain} data-testid="quality-gate-check-again"
+              className="text-[9px] text-sky-200 underline hover:text-white">{t('qualityGate.checkAgain')}</button>
+          )}
           {gateOn && canAttest && (
             <label className="flex items-start gap-1 text-[9px] text-sky-100" data-testid="quality-gate-attest">
               <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} />
@@ -313,6 +334,10 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
         <p className="text-[9px] text-sky-200" role="status" data-testid="quality-gate-retry">
           {t('qualityGate.retrying', { seconds: finalLeft })}
         </p>
+      )}
+      {gateOn && flames.status === 'done' && flames.result && finalStuck && (
+        <button type="button" onClick={checkFinalAgain} data-testid="quality-gate-check-again-final"
+          className="text-[9px] text-sky-200 underline hover:text-white">{t('qualityGate.checkAgain')}</button>
       )}
 
       {flames.status === 'done' && flames.result && gateAllowsOutput && (

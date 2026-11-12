@@ -1474,6 +1474,7 @@
     "draft": "Entwurf — Freigabe ausstehend",
     "aiHidden": "Das KI-Ergebnis wird nicht angezeigt, weil die Qualitätsprüfung es nicht zulässt.",
     "retrying": "Wird in {{seconds}} s automatisch erneut geprüft.",
+    "checkAgain": "Erneut prüfen",
     "checking": "Das Bild wird vor der KI geprüft …",
     "attest": "Ich bestätige in eigener Verantwortung, dass dieses Bild ein T2-FLAIR ist. Der Bildkopf sagt das nicht; meine Bestätigung wird mit meinem Namen im Prüfprotokoll gespeichert.",
     "decision": {
@@ -1530,6 +1531,10 @@
       "gate_unavailable": {
         "message": "Die Qualitätsprüfung konnte nicht abgeschlossen werden, daher läuft die KI nicht.",
         "action": "Versuchen Sie es in einigen Minuten erneut. Wenn es weiter auftritt, informieren Sie die Administration."
+      },
+      "gate_not_enabled": {
+        "message": "Die Qualitätsprüfung ist auf dem Server nicht aktiviert, daher läuft die KI nicht.",
+        "action": "Bitten Sie die Administration, die Qualitätsprüfung auf dem Server zu aktivieren oder in der App auszuschalten."
       },
       "gate_rate_limited": {
         "message": "Zu viele Qualitätsprüfungen in kurzer Zeit, daher läuft die KI noch nicht. Warten Sie {{seconds}} s.",

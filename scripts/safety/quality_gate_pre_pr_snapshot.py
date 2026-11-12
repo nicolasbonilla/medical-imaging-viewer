@@ -31,6 +31,9 @@ def reason(c):
     t = " ".join(str(x) for x in (c.get("text"), c.get("sequence_name"), c.get("image_type")) if x).lower()
     if any(w in t for w in ("+c", "post", "gd", "contrast")):
         return "D-QG-7: a post-contrast FLAIR is 'other' (abstains)"
+    if c.get("image_type") and any(w in t for w in ("secondary", "resampled", "screen", "localizer")):
+        return ("D-QG-11 (seventh review of PR #81): an ImageType that is not an original acquisition (secondary, "
+                "resampled, screen save, localizer) is 'other' (abstains)")
     if any(w in t for w in ("mpr", "mip", "derived", "subtraction", "projection")):
         return "D-QG-7: a reformatted, projected, derived or subtracted FLAIR is 'other' (abstains)"
     if "t1" in t:

@@ -303,10 +303,6 @@ LONGITUDINAL_NOTICE: Dict[str, Dict[str, str]] = {
 }
 
 
-# R4 (fourth review of PR #81; DRAFT): a pair the single quality gate let through WITH warnings is not presented as
-# clean. Fixed text per known warning code, in the report language.
-
-
 def _int(v) -> int:
     try:
         return max(0, int(v))
@@ -348,7 +344,9 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
         # A4 (sixth review of PR #81): when the GATE stopped the comparison, the gate's reasons — never RC-062's
         # "the acquisition differs" — from the one table of reason sentences
         if isinstance(gate, dict) and gate.get("ai_output_allowed") is not True:
-            reasons = [qg.reason_sentence(c, language) for c in (gate.get("codes") or ["gate_unavailable"])]
+            # R1 (seventh review): the body is client data — only a list of known code strings is read
+            codes = [c for c in gate.get("codes") if isinstance(c, str)] if isinstance(gate.get("codes"), list) else []
+            reasons = [qg.reason_sentence(c, language) for c in (codes or ["gate_unavailable"])]
             return (qg.reason_lead("stopped", language) + " " + "; ".join(reasons) + ". "
                     + qg.reason_lead("stopped_tail", language))
         return texts["abstained"]

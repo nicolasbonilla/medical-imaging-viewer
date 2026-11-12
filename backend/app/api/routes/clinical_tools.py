@@ -22,7 +22,7 @@ from app.security.patient_access_dependency import require_imaging_access
 from app.security.resource_access import authorize_patient_id, authorize_study_id
 from app.security.ownership import initiators
 from app.core.logging import get_logger
-from app.core.container import get_imaging_service, get_storage_service, get_tool_runner_service
+from app.core.container import get_storage_service, get_tool_runner_service
 from app.core.interfaces.ai_interface import (
     LSTAISegmentRequest,
     SynthSegRequest,
@@ -98,7 +98,6 @@ async def quality_gate(
     body: QualityGateRequest,
     request: Request,
     storage_service=Depends(get_storage_service),
-    imaging_service=Depends(get_imaging_service),
     current_user: User = Depends(get_current_active_user),
 ):
     """The single quality gate before the in-browser AI (REQ-FUNC-117, REQ-SAFE-052/054; RC-122, RC-126).
@@ -137,7 +136,7 @@ async def quality_gate(
         return {**refused, "subject": {"file_id": body.file_id, "version": None}}
     paths = await _authorized_inputs([body.file_id], None, None, current_user)
     bucket = get_settings().GCS_BUCKET_NAME
-    version_key = await qg.file_version_key(storage_service, bucket, paths[0])
+    version_key = await qg.file_version(storage_service, bucket, paths[0])
     # A3 (sixth review): the stored records the decision is made from are read first, and their digest is part of
     # the cache key; A2: so is the clinician when the physician attests
     records = await asyncio.to_thread(qg.stored_records, paths[0])
@@ -149,7 +148,7 @@ async def quality_gate(
     limited = _over_limit()
     if limited is not None:
         return limited
-    inputs, version = await qg.single_study_inputs(paths[0], storage_service, imaging_service, bucket=bucket,
+    inputs, version = await qg.single_study_inputs(paths[0], storage_service, bucket=bucket,
                                                    physician_confirmed_flair=body.physician_confirmed_flair,
                                                    skull=body.skull, version_key=version_key, records=records)
     result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)

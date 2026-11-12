@@ -404,13 +404,13 @@ def test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version(si
     threads = []
     parse = qg.read_header_fields
 
-    def _spy(data, name, imaging_service):
+    def _spy(data):
         try:
             asyncio.get_running_loop()
             threads.append("event loop")
         except RuntimeError:
             threads.append("worker")
-        return parse(data, name, imaging_service)
+        return parse(data)
 
     monkeypatch.setattr(qg, "read_header_fields", _spy)
     app.dependency_overrides[get_imaging_service] = lambda: _NoPixelImaging()
@@ -686,7 +686,7 @@ def test_rc122_a_storage_without_real_ranges_is_read_once():
     storage = _DefaultRanges(_dicom_bytes(rows=512, comment_bytes=200_000))
     loop = asyncio.new_event_loop()          # own loop: asyncio.run would leave the next test without one
     try:
-        fields = loop.run_until_complete(qg._read_header_fields(storage, "b", "patients/p/studies/s/series/se/b.dcm", ImagingService()))
+        fields = loop.run_until_complete(qg._read_header_fields(storage, "b", "patients/p/studies/s/series/se/b.dcm"))
     finally:
         loop.close()
     assert storage.downloads == 1 and fields["thickness"]["effective_mm"] == 3.0

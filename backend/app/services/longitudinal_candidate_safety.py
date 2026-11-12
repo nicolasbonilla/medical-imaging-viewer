@@ -368,21 +368,35 @@ async def read_source_visit(file_id, study_service=None) -> Optional[Dict[str, A
         return None
 
 
-def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
-    """The acquisition record stored with a source image (instance document), or None. Never raises."""
+def source_series_ref(file_id, study_service=None):
+    """The Firestore reference of a source image's series (studies/{study}/series/{series}), or None — the ONE lookup
+    of a source file id, used by the acquisition record (RC-062) and the stored series description (the gate)."""
     m = _FILE_ID_RE.fullmatch(str(file_id or ""))
     if not m:
         return None
+    if study_service is None:
+        from app.core.container import get_study_service
+        study_service = get_study_service()
+    db = getattr(study_service, "db", None)
+    if db is None:
+        return None
+    return db.collection("studies").document(m.group(1)).collection("series").document(m.group(2))
+
+
+def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
+    """The acquisition record stored with a source image (instance document), or None. Never raises. Seventh review
+    of PR #81 (E1): ONE instance document is read — a query on the file, limit 1 — never the whole collection."""
     try:
-        if study_service is None:
-            from app.core.container import get_study_service
-            study_service = get_study_service()
-        db = getattr(study_service, "db", None)
-        if db is None:
+        series = source_series_ref(file_id, study_service)
+        if series is None:
             return None
-        instances = (db.collection("studies").document(m.group(1))
-                     .collection("series").document(m.group(2)).collection("instances"))
-        for doc in instances.stream():
+        instances = series.collection("instances")
+        try:
+            from google.cloud.firestore_v1.base_query import FieldFilter
+            query = instances.where(filter=FieldFilter("gcs_object_name", "==", file_id))
+        except ImportError:  # pragma: no cover — the SDK is installed in the service
+            query = instances.where("gcs_object_name", "==", file_id)
+        for doc in query.limit(1).stream():
             data = doc.to_dict() or {}
             if data.get("gcs_object_name") == file_id:
                 acq = data.get("acquisition")

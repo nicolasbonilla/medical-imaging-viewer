@@ -638,7 +638,7 @@ def test_rc122_g19_no_flair_accepted_before_this_pr_is_lost():
     for key in snap["inventory_flair"]:
         if inv.detect_sequence(cases[key]["text"] or "") != "FLAIR" and key not in snap["exceptions"]:
             bad.append(("inventory", key))
-    undocumented = [k for k, why in snap["exceptions"].items() if not any(d in why for d in ("D-QG-7", "D-QG-12", "S2", "inversion time"))]
+    undocumented = [k for k, why in snap["exceptions"].items() if not any(d in why for d in ("D-QG-7", "D-QG-11", "D-QG-12", "S2", "inversion time"))]
     assert not undocumented, f"exceptions without a documented decision: {undocumented}"
     assert not bad, f"G19: {len(bad)} pre-PR FLAIR acceptances lost; first: {bad[:6]}"
 

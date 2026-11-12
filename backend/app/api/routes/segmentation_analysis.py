@@ -150,19 +150,27 @@ async def _gate_before_loading(specs, segmentation_service, current_user, reques
         return None
     attestation = _attestation(body)
     import asyncio
-    sources = []
-    for spec in specs:
-        meta = None
-        if spec.get("type") == "segmentation":
-            try:
-                meta = await segmentation_service.get_metadata(spec.get("id"))
-            except Exception as e:  # noqa: BLE001 — unknown source: the gate abstains with its reason
-                logger.warning("Segmentation metadata unreadable for the quality gate", extra={"error": str(e)})
-            metas[spec.get("id")] = meta
-        sources.append(getattr(meta, "file_id", None))   # an instance mask has no source image: the gate abstains
-    acquisitions = [_memo_acquisition(s, acq_memo) for s in sources]
-    # A1 (sixth review of PR #81): each visit's stored image header is read exactly as for a single study
-    headers = [await qg.visit_header_fields(storage_service, settings.GCS_BUCKET_NAME, s) if s else None for s in sources]
+
+    async def _meta(spec):
+        if spec.get("type") != "segmentation":
+            return None                          # an instance mask has no source image: the gate abstains
+        try:
+            meta = await segmentation_service.get_metadata(spec.get("id"))
+        except Exception as e:  # noqa: BLE001 — unknown source: the gate abstains with its reason
+            logger.warning("Segmentation metadata unreadable for the quality gate", extra={"error": str(e)})
+            meta = None
+        metas[spec.get("id")] = meta
+        return meta
+
+    # E2 (seventh review of PR #81): the independent reads run concurrently — both visits' metadata, then both
+    # visits' acquisition records and stored image headers (A1)
+    async def _header(source):
+        return await qg.visit_header_fields(storage_service, settings.GCS_BUCKET_NAME, source) if source else None
+
+    sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]
+    acquisitions, headers = await asyncio.gather(
+        asyncio.gather(*(asyncio.to_thread(_memo_acquisition, s, acq_memo) for s in sources)),
+        asyncio.gather(*(_header(s) for s in sources)))
     return await asyncio.to_thread(qg.comparison_gate, *sources, headers=headers, acquisitions=acquisitions,
                                    attestation=attestation,
                                    user=current_user, request=request)

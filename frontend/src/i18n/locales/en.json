@@ -1481,6 +1481,7 @@
     "draft": "Draft — pending approval",
     "aiHidden": "The AI result is not shown, because the quality check does not allow it.",
     "retrying": "Checking again by itself in {{seconds}} s.",
+    "checkAgain": "Check again",
     "checking": "Checking the image before the AI…",
     "attest": "I confirm, on my own responsibility, that this image is a T2-FLAIR. Its header does not say so; my confirmation is recorded in the audit with my name.",
     "decision": {
@@ -1537,6 +1538,10 @@
       "gate_unavailable": {
         "message": "The quality check could not be completed, so the AI does not run.",
         "action": "Try again in a few minutes. If it keeps happening, tell the administrator."
+      },
+      "gate_not_enabled": {
+        "message": "The quality check is not enabled on the server, so the AI does not run.",
+        "action": "Ask the administrator to enable the quality check on the server, or to switch it off in the app."
       },
       "gate_rate_limited": {
         "message": "Too many quality checks in a short time, so the AI does not run yet. Wait {{seconds}} s.",

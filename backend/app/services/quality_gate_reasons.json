@@ -25,6 +25,7 @@
     "gate_not_approved": {"en": "the quality gate is not yet approved for use", "es": "el control de calidad aún no está aprobado para su uso", "de": "die Qualitätsprüfung ist noch nicht für den Einsatz freigegeben"},
     "gate_switched_off": {"en": "the quality gate is switched off", "es": "el control de calidad está apagado", "de": "die Qualitätsprüfung ist ausgeschaltet"},
     "gate_unavailable": {"en": "the quality gate could not be completed", "es": "no se pudo completar el control de calidad", "de": "die Qualitätsprüfung konnte nicht abgeschlossen werden"},
+    "gate_not_enabled": {"en": "the quality gate is not enabled on the server", "es": "el control de calidad no está activado en el servidor", "de": "die Qualitätsprüfung ist auf dem Server nicht aktiviert"},
     "gate_rate_limited": {"en": "too many quality checks were asked for in a short time", "es": "se pidieron demasiados controles de calidad en poco tiempo", "de": "in kurzer Zeit wurden zu viele Qualitätsprüfungen angefordert"},
     "gate_input_invalid": {"en": "the information needed to check the images is incomplete", "es": "la información necesaria para comprobar las imágenes está incompleta", "de": "die für die Prüfung der Bilder nötigen Angaben sind unvollständig"},
     "sequence_not_flair": {"en": "an image is not a FLAIR (its header names another sequence)", "es": "una imagen no es una FLAIR (su cabecera indica otra secuencia)", "de": "ein Bild ist kein FLAIR (sein Bildkopf nennt eine andere Sequenz)"},
