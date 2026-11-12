@@ -388,7 +388,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         '        fields = dict(_NO_HEADER)\n')],
         "a comparison classifies from the series record only: uploaded DICOM FLAIR pairs are 'missing' (A1)", "backend", "RC-123"),
     "Y4_cache_ignores_the_clinician": ([(QG, '    return (*version_key, attested, skull, _policy()["policy_version"], digest, user_id if attested else None)\n',
-        '    return (*version_key, attested, skull, _policy()["policy_version"], digest, None)\n')],
+        '    return (*version_key, attested, skull, _policy()["policy_version"], digest, None)\n'),
+        (QG, '    details = {**explain(answer), "decision": answer.get("decision"), "mode": answer.get("mode"), "cached": True}\n    with R.audit_actor(actor_for(user, request) if user is not None else None):\n',
+         '    details = {**explain(answer), "decision": answer.get("decision"), "mode": answer.get("mode"), "cached": True}\n    with R.audit_actor(None):\n')],
+        # ninth review (O2): every attestation answered from the cache is audited under the clinician who sent it, so
+        # dropping only the clinician from the key became an equivalent mutant for A2 (B is still audited, as B); the
+        # defect is B answered from A's cached decision AND audited under nobody
         "clinician B's attestation is answered from A's cached decision and audited under nobody (A2)", "backend", "RC-126"),
     "Y5_cache_ignores_the_records": ([(QG, '    digest = hashlib.sha256(json.dumps(records, sort_keys=True, default=str).encode("utf-8")).hexdigest()\n',
         '    digest = ""\n')],
