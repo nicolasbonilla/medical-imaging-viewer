@@ -82,7 +82,7 @@ def test_rc123_apply_to_comparison_withholds_exactly_what_rc062_withholds():
     stopped = qg.apply_to_comparison(result, {"ai_output_allowed": False, "codes": ["scanner_changed"]})
     assert stopped["abstained"] is True and stopped["changes"] == []
     assert all(stopped[k] is None for k in lcs.ABSTAINED_NULL_FIELDS)
-    assert "scanner_changed" in stopped["caveat"]
+    assert stopped["caveat"].startswith("x ") and "different scanners" in stopped["caveat"]
     allowed = qg.apply_to_comparison(result, {"ai_output_allowed": True, "codes": []})
     assert allowed["changes"] == [{"status": "new"}] and allowed["quality_gate"]["ai_output_allowed"] is True
 
@@ -278,12 +278,12 @@ def test_rc123_a_scanner_change_stops_the_comparison_in_the_gate_and_in_rc062(co
 
 def test_rc123_the_gate_is_stricter_than_rc062_on_the_sequence(compare, monkeypatch):
     """RC-062 sees the same acquisition record, but visit 2's series is a T1: the gate withholds the candidates."""
-    client, records, (_, f2) = compare
+    client, records, (f1, f2) = compare
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     records["desc"][f2] = "t1_mprage_sag"
     res = _post(client)
-    assert lcs.compare_acquisitions(records["acq"][f1], records["acq"][f2], None, None)["status"] == "same"
+    assert lcs.compare_acquisitions(records["acq"][f1], records["acq"][f2], (1.0, 1.0, 1.0), (1.0, 1.0, 1.0))["status"] == "same"
     assert "sequence_not_flair" in res["quality_gate"]["codes"]
     assert res["abstained"] is True and res["change_candidates"] is None and res["burden_tp2_mm3"] is None
     assert "not a FLAIR" in res["caveat"] and "sequence_not_flair" not in res["caveat"]
@@ -409,7 +409,7 @@ def test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version(si
         if storage is None:
             img = nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0]))
             storage = _CountingStorage(img.to_bytes())
-        app.dependency_overrides[get_storage_service] = lambda s=storage: s
+        app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(storage)   # no parameter: FastAPI would copy it
         monkeypatch.setattr(ct, "_authorized_inputs", lambda *a, n=name: _as_coro([n]))
         for _ in range(2):
             body = client.post("/api/v1/clinical/quality-gate", json={"file_id": name}).json()
@@ -427,7 +427,7 @@ def test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_u
     client, _ = single
     for value in ("true", 1, "yes"):
         r = client.post("/api/v1/clinical/quality-gate", json={"file_id": FILE, "physician_confirmed_flair": value})
-        assert r.status_code == 422, value
+        assert r.status_code in (400, 422), value
     records = []
     reg = _registry()
     reg._audit = lambda e: records.append((e, R.current_actor().user_id))

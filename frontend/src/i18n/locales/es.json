@@ -1557,11 +1557,13 @@
       },
       "sequence_unknown": {
         "message": "La cabecera de la imagen no indica qué secuencia es, así que la aplicación no puede saber si es una FLAIR.",
-        "action": "Si está seguro de que es una FLAIR potenciada en T2, marque la casilla de confirmación. Si no, seleccione la imagen FLAIR."
+        "action": "Si está seguro de que es una FLAIR potenciada en T2, marque la casilla de confirmación. Si no, seleccione la imagen FLAIR.",
+        "action_comparison": "En una comparación la secuencia no se puede confirmar a mano. Compare usted las imágenes con la superposición, o compare visitas cuya FLAIR indique la secuencia en la cabecera."
       },
       "sequence_missing": {
         "message": "La imagen no trae información de secuencia, así que la aplicación no puede saber si es una FLAIR.",
-        "action": "Si está seguro de que es una FLAIR potenciada en T2, marque la casilla de confirmación. Si no, seleccione la imagen FLAIR."
+        "action": "Si está seguro de que es una FLAIR potenciada en T2, marque la casilla de confirmación. Si no, seleccione la imagen FLAIR.",
+        "action_comparison": "En una comparación la secuencia no se puede confirmar a mano. Compare usted las imágenes con la superposición, o compare visitas cuya FLAIR indique la secuencia en la cabecera."
       },
       "sequence_confirmed_by_physician": {
         "message": "Usted confirmó que esta imagen es una FLAIR; su cabecera no lo indica. Su confirmación queda registrada con el resultado.",

@@ -118,6 +118,36 @@ def _source_acquisition(file_id):
     return lcs.read_source_acquisition(file_id)
 
 
+def _memo_acquisition(file_id, memo):
+    """The acquisition record of a source image, read once per request (E2, first review of PR #81)."""
+    if not file_id:
+        return None
+    if file_id not in memo:
+        memo[file_id] = _source_acquisition(file_id)
+    return memo[file_id]
+
+
+async def _gate_before_loading(specs, segmentation_service, current_user, request, acq_memo):
+    """C2 (first review of PR #81; REQ-FUNC-117): the single quality gate decides from the STORED records before
+    any mask, image, registration or atlas is loaded. None when the gate is not enforced (QUALITY_GATE_ENFORCED)."""
+    if not settings.QUALITY_GATE_ENFORCED:
+        return None
+    import asyncio
+    from app.services import quality_gate as qg
+    sources = []
+    for spec in specs:
+        if spec.get("type") == "segmentation":
+            meta = await segmentation_service.get_metadata(spec.get("id"))
+            if meta is None:
+                raise HTTPException(status_code=404, detail=f"Segmentation {spec.get('id')} not found")
+            sources.append(getattr(meta, "file_id", None))
+        else:
+            sources.append(None)            # a binary mask instance has no source image: the gate abstains
+    acquisitions = [_memo_acquisition(s, acq_memo) for s in sources]
+    return await asyncio.to_thread(qg.comparison_gate, *sources, acquisitions=acquisitions,
+                                   user=current_user, request=request)
+
+
 def _source_visit(file_id):
     """Review of PR #63: the study (visit) and study date of a segmentation's source image, or None.
     Returns an awaitable in production (study service); tests may return the record directly."""
@@ -711,6 +741,11 @@ async def compare_longitudinal(
         if not tp1_spec or not tp2_spec:
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
+        acq_memo: dict = {}
+        gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo)
+        if gate is not None and gate.get("ai_output_allowed") is not True:
+            from app.services import quality_gate as qg
+            return qg.abstained_comparison(gate)
 
         async def load_mask(spec):
             """Return (mask, voxel_spacing, source_intensity, nib_img, source_file_id) —
@@ -883,8 +918,7 @@ async def compare_longitudinal(
         # flags are removed and reader decisions apply only to the masks they were given for.
         # RC-061: the measured false-candidate rate from the versioned asset.
         acquisition_check = lcs.compare_acquisitions(
-            _source_acquisition(source_tp1) if source_tp1 else None,
-            _source_acquisition(source_tp2) if source_tp2 else None,
+            _memo_acquisition(source_tp1, acq_memo), _memo_acquisition(source_tp2, acq_memo),   # E2: read once
             spacing_tp1, _spacing_tp2,
         )
         both_saved = tp1_spec.get("type") == "segmentation" and tp2_spec.get("type") == "segmentation"
@@ -903,10 +937,9 @@ async def compare_longitudinal(
             binding=binding, stored_review=stored_review,
             visit_check=visit_check, review_read_failed=review_read_failed,
         )
-        if settings.QUALITY_GATE_ENFORCED:   # RC-123 / RC-126 (DRAFT): the single quality gate decides, fail closed
+        if gate is not None:   # RC-123 / RC-126 (DRAFT): the gate allowed it before loading; its warnings attached
             from app.services import quality_gate as qg
-            result = qg.apply_to_comparison(
-                result, qg.comparison_gate(source_tp1, source_tp2, user=current_user, request=request))
+            result = qg.apply_to_comparison(result, gate)
 
         logger.info("Longitudinal comparison completed (unconfirmed candidates, registration unverified)", extra={
             "new": status_counts.get("new"),
@@ -1044,6 +1077,16 @@ async def detect_slowly_expanding_lesions(
         if not tp1_spec or not tp2_spec:
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
+        if any(s.get("type") != "segmentation" for s in (tp1_spec, tp2_spec)):
+            raise HTTPException(status_code=400,
+                                detail="SEL detection requires segmentation-type inputs "
+                                       "(needs the source FLAIR intensities).")
+        acq_memo: dict = {}
+        gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo)
+        if gate is not None and gate.get("ai_output_allowed") is not True:
+            from app.services import quality_gate as qg
+            return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate), "sels": [], "n_existing": 0,
+                    "n_sel": 0, "registration_verified": False, "adjudication_required": True, "quality_gate": gate}
 
         async def _load(spec):
             if spec.get("type") != "segmentation":
@@ -1067,20 +1110,13 @@ async def detect_slowly_expanding_lesions(
         # (different or unknown acquisition, unknown visit order; same visit / wrong order refused).
         visit_check = await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)
         acquisition_check = lcs.compare_acquisitions(
-            _source_acquisition(source_tp1) if source_tp1 else None,
-            _source_acquisition(source_tp2) if source_tp2 else None,
+            _memo_acquisition(source_tp1, acq_memo), _memo_acquisition(source_tp2, acq_memo),   # E2: read once
             spacing_tp1, _sp2,
         )
-        gate = None
-        if settings.QUALITY_GATE_ENFORCED:   # RC-123 / RC-126 (DRAFT): the single quality gate decides, fail closed
-            from app.services import quality_gate as qg
-            gate = qg.comparison_gate(source_tp1, source_tp2, user=current_user, request=request)
-        gate_stops = gate is not None and gate.get("ai_output_allowed") is not True
-        if acquisition_check["status"] != "same" or visit_check["status"] != "ok" or gate_stops:
+        if acquisition_check["status"] != "same" or visit_check["status"] != "ok":
             return {
                 "ok": False, "abstained": True,
-                "reason": (qg.apply_to_comparison({}, gate)["caveat"] if gate_stops
-                           else lcs._abstention_caveat(acquisition_check, visit_check)),
+                "reason": lcs._abstention_caveat(acquisition_check, visit_check),
                 "sels": [], "n_existing": 0, "n_sel": 0,
                 "acquisition_check": acquisition_check, "visit_check": visit_check,
                 "registration_verified": False, "adjudication_required": True,

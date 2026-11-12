@@ -13,7 +13,7 @@ the tool version, academic citation, and regulatory status.
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool
 from typing import List, Dict, Any
 
 from app.security import get_current_active_user
@@ -87,7 +87,7 @@ async def skull_strip(
 
 class QualityGateRequest(BaseModel):
     file_id: str = Field(..., min_length=1, max_length=500)
-    physician_confirmed_flair: bool = False
+    physician_confirmed_flair: StrictBool = False   # S3: a deliberate attestation, never coerced from "true"/1
 
 
 @router.post("/quality-gate")

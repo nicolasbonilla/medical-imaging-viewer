@@ -22,15 +22,17 @@ fail closed), records one trace with one child span per check that ran, and one 
 """
 from __future__ import annotations
 
+import asyncio
 import copy
+import io
 import json
 import math
 import re
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from app.services import longitudinal_candidate_safety as lcs
-from app.services.dataset_inventory import SEQ_FLAIR, SEQ_T1, SEQ_T2, detect_sequence
 
 GATE_VERSION = "quality-gate/1"
 AGENT_ID = "quality-gate"
@@ -38,21 +40,27 @@ POLICY_PATH = Path(__file__).with_name("quality_gate_policy.json")
 DECISIONS = ("abstain", "pending", "proceed_with_warnings", "proceed")
 STATUSES = ("pass", "warn", "pending", "abstain")
 VISIT_LABELS = ("study", "tp1", "tp2")
-# A FLAIR's inversion time is ~1600-2800 ms; T1 IR / MPRAGE ~400-1200, STIR ~150-250 (as headerEvidence.ts).
-MIN_FLAIR_TI_MS = 1400.0
-_T1_FLAIR = re.compile(r"t1[ _-]*w?[ _-]*flair|flair[ _-]*t1\b")
-# Names of other contrasts that detect_sequence does not know (as headerEvidence.ts): never a FLAIR.
-_OTHER = re.compile(r"\b(dwi|dti|adc|trace|stir|dir|psir|mra|tof|locali[sz]er|scout|gd|gado|post[ _-]?(gd|contrast))\b")
+# Tokeniser of a series description (first review of PR #81, S1/S2): no word-boundary regex — '_' is a word
+# character for \b, so 'AX_DWI_B1000' was read as naming no sequence. The SAME steps are in gate.ts.
+_CAMEL = re.compile(r"([a-z])([A-Z])")
+_PLUS_C = re.compile(r"\+\s*[cC](?![A-Za-z])")
+_NON_ALNUM = re.compile(r"[^a-z0-9]+")
+_LETTERS = re.compile(r"[a-z]*")
 
 _POLICY: Optional[Dict[str, Any]] = None
 
 
-def load_policy() -> Dict[str, Any]:
-    """The shipped policy (a deep copy; the cached original is never handed out)."""
+def _policy() -> Dict[str, Any]:
+    """The shipped policy, cached and read only (no copy per call; E3)."""
     global _POLICY
     if _POLICY is None:
         _POLICY = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
-    return copy.deepcopy(_POLICY)
+    return _POLICY
+
+
+def load_policy() -> Dict[str, Any]:
+    """A deep copy of the shipped policy, for a caller that changes it (the cached original is never handed out)."""
+    return copy.deepcopy(_policy())
 
 
 # ----------------------------------------------------------------------------- the rule (pure)
@@ -77,14 +85,15 @@ def _platform_check(platform, policy) -> Dict[str, Any]:
                   if isinstance(code, str) else policy["platform"]["otherwise"])
 
 
-def _sequence_check(visit, label, policy) -> Dict[str, Any]:
+def _sequence_check(visit, label, policy, mode) -> Dict[str, Any]:
     rules = policy["sequence"]
     raw = visit.get("sequence")
     seq = "missing" if raw is None else (raw if isinstance(raw, str) and raw in rules["values"] else "unknown")
     if seq in rules["accepted"]:
         return _check("sequence", label, "pass")
     if seq in rules["confirmable_by_physician"]:
-        if visit.get("physician_confirmed_flair") is True:
+        # G13: the attestation lifts only unknown / missing, and only where the product offers it (single study)
+        if visit.get("physician_confirmed_flair") is True and mode in rules["confirmation_modes"]:
             return _check("sequence", label, "warn", "sequence_confirmed_by_physician", sequence=seq)
         return _check("sequence", label, "abstain", f"sequence_{seq}")
     return _check("sequence", label, "abstain", "sequence_not_flair", sequence=seq)
@@ -195,7 +204,7 @@ def _evaluate(inputs, policy) -> Dict[str, Any]:
         return _result([platform, _check("input", None, "abstain", "gate_input_invalid")], policy)
     checks = [platform]
     for label, visit in zip(spec["visits"], visits):
-        checks.append(_sequence_check(visit, label, policy))
+        checks.append(_sequence_check(visit, label, policy, mode))
         checks.append(_thickness_check(visit, label, policy))
         if "skull" in spec["checks"] and mode in policy["skull"]["required_in_modes"]:
             checks.append(_skull_check(visit, label))
@@ -206,7 +215,7 @@ def _evaluate(inputs, policy) -> Dict[str, Any]:
 
 def evaluate(inputs, policy: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """The gate's decision for normalised inputs (see the design, section 3). Total: never raises."""
-    policy = policy if policy is not None else load_policy()
+    policy = policy if policy is not None else _policy()
     try:
         return _evaluate(inputs, policy)
     except Exception:  # noqa: BLE001 — a fault in the gate is an abstention, never a pass
@@ -225,24 +234,49 @@ def canonical(result: Dict[str, Any]) -> str:
 
 
 # ----------------------------------------------------------------------------- inputs from stored metadata
-def sequence_from_header(series_description: Any, inversion_time_ms: Any = None) -> str:
+def sequence_tokens(text: str) -> List[str]:
+    """The tokens of a series description: camelCase split, '*' read as 'star', '+C' as 'postcontrast', lower
+    case, split on every non-alphanumeric character (so '_' separates, unlike a regex word boundary)."""
+    s = _PLUS_C.sub(" postcontrast ", _CAMEL.sub(r"\1 \2", text).replace("*", " star "))
+    return [t for t in _NON_ALNUM.split(s.lower()) if t]
+
+
+def _weighted(token: str, prefix: str) -> bool:
+    return token.startswith(prefix) and _LETTERS.fullmatch(token[len(prefix):]) is not None
+
+
+def _classify_tokens(tokens: List[str], vocab: Dict[str, Any]) -> str:
+    other = set(vocab["other_words"])
+    flair_word = vocab["flair_substring"]
+    is_other = any({t, t.rstrip("0123456789")} & other for t in tokens)
+    flair = (any(flair_word in t for t in tokens) or any(t in vocab["flair_compounds"] for t in tokens)
+             or any([a, b] in vocab["flair_pairs"] for a, b in zip(tokens, tokens[1:])))
+    t1 = (any(_weighted(t, vocab["t1_prefix"]) or t in vocab["t1_words"] for t in tokens)
+          or any(flair_word in t and vocab["t1_prefix"] in t.replace(flair_word, "") for t in tokens))
+    t2 = any(_weighted(t, vocab["t2_prefix"]) for t in tokens)
+    if is_other or (flair and t1):          # a non-FLAIR name, or a T1-weighted FLAIR: ALWAYS abstains
+        return "other"
+    if flair:
+        return "FLAIR"
+    return "T1" if t1 else "T2" if t2 else "unknown"
+
+
+def sequence_from_header(series_description: Any, inversion_time_ms: Any = None,
+                         policy: Optional[Dict[str, Any]] = None) -> str:
     """Sequence of an image from its header text (series description) and inversion time — never the file name.
 
-    FLAIR / T1 / T2 / other (PD, SWI, a T1-weighted FLAIR, an inversion time too short for a FLAIR) / unknown
-    (text that names no sequence, or only a FLAIR-compatible inversion time) / missing (nothing recorded)."""
-    text = " ".join(series_description.split()) if isinstance(series_description, str) else ""
+    FLAIR (only an unambiguous FLAIR, T2-FLAIR or dark-fluid name) / T1 / T2 / other (any token naming a
+    non-FLAIR sequence, a T1 weighting with FLAIR, a localizer, a derived or contrast image, an inversion time
+    too short for a FLAIR) / unknown (names no sequence, or only a FLAIR-compatible inversion time) / missing."""
+    rules = (policy if policy is not None else _policy())["sequence"]
+    tokens = sequence_tokens(series_description) if isinstance(series_description, str) else []
     ti = _number(inversion_time_ms)
     ti = ti if ti is not None and ti > 0 else None
-    if not text and ti is None:
+    if not tokens and ti is None:
         return "missing"
-    if ti is not None and ti < MIN_FLAIR_TI_MS:
+    if ti is not None and ti < rules["min_flair_inversion_time_ms"]:
         return "other"
-    found = detect_sequence(text) if text else None
-    if found == SEQ_FLAIR:
-        return "other" if _T1_FLAIR.search(text.lower()) else "FLAIR"
-    if found in (SEQ_T1, SEQ_T2):
-        return found
-    return "other" if found or _OTHER.search(text.lower()) else "unknown"
+    return _classify_tokens(tokens, rules["vocabulary"]) if tokens else "unknown"
 
 
 def thickness_from_geometry(geometry: Any) -> Optional[Dict[str, Any]]:
@@ -253,17 +287,19 @@ def thickness_from_geometry(geometry: Any) -> Optional[Dict[str, Any]]:
     return {"state": get("state"), "effective_mm": get("effective_mm")}
 
 
-def thickness_from_acquisition_record(acq: Optional[dict]) -> Optional[Dict[str, Any]]:
+def thickness_from_acquisition_record(acq: Optional[dict], thin_limit_mm: Optional[float] = None
+                                      ) -> Optional[Dict[str, Any]]:
     """The thickness input from a stored acquisition record (PACS import). The record does not say whether the
-    image is ORIGINAL, so it is at most a lower bound (as RC-054 treats a derived image): at_least above 1.5 mm,
-    otherwise not determinable."""
+    image is ORIGINAL, so it is at most a lower bound (as RC-054 treats a derived image): at_least above the thin
+    limit of the policy being evaluated (E3), otherwise not determinable."""
     if not isinstance(acq, dict):
         return None
+    limit = thin_limit_mm if thin_limit_mm is not None else _policy()["thickness"]["thin_limit_mm"]
     values = [lcs._number(acq.get(k)) for k in ("slice_thickness_mm", "spacing_between_slices_mm")]
     if values[0] is None:
         return {"state": "not_determinable", "effective_mm": None}
     mm = max(v for v in values if v is not None)
-    if mm > load_policy()["thickness"]["thin_limit_mm"]:
+    if mm > limit:
         return {"state": "at_least", "effective_mm": mm}
     return {"state": "not_determinable", "effective_mm": None}
 
@@ -301,30 +337,75 @@ def study_of(file_id) -> Optional[str]:
     return m.group(1) if m else None
 
 
+_NO_HEADER = {"series_description": None, "inversion_time_ms": None, "thickness": None}
+_HEADER_CACHE: "OrderedDict[tuple, Dict[str, Any]]" = OrderedDict()
+HEADER_CACHE_MAX = 256
+
+
+def _nifti_header_image(data: bytes):
+    """A NIfTI image whose header is read and whose voxels are NOT (nibabel's lazy array proxy)."""
+    import gzip
+    import nibabel as nib
+    stream = gzip.GzipFile(fileobj=io.BytesIO(data)) if data[:2] == b"\x1f\x8b" else io.BytesIO(data)
+    holder = nib.FileHolder(fileobj=stream)
+    return nib.Nifti1Image.from_file_map({"header": holder, "image": holder})
+
+
+def read_header_fields(data: bytes, name: str, imaging_service) -> Dict[str, Any]:
+    """Header only (E1): pydicom with stop_before_pixels, a lazy NIfTI header — no voxel is decoded, normalised
+    or summarised. Series description and inversion time (DICOM), RC-054 thickness (both)."""
+    from app.services.acquisition_geometry import derive_from_dicom_dataset, derive_from_nifti_image
+    fmt = getattr(imaging_service.detect_format(data, name), "value", None)
+    if fmt == "dicom":
+        import pydicom
+        ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True)
+        return {"series_description": str(ds.get("SeriesDescription", "") or "") or None,
+                "inversion_time_ms": lcs._number(getattr(ds, "InversionTime", None)),
+                "thickness": thickness_from_geometry(derive_from_dicom_dataset(ds))}
+    if fmt == "nifti":
+        return {**_NO_HEADER, "thickness": thickness_from_geometry(derive_from_nifti_image(_nifti_header_image(data)))}
+    return dict(_NO_HEADER)
+
+
+async def _file_version(storage_service, bucket: str, file_path: str) -> Optional[tuple]:
+    try:
+        meta = await storage_service.get_file_metadata(bucket, file_path)
+    except Exception:  # noqa: BLE001 — no version known: no cache
+        return None
+    version = (getattr(meta, "size", None), getattr(meta, "checksum_sha256", None), getattr(meta, "created_at", None))
+    return (file_path, *version) if meta is not None and version[0] is not None and any(version[1:]) else None
+
+
 async def single_study_inputs(file_path: str, storage_service, imaging_service, *, bucket: str,
                               physician_confirmed_flair: bool = False) -> Dict[str, Any]:
     """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file: its header's
-    series description (else the stored series record), the RC-054 geometry, the stored inversion time. The
-    skull is 'pending': the browser's skull gates and the app's removal decide it before the output (RC-125).
-    Anything unreadable stays unknown, so the gate warns or abstains; it never raises."""
-    description, geometry = None, None
-    try:
-        data = await storage_service.download_file(bucket, file_path)
-        fmt = getattr(imaging_service.detect_format(data, file_path.rsplit("/", 1)[-1]), "value", None)
-        loader = {"dicom": imaging_service.load_dicom, "nifti": imaging_service.load_nifti}.get(fmt)
-        if loader is not None:
-            _, meta = loader(data)
-            description = getattr(meta, "series_description", None)
-            geometry = getattr(meta, "acquisition_geometry", None)
-    except Exception:  # noqa: BLE001 — unknown header: sequence missing, thickness unknown
-        pass
-    acq = lcs.read_source_acquisition(file_path)
-    if not (isinstance(description, str) and description.strip()):
-        description = read_source_series_description(file_path)
+    series description and inversion time (else the stored series and acquisition records), the RC-054
+    geometry. Header only, parsed off the event loop, cached per file version (E1). The skull is 'pending': the
+    browser's skull gates and the app's removal decide it before the output (RC-125). Anything unreadable stays
+    unknown, so the gate warns or abstains; it never raises."""
+    key = await _file_version(storage_service, bucket, file_path)
+    fields = _HEADER_CACHE.get(key) if key else None
+    if fields is None:
+        try:
+            data = await storage_service.download_file(bucket, file_path)
+            fields = await asyncio.to_thread(read_header_fields, data, file_path.rsplit("/", 1)[-1], imaging_service)
+        except Exception:  # noqa: BLE001 — unknown header: sequence missing, thickness unknown (not cached)
+            fields = dict(_NO_HEADER)
+        else:
+            if key:
+                _HEADER_CACHE[key] = fields
+                while len(_HEADER_CACHE) > HEADER_CACHE_MAX:
+                    _HEADER_CACHE.popitem(last=False)
+    else:
+        _HEADER_CACHE.move_to_end(key)
+    acq, stored = await asyncio.to_thread(
+        lambda: (lcs.read_source_acquisition(file_path), read_source_series_description(file_path)))
+    description = fields["series_description"] or stored
+    ti = fields["inversion_time_ms"] if fields["inversion_time_ms"] is not None else (acq or {}).get("inversion_time_ms")
     return {"mode": "single", "visits": [{
-        "sequence": sequence_from_header(description, (acq or {}).get("inversion_time_ms")),
+        "sequence": sequence_from_header(description, ti),
         "physician_confirmed_flair": physician_confirmed_flair is True,
-        "thickness": thickness_from_geometry(geometry),
+        "thickness": copy.deepcopy(fields["thickness"]),
         "scanner": None,
         "skull": "pending",
     }]}
@@ -338,15 +419,23 @@ def actor_for(user, request=None):
                       role=str(getattr(role, "value", role)) if role is not None else None, request=request)
 
 
-def visit_from_stored_records(file_id, *, skull: str = "unknown", physician_confirmed_flair: bool = False,
-                              study_service=None) -> Dict[str, Any]:
-    """Gate inputs of one visit from the records stored with its source image (comparison mode)."""
-    acq = lcs.read_source_acquisition(file_id, study_service) if file_id else None
+_UNREAD = object()
+
+
+def visit_from_stored_records(file_id, *, acquisition: Any = _UNREAD, skull: str = "unknown",
+                              physician_confirmed_flair: bool = False, study_service=None,
+                              policy: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Gate inputs of one visit from the records stored with its source image (comparison mode). The caller passes
+    the acquisition record it already read (E2); it is read here only when not given."""
+    policy = policy if policy is not None else _policy()
+    if acquisition is _UNREAD:
+        acquisition = lcs.read_source_acquisition(file_id, study_service) if file_id else None
+    acq = acquisition if isinstance(acquisition, dict) else None
     description = read_source_series_description(file_id, study_service) if file_id else None
     return {
-        "sequence": sequence_from_header(description, (acq or {}).get("inversion_time_ms")),
+        "sequence": sequence_from_header(description, (acq or {}).get("inversion_time_ms"), policy),
         "physician_confirmed_flair": physician_confirmed_flair is True,
-        "thickness": thickness_from_acquisition_record(acq),
+        "thickness": thickness_from_acquisition_record(acq, policy["thickness"]["thin_limit_mm"]),
         "scanner": scanner_from_acquisition_record(acq),
         "skull": skull,
     }
@@ -413,8 +502,10 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
             reg.audit("denied", state["refusal"], event="agent.run", agent_id=AGENT_ID,
                       study_key=study_key or None, trace_id=state["trace_id"])
         else:
-            reg.audit("success", f"quality_gate.{result['decision']}", event="agent.run", agent_id=AGENT_ID,
-                      study_key=study_key or None, trace_id=state["trace_id"])
+            # S3: the physician's attestation is recorded with the run's actor (the authenticated clinician)
+            attested = any(c["code"] == "sequence_confirmed_by_physician" for c in result["checks"])
+            reg.audit("success", f"quality_gate.{result['decision']}" + (".physician_attested" if attested else ""),
+                      event="agent.run", agent_id=AGENT_ID, study_key=study_key or None, trace_id=state["trace_id"])
     return result
 
 
@@ -427,15 +518,53 @@ def apply_to_comparison(result: Dict[str, Any], gate: Dict[str, Any]) -> Dict[st
         out.update({"abstained": True, "changes": []})
         out.update({k: None for k in lcs.ABSTAINED_NULL_FIELDS})
         out["reader_confirmed_activity"] = None
-        out["caveat"] = ("No automatic change candidates and no lesion load or count comparison for this pair: the "
-                         "quality gate stopped it (" + ", ".join(gate.get("codes") or ["gate_unavailable"]) + "). "
-                         "Compare the images visually with the overlay.")
+        previous = out.get("caveat")       # C3: RC-062's reasons (visit dates, acquisition fields) are kept
+        out["caveat"] = (previous.rstrip() + " " if isinstance(previous, str) and previous.strip() else "") + gate_caveat(gate)
     return out
 
 
-def comparison_gate(source_tp1, source_tp2, *, user=None, request=None) -> Dict[str, Any]:
-    """The gate on two visits from their stored records (RC-123), through the platform (RC-126)."""
-    visits = [visit_from_stored_records(s) for s in (source_tp1, source_tp2)]
+# C3: plain reasons for the report and the assistant (never a raw code). The UI shows the en/es/de texts of the
+# i18n files through QualityGatePanel; these are the backend's English sentences for text consumers.
+CAVEAT_REASONS = {
+    "gate_not_approved": "the quality gate is not yet approved for use",
+    "gate_switched_off": "the quality gate is switched off",
+    "gate_unavailable": "the quality gate could not be completed",
+    "gate_input_invalid": "the information needed to check the images is incomplete",
+    "sequence_not_flair": "an image is not a FLAIR (its header names another sequence)",
+    "sequence_unknown": "an image header does not say which sequence it is",
+    "sequence_missing": "an image carries no sequence information",
+    "sequence_confirmed_by_physician": "a physician confirmed as FLAIR an image whose header does not say so",
+    "thickness_thick": "the slices are thick, so small lesions can be missed",
+    "thickness_at_least": "the slices are thicker than 1.5 mm (only a lower bound is known), so small lesions can be missed",
+    "thickness_unknown": "the original slice thickness cannot be read",
+    "thickness_out_of_range": "the slices are thicker than the range in which the AI has been shown to work",
+    "scanner_changed": "the two visits were acquired on different scanners",
+    "scanner_unknown": "it cannot be established that the two visits were acquired on the same scanner",
+    "skull_present": "an image still has its skull",
+    "skull_unknown": "it cannot be confirmed that the skull was removed",
+    "skull_pending": "the skull has not been checked yet",
+}
+
+
+def gate_caveat(gate: Dict[str, Any]) -> str:
+    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in (gate.get("codes") or ["gate_unavailable"])]
+    return ("No automatic change candidates and no lesion load or count comparison for this pair: the quality gate "
+            "stopped it, because " + "; ".join(reasons) + ". Compare the images visually with the overlay.")
+
+
+def abstained_comparison(gate: Dict[str, Any]) -> Dict[str, Any]:
+    """The comparison response when the gate stops it BEFORE anything is loaded (C2): every quantity withheld."""
+    out = {"abstained": True, "changes": [], "quality_gate": gate, "registration_verified": False,
+           "adjudication_required": True, "reader_confirmed_activity": None, "caveat": gate_caveat(gate)}
+    out.update({k: None for k in lcs.ABSTAINED_NULL_FIELDS})
+    return out
+
+
+def comparison_gate(source_tp1, source_tp2, *, acquisitions=None, user=None, request=None) -> Dict[str, Any]:
+    """The gate on two visits from their stored records (RC-123), through the platform (RC-126). ``acquisitions``:
+    the two records the route already read (E2); read here only when not given."""
+    given = list(acquisitions) if acquisitions is not None else [_UNREAD, _UNREAD]
+    visits = [visit_from_stored_records(s, acquisition=a) for s, a in zip((source_tp1, source_tp2), given)]
     return run_quality_gate({"mode": "comparison", "visits": visits},
                             study_key=study_of(source_tp2) or study_of(source_tp1) or "",
                             actor=actor_for(user, request) if user is not None else None)

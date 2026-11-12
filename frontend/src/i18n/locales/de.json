@@ -1539,11 +1539,13 @@
       },
       "sequence_unknown": {
         "message": "Der Bildkopf nennt keine Sequenz, daher kann die Anwendung nicht erkennen, ob es ein FLAIR ist.",
-        "action": "Wenn Sie sicher sind, dass es ein T2-FLAIR ist, setzen Sie das Bestätigungshäkchen. Sonst wählen Sie das FLAIR-Bild."
+        "action": "Wenn Sie sicher sind, dass es ein T2-FLAIR ist, setzen Sie das Bestätigungshäkchen. Sonst wählen Sie das FLAIR-Bild.",
+        "action_comparison": "Bei einem Vergleich kann die Sequenz nicht von Hand bestätigt werden. Vergleichen Sie die Bilder selbst mit der Überlagerung oder vergleichen Sie Untersuchungen, deren FLAIR-Bildkopf die Sequenz nennt."
       },
       "sequence_missing": {
         "message": "Das Bild enthält keine Angaben zur Sequenz, daher kann die Anwendung nicht erkennen, ob es ein FLAIR ist.",
-        "action": "Wenn Sie sicher sind, dass es ein T2-FLAIR ist, setzen Sie das Bestätigungshäkchen. Sonst wählen Sie das FLAIR-Bild."
+        "action": "Wenn Sie sicher sind, dass es ein T2-FLAIR ist, setzen Sie das Bestätigungshäkchen. Sonst wählen Sie das FLAIR-Bild.",
+        "action_comparison": "Bei einem Vergleich kann die Sequenz nicht von Hand bestätigt werden. Vergleichen Sie die Bilder selbst mit der Überlagerung oder vergleichen Sie Untersuchungen, deren FLAIR-Bildkopf die Sequenz nennt."
       },
       "sequence_confirmed_by_physician": {
         "message": "Sie haben bestätigt, dass dieses Bild ein FLAIR ist; der Bildkopf sagt das nicht. Ihre Bestätigung wird mit dem Ergebnis gespeichert.",
