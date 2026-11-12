@@ -59,7 +59,23 @@ export interface GateInput {
 export interface GatePolicy {
   policy_version: string;
   modes: Record<string, { visits: string[]; checks: string[] }>;
-  sequence: { values: string[]; accepted: string[]; confirmable_by_physician: string[] };
+  sequence: {
+    values: string[];
+    accepted: string[];
+    confirmable_by_physician: string[];
+    confirmation_modes: string[];
+    min_flair_inversion_time_ms: number;
+    vocabulary: {
+      flair_substring: string;
+      flair_compounds: string[];
+      flair_pairs: [string, string][];
+      t1_prefix: string;
+      t2_prefix: string;
+      t1_words: string[];
+      other_words: string[];
+    };
+  };
+  mode_actions?: Record<string, unknown>;
   thickness: {
     thin_limit_mm: number;
     plausible_max_mm: number;
@@ -94,13 +110,14 @@ function platformCheck(platform: unknown, policy: GatePolicy): GateCheck {
   return mk('platform', null, 'abstain', mapped);
 }
 
-function sequenceCheck(visit: Obj, label: GateVisitLabel, policy: GatePolicy): GateCheck {
+function sequenceCheck(visit: Obj, label: GateVisitLabel, policy: GatePolicy, mode: string): GateCheck {
   const raw = visit.sequence;
   const seq = raw === undefined || raw === null ? 'missing'
     : typeof raw === 'string' && policy.sequence.values.includes(raw) ? raw : 'unknown';
   if (policy.sequence.accepted.includes(seq)) return mk('sequence', label, 'pass');
   if (policy.sequence.confirmable_by_physician.includes(seq)) {
-    if (visit.physician_confirmed_flair === true) {
+    // G13: the attestation lifts only unknown / missing, and only where the product offers it (single study)
+    if (visit.physician_confirmed_flair === true && policy.sequence.confirmation_modes.includes(mode)) {
       return mk('sequence', label, 'warn', 'sequence_confirmed_by_physician', { sequence: seq });
     }
     return mk('sequence', label, 'abstain', `sequence_${seq}`);
@@ -206,7 +223,7 @@ function evaluateUnsafe(inputs: unknown, policy: GatePolicy): GateResult {
   const checks: GateCheck[] = [platform];
   spec.visits.forEach((label, i) => {
     const visit = visits[i] as Obj;
-    checks.push(sequenceCheck(visit, label as GateVisitLabel, policy));
+    checks.push(sequenceCheck(visit, label as GateVisitLabel, policy, mode as string));
     checks.push(thicknessCheck(visit, label as GateVisitLabel, policy));
     if (spec.checks.includes('skull') && policy.skull.required_in_modes.includes(mode as string)) {
       checks.push(skullCheck(visit, label as GateVisitLabel));
@@ -223,6 +240,62 @@ export function evaluateGate(inputs: GateInput | unknown, policy: GatePolicy = Q
   } catch {
     return result([mk('input', null, 'abstain', 'gate_input_invalid')], policy);
   }
+}
+
+/** The tokens of a series description, as quality_gate.sequence_tokens: camelCase split, '*' read as 'star', '+C'
+ *  as 'postcontrast', lower case, split on every non-alphanumeric character (no word-boundary regex; S1). */
+export function sequenceTokens(text: string): string[] {
+  const s = text.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/\*/g, ' star ').replace(/\+\s*[cC](?![A-Za-z])/g, ' postcontrast ');
+  return s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+}
+
+const weighted = (t: string, prefix: string) => t.startsWith(prefix) && /^[a-z]*$/.test(t.slice(prefix.length));
+
+function classifyTokens(tokens: string[], v: GatePolicy['sequence']['vocabulary']): string {
+  const other = new Set(v.other_words);
+  const isOther = tokens.some((t) => other.has(t) || other.has(t.replace(/[0-9]+$/, '')));
+  const flair = tokens.some((t) => t.includes(v.flair_substring)) || tokens.some((t) => v.flair_compounds.includes(t))
+    || tokens.slice(1).some((b, i) => v.flair_pairs.some(([x, y]) => x === tokens[i] && y === b));
+  const t1 = tokens.some((t) => weighted(t, v.t1_prefix) || v.t1_words.includes(t))
+    || tokens.some((t) => t.includes(v.flair_substring) && t.split(v.flair_substring).join('').includes(v.t1_prefix));
+  const t2 = tokens.some((t) => weighted(t, v.t2_prefix));
+  if (isOther || (flair && t1)) return 'other';                // a non-FLAIR name, or a T1-weighted FLAIR: ALWAYS abstains
+  if (flair) return 'FLAIR';
+  return t1 ? 'T1' : t2 ? 'T2' : 'unknown';
+}
+
+/** Sequence from a series description and inversion time, as quality_gate.sequence_from_header (G12, G4). */
+export function sequenceFromHeader(text: unknown, inversionTimeMs: unknown = null, policy: GatePolicy = QUALITY_GATE_POLICY): string {
+  const rules = policy.sequence;
+  const tokens = typeof text === 'string' ? sequenceTokens(text) : [];
+  const n = num(inversionTimeMs);
+  const ti = n !== null && n > 0 ? n : null;
+  if (!tokens.length && ti === null) return 'missing';
+  if (ti !== null && ti < rules.min_flair_inversion_time_ms) return 'other';
+  return tokens.length ? classifyTokens(tokens, rules.vocabulary) : 'unknown';
+}
+
+/** The i18n action key a check shows in a mode (G14): only where the attestation is offered may it be asked for. */
+export function actionKey(mode: string | null | undefined, code: string, policy: GatePolicy = QUALITY_GATE_POLICY): string {
+  const table = mode && isObj(policy.mode_actions) ? policy.mode_actions[mode] : undefined;
+  const key = isObj(table) ? table[code] : undefined;
+  return typeof key === 'string' ? key : 'action';
+}
+
+/** S3: the physician may attest a FLAIR only for a sequence the backend found unknown or missing, in a single study. */
+export function attestable(server: ServerGateResponse | null | undefined, policy: GatePolicy = QUALITY_GATE_POLICY): boolean {
+  const inputs = server?.inputs;
+  if (!isObj(inputs) || !Array.isArray(inputs.visits) || typeof inputs.mode !== 'string') return false;
+  if (!policy.sequence.confirmation_modes.includes(inputs.mode)) return false;
+  return (inputs.visits as unknown[]).some((v) => isObj(v) && (v.sequence === 'unknown' || v.sequence === 'missing' || v.sequence === null));
+}
+
+/** The backend's answer re-evaluated locally with the physician's attestation (no call per toggle; E1). */
+export function withAttestation(server: ServerGateResponse | null | undefined, attested: boolean): GateResult | null {
+  if (!server) return null;
+  if (!isObj(server.inputs) || !Array.isArray(server.inputs.visits) || !isObj(server.platform)) return server;
+  const visits = (server.inputs.visits as unknown[]).map((v) => (isObj(v) ? { ...v, physician_confirmed_flair: attested === true } : v));
+  return evaluateGate({ mode: server.inputs.mode, visits, platform: server.platform });
 }
 
 /** The decision as one line, identical to quality_gate.canonical (G4). */

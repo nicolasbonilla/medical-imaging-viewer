@@ -1481,6 +1481,7 @@
     "draft": "Draft — pending approval",
     "aiHidden": "The AI result is not shown, because the quality check does not allow it.",
     "checking": "Checking the image before the AI…",
+    "attest": "I confirm, on my own responsibility, that this image is a T2-FLAIR. Its header does not say so; my confirmation is recorded in the audit with my name.",
     "decision": {
       "abstain": "The AI does not run for this step",
       "pending": "The AI may start; its result is shown only after the last check",

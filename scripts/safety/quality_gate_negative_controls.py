@@ -15,7 +15,13 @@ files the tests need (made under the system temporary folder, deleted at the end
   must pass before (baseline) and after (restored).
 
 Frontend mutations that only vitest can observe (React components) are listed with runner 'vitest' and run
-only when frontend/node_modules exists; otherwise they are recorded as 'not run' (GitHub Actions runs vitest).
+only when frontend/node_modules exists; otherwise they are recorded as 'not run (no node_modules)', never as
+detected or survived (GitHub Actions runs vitest).
+
+First review of PR #81, S4 (lesson I15 of PR #78): EVERY test command runs with its working directory inside the
+throwaway copy (pytest and Node from the copy's root, vitest from the copy's frontend with node_modules linked),
+and before a kill counts the script asserts that every mutated file lies under that working directory — a mutant
+can never be checked against unmutated code.
 
 Backend tests run OFFLINE: GOOGLE_APPLICATION_CREDENTIALS points to a missing file, CLOUDSDK_CONFIG to an
 empty folder, GOOGLE_CLOUD_PROJECT=mstool-offline-tests, ANTHROPIC_API_KEY removed (PRB-002).
@@ -46,9 +52,10 @@ COPY_TREES = ["backend/app", "backend/data"]
 COPY_FILES = ["backend/pytest.ini", "backend/tests/__init__.py", "backend/tests/conftest.py",
               "backend/tests/unit/__init__.py", *("backend/" + t for t in BACKEND_TESTS),
               "frontend/src/config/qualityGatePolicy.v1.json", "frontend/src/config/qualityGate.cases.v1.json",
+              "frontend/src/config/qualityGate.sequences.v1.json",
               "frontend/src/i18n/locales/en.json", "frontend/src/i18n/locales/es.json",
               "frontend/src/i18n/locales/de.json", "frontend/src/services/qualityGate/gate.ts"]
-IMPORT_PROBE = ("import sys; sys.path.insert(0, '.'); import app.services.quality_gate, app.agent_platform.registry, "
+IMPORT_PROBE = ("import sys; sys.path.insert(0, 'backend'); import app.services.quality_gate, app.agent_platform.registry, "
                 "app.agent_platform.tracing, app.api.routes.clinical_tools, app.api.routes.segmentation_analysis")
 
 QG = "backend/app/services/quality_gate.py"
@@ -61,6 +68,10 @@ TS = "frontend/src/services/qualityGate/gate.ts"
 FPOL = "frontend/src/config/qualityGatePolicy.v1.json"
 CARD = "frontend/src/components/BrowserFlamesCard.tsx"
 PANEL = "frontend/src/components/QualityGatePanel.tsx"
+CT = "backend/app/api/routes/clinical_tools.py"
+EN = "frontend/src/i18n/locales/en.json"
+CMP_ACTION = ("In a comparison the sequence cannot be confirmed by hand. Compare the images visually with the overlay, "
+              "or compare visits whose FLAIR header names the sequence.")
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runner, controls)
     # ── RC-122: FLAIR only, unknown never passes ──
@@ -96,9 +107,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Q9_abstention_does_not_withhold": ([(QG, '        out.update({k: None for k in lcs.ABSTAINED_NULL_FIELDS})\n        out["reader_confirmed_activity"] = None\n',
         '        pass\n')],
         "a comparison the gate stops still carries lesion counts and loads", "backend", "RC-123"),
-    "Q10_route_ignores_the_gate": ([(SA, '            result = qg.apply_to_comparison(\n'
-        '                result, qg.comparison_gate(source_tp1, source_tp2, user=current_user, request=request))\n',
-        '            qg.comparison_gate(source_tp1, source_tp2, user=current_user, request=request)\n')],
+    "Q10_route_ignores_the_gate": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            from app.services import quality_gate as qg\n            return qg.abstained_comparison(gate)\n', '        pass\n'),
+        (SA, '            result = qg.apply_to_comparison(result, gate)\n', '            pass\n')],
         "the longitudinal route consults the gate but shows the candidates anyway", "backend", "RC-123"),
     # ── RC-124: data rule ──
     "Q11_hook_ignores_the_licence": ([(QG, '    if not isinstance(asset, dict) or asset.get("licence") not in rules["commercial_licence_allowlist"]:\n',
@@ -141,12 +151,13 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Q24_policy_changed_silently": ([(POL, '    "thin_limit_mm": 1.5,\n', '    "thin_limit_mm": 2.0,\n')],
         "the backend policy changes without the registry, the fixture or the browser copy", "backend", "RC-126, RC-127"),
     # ── input derivation (RC-122) ──
-    "Q25_file_name_as_evidence": ([(QG, '        description = read_source_series_description(file_path)\n',
-        '        description = read_source_series_description(file_path) or file_path\n')],
+    "Q25_file_name_as_evidence": ([(QG, '    description = fields["series_description"] or stored\n',
+        '    description = fields["series_description"] or stored or file_path\n')],
         "the file name is read as the sequence (RC-049 forbids it)", "backend", "RC-122"),
-    "Q26_t1_flair_accepted": ([(QG, '        return "other" if _T1_FLAIR.search(text.lower()) else "FLAIR"\n', '        return "FLAIR"\n')],
+    "Q26_t1_flair_accepted": ([(QG, '    if is_other or (flair and t1):          # a non-FLAIR name, or a T1-weighted FLAIR: ALWAYS abstains\n',
+        '    if is_other:\n')],
         "a T1-weighted FLAIR is taken as a T2 FLAIR", "backend", "RC-122"),
-    "Q27_short_inversion_time_ignored": ([(QG, '    if ti is not None and ti < MIN_FLAIR_TI_MS:\n', '    if False:\n')],
+    "Q27_short_inversion_time_ignored": ([(QG, '    if ti is not None and ti < rules["min_flair_inversion_time_ms"]:\n', '    if False:\n')],
         "an inversion time too short for a FLAIR is ignored", "backend", "RC-122"),
     "Q28_record_called_native": ([(QG, '        return {"state": "at_least", "effective_mm": mm}\n', '        return {"state": "native", "effective_mm": mm}\n')],
         "a stored acquisition record (not provably original) reported as native thickness", "backend", "RC-122, RC-124"),
@@ -154,6 +165,57 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Q29_spanish_message_missing": ([(ES, '        "message": "La cabecera de la imagen indica que es una imagen {{sequence}}, no una FLAIR. La IA solo funciona con imágenes FLAIR.",\n',
         '        "message": "",\n')],
         "a reason shown to a Spanish-speaking physician is empty", "backend", "RC-127"),
+    # ── first review of PR #81 ──
+    "R1_underscore_kept_in_tokens": ([(QG, '_NON_ALNUM = re.compile(r"[^a-z0-9]+")\n', '_NON_ALNUM = re.compile(r"[^a-z0-9_]+")\n')],
+        "'_' kept inside tokens (as a regex word boundary does): AX_DWI_B1000 names no sequence", "backend", "RC-122"),
+    "R2_camel_case_not_split": ([(QG, '    s = _PLUS_C.sub(" postcontrast ", _CAMEL.sub(r"\\1 \\2", text).replace("*", " star "))\n',
+        '    s = _PLUS_C.sub(" postcontrast ", text.replace("*", " star "))\n')],
+        "camelCase names (TraceW) are not split", "backend", "RC-122"),
+    "R3_star_not_read": ([(QG, '    s = _PLUS_C.sub(" postcontrast ", _CAMEL.sub(r"\\1 \\2", text).replace("*", " star "))\n',
+        '    s = _PLUS_C.sub(" postcontrast ", _CAMEL.sub(r"\\1 \\2", text))\n')],
+        "'T2*' read as a T2", "backend", "RC-122"),
+    "R4_confirmation_in_a_comparison": ([(QG, '        if visit.get("physician_confirmed_flair") is True and mode in rules["confirmation_modes"]:\n',
+        '        if visit.get("physician_confirmed_flair") is True:\n')],
+        "a confirmation lifts an unknown sequence in a comparison, where none is offered", "backend", "RC-122"),
+    "R5_lax_attestation_boolean": ([(CT, '    physician_confirmed_flair: StrictBool = False   # S3: a deliberate attestation, never coerced from "true"/1\n',
+        '    physician_confirmed_flair: bool = False\n')],
+        "'true' or 1 accepted as the physician's attestation", "backend", "RC-122, RC-126"),
+    "R6_attestation_not_audited": ([(QG, '+ (".physician_attested" if attested else "")', '+ ""')],
+        "the physician's attestation leaves no audit trace", "backend", "RC-126"),
+    "R7_comparison_asks_for_a_confirmation": ([(EN, '        "action_comparison": "' + CMP_ACTION + '"\n      },\n      "sequence_confirmed_by_physician"',
+        '        "action_comparison": "If you are sure it is a T2-FLAIR, tick the confirmation box."\n      },\n      "sequence_confirmed_by_physician"')],
+        "a comparison asks for an attestation it cannot take", "backend", "RC-127"),
+    "R8_gate_after_loading": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            from app.services import quality_gate as qg\n            return qg.abstained_comparison(gate)\n', '        pass\n')],
+        "the comparison loads masks, images, registration and atlas before the gate stops it", "backend", "RC-123"),
+    "R9_caveat_overwritten": ([(QG, '        out["caveat"] = (previous.rstrip() + " " if isinstance(previous, str) and previous.strip() else "") + gate_caveat(gate)\n',
+        '        out["caveat"] = gate_caveat(gate)\n')],
+        "RC-062's reasons are lost from the caveat", "backend", "RC-123"),
+    "R10_raw_codes_in_caveat": ([(QG, '    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in (gate.get("codes") or ["gate_unavailable"])]\n',
+        '    reasons = list(gate.get("codes") or ["gate_unavailable"])\n')],
+        "the caveat shows raw codes instead of plain reasons", "backend", "RC-123, RC-127"),
+    "R11_pixels_decoded": ([(QG, '        ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True)\n',
+        '        imaging_service.load_dicom(data)\n        ds = pydicom.dcmread(io.BytesIO(data))\n')],
+        "the gate decodes the whole image instead of the header", "backend", "RC-122"),
+    "R12_header_cache_off": ([(QG, '            if key:\n                _HEADER_CACHE[key] = fields\n',
+        '            if False:\n                _HEADER_CACHE[key] = fields\n')],
+        "every consultation downloads and parses the file again", "backend", "RC-122"),
+    "R13_parsed_on_the_event_loop": ([(QG, '            fields = await asyncio.to_thread(read_header_fields, data, file_path.rsplit("/", 1)[-1], imaging_service)\n',
+        '            fields = read_header_fields(data, file_path.rsplit("/", 1)[-1], imaging_service)\n')],
+        "the header is parsed on the event loop", "backend", "RC-122"),
+    "R14_acquisition_read_twice": ([(SA, '    if file_id not in memo:\n        memo[file_id] = _source_acquisition(file_id)\n    return memo[file_id]\n',
+        '    return _source_acquisition(file_id)\n')],
+        "the acquisition records are read again for RC-062", "backend", "RC-123"),
+    "R15_thin_limit_not_the_evaluated_policy": ([(QG, '    limit = thin_limit_mm if thin_limit_mm is not None else _policy()["thickness"]["thin_limit_mm"]\n',
+        '    limit = _policy()["thickness"]["thin_limit_mm"]\n')],
+        "the thin limit of another policy than the one evaluated", "backend", "RC-124"),
+    "F10_ts_underscore_kept_in_tokens": ([(TS, "  return s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);\n",
+        "  return s.toLowerCase().split(/[^a-z0-9_]+/).filter(Boolean);\n")],
+        "the browser keeps '_' inside tokens", "node", "RC-122, RC-127"),
+    "F11_ts_t1_flair_accepted": ([(TS, "  if (isOther || (flair && t1)) return 'other';", "  if (isOther) return 'other';")],
+        "the browser takes a T1-weighted FLAIR as a FLAIR", "node", "RC-122, RC-127"),
+    "F12_ts_confirmation_in_a_comparison": ([(TS, "    if (visit.physician_confirmed_flair === true && policy.sequence.confirmation_modes.includes(mode)) {\n",
+        "    if (visit.physician_confirmed_flair === true) {\n")],
+        "the browser lets a confirmation lift an unknown sequence in a comparison", "node", "RC-122"),
     # ── browser rule (G4 parity harness under Node) ──
     "F1_ts_confirmation_overrides_another_sequence": ([(TS, "  return mk('sequence', label, 'abstain', 'sequence_not_flair', { sequence: seq });\n",
         "  return visit.physician_confirmed_flair === true ? mk('sequence', label, 'warn', 'sequence_confirmed_by_physician', { sequence: seq })\n"
@@ -190,12 +252,19 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "V3_panel_hides_the_reasons": ([(PANEL, "  const notOk = (result.checks ?? []).filter((c) => c.status !== 'pass' && c.code);\n",
         "  const notOk: GateCheck[] = [];\n")],
         "the panel shows the decision but not why", "vitest", "RC-127"),
+    "V4_run_checkbox_implies_the_attestation": ([(CARD, "  const gateBefore = useMemo(() => withAttestation(preflight, canAttest && attested), [preflight, canAttest, attested]);\n",
+        "  const gateBefore = useMemo(() => withAttestation(preflight, sequenceConfirmed), [preflight, sequenceConfirmed]);\n")],
+        "the run checkbox counts as the FLAIR attestation", "vitest", "RC-122"),
+    "V5_backend_called_on_every_toggle": ([(CARD, "  }, [gateOn, flairFileId]);\n", "  }, [gateOn, flairFileId, attested]);\n")],
+        "the backend is called on every toggle", "vitest", "RC-122"),
+    "V6_panel_ignores_the_mode": ([(PANEL, "${actionKey(result.mode, c.code as string)}", "action")],
+        "the panel asks a comparison for an attestation", "vitest", "RC-127"),
 }
 
 HARNESS = r"""
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { canonicalGate, evaluateGate, finalBrowserGate, gateUnavailable, QUALITY_GATE_POLICY } from './gate.ts';
+import { canonicalGate, evaluateGate, finalBrowserGate, gateUnavailable, QUALITY_GATE_POLICY, sequenceFromHeader } from './gate.ts';
 const F = JSON.parse(readFileSync(process.env.QG_FIXTURE, 'utf-8'));
 const BACKEND_POLICY = JSON.parse(readFileSync(process.env.QG_BACKEND_POLICY, 'utf-8'));
 const failures = [];
@@ -234,7 +303,11 @@ const server = { ...evaluateGate({ mode: 'single', visits: [visit], platform: { 
 fail('rc125_unknown_skull_hides', finalBrowserGate(server, {}).ai_output_allowed === false);
 fail('rc125_removed_skull_shows', finalBrowserGate(server, { inputPreparation: 'skull-removed' }).ai_output_allowed === true);
 fail('rc125_pending_hides', server.ai_output_allowed === false);
-console.log(JSON.stringify({ failures, checks: 10 }));
+const CORPUS = JSON.parse(readFileSync(process.env.QG_CORPUS, 'utf-8'));
+fail('g12_corpus', CORPUS.cases.every((c) => sequenceFromHeader(c.text, c.inversion_time_ms) === c.expected));
+fail('g13_no_confirmation_in_a_comparison', evaluateGate({ mode: 'comparison', platform: { allowed: true, code: null },
+  visits: [F.matrix.base_visit, { ...F.matrix.base_visit, sequence: 'unknown', physician_confirmed_flair: true }] }).ai_may_run === false);
+console.log(JSON.stringify({ failures, checks: 12 }));
 """
 
 
@@ -255,8 +328,15 @@ def make_copy(dest):
     ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
     for tree in COPY_TREES:
         shutil.copytree(os.path.join(ROOT, tree), os.path.join(dest, tree), ignore=ignore)
-    extra = [CARD, PANEL] if has_node_modules() else []
-    for f in COPY_FILES + extra:
+    if has_node_modules():       # vitest runs IN the copy (S4): the whole frontend source, node_modules linked
+        shutil.copytree(os.path.join(ROOT, "frontend"), os.path.join(dest, "frontend"), dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns("node_modules", "dist", "coverage"))
+        link, target = os.path.join(dest, "frontend", "node_modules"), os.path.join(ROOT, "frontend", "node_modules")
+        if os.name == "nt":
+            subprocess.run(["cmd", "/c", "mklink", "/J", link, target], check=True, capture_output=True)
+        else:
+            os.symlink(target, link, target_is_directory=True)
+    for f in COPY_FILES:
         os.makedirs(os.path.dirname(os.path.join(dest, f)), exist_ok=True)
         shutil.copy2(os.path.join(ROOT, f), os.path.join(dest, f))
 
@@ -267,9 +347,10 @@ def has_node_modules():
 
 def run_backend(copy, env):
     xml_path = os.path.join(copy, "junit.xml")
-    p = subprocess.run([PY, "-m", "pytest", *BACKEND_TESTS, "-q", "-p", "no:cacheprovider", "--timeout=120",
-                        "-o", "log_cli=false", f"--junitxml={xml_path}"], cwd=os.path.join(copy, "backend"),
-                       capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, timeout=900)
+    p = subprocess.run([PY, "-m", "pytest", *("backend/" + t for t in BACKEND_TESTS), "-q", "-p", "no:cacheprovider",
+                        "--timeout=120", "-o", "log_cli=false", f"--junitxml={xml_path}"], cwd=run_cwd("backend", copy),
+                       capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       env={**env, "PYTHONPATH": os.path.join(copy, "backend")}, timeout=900)
     failed, passed = [], 0
     if os.path.exists(xml_path):
         for case in ET.parse(xml_path).getroot().iter("testcase"):
@@ -301,7 +382,8 @@ def node_files(copy):
 
 def node_env(copy, env):
     return {**env, "QG_POLICY": os.path.join(copy, FPOL), "QG_FIXTURE": os.path.join(copy, "frontend/src/config/qualityGate.cases.v1.json"),
-            "QG_BACKEND_POLICY": os.path.join(copy, POL), "NODE_NO_WARNINGS": "1"}
+            "QG_BACKEND_POLICY": os.path.join(copy, POL), "NODE_NO_WARNINGS": "1",
+            "QG_CORPUS": os.path.join(copy, "frontend/src/config/qualityGate.sequences.v1.json")}
 
 
 def probe(runner, copy, env, files):
@@ -313,12 +395,13 @@ def probe(runner, copy, env, files):
             except ValueError as exc:
                 return f"{f} does not parse: {exc}"
     if runner == "backend":
-        p = subprocess.run([PY, "-c", IMPORT_PROBE], cwd=os.path.join(copy, "backend"), capture_output=True,
+        p = subprocess.run([PY, "-c", IMPORT_PROBE], cwd=run_cwd("backend", copy), capture_output=True,
                            text=True, encoding="utf-8", errors="replace", env=env, timeout=300)
         return None if p.returncode == 0 else (p.stderr.strip().splitlines() or ["import failed"])[-1][:300]
     if runner == "node":
-        work = node_files(copy)
-        p = subprocess.run(["node", "--input-type=module", "-e", "await import('./gate.ts')"], cwd=work,
+        node_files(copy)
+        p = subprocess.run(["node", "--input-type=module", "-e", "await import('./node_harness/gate.ts')"],
+                           cwd=run_cwd("node", copy),
                            capture_output=True, text=True, encoding="utf-8", errors="replace", env=node_env(copy, env),
                            timeout=120)
         return None if p.returncode == 0 else (p.stderr.strip().splitlines() or ["load failed"])[-1][:300]
@@ -326,8 +409,8 @@ def probe(runner, copy, env, files):
 
 
 def run_node(copy, env):
-    work = node_files(copy)
-    p = subprocess.run(["node", "harness.mjs"], cwd=work, capture_output=True, text=True, encoding="utf-8",
+    node_files(copy)
+    p = subprocess.run(["node", "node_harness/harness.mjs"], cwd=run_cwd("node", copy), capture_output=True, text=True, encoding="utf-8",
                        errors="replace", env=node_env(copy, env), timeout=300)
     try:
         out = json.loads(p.stdout.strip().splitlines()[-1])
@@ -338,7 +421,7 @@ def run_node(copy, env):
 
 def run_vitest(copy, env):
     p = subprocess.run(["npx", "vitest", "run", *VITEST_TESTS, "--reporter=json", "--pool=threads"],
-                       cwd=os.path.join(ROOT, "frontend"), capture_output=True, text=True, encoding="utf-8",
+                       cwd=run_cwd("vitest", copy), capture_output=True, text=True, encoding="utf-8",
                        errors="replace", env=env, timeout=900, shell=os.name == "nt")
     try:
         data = json.loads(p.stdout[p.stdout.index("{"):])
@@ -349,6 +432,19 @@ def run_vitest(copy, env):
 
 
 RUNNERS = {"backend": run_backend, "node": run_node}
+
+
+def run_cwd(runner, copy):
+    """The working directory of a runner's test command: always INSIDE the throwaway copy (S4)."""
+    return os.path.join(copy, "frontend") if runner == "vitest" else copy
+
+
+def assert_under(paths, cwd):
+    """S4: a mutant is only ever checked by a test run whose working directory contains the mutated file."""
+    root = os.path.realpath(cwd)
+    for path in paths:
+        real = os.path.realpath(path)
+        assert os.path.commonpath([real, root]) == root, f"{real} is not under the test run's directory {root}"
 
 
 def main():
@@ -378,7 +474,7 @@ def main():
         for name, (edits, what, runner, controls) in M.items():
             entry = {"reintroduces": what, "runner": runner, "controls": controls}
             if runner == "vitest" and not has_node_modules():
-                entry.update({"status": "not_run", "reason": "frontend/node_modules absent on this machine; vitest runs in GitHub Actions"})
+                entry.update({"status": "not_run", "reason": "not run (no node_modules): vitest runs in GitHub Actions"})
                 res["mutations"][name] = entry
                 print(f"{name:52s} NOT RUN (vitest)")
                 continue
@@ -394,6 +490,7 @@ def main():
                 with open(os.path.join(copy, f), "wb") as fh:
                     fh.write(text.encode("utf-8"))
             try:
+                assert_under([os.path.join(copy, f) for f in texts], run_cwd(runner, copy))
                 problem = probe(runner, copy, env, list(texts))
                 if problem:
                     entry.update({"status": "invalid", "reason": problem})

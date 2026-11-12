@@ -11,7 +11,7 @@
  *    choice (REQ-SAFE-032); only an explicit Save persists it, with its AI provenance (REQ-SAFE-030);
  *  - licence and attribution notices are reachable here (FLAMeS CC BY 4.0, Neurodesk/nnU-Net Apache-2.0).
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBrowserFlames } from '@/hooks/useBrowserFlames';
 import { useViewerStore } from '@/store/useViewerStore';
@@ -31,7 +31,7 @@ import { currentEnvironment, estimateDuration, formatElapsed } from '@/services/
 import { FEATURES } from '@/config/features';
 import { QualityGatePanel } from './QualityGatePanel';
 import { requestQualityGate } from '@/services/qualityGate/api';
-import { finalBrowserGate, type GateResult } from '@/services/qualityGate/gate';
+import { attestable, finalBrowserGate, withAttestation, type GateResult, type ServerGateResponse } from '@/services/qualityGate/gate';
 
 interface BrowserFlamesCardProps {
   flairFileId: string;
@@ -56,27 +56,37 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   // Single quality gate (REQ-FUNC-117/118, RC-122..RC-127; DRAFT, behind VITE_ENABLE_QUALITY_GATE). Consulted before
   // the run (the backend's decision; skull still pending) and again before the result is shown (the backend's fresh
   // answer with the worker's skull outcome). Until the final answer arrives, nothing of the result is shown.
+  // E1: ONE (debounced) consultation per file; the attestation is evaluated locally and sent only on Run.
+  // S3 / G13: the physician's FLAIR attestation is its own control, offered only when the backend found the sequence
+  // unknown or missing, unticked by default, reset on every file change, never implied by the run checkbox.
   const gateOn = FEATURES.QUALITY_GATE;
-  const [preflight, setPreflight] = useState<GateResult | null>(null);
+  const [preflight, setPreflight] = useState<ServerGateResponse | null>(null);
+  const [attested, setAttested] = useState(false);
+  const attestedAtRun = useRef(false);
   const [finalGate, setFinalGate] = useState<GateResult | null>(null);
   useEffect(() => {
+    setAttested(false);
     if (!gateOn || !flairFileId) return;
     let live = true;
     setPreflight(null);
-    void requestQualityGate(flairFileId, sequenceConfirmed).then((r) => { if (live) setPreflight(r); });
-    return () => { live = false; };
-  }, [gateOn, flairFileId, sequenceConfirmed]);
+    const timer = setTimeout(() => {
+      void requestQualityGate(flairFileId, false).then((r) => { if (live) setPreflight(r); });
+    }, 250);
+    return () => { live = false; clearTimeout(timer); };
+  }, [gateOn, flairFileId]);
+  const canAttest = attestable(preflight);
+  const gateBefore = useMemo(() => withAttestation(preflight, canAttest && attested), [preflight, canAttest, attested]);
   const doneResult = flames.status === 'done' ? flames.result : null;
   useEffect(() => {
     if (!gateOn) return;
     setFinalGate(null);
     if (!doneResult) return;
     let live = true;
-    void requestQualityGate(doneResult.fileId, doneResult.provenance?.sequenceEvidence === 'clinician')
+    void requestQualityGate(doneResult.fileId, attestedAtRun.current)
       .then((r) => { if (live) setFinalGate(finalBrowserGate(r, doneResult.provenance)); });
     return () => { live = false; };
   }, [gateOn, doneResult]);
-  const gateAllowsRun = !gateOn || preflight?.ai_may_run === true;
+  const gateAllowsRun = !gateOn || gateBefore?.ai_may_run === true;
   const gateAllowsOutput = !gateOn || finalGate?.ai_output_allowed === true;
 
   const running = flames.status === 'running';
@@ -99,7 +109,20 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     const seriesDescription =
       currentSeries?.file_id === flairFileId ? currentSeries?.metadata?.series_description ?? null : null;
     if (!sequenceConfirmed || !gateAllowsRun) return;
-    void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
+    if (!gateOn) {
+      void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
+      return;
+    }
+    // The attestation reaches the backend (and its audit, with the clinician) only now, deliberately.
+    const attestation = canAttest && attested;
+    void requestQualityGate(flairFileId, attestation).then((fresh) => {
+      if (!fresh.ai_may_run) {
+        setPreflight(fresh);
+        return;
+      }
+      attestedAtRun.current = attestation;
+      void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
+    });
   };
 
   const openDraft = (discardUnsavedWork: boolean) => {
@@ -169,8 +192,14 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
               <span className="text-gray-400 break-all">{flairFileId ? `(${flairName ?? flairFileId.split('/').pop()})` : ''}</span>
             </span>
           </label>
-          {gateOn && (preflight ? <QualityGatePanel result={preflight} testId="quality-gate-before" />
+          {gateOn && (gateBefore ? <QualityGatePanel result={gateBefore} testId="quality-gate-before" />
             : <p className="text-[9px] text-gray-400" data-testid="quality-gate-checking">{t('qualityGate.checking')}</p>)}
+          {gateOn && canAttest && (
+            <label className="flex items-start gap-1 text-[9px] text-sky-100" data-testid="quality-gate-attest">
+              <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} />
+              <span>{t('qualityGate.attest')}</span>
+            </label>
+          )}
           <button
             onClick={handleRun}
             disabled={!flairFileId || !sequenceConfirmed || !gateAllowsRun}

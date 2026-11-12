@@ -102,7 +102,7 @@ describe('the physician attestation (S3, G13)', () => {
     const OTHER = 'patients/p/studies/s/other.nii.gz';
     rerender(<BrowserFlamesCard flairFileId={OTHER} />);
     await waitFor(() => expect(h.calls[h.calls.length - 1]).toEqual([OTHER, false]));
-    expect(attest().checked).toBe(false);
+    await waitFor(() => expect(attest().checked).toBe(false));
   });
 
   it('rc126 the agent switched off: the run stays disabled and the reason is shown', async () => {

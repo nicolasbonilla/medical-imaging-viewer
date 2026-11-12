@@ -1,12 +1,13 @@
 /**
  * QualityGatePanel — the single quality gate's result, shown BEFORE any AI output (REQ-FUNC-118; RC-127).
  * DRAFT, PENDING owner approval. Every word comes from the i18n files (qualityGate.*), keyed by the gate's codes:
- * the decision, then each check that is not OK with its plain reason and what to do. Rendered only when
+ * the decision, then each check that is not OK with its plain reason and what to do — an action possible in the
+ * gate's mode (G14: a comparison never asks for an attestation it cannot take). Rendered only when
  * FEATURES.QUALITY_GATE is on (VITE_ENABLE_QUALITY_GATE, default OFF).
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GateCheck, GateResult } from '@/services/qualityGate/gate';
+import { actionKey, type GateCheck, type GateResult } from '@/services/qualityGate/gate';
 
 const TONE: Record<GateResult['decision'], string> = {
   abstain: 'border-red-500/60 bg-red-950/30 text-red-100',
@@ -51,7 +52,7 @@ export const QualityGatePanel: React.FC<QualityGatePanelProps> = ({ result, test
                 {t(`qualityGate.status.${c.status}`)}:
               </span>{' '}
               {t(`qualityGate.codes.${c.code}.message`, params(c))}{' '}
-              <span className="italic">{t(`qualityGate.codes.${c.code}.action`, params(c))}</span>
+              <span className="italic">{t(`qualityGate.codes.${c.code}.${actionKey(result.mode, c.code as string)}`, params(c))}</span>
             </li>
           ))}
         </ul>
