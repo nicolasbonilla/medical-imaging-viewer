@@ -1607,8 +1607,8 @@
         "action": "Empiece el análisis; esta comprobación se hace sola."
       },
       "scanner_not_recorded": {
-        "message": "No consta el equipo de ninguna de las dos visitas (ambas imágenes se subieron como archivos). Las diferencias entre equipos pueden parecer lesiones nuevas o desaparecidas.",
-        "action": "Asegúrese de que las dos visitas se adquirieron en el mismo equipo y con el mismo protocolo antes de fiarse de los candidatos de cambio."
+        "message": "No constan los equipos de las dos visitas (ambas imágenes se subieron como archivos).",
+        "action": "La comprobación de la adquisición decide si esta pareja se puede comparar automáticamente; sin registro no se puede, así que compare usted las imágenes."
       },
       "header_unreadable": {
         "message": "No se pudo leer la cabecera de esta imagen, así que la aplicación no puede comprobarla.",
@@ -1617,7 +1617,6 @@
     },
     "attestVisit": "Confirmo, bajo mi responsabilidad, que la imagen de la {{visit}} es una FLAIR potenciada en T2. Su cabecera no lo indica; mi confirmación queda registrada en la auditoría con mi nombre.",
     "attestAgain": "Comparar de nuevo con mi confirmación",
-    "governedByRc062": "El control de calidad dio por buena esta pareja; la comprobación de la adquisición de abajo detiene los resultados automáticos, y su motivo es el que vale.",
-    "acquisitionUnrecorded": "Ninguna visita registra su equipo (ambas imágenes se subieron como archivos): trate los candidatos de cambio con especial cuidado."
+    "governedByRc062": "El control de calidad dio por buena esta pareja; la comprobación de la adquisición de abajo detiene los resultados automáticos, y su motivo es el que vale."
   }
 }

@@ -775,6 +775,14 @@ class BrainReportService:
                     "  Radiologist decisions on these candidates are recorded in the application and "
                     "are not part of this draft: state none."
                 )
+                # Single quality gate (R4, fourth review of PR #81; DRAFT): a pair the gate let through WITH warnings is
+                # not a clean comparison. Fixed sentences from known codes only (never free text of the request).
+                from app.services.quality_gate import CAVEAT_REASONS
+                gate_warnings = [CAVEAT_REASONS[c] for c in (lng.get("quality_gate_warnings") or [])
+                                 if isinstance(c, str) and c in CAVEAT_REASONS]
+                if gate_warnings:
+                    parts.append("  QUALITY-GATE WARNINGS for this pair (state them in the report): "
+                                 + "; ".join(gate_warnings) + ".")
 
         # Zone map statistics (from MSMask atlas)
         if findings.get("zone_stats"):

@@ -37,6 +37,7 @@ from app.services.lesion_analysis_service import (
 )
 from app.services.longitudinal_tracking_service import compare_timepoints
 from app.services import longitudinal_candidate_safety as lcs
+from app.services import quality_gate as qg
 # PRB-003 (RC-070): DIS only on a segmentation a clinician confirmed for its current mask.
 from app.services import dis_review_gate as dis_gate
 from app.core.config import get_settings
@@ -147,7 +148,6 @@ async def _gate_before_loading(specs, segmentation_service, current_user, reques
     if not settings.QUALITY_GATE_ENFORCED:
         return None
     import asyncio
-    from app.services import quality_gate as qg
     sources = []
     for spec in specs:
         meta = None
@@ -761,7 +761,6 @@ async def compare_longitudinal(
         gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo,
                                           metas, _attestation(body))
         if gate is not None and gate.get("ai_output_allowed") is not True:
-            from app.services import quality_gate as qg
             return qg.abstained_comparison(gate)
 
         async def load_mask(spec):
@@ -948,17 +947,13 @@ async def compare_longitudinal(
                 logger.error("Stored longitudinal decisions could not be read", extra={"error": str(e)})
                 review_read_failed = True
         status_counts = result.get("status_counts") or {}
-        result = lcs.present_comparison(
+        # G24 / G25: RC-062 exactly as on the base branch, then the gate, which only adds (one function)
+        result = qg.present_gated_comparison(
             result, acquisition_check=acquisition_check,
             evidence=lcs.load_false_candidate_evidence(),
             binding=binding, stored_review=stored_review,
-            visit_check=visit_check, review_read_failed=review_read_failed,
-            # F1 / D-QG-10: two uploads without any acquisition record warn instead of abstaining, once the gate allowed
-            unrecorded_in_both_warns=gate is not None and "scanner_not_recorded" in (gate.get("codes") or []),
+            visit_check=visit_check, review_read_failed=review_read_failed, gate=gate,
         )
-        if gate is not None:   # RC-123 / RC-126 (DRAFT): the gate allowed it before loading; its warnings attached
-            from app.services import quality_gate as qg
-            result = qg.apply_to_comparison(result, gate)
 
         logger.info("Longitudinal comparison completed (unconfirmed candidates, registration unverified)", extra={
             "new": status_counts.get("new"),
@@ -1105,7 +1100,6 @@ async def detect_slowly_expanding_lesions(
         gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo,
                                           metas, _attestation(body))
         if gate is not None and gate.get("ai_output_allowed") is not True:
-            from app.services import quality_gate as qg
             return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate), "sels": [], "n_existing": 0,
                     "n_sel": 0, "registration_verified": False, "adjudication_required": True, "quality_gate": gate}
 
@@ -1130,7 +1124,7 @@ async def detect_slowly_expanding_lesions(
             _memo_acquisition(source_tp1, acq_memo), _memo_acquisition(source_tp2, acq_memo),   # E2: read once
             spacing_tp1, _sp2,
         )
-        if acquisition_check["status"] != "same" or visit_check["status"] != "ok":
+        if qg.comparison_withheld(acquisition_check, visit_check, gate)["withheld"]:   # G25: one verdict
             return {
                 "ok": False, "abstained": True,
                 "reason": lcs._abstention_caveat(acquisition_check, visit_check),

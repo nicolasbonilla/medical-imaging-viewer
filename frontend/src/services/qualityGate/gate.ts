@@ -90,7 +90,7 @@ export interface GatePolicy {
     evidence_asset: unknown;
     commercial_licence_allowlist: string[];
   };
-  scanner: { fields: string[]; field_strength_tolerance_t: number; unrecorded_in_both?: string };
+  scanner: { fields: string[]; field_strength_tolerance_t: number };
   skull: { required_in_modes: string[] };
   platform: { codes: Record<string, string>; otherwise: string };
   codes: Record<string, GateStatus>;
@@ -198,8 +198,9 @@ function scannerCheck(visits: Obj[], policy: GatePolicy): GateCheck {
   }
   if (differing.length) return mk('scanner', null, 'abstain', 'scanner_changed', { fields: differing });
   const unrecorded = visits.every((v) => policy.scanner.fields.every((f) => scannerValue(v, f) === null));
-  if (missing.length && unrecorded && policy.scanner.unrecorded_in_both === 'warn') {
-    return mk('scanner', null, policy.codes.scanner_not_recorded, 'scanner_not_recorded');   // F1, D-QG-10
+  if (missing.length && unrecorded) {
+    // nothing recorded in either visit: a warning; RC-062 decides and abstains (the gate never relaxes it, G24)
+    return mk('scanner', null, policy.codes.scanner_not_recorded, 'scanner_not_recorded');
   }
   if (missing.length) return mk('scanner', null, 'abstain', 'scanner_unknown', { fields: missing });
   return mk('scanner', null, 'pass');

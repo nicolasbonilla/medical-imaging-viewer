@@ -514,19 +514,9 @@ def test_rc124_g7_the_v3_hook_abstains_only_with_a_commercial_licence():
     assert not bad, f"G7 (hook): wrong for licences {bad}"
 
 
-# ----------------------------------------------------------------------------- G8
-def test_rc123_g8_the_gate_never_lets_through_what_rc062_withholds_for_a_scanner_reason(results):
-    bad = []
-    for key, _, inp, out in results:
-        if inp["mode"] != "comparison":
-            continue
-        check = lcs.compare_acquisitions(inp["visits"][0]["scanner"], inp["visits"][1]["scanner"], None, None)
-        scanner_fields = set(lcs.REQUIRED_ACQUISITION_FIELDS[:3])
-        flagged = [d["field"] for d in check["differing"] + check["missing"] if d["field"] in scanner_fields]
-        if flagged and (out.get("ai_may_run") is not False
-                        or not ({"scanner_changed", "scanner_unknown"} & set(out.get("codes", [])))):
-            bad.append(key)
-    assert not bad, _report("G8", bad)
+# ----------------------------------------------------------------------------- G8 -> G24
+# The G8 matrix (scanner fields only) is replaced by G24, exhaustive over every RC-062 acquisition fact and the
+# visit order, on the comparison OUTPUT: tests/unit/test_rc123_rc062_monotonicity.py (fourth review of PR #81).
 
 
 # ----------------------------------------------------------------------------- G9

@@ -64,16 +64,6 @@ def _visit(acq):
             "thickness": qg.thickness_from_acquisition_record(acq), "scanner": qg.scanner_from_acquisition_record(acq)}
 
 
-def _route_as_of_638d089(result, acquisition_check, visit_check, gate):  # pragma: no cover — failing-first only
-    """How the compare route composed the answer on 638d089 (kept only to count the failing-first cases)."""
-    if gate.get("ai_output_allowed") is not True:
-        return qg.abstained_comparison(gate)
-    presented = lcs.present_comparison(result, acquisition_check=acquisition_check, evidence=None, binding=BINDING,
-                                       stored_review=REVIEW, visit_check=visit_check,
-                                       unrecorded_in_both_warns="scanner_not_recorded" in gate.get("codes", []))
-    return qg.apply_to_comparison(presented, gate)
-
-
 def _cases():
     for states in itertools.product(STATES, repeat=len(FIELDS)):
         for order in ("ok", "unknown"):
@@ -85,10 +75,7 @@ def _cases():
 
 
 def _on(check, visit, gate):
-    compose = getattr(qg, "present_gated_comparison", None)
-    if compose is None:                                         # 638d089: the route's own composition
-        return _route_as_of_638d089(dict(RESULT), check, visit, gate)
-    return compose(dict(RESULT), acquisition_check=check, evidence=None, binding=BINDING, stored_review=REVIEW,
+    return qg.present_gated_comparison(dict(RESULT), acquisition_check=check, evidence=None, binding=BINDING, stored_review=REVIEW,
                    visit_check=visit, gate=gate)
 
 
@@ -109,10 +96,7 @@ def test_rc123_g24_the_gate_never_relaxes_rc062_exhaustive():
 
 
 def _sel_verdict(check, visit, gate):
-    withheld = getattr(qg, "comparison_withheld", None)
-    if withheld is None:                                        # 638d089: the SEL route's own condition
-        return check["status"] != "same" or visit["status"] != "ok" or gate.get("ai_output_allowed") is not True
-    return withheld(check, visit, gate)["withheld"]
+    return qg.comparison_withheld(check, visit, gate)["withheld"]
 
 
 def test_rc123_g25_compare_and_sel_give_one_comparability_verdict():

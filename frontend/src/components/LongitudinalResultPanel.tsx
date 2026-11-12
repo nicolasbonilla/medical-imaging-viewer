@@ -279,9 +279,6 @@ export function LongitudinalResultPanel({
       {gateStopped && onAttest && result.quality_gate && (
         <ComparisonAttestation key={`${tp1SegId}|${tp2SegId}`} gate={result.quality_gate} onAttest={onAttest} />
       )}
-      {result.acquisition_unrecorded && (
-        <p className="text-[9px] text-amber-300" data-testid="longitudinal-acquisition-unrecorded">{t('qualityGate.acquisitionUnrecorded')}</p>
-      )}
 
       {abstained ? (gateStopped ? null : abstentionBox()) : (
         <>

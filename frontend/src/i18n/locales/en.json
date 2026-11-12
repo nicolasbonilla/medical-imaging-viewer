@@ -1596,8 +1596,8 @@
         "action": "Start the analysis; this check runs by itself."
       },
       "scanner_not_recorded": {
-        "message": "The scanners of the two visits are not recorded (both images were uploaded as files). Differences between scanners can look like new or vanished lesions.",
-        "action": "Make sure both visits were acquired on the same scanner with the same protocol before relying on the change candidates."
+        "message": "The scanners of the two visits are not recorded (both images were uploaded as files).",
+        "action": "The acquisition check decides whether this pair can be compared automatically; without a record it cannot, so compare the images visually."
       },
       "header_unreadable": {
         "message": "The header of this image could not be read, so the app cannot check the image.",
@@ -1606,7 +1606,6 @@
     },
     "attestVisit": "I confirm, on my own responsibility, that the image of the {{visit}} is a T2-FLAIR. Its header does not say so; my confirmation is recorded in the audit with my name.",
     "attestAgain": "Compare again with my confirmation",
-    "governedByRc062": "The quality check passed for this pair; the acquisition check below stops the automatic results, and its reason applies.",
-    "acquisitionUnrecorded": "Neither visit records its scanner (both images were uploaded as files): treat the change candidates with extra care."
+    "governedByRc062": "The quality check passed for this pair; the acquisition check below stops the automatic results, and its reason applies."
   }
 }

@@ -682,9 +682,9 @@ def test_rc122_a_storage_without_real_ranges_is_read_once():
 
 
 def test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation(compare, monkeypatch):
-    """F1: no acquisition record and no description for either visit (two uploads). Without the attestation the gate
-    abstains per visit with its reason; with it (per visit, strict booleans, audited with the user), the unrecorded
-    scanners WARN (policy) and the comparison shows its candidates."""
+    """F1 as corrected by the fourth review (R1): two uploads, no acquisition record and no description. Without the
+    attestation the gate abstains per visit; with it (per visit, strict booleans, audited with the user) the gate
+    passes with warnings and RC-062 then ABSTAINS exactly as on the base branch — the gate never relaxes it."""
     client, records, (f1, f2) = compare
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     audit = []
@@ -699,7 +699,8 @@ def test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestati
     res = client.post("/api/v1/segmentation/longitudinal/compare", json=body).json()
     gate = res["quality_gate"]
     assert gate["ai_output_allowed"] is True and "scanner_not_recorded" in gate["codes"], gate["codes"]
-    assert res["abstained"] is False and res["change_candidates"]["total"] == 1 and res["acquisition_unrecorded"] is True
+    assert res["abstained"] is True and res["change_candidates"] is None and "acquisition_unrecorded" not in res
+    assert res["acquisition_check"]["status"] == "not_established"
     assert audit[-1]["code"].endswith(".attested_tp1_tp2")
     for bad in ({"tp1": "true", "tp2": True}, {"tp1": 1}, ["tp1"], {"tp3": True}):
         r = client.post("/api/v1/segmentation/longitudinal/compare", json={**PAIR, "quality_gate_attestation": bad})

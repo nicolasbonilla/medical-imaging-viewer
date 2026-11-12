@@ -303,6 +303,30 @@ LONGITUDINAL_NOTICE: Dict[str, Dict[str, str]] = {
 }
 
 
+# R4 (fourth review of PR #81; DRAFT): a pair the single quality gate let through WITH warnings is not presented as
+# clean. Fixed text per known warning code, in the report language.
+GATE_WARNING_NOTICE: Dict[str, Dict[str, str]] = {
+    "en": {"lead": "**Quality-gate warnings for this pair:**",
+           "sequence_confirmed_by_physician": "a physician confirmed as FLAIR an image whose header does not say so",
+           "thickness_thick": "the slices are thick, so small lesions can be missed",
+           "thickness_at_least": "the slices are thicker than 1.5 mm, so small lesions can be missed",
+           "thickness_unknown": "the original slice thickness cannot be read",
+           "scanner_not_recorded": "the scanners of the two visits are not recorded"},
+    "es": {"lead": "**Avisos del control de calidad para esta pareja:**",
+           "sequence_confirmed_by_physician": "un médico confirmó como FLAIR una imagen cuya cabecera no lo indica",
+           "thickness_thick": "los cortes son gruesos, así que pueden escaparse lesiones pequeñas",
+           "thickness_at_least": "los cortes miden más de 1,5 mm, así que pueden escaparse lesiones pequeñas",
+           "thickness_unknown": "no se puede leer el grosor de corte original",
+           "scanner_not_recorded": "no constan los equipos de las dos visitas"},
+    "de": {"lead": "**Hinweise der Qualitätsprüfung für dieses Paar:**",
+           "sequence_confirmed_by_physician": "ein Arzt hat ein Bild als FLAIR bestätigt, dessen Bildkopf das nicht sagt",
+           "thickness_thick": "die Schichten sind dick, kleine Läsionen können übersehen werden",
+           "thickness_at_least": "die Schichten sind dicker als 1,5 mm, kleine Läsionen können übersehen werden",
+           "thickness_unknown": "die ursprüngliche Schichtdicke lässt sich nicht lesen",
+           "scanner_not_recorded": "die Geräte der beiden Untersuchungen sind nicht erfasst"},
+}
+
+
 def _int(v) -> int:
     try:
         return max(0, int(v))
@@ -356,6 +380,11 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
             pct=false_share_percent(ev), source=ev["source"], date=ev["measured_on"]))
     else:
         lines.append(texts["no_evidence"])
+    from app.services.quality_gate import warning_codes
+    gw = GATE_WARNING_NOTICE.get(language, GATE_WARNING_NOTICE["en"])
+    reasons = [gw[c] for c in warning_codes(longitudinal.get("quality_gate")) if c in gw]
+    if reasons:
+        lines.append(gw["lead"] + " " + "; ".join(reasons) + ".")
     return " ".join(lines)
 
 

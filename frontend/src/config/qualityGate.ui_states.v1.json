@@ -1,7 +1,8 @@
 {
  "$comment": [
   "G21 (third review of PR #81): gate decision x RC-062 status -> the ONE verdict the comparison panel shows.",
-  "Read by frontend/src/components/LongitudinalResultPanel.qualityGate.test.tsx. DRAFT, PENDING owner approval."
+  "Read by frontend/src/components/LongitudinalResultPanel.qualityGate.test.tsx. DRAFT, PENDING owner approval.",
+  "Fourth review of PR #81 (R1): two uploads with no acquisition record abstain by RC-062 even when the gate only warns."
  ],
  "states": [
   {
@@ -315,36 +316,20 @@
    }
   },
   {
-   "name": "gate_allows_scanners_unrecorded",
+   "name": "gate_warns_scanners_unrecorded_rc062_abstains",
    "result": {
     "changes": [],
-    "abstained": false,
-    "total_lesions_tp1": 1,
-    "total_lesions_tp2": 2,
-    "burden_tp1_mm3": 27,
-    "burden_tp2_mm3": 54,
+    "abstained": true,
+    "total_lesions_tp1": null,
+    "total_lesions_tp2": null,
+    "burden_tp1_mm3": null,
+    "burden_tp2_mm3": null,
     "burden_tp1_ml": null,
     "burden_tp2_ml": null,
     "burden_delta_mm3": null,
     "burden_delta_percent": null,
-    "status_counts": {
-     "new": 1,
-     "resolved": 0,
-     "enlarged": 0,
-     "shrunk": 0,
-     "stable": 0
-    },
-    "change_candidates": {
-     "new": 1,
-     "enlarging": 0,
-     "total": 1,
-     "confirmed": 0,
-     "rejected": 0,
-     "awaiting_review": 1,
-     "earlier_decisions_voided": false,
-     "decisions_unavailable": false,
-     "presentation": "p"
-    },
+    "status_counts": null,
+    "change_candidates": null,
     "registration_verified": false,
     "adjudication_required": true,
     "caveat": "x",
@@ -388,13 +373,12 @@
      ],
      "tolerances": {},
      "source": ""
-    },
-    "acquisition_unrecorded": true
+    }
    },
    "expect": {
-    "gate_panel": true,
-    "rc062_box": false,
-    "governed": false
+    "gate_panel": false,
+    "rc062_box": true,
+    "governed": true
    }
   },
   {

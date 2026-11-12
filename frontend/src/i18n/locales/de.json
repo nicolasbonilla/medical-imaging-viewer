@@ -1589,8 +1589,8 @@
         "action": "Starten Sie die Analyse; diese Prüfung läuft von selbst."
       },
       "scanner_not_recorded": {
-        "message": "Die Geräte der beiden Untersuchungen sind nicht erfasst (beide Bilder wurden als Dateien hochgeladen). Unterschiede zwischen Geräten können wie neue oder verschwundene Läsionen aussehen.",
-        "action": "Stellen Sie sicher, dass beide Untersuchungen am selben Gerät mit demselben Protokoll aufgenommen wurden, bevor Sie sich auf die Veränderungskandidaten verlassen."
+        "message": "Die Geräte der beiden Untersuchungen sind nicht erfasst (beide Bilder wurden als Dateien hochgeladen).",
+        "action": "Die Aufnahmeprüfung entscheidet, ob dieses Paar automatisch verglichen werden kann; ohne Erfassung geht das nicht, vergleichen Sie die Bilder daher selbst."
       },
       "header_unreadable": {
         "message": "Der Bildkopf dieses Bildes konnte nicht gelesen werden, daher kann die Anwendung das Bild nicht prüfen.",
@@ -1599,7 +1599,6 @@
     },
     "attestVisit": "Ich bestätige in eigener Verantwortung, dass das Bild der {{visit}} ein T2-FLAIR ist. Der Bildkopf sagt das nicht; meine Bestätigung wird mit meinem Namen im Prüfprotokoll gespeichert.",
     "attestAgain": "Mit meiner Bestätigung erneut vergleichen",
-    "governedByRc062": "Die Qualitätsprüfung hat dieses Paar zugelassen; die Aufnahmeprüfung unten hält die automatischen Ergebnisse an, und ihr Grund gilt.",
-    "acquisitionUnrecorded": "Keine Untersuchung erfasst ihr Gerät (beide Bilder wurden als Dateien hochgeladen): behandeln Sie die Veränderungskandidaten besonders vorsichtig."
+    "governedByRc062": "Die Qualitätsprüfung hat dieses Paar zugelassen; die Aufnahmeprüfung unten hält die automatischen Ergebnisse an, und ihr Grund gilt."
   }
 }

@@ -172,8 +172,10 @@ def _scanner_check(visits, policy) -> Dict[str, Any]:
     missing = [d["field"] for d in result["missing"] if d["field"] in fields]
     if differing:
         return _check("scanner", None, "abstain", "scanner_changed", fields=[f for f in fields if f in differing])
+    # Nothing recorded in EITHER visit (two uploads): a warning, and RC-062 decides — it abstains, as on the base
+    # branch. The gate never removes an RC-062 abstention (fourth review of PR #81, R1 / G24).
     unrecorded = all(all(v is None for v in _scanner_record(visit, policy).values()) for visit in visits)
-    if missing and unrecorded and policy["scanner"].get("unrecorded_in_both") == "warn":
+    if missing and unrecorded:
         return _check("scanner", None, policy["codes"]["scanner_not_recorded"], "scanner_not_recorded")
     if missing:
         return _check("scanner", None, "abstain", "scanner_unknown", fields=[f for f in fields if f in missing])
@@ -717,7 +719,40 @@ def apply_to_comparison(result: Dict[str, Any], gate: Dict[str, Any]) -> Dict[st
     """Attach the gate to a longitudinal comparison; when it abstains, withhold exactly what RC-062 withholds."""
     if gate.get("ai_output_allowed") is not True:      # ONE abstention path (second review, finding 5)
         return abstained_comparison(gate)
-    return {**result, "quality_gate": gate}
+    out = {**result, "quality_gate": gate}
+    reasons = [CAVEAT_REASONS[c] for c in warning_codes(gate)]
+    if reasons:                                       # R4: a warned comparison says so (the assistant reads this)
+        previous = out.get("caveat") if isinstance(out.get("caveat"), str) else ""
+        out["caveat"] = (previous.rstrip() + " " if previous.strip() else "") + (
+            "Quality-gate warnings for this pair: " + "; ".join(reasons) + ".")
+    return out
+
+
+def warning_codes(gate: Any) -> List[str]:
+    """The gate's WARNING codes (policy status 'warn'), from a gate result; anything else is ignored (R4)."""
+    codes = _policy()["codes"]
+    raw = gate.get("codes") if isinstance(gate, dict) else None
+    return [c for c in raw if isinstance(c, str) and codes.get(c) == "warn"] if isinstance(raw, list) else []
+
+
+def present_gated_comparison(result: Dict[str, Any], *, acquisition_check: Dict[str, Any], evidence, binding,
+                             stored_review, visit_check, review_read_failed: bool = False, gate=None) -> Dict[str, Any]:
+    """G24 / G25 (fourth review of PR #81): RC-062 EXACTLY as on the base branch
+    (longitudinal_candidate_safety.present_comparison, no gate parameter), then the gate, which can only ADD an
+    abstention or warnings. The compare route answers through this one function."""
+    presented = lcs.present_comparison(result, acquisition_check=acquisition_check, evidence=evidence,
+                                       binding=binding, stored_review=stored_review, visit_check=visit_check,
+                                       review_read_failed=review_read_failed)
+    return apply_to_comparison(presented, gate) if gate is not None else presented
+
+
+def comparison_withheld(acquisition_check: Dict[str, Any], visit_check, gate=None) -> Dict[str, bool]:
+    """G25: the ONE comparability verdict of a pair, for compare_longitudinal and the SEL search: RC-062's own
+    decision (present_comparison, as on the base branch) or the gate's abstention."""
+    rc062 = lcs.present_comparison({}, acquisition_check=acquisition_check, evidence=None, binding=None,
+                                   stored_review=None, visit_check=visit_check).get("abstained") is True
+    stops = gate is not None and gate.get("ai_output_allowed") is not True
+    return {"withheld": rc062 or stops, "rc062": rc062, "gate": stops}
 
 
 # C3: plain reasons for the report and the assistant (never a raw code). The UI shows the en/es/de texts of the

@@ -321,6 +321,10 @@ class _Projector:
         sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
         o["status_counts"] = {k: self.count(sc.get(k), "status_counts")
                               for k in ("new", "enlarged", "resolved", "shrunk", "stable")}
+        from app.services.quality_gate import warning_codes   # R4: fixed codes only, never free text
+        warnings = warning_codes(lng.get("quality_gate"))
+        if warnings:
+            o["quality_gate_warnings"] = warnings
         return o
 
     def zone_stats(self, zs: dict) -> dict:
