@@ -1,7 +1,7 @@
 {
  "record": "QUALITY-GATE negative controls (RC-122..RC-127, HAZ-025) — DRAFT, PENDING owner approval",
  "date": "2026-11-12",
- "commit": "0a4b5758a5887d3a7881037d9d945efc8c75b698",
+ "commit": "ea9d1515161fe080d86b33509d2edc865357997a",
  "method": "one mutation at a time in a throwaway copy (never the worktree); every anchor exactly once; the mutant must compile/import (or parse / load under Node) before its kill counts; bound tests: backend pytest (JUnit) or the Node G4 parity harness; original bytes restored and hash-checked",
  "bound_tests": {
   "backend": [
@@ -9,7 +9,8 @@
    "tests/unit/test_rc122_quality_gate_wiring.py",
    "tests/unit/test_rc123_rc062_monotonicity.py",
    "tests/unit/test_rc122_flags_off_identity.py",
-   "tests/unit/test_rc122_one_gate.py"
+   "tests/unit/test_rc122_one_gate.py",
+   "tests/unit/test_rc122_review7.py"
   ],
   "node": "RC-049 harness under Node: G26 a (flag off = the base) and G27 (flag on = the server's class)",
   "vitest": [
@@ -20,35 +21,38 @@
    "src/components/LongitudinalCompare.qualityGate.test.tsx",
    "src/components/LongitudinalResultPanel.qualityGate.test.tsx",
    "src/services/qualityGate/api.test.ts",
-   "src/components/BrowserFlamesCard.serverDecides.test.tsx"
+   "src/components/BrowserFlamesCard.serverDecides.test.tsx",
+   "src/components/BrowserFlamesCard.boundedTraffic.test.tsx"
   ]
  },
  "source_sha256": {
-  "backend/app/agent_platform/agents.json": "01fbd98e7fa37b1d1676be68157c9b8a1e5cbc0c1594e7049d93364e62d08284",
+  "backend/app/agent_platform/agents.json": "4a51d928c7ae2b27473e9d9d3606277f7e266cf9171ba79e454b907c6df8ea21",
   "backend/app/agent_platform/registry.py": "30d8a413e02c6624cc798cb8c90ab7c2633283e1adb1f5f6a3b6d07684d7f657",
   "backend/app/agent_platform/tracing.py": "f01e1a2a2b850fdddf8ca8c0b4c777e8942af87266c82ad9def29152c258936b",
-  "backend/app/api/routes/ai_report.py": "7e7bbd801d1f5a9670ce51093097f5aa6e65e441c7a2c6e106538b3d0de3229c",
-  "backend/app/api/routes/clinical_tools.py": "c8d49d5ebe29a448fccbb500db414a2f74fdf3e2bf6c7e1b08cc113a5002b7f1",
-  "backend/app/api/routes/segmentation_analysis.py": "d40f450ac793d391c7fa9d11dfcf29dd50d51e56802a790b035fc6bae5e76338",
+  "backend/app/api/routes/ai_report.py": "1479bb982a958368cb95a57facb7072a1f846040ca46c4462b307b8e8d9d14fd",
+  "backend/app/api/routes/clinical_tools.py": "993d10f5d122c91cd6caa41f614258c39ff01a36c032b9835cb3825fe7ee6e6f",
+  "backend/app/api/routes/segmentation_analysis.py": "31e243f711f7cab0ee39b728036f60bcb135236555ff2faeb7690ea0be6f3252",
   "backend/app/core/logging/audit_middleware.py": "edf77dd7c3a7d718d73d2a34baa63b9eb86a1e01df838bd5835a8973054d5bec",
   "backend/app/services/brain_report_service.py": "c486fd59ebc089bc90af709c9c1ff0477b41fbaf55e2a6a63f738f99e497f8c3",
   "backend/app/services/dataset_inventory.py": "2cbcaa2dbf2ac8e00ebb3f03dc0df517887ab83602838bb68e5a1406e50764c6",
-  "backend/app/services/longitudinal_candidate_safety.py": "2d70e9878e2b71972e440f556e92967948fe2fa8853c9f300c49eb05316aaa5a",
-  "backend/app/services/quality_gate.py": "a39d70c613b9e79b617b34ed9081d2029c8bee6a41aebf781a0c4f04df04d7a1",
-  "backend/app/services/quality_gate_policy.json": "031dfceeecd8085f284138f41a69c365f4f07517e6c24d0ea6308da05bc56f39",
+  "backend/app/services/longitudinal_candidate_safety.py": "b4d55b7d589e11e03c86a32c74bc95a2531e309dd56380c500eea9c9d7289fad",
+  "backend/app/services/quality_gate.py": "9e4b421d15a72c492bf8a2aad0a91b7e97549f6b15c76a76fdac2850c13a6603",
+  "backend/app/services/quality_gate_policy.json": "c2797e9fd712cfa10b58491fecb9bfd5e50777b7a31ae50867a2af38aea89ae5",
   "backend/app/services/report_payload_guard.py": "764bb5f17091dd0e70e47a2c85b415beb9a5cf88f4b4f8bbf8fcffedf82f7438",
-  "frontend/src/components/BrowserFlamesCard.tsx": "8f9f83363aa95b295cb9494c07836fda0c6f113351fe7e13217e15796ecba51c",
+  "frontend/src/components/BrowserFlamesCard.tsx": "acf991194e8189800c7d3086455756e8ac1a2148cca5ef8016c6033864b0f22a",
   "frontend/src/components/LongitudinalCompare.tsx": "303d12ca362b3cdecf397e95a0dfb7d8b145326c14d01c7a7d5fd3ddd784f0ac",
   "frontend/src/components/LongitudinalResultPanel.tsx": "c96e71cf643b8ae65cbb4fc28f6a39e54029f2fa4a5f1f21fdcb06997bd77d04",
   "frontend/src/components/QualityGatePanel.tsx": "29ec4962ba44db65452c6980cfd425adefcc1db63ec7d723e78cc1f4feb79abd",
-  "frontend/src/i18n/locales/en.json": "daa9265342f2dc12929860aee73dc763c710411a84066ff17dc77d070b9ddde6",
-  "frontend/src/i18n/locales/es.json": "f66ddc8309649d61983b1b84d03363a981982a5c6da613e7e1cd7182e6ad5dd0",
-  "frontend/src/services/flames/headerEvidence.ts": "1bbc76ddea6ed9054de3201f060ed8d300faff338b210509cda4ee8dfe2205cd"
+  "frontend/src/i18n/locales/en.json": "0d0e81655e006e480d0a04100a1ac3a40c78759251c27b054823ea5bb36d4657",
+  "frontend/src/i18n/locales/es.json": "2ef9ad87b84ea6f81015ec6c6413ef4bcc49e241971a1583b8d27f0d5b77a1f9",
+  "frontend/src/services/flames/headerEvidence.ts": "1bbc76ddea6ed9054de3201f060ed8d300faff338b210509cda4ee8dfe2205cd",
+  "frontend/src/services/qualityGate/api.ts": "d82e7886c1f53d7c37ffd610a0f4eb3fce2d8f790aa3fbe2b2a188e120cea925",
+  "frontend/src/services/qualityGate/gate.ts": "3a366c50a1d9eb636d6daf280b8f31e73c2d84f892696a2392eabe8314028a7d"
  },
  "environment": "offline: GOOGLE_APPLICATION_CREDENTIALS -> missing file, CLOUDSDK_CONFIG -> empty folder, GOOGLE_CLOUD_PROJECT=mstool-offline-tests, ANTHROPIC_API_KEY removed",
  "baseline": {
   "backend": {
-   "passed": 124,
+   "passed": 167,
    "failed": 0,
    "failing_tests": [],
    "returncode": 0
@@ -66,7 +70,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 120,
+    "passed": 163,
     "failed": 4,
     "failing_tests": [
      "test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed",
@@ -83,10 +87,11 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 120,
-    "failed": 4,
+    "passed": 162,
+    "failed": 5,
     "failing_tests": [
      "test_rc122_g1_the_ai_never_runs_on_a_non_flair_or_unknown_sequence",
+     "test_rc122_g28_reviewer_cases",
      "test_rc122_g3_no_pass_from_an_unknown_value_and_proceed_only_when_everything_is_known_and_good",
      "test_rc122_g3_values_outside_the_known_set_never_pass",
      "test_rc127_g27_the_answer_carries_what_the_browser_shows"
@@ -100,7 +105,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 117,
+    "passed": 160,
     "failed": 7,
     "failing_tests": [
      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
@@ -120,7 +125,7 @@
    "controls": "RC-122, RC-124",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc122_an_unreadable_file_never_passes",
@@ -136,7 +141,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_g3_values_outside_the_known_set_never_pass"
@@ -150,7 +155,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_g3_values_outside_the_known_set_never_pass"
@@ -164,9 +169,10 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 122,
-    "failed": 2,
+    "passed": 164,
+    "failed": 3,
     "failing_tests": [
+     "test_rc122_g28_reviewer_cases",
      "test_rc122_g3_no_pass_from_an_unknown_value_and_proceed_only_when_everything_is_known_and_good",
      "test_rc123_a_scanner_change_stops_the_comparison_in_the_gate_and_in_rc062"
     ],
@@ -179,7 +185,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_g3_no_pass_from_an_unknown_value_and_proceed_only_when_everything_is_known_and_good"
@@ -193,7 +199,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc123_apply_to_comparison_withholds_exactly_what_rc062_withholds",
@@ -209,7 +215,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 116,
+    "passed": 159,
     "failed": 8,
     "failing_tests": [
      "test_rc123_a1_a_comparison_reads_each_visit_s_image_header",
@@ -230,7 +236,7 @@
    "controls": "RC-124",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc124_g7_the_v3_hook_abstains_only_with_a_commercial_licence"
@@ -244,7 +250,7 @@
    "controls": "RC-124",
    "status": "detected",
    "result": {
-    "passed": 116,
+    "passed": 159,
     "failed": 8,
     "failing_tests": [
      "test_rc122_g10_making_one_input_worse_never_turns_an_abstention_into_a_run",
@@ -265,7 +271,7 @@
    "controls": "RC-125",
    "status": "detected",
    "result": {
-    "passed": 119,
+    "passed": 162,
     "failed": 5,
     "failing_tests": [
      "test_rc122_g10_making_one_input_worse_never_turns_an_abstention_into_a_run",
@@ -283,7 +289,7 @@
    "controls": "RC-125",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc122_the_single_study_route_derives_its_inputs_on_the_server",
@@ -299,7 +305,7 @@
    "controls": "RC-125",
    "status": "detected",
    "result": {
-    "passed": 116,
+    "passed": 159,
     "failed": 8,
     "failing_tests": [
      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
@@ -320,7 +326,7 @@
    "controls": "RC-125",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
@@ -336,7 +342,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 114,
+    "passed": 157,
     "failed": 10,
     "failing_tests": [
      "test_rc123_c2_the_gate_decides_before_any_mask_or_image_is_loaded",
@@ -359,7 +365,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_g6_platform_not_on_means_no_ai_step_and_the_reason[malformed]"
@@ -373,7 +379,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 118,
+    "passed": 161,
     "failed": 6,
     "failing_tests": [
      "test_rc123_c2_the_gate_decides_before_any_mask_or_image_is_loaded",
@@ -392,7 +398,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_g5_the_trace_and_the_audit_record_exactly_the_checks_that_ran"
@@ -406,7 +412,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 118,
+    "passed": 161,
     "failed": 6,
     "failing_tests": [
      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
@@ -425,7 +431,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_g5_the_trace_and_the_audit_record_exactly_the_checks_that_ran"
@@ -439,7 +445,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 118,
+    "passed": 161,
     "failed": 6,
     "failing_tests": [
      "test_rc123_c2_the_gate_decides_before_any_mask_or_image_is_loaded",
@@ -458,7 +464,7 @@
    "controls": "RC-126, RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_g27_one_policy_on_the_server_bound_to_the_registry_and_to_the_checks_it_reuses"
@@ -472,7 +478,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 118,
+    "passed": 161,
     "failed": 6,
     "failing_tests": [
      "test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version",
@@ -491,7 +497,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 119,
+    "passed": 162,
     "failed": 5,
     "failing_tests": [
      "test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed",
@@ -509,7 +515,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 117,
+    "passed": 160,
     "failed": 7,
     "failing_tests": [
      "test_rc122_a1_the_server_reads_the_nifti_descrip[TE=81;TI=900-other]",
@@ -529,13 +535,14 @@
    "controls": "RC-122, RC-124",
    "status": "detected",
    "result": {
-    "passed": 120,
-    "failed": 4,
+    "passed": 162,
+    "failed": 5,
     "failing_tests": [
      "test_rc122_e3_the_thin_limit_is_the_evaluated_policy_s",
      "test_rc122_thickness_inputs_come_from_rc054_and_a_stored_record_is_a_lower_bound_at_most",
      "test_rc123_r4_a_warned_comparison_says_so_in_the_caveat",
-     "test_rc123_r4_the_report_draft_states_the_gate_warnings"
+     "test_rc123_r4_the_report_draft_states_the_gate_warnings",
+     "test_rc124_r2_an_undeterminable_header_thickness_falls_back_to_the_acquisition_record"
     ],
     "returncode": 1
    }
@@ -546,7 +553,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc127_g2_every_code_has_a_plain_message_and_an_action_in_en_es_de"
@@ -560,7 +567,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 116,
+    "passed": 159,
     "failed": 8,
     "failing_tests": [
      "test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed",
@@ -581,7 +588,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 120,
+    "passed": 163,
     "failed": 4,
     "failing_tests": [
      "test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed",
@@ -598,7 +605,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc122_g12_every_series_description_gets_its_class",
@@ -614,9 +621,10 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 120,
-    "failed": 4,
+    "passed": 162,
+    "failed": 5,
     "failing_tests": [
+     "test_rc122_g28_reviewer_cases",
      "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation",
      "test_rc126_g27_one_policy_on_the_server_bound_to_the_registry_and_to_the_checks_it_reuses",
      "test_rc127_g14_every_suggested_action_is_possible_in_its_mode",
@@ -631,7 +639,7 @@
    "controls": "RC-122, RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user"
@@ -645,7 +653,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 120,
+    "passed": 163,
     "failed": 4,
     "failing_tests": [
      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
@@ -662,7 +670,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc127_g14_every_suggested_action_is_possible_in_its_mode"
@@ -676,7 +684,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 117,
+    "passed": 160,
     "failed": 7,
     "failing_tests": [
      "test_rc123_a_scanner_change_stops_the_comparison_in_the_gate_and_in_rc062",
@@ -696,7 +704,7 @@
    "controls": "RC-123, RC-127",
    "status": "detected",
    "result": {
-    "passed": 120,
+    "passed": 163,
     "failed": 4,
     "failing_tests": [
      "test_rc123_apply_to_comparison_withholds_exactly_what_rc062_withholds",
@@ -713,9 +721,10 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 120,
-    "failed": 4,
+    "passed": 162,
+    "failed": 5,
     "failing_tests": [
+     "test_rc122_a_storage_without_real_ranges_is_read_once",
      "test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version",
      "test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop",
      "test_rc122_the_header_is_read_with_a_bounded_range",
@@ -730,7 +739,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version"
@@ -744,7 +753,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version"
@@ -758,7 +767,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc123_e2_the_acquisition_records_are_read_once"
@@ -772,7 +781,7 @@
    "controls": "RC-124",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_e3_the_thin_limit_is_the_evaluated_policy_s"
@@ -786,7 +795,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc122_g15_with_the_gate_on_one_classifier",
@@ -802,7 +811,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 118,
+    "passed": 161,
     "failed": 6,
     "failing_tests": [
      "test_rc122_g12_every_series_description_gets_its_class",
@@ -821,7 +830,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 119,
+    "passed": 162,
     "failed": 5,
     "failing_tests": [
      "test_rc122_a1_the_server_reads_the_nifti_descrip[TE=81;TI=900-other]",
@@ -839,7 +848,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records"
@@ -853,7 +862,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
@@ -868,7 +877,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_behind_the_flag_and_refused_before_any_io"
@@ -882,7 +891,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc126_behind_the_flag_and_refused_before_any_io",
@@ -898,7 +907,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc126_a_per_user_rate_limit_bounds_the_reads",
@@ -914,7 +923,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop",
@@ -929,7 +938,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop",
@@ -944,7 +953,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc123_missing_or_unreadable_metadata_abstains_with_a_reason"
@@ -958,7 +967,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc123_the_metadata_is_read_once_per_visit_and_one_type_check"
@@ -972,7 +981,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_no_policy_copy_per_consultation"
@@ -986,7 +995,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 118,
+    "passed": 161,
     "failed": 6,
     "failing_tests": [
      "test_rc122_g12_every_series_description_gets_its_class",
@@ -1005,14 +1014,25 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 119,
-    "failed": 5,
+    "passed": 151,
+    "failed": 16,
     "failing_tests": [
      "test_rc122_a1_the_server_reads_nifti_extensions_and_the_dicom_image_type",
      "test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed",
      "test_rc122_g12_every_series_description_gets_its_class",
      "test_rc122_g15_with_the_gate_on_one_classifier",
-     "test_rc122_g27_the_server_alone_passes_the_shared_corpus"
+     "test_rc122_g27_the_server_alone_passes_the_shared_corpus",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\PRIMARY-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\PRIMARY\\\\MPR\\\\ND\\\\NORM-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\PRIMARY\\\\PROJECTION IMAGE-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\PRIMARY\\\\SUBTRACTION-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\SECONDARY-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\SECONDARY\\\\CSA RESAMPLED-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\SECONDARY\\\\MPR-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\SECONDARY\\\\RESAMPLED-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[ORIGINAL\\\\PRIMARY\\\\LOCALIZER-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[ORIGINAL\\\\SECONDARY-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[ORIGINAL\\\\SECONDARY\\\\SCREEN SAVE-other]"
     ],
     "returncode": 1
    }
@@ -1023,7 +1043,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_g26_b_g20_hygiene_is_the_only_documented_difference"
@@ -1037,7 +1057,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_g22_every_clinical_and_analysis_post_route_is_audited"
@@ -1051,10 +1071,11 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 123,
-    "failed": 1,
+    "passed": 165,
+    "failed": 2,
     "failing_tests": [
-     "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation"
+     "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation",
+     "test_rc127_g27_the_answer_carries_what_the_browser_shows"
     ],
     "returncode": 1
    }
@@ -1065,7 +1086,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation"
@@ -1079,7 +1100,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation"
@@ -1093,7 +1114,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop"
@@ -1107,18 +1128,25 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 115,
-    "failed": 9,
+    "passed": 151,
+    "failed": 16,
     "failing_tests": [
      "test_rc122_a1_the_server_reads_nifti_extensions_and_the_dicom_image_type",
      "test_rc122_a1_the_server_reads_the_nifti_descrip[AX T2 FLAIR-FLAIR]",
      "test_rc122_a1_the_server_reads_the_nifti_descrip[Sag T1 MPRAGE-T1]",
      "test_rc122_a1_the_server_reads_the_nifti_descrip[TE=81;TI=900-other]",
+     "test_rc122_a1_the_single_route_classifies_a_nifti_by_its_descrip",
+     "test_rc122_a_storage_without_real_ranges_is_read_once",
+     "test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version",
+     "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
      "test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop",
+     "test_rc122_the_header_is_read_with_a_bounded_range",
+     "test_rc122_the_single_study_route_derives_its_inputs_on_the_server",
      "test_rc123_a1_a_comparison_reads_each_visit_s_image_header",
      "test_rc123_e2_the_acquisition_records_are_read_once",
      "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation",
-     "test_rc123_flag_on_same_scanner_flair_shows_candidates_with_the_gate_attached"
+     "test_rc123_flag_on_same_scanner_flair_shows_candidates_with_the_gate_attached",
+     "test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records"
     ],
     "returncode": 1
    }
@@ -1129,7 +1157,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop"
@@ -1143,7 +1171,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_the_rate_limit_comes_first_and_the_gate_runs_off_the_loop"
@@ -1157,7 +1185,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_a_storage_without_real_ranges_is_read_once"
@@ -1171,7 +1199,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation",
@@ -1187,7 +1215,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation",
@@ -1203,7 +1231,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc122_g26_c_compare_and_sel_are_the_base_with_the_gate_off",
@@ -1218,7 +1246,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc123_c2_the_gate_decides_before_any_mask_or_image_is_loaded",
@@ -1233,7 +1261,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_g26_c_compare_and_sel_are_the_base_with_the_gate_off"
@@ -1247,7 +1275,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc123_r4_a_warned_comparison_says_so_in_the_caveat"
@@ -1261,7 +1289,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc123_r4_the_report_draft_states_the_gate_warnings"
@@ -1275,7 +1303,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc123_r4_the_report_draft_states_the_gate_warnings"
@@ -1289,7 +1317,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc123_r4_the_report_draft_states_the_gate_warnings",
@@ -1330,7 +1358,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc122_g26_c_a_malformed_attestation_is_ignored_with_the_gate_off",
@@ -1345,7 +1373,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc122_g26_c_compare_and_sel_are_the_base_with_the_gate_off",
@@ -1360,7 +1388,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 112,
+    "passed": 155,
     "failed": 12,
     "failing_tests": [
      "test_rc122_g12_every_series_description_gets_its_class",
@@ -1385,7 +1413,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 114,
+    "passed": 157,
     "failed": 10,
     "failing_tests": [
      "test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed",
@@ -1408,7 +1436,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_f3_repeated_consultations_come_from_the_cache_and_are_not_counted"
@@ -1422,7 +1450,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc126_a_per_user_rate_limit_bounds_the_reads",
@@ -1437,7 +1465,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_f3_a_releasing_consultation_is_never_served_from_the_cache"
@@ -1449,14 +1477,16 @@
    "reintroduces": "the answer without the physician's attestation is served after the attestation (F3)",
    "runner": "backend",
    "controls": "RC-122, RC-126",
-   "status": "SURVIVED",
+   "status": "detected",
    "result": {
-    "passed": 124,
-    "failed": 0,
-    "failing_tests": [],
-    "returncode": 0
-   },
-   "status_after_follow_up": "detected"
+    "passed": 165,
+    "failed": 2,
+    "failing_tests": [
+     "test_rc126_a2_each_clinician_s_attestation_is_audited_under_that_clinician",
+     "test_rc126_f3_repeated_consultations_come_from_the_cache_and_are_not_counted"
+    ],
+    "returncode": 1
+   }
   },
   "W17_retry_seconds_dropped": {
    "reintroduces": "over the limit, the physician is not told how long to wait (F3)",
@@ -1464,7 +1494,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_f3_repeated_consultations_come_from_the_cache_and_are_not_counted"
@@ -1478,7 +1508,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc126_f4_only_a_releasing_decision_is_an_ai_run",
@@ -1494,7 +1524,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc126_f4_opening_ten_images_records_no_ai_run",
@@ -1509,7 +1539,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc126_f4_only_a_releasing_decision_is_an_ai_run",
@@ -1524,7 +1554,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc122_g26_c_compare_and_sel_are_the_base_with_the_gate_off",
@@ -1574,7 +1604,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 120,
+    "passed": 163,
     "failed": 4,
     "failing_tests": [
      "test_rc122_a1_the_server_reads_the_nifti_descrip[AX T2 FLAIR-FLAIR]",
@@ -1591,7 +1621,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_a1_the_server_reads_nifti_extensions_and_the_dicom_image_type"
@@ -1605,7 +1635,7 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 122,
+    "passed": 165,
     "failed": 2,
     "failing_tests": [
      "test_rc123_a1_a_comparison_reads_each_visit_s_image_header",
@@ -1620,7 +1650,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_a2_each_clinician_s_attestation_is_audited_under_that_clinician"
@@ -1634,7 +1664,7 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc126_a3_correcting_the_series_description_invalidates_the_cached_decision"
@@ -1648,9 +1678,11 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
-    "failed": 1,
+    "passed": 164,
+    "failed": 3,
     "failing_tests": [
+     "test_rc122_g28_an_attestation_is_offered_only_when_it_changes_the_decision[on]",
+     "test_rc122_g28_reviewer_cases",
      "test_rc127_g27_the_answer_carries_what_the_browser_shows"
     ],
     "returncode": 1
@@ -1662,7 +1694,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc127_g27_the_answer_carries_what_the_browser_shows"
@@ -1676,7 +1708,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 121,
+    "passed": 164,
     "failed": 3,
     "failing_tests": [
      "test_rc127_a4_the_report_notice_gives_the_gate_s_reason_when_the_gate_stops[de]",
@@ -1692,7 +1724,7 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report"
@@ -1706,7 +1738,7 @@
    "controls": "RC-122",
    "status": "detected",
    "result": {
-    "passed": 123,
+    "passed": 166,
     "failed": 1,
     "failing_tests": [
      "test_rc122_a1_the_server_reads_nifti_extensions_and_the_dicom_image_type"
@@ -1759,6 +1791,121 @@
    "reintroduces": "the comparison offers an attestation for a visit the server did not name (G27)",
    "runner": "vitest",
    "controls": "RC-122",
+   "status": "not_run",
+   "reason": "not run (no node_modules): vitest runs in GitHub Actions"
+  },
+  "Z1_derived_image_type_original": {
+   "reintroduces": "a derived or secondary DICOM (ImageType DERIVED / SECONDARY) passes as an original FLAIR (S1)",
+   "runner": "backend",
+   "controls": "RC-122",
+   "status": "detected",
+   "result": {
+    "passed": 159,
+    "failed": 8,
+    "failing_tests": [
+     "test_rc122_g12_a_non_flair_name_always_abstains_whatever_is_confirmed",
+     "test_rc122_g12_every_series_description_gets_its_class",
+     "test_rc122_g15_with_the_gate_on_one_classifier",
+     "test_rc122_g27_the_server_alone_passes_the_shared_corpus",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\PRIMARY-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[DERIVED\\\\SECONDARY-other]",
+     "test_rc122_s1_a_derived_image_is_never_an_original_flair[ORIGINAL\\\\SECONDARY-other]",
+     "test_rc126_g27_one_policy_on_the_server_bound_to_the_registry_and_to_the_checks_it_reuses"
+    ],
+    "returncode": 1
+   }
+  },
+  "Z2_futile_attestation_offered": {
+   "reintroduces": "an attestation is offered (and audited) when an unreadable header or a scanner change stops the AI anyway (G28)",
+   "runner": "backend",
+   "controls": "RC-122, RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 164,
+    "failed": 3,
+    "failing_tests": [
+     "test_rc122_g28_an_attestation_is_offered_only_when_it_changes_the_decision[on]",
+     "test_rc122_g28_reviewer_cases",
+     "test_rc127_g27_the_answer_carries_what_the_browser_shows"
+    ],
+    "returncode": 1
+   }
+  },
+  "Z3_report_reads_any_code": {
+   "reintroduces": "a malformed quality_gate in a report body breaks the draft (R1)",
+   "runner": "backend",
+   "controls": "RC-127",
+   "status": "detected",
+   "result": {
+    "passed": 165,
+    "failed": 2,
+    "failing_tests": [
+     "test_rc127_r1_a_malformed_gate_in_the_report_body_never_breaks_the_notice[True-gate1]",
+     "test_rc127_r1_a_malformed_gate_in_the_report_body_never_breaks_the_notice[True-gate2]"
+    ],
+    "returncode": 1
+   }
+  },
+  "Z4_no_record_thickness_fallback": {
+   "reintroduces": "an undeterminable header thickness hides the record's thickness (R2)",
+   "runner": "backend",
+   "controls": "RC-124",
+   "status": "detected",
+   "result": {
+    "passed": 166,
+    "failed": 1,
+    "failing_tests": [
+     "test_rc124_r2_an_undeterminable_header_thickness_falls_back_to_the_acquisition_record"
+    ],
+    "returncode": 1
+   }
+  },
+  "Z5_instances_streamed": {
+   "reintroduces": "every consultation streams the whole instances collection to build the cache key (E1)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 166,
+    "failed": 1,
+    "failing_tests": [
+     "test_rc126_e1_the_stored_records_are_read_without_streaming_the_instances"
+    ],
+    "returncode": 1
+   }
+  },
+  "Z6_visits_read_one_after_the_other": {
+   "reintroduces": "the comparison reads the two visits one after the other (E2)",
+   "runner": "backend",
+   "controls": "RC-123",
+   "status": "detected",
+   "result": {
+    "passed": 166,
+    "failed": 1,
+    "failing_tests": [
+     "test_rc123_e2_the_comparison_reads_both_visits_concurrently"
+    ],
+    "returncode": 1
+   }
+  },
+  "V24_unavailable_retried": {
+   "reintroduces": "an unavailable or not-enabled answer is asked again forever (G29)",
+   "runner": "vitest",
+   "controls": "RC-126",
+   "status": "not_run",
+   "reason": "not run (no node_modules): vitest runs in GitHub Actions"
+  },
+  "V25_no_retry_cap": {
+   "reintroduces": "a rate limit that never lifts makes the browser ask forever (G29)",
+   "runner": "vitest",
+   "controls": "RC-126",
+   "status": "not_run",
+   "reason": "not run (no node_modules): vitest runs in GitHub Actions"
+  },
+  "V26_404_shown_as_unavailable": {
+   "reintroduces": "the flag mismatch (server gate off) is shown as 'could not be completed' (G29)",
+   "runner": "vitest",
+   "controls": "RC-127",
    "status": "not_run",
    "reason": "not run (no node_modules): vitest runs in GitHub Actions"
   },
@@ -1821,7 +1968,7 @@
  },
  "restored": {
   "backend": {
-   "passed": 124,
+   "passed": 167,
    "failed": 0,
    "failing_tests": [],
    "returncode": 0
@@ -1833,69 +1980,19 @@
   }
  },
  "summary": {
-  "mutations": 121,
-  "run": 103,
-  "detected": 102,
-  "survived": 1,
+  "mutations": 130,
+  "run": 109,
+  "detected": 109,
+  "survived": 0,
   "invalid": 0,
-  "not_run": 18,
+  "not_run": 21,
   "restored_backend": [
-   124,
+   167,
    0
   ],
   "restored_node": [
    2,
    0
-  ],
-  "survived_after_follow_up": 0
- },
- "follow_up": [
-  {
-   "why": "W14_cache_ignores_the_attestation SURVIVED the full run as an EQUIVALENT mutant: after A2 the clinician in the cache key also tells an attested consultation apart, so dropping only the attestation flag changed nothing. The mutant now drops both (the defect it stands for) and is re-run here.",
-   "commit": "4f067236d9659b6cab391fd956d5a9b6fdcb330f",
-   "mutations": {
-    "W14_cache_ignores_the_attestation": {
-     "reintroduces": "the answer without the physician's attestation is served after the attestation (F3)",
-     "runner": "backend",
-     "controls": "RC-122, RC-126",
-     "status": "detected",
-     "result": {
-      "passed": 122,
-      "failed": 2,
-      "failing_tests": [
-       "test_rc126_a2_each_clinician_s_attestation_is_audited_under_that_clinician",
-       "test_rc126_f3_repeated_consultations_come_from_the_cache_and_are_not_counted"
-      ],
-      "returncode": 1
-     }
-    }
-   },
-   "baseline": {
-    "backend": {
-     "passed": 124,
-     "failed": 0,
-     "failing_tests": [],
-     "returncode": 0
-    },
-    "node": {
-     "passed": 2,
-     "failed": 0,
-     "failing_tests": []
-    }
-   },
-   "restored": {
-    "backend": {
-     "passed": 124,
-     "failed": 0,
-     "failing_tests": [],
-     "returncode": 0
-    },
-    "node": {
-     "passed": 2,
-     "failed": 0,
-     "failing_tests": []
-    }
-   }
-  }
- ]
+  ]
+ }
 }

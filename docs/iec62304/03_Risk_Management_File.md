@@ -1144,6 +1144,22 @@ Negative controls (every test run inside the throwaway copy; full run on `0a4b57
 
 **HAZ-007 residual:** unchanged.
 
+### C.12 Seventh independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| S1 (safety) | A DICOM with ImageType DERIVED\SECONDARY was 'unknown', so a derived FLAIR passed (against D-QG-7 / D-QG-11) | RC-122 | `image_type_other` += derived, secondary, resampled, localizer, screen (justified per value, design §3a; D-QG-14); corpus +15 ImageType entries | G12, S1 |
+| G28 | A futile attestation was offered (and audited): unreadable header + missing, a scanner change | RC-122, RC-126 | offered only when every abstaining check is a sequence check the attestation lifts | G28 (matrix) |
+| G29 | Unbounded retries; 'unavailable' retried; the flag mismatch shown as unavailable | RC-126, RC-127 | only rate-limited answers retried, after the wait, backoff ×2, at most 3; unavailable and 404 (`gate_not_enabled`) shown, never retried; a "check again" button | G29 (fake timers, 10 min) |
+| R1, R2 | A malformed gate in a report body could break the draft; no record fallback for an undeterminable header thickness | RC-127, RC-124 | only a list of code strings is read; the record's thickness is used | unit |
+| E1, E2 | The instances collection streamed per consultation; the visits read one after the other | RC-126, RC-123 | one instance document by query (limit 1) through one file-id lookup; concurrent reads | unit, route |
+
+Failing first (commit `02c2adb`, on the code of 302e00d): backend `test_rc122_review7.py` **15 of 43 failed** — S1 7, G28 2 (a futile attestation offered in **880 of the 3 200 matrix cases** with the platform on, and in both reviewer cases), R1 2, R2 1, E1 1, E2 1, cleanup 1; browser (GitHub Actions) **5 failed** — G29 3 (card), G29 2 (request). After the fixes: all pass.
+
+Negative controls (every test run inside the throwaway copy; full run on `ea9d151`): 130 mutations (4 re-anchored, 9 new for S1, G28, G29, R1, R2, E1, E2), **109 run, 109 detected, 0 survived, 0 invalid**; 21 component mutations not run (no node_modules; vitest runs in GitHub Actions). Per control: RC-122 45/45, RC-123 19/19, RC-124 6/6, RC-125 4/4, RC-126 29/29, RC-127 13/13. Baseline and restored copy: backend 167 / 0, RC-049 browser harness 2 / 0.
+
+**HAZ-007 residual:** unchanged.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
