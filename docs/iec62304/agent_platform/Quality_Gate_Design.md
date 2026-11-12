@@ -95,6 +95,11 @@ Matrix: sequence {FLAIR, T1, T2, unknown, missing} × physician confirmation {no
 - **G16** When the gate stops a comparison, only its reason is shown.
 - **G17** The decision that releases or withholds the output is decided and audited by the server, with the deciding code.
 - **G18** No stale answer acts: every consultation and run names its file and version; one request at a time.
+- **G19** Field-aware classification; nothing accepted as FLAIR before PR #81 is lost except documented decisions (pre-PR snapshot, `scripts/safety/quality_gate_pre_pr_snapshot.py`).
+- **G20** Only descriptive fields are classified; identifiers never change the class.
+- **G21** One coherent verdict per gate decision × RC-062 status.
+- **G22** Every clinical / analysis POST route is audited (generic test).
+- **G23** The card always reaches a decided state for the selected file.
 
 ## 6. Data rule and the v3 hook (REQ-SAFE-053)
 
@@ -118,4 +123,6 @@ Published OFF: `VITE_ENABLE_QUALITY_GATE` and `QUALITY_GATE_ENFORCED` default to
 | D-QG-6 | Identifier numbering if PR #78 or PR #79 take REQ-FUNC-117/118, REQ-SAFE-052..054, HAZ-025 or RC-122..127 first. |
 | D-QG-7 | Post-contrast, reformatted (MPR, MIP) and derived or subtracted FLAIRs are "other" and always abstain; confirm, or allow some of them. |
 | D-QG-9 | TIRM names count as FLAIR (as RC-049 already read them); a short-TI TIRM (a STIR) is caught only when its inversion time is recorded in the header or the text; confirm. |
-| D-QG-8 | A comparison offers no attestation, so visits whose header names no sequence are never compared automatically; confirm, or ask for a per-visit attestation in the comparison screen. |
+| D-QG-8 | *Superseded by F1 (third review of PR #81):* the comparison now offers a per-visit attestation. |
+| D-QG-10 | When NEITHER visit records its scanner (two uploads), the gate warns (`scanner_not_recorded`) and RC-062 shows the candidates with a warning, only while the gate is enforced; a one-sided or partial record still abstains. Confirm, or keep RC-062's abstention for uploads. |
+| D-QG-11 | A DICOM ImageType naming a reformatted, projected, subtracted or parametric image (MPR, MIP, ADC, …) makes the image 'other' (an extension of D-QG-7); confirm. |

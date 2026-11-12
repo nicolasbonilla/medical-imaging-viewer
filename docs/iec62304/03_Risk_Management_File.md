@@ -1076,6 +1076,20 @@ Failing first (commit `e5e3f0f`, CI run 43158533290): G15 the inventory disagree
 
 After the fixes: matrix 29 of 29, wiring 38 of 38, CAPA-013 52 of 52, CAPA-009 53 of 53, inventory 28 of 28; GitHub Actions run on `84e432c`: all 8 jobs green. Negative controls (every test run inside the throwaway copy): 81 mutations, **71 of 71 run detected, 0 survived, 0 invalid**; 10 component mutations not run (no node_modules). Per control: RC-122 30/30, RC-123 11/11, RC-124 5/5, RC-125 6/6, RC-126 19/19, RC-127 11/11. Baseline and restored copy: backend 67 / 0, browser harness 14 / 0.
 
+### C.8 Third independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| G19 | REGRESSION of G15, live even with the gate off: RC-049 tokenised the DICOM SequenceName, so Siemens "*tir2d1rr18" / "*spcir_278" read "star" (T2*) → "contradicts": the in-browser AI rejected valid Siemens FLAIR | RC-122 | FIELD-AWARE classifier: description by tokens; SequenceName by a vendor-code table ('*' a Siemens prefix, an unlisted code says nothing); ImageType by its own list (reformatted/parametric = other, D-QG-7) | pre-PR snapshot: every FLAIR RC-049 or the inventory accepted before PR #81 is still accepted, except 20 documented changes |
+| G20 | The inventory classified file ids: UUID fragments ("ce41", "dce3") turned FLAIR into other/None | RC-122 | only the description and the file NAME without identifier tokens | property test with random UUID/hex ids |
+| G21 | "The gate allows" shown next to "no automatic candidates" | RC-127 | one verdict: when RC-062 abstains after the gate allows, RC-062's reason governs and the gate panel steps aside | shared UI-state fixture (vitest) |
+| G22 | POST /clinical/quality-gate not in the audit middleware | RC-126 | registered; a GENERIC test enumerates every POST route of the clinical and analysis routers | generic route test |
+| G23 | A → B → A left the card on "checking" for ever | RC-122 | the final decision is kept with its file; re-selection consults again | vitest |
+| F1 | Two uploaded NIfTIs were never comparable (sequence missing, no attestation; scanner_unknown) | RC-122, RC-123 | per-visit attestation in the comparison panel (explicit, unticked, unknown/missing only, reset per pair, audited per visit); when NEITHER visit records its scanner, the gate warns and RC-062 shows the candidates with a warning, only when the gate is enforced (D-QG-10, supersedes D-QG-8) | wiring + vitest |
+| 1–4 | Format by file name on truncated data, on the loop; silent "missing"; rate limit after the platform; gate on the loop; repeated whole downloads | RC-122, RC-126 | magic bytes only, off the loop, explicit `header_unreadable`; limit first; gate in a worker thread; one full download at most without real ranges | wiring |
+
+Failing first (commit `50ec58f`, CI run 43163086468): **G19 4 of 71 pre-PR RC-049 FLAIR acceptances lost** (all Siemens FLAIR with "*tir…" / "*spcir…" SequenceName); G20 identifiers changed the inventory's class in 8 cases; G21 3 of 8 UI states showed two verdicts; G22 1 POST route not audited; G23 no second consultation after A → B → A; F1 two uploads never comparable; backend wiring 5 failed, matrix 5 failed.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
