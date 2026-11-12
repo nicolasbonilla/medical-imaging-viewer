@@ -1177,6 +1177,24 @@ Negative controls (every test run inside the throwaway copy; full run on `1f6186
 
 **HAZ-007 residual:** unchanged.
 
+### C.14 Ninth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+The main class is now the converse of the earlier ones: OVER-BLOCKING (a real FLAIR stopped with an unliftable 'other').
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| G33 | Real FLAIRs dead-ended: DERIVED\PRIMARY with on-scanner corrections read as derived; 'da-fl' / 'dark-fl' read as T2 | RC-122 | only non-acquisition ImageType markers are 'other' (D-QG-14 updated, no warning for corrections); dark-fluid spellings are FLAIR; a labelled corpus of 770 real FLAIRs (D-QG-15) | G33 |
+| G34 | A study description copied into a series could stop a true FLAIR | RC-122 | image-level inputs only; a copied description (provenance or equality with the study's) is ignored | G34 |
+| G35 | With the gate on, an unknown mask type was answered by the gate; an instance pair was reported as an unreadable header | RC-123, RC-127 | validation first (keeps its 400), `source_image_missing` | G35 |
+| G30 ext. | An SEL failure shown as RC-062; a warned pair withheld by RC-062 lost its warnings in the model's text | RC-127 | `withheld_by`; the same warnings from `explain` | G30 |
+| O1–O4 | Reads before the request limit; a cached attestation not audited; visits read twice; dead code | RC-126, RC-123 | counter first; audit on every attestation; one visit check; cleanup | unit |
+
+Failing first (commit `bde1cd7`, on the code of 01ed30b): **510 of the 770 labelled real FLAIRs hit a dead end** (260 for a DERIVED\PRIMARY ImageType, 250 for da-fl / dark-fl names); backend `test_rc122_review9.py` **20 of 33 failed** — G33 10, G34 3, G35 2, G30 1, O1 1, O2 1, O3 1, O4 1; browser (GitHub Actions run 43218493334): **2 of the 4** G30-extended SEL cases failed (both "withheld by sel"; the two RC-062 cases already passed). After the fixes: 0 dead ends, all pass.
+
+Negative controls: 152 mutations in a throwaway copy (baseline and restored copy: backend 213 / 0, RC-049 browser harness 4 / 0): 128 run, 127 detected, 1 survived — Y4_cache_ignores_the_clinician, an equivalent mutant once O2 audits every cached attestation under its clinician; redefined as the full A2 defect (commit 667e994) and detected on re-run — so **0 survived**, 0 invalid; 24 component mutations not run locally (no node_modules; vitest runs in CI). Per control: RC-122 51 / 51, RC-123 23 / 23, RC-124 6 / 6, RC-125 4 / 4, RC-126 34 / 34, RC-127 18 / 18. Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (follow_up).
+
+**HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** the over-blocking of real FLAIRs is removed without letting a non-acquisition image through (S1 of the seventh review still holds: SECONDARY, MPR, projections, subtraction, localizers and screen saves stay 'other').
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
