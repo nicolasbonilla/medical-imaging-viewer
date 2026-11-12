@@ -272,6 +272,20 @@ def _spacing(s) -> Optional[List[float]]:
     return vals if len(vals) == 3 and all(math.isfinite(x) and x > 0 for x in vals) else None
 
 
+def rc062_voxel_spacing(img) -> Optional[tuple]:
+    """RC-062's voxel spacing of a source image, in the mask's internal axis order (k, a0, a1) — the ONE helper for the
+    run time (the image the NIfTI loader returned, _load_source_intensity) and for the quality gate's prediction (the
+    NIfTI header alone; tenth review of PR #81, S3): a 3-D image whose three zooms are positive, else None (not
+    established, so RC-062 withholds)."""
+    try:
+        zooms = img.header.get_zooms()[:3]
+        if len(img.shape) != 3 or len(zooms) < 3 or not all(float(z) > 0 for z in zooms):
+            return None
+        return (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+    except Exception:  # noqa: BLE001 — not established
+        return None
+
+
 def compare_acquisitions(acq_tp1: Optional[dict], acq_tp2: Optional[dict],
                          spacing_tp1, spacing_tp2) -> Dict[str, Any]:
     """Compare the acquisition of the two visits (RC-062).
@@ -368,9 +382,10 @@ async def read_source_visit(file_id, study_service=None) -> Optional[Dict[str, A
         return None
 
 
-def source_series_ref(file_id, study_service=None):
-    """The Firestore reference of a source image's series (studies/{study}/series/{series}), or None — the ONE lookup
-    of a source file id, used by the acquisition record (RC-062) and the stored series description (the gate)."""
+def source_refs(file_id, study_service=None):
+    """(study, series) Firestore references of a source image (studies/{study}, .../series/{series}), or None — the ONE
+    lookup of a source file id (tenth review of PR #81), used by the acquisition record (RC-062) and by the stored
+    series description and its study (the gate, G34)."""
     m = _FILE_ID_RE.fullmatch(str(file_id or ""))
     if not m:
         return None
@@ -380,29 +395,18 @@ def source_series_ref(file_id, study_service=None):
     db = getattr(study_service, "db", None)
     if db is None:
         return None
-    return db.collection("studies").document(m.group(1)).collection("series").document(m.group(2))
-
-
-def source_study_ref(file_id, study_service=None):
-    """The Firestore reference of a source image's STUDY (studies/{study}), through the same file-id lookup."""
-    m = _FILE_ID_RE.fullmatch(str(file_id or ""))
-    if not m:
-        return None
-    if study_service is None:
-        from app.core.container import get_study_service
-        study_service = get_study_service()
-    db = getattr(study_service, "db", None)
-    return None if db is None else db.collection("studies").document(m.group(1))
+    study = db.collection("studies").document(m.group(1))
+    return study, study.collection("series").document(m.group(2))
 
 
 def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
     """The acquisition record stored with a source image (instance document), or None. Never raises. Seventh review
     of PR #81 (E1): ONE instance document is read — a query on the file, limit 1 — never the whole collection."""
     try:
-        series = source_series_ref(file_id, study_service)
-        if series is None:
+        refs = source_refs(file_id, study_service)
+        if refs is None:
             return None
-        instances = series.collection("instances")
+        instances = refs[1].collection("instances")
         try:
             from google.cloud.firestore_v1.base_query import FieldFilter
             query = instances.where(filter=FieldFilter("gcs_object_name", "==", file_id))

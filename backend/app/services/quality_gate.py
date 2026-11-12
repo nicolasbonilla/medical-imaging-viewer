@@ -29,7 +29,6 @@ from __future__ import annotations
 
 import asyncio
 import copy
-import hashlib
 import io
 import json
 import math
@@ -372,17 +371,20 @@ def _image_type_class(value: Any, vocab: Dict[str, Any]) -> Optional[str]:
 
 def classify_fields(fields: Dict[str, Any], inversion_time_ms: Any = None,
                     policy: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[str]]:
-    """The ONE sequence classifier of the product, FIELD-AWARE (third review of PR #81, G19): the description
-    (``description``: a text or a list — SeriesDescription, ProtocolName, NIfTI descrip; also ``protocol_name``) by
-    its tokens, ``sequence_name`` by the vendor-code table, ``image_type`` by its own list. Any field naming a
-    non-FLAIR sequence decides (other / T1 / T2); else a FLAIR name; else unknown; nothing at all = missing."""
+    """The ONE sequence classifier of the product, FIELD-AWARE (third review of PR #81, G19): the SERIES-level
+    description (``description``: a text or a list — SeriesDescription, NIfTI descrip, the stored series description)
+    by its tokens, ``sequence_name`` by the vendor-code table, ``image_type`` by its own list. Any of them naming a
+    non-FLAIR sequence decides (other / T1 / T2); else a FLAIR name; else unknown; nothing at all = missing.
+
+    Tenth review (S2, G33 extended): ``protocol_name`` is EXAM-level for some vendors (GE writes the examination's
+    protocol there, "BRAIN W WO CONTRAST"), so it never vetoes a series: it may support a FLAIR when the series fields
+    are silent, and anything else it says leaves the series unknown (the physician may attest) — never 'other'."""
     policy = policy if policy is not None else _policy()
     rules = policy["sequence"]
     vocab = rules["vocabulary"]
     desc = fields.get("description")
     texts = [t for t in (desc if isinstance(desc, (list, tuple)) else [desc]) if isinstance(t, str)]
-    if isinstance(fields.get("protocol_name"), str):
-        texts.append(fields["protocol_name"])
+    exam = [t for t in (fields.get("protocol_name"),) if isinstance(t, str) and sequence_tokens(t)]
     ti = _number(inversion_time_ms)
     ti = ti if ti is not None and ti > 0 else next(
         (v for v in (text_inversion_time_ms(t, policy) for t in texts) if v is not None), None)
@@ -391,6 +393,8 @@ def classify_fields(fields: Dict[str, Any], inversion_time_ms: Any = None,
     classes = [cls for cls, _, _ in per_text]
     classes += [c for c in (_sequence_name_class(fields.get("sequence_name"), vocab),
                             _image_type_class(fields.get("image_type"), vocab)) if c]
+    if exam and not any(c in ("other", "T1", "T2", "FLAIR") for c in classes):   # the series is silent (S2)
+        classes.append("FLAIR" if _classify_tokens(sequence_tokens(exam[0]), vocab)[0] == "FLAIR" else "unknown")
     words = _compiled(vocab)
     tokens = {t for tk in tokens_per_text for t in tk}
     weighting = "T1" if any(t1 for _, t1, _ in per_text) else "T2" if any(t2 for _, _, t2 in per_text) else None
@@ -460,18 +464,17 @@ def read_source_series_description(file_id, study_service=None) -> Optional[str]
     PR #81 (G34): IMAGE-LEVEL only — a description copied from the STUDY (marked series_description_source = "study",
     or equal to the study's study_description) is not the series' own and is ignored."""
     try:
-        series = lcs.source_series_ref(file_id, study_service)
-        if series is None:
+        refs = lcs.source_refs(file_id, study_service)
+        if refs is None:
             return None
+        study, series = refs
         doc = series.get()
         data = (doc.to_dict() or {}) if getattr(doc, "exists", False) else {}
         value = data.get("series_description")
         if not isinstance(value, str) or not value.strip() or data.get("series_description_source") == "study":
             return None
-        study = lcs.source_study_ref(file_id, study_service)
-        study_doc = study.get() if study is not None else None
-        study_desc = ((study_doc.to_dict() or {}).get("study_description")
-                      if study_doc is not None and getattr(study_doc, "exists", False) else None)
+        study_doc = study.get()
+        study_desc = (study_doc.to_dict() or {}).get("study_description") if getattr(study_doc, "exists", False) else None
         same = isinstance(study_desc, str) and " ".join(study_desc.split()).lower() == " ".join(value.split()).lower()
         return None if same else value
     except Exception:  # noqa: BLE001 — unknown description: the sequence is "missing", the gate abstains
@@ -572,15 +575,15 @@ def read_header_fields(data: bytes, decoded: Optional[bytes] = None) -> Dict[str
     if fmt == "dicom":
         import pydicom
         ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True, force=True)
-        spacing = [lcs._number(v) for v in list(getattr(ds, "PixelSpacing", []) or [])[:2]] + \
-            [lcs._number(getattr(ds, "SpacingBetweenSlices", None)) or lcs._number(getattr(ds, "SliceThickness", None))]
+        # S3 (tenth review): RC-062 loads a source image with the NIfTI loader only, so a DICOM source has no RC-062
+        # spacing at run time — none is predicted for it here (RC-062 will withhold the pair)
         return {**_dicom_fields(ds), "thickness": thickness_from_geometry(derive_from_dicom_dataset(ds)),
-                "voxel_spacing_mm": spacing if len(spacing) == 3 and all(spacing) else None}
+                "voxel_spacing_mm": None}
     if fmt == "nifti":
         img = _nifti_header_image(data, decoded)
-        zooms = [lcs._number(float(z)) for z in img.header.get_zooms()[:3]]
+        # S3: the SAME helper, axis order and 3-D check as RC-062 at run time (_load_source_intensity)
         return {**_nifti_fields(img), "thickness": thickness_from_geometry(derive_from_nifti_image(img)),
-                "voxel_spacing_mm": zooms if len(zooms) == 3 and all(zooms) else None}
+                "voxel_spacing_mm": lcs.rc062_voxel_spacing(img)}
     return {**_NO_HEADER, "unreadable": True}
 
 
@@ -673,23 +676,22 @@ _NOT_GIVEN = object()
 
 async def visit_header_fields(storage_service, bucket: str, file_path: str, *,
                               version_key: Any = _NOT_GIVEN) -> Dict[str, Any]:
-    """The header fields of one stored image, cached per file version (E1); an unreadable header is an explicit
-    'unreadable' (never 'missing'). Used by the single study AND by each visit of a comparison (A1)."""
-    # the route passes the version it already read for the cache key (F3): one metadata read per consultation
+    """The header fields of one stored image, cached per file version (E1) — the ONE cache of the gate (tenth review,
+    S1); an unreadable header is an explicit 'unreadable' (never 'missing'). Used by the single study AND by each visit
+    of a comparison (A1)."""
     key = version_key if version_key is not _NOT_GIVEN else await file_version(storage_service, bucket, file_path)
     fields = _HEADER_CACHE.get(key) if key else None
-    if fields is None:
-        try:
-            fields = await _read_header_fields(storage_service, bucket, file_path)
-        except Exception:  # noqa: BLE001 — the header could not be read: an explicit code, never 'missing'
-            fields = {**_NO_HEADER, "unreadable": True}
-        else:
-            if key and not fields.get("unreadable"):
-                _HEADER_CACHE[key] = fields
-                while len(_HEADER_CACHE) > HEADER_CACHE_MAX:
-                    _HEADER_CACHE.popitem(last=False)
-    else:
+    if fields is not None:
         _HEADER_CACHE.move_to_end(key)
+        return fields
+    try:
+        fields = await _read_header_fields(storage_service, bucket, file_path)
+    except Exception:  # noqa: BLE001 — the header could not be read: an explicit code, never 'missing'
+        fields = {**_NO_HEADER, "unreadable": True}
+    if key and not fields.get("unreadable"):          # S1: a failed or unreadable read is NEVER remembered
+        _HEADER_CACHE[key] = fields
+        while len(_HEADER_CACHE) > HEADER_CACHE_MAX:
+            _HEADER_CACHE.popitem(last=False)
     return fields
 
 
@@ -726,19 +728,20 @@ def stored_records(file_path: str, study_service=None):
 
 
 async def single_study_inputs(file_path: str, storage_service, *, bucket: str,
-                              physician_confirmed_flair: bool = False, skull: str = "pending",
-                              version_key: Any = _NOT_GIVEN, records: Any = None):
+                              physician_confirmed_flair: bool = False, skull: str = "pending"):
     """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file (visit_inputs):
     its header, else the stored series and acquisition records, and the RC-054 geometry. Header only, parsed off the
     event loop, cached per file version (E1). Anything unreadable stays unknown, so the gate warns or abstains; it
-    never raises. Returns (inputs, file version or None).
+    never raises. Returns (inputs, file version or None). Every consultation is evaluated (tenth review, S1): the
+    header (file version, then the header cache or a ranged read) and the stored records are read concurrently.
 
     ``skull``: 'pending' before the run; at the final consultation the outcome the browser reports ('stripped' /
-    'unknown'), so the decision that releases or withholds the output is decided and audited here (G17).
-    ``records``: the (acquisition, stored description) pair the route already read for the cache key (A3)."""
-    key = version_key if version_key is not _NOT_GIVEN else await file_version(storage_service, bucket, file_path)
-    fields = await visit_header_fields(storage_service, bucket, file_path, version_key=key)
-    acq, stored = records if records is not None else await asyncio.to_thread(stored_records, file_path)
+    'unknown'), so the decision that releases or withholds the output is decided and audited here (G17)."""
+    async def header():
+        version = await file_version(storage_service, bucket, file_path)
+        return version, await visit_header_fields(storage_service, bucket, file_path, version_key=version)
+
+    (key, fields), (acq, stored) = await asyncio.gather(header(), asyncio.to_thread(stored_records, file_path))
     visit = visit_inputs(fields, acq, stored, physician_confirmed_flair=physician_confirmed_flair, skull=skull)
     return {"mode": "single", "visits": [visit]}, (":".join(str(v) for v in key[1:]) if key else None)
 
@@ -773,37 +776,10 @@ def platform_allows(registry=None) -> bool:
         return reg.check_agent(AGENT_ID).allowed is True
 
 
-RATE_LIMIT_PER_MINUTE = 30
+# Tenth review of PR #81 (S1): ONE per-user limit, checked before any authorization, storage or Firestore read; there
+# is no consultation cache any more, so every consultation is a real evaluation and every one counts
+RATE_LIMIT_PER_MINUTE = 60
 _LIMITER = None
-REQUEST_LIMIT_PER_MINUTE = 120       # O1 (ninth review): every request, before any authorization or storage read
-_REQUEST_LIMITER = None
-
-
-def rate_limit_request(user_id: str) -> Optional[int]:
-    """O1 (ninth review of PR #81): a cheap per-user counter of EVERY consultation request, checked before any
-    authorization lookup, storage metadata or Firestore read (the cached path included); None when allowed, else the
-    seconds to wait. Real evaluations keep their own lower limit (rate_limit_evaluation)."""
-    global _REQUEST_LIMITER
-    from app.core.security.rate_limiter import RateLimiter, RateLimitScope
-    if _REQUEST_LIMITER is None:
-        _REQUEST_LIMITER = RateLimiter(redis_client=None, default_limit=REQUEST_LIMIT_PER_MINUTE, default_window=60)
-    allowed, meta = _REQUEST_LIMITER.check_rate_limit(f"quality_gate_requests:{user_id}", limit=REQUEST_LIMIT_PER_MINUTE,
-                                                      window=60, scope=RateLimitScope.PER_USER, user_id=user_id)
-    if allowed:
-        return None
-    wait = lcs._number((meta or {}).get("retry_after")) if isinstance(meta, dict) else None
-    return max(1, min(60, int(math.ceil(wait)))) if wait is not None and wait > 0 else 60
-
-
-def audit_cached_attestation(answer: Dict[str, Any], *, user=None, request=None, study_key: str = "", registry=None) -> None:
-    """O2 (ninth review of PR #81): an attestation is ALWAYS audited, also when its decision comes from the cache — one
-    record per attested consultation, under the clinician who sent it."""
-    from app.agent_platform import registry as R
-    reg = registry if registry is not None else default_registry()
-    details = {**explain(answer), "decision": answer.get("decision"), "mode": answer.get("mode"), "cached": True}
-    with R.audit_actor(actor_for(user, request) if user is not None else None):
-        reg.audit("success", audit_code(answer), event="agent.consultation", agent_id=AGENT_ID,
-                  study_key=study_key or None, trace_id=answer.get("trace_id"), details=details)
 
 
 def new_rate_limiter():
@@ -811,11 +787,10 @@ def new_rate_limiter():
     return RateLimiter(redis_client=None, default_limit=RATE_LIMIT_PER_MINUTE, default_window=60)
 
 
-def rate_limit_evaluation(user_id: str) -> Optional[int]:
-    """Per-user bound on REAL evaluations (each may read a file header and writes an audit record), with the
-    platform's rate limiter: None when allowed, else the seconds to wait (fifth review of PR #81, F3). A
-    consultation served from the cache is not counted. KNOWN LIMITATION: the limiter and the cache are per server
-    instance (in memory), so N instances allow up to N times the limit (Quality_Gate_Design.md)."""
+def rate_limit(user_id: str) -> Optional[int]:
+    """The ONE rate limit of the gate's consultations, per user, with the platform's rate limiter: None when allowed,
+    else the seconds to wait. KNOWN LIMITATION: the limiter is per server instance (in memory), so N instances allow up
+    to N times the limit (Quality_Gate_Design.md)."""
     global _LIMITER
     from app.core.security.rate_limiter import RateLimitScope
     if _LIMITER is None:
@@ -828,42 +803,12 @@ def rate_limit_evaluation(user_id: str) -> Optional[int]:
     return max(1, min(60, int(math.ceil(wait)))) if wait is not None and wait > 0 else 60
 
 
-# F3: the gate's answers to pre-run consultations, per (file, version, attestation, skull, policy version)
-CONSULTATION_CACHE_MAX = 512
-_CONSULTATIONS: "OrderedDict[tuple, tuple]" = OrderedDict()
-
-
-def consultation_key(version_key: Optional[tuple], physician_confirmed_flair: bool, skull: str,
-                     records: Any = None, user_id: Optional[str] = None) -> Optional[tuple]:
-    """The cache key of a consultation, or None when it must be evaluated: the file's version is unknown, or the
-    consultation would release an AI output (a skull outcome other than 'pending' — the final consultation, whose
-    decision is always decided and audited again, F4). Sixth review of PR #81: the key names EVERY input the
-    decision is made from (A3: the file version, a digest of the stored series and acquisition records, the
-    attestation, the skull outcome, the policy version) and, when the physician attests, the clinician (A2: an
-    attestation is always evaluated and audited under the clinician who gave it)."""
-    if not version_key or skull != "pending":
-        return None
-    digest = hashlib.sha256(json.dumps(records, sort_keys=True, default=str).encode("utf-8")).hexdigest()
-    attested = physician_confirmed_flair is True
-    return (*version_key, attested, skull, _policy()["policy_version"], digest, user_id if attested else None)
-
-
-def cached_consultation(key: Optional[tuple]) -> Optional[tuple]:
-    """(answer, file version) of an earlier evaluation of the same consultation, or None."""
-    if key is None or key not in _CONSULTATIONS:
-        return None
-    _CONSULTATIONS.move_to_end(key)
-    return _CONSULTATIONS[key]
-
-
-def store_consultation(key: Optional[tuple], answer: Dict[str, Any], version: Optional[str]) -> None:
-    """Only an answer the platform allowed is kept (a refusal or a fault is never served again); the platform is
-    read again before every cached answer is served, so a kill switch applies at once."""
-    if key is None or (answer.get("platform") or {}).get("allowed") is not True:
-        return
-    _CONSULTATIONS[key] = (answer, version)
-    while len(_CONSULTATIONS) > CONSULTATION_CACHE_MAX:
-        _CONSULTATIONS.popitem(last=False)
+def rate_limited_response(wait: int):
+    """The ONE 429 answer of the gate: the seconds to wait in Retry-After and as data (code gate_rate_limited)."""
+    from fastapi.responses import JSONResponse
+    return JSONResponse(status_code=429, headers={"Retry-After": str(wait)}, content={"error": {
+        "code": "HTTP_429", "message": "Too many quality-gate checks; try again shortly",
+        "details": {"code": "gate_rate_limited", "retry_after_s": wait}}})
 
 
 def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None, releases_output: bool = True,
@@ -933,19 +878,12 @@ def apply_to_comparison(result: Dict[str, Any], gate: Dict[str, Any]) -> Dict[st
     if gate.get("ai_output_allowed") is not True:      # ONE abstention path (second review, finding 5)
         return abstained_comparison(gate)
     out = {**result, "quality_gate": gate}
-    reasons = [CAVEAT_REASONS[c] for c in explain(gate)["warnings"]]
+    reasons = [reason_sentence(c) for c in explain(gate)["warnings"]]
     if reasons:                                       # R4: a warned comparison says so (the assistant reads this)
         previous = out.get("caveat") if isinstance(out.get("caveat"), str) else ""
         out["caveat"] = (previous.rstrip() + " " if previous.strip() else "") + (
-            "Quality-gate warnings for this pair: " + "; ".join(reasons) + ".")
+            reason_lead("warned") + " " + "; ".join(reasons) + ".")
     return out
-
-
-def warning_codes(gate: Any) -> List[str]:
-    """The gate's WARNING codes (policy status 'warn'), from a gate result; anything else is ignored (R4)."""
-    codes = _policy()["codes"]
-    raw = gate.get("codes") if isinstance(gate, dict) else None
-    return [c for c in raw if isinstance(c, str) and codes.get(c) == "warn"] if isinstance(raw, list) else []
 
 
 def present_gated_comparison(result: Dict[str, Any], *, acquisition_check: Dict[str, Any], evidence, binding,
@@ -982,26 +920,25 @@ CAVEAT_REASONS = {code: row["en"] for code, row in _REASONS["reasons"].items()}
 
 
 def audit_code(result: Dict[str, Any]) -> str:
-    """G17: the decision and the code that decided it (the first abstaining, else pending, check), plus '.attested'
-    when the physician's attestation was used — shown and withheld outputs leave distinguishable records (the
-    server log keeps 64 characters: 'agent.run:' + this)."""
-    decision = result.get("decision")
-    deciding = next((c["code"] for st in ("abstain", "pending") for c in result.get("checks", [])
-                     if c.get("status") == st and c.get("code")), None) if decision in ("abstain", "pending") else None
-    visits = [c.get("visit") for c in result.get("checks", []) if c.get("code") == "sequence_confirmed_by_physician"]
-    attested = "" if not visits else ".attested" if visits == ["study"] else ".attested_" + "_".join(visits)
-    return f"quality_gate.{decision}" + (f".{deciding}" if deciding else "") + attested
+    """G17: the decision, plus '.attested' when the physician's attestation was used — shown and withheld outputs leave
+    distinguishable records. Tenth review (S4): a SHORT code by construction (at most 43 characters, so the audit
+    reason '<event>:<code>' always fits the 64-character code field whole); the causes and the attested visits travel
+    as structured details (explain), never packed into this string."""
+    attested = any(c.get("code") == "sequence_confirmed_by_physician" for c in result.get("checks", []))
+    return f"quality_gate.{result.get('decision')}" + (".attested" if attested else "")
 
 
 def explain(gate: Any) -> Dict[str, Any]:
     """G30 (eighth review of PR #81): the ONE account of a gate result that every text is built from — CAUSES are
     exactly the checks that stopped it (abstained; for a pending result, the pending checks), WARNINGS the checks that
-    only warned, and the visits the physician attested. A client-supplied result is read defensively: checks of the
+    only warned (tenth review: the ONE warnings story — the caveat, the notice, the report payload and the model's text
+    all take them from here), and the visits the physician attested. A client-supplied result is read defensively: checks of the
     right shape, else codes with their policy status; anything else is ignored."""
     statuses = _policy()["codes"]
     checks = gate.get("checks") if isinstance(gate, dict) and isinstance(gate.get("checks"), list) else None
     if checks is not None and all(isinstance(c, dict) for c in checks):
-        pairs = [(c.get("code"), c.get("status"), c.get("visit")) for c in checks if isinstance(c.get("code"), str)]
+        # known codes only (R4): a client-supplied result never brings free text into a report or an audit record
+        pairs = [(c.get("code"), c.get("status"), c.get("visit")) for c in checks if c.get("code") in statuses]
     else:
         codes = gate.get("codes") if isinstance(gate, dict) and isinstance(gate.get("codes"), list) else []
         pairs = [(c, statuses.get(c), None) for c in codes if isinstance(c, str) and c in statuses]
@@ -1044,7 +981,7 @@ def comparison_gate(source_tp1, source_tp2, *, headers=None, records=None, attes
         acq, stored = rec if isinstance(rec, tuple) else (stored_records(s) if s else (None, None))
         fields = h if isinstance(h, dict) else {**_NO_HEADER, "no_source": True} if not s else {**_NO_HEADER, "unreadable": True}
         acqs.append(acq if isinstance(acq, dict) else None)
-        spacings.append(tuple(fields["voxel_spacing_mm"]) if fields.get("voxel_spacing_mm") else None)
+        spacings.append(fields.get("voxel_spacing_mm"))       # S3: RC-062's own spacing (lcs.rc062_voxel_spacing)
         visits.append(visit_inputs(fields, acq, stored, physician_confirmed_flair=att is True, with_scanner=True))
     rc062 = lcs.rc062_withholds(lcs.compare_acquisitions(acqs[0], acqs[1], spacings[0], spacings[1]),
                                 {"status": "ok" if visit_ok is True else "unknown"})

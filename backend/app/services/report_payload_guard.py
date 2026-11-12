@@ -310,17 +310,19 @@ class _Projector:
         return o
 
     def longitudinal(self, lng: dict) -> dict:
+        # G30 / tenth review: ONE account of the gate (explain): causes of a stop, warnings of a pair it let through —
+        # fixed codes only (R4), never free text of the request
+        from app.services.quality_gate import explain
+        gate = lng.get("quality_gate")
+        account = explain(gate) if isinstance(gate, dict) else {"causes": [], "warnings": []}
+        stopped = isinstance(gate, dict) and gate.get("ai_output_allowed") is not True
         if lng.get("abstained") is True:
-            # G30 (eighth review): WHO withheld it and why, as fixed codes — the report model must give the same cause
-            # as the code-written notice (never "acquisition not comparable" for a gate stop)
-            from app.services.quality_gate import explain
-            gate = lng.get("quality_gate")
-            account = explain(gate) if isinstance(gate, dict) else {"causes": [], "warnings": []}
-            stopped = isinstance(gate, dict) and gate.get("ai_output_allowed") is not True
+            # WHO withheld it and why — the report model gives the same cause as the code-written notice (never
+            # "acquisition not comparable" for a gate stop, and a stopped pair states its causes only)
             o = {"abstained": True, "abstained_by": "quality_gate" if stopped else "rc062"}
             if stopped:
                 o["causes"] = account["causes"]
-            if account["warnings"]:
+            elif account["warnings"]:
                 o["quality_gate_warnings"] = account["warnings"]
             return o
         o: dict = {key: self.number(lng.get(key), key, 0, _LESION_ML_MAX) for key in ("burden_tp1_ml", "burden_tp2_ml")}
@@ -332,10 +334,8 @@ class _Projector:
         sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
         o["status_counts"] = {k: self.count(sc.get(k), "status_counts")
                               for k in ("new", "enlarged", "resolved", "shrunk", "stable")}
-        from app.services.quality_gate import warning_codes   # R4: fixed codes only, never free text
-        warnings = warning_codes(lng.get("quality_gate"))
-        if warnings:
-            o["quality_gate_warnings"] = warnings
+        if account["warnings"]:
+            o["quality_gate_warnings"] = account["warnings"]
         return o
 
     def zone_stats(self, zs: dict) -> dict:

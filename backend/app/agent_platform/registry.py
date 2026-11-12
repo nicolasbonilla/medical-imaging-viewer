@@ -481,10 +481,12 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
                  else AuditEventType.CLINICAL_AI_RUN)
         emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
-                   details=event.get("details"),   # G31 (eighth review of PR #81): structured, never cut
+                   # G31 (eighth review of PR #81) / S4 (tenth): structured details, kept whole by the durable record
+                   details=event.get("details"),
                    # fourth review of PR #79, finding 7: the reason is "<event type>:<code>", so the server log
-                   # keeps which record of AUDIT_EVENT_TYPES this is (e.g. "agent.run:agent_not_approved")
-                   reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}"[:64],
+                   # keeps which record of AUDIT_EVENT_TYPES this is (e.g. "agent.run:agent_not_approved"); S4: never
+                   # cut — every code the platform writes is short by construction (test_rc122_review10.py)
+                   reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}",
                    resource_type="agent_run", resource_ids=ids)
     except Exception:  # noqa: BLE001 — auditing never breaks the caller
         pass

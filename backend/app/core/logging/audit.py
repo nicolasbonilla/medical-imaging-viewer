@@ -293,6 +293,8 @@ _METHODS = {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 DETAIL_KEYS = frozenset({
     "template_type", "language", "decisions", "failed_attempts", "fields_changed", "new_role",
     "revoked_sessions", "rotation_count", "deduplicated_window_s", "role", "durable_suppressed",
+    # the single quality gate (tenth review of PR #81, S4): its codes, visit labels and flags reach the durable record
+    "causes", "warnings", "attested_visits", "decision", "mode", "released", "withheld_by",
 })
 
 # Review m10: identifiers that must not be stored (typed login names, file names, MRNs, accession

@@ -101,10 +101,7 @@ async def _load_source_intensity(file_id, storage_service, context: str):
         if data.ndim != 3:
             return None, None, None
         intensity = np.transpose(data, (2, 0, 1))  # native (a0,a1,k) -> internal (k,a0,a1)
-        spacing = None
-        zooms = img.header.get_zooms()[:3]
-        if len(zooms) >= 3 and all(float(z) > 0 for z in zooms):
-            spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+        spacing = lcs.rc062_voxel_spacing(img)     # the ONE helper, shared with the quality gate's prediction (S3)
         return intensity, spacing, img  # img (with affine) enables MSMask atlas region mapping
     except Exception as e:  # noqa: BLE001 — advisory; never block the comparison
         logger.warning(f"[{context}] source intensity load failed; registration disabled: {e}")
@@ -138,22 +135,27 @@ def _attestation(body) -> tuple:
     return (raw.get("tp1") is True, raw.get("tp2") is True)
 
 
-async def _gate_before_loading(specs, segmentation_service, current_user, request, acq_memo, metas, body=None,
-                               storage_service=None, ctx=None):
-    """C2 (first review of PR #81; REQ-FUNC-117): the single quality gate decides from the STORED records before
-    any mask, image, registration or atlas is loaded. None when the gate is not enforced (QUALITY_GATE_ENFORCED).
-    Second review, findings 2 and 4: each segmentation's metadata is read ONCE here and kept in ``metas`` for the
-    loaders; missing or unreadable metadata is an unknown source, so the gate ABSTAINS with its reason (as
-    load_mask did, D5) — never a 404 or a 500. Fifth review (G26): the request's quality_gate_attestation is read
-    only HERE, after the flag — with the gate off it is ignored, as on the base branch."""
+async def _gate_setup(specs, body, segmentation_service, storage_service, current_user, request):
+    """The ONE gate set-up of the comparison and the SEL search (tenth review of PR #81): returns
+    (gate, metas, acq_memo, visit_check). With QUALITY_GATE_ENFORCED off: (None, {}, {}, None) — nothing is read and
+    the routes run as on the base branch (G26).
+
+    C2 (first review): the gate decides from the STORED records before any mask, image, registration or atlas is
+    loaded. Second review, findings 2 and 4: each segmentation's metadata is read ONCE here (``metas``, for the
+    loaders); missing or unreadable metadata is an unknown source, so the gate ABSTAINS with its reason — never a 404
+    or a 500. Fifth review (G26): the request's quality_gate_attestation is read only here, after the flag. Ninth
+    review (G35): an invalid request keeps its own 400, and the visit check runs before the gate; its result is
+    returned for the route (O3). E2: the independent reads run concurrently and each acquisition record is read once
+    (``acq_memo``, reused by RC-062)."""
     if not settings.QUALITY_GATE_ENFORCED:
-        return None
+        return None, {}, {}, None
     attestation = _attestation(body)
     import asyncio
-    # G35 (ninth review): an invalid request keeps its own 400 — the gate never answers it instead
     for spec in specs:
         if spec.get("type") not in ("segmentation", "instance"):
             raise HTTPException(status_code=400, detail=f"Unknown mask type: {spec.get('type')}")
+    metas: dict = {}
+    acq_memo: dict = {}
 
     async def _meta(spec):
         if spec.get("type") != "segmentation":
@@ -166,29 +168,24 @@ async def _gate_before_loading(specs, segmentation_service, current_user, reques
         metas[spec.get("id")] = meta
         return meta
 
-    # E2 (seventh review of PR #81): the independent reads run concurrently — both visits' metadata, then both
-    # visits' acquisition records and stored image headers (A1)
     async def _header(source):
         return await qg.visit_header_fields(storage_service, settings.GCS_BUCKET_NAME, source) if source else None
 
     async def _records(source):
         if not source:
             return None, None
-        acq, desc = await asyncio.to_thread(qg.stored_records, source)   # E2 (eighth review): one read of each record
-        acq_memo[source] = acq                                            # RC-062 reuses it (E2, first review)
+        acq, desc = await asyncio.to_thread(qg.stored_records, source)
+        acq_memo[source] = acq
         return acq, desc
 
     sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]
-    # G35: the visit check (same mask, same visit, wrong order: 400) BEFORE the gate; O3: its reads serve the route too
     visit_check = await _visit_check(specs[0], specs[1], sources[0], sources[1])
-    if ctx is not None:
-        ctx["visit_check"] = visit_check
     records, headers = await asyncio.gather(
         asyncio.gather(*(_records(s) for s in sources)), asyncio.gather(*(_header(s) for s in sources)))
-    visit_ok = visit_check.get("status") == "ok"
-    return await asyncio.to_thread(qg.comparison_gate, *sources, headers=headers, records=list(records),
-                                   attestation=attestation, visit_ok=visit_ok,
+    gate = await asyncio.to_thread(qg.comparison_gate, *sources, headers=headers, records=list(records),
+                                   attestation=attestation, visit_ok=visit_check.get("status") == "ok",
                                    user=current_user, request=request)
+    return gate, metas, acq_memo, visit_check
 
 
 def _sel_input_type_error():
@@ -790,11 +787,8 @@ async def compare_longitudinal(
         if not tp1_spec or not tp2_spec:
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
-        acq_memo: dict = {}
-        metas: dict = {}
-        gate_ctx: dict = {}
-        gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo,
-                                          metas, body, storage_service, gate_ctx)
+        gate, metas, acq_memo, gate_visit_check = await _gate_setup(
+            [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             return qg.abstained_comparison(gate)
 
@@ -870,7 +864,7 @@ async def compare_longitudinal(
         # permutation (the old behavior) silently mis-aligned square/permuted
         # volumes — audit A-3. Fail loud on any grid mismatch instead.
         _require_comparable_grid(mask_tp1.shape, mask_tp2.shape)
-        visit_check = gate_ctx.get("visit_check") or await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # review of PR #63; O3
+        visit_check = gate_visit_check or await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # review of PR #63; O3
 
         # Binarize masks (labels > 0 → 1) for comparison
         mask_tp1_bin = (mask_tp1 > 0).astype(np.uint8)
@@ -1131,11 +1125,8 @@ async def detect_slowly_expanding_lesions(
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
         if settings.QUALITY_GATE_ENFORCED and any(s.get("type") != "segmentation" for s in (tp1_spec, tp2_spec)):
             _sel_input_type_error()                  # gate on: before the gate (it needs each source image)
-        acq_memo: dict = {}
-        metas: dict = {}
-        gate_ctx: dict = {}
-        gate = await _gate_before_loading([tp1_spec, tp2_spec], segmentation_service, current_user, request, acq_memo,
-                                          metas, body, storage_service, gate_ctx)
+        gate, metas, acq_memo, gate_visit_check = await _gate_setup(
+            [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate), "sels": [], "n_existing": 0,
                     "n_sel": 0, "registration_verified": False, "adjudication_required": True, "quality_gate": gate}
@@ -1158,7 +1149,7 @@ async def detect_slowly_expanding_lesions(
         _require_comparable_grid(mask_tp1.shape, mask_tp2.shape)
         # Review of PR #63: the SEL search is withheld exactly when the change candidates are
         # (different or unknown acquisition, unknown visit order; same visit / wrong order refused).
-        visit_check = gate_ctx.get("visit_check") or await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # O3
+        visit_check = gate_visit_check or await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # O3
         acquisition_check = lcs.compare_acquisitions(
             _memo_acquisition(source_tp1, acq_memo), _memo_acquisition(source_tp2, acq_memo),   # E2: read once
             spacing_tp1, _sp2,

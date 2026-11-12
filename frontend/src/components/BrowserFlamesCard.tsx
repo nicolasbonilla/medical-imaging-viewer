@@ -32,21 +32,14 @@ import { FEATURES } from '@/config/features';
 import { QualityGatePanel } from './QualityGatePanel';
 import { requestQualityGate } from '@/services/qualityGate/api';
 import {
-  gateUnavailable, isGateResult, MAX_AUTOMATIC_RETRIES, retryAfterSeconds, serverSequenceClass, skullFromProvenance,
+  gateUnavailable, isGateResult, retryAfterSeconds, serverSequenceClass, skullFromProvenance,
   type GateResult, type ServerGateResponse,
 } from '@/services/qualityGate/gate';
+import { useGateConsultation } from '@/hooks/useGateConsultation';
 
-/** U2: the seconds left before an automatic retry, counted down once a second; null when nothing is to be retried. */
-function useCountdown(seconds: number | null, restartOn: unknown): number | null {
-  const [left, setLeft] = useState<number | null>(seconds);
-  useEffect(() => {
-    setLeft(seconds);
-    if (seconds === null) return undefined;
-    const id = setInterval(() => setLeft((s) => (s === null ? null : Math.max(0, s - 1))), 1000);
-    return () => clearInterval(id);
-  }, [seconds, restartOn]);
-  return left;
-}
+/** G29 / U1: an answer the physician may ask again for once no automatic retry is left (rate limited or unavailable). */
+const askable = (r: GateResult): boolean =>
+  retryAfterSeconds(r) !== null || (r.codes.length === 1 && r.codes[0] === 'gate_unavailable');
 
 interface BrowserFlamesCardProps {
   flairFileId: string;
@@ -76,17 +69,9 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   // S3 / G13: the attestation is its own control, offered only when the answer names the study as attestable,
   // unticked by default, reset on every file change, never implied by the run checkbox.
   const gateOn = FEATURES.QUALITY_GATE;
-  const [preflight, setPreflight] = useState<ServerGateResponse | null>(null);
-  const [preflightTry, setPreflightTry] = useState(0);
   const [attested, setAttested] = useState(false);
   const attestedAtRun = useRef(false);
-  // U3: the final decision belongs to the RUN (its result object), never to the file: a re-run of the same file never
-  // shows the previous run's decision, not even on its first render
-  const [finalState, setFinalState] = useState<{ run: unknown; gate: GateResult; retry: boolean } | null>(null);
-  const [finalTry, setFinalTry] = useState(0);
   const doneResult = flames.status === 'done' ? flames.result : null;
-  const ownFinal = finalState && doneResult && finalState.run === doneResult && doneResult.fileId === flairFileId ? finalState : null;
-  const finalGate = ownFinal ? ownFinal.gate : null;
   // G18: every answer and every run carries the file it was made for; an answer for a file that is no longer the
   // selected one never acts. One request at a time: Run is disabled while it is in flight.
   const currentFile = useRef(flairFileId);
@@ -95,67 +80,33 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const [busy, setBusy] = useState(false);
   const runVersion = useRef<string | null>(null);
   useEffect(() => setAttested(false), [flairFileId]);
-  useEffect(() => {
-    if (!gateOn || !flairFileId) return undefined;
-    let live = true;
-    if (preflightTry === 0) setPreflight(null);
-    const timer = setTimeout(() => {
-      void requestQualityGate(flairFileId, false).then((r) => {
-        if (live && r.subject?.file_id === currentFile.current) setPreflight(r);
-      });
-    }, 250);
-    return () => { live = false; clearTimeout(timer); };
-  }, [gateOn, flairFileId, preflightTry]);
-  // G29 (seventh review): at most MAX_AUTOMATIC_RETRIES automatic retries per file, with backoff, and ONLY for a
-  // rate-limited answer; then (and for an unavailable answer) the physician may ask again with one click
-  const preflightRetries = useRef(0);
-  useEffect(() => { setPreflightTry(0); preflightRetries.current = 0; }, [flairFileId]);
-  // U2: a rate-limited or unavailable answer is asked again by itself after the server's wait (never disabled forever)
-  const preflightBase = gateOn ? retryAfterSeconds(preflight) : null;
-  const preflightWait = preflightBase !== null && preflightRetries.current < MAX_AUTOMATIC_RETRIES
-    ? preflightBase * 2 ** preflightRetries.current : null;
-  useEffect(() => {
-    if (preflightWait === null) return undefined;
-    const id = setTimeout(() => { preflightRetries.current += 1; setPreflightTry((n) => n + 1); }, preflightWait * 1000);
-    return () => clearTimeout(id);
-  }, [preflight, preflightWait]);
-  const checkPreflightAgain = () => { preflightRetries.current = 0; setPreflightTry((n) => n + 1); };
-  const preflightStuck = gateOn && preflight !== null && preflightWait === null
-    && (preflightBase !== null || (preflight.codes.length === 1 && preflight.codes[0] === 'gate_unavailable'));
-  const preflightLeft = useCountdown(preflightWait, preflight);
+  // E1: ONE (debounced) consultation per file before the run. U1 (tenth review): its automatic retries are state —
+  // one timer per rate-limited answer, none while in flight, at most 3 (G29), "Check again" after the last answer.
+  const before = useGateConsultation<ServerGateResponse>(
+    gateOn && flairFileId ? flairFileId : null,
+    () => requestQualityGate(flairFileId, false).then((r) => (r.subject?.file_id === currentFile.current ? r : null)),
+    retryAfterSeconds, 250);
+  const preflight = before.answer;
+  const preflightStuck = gateOn && preflight !== null && before.settled && askable(preflight);
   const canAttest = gateOn && (preflight?.attestable_visits ?? []).includes('study');
   const gateBefore: GateResult | null = preflight;
-  useEffect(() => {
-    if (!gateOn || !doneResult || doneResult.fileId !== flairFileId) return undefined;   // another file: nothing
-    let live = true;
-    // G17: the server decides (and audits) the releasing decision with the skull outcome reported here
-    const skull = skullFromProvenance(doneResult.provenance);
-    void requestQualityGate(doneResult.fileId, attestedAtRun.current, skull).then((r) => {
-      if (!live || r.subject?.file_id !== doneResult.fileId || doneResult.fileId !== currentFile.current) return;
-      const changed = runVersion.current !== null && r.subject?.version != null && r.subject.version !== runVersion.current;
-      // G27: the server's answer is shown as it is; no answer of the right shape, or a file changed since the run,
-      // is unavailable (and a changed file is not asked again)
-      setFinalState({ run: doneResult, gate: !changed && isGateResult(r) ? r : gateUnavailable(), retry: !changed });
-    });
-    return () => { live = false; };
-  }, [gateOn, doneResult, flairFileId, finalTry]);
-  // U2: a rate-limited or unavailable final answer is asked again by itself (a finished result is never hidden forever)
-  const finalRetries = useRef<{ run: unknown; n: number }>({ run: null, n: 0 });
-  const finalRetryCount = finalRetries.current.run === doneResult ? finalRetries.current.n : 0;
-  const finalBase = ownFinal && ownFinal.retry ? retryAfterSeconds(ownFinal.gate) : null;
-  const finalWait = finalBase !== null && finalRetryCount < MAX_AUTOMATIC_RETRIES ? finalBase * 2 ** finalRetryCount : null;
-  useEffect(() => {
-    if (finalWait === null) return undefined;
-    const id = setTimeout(() => {
-      finalRetries.current = { run: doneResult, n: finalRetryCount + 1 };
-      setFinalTry((n) => n + 1);
-    }, finalWait * 1000);
-    return () => clearTimeout(id);
-  }, [ownFinal, finalWait, doneResult, finalRetryCount]);
-  const checkFinalAgain = () => { finalRetries.current = { run: doneResult, n: 0 }; setFinalTry((n) => n + 1); };
-  const finalStuck = ownFinal !== null && ownFinal.retry && finalWait === null
-    && (finalBase !== null || (ownFinal.gate.codes.length === 1 && ownFinal.gate.codes[0] === 'gate_unavailable'));
-  const finalLeft = useCountdown(finalWait, ownFinal);
+  // U3: the final decision belongs to the RUN (its result object), never to the file: a re-run of the same file never
+  // shows the previous run's decision, not even on its first render. G17: the server decides (and audits) the
+  // releasing decision with the skull outcome reported here. G27: the server's answer is shown as it is; no answer of
+  // the right shape, or a file changed since the run, is unavailable (and a changed file is not asked again).
+  const final = useGateConsultation<{ gate: GateResult; retry: boolean }>(
+    gateOn && doneResult && doneResult.fileId === flairFileId ? doneResult : null,
+    () => {
+      const run = doneResult as NonNullable<typeof doneResult>;
+      return requestQualityGate(run.fileId, attestedAtRun.current, skullFromProvenance(run.provenance)).then((r) => {
+        if (r.subject?.file_id !== run.fileId || run.fileId !== currentFile.current) return null;
+        const changed = runVersion.current !== null && r.subject?.version != null && r.subject.version !== runVersion.current;
+        return { gate: !changed && isGateResult(r) ? r : gateUnavailable(), retry: !changed };
+      });
+    },
+    (f) => (f.retry ? retryAfterSeconds(f.gate) : null));
+  const finalGate = final.answer ? final.answer.gate : null;
+  const finalStuck = final.answer !== null && final.settled && final.answer.retry && askable(final.answer.gate);
   const gateAllowsRun = !gateOn || preflight?.ai_may_run === true || (canAttest && attested);
   const gateAllowsOutput = !gateOn || (finalGate?.ai_output_allowed === true && doneResult?.fileId === flairFileId);
 
@@ -194,7 +145,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       setBusy(false);
       if (currentFile.current !== fileAtClick || fresh.subject?.file_id !== fileAtClick) return;   // stale: never runs
       if (!fresh.ai_may_run) {
-        setPreflight(fresh);
+        before.show(fresh);
         return;
       }
       attestedAtRun.current = attestation;
@@ -274,13 +225,13 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
           </label>
           {gateOn && (gateBefore ? <QualityGatePanel result={gateBefore} testId="quality-gate-before" />
             : <p className="text-[9px] text-gray-400" data-testid="quality-gate-checking">{t('qualityGate.checking')}</p>)}
-          {gateOn && preflightLeft !== null && (
+          {gateOn && before.left !== null && (
             <p className="text-[9px] text-sky-200" role="status" data-testid="quality-gate-retry">
-              {t('qualityGate.retrying', { seconds: preflightLeft })}
+              {t('qualityGate.retrying', { seconds: before.left })}
             </p>
           )}
           {preflightStuck && (
-            <button type="button" onClick={checkPreflightAgain} data-testid="quality-gate-check-again"
+            <button type="button" onClick={before.again} data-testid="quality-gate-check-again"
               className="text-[9px] text-sky-200 underline hover:text-white">{t('qualityGate.checkAgain')}</button>
           )}
           {gateOn && canAttest && (
@@ -330,13 +281,13 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       {gateOn && flames.status === 'done' && flames.result && finalGate && !finalGate.ai_output_allowed && (
         <p className="text-[10px] text-red-200" role="alert" data-testid="quality-gate-output-hidden">{t('qualityGate.aiHidden')}</p>
       )}
-      {gateOn && flames.status === 'done' && flames.result && finalLeft !== null && (
+      {gateOn && flames.status === 'done' && flames.result && final.left !== null && (
         <p className="text-[9px] text-sky-200" role="status" data-testid="quality-gate-retry">
-          {t('qualityGate.retrying', { seconds: finalLeft })}
+          {t('qualityGate.retrying', { seconds: final.left })}
         </p>
       )}
       {gateOn && flames.status === 'done' && flames.result && finalStuck && (
-        <button type="button" onClick={checkFinalAgain} data-testid="quality-gate-check-again-final"
+        <button type="button" onClick={final.again} data-testid="quality-gate-check-again-final"
           className="text-[9px] text-sky-200 underline hover:text-white">{t('qualityGate.checkAgain')}</button>
       )}
 

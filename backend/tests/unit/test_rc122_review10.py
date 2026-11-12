@@ -197,11 +197,13 @@ def test_rc126_s4_the_real_audit_record_keeps_every_attested_visit(monkeypatch):
     reg._audit = lambda e: (events.append(e), R.default_audit_sink(e))
     visit = {"sequence": "unknown", "physician_confirmed_flair": True, "skull": "stripped", "scanner": None,
              "thickness": {"state": "native", "effective_mm": 1.0}}
-    qg.run_quality_gate({"mode": "comparison", "visits": [dict(visit), dict(visit)], "rc062_withholds": False},
-                        registry=reg, study_key="s")
+    result = qg.run_quality_gate({"mode": "comparison", "visits": [dict(visit), dict(visit)], "rc062_withholds": False},
+                                 registry=reg, study_key="s")
     (event,), (record,) = events, built
+    account = qg.explain(result)
     assert record.get("details", {}).get("attested_visits") == ["tp1", "tp2"], record
-    assert record["details"].get("causes") == ["scanner_not_recorded"], record
+    assert [record["details"].get(k, []) for k in ("causes", "warnings")] == [account["causes"], account["warnings"]]
+    assert record["details"].get("decision") == result["decision"]
     assert record["reason"] == f"{event['event']}:{event['code']}", "S4: the reason was cut"
 
 
@@ -236,7 +238,7 @@ def test_rc127_one_warnings_story():
 
 
 def test_rc126_one_rate_limit_helper_and_one_429_builder():
-    assert [n for n in dir(qg) if n.startswith("rate_limit")] == ["rate_limit"]
+    assert {n for n in dir(qg) if n.startswith("rate_limit")} == {"rate_limit", "rate_limited_response"}
     assert inspect.getsource(ct.quality_gate).count("status_code=429") == 0
     assert inspect.getsource(qg).count("status_code=429") == 1
 

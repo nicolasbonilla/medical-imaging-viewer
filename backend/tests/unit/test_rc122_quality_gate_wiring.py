@@ -121,8 +121,7 @@ def single(monkeypatch):
     monkeypatch.setattr(ct, "_authorized_inputs", _authorized)
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     monkeypatch.setattr(qg, "_LIMITER", None)
-    # each test starts with empty server caches (a file of the same path and size in another test is another file)
-    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
+    # each test starts with an empty header cache (a file of the same path and size in another test is another file)
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
     monkeypatch.setattr(lcs, "read_source_acquisition", lambda fid, svc=None: None)
     monkeypatch.setattr(qg, "read_source_series_description", lambda fid, svc=None: None)
@@ -423,8 +422,7 @@ def test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version(si
             storage = _CountingStorage(img.to_bytes())
         app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(storage)   # no parameter: FastAPI would copy it
         monkeypatch.setattr(ct, "_authorized_inputs", lambda *a, n=name: _as_coro([n]))
-        # fifth review (F3): the second is a REAL evaluation (the final consultation is never served from the
-        # consultation cache), so only the header cache can spare its download
+        # every consultation is evaluated (tenth review, S1): only the header cache spares the second download
         for extra in ({}, {"skull": "stripped"}):
             body = client.post("/api/v1/clinical/quality-gate", json={"file_id": name, **extra}).json()
             visit = body["inputs"]["visits"][0]
@@ -449,8 +447,8 @@ def test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_u
     client.post("/api/v1/clinical/quality-gate", json={"file_id": FILE})
     client.post("/api/v1/clinical/quality-gate", json={"file_id": FILE, "physician_confirmed_flair": True})
     (plain, u1), (attested, u2) = records
-    assert plain["code"] == "quality_gate.abstain.sequence_missing"
-    assert attested["code"] == "quality_gate.pending.skull_pending.attested"
+    assert plain["code"] == "quality_gate.abstain" and plain["details"]["causes"] == ["sequence_missing"]
+    assert attested["code"] == "quality_gate.pending.attested" and attested["details"]["attested_visits"] == ["study"]
     assert u1 == u2 == "id-dr_rev"
 
 
@@ -469,8 +467,8 @@ def test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records(
     shown = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "stripped"}).json()
     hidden = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "unknown"}).json()
     assert shown["ai_output_allowed"] is True and hidden["ai_output_allowed"] is False
-    assert [r["code"] for r in records] == ["quality_gate.proceed_with_warnings.attested",
-                                            "quality_gate.abstain.skull_unknown.attested"]
+    assert [r["code"] for r in records] == ["quality_gate.proceed_with_warnings.attested", "quality_gate.abstain.attested"]
+    assert records[1]["details"]["causes"] == ["skull_unknown"]       # S4: the cause as a structured field
     assert shown["subject"]["file_id"] == FILE and "version" in shown["subject"]
     for bad in ("not_stripped", "STRIPPED", 1, None):
         assert client.post(URL, json={"file_id": FILE, "skull": bad}).status_code in (400, 422), bad
@@ -717,7 +715,7 @@ def test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestati
     # says RC-062 withheld the pair
     decision = [e for e in audit if (e.get("details") or {}).get("attested_visits") == ["tp1", "tp2"]
                 and not e["code"].startswith("quality_gate.withheld")]
-    assert decision and decision[-1]["code"].endswith(".attested_tp1_tp2")
+    assert decision and decision[-1]["code"].endswith(".attested")         # S4: the visits are in the details
     assert (audit[-1].get("details") or {}).get("withheld_by") == "rc062"
     for bad in ({"tp1": "true", "tp2": True}, {"tp1": 1}, ["tp1"], {"tp3": True}):
         r = client.post("/api/v1/segmentation/longitudinal/compare", json={**PAIR, "quality_gate_attestation": bad})
@@ -747,50 +745,25 @@ def _spy_runs(monkeypatch):
     return runs
 
 
-def test_rc126_f3_repeated_consultations_come_from_the_cache_and_are_not_counted(single, monkeypatch):
-    """Per (file, version, attestation, skull, policy version): a repeated pre-run consultation is served from the
-    server's cache and does not count against the limit; only real evaluations count."""
+def test_rc126_f3_every_consultation_counts_and_over_the_limit_gets_the_wait(single, monkeypatch):
+    """Tenth review (S1): no consultation cache — every consultation is evaluated and counted; over the ONE limit, 429
+    with the seconds to wait (was: repeated consultations served from a cache without counting, fifth review F3)."""
     client, _ = single
-    app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(
-        nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()))
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     monkeypatch.setattr(qg, "RATE_LIMIT_PER_MINUTE", 2)
     monkeypatch.setattr(qg, "_LIMITER", qg.new_rate_limiter())
-    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
     runs = _spy_runs(monkeypatch)
-    first = [client.post(URL, json={"file_id": FILE}) for _ in range(6)]
-    assert [r.status_code for r in first] == [200] * 6 and len(runs) == 1
-    assert all(r.json() == first[0].json() for r in first)
-    assert client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True}).status_code == 200
-    assert len(runs) == 2                                     # another attestation: a real evaluation, counted
+    assert [client.post(URL, json={"file_id": FILE}).status_code for _ in range(2)] == [200, 200] and len(runs) == 2
     limited = client.post(URL, json={"file_id": FILE, "skull": "stripped"})
-    assert limited.status_code == 429 and len(runs) == 2      # the third real evaluation is over the limit
+    assert limited.status_code == 429 and len(runs) == 2
     details = limited.json()["error"]["details"]
     assert details["code"] == "gate_rate_limited" and isinstance(details["retry_after_s"], int)
     assert 0 < details["retry_after_s"] <= 60 and limited.headers["Retry-After"] == str(details["retry_after_s"])
-    assert client.post(URL, json={"file_id": FILE}).status_code == 200   # still served from the cache
 
 
-def test_rc126_f3_a_releasing_consultation_is_never_served_from_the_cache(single, monkeypatch):
+def test_rc126_f3_the_kill_switch_applies_at_once(single, monkeypatch):
     client, _ = single
-    app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(
-        nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()))
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
-    monkeypatch.setattr(qg, "_LIMITER", None)
-    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
-    runs = _spy_runs(monkeypatch)
-    for _ in range(3):
-        assert client.post(URL, json={"file_id": FILE, "skull": "stripped"}).status_code == 200
-    assert len(runs) == 3, "each final consultation is decided and audited again"
-
-
-def test_rc126_f3_the_kill_switch_applies_to_a_cached_answer(single, monkeypatch):
-    client, _ = single
-    app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(
-        nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 5.0, 1.0])).to_bytes()))
-    monkeypatch.setattr(qg, "_REGISTRY", _registry())
-    monkeypatch.setattr(qg, "_LIMITER", None)
-    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
     assert client.post(URL, json={"file_id": FILE}).json()["platform"]["allowed"] is True
     monkeypatch.setattr(qg, "_REGISTRY", _registry(on=False))
     assert client.post(URL, json={"file_id": FILE}).json()["codes"] == ["gate_switched_off"]
@@ -807,7 +780,6 @@ def test_rc126_f4_opening_ten_images_records_no_ai_run(single, monkeypatch):
     seen = []
     monkeypatch.setattr(A.AuditLogger, "log_event", lambda self, event, durable=True: seen.append(event.event_type))
     for i in range(10):
-        monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
         assert client.post(URL, json={"file_id": f"{FILE}-{i}"}).status_code == 200
     assert A.AuditEventType.CLINICAL_AI_RUN not in seen, seen
     assert seen.count(A.AuditEventType.QUALITY_GATE_CONSULTATION) >= 10

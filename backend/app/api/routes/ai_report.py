@@ -340,10 +340,10 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
     texts = LONGITUDINAL_NOTICE.get(language, LONGITUDINAL_NOTICE["en"])
     from app.services import quality_gate as qg
     gate = longitudinal.get("quality_gate")
+    account = qg.explain(gate)                       # G30: ONE account, read once (client data read defensively, R1)
     if longitudinal.get("abstained"):
         # A4 (sixth review of PR #81): when the GATE stopped the comparison, the gate's reasons — never RC-062's
         # "the acquisition differs" — from the one table of reason sentences
-        account = qg.explain(gate)                   # G30: ONE account (client data read defensively, R1)
         if isinstance(gate, dict) and gate.get("ai_output_allowed") is not True:
             reasons = [qg.reason_sentence(c, language) for c in account["causes"]]
             return (qg.reason_lead("stopped", language) + " " + "; ".join(reasons) + ". "
@@ -367,7 +367,7 @@ def longitudinal_notice(longitudinal: Any, language: str) -> Optional[str]:
             pct=false_share_percent(ev), source=ev["source"], date=ev["measured_on"]))
     else:
         lines.append(texts["no_evidence"])
-    reasons = [qg.reason_sentence(c, language) for c in qg.explain(gate)["warnings"]]
+    reasons = [qg.reason_sentence(c, language) for c in account["warnings"]]
     if reasons:
         lines.append(qg.reason_lead("warned", language) + " " + "; ".join(reasons) + ".")
     return " ".join(lines)

@@ -109,7 +109,7 @@ def test_rc123_g25_compare_and_sel_give_one_comparability_verdict():
     assert "lcs.rc062_withholds(" in sel and "present_gated_comparison(" in compare, "one shared predicate"
     assert "rc062_withholds(" in inspect.getsource(lcs.present_comparison), "present_comparison uses the predicate"
     assert "lcs.present_comparison(" not in compare and 'acquisition_check["status"] != "same"' not in sel
-    assert sel.index("_gate_before_loading(") < sel.index("lcs.rc062_withholds("), "the gate decides first"
+    assert sel.index("_gate_setup(") < sel.index("lcs.rc062_withholds("), "the gate decides first"
     assert not hasattr(qg, "comparison_withheld"), "one predicate, no second copy (fifth review, cleanup)"
 
 

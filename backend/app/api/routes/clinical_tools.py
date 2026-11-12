@@ -107,9 +107,9 @@ async def quality_gate(
     its subject — the file id it was made for and the file's version (G18: a stale answer never acts).
 
     Second review of PR #81, finding 1: behind QUALITY_GATE_ENFORCED; the approval and both kill switches are read
-    BEFORE any I/O (a refusal reads, authorizes and downloads nothing). Fifth review, F3: a per-user rate limit bounds
-    the REAL evaluations (refusals included); a repeated pre-run consultation of the same file version is answered
-    from the cache without counting; over the limit, 429 with the seconds to wait (code gate_rate_limited)."""
+    BEFORE any I/O (a refusal reads, authorizes and downloads nothing). Tenth review (S1): no consultation cache — every
+    consultation is evaluated and audited (an attestation included); ONE per-user rate limit comes before any
+    authorization, storage or Firestore read; over it, 429 with the seconds to wait (code gate_rate_limited)."""
     from fastapi.responses import JSONResponse
     from app.core.config import get_settings
     from app.services import quality_gate as qg
@@ -122,51 +122,18 @@ async def quality_gate(
                                      "Access-Control-Expose-Headers": "X-Quality-Gate-Code"})
     import asyncio
     actor = qg.actor_for(current_user, request)
-    user_id = str(getattr(current_user, "id", ""))
-
-    def _over_limit():
-        wait = qg.rate_limit_evaluation(user_id)
-        if wait is None:
-            return None
-        return JSONResponse(status_code=429, headers={"Retry-After": str(wait)}, content={"error": {
-            "code": "HTTP_429", "message": "Too many quality-gate checks; try again shortly",
-            "details": {"code": "gate_rate_limited", "retry_after_s": wait}}})
-
-    # O1 (ninth review): a cheap per-user counter of EVERY request, before any authorization, storage or Firestore read
-    request_wait = qg.rate_limit_request(user_id)
-    if request_wait is not None:
-        return JSONResponse(status_code=429, headers={"Retry-After": str(request_wait)}, content={"error": {
-            "code": "HTTP_429", "message": "Too many quality-gate checks; try again shortly",
-            "details": {"code": "gate_rate_limited", "retry_after_s": request_wait}}})
+    wait = qg.rate_limit(str(getattr(current_user, "id", "")))
+    if wait is not None:
+        return qg.rate_limited_response(wait)
     if not qg.platform_allows():
-        limited = _over_limit()                    # a refusal is a real, audited evaluation: counted too
-        if limited is not None:
-            return limited
         refused = await asyncio.to_thread(qg.run_quality_gate, {"mode": "single", "visits": []}, actor=actor)
         return {**refused, "subject": {"file_id": body.file_id, "version": None}}
     paths = await _authorized_inputs([body.file_id], None, None, current_user)
-    bucket = get_settings().GCS_BUCKET_NAME
-    version_key = await qg.file_version(storage_service, bucket, paths[0])
-    # A3 (sixth review): the stored records the decision is made from are read first, and their digest is part of
-    # the cache key; A2: so is the clinician when the physician attests
-    records = await asyncio.to_thread(qg.stored_records, paths[0])
-    key = qg.consultation_key(version_key, body.physician_confirmed_flair, body.skull, records=records, user_id=user_id)
-    cached = qg.cached_consultation(key)
-    if cached is not None:                         # F3: the same answer again, not counted, not re-audited
-        answer, version = cached
-        if body.physician_confirmed_flair:          # O2 (ninth review): every attestation is audited, cache or not
-            qg.audit_cached_attestation(answer, user=current_user, request=request, study_key=qg.study_of(paths[0]) or "")
-        return {**answer, "subject": {"file_id": body.file_id, "version": version}}
-    limited = _over_limit()
-    if limited is not None:
-        return limited
-    inputs, version = await qg.single_study_inputs(paths[0], storage_service, bucket=bucket,
+    inputs, version = await qg.single_study_inputs(paths[0], storage_service, bucket=get_settings().GCS_BUCKET_NAME,
                                                    physician_confirmed_flair=body.physician_confirmed_flair,
-                                                   skull=body.skull, version_key=version_key, records=records)
+                                                   skull=body.skull)
     result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)
-    answer = {**result, "inputs": inputs}
-    qg.store_consultation(key, answer, version)
-    return {**answer, "subject": {"file_id": body.file_id, "version": version}}
+    return {**result, "inputs": inputs, "subject": {"file_id": body.file_id, "version": version}}
 
 
 @router.get("/tools", response_model=List[Dict[str, Any]])

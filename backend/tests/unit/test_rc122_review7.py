@@ -153,7 +153,7 @@ def test_rc126_e1_the_stored_records_are_read_without_streaming_the_instances():
     service = type("S", (), {"db": type("D", (), {"collection": lambda self, name: _Coll(db.tree.get(name, {}), counter)})()})()
     acq, desc = qg.stored_records(file_id, study_service=service)
     assert acq == {"manufacturer": "SIEMENS", "n": 42} and desc == "AX T2 FLAIR"
-    assert counter["docs"] <= 3, f"{counter['docs']} documents read to build one cache key"   # + the study (G34)
+    assert counter["docs"] <= 3, f"{counter['docs']} documents read for one consultation"   # + the study (G34)
 
 
 def test_rc123_e2_the_comparison_reads_both_visits_concurrently(compare, monkeypatch):
@@ -183,7 +183,7 @@ def test_rc126_cleanup_no_unused_parameters_and_one_lookup():
     assert list(inspect.signature(qg.read_header_fields).parameters) == ["data", "decoded"]   # decoded: E1 (eighth)
     assert "imaging_service" not in inspect.signature(ct.quality_gate).parameters
     assert not hasattr(qg, "file_version_key")
-    assert "lcs.source_series_ref(" in inspect.getsource(qg.read_source_series_description)
-    assert "source_series_ref(" in inspect.getsource(lcs.read_source_acquisition)
+    assert "lcs.source_refs(" in inspect.getsource(qg.read_source_series_description)       # one lookup (tenth review)
+    assert "source_refs(" in inspect.getsource(lcs.read_source_acquisition)
     assert qg._number("1.5") is None and qg._number(True) is None and qg._number(1.5) == 1.5
     assert "lcs._number(" in inspect.getsource(qg._number), "one number parser (lcs._number), strict on types"

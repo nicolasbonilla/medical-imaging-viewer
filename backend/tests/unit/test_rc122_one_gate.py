@@ -7,7 +7,7 @@ A1   the server reads everything the browser used to read: the NIfTI descrip / a
      text and DICOM attributes of NIfTI extensions, and the DICOM ImageType; a comparison reads each visit's stored
      image header exactly as a single study does.
 A2   an attestation is audited under the clinician who gave it, always — also when the decision is in the cache.
-A3   the cached decision depends on every input it was made from (file, series record, acquisition record,
+A3   the decision depends on every input it was made from (file, series record, acquisition record,
      attestation, skull outcome, policy version, and the user when attested).
 A4   when the gate stops a comparison the report notice gives the gate's reason; one table of reason sentences feeds
      the assistant's caveat and the report notice in en/es/de.
@@ -178,7 +178,6 @@ def test_rc126_a2_each_clinician_s_attestation_is_audited_under_that_clinician(s
     reg._audit = lambda e: seen.append((e.get("code"), R.current_actor().user_id))
     monkeypatch.setattr(qg, "_REGISTRY", reg)
     monkeypatch.setattr(qg, "_LIMITER", None)
-    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())   # a fresh header cache per test
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(_nifti()))
     for user in _users():
@@ -192,7 +191,6 @@ def test_rc126_a3_correcting_the_series_description_invalidates_the_cached_decis
     client, _ = single
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     monkeypatch.setattr(qg, "_LIMITER", None)
-    monkeypatch.setattr(qg, "_CONSULTATIONS", type(qg._CONSULTATIONS)())
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())   # a fresh header cache per test
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(_nifti()))
     desc = {"value": "Sag T1 MPRAGE"}

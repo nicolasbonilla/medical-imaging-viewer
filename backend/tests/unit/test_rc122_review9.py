@@ -140,8 +140,8 @@ def test_rc127_g30_rc062_withholding_a_warned_pair_tells_the_model_the_same_warn
 def test_rc126_o1_a_request_counter_comes_before_any_read(single, monkeypatch):
     client, state = single
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
-    monkeypatch.setattr(qg, "REQUEST_LIMIT_PER_MINUTE", 2)
-    monkeypatch.setattr(qg, "_REQUEST_LIMITER", None)
+    monkeypatch.setattr(qg, "RATE_LIMIT_PER_MINUTE", 2)                  # the ONE limit (tenth review)
+    monkeypatch.setattr(qg, "_LIMITER", None)
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(b"x"))
     codes = [client.post(URL, json={"file_id": FILE}).status_code for _ in range(4)]
     assert codes[:2] == [200, 200] and codes[2:] == [429, 429]
