@@ -999,6 +999,45 @@ No patient-data leak found (the exit rule for safety). Failing-first tests at `2
 
 Failing-first tests at `b5571ee` (CI run 43063117100 red: 5 of 5); fixes at `b6430d6` (CI run 43063554593 green: 621 platform tests, 2483 backend tests). Negative controls for T1: 4 of 4 detected (EE1–EE4), restored suite 618 passed / 0 failed.
 
+## Addendum C — Single quality gate (DRAFT, PENDING owner approval)
+
+*Proposed 2026-11-12 on branch `feat/quality-gate`, stacked on draft PR #79; not merged, not deployed. DRAFT, PENDING owner approval: severity, probability and acceptability are PROPOSALS; nothing is approved until N. G. Bonilla Vargas records it. RC-122..RC-127 follow the highest control in use on any branch (RC-121); HAZ-025 follows HAZ-024. Requirements: SRS Addendum C. Design and survey of the existing checks: `docs/iec62304/agent_platform/Quality_Gate_Design.md`.*
+
+### C.1 Hazard
+
+| HAZ ID | Hazard (module) | Hazardous situation | Cause | Harm | Severity (proposed) |
+|---|---|---|---|---|---|
+| HAZ-025 | AI output from an input that fails a quality precondition, silently or inconsistently (`quality_gate.py`, `gate.ts`, the AI entry points) | Lesions are segmented on a T1/T2 or unlabelled image, on a thick-slice acquisition without a word, with the skull still on, or compared across a change of scanner; or one screen abstains while another shows the result | The preconditions are checked in five places (RC-049, RC-054, RC-062, RC-101, the reliability card) with different rules; unknown values handled differently; some checks only in the browser, some only on the server | Missed or false lesions, false activity between visits, taken as findings → delayed or wrong diagnosis or treatment change (as HAZ-001, HAZ-007, HAZ-015) | S4 (Serious) |
+
+### C.2 Risk estimation before control (proposed)
+
+| HAZ ID | Severity | Probability (pre-control) | Risk Level (pre-control) |
+|---|---|---|---|
+| HAZ-025 | S4 | P3 (Occasional) — without a gate, the matrix of `test_quality_gate_matrix.py` lets the AI run in every combination (baseline counts in C.5) | UNACCEPTABLE *(proposed)* |
+
+### C.3 Risk control measures
+
+All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/unit/test_quality_gate_matrix.py` (3 200-case matrix, failing first), `backend/tests/unit/test_rc122_quality_gate_wiring.py`, `frontend/src/services/qualityGate/gate.test.ts`, `frontend/src/components/QualityGatePanel.test.tsx`, and the negative controls of `scripts/safety/quality_gate_negative_controls.py`.
+
+| HAZ ID | Risk control | Type | Requirement | Implementation | Verification |
+|---|---|---|---|---|---|
+| HAZ-025 | RC-122: one deterministic gate decides before every AI step and before its output is shown; FLAIR only (a confirmation never overrides a header naming another sequence; it lifts unknown/missing with a warning); unknown never passes; any abstention wins; the output is shown only on `proceed` / `proceed_with_warnings` | Inherent safety (design) + protective | REQ-FUNC-117, REQ-SAFE-052 | `backend/app/services/quality_gate.py`, `quality_gate_policy.json`; `frontend/src/services/qualityGate/gate.ts` | `test_quality_gate_matrix.py` (G1, G3, G9, G10) |
+| HAZ-025, HAZ-007 | RC-123: a change of manufacturer, model or field strength between compared visits, or any of them missing, abstains; the scanner check calls RC-062's `compare_acquisitions`, so it never lets through what RC-062 withholds for a scanner reason; an abstention withholds the same fields as RC-062 | Protective | REQ-SAFE-052 | `quality_gate.py` (`apply_to_comparison`), `segmentation_analysis.py` (behind `QUALITY_GATE_ENFORCED`) | `test_quality_gate_matrix.py` (G8), `test_rc122_quality_gate_wiring.py` |
+| HAZ-025, HAZ-015 | RC-124: data rule — the thickness check warns and explains and never abstains until a v3 evidence asset with a commercial licence (CC0-1.0, CC-BY-4.0) is set through the marked hook; the shipped policy has none and cites no non-commercial cohort | Information for safety | REQ-SAFE-053 | `quality_gate_policy.json` (`thickness.evidence_asset: null`), both implementations | `test_quality_gate_matrix.py` (G7) |
+| HAZ-025, HAZ-001 | RC-125: in a single study the image the AI reads must be skull-free (`as-uploaded` after the skull gates, or `skull-removed`); skull present or unknown abstains; not read yet = pending (the output is not shown) | Protective | REQ-SAFE-052 | `quality_gate.py`, `gate.ts`, `BrowserFlamesCard.tsx` | `test_quality_gate_matrix.py`, `gate.test.ts` |
+| HAZ-025, HAZ-020 | RC-126: the gate is the registered agent `quality-gate` (no model, no tool): approval and both kill switches read at every consultation, fail closed (not approved / off / unreadable / unreachable → no AI step, reason shown); one trace per consultation with one child span per check that ran, one audit record; the registry records the policy's SHA-256 | Protective | REQ-SAFE-054 | `agents.json`, `tracing.py` (gate attributes), `quality_gate.py` (`run_quality_gate`) | `test_quality_gate_matrix.py` (G5, G6), `test_rc122_quality_gate_wiring.py` |
+| HAZ-025 | RC-127: one decision everywhere and the reason shown — backend and frontend identical on a shared fixture read by pytest and vitest; every code with a plain message and an action in en/es/de; the panel shows the result before any AI output, and no AI result is shown when the final decision does not allow it | Information for safety + protective | REQ-FUNC-118, REQ-SAFE-054 | `qualityGate.cases.v1.json`, `qualityGatePolicy.v1.json`, `QualityGatePanel.tsx`, i18n `qualityGate.*` | `test_quality_gate_matrix.py` (G2, G4), `gate.test.ts`, `QualityGatePanel.test.tsx` |
+
+### C.4 Residual risk (proposed) and limits
+
+| HAZ ID | Proposed residual | Acceptable? | Limits that keep it open |
+|---|---|---|---|
+| HAZ-025 | S4 / P2 | ALARP *(proposed)* | the sequence of an image without a descriptive header rests on the physician's confirmation (D-QG-3) and on RC-049's content check; thickness only warns until the v3 evidence (D-QG-4); the browser's final check trusts the worker's provenance; OFF until the owner enables it (D-QG-2) |
+
+### C.5 Verification record
+
+*(Filled in by the implementation commits; see the PR.)*
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
