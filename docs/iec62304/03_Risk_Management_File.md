@@ -1126,6 +1126,24 @@ Negative controls (every test run inside the throwaway copy; record `QUALITY-GAT
 
 **HAZ-007 residual:** unchanged (RC-062's rule is the base branch's; its predicate is only named and shared).
 
+### C.11 Sixth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+Root cause of most findings: two implementations of the rule and the classifier (server and browser) kept drifting — the NIfTI descrip read by the browser but not by the server, ImageType never set in the browser, a local re-evaluation that hid output on drift. Per "don't repeat a failing approach", the ARCHITECTURE changed instead of chasing the drift.
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| A1 | Two implementations drift | RC-122, RC-123, RC-127 | server-authoritative: the rule, the policy and the classifier exist only in `quality_gate.py`; the browser sends its inputs and shows the answer as it is (≈500 lines of browser rule code, the 103-line policy copy and the 2 468-line parity fixture removed); the answer names the attestable visits and the action of each code; RC-049 with the gate on takes the server's class (G26 kept); the server reads every header field the browser read; a comparison reads each visit's stored image header as a single study does | G27 |
+| A2 | A second clinician's attestation answered from the first one's cache | RC-126 | the clinician is part of the cache key whenever the physician attests | wiring |
+| A3 | A corrected series or acquisition record still served the old decision | RC-126 | the cache key carries a digest of the stored records (plus file version, attestation, skull outcome, policy version) | wiring |
+| A4 | The report gave RC-062's reason for a gate stop; two reason tables drifted | RC-127 | one table of reason sentences (`quality_gate_reasons.json`, en/es/de) for the caveat and the report; a gate stop gives the gate's reason | unit |
+| U1–U3 | Attestations replaced each other; a rate-limited answer disabled Run for good; a re-run showed the previous run's decision | RC-122, RC-126 | attestations for a pair add up; automatic retry after the server's wait with a countdown; the final decision keyed to the run | vitest |
+
+Failing first (commit `4b91754`, on the code of 0fa8a93): backend `test_rc122_one_gate.py` **15 of 16 failed** — G27 3, A1 6, A2 1, A3 1, A4 4; browser (GitHub Actions) **7 failed** — A1 card 1, U1 1, U2 2, U3 1, G27 panel action 1, G27 RC-049 server class 1. After the fixes: all pass.
+
+Negative controls (every test run inside the throwaway copy; full run on `0a4b575`): 121 mutations — 23 browser-rule mutants retired with the rule they sabotaged, 6 re-anchored, 16 new (A1–A4, G27, U1–U3) — **103 run, 102 detected, 1 survived, 0 invalid**; 18 component mutations not run (no node_modules; vitest runs in GitHub Actions). The survivor, W14 (cache key without the attestation), had become an EQUIVALENT mutant: after A2 the clinician in the key also tells an attested consultation apart. It was redefined to drop both (commit `4f06723`) and the re-run detected it: **0 survived after the follow-up**. Per control: RC-122 43/43, RC-123 18/18, RC-124 5/5, RC-125 4/4, RC-126 27/27, RC-127 12/12. Baseline and restored copy: backend 124 / 0, RC-049 browser harness 2 / 0.
+
+**HAZ-007 residual:** unchanged.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
