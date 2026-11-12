@@ -1,0 +1,49 @@
+{
+  "executed": "2026-11-12T03:38:43",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; the panel tests run with vitest (JSON reporter); detected only when a test fails (a load error is not a detection); original bytes restored after each mutation and checked at the end",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "frontend/src/components/AIReportPanel.tsx": "d6c78c2862e3cf4e31dec9d1471c58f49853c25bdb0083d41bf4727de567c245"
+  },
+  "test_sha256": {
+    "frontend/src/components/AIReportPanel.errorCodes.test.tsx": "79135840211aecd46df1a551ea38de0314f3ea2e166ec1d26905558d18bb5be2",
+    "frontend/src/components/AIReportPanel.release20261025.test.tsx": "363df84dc51764fb298f04bd09fbe9ef137c4f53d75abd17d90a7db061c6eb5c"
+  },
+  "tests": [
+    "frontend/src/components/AIReportPanel.errorCodes.test.tsx",
+    "frontend/src/components/AIReportPanel.release20261025.test.tsx"
+  ],
+  "baseline": {
+    "failed": 0,
+    "passed": 22,
+    "errors": 0,
+    "failing_tests": [],
+    "error_files": []
+  },
+  "mutations": {
+    "U3_code_without_its_message": {
+      "failed": 1,
+      "passed": 21,
+      "errors": 0,
+      "failing_tests": [
+        "i16 label_in_record (503) shows its own message"
+      ],
+      "error_files": [],
+      "reintroduces": "I16: a code the route returns has no message of its own (the transport's text instead)",
+      "detected": true,
+      "executed": "2026-11-12T03:38:53"
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 22,
+    "errors": 0,
+    "failing_tests": [],
+    "error_files": []
+  },
+  "summary": {
+    "mutations": 1,
+    "detected": 1,
+    "undetected": []
+  }
+}
