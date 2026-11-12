@@ -25,7 +25,7 @@ It is a code-only agent: no language model, no tool, no network call. It is regi
 | Metadata extraction (Class C, read only) | `backend/app/utils/dicom_utils.py`, `backend/app/services/imaging_service.py` | series description, manufacturer into `ImageMetadata` | Source of the gate's inputs; not modified. |
 | Stored study records | `backend/app/services/study_service_firestore.py` (series `series_description`; instance `acquisition` written at PACS import) | — | Source of the inputs of a comparison (read the same way as `read_source_acquisition`). |
 | Frontend sequence detection | `frontend/src/utils/sequenceDetection.ts` | sequence from BIDS **file names**, to place images in viewer panels | **Not used by the gate**: a file name is not evidence (RC-049). |
-| FLAIR contrast gate (RC-049) | `frontend/src/services/flames/headerEvidence.ts`, `contrastGate.ts`, in the worker | refuses another contrast from the header and the image content; requires positive evidence (header or physician confirmation) | **Second line, unchanged.** Its outcome (`provenance.sequenceEvidence`) is the sequence input of the gate's final check before the output is shown. |
+| FLAIR contrast gate (RC-049) | `frontend/src/services/flames/headerEvidence.ts`, `contrastGate.ts`, in the worker | refuses another contrast from the header and the image content; requires positive evidence (header or physician confirmation) | **Second line; its header evidence routes to the gate's classifier** (second review of PR #81, G15: one classifier for the product). Its outcome (`provenance.sequenceEvidence`) is the sequence input of the gate's final check before the output is shown. |
 | Skull removal (REQ-FUNC-093/115, REQ-SAFE-033, RC-043, RC-101) | `frontend/src/hooks/useBrowserFlames.ts`, skull gates in the worker, `strip-worker/` | the worker refuses an image with its skull; the app removes it on its server and runs again | **The gate reads the outcome**: `provenance.inputPreparation` (`as-uploaded` after the skull gates passed, or `skull-removed`). Without it, the skull is `unknown` and the output is not shown. |
 | Slice-thickness reliability card (REQ-FUNC-098/099, REQ-SAFE-034/035, RC-054..058, HAZ-015; flag `VITE_ENABLE_SLICE_THICKNESS_RELIABILITY` OFF) | `frontend/src/config/sliceThicknessReliability.v2.json`, card | shows research detection figures by thickness band | **Unchanged.** The gate uses only the pre-registered band limits (B1 ≤ 1.5, B2 (1.5, 4.5], B3 (4.5, 6.5], B4 > 6.5 mm) to NAME the band in its warning, never the card's figures (they come from cohorts whose licences do not allow commercial use). |
 | Acquisition of two visits (RC-062, CAPA-013) | `backend/app/services/longitudinal_candidate_safety.py` `compare_acquisitions` | same / differs / not established over manufacturer, model, field strength, 2D/3D, thickness, TR/TE/TI, voxel size | **The gate calls it** and keeps the scanner fields (manufacturer, model, field strength). RC-062 stays the wider check; the gate never lets through what RC-062 withholds. |
@@ -91,6 +91,10 @@ Matrix: sequence {FLAIR, T1, T2, unknown, missing} × physician confirmation {no
 - **G12** Shared corpus of series descriptions: each gets its class in backend and browser; a non-FLAIR name always abstains.
 - **G13** The attestation lifts only unknown/missing, only in a single study, and is never sent implicitly.
 - **G14** Every suggested action is possible in its mode.
+- **G15** One sequence classifier for the product (gate backend and browser, dataset inventory, RC-049 header evidence), bound by the corpus.
+- **G16** When the gate stops a comparison, only its reason is shown.
+- **G17** The decision that releases or withholds the output is decided and audited by the server, with the deciding code.
+- **G18** No stale answer acts: every consultation and run names its file and version; one request at a time.
 
 ## 6. Data rule and the v3 hook (REQ-SAFE-053)
 
@@ -113,4 +117,5 @@ Published OFF: `VITE_ENABLE_QUALITY_GATE` and `QUALITY_GATE_ENFORCED` default to
 | D-QG-5 | A change of scanner model alone (same vendor, same field) abstains, as RC-062 today; confirm or relax. |
 | D-QG-6 | Identifier numbering if PR #78 or PR #79 take REQ-FUNC-117/118, REQ-SAFE-052..054, HAZ-025 or RC-122..127 first. |
 | D-QG-7 | Post-contrast, reformatted (MPR, MIP) and derived or subtracted FLAIRs are "other" and always abstain; confirm, or allow some of them. |
+| D-QG-9 | TIRM names count as FLAIR (as RC-049 already read them); a short-TI TIRM (a STIR) is caught only when its inversion time is recorded in the header or the text; confirm. |
 | D-QG-8 | A comparison offers no attestation, so visits whose header names no sequence are never compared automatically; confirm, or ask for a per-visit attestation in the comparison screen. |

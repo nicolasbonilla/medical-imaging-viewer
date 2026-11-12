@@ -1059,6 +1059,21 @@ Failing first (commit `3990365`): G12 55 of 123 descriptions misclassified, 46 n
 
 Negative controls, re-run with every test command inside the throwaway copy (S4): 62 mutations, **56 of 56 run detected, 0 survived, 0 invalid**; 6 component mutations (V1–V6) not run (no node_modules). Per control: RC-122 23/23, RC-123 10/10, RC-124 5/5, RC-125 6/6, RC-126 12/12, RC-127 11/11. Baseline and restored copy: backend 59 / 0, browser harness 12 / 0.
 
+### C.7 Second independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| G15 | Three FLAIR classifiers disagreed (the gate, `dataset_inventory.detect_sequence`, RC-049 `headerEvidence.ts`): "t2_tirm_tra" abstained in the gate and passed RC-049 | RC-122 | ONE classifier: `quality_gate.classify_sequence` / `gate.ts sequenceFromHeader` from the policy vocabulary; the inventory and RC-049 route to it; TIRM is a FLAIR name; "TI=" / "TI:" in the text is an inversion time | corpus of 151 descriptions, every classifier the same class |
+| G16 | A comparison stopped by the gate showed RC-062's "change of scanner or protocol" box | RC-127 | the box only for genuine RC-062 abstentions; the gate panel gives the gate's reason | every abstaining code (vitest) |
+| G17 | The decision that released the output was computed only in the browser; the server audited "pending" | RC-126 | the browser reports the skull outcome; the server decides and audits it (`quality_gate.<decision>[.<deciding code>][.attested]`); the browser uses it only if the same rule reproduces it | shown vs withheld audit records |
+| G18 | A stale answer (file A) could set the panel or start a run after B was selected | RC-122 | every answer names its file and version; a mismatch is discarded; one request per click, Run disabled while in flight | vitest A→B |
+| 1 | The endpoint read files before checking the platform, outside the flag, without a limit | RC-126 | behind `QUALITY_GATE_ENFORCED`; approval and switches before any I/O; per-user rate limit | wiring |
+| 2 | Missing metadata gave a 404 | RC-123 | abstains with a reason (as load_mask, D5) | wiring |
+| 3 | "Header only" downloaded the whole file | — | bounded byte ranges, retried larger while the header runs longer | wiring |
+| 4–6 | Metadata read twice; duplicate type check; dead abstention branch; policy copied per call | — | read once and passed on; one check; one abstention path; cached policy | wiring |
+
+Failing first (commit `e5e3f0f`, CI run 43158533290): G15 the inventory disagreed with the corpus in 40 of 144 entries, RC-049 in 56 of 151 (no shared class in 151 of 151), the gate in 10 of 151 (+2 short-TI names lifted by a confirmation); G16 12 of 12 abstaining codes showed the RC-062 box; G17 the final consultation reported only "pending"; G18 a double click sent two requests; backend wiring 4 failed and 9 errors.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
