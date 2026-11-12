@@ -1,0 +1,105 @@
+{
+  "executed": "2026-11-12T01:17:14",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/verified_report.py": "6580a5516830e19e28c204253ad896deb9f52c825ad51fc12fbd24114e90afee"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "972dad4635c7a083fa2f54e1b4411693239b0a2b99e8cf4e430c0f35677281e4",
+    "tests/unit/test_rc103_verified_report_loop.py": "98e37933215b1a96512f14b5aec8f2b0dc8a629ff8bd11815d29fad191925170",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "fd42d0309ee427ed4dd3d5e1bf36b9b2d8ceb2fb242f2e37576c6d900a969aa2",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8",
+    "tests/unit/test_verified_report_review1.py": "21719a0f9de75dbf7c508d4c9d40708b6c72a2f6611c3352fbfffdff2398bdb8",
+    "tests/unit/test_verified_report_review2.py": "364f8daf280113d7001cbee6ff4ff99169f06bae5264d27df94126b214a188cb",
+    "tests/unit/test_verified_report_review2_dis.py": "cac14a7e8dfe21d7c3c399199e5089a5020f9d08bbe9bbcfbb80cfd6ee957a1a",
+    "tests/unit/test_verified_report_review3.py": "c8b2e9c9e6823ef8219d4ceea137666c41dcdf1f7297dbee188065a17535e3a0",
+    "tests/unit/test_verified_report_review4.py": "66dc5c7568c6d1f3e2f7f8f1c5c57a08ed3dee470a5f9f166780cfb46a3bce43",
+    "tests/unit/test_verified_report_review5.py": "c44f6b57913e310aee3499eafeed2ca13df0591a863c713de19a01ab61167155",
+    "tests/unit/test_verified_report_review6.py": "d488840a4f9a2ed435028e7b0a14208746b1b76fd7db4770fb25fb5f35d5a299",
+    "tests/unit/test_verified_report_scenario_matrix.py": "2b7e75e9a14ebfc8e85905c60e913ae3c955185d27319ecc38c4c8ca2b6e4e95"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py",
+    "tests/unit/test_verified_report_review5.py",
+    "tests/unit/test_verified_report_review6.py",
+    "tests/unit/test_verified_report_scenario_matrix.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 815,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "mutations": {
+    "F30_exact_count_from_twenty_in_the_record": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 812,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[de]",
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[en]",
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[es]"
+      ],
+      "reintroduces": "I12: from 20 lesions the exact count reaches the record sent to the model",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T01:18:42",
+      "detected": true
+    },
+    "F31_exact_visit_totals_in_the_record": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 812,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[de]",
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[en]",
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[es]"
+      ],
+      "reintroduces": "I12: an exact visit total from 20 lesions reaches the record",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T01:19:25",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 815,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 2,
+    "detected": 2,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "32ac755b91e02213edd901ba353357513ac7626d",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}
