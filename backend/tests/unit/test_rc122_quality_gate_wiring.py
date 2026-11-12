@@ -415,11 +415,13 @@ def test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version(si
             storage = _CountingStorage(img.to_bytes())
         app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(storage)   # no parameter: FastAPI would copy it
         monkeypatch.setattr(ct, "_authorized_inputs", lambda *a, n=name: _as_coro([n]))
-        for _ in range(2):
-            body = client.post("/api/v1/clinical/quality-gate", json={"file_id": name}).json()
+        # fifth review (F3): the second is a REAL evaluation (the final consultation is never served from the
+        # consultation cache), so only the header cache can spare its download
+        for extra in ({}, {"skull": "stripped"}):
+            body = client.post("/api/v1/clinical/quality-gate", json={"file_id": name, **extra}).json()
             visit = body["inputs"]["visits"][0]
             assert (visit["sequence"], visit["thickness"]["state"], visit["thickness"]["effective_mm"]) == expected
-        assert storage.downloads == 1, "the second consultation of the same file version is served from the cache"
+        assert storage.downloads == 1, "the second evaluation of the same file version reads the header from the cache"
     assert threads and set(threads) == {"worker"}
 
 
