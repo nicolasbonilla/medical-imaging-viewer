@@ -152,8 +152,10 @@ def _flow(replies):
     # (amended with the tenth review of PR #78, I18: a retry cut by the time budget is a failed check — the answer
     # before it failed the check and is withheld; never "the AI service timed out")
     ([VR.ModelReply(text=BAD), VR.ProviderFailure(VR.REASON_TIMEOUT, "TimeoutError")], VR.REASON_BLOCKED),
-    ([VR.ModelReply(text=BAD), VR.ProviderFailure(VR.REASON_PROVIDER, "APIError")], VR.REASON_PROVIDER),
-    ([VR.ModelReply(text=BAD), VR.ModelReply(text="", stop_reason="refusal")], VR.REASON_REFUSAL),
+    # (amended with the eleventh review of PR #78, C3: ANY failure of a regeneration after an answer that failed the
+    # check is a failed check — "could not be obtained" only when no answer was ever received)
+    ([VR.ModelReply(text=BAD), VR.ProviderFailure(VR.REASON_PROVIDER, "APIError")], VR.REASON_BLOCKED),
+    ([VR.ModelReply(text=BAD), VR.ModelReply(text="", stop_reason="refusal")], VR.REASON_BLOCKED),
     ([VR.ProviderFailure(VR.REASON_PROVIDER, "APIError")], VR.REASON_PROVIDER),
     ([VR.ModelReply(text="", stop_reason="refusal")], VR.REASON_REFUSAL),
 ], ids=["timeout_after_an_attempt", "provider_after_an_attempt", "refusal_after_an_attempt", "provider_first",
@@ -206,10 +208,12 @@ def test_rc104_t2_the_audit_and_the_response_say_withheld_with_the_reason(sink):
         template_type="general", findings={"lesion_analysis": {"total_count": 7}}, language="en", identifiers=IDS,
         audit_actor=SimpleNamespace(id="reader-t2", username="reader-t2", role="radiologist")))
     assert result["verification"]["outcome"] == "withheld" and result["verification"]["interpretive_text"] == "withheld"
-    assert result["verification"]["reason"] == VR.REASON_PROVIDER and result["verification"]["attempts"] == 2
+    # (amended with the eleventh review of PR #78, C3: the regeneration's failure after an answer that failed the check
+    # is a failed check — the provider error stays in the attempt's own record)
+    assert result["verification"]["reason"] == VR.REASON_BLOCKED and result["verification"]["attempts"] == 2
     (outcome,) = [r for r in sink.memory_records if r["event_type"] == "clinical.ai_report.verification"]
     assert outcome["details"]["report_outcome"] == "withheld" and outcome["details"]["interpretive_text"] == "withheld"
-    assert outcome["details"]["llm_reason"] == VR.REASON_PROVIDER and outcome["details"]["attempts"] == 2
+    assert outcome["details"]["llm_reason"] == VR.REASON_BLOCKED and outcome["details"]["attempts"] == 2
 
 
 # ═══════════════════════════════════════════════════════════════════════ T3 — the async client, cancelled at the deadline

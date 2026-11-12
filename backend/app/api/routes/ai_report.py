@@ -24,7 +24,6 @@ from app.security.resource_access import authorize_mask_specs
 from app.services.report_payload_guard import (
     FREE_TEXT_FIELDS,
     PatientIdentifiers,
-    IdentifierInPrompt,
     ImplausibleMeasurement,
     PatientRecordUnavailable,
     ProviderGuardError,
@@ -54,7 +53,8 @@ REPORT_ERROR_CODES = frozenset({
     "lesion_table_failed",          # 422 the server-side lesion table could not be computed
     "implausible_measurement",      # 422 RC-064: a measurement outside its plausible range (details.field)
     "patient_record_unavailable",   # 503 RC-065: the patient's record could not be read; nothing sent
-    "identifier_in_prompt",         # 503 RC-065: the tripwire found an identifier; nothing sent
+    # (eleventh review, C1: an identifier-check hit is no error any more — a measurements-only draft, reason
+    # identifier_check, as a patient-number match; "identifier_in_prompt" was removed)
     "label_in_record",              # 503 R8: a request label reached the record; nothing sent
     "not_sent",                     # 503 any other refusal of the privacy checks; nothing sent
     "report_failed",                # 500 an internal failure
@@ -669,7 +669,6 @@ async def generate_report(
                        extra={"privacy_check": "refused"})
         from app.services.brain_report_service import LabelInRecord
         code = ("patient_record_unavailable" if isinstance(e, PatientRecordUnavailable)
-                else "identifier_in_prompt" if isinstance(e, IdentifierInPrompt)
                 else "label_in_record" if isinstance(e, LabelInRecord) else "not_sent")
         raise ReportError(code, status.HTTP_503_SERVICE_UNAVAILABLE, NOT_SENT_DETAIL.format(reason=str(e)))
     # Second review of PR #78 (F): no `except RuntimeError` any more — a missing provider key is no error of the

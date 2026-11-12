@@ -49,17 +49,17 @@ const REPORT_ERROR_MESSAGES: Record<string, [key: string, english: string]> = {
   lesion_table_failed: ['report.lesionTableFailed', 'The lesion measurements could not be computed on the server, so the report was not generated. Nothing was sent to the AI service.'],
   implausible_measurement: ['report.errors.implausibleMeasurement', 'The {{measurement}} computed by the segmentation analysis is outside its plausible range, so no draft was written. Re-run the analysis or check the segmentation. Nothing was sent to the AI service.'],
   patient_record_unavailable: ['report.errors.patientRecordUnavailable', "The patient's record could not be read, so the request could not be checked and nothing was sent to the AI service. Try again later."],
-  identifier_in_prompt: ['report.errors.identifierInPrompt', 'The privacy check found something in the request that could identify the patient, so nothing was sent to the AI service and no draft was written.'],
   label_in_record: ['report.errors.labelInRecord', 'A label typed in the application reached the measurement record, so nothing was sent to the AI service and no draft was written. Please report this error.'],
   not_sent: ['report.errors.notSent', 'A safety check refused the request, so nothing was sent to the AI service and no draft was written.'],
   report_failed: ['report.errors.reportFailed', 'The report could not be generated because of an internal error; no draft was written.'],
 };
-// The measurements an implausible-measurement error can name (`error.details.field`), as the physician reads them.
+// The measurements an implausible-measurement error can name (`error.details.field`), as the physician reads them —
+// exactly the fields the server range-checks in what the report renders (eleventh review of PR #78, M1: a test derives
+// them from the projection).
 const MEASUREMENT_NAMES: Record<string, string> = {
   total_count: 'lesion count', total_burden_mm3: 'total lesion volume', total_burden_ml: 'total lesion volume',
   size_distribution: 'lesion size distribution', lesion_count: 'lesion count of a region',
-  total_volume_mm3: 'lesion volume of a region', total_volume_ml: 'lesion volume of a region',
-  regions_with_lesions: 'number of regions with lesions', total_dis_regions: 'number of regions with lesions',
+  regions_with_lesions: 'number of regions with lesions',
   burden_tp1_ml: 'lesion volume of the previous visit', burden_tp2_ml: 'lesion volume of this visit',
   total_lesions_tp1: 'lesion count of the previous visit', total_lesions_tp2: 'lesion count of this visit',
   status_counts: 'change counts of the comparison', change_candidates: 'change candidates of the comparison',

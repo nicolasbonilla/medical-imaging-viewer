@@ -80,6 +80,7 @@ TESTS = [
     "tests/unit/test_verified_report_review6.py",       # sixth independent review of PR #78, W1-W7
     "tests/unit/test_verified_report_scenario_matrix.py",   # seventh review: invariants I1-I8 over 1128 cases
     "tests/unit/test_verified_report_review10.py",      # tenth independent review of PR #78, I16-I19
+    "tests/unit/test_verified_report_review11.py",      # eleventh (final) review of PR #78: L1, L2, C1-C4, C7, M1, M2
 ]
 
 VR = "backend/app/services/verified_report.py"
@@ -347,7 +348,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "V4: the application shutdown does not close the shared client"),
     "K3_record_read_when_nothing_is_sent": ([(RT, '    if not hasattr(service, "interpretive_text_gate") or service.interpretive_text_gate()[0] is not False:\n', "    if True:\n")],
                                             "V5: kill switch off, the route still needs the patient record (503)"),
-    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            payload = provider_payload(rendered_findings, rendered_volumetry, identifiers if isinstance(identifiers, PatientIdentifiers) else None)\n")],
+    # (rewritten with the eleventh review of PR #78, M2: the service no longer imports provider_payload — the mutant
+    # reaches the guard's function itself, so it imports and runs; I15)
+    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            payload = __import__(\"app.services.report_payload_guard\", fromlist=[\"provider_payload\"]).provider_payload(rendered_findings, rendered_volumetry, identifiers if isinstance(identifiers, PatientIdentifiers) else None)\n")],
                                                      "V5: provider-only refusals apply when nothing is sent"),
     "P7_identifiers_not_required_when_sending": ([(BRS, "                if not isinstance(ids, PatientIdentifiers):\n", "                if False:\n")],
                                                  "V5: a request is sent without the patient's identifiers"),
@@ -428,7 +431,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "C42_other_languages_cardinals_ignored": ([(VR, "_CARDINALS_OF = {lang: frozenset(_CARDINALS[lang]) | frozenset(",
                                                 "_CARDINALS_OF = {lang: frozenset(_CARDINALS[lang]) | frozenset() & frozenset(")],
                                               "finding 8: \"two lesions\" in a German report passes the check"),
-    "F29_synthetic_payloads_without_the_matrix": ([(VR, "    for case in scenario_covering_cases():\n", "    for case in scenario_covering_cases()[:0]:\n")],
+    # (re-anchored with the eleventh review of PR #78, C4: the module's own minimal enumeration of the branches)
+    "F29_synthetic_payloads_without_the_matrix": ([(VR, "    for findings, volumetry, source in _branch_requests():\n",
+                                                    "    for findings, volumetry, source in list(_branch_requests())[:0]:\n")],
                                                   "finding 6: branches of the draft missing from the RC-065 device words"),
     # ── ninth independent review of PR #78: I12-I14 and findings 1, 7, 8 ──
     "F30_exact_count_from_twenty_in_the_record": ([(VR, '            "total_count": n if n is not None and n < 20 else None,\n',
@@ -485,12 +490,16 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M26_skipped_retry_as_timeout": ([(VR, "            if attempt:\n                return measurements_only(view, lang, REASON_BLOCKED, attempts, outcome=OUTCOME_WITHHELD,\n",
                                        "            if attempt:\n                return measurements_only(view, lang, REASON_TIMEOUT, attempts, outcome=OUTCOME_WITHHELD,\n")],
                                      "I18: a retry skipped for lack of time is reported as an AI-service timeout"),
-    "M27_cut_retry_as_timeout": ([(VR, "            if attempt and e.reason == REASON_TIMEOUT:\n", "            if False:\n")],
+    # (re-anchored with the eleventh review of PR #78, C3: the conversion now covers every failure of a regeneration)
+    "M27_cut_retry_as_timeout": ([(VR, "            if attempt:\n                # I18 (tenth review: a retry cut",
+                                   "            if False:\n                # I18 (tenth review: a retry cut")],
                                  "I18: a retry cut by the time budget is reported as an AI-service timeout"),
     "F35_nothing_to_report_before_the_substitutions": ([(RT, "    if not verified_report.renderable(findings, request.volumetry):\n"
                                                             "        raise ReportError(\"nothing_to_report\", status.HTTP_422_UNPROCESSABLE_ENTITY, NOTHING_TO_REPORT_DETAIL)\n", "")],
                                                        "I19: a block that held only a dropped reader decision gives a draft of the limitations alone"),
-    "P11_patient_number_as_503": ([(BRS, "                except IdentifierInPrompt:\n", "                except ZeroDivisionError:\n")],
+    # (re-anchored with the eleventh review of PR #78: the tripwire's own handler, C1, made the line occur twice)
+    "P11_patient_number_as_503": ([(BRS, "                except IdentifierInPrompt:\n                    # tenth review, finding 5",
+                                    "                except ZeroDivisionError:\n                    # tenth review, finding 5")],
                                   "finding 5: a measurement equal to a patient number ends in a 503 without a draft"),
     "P12_projected_payload_not_checked": ([(GRD, "        if is_patient_number(n, forms):       # (tenth review, finding 9: the projection's own rule)\n",
                                             "        if False:\n")],
@@ -500,6 +509,38 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                 (LCS, '        logger.warning(f"[RC-061] evidence asset unreadable: {e}")\n        return None\n',
                                  '        logger.warning(f"[RC-061] evidence asset unreadable: {e}")\n        _EVIDENCE_FILES[path_str] = None\n        return None\n')],
                                "finding 7: a transient read error withholds the rate until the server restarts"),
+    # ── eleventh (final) independent review of PR #78: L1, L2, C1-C4, C7, M1 (DRAFT, PENDING owner approval) ──
+    "N1_notice_claims_sex_and_age": ([("frontend/src/i18n/locales/en.json",
+                                       "only the measurements \u2014 the lesion count",
+                                       "only the measurements, sex and a 5-year age range \u2014 the lesion count")],
+                                     "L1: the panel notice says sex and an age band are sent again"),
+    "F36_partial_bracket_dropped": ([(VR, '    _t["lng_ok_partial"] = _partial\n',
+                                      '    _t["lng_ok_partial"] = re.sub(r"\\s*\\([^)]*\\{res_part\\}[^)]*\\)", "", _partial)\n')],
+                                    "L2: a partial comparison drops every computed resolved / shrunk / stable count"),
+    "P13_identifier_hit_as_503": ([(BRS, "                except IdentifierInPrompt:\n                    # eleventh review of PR #78, C1",
+                                    "                except ZeroDivisionError:\n                    # eleventh review of PR #78, C1")],
+                                  "C1: an identifier-pattern hit in device-written text ends in a 503 without a draft"),
+    "A11_skipped_retry_counted": ([(VR, "            if attempt:\n                return measurements_only(view, lang, REASON_BLOCKED, attempts, outcome=OUTCOME_WITHHELD,\n"
+                                        "                                         tokens=tuple(tokens), model_answered=answered, retry_skipped_budget=True)\n",
+                                    "            if attempt:\n                attempts.append({**record, \"verdict\": \"not_sent\", \"rule_ids\": []})\n"
+                                    "                on_attempt(attempts[-1])\n"
+                                    "                return measurements_only(view, lang, REASON_BLOCKED, attempts, outcome=OUTCOME_WITHHELD,\n"
+                                    "                                         tokens=tuple(tokens), model_answered=answered, retry_skipped_budget=True)\n")],
+                                  "C2: a retry the budget skipped is counted as an attempt (verification and audit)"),
+    "A12_asked_without_a_request": ([(BRS, '        asked = any(a.get("verdict") != "not_sent" for a in result.attempts)\n',
+                                      "        asked = bool(result.attempts)\n")],
+                                    "C7: a draft with no request sent names a model and a token count"),
+    "M28_retry_provider_error_as_unavailable": ([(VR, "            if attempt:\n                # I18 (tenth review: a retry cut",
+                                                  "            if attempt and e.reason == REASON_TIMEOUT:\n                # I18 (tenth review: a retry cut")],
+                                                "C3: a regeneration's provider error after a failed answer reads 'could not be obtained'"),
+    "M29_word_list_built_in_the_first_request": ([("backend/app/main.py",
+                                                   "        from app.services.brain_report_service import warm_report_word_lists\n"
+                                                   "        await asyncio.to_thread(warm_report_word_lists)\n", "        pass\n")],
+                                                 "C4: the device-word list is built inside the first request's budget"),
+    "C49_label_for_a_field_never_checked": ([("frontend/src/components/AIReportPanel.tsx",
+                                              "  regions_with_lesions: 'number of regions with lesions',",
+                                              "  regions_with_lesions: 'number of regions with lesions', total_dis_regions: 'number of regions with lesions',")],
+                                            "M1: the panel names a measurement that can never be refused as implausible"),
     "F32_format_rule_twice": ([(RT, "        # (ninth review of PR #78, finding 8: CAPA-014's format-character rule runs once, inside neutralised_model_text\n",
                                 '        result = {**result, "content": without_format_characters(result["content"])}\n'
                                 "        # (ninth review of PR #78, finding 8: CAPA-014's format-character rule runs once, inside neutralised_model_text\n")],
@@ -517,6 +558,10 @@ RETIRED_WITH_THE_LAZY_READER = {name: M.pop(name)[1] for name in ("K3_record_rea
 # {total_count} placeholder giving the exact count) has no exact count left to give; its line was rewritten.
 # Replaced by: F1, F34 and test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown.
 RETIRED_WITH_THE_RANGE_ONLY_RECORD = {name: M.pop(name)[1] for name in ("C14_exact_count_placeholder",)}
+# Eleventh review of PR #78, M2: the service no longer imports provider_payload, so P10's defect (the provider payload
+# built in the service with nothing to send) cannot be written there; its mutant would die by NameError (I15).
+# Replaced by: test_m2_no_unused_names and test_rc105_i14_the_provider_payload_runs_only_when_a_call_will_happen.
+RETIRED_WITH_THE_UNUSED_IMPORT = {name: M.pop(name)[1] for name in ("P10_provider_payload_on_every_draft",)}
 
 
 def offline_env():

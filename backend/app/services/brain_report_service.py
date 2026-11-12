@@ -58,7 +58,6 @@ from app.services.report_payload_guard import (
     PatientRecordUnavailable,
     ProviderGuardError,
     assert_no_identifiers,
-    provider_payload,
     assert_no_patient_numbers,
     project_measurements,
     words_of,
@@ -199,9 +198,12 @@ class _ReportAudit:
         from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
         withheld = result.interpretive == "withheld" or (result.reason not in (None, verified_report.REASON_OFF,
                                                                                 verified_report.REASON_NOTHING_TO_COMMENT))
+        # eleventh review of PR #78, C2 (I17): `attempts` counts the requests sent; a regeneration the time budget no
+        # longer allowed is recorded apart
         details = {"report_outcome": result.outcome, "interpretive_text": result.interpretive,
-                   "attempts": len(result.attempts), "model_id": model_id, "model_answered": result.model_answered,
-                   "llm_reason": result.reason}
+                   "attempts": sum(1 for a in result.attempts if a.get("verdict") != "not_sent"), "model_id": model_id,
+                   "model_answered": result.model_answered, "llm_reason": result.reason,
+                   "retry_skipped_budget": True if getattr(result, "retry_skipped_budget", False) else None}
         self._emit(AuditEventType.CLINICAL_AI_REPORT_VERIFICATION,
                    AuditOutcome.PARTIAL if withheld else AuditOutcome.SUCCESS,
                    {k: v for k, v in details.items() if v is not None},
@@ -543,8 +545,16 @@ class BrainReportService:
                 if UNLISTED.rstrip("]") in sent_text:
                     raise LabelInRecord("a label of the request reached the measurement record")
                 # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
-                assert_prompt_carries_no_identifier(sent_text, ids)
-                privacy = "passed"
+                try:
+                    assert_prompt_carries_no_identifier(sent_text, ids)
+                    privacy = "passed"
+                except IdentifierInPrompt:
+                    # eleventh review of PR #78, C1: the first message holds only device-written text (e.g. a volume
+                    # of 9.1175 mL read as the birth date 9.11.75) — nothing is sent and the clinician still gets the
+                    # measurements, with the privacy reason (as for a patient-number match, finding 5)
+                    reason, privacy = verified_report.REASON_PRIVACY, "refused"
+                    logger.warning("[Report] The identifier check matched the measurement record; nothing sent, "
+                                   "measurements only", extra={"report_id": report_id, "privacy_check": "refused"})
             if reason is None:
                 # REQ-SAFE-019 (ninth review, finding 1; tenth review, finding 8 / I18): what is left of the request's
                 # 30 s, computed ONCE, here — after the record and the device-word list, just before the call; run_flow
@@ -607,7 +617,9 @@ class BrainReportService:
             extra={"report_id": report_id, "report_outcome": result.outcome, "attempts": len(result.attempts),
                    "tokens_in": result.input_tokens, "tokens_out": result.output_tokens},
         )
-        asked = bool(result.attempts)
+        # eleventh review of PR #78, C7 (I17): asked only when a request was actually sent — otherwise no model and no
+        # token count
+        asked = any(a.get("verdict") != "not_sent" for a in result.attempts)
         return {
             "report_id": report_id,
             "content": content,
@@ -666,6 +678,13 @@ def _fixed_prompt_word_lists() -> tuple:
     texts.append(verified_report.REGENERATION_PREFIX + verified_report.REGENERATION_SUFFIX)
     texts.extend(verified_report.FIXED_FEEDBACK_TEXTS)
     return tuple(tuple(words_of(text)) for text in texts)
+
+
+def warm_report_word_lists() -> None:
+    """Eleventh review of PR #78, C4 (REQ-SAFE-019): build the device-word list once at startup (FastAPI lifespan),
+    so that the first report request does not spend its 30 s budget on it."""
+    fixed_prompt_words()
+    fixed_prompt_pairs()
 
 
 @lru_cache(maxsize=1)

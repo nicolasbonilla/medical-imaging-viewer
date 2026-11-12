@@ -221,15 +221,17 @@ def test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited(sink, mon
     original = VR.first_user_message
     monkeypatch.setattr(VR, "first_user_message", lambda view, lang: original(view, lang) + "\nTestgiven Testfamily")
     client = _Client()
-    with pytest.raises(ProviderGuardError):
-        _generate(_service(client), {"lesion_analysis": {"total_count": 7, "total_burden_mm3": 10.0,
-                                                         "total_burden_ml": 0.01}}, segmentation_id="seg-r7",
-                  audit_actor=USER)
+    # (amended with the eleventh review of PR #78, C1: the identifier check's refusal is a measurements-only draft with
+    # the privacy reason — audited as such, nothing sent)
+    assert ProviderGuardError
+    _generate(_service(client), {"lesion_analysis": {"total_count": 7, "total_burden_mm3": 10.0,
+                                                     "total_burden_ml": 0.01}}, segmentation_id="seg-r7",
+              audit_actor=USER)
     assert client.calls == []
     (outcome,) = _outcomes(sink)
     assert outcome["actor_user_id"] == "reader-r7"
-    assert outcome["details"]["report_outcome"] == "not_sent" and outcome["outcome"] == "denied"
-    assert outcome["details"]["llm_reason"] == "identifier_in_request"
+    assert outcome["details"]["report_outcome"] == "not_requested" and outcome["details"]["attempts"] == 0
+    assert outcome["details"]["llm_reason"] == VR.REASON_PRIVACY
     assert outcome["resource_ids"]["segmentation_id"] == "seg-r7"
 
 

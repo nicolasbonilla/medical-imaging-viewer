@@ -286,10 +286,12 @@ async def test_rc102_the_first_request_is_checked_for_identifiers(monkeypatch):
     original = VR.first_user_message
     monkeypatch.setattr(VR, "first_user_message", lambda view, lang: original(view, lang) + "\nTestgiven Testfamily")
     client = _Client("[FINDINGS_COMMENT]\nSmall.\n[IMPRESSION_COMMENT]\nReview.")
-    with pytest.raises(IdentifierInPrompt):
-        await _service(client).generate_report(template_type="general", findings={"lesion_analysis": _la(7)},
-                                               language="en", identifiers=IDS)
-    assert client.calls == []
+    # (amended with the eleventh review of PR #78, C1: the first message holds only device-written text, so a hit of
+    # the tripwire gives the measurements-only draft with the privacy reason — nothing is sent, never a 503)
+    assert IdentifierInPrompt
+    result = await _service(client).generate_report(template_type="general", findings={"lesion_analysis": _la(7)},
+                                                    language="en", identifiers=IDS)
+    assert client.calls == [] and result["verification"]["reason"] == VR.REASON_PRIVACY
 
 
 @pytest.mark.asyncio

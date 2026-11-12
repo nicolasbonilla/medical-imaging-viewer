@@ -112,6 +112,14 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize default admin user: {e}", exc_info=True)
         # Don't fail startup - allow app to run even if user creation fails
 
+    # Eleventh review of PR #78, C4 (REQ-SAFE-019; DRAFT): the verified report's device-word list (RC-065) is built
+    # here, once, not inside the first report request's 30 s budget
+    try:
+        from app.services.brain_report_service import warm_report_word_lists
+        await asyncio.to_thread(warm_report_word_lists)
+    except Exception as e:  # noqa: BLE001 — the first request then builds it (the check never runs without it)
+        logger.error(f"Report word-list warm-up failed: {type(e).__name__}")
+
     yield
 
     # Shutdown: gracefully handle shutdown

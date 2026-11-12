@@ -29,7 +29,7 @@ from app.core.logging.audit_sink import DurableAuditSink, set_durable_audit_sink
 from app.services import brain_report_service as BRS
 from app.services import verified_report as VR
 from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE, NOT_EVALUATED_LINE
-from app.services.report_payload_guard import PatientIdentifiers
+from app.services.report_payload_guard import PatientIdentifiers, provider_payload
 
 IDS = PatientIdentifiers.from_record({"mrn": "MRN-TEST-0578", "given_name": "Testgiven", "family_name": "Testfamily",
                                       "birth_date": date(1980, 1, 1)})
@@ -37,8 +37,12 @@ T = VR.T["en"]
 GOOD = "[FINDINGS_COMMENT]\nThe marking is automatic.\n[IMPRESSION_COMMENT]\nTo be reviewed by a radiologist."
 
 # The input dimensions are the product's own (eighth review of PR #78: shared with VR.synthetic_payloads).
-LESION, DIS, LONGITUDINAL = VR.SCENARIO["lesion"], VR.SCENARIO["dis"], VR.SCENARIO["longitudinal"]
-VOLUMETRY, SOURCE, ENTRY = VR.SCENARIO["volumetry"], VR.SCENARIO["source"], VR.SCENARIO["entry"]
+# (eleventh review of PR #78, C4: the dimensions live in the tests, tests/unit/report_scenarios.py; the product keeps
+# its own minimal enumeration, checked against these by test_verified_report_review11)
+from tests.unit.report_scenarios import SCENARIO, scenario_request  # noqa: E402
+
+LESION, DIS, LONGITUDINAL = SCENARIO["lesion"], SCENARIO["dis"], SCENARIO["longitudinal"]
+VOLUMETRY, SOURCE, ENTRY = SCENARIO["volumetry"], SCENARIO["source"], SCENARIO["entry"]
 
 
 def _renderable(c):
@@ -52,7 +56,7 @@ CASES = [c for c in CASES if _renderable(c)]
 
 
 def _request(c):
-    return VR.scenario_request(c)
+    return scenario_request(c)
 
 
 def _service(client=None, enabled=False):
@@ -356,7 +360,7 @@ def _i9_violations(lang):
     for c in CASES:
         findings, volumetry = _request(c)
         f, v, ni = VR.rendered_request(findings, volumetry)
-        p = BRS.provider_payload(f, v)
+        p = provider_payload(f, v)
         view = VR.build_view(p.findings, p.volumetry, lang, review_source=BRS._review_source(findings),
                              not_included=ni)
         for part in (VR.assemble(view, lang, "", ""), VR.change_notice(view, lang)):
@@ -405,7 +409,7 @@ def test_rc103_i10_a_comment_that_obeys_each_rule_passes_the_check():
     bad = []
     for n, findings, comment in cases:
         f, v, ni = VR.rendered_request(findings, None)
-        p = BRS.provider_payload(f, v)
+        p = provider_payload(f, v)
         view = VR.build_view(p.findings, p.volumetry, "en", not_included=ni)
         fails = VR.check(view, "en", f"[FINDINGS_COMMENT]\n{comment}\n[IMPRESSION_COMMENT]\nTo be reviewed by a "
                                      "radiologist.")[1]
@@ -418,7 +422,7 @@ def test_rc103_i10_a_comment_that_obeys_each_rule_passes_the_check():
 @pytest.mark.parametrize("case", FIXTURE["cases"], ids=[c["name"] for c in FIXTURE["cases"]])
 def test_rc102_i11_the_draft_follows_the_shared_longitudinal_rule(case):
     f, v, ni = VR.rendered_request({"longitudinal": case["longitudinal"]}, None)
-    p = BRS.provider_payload(f, v)
+    p = provider_payload(f, v)
     view = VR.build_view(p.findings, p.volumetry, "en", not_included=ni)
     lng, exp = view["longitudinal"], case["expected"]
     computed = not lng.get("abstained")
@@ -510,7 +514,7 @@ def test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown(lang):
     for n in range(0, 201):
         lng = {**LONGITUDINAL["complete"], "total_lesions_tp1": n, "total_lesions_tp2": n}
         f, v, ni = VR.rendered_request({"lesion_analysis": {"total_count": n}, "longitudinal": lng}, None)
-        p = BRS.provider_payload(f, v)
+        p = provider_payload(f, v)
         view = VR.build_view(p.findings, p.volumetry, lang, not_included=ni)
         draft, record = VR.assemble(view, lang, "", ""), VR.first_user_message(view, lang)
         if n >= 20:
@@ -590,7 +594,12 @@ def test_rc105_i14_the_provider_payload_runs_only_when_a_call_will_happen(monkey
     def refuse(*a, **k):
         raise AssertionError("provider_payload ran although nothing will be sent")
 
-    monkeypatch.setattr(BRS, "provider_payload", refuse)
+    # (amended with the eleventh review of PR #78, M2: the service no longer imports provider_payload at all — it
+    # projects through project_measurements; the guard's own function must not run with the identifiers either)
+    assert not hasattr(BRS, "provider_payload")
+    import app.services.report_payload_guard as G
+    real = G.provider_payload
+    monkeypatch.setattr(G, "provider_payload", lambda f, v, ids=None: refuse() if ids is not None else real(f, v, None))
     c = {"lesion": "computed", "dis": "not_evaluated", "longitudinal": "complete", "volumetry": "present",
          "source": "automatic", "entry": "none"}
     result = _generate(_service(), c)

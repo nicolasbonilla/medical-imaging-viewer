@@ -244,14 +244,24 @@ def test_rc106_c3_with_no_answer_ever_received_the_reason_stays_could_not_be_obt
 def test_rc106_c4_the_device_word_list_is_built_at_startup():
     import app.main as main
     assert "warm_report_word_lists" in inspect.getsource(main.lifespan)
-    BRS._fixed_prompt_word_lists.cache_clear()
+    for cached in (BRS._fixed_prompt_word_lists, BRS.fixed_prompt_words, BRS.fixed_prompt_pairs):
+        cached.cache_clear()
     BRS.warm_report_word_lists()
-    assert BRS._fixed_prompt_word_lists.cache_info().currsize == 1
+    assert all(c.cache_info().currsize == 1
+               for c in (BRS._fixed_prompt_word_lists, BRS.fixed_prompt_words, BRS.fixed_prompt_pairs))
 
 
 def test_rc106_c4_the_test_matrix_lives_in_the_tests_not_in_the_class_c_module():
     for name in ("SCENARIO", "SCENARIO_BASE", "scenario_request", "scenario_covering_cases"):
         assert not hasattr(VR, name), name
+    # (added with the fix) every value of the test matrix is one of the product's own branches, so the device-word
+    # list (built from those branches) covers every text the matrix checks
+    from tests.unit.report_scenarios import SCENARIO
+    branches = getattr(VR, "_BRANCHES", {})
+    for dim, values in SCENARIO.items():
+        for name, value in values.items():
+            if value is not None:
+                assert branches.get(dim, {}).get(name) == value, (dim, name)
 
 
 # ══════════════════════════════════════════════════════════════════════════════════════════════ M1

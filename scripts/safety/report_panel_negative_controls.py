@@ -32,8 +32,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "U2_implausible_not_named": ([(PANEL, "      return t(entry[0], { defaultValue: entry[1], measurement });\n",
                                    "      return t(entry[0], { defaultValue: entry[1], measurement: '' });\n")],
                                  "I16: the implausible measurement is not named"),
-    "U3_code_without_its_message": ([(PANEL, "  identifier_in_prompt: ['report.errors.identifierInPrompt', ",
-                                      "  identifier_in_prompt_unmapped: ['report.errors.identifierInPrompt', ")],
+    # (re-anchored with the eleventh review of PR #78, C1: identifier_in_prompt is no error any more)
+    "U3_code_without_its_message": ([(PANEL, "  label_in_record: ['report.errors.labelInRecord', ",
+                                      "  label_in_record_unmapped: ['report.errors.labelInRecord', ")],
                                     "I16: a code the route returns has no message of its own (the transport's text instead)"),
 }
 

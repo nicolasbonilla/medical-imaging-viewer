@@ -126,7 +126,8 @@ def test_rc103_w3_ordinals_and_non_count_uses_pass(sentence):
 # ═══════════════════════════════════════════════════════════════════════ W4 — decide once, build once
 def test_rc102_w4_the_record_is_projected_and_built_once(monkeypatch):
     counts = {"payload": 0, "view": 0}
-    real_payload, real_view = BRS.provider_payload, VR.build_view
+    # (amended with the eleventh review of PR #78, M2: the service projects through project_measurements only)
+    real_payload, real_view = BRS.project_measurements, VR.build_view
 
     def payload(*a, **k):
         counts["payload"] += 1
@@ -136,7 +137,6 @@ def test_rc102_w4_the_record_is_projected_and_built_once(monkeypatch):
         counts["view"] += 1
         return real_view(*a, **k)
 
-    monkeypatch.setattr(BRS, "provider_payload", payload)
     # (amended with the ninth review of PR #78, I14: the service projects through project_measurements — the same
     # projection, measurements only, run before any call is decided)
     monkeypatch.setattr(BRS, "project_measurements", payload)

@@ -193,8 +193,9 @@ def test_rc106_all_calls_of_one_report_share_the_time_budget():
                            on_attempt=records.append, clock=lambda: next(clock)))
     # (amended with the tenth review of PR #78, I18: the retry the budget no longer allows is not sent, and the draft
     # is reported as a failed check — the AI answered and its text failed the check)
-    assert res.reason == VR.REASON_BLOCKED and [r["verdict"] for r in records] == ["fail", "not_sent"]
-    assert records[-1]["error"] == VR.REASON_TIME_BUDGET
+    # (amended again with the eleventh review, C2: a retry not sent is no attempt — recorded apart)
+    assert res.reason == VR.REASON_BLOCKED and [r["verdict"] for r in records] == ["fail"]
+    assert res.retry_skipped_budget and res.summary()["attempts"] == 1
 
 
 # ───────────────────────────────────────────────────────────── the pinned SDK, offline (CI installs it)

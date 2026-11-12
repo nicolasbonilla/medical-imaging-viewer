@@ -298,6 +298,8 @@ DETAIL_KEYS = frozenset({
     "flow", "attempt", "model_id", "model_answered", "prompt_sha256", "verdict", "rule_ids", "latency_ms",
     "stop_reason", "input_tokens", "output_tokens", "error", "report_outcome", "interpretive_text", "attempts",
     "llm_reason",
+    # (eleventh review of PR #78, C2: a regeneration the time budget no longer allowed — a flag, not an attempt)
+    "retry_skipped_budget",
 })
 
 # Review m10: identifiers that must not be stored (typed login names, file names, MRNs, accession

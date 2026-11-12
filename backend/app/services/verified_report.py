@@ -106,7 +106,6 @@ SECTIONS = {
 DIS_NOT_IN_REPORT = "not part of this report"
 
 # Outcome codes (audit `report_outcome`, response `verification.outcome`).
-PASSED = tuple(f"passed_{k}" for k in range(MAX_REGENERATIONS + 1))   # named from the attempt number (review 2, I)
 BLOCKED = "blocked"
 # third review of PR #78, T2: the AI was asked, and gave no usable answer (timeout, provider failure, refusal) — the
 # comments are withheld; "not_requested" is only for a draft for which nothing was sent
@@ -128,7 +127,8 @@ REASON_INTERNAL_CHECK = "internal_check_error"  # the check itself failed after 
 REASON_WIRING = "provider_wiring"               # the client returned something that is not an answer (4th review, Q5)
 REASON_TIME_BUDGET = "time_budget"              # too little of the request's 30 s was left for the model (6th, W7)
 # tenth review of PR #78, finding 5 (RC-065): a projected measurement equals one of the patient's own numbers — nothing
-# is sent and the measurements are delivered (as with the comments off), never a 503 without a draft
+# is sent and the measurements are delivered (as with the comments off), never a 503 without a draft. Eleventh review,
+# C1: the same for a hit of the identifier tripwire in the first message (device-written text only)
 REASON_PRIVACY = "identifier_check"
 
 # The fixed notes after a report without comments, in the report language (RC-103, RC-105, RC-106).
@@ -152,9 +152,9 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                     "above are complete.",
         "time": "Interpretive text not requested: too little of the time budget was left after the measurements "
                 "were computed. The measurements above are complete.",
-        "privacy": "Interpretive text not requested: a measurement equals one of the patient's own numbers (record "
-                   "number, phone or birth date), so nothing was sent to the AI service. The measurements above are "
-                   "complete.",
+        "privacy": "Interpretive text not requested: the privacy check found something in the request that matches the "
+                   "patient's own record (a record number, a phone number, a birth date or a name), so nothing was sent "
+                   "to the AI service. The measurements above are complete.",
     },
     "es": {
         REASON_BLOCKED: "Texto interpretativo retenido por la comprobación de seguridad: los comentarios de la IA no "
@@ -177,9 +177,9 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                     "mediciones de arriba están completas.",
         "time": "Texto interpretativo no solicitado: quedaba muy poco del tiempo disponible después de calcular "
                 "las mediciones. Las mediciones de arriba están completas.",
-        "privacy": "Texto interpretativo no solicitado: una medición coincide con uno de los números propios del "
-                   "paciente (número de historia, teléfono o fecha de nacimiento), así que no se envió nada al servicio "
-                   "de IA. Las mediciones de arriba están completas.",
+        "privacy": "Texto interpretativo no solicitado: la comprobación de privacidad encontró en la petición algo que "
+                   "coincide con la ficha del paciente (un número de historia, un teléfono, una fecha de nacimiento o un "
+                   "nombre), así que no se envió nada al servicio de IA. Las mediciones de arriba están completas.",
     },
     "de": {
         REASON_BLOCKED: "Interpretierender Text von der Sicherheitsprüfung zurückgehalten: Die KI-Kommentare haben die "
@@ -201,9 +201,9 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                     "werden. Die Messwerte oben sind vollständig.",
         "time": "Interpretierender Text nicht angefordert: Nach der Berechnung der Messwerte blieb zu wenig "
                 "Zeit. Die Messwerte oben sind vollständig.",
-        "privacy": "Interpretierender Text nicht angefordert: Ein Messwert stimmt mit einer eigenen Nummer der "
-                   "Patientin oder des Patienten überein (Aktennummer, Telefon oder Geburtsdatum); daher wurde nichts "
-                   "an den KI-Dienst gesendet. Die Messwerte oben sind vollständig.",
+        "privacy": "Interpretierender Text nicht angefordert: Die Datenschutzprüfung hat in der Anfrage etwas gefunden, "
+                   "das zur Akte der Patientin oder des Patienten passt (Aktennummer, Telefonnummer, Geburtsdatum oder "
+                   "Name); daher wurde nichts an den KI-Dienst gesendet. Die Messwerte oben sind vollständig.",
     },
 }
 _NOTE_OF_REASON = {
@@ -483,10 +483,24 @@ def _loc(s: str, lang: str) -> str:
     return s.replace(".", ",") if lang in ("es", "de") else s
 
 
-# Eighth review of PR #78, I11: the comparison line when a resolved / shrunk / stable count was not computed — the
-# full line without its parenthesis of those counts.
-for _t in T.values():
-    _t["lng_ok_partial"] = re.sub(r"\s*\([^)]*\{res\}[^)]*\)", "", _t["lng_ok"])
+# Eighth review of PR #78, I11: the comparison line when a resolved / shrunk / stable count was not computed.
+# Eleventh review, L2: every computed count is still written, and the missing one is named "not computed" (the line
+# lost the whole parenthesis before, so computed counts vanished silently).
+_OTHER_COUNT_WORDS = {"en": ("resolved", "shrunk", "stable"), "es": ("resueltos", "reducidos", "estables"),
+                      "de": ("zurückgebildet", "verkleinert", "stabil")}
+for _lang, _t in T.items():
+    _partial = _t["lng_ok"]
+    for _key, _word in zip(("res", "shr", "sta"), _OTHER_COUNT_WORDS[_lang]):
+        assert "{%s} %s" % (_key, _word) in _partial, (_lang, _key)
+        _partial = _partial.replace("{%s} %s" % (_key, _word), "{%s_part}" % _key)
+    _t["lng_ok_partial"] = _partial
+
+
+def _other_count_parts(cc: Dict[str, Any], lang: str) -> Dict[str, str]:
+    """resolved / shrunk / stable as the partial comparison line writes them: "4 resolved" or "resolved: not computed"."""
+    t = T[lang]
+    return {f"{key}_part": (f"{cc.get(name)} {word}" if cc.get(name) is not None else f"{word}: {t['nc']}")
+            for key, name, word in zip(("res", "shr", "sta"), ("resolved", "shrunk", "stable"), _OTHER_COUNT_WORDS[lang])}
 
 
 # ─────────────────────────────────────────────────────────────── the measurement record (from the RC-064 payload)
@@ -877,9 +891,12 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
         else:
             cc = lng["candidates"]
             others = all(cc.get(k_) is not None for k_ in ("resolved", "shrunk", "stable"))
-            comp = [t["lng_ok" if others else "lng_ok_partial"].format(
-                new=stated["new_candidates"], enl=stated["enlarging_candidates"],
-                res=cc.get("resolved"), shr=cc.get("shrunk"), sta=cc.get("stable"))]
+            if others:
+                comp = [t["lng_ok"].format(new=stated["new_candidates"], enl=stated["enlarging_candidates"],
+                                           res=cc.get("resolved"), shr=cc.get("shrunk"), sta=cc.get("stable"))]
+            else:   # (eleventh review, L2: every computed count, the missing one named "not computed")
+                comp = [t["lng_ok_partial"].format(new=stated["new_candidates"], enl=stated["enlarging_candidates"],
+                                                   **_other_count_parts(cc, lang))]
             below = cc.get("new_below_review_size")
             if below:       # seventh review, finding 4 (I4): never dropped silently (wording: owner decision)
                 d = lng.get("new_lesion_min_diameter_mm")
@@ -1296,16 +1313,20 @@ class FlowResult:
     model_answered: Optional[str] = None
     input_tokens: int = 0
     output_tokens: int = 0
+    # eleventh review of PR #78, C2 (I17): a regeneration the time budget no longer allowed — recorded apart, never
+    # counted as an attempt (`attempts` holds only the requests actually sent)
+    retry_skipped_budget: bool = False
 
     def summary(self) -> Dict[str, Any]:
         last = self.attempts[-1] if self.attempts else {}
         return {"flow": FLOW_ID, "outcome": self.outcome, "interpretive_text": self.interpretive,
                 "reason": self.reason, "attempts": len(self.attempts),
-                "rules_failed_last_attempt": list(last.get("rule_ids") or [])}
+                "rules_failed_last_attempt": list(last.get("rule_ids") or []),
+                **({"retry_skipped_budget": True} if self.retry_skipped_budget else {})}
 
 
 def measurements_only(view: Dict[str, Any], language: str, reason: str, attempts=None, outcome: str = NOT_REQUESTED,
-                      tokens=(0, 0), model_answered=None) -> FlowResult:
+                      tokens=(0, 0), model_answered=None, retry_skipped_budget: bool = False) -> FlowResult:
     """The code-written report without comments, with the fixed note of `reason` (RC-103, RC-105, RC-106)."""
     lang = language_of(language)
     note = WITHHELD[lang][_NOTE_OF_REASON[reason]]
@@ -1313,7 +1334,7 @@ def measurements_only(view: Dict[str, Any], language: str, reason: str, attempts
     return FlowResult(text=assemble(view, lang, "", "") + "\n\n" + note, outcome=outcome,
                       interpretive="withheld" if withheld else "not_requested", reason=reason,
                       attempts=list(attempts or []), model_answered=model_answered,
-                      input_tokens=tokens[0], output_tokens=tokens[1])
+                      input_tokens=tokens[0], output_tokens=tokens[1], retry_skipped_budget=retry_skipped_budget)
 
 
 def _after_asking(attempts: List[Dict[str, Any]]) -> str:
@@ -1361,16 +1382,13 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
                   "model_id": request_meta.get("model")}
         if remaining < MIN_LLM_BUDGET_S:
             # Tenth review of PR #78, I18 (REQ-SAFE-019): no request is sent with less than MIN_LLM_BUDGET_S left —
-            # retries included (the attempt is recorded as not sent, for the time budget). A retry skipped for lack of
-            # time is a failed check: the AI answered and its text failed the check, so it is withheld — never "the AI
-            # service timed out".
-            record.update({"verdict": "not_sent", "rule_ids": [], "latency_ms": 0, "error": REASON_TIME_BUDGET})
-            attempts.append(record)
-            on_attempt(record)
+            # retries included. A retry skipped for lack of time is a failed check: the AI answered and its text failed
+            # the check, so it is withheld — never "the AI service timed out". Eleventh review, C2 (I17): nothing was
+            # sent, so it is no attempt — it is recorded apart (retry_skipped_budget).
             if attempt:
                 return measurements_only(view, lang, REASON_BLOCKED, attempts, outcome=OUTCOME_WITHHELD,
-                                         tokens=tuple(tokens), model_answered=answered)
-            return measurements_only(view, lang, REASON_TIME_BUDGET, attempts, outcome=_after_asking(attempts))
+                                         tokens=tuple(tokens), model_answered=answered, retry_skipped_budget=True)
+            return measurements_only(view, lang, REASON_TIME_BUDGET, attempts, outcome=NOT_REQUESTED)
         t0 = clock()
         try:
             reply = await call(SYSTEM_PROMPT, copy.deepcopy(messages), remaining)
@@ -1379,8 +1397,10 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
                            "error": e.error})
             attempts.append(record)
             on_attempt(record)
-            if attempt and e.reason == REASON_TIMEOUT:
-                # I18: a retry cut by the time budget — the answer before it failed the check and is withheld
+            if attempt:
+                # I18 (tenth review: a retry cut by the time budget; eleventh review, C3: ANY failure of a regeneration
+                # — provider error, 5xx, connection error, unavailable model): an answer was received and failed the
+                # check, so its text is withheld by the check; "could not be obtained" is only for no answer at all
                 return measurements_only(view, lang, REASON_BLOCKED, attempts, outcome=OUTCOME_WITHHELD,
                                          tokens=tuple(tokens), model_answered=answered)
             return measurements_only(view, lang, e.reason, attempts, outcome=_after_asking(attempts),
@@ -1404,8 +1424,9 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
             record.update({"verdict": "refusal", "rule_ids": []})
             attempts.append(record)
             on_attempt(record)
-            return measurements_only(view, lang, REASON_REFUSAL, attempts, outcome=_after_asking(attempts),
-                                     tokens=tuple(tokens), model_answered=answered)
+            # (eleventh review, C3: a regeneration declined after an answer that failed the check is a failed check)
+            return measurements_only(view, lang, REASON_BLOCKED if attempt else REASON_REFUSAL, attempts,
+                                     outcome=_after_asking(attempts), tokens=tuple(tokens), model_answered=answered)
         try:
             assembled, fails = check(view, lang, reply.text)
         except Exception as e:  # noqa: BLE001 — fifth review of PR #78, V3: the check itself failed (a fault of this
@@ -1505,76 +1526,65 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
                "dis_assessment": {"evaluation_status": "not_evaluated"}}, None, "ai_draft"
     yield {"longitudinal": pair}, None, None
     yield {}, vol, None
-    # eighth review of PR #78, finding 6: every value of every dimension of the scenario matrix, each on a base case,
-    # through the RC-064 projection — so every branch of the code-written draft (the below-size line too) is here
-    for case in scenario_covering_cases():
-        findings, volumetry = scenario_request(case)
+    # eighth review of PR #78, finding 6: every value of every branch dimension, each on a base case, through the
+    # RC-064 projection — so every branch of the code-written draft (the below-size line too) is here
+    for findings, volumetry, source in _branch_requests():
         f, v_, _ni = rendered_request(findings, volumetry)
         p = provider_payload(f, v_)
-        review = (findings.get("dis_assessment") or {}).get("segmentation_review") or {}
-        source = review.get("source") if review.get("source") in ("ai_draft", "automatic_tool",
-                                                                   "origin_not_recorded") else None
-        yield p.findings, p.volumetry, source
-    below_nd = {k: x for k, x in SCENARIO["longitudinal"]["small_new"].items() if k != "new_lesion_min_diameter_mm"}
+        yield p.findings, p.volumetry, source if source in ("ai_draft", "automatic_tool", "origin_not_recorded") else None
+    below_nd = {k: x for k, x in _BRANCHES["longitudinal"]["small_new"].items() if k != "new_lesion_min_diameter_mm"}
     yield {"longitudinal": below_nd}, None, None
-    # a comparison whose stable count was not computed (eighth review, I11: the partial comparison line)
-    partial = {**SCENARIO["longitudinal"]["complete"],
-               "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0}}
-    yield {"longitudinal": partial}, None, None
 
 
-# ── The scenario matrix's input dimensions (eighth review of PR #78): shared by the test matrix
-# (tests/unit/test_verified_report_scenario_matrix.py) and the synthetic payloads above.
+# ── Eleventh review of PR #78, C4: the MINIMAL production enumeration of the record's branches — what the RC-065
+# device-word list needs (synthetic_payloads above). The test matrix's own dimensions live in the tests
+# (backend/tests/unit/report_scenarios.py); a test checks that every value there is one of these.
 _SC_EVALUATED = {"evaluation_status": "evaluated", "regions_with_lesions": 2, "total_dis_regions": 5,
                  "region_details": {"Periventricular": {"present": True}, "Juxtacortical": {"present": True},
                                     "Infratentorial": {"present": False}}}
 _SC_LNG = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.4, "total_lesions_tp1": 3, "total_lesions_tp2": 9,
            "burden_delta_percent": 40.0, "abstained": False, "new_lesion_min_diameter_mm": 3}
-SCENARIO: Dict[str, Dict[str, Any]] = {
-    "lesion": {"absent": None,
-               "not_available": {"total_count": None, "total_burden_mm3": None, "total_burden_ml": None},
+_BRANCHES: Dict[str, Dict[str, Any]] = {
+    "lesion": {"not_available": {"total_count": None, "total_burden_mm3": None, "total_burden_ml": None},
                "computed": {"total_count": 7, "total_burden_mm3": 3132.0, "total_burden_ml": 3.132,
                             "size_distribution": {"small": 4, "medium": 2, "large": 1}}},
-    "dis": {"absent": None, "not_evaluated": {"evaluation_status": "not_evaluated"},
+    "dis": {"not_evaluated": {"evaluation_status": "not_evaluated"},
             "evaluated_met": {**_SC_EVALUATED, "dis_met": True}, "evaluated_not_met": {**_SC_EVALUATED, "dis_met": False}},
     "longitudinal": {
-        "absent": None,
         "complete": {**_SC_LNG, "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
                      "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
         "null_counts": {**_SC_LNG, "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
                         "change_candidates": {"new": None, "enlarging": 1, "total": 1}},
         "small_new": {**_SC_LNG, "status_counts": {"new": 5, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
                       "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
+        # (eighth review, I11; eleventh review, L2: the partial comparison line, a computed count and a missing one)
+        "partial_counts": {**_SC_LNG, "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 1},
+                           "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
     },
-    "volumetry": {"absent": None, "present": {"total_brain_volume_ml": 1100.0, "intracranial_volume_ml": 1450.0}},
+    "volumetry": {"present": {"total_brain_volume_ml": 1100.0, "intracranial_volume_ml": 1450.0}},
     "source": {"automatic": "ai_draft", "manual": "manual", "not_recorded": "origin_not_recorded"},
     "entry": {"none": {}, "indication": {"clinical_indication": "follow-up"}, "technique": {"technique": "3T"},
               "observations": {"additional_observations": "motion"}},
 }
-SCENARIO_BASE = {"lesion": "computed", "dis": "not_evaluated", "longitudinal": "complete", "volumetry": "present",
-                 "source": "automatic", "entry": "none"}
+_BRANCH_BASE = {"lesion": "computed", "dis": "not_evaluated", "longitudinal": "complete", "volumetry": "present",
+                "source": "automatic", "entry": "none"}
 
 
-def scenario_request(case: Dict[str, str]) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
-    """The report request (findings, volumetry) of one scenario case."""
-    findings: Dict[str, Any] = dict(SCENARIO["entry"][case["entry"]])
-    if SCENARIO["lesion"][case["lesion"]] is not None:
-        findings["lesion_analysis"] = dict(SCENARIO["lesion"][case["lesion"]])
-    if SCENARIO["dis"][case["dis"]] is not None:
-        findings["dis_assessment"] = {**SCENARIO["dis"][case["dis"]],
-                                      "segmentation_review": {"source": SCENARIO["source"][case["source"]]}}
-    if SCENARIO["longitudinal"][case["longitudinal"]] is not None:
-        findings["longitudinal"] = SCENARIO["longitudinal"][case["longitudinal"]]
-    return findings, SCENARIO["volumetry"][case["volumetry"]]
-
-
-def scenario_covering_cases() -> List[Dict[str, str]]:
-    """Every value of every dimension, each on the base case (with the entries also on a DIS-evaluated case)."""
-    out = [dict(SCENARIO_BASE)]
-    for dim, values in SCENARIO.items():
-        for value in values:
-            if value != SCENARIO_BASE[dim]:
-                out.append({**SCENARIO_BASE, dim: value})
-    for value in SCENARIO["entry"]:
-        out.append({**SCENARIO_BASE, "dis": "evaluated_met", "entry": value})
-    return out
+def _branch_requests() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, Any]], Optional[str]]]:
+    """Every value of every branch dimension on the base case, each measurement block also absent, and the typed
+    entries also on a DIS-evaluated case: (findings, volumetry, review source) requests."""
+    cases = [dict(_BRANCH_BASE)]
+    for dim, values in _BRANCHES.items():
+        cases += [{**_BRANCH_BASE, dim: value} for value in values if value != _BRANCH_BASE[dim]]
+    cases += [{**_BRANCH_BASE, dim: None} for dim in ("lesion", "dis", "longitudinal", "volumetry")]
+    cases += [{**_BRANCH_BASE, "dis": "evaluated_met", "entry": value} for value in _BRANCHES["entry"]]
+    for case in cases:
+        source = _BRANCHES["source"][case["source"]]
+        findings: Dict[str, Any] = dict(_BRANCHES["entry"][case["entry"]])
+        if case["lesion"]:
+            findings["lesion_analysis"] = dict(_BRANCHES["lesion"][case["lesion"]])
+        if case["dis"]:
+            findings["dis_assessment"] = {**_BRANCHES["dis"][case["dis"]], "segmentation_review": {"source": source}}
+        if case["longitudinal"]:
+            findings["longitudinal"] = _BRANCHES["longitudinal"][case["longitudinal"]]
+        yield findings, (_BRANCHES["volumetry"][case["volumetry"]] if case["volumetry"] else None), source
