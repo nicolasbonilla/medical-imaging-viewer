@@ -49,7 +49,7 @@ BACKEND_TESTS = ["tests/unit/test_quality_gate_matrix.py", "tests/unit/test_rc12
                  "tests/unit/test_rc123_rc062_monotonicity.py", "tests/unit/test_rc122_flags_off_identity.py",
                  "tests/unit/test_rc122_one_gate.py", "tests/unit/test_rc122_review7.py",
                  "tests/unit/test_rc122_review8.py", "tests/unit/test_rc122_review9.py", "tests/unit/test_rc122_review10.py",
-                 "tests/unit/test_rc122_review11.py"]
+                 "tests/unit/test_rc122_review11.py", "tests/unit/test_rc122_review12.py"]
 VITEST_TESTS = ["src/components/BrowserFlamesCard.qualityGate.test.tsx", "src/components/QualityGatePanel.test.tsx",
                 "src/services/qualityGate/gate.test.ts", "src/services/flames/__tests__/headerEvidence.flagsOff.test.ts",
                 "src/components/LongitudinalCompare.qualityGate.test.tsx", "src/components/LongitudinalResultPanel.qualityGate.test.tsx",
@@ -64,6 +64,8 @@ COPY_FILES = ["backend/pytest.ini", "backend/tests/__init__.py", "backend/tests/
               "backend/tests/fixtures/quality_gate/real_flair.v1.json",
               # eleventh review: the report route's fixture (I1, I2) and the shared UI states (I4)
               "backend/tests/unit/test_capa014_report_provider_payload.py", "frontend/src/config/qualityGate.ui_states.v1.json",
+              # twelfth review: the manifest (K4 checks RC-125's statement)
+              "docs/iec62304/records/risk_verification/rc_test_manifest.json",
               "frontend/src/i18n/locales/en.json", "frontend/src/i18n/locales/es.json",
               "frontend/src/i18n/locales/de.json", "frontend/src/services/qualityGate/gate.ts",
               "frontend/src/components/BrowserFlamesCard.tsx", "frontend/src/components/QualityGatePanel.tsx",
@@ -109,6 +111,9 @@ CMP_ACTION = ("If you are sure this visit's image is a T2-FLAIR, tick its confir
 # Tenth review of PR #81 (SIMPLIFY): controls RETIRED because the part they mutated no longer exists — kept here and in the
 # record with the reason, never silently dropped
 RETIRED = {
+    "AD1_report_trusts_the_client_block": "the in-memory decision store and its lookup were replaced by signed, pair-bound tokens (twelfth review, K1/K2); AE1-AE4 sabotage the verification instead",
+    "AD2_unverified_gate_treated_as_clean": "re-expressed on the signed path as AE4_unverified_gate_treated_as_clean (twelfth review, K1)",
+    "AD3_decisions_not_recorded": "the in-memory decision store was removed (twelfth review, K1): nothing is recorded per instance any more",
     "W11_consultation_cache_off": "the consultation cache was removed (S1): there is no cache to switch off",
     "W12_cached_answers_counted": "the consultation cache was removed (S1): every consultation is evaluated and counted",
     "W13_release_decision_cached": "the consultation cache was removed (S1): no decision is ever served from a cache",
@@ -118,6 +123,12 @@ RETIRED = {
     "AB7_request_counter_after_the_reads": "the two limits were merged into ONE before any read (S1); S8_no_rate_limit and AC7_limit_after_the_reads cover it",
     "AB8_cached_attestation_not_audited": "the cached path was removed (S1): an attestation is always evaluated and audited",
     "S5_audit_without_the_deciding_code": "the deciding code moved from the packed audit code to structured details (S4); AA6_audit_details_dropped and AC5_durable_record_drops_the_details cover it",
+}
+
+# Twelfth review of PR #81 (K4): controls whose sabotaged check can never fail in this app test LABELLING only — they are
+# run and recorded, but never counted as evidence of a risk control.
+LABELLING_ONLY = {
+    "Q13_unknown_skull_passes": "the browser reports 'unknown' only for a result without the worker's skull report, which this app's worker never produces (RC-043 refuses first); the control tests how the server handles a client-reported value",
 }
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runner, controls)
@@ -154,7 +165,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Q9_abstention_does_not_withhold": ([(QG, '    if gate.get("ai_output_allowed") is not True:      # ONE abstention path (second review, finding 5)\n',
         '    if False:\n')],
         "a comparison the gate stops still carries lesion counts and loads", "backend", "RC-123"),
-    "Q10_route_ignores_the_gate": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            return qg.abstained_comparison(gate)\n', '        pass\n'),
+    "Q10_route_ignores_the_gate": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            return {**qg.abstained_comparison(gate), "pair": pair}\n', '        pass\n'),
         (SA, '            visit_check=visit_check, review_read_failed=review_read_failed, gate=gate,\n', '            visit_check=visit_check, review_read_failed=review_read_failed, gate=None,\n')],
         "the longitudinal route consults the gate but shows the candidates anyway", "backend", "RC-123"),
     # ── RC-124: data rule ──
@@ -232,7 +243,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "R7_comparison_action_missing": ([(EN, '        "action_comparison": "' + CMP_ACTION + '"\n      },\n      "sequence_confirmed_by_physician"',
         '        "action_comparison": ""\n      },\n      "sequence_confirmed_by_physician"')],
         "a comparison stopped on the sequence says nothing about what to do", "backend", "RC-127"),
-    "R8_gate_after_loading": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            return qg.abstained_comparison(gate)\n', '        pass\n')],
+    "R8_gate_after_loading": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            return {**qg.abstained_comparison(gate), "pair": pair}\n', '        pass\n')],
         "the comparison loads masks, images, registration and atlas before the gate stops it", "backend", "RC-123"),
     "R10_raw_codes_in_caveat": ([(QG, '    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in explain(gate)["causes"]]\n',
         '    reasons = list(explain(gate)["causes"])\n')],
@@ -307,8 +318,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "U11_completeness_on_the_loop": ([(DIC, '        return await asyncio.to_thread(inspect, raw) if in_thread else inspect(raw)\n',
         '        return inspect(raw)\n')],
         "the header completeness check runs on the event loop", "backend", "RC-122"),
-    "U12_gate_on_the_loop": ([(CT, '    result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)\n',
-        '    result = qg.run_quality_gate(inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)\n')],
+    "U12_gate_on_the_loop": ([(CT, '    result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor,\n'
+        '                                     releases_output=ran)\n',
+        '    result = qg.run_quality_gate(inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor, releases_output=ran)\n')],
         "the gate runs on the event loop", "backend", "RC-126"),
     "U13_default_ranges_download_repeatedly": ([(DIC, '    if ranged is None or getattr(type(storage_service), "download_file_range", None) is IStorageService.download_file_range:\n',
         '    if ranged is None:\n')],
@@ -346,8 +358,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the in-browser AI's header evidence changes with VITE_ENABLE_QUALITY_GATE off (G26 a)", "node", "RC-122"),
     "W2_rc049_base_rule_changed": ([(HE, "|LOCALI[SZ]ER|SCOUT)\\b/;\n", "|LOCALI[SZ]ER|SCOUT|CAL)\\b/;\n")],
         "the base RC-049 rule is edited, so production answers change with the flag off (G26 a)", "node", "RC-122"),
-    "W5_attestation_parsed_with_the_gate_off": ([(SA, '    if not settings.QUALITY_GATE_ENFORCED:\n        return None, {}, {}, None\n    attestation = _attestation(body)\n',
-        '    attestation = _attestation(body)\n    if not settings.QUALITY_GATE_ENFORCED:\n        return None, {}, {}, None\n')],
+    "W5_attestation_parsed_with_the_gate_off": ([(SA, '    if not settings.QUALITY_GATE_ENFORCED:\n        return None, {}, {}, None, None\n    attestation = _attestation(body)\n',
+        '    attestation = _attestation(body)\n    if not settings.QUALITY_GATE_ENFORCED:\n        return None, {}, {}, None, None\n')],
         "a malformed quality_gate_attestation gives 400 with the gate off (G26 c)", "backend", "RC-122"),
     "W6_sel_type_checked_early_with_the_gate_off": ([(SA, '        if settings.QUALITY_GATE_ENFORCED and any(s.get("type") != "segmentation" for s in (tp1_spec, tp2_spec)):\n',
         '        if any(s.get("type") != "segmentation" for s in (tp1_spec, tp2_spec)):\n')],
@@ -422,23 +434,49 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "V23_attestable_visits_not_from_the_answer": ([(LRP, "  const visits = (['tp1', 'tp2'] as const).filter((v) => (gate.attestable_visits ?? []).includes(v));\n",
         "  const visits = (['tp1', 'tp2'] as const).filter(() => true);\n")],
         "the comparison offers an attestation for a visit the server did not name (G27)", "vitest", "RC-122"),
+    # ── twelfth review of PR #81: K1/K2 signed pair-bound decisions, K3 refused access audited, K5 a real run, O1-O4 ──
+    "AE1_signature_not_checked": ([(QG, '        if prefix != TOKEN_PREFIX or not hmac.compare_digest(_sign(key, body), sig):\n',
+        '        if prefix != TOKEN_PREFIX:\n')],
+        "a tampered gate decision is accepted by the report (K1)", "backend", "RC-127"),
+    "AE2_expiry_not_checked": ([(QG, "        if payload.get(\"kind\") != kind or isinstance(exp, bool) or not isinstance(exp, (int, float)) or exp <= _now():\n",
+        "        if payload.get(\"kind\") != kind:\n")],
+        "an expired gate decision is accepted by the report (K1)", "backend", "RC-127"),
+    "AE3_pair_not_compared": ([(QG, '    if payload is None or not isinstance(payload.get("pair"), dict) or payload["pair"] != longitudinal.get("pair"):\n',
+        '    if payload is None:\n')],
+        "the decision of pair A is used in a report about pair B (K2)", "backend", "RC-127"),
+    "AE4_unverified_gate_treated_as_clean": ([(QG, '        return {"established": False, "stopped": True, "causes": ["gate_not_established"], "warnings": []}\n',
+        '        return None\n')],
+        "a missing, forged or mismatched decision is reported as a clean comparison (I1, K1)", "backend", "RC-127"),
+    "AE5_refused_access_not_audited": ([(AM, '        if (method, template) in SELF_AUDITED_ROUTES and getattr(request.state, "audit_recorded", False) and status < 500:\n',
+        '        if (method, template) in SELF_AUDITED_ROUTES and status < 500:\n')],
+        "an access refused with 404 on the quality-gate route leaves no audit trace (K3)", "backend", "RC-126"),
+    "AE6_release_without_a_run": ([(CT, '    ran = body.skull != "pending" and qg.spend_run_token(body.run_token, file_id=paths[0], version=version,\n'
+        '                                                         user_id=user_id, attested=body.physician_confirmed_flair)\n',
+        '    ran = body.skull != "pending"\n')],
+        "a final consultation with no run is recorded as an AI run (K5)", "backend", "RC-126"),
+    "AE7_run_token_reusable": ([(QG, '        if not isinstance(nonce, str) or nonce in _RUN_TOKENS_SPENT:\n', '        if not isinstance(nonce, str):\n')],
+        "one run is recorded as several AI runs (K5)", "backend", "RC-126"),
+    "AE8_nifti_prefix_capped_at_1_mib": ([(QG, '                want = int(min(max(vox, size + 4), NIFTI_DECOMPRESSED_MAX))\n', '                want = 1 << 20\n')],
+        "a header with extensions beyond 1 MiB is unreadable (O1)", "backend", "RC-122"),
+    "AE9_indexed_query_with_the_flags_off": ([(LCS, '        if get_settings().QUALITY_GATE_ENFORCED:     # E1 (seventh review of PR #81): one document, by query\n',
+        '        if True:     # E1 (seventh review of PR #81): one document, by query\n')],
+        "with the flags off the acquisition record is read differently from the base (O2, G26)", "backend", "RC-122"),
+    "AE10_word_sets_keyed_by_identity": ([(QG, '    key = _vocab_key(vocab)\n', '    key = str(id(vocab))\n')],
+        "a vocabulary changed in place keeps its stale word sets (O4)", "backend", "RC-122"),
+    "V33_stale_before_panel_after_an_attested_run": ([(CARD, "      before.show(fresh);              // O3 (twelfth review): the \"before\" panel shows the decision the run follows\n      if (!fresh.ai_may_run) return;\n",
+        "      if (!fresh.ai_may_run) { before.show(fresh); return; }\n")],
+        "after an attested run the 'before' panel still says abstain (O3)", "vitest", "RC-127"),
+    "V34_final_without_the_run_token": ([(CARD, "skullFromProvenance(run.provenance), runToken.current).then((r) => {", "skullFromProvenance(run.provenance)).then((r) => {")],
+        "the final consultation never presents the run token: no run is recorded (K5)", "vitest", "RC-126"),
     # ── eleventh review of PR #81: I1 the server's record, I2 type-safe, I3 punctuation kept, I4, I5 one record, I6 ──
-    "AD1_report_trusts_the_client_block": ([(QG, '    decision = stored_decision(longitudinal.get("quality_gate"))\n',
-        '    decision = longitudinal.get("quality_gate") if isinstance(longitudinal.get("quality_gate"), dict) else None\n')],
-        "the report takes the gate's decision, causes and warnings from the client's copy (I1)", "backend", "RC-127"),
-    "AD2_unverified_gate_treated_as_clean": ([(QG, '    if decision is None:\n        return {"established": False, "stopped": True, "causes": ["gate_not_established"], "warnings": []}\n',
-        '    if decision is None:\n        return None\n')],
-        "a forged, unknown or missing trace id is reported as a clean comparison (I1)", "backend", "RC-127"),
-    "AD3_decisions_not_recorded": ([(QG, '    _remember(result)                                 # I1: the report reads this record, never the client\'s copy\n', '')],
-        "the server keeps no record of its decisions: every report is 'not established' (I1)", "backend", "RC-127"),
     "AD4_explain_not_type_safe": ([(QG, '                 if isinstance(c, dict) and text(c.get("code")) in statuses]\n',
         '                 if isinstance(c, dict) and c.get("code") in statuses]\n')],
         "a list in place of a code breaks the report with a 500 (I2)", "backend", "RC-127"),
     "AD5_file_name_punctuation_dropped": ([(DI, '    return "".join(kept).strip("-_. ")\n', '    return " ".join(t for t in kept if t[:1].isalnum())\n')],
         "'AX_T2*' in a file name reads as T2, not SWI: the flags-off inventory differs from the base (I3)", "backend", "RC-122"),
-    "AD6_middleware_duplicates_the_record": ([(AM, '        if (method, template) in SELF_AUDITED_ROUTES and status < 500 and status not in (401, 403):\n',
+    "AD6_middleware_duplicates_the_record": ([(AM, '        if (method, template) in SELF_AUDITED_ROUTES and getattr(request.state, "audit_recorded", False) and status < 500:\n',
         '        if False:\n')],
-        "two audit records per consultation, and a consultation record for a 404 (I5)", "backend", "RC-126"),
+        "two audit records per consultation (I5)", "backend", "RC-126"),
     "V31_governed_without_the_warnings": ([(LRP, ".filter((c) => c.status === 'warn' && c.code)", ".filter(() => false)")],
         "RC-062's line hides the gate's warnings for the pair (I4)", "vitest", "RC-127"),
     "V32_run_asks_again_without_an_attestation": ([(CARD, "    if (!attestation && preflight?.ai_may_run === true && preflight.subject?.file_id === fileAtClick) {\n",
@@ -537,8 +575,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Z4_no_record_thickness_fallback": ([(QG, '    if not isinstance(thickness, dict) or thickness.get("state") == "not_determinable":\n',
         '    if not isinstance(thickness, dict):\n')],
         "an undeterminable header thickness hides the record's thickness (R2)", "backend", "RC-124"),
-    "Z5_instances_streamed": ([(LCS, '        for doc in query.limit(1).stream():\n', '        for doc in instances.stream():\n')],
-        "every consultation streams the whole instances collection to build the cache key (E1)", "backend", "RC-126"),
+    "Z5_instances_streamed": ([(LCS, '            docs = query.limit(1).stream()\n', '            docs = instances.stream()\n')],
+        "with the gate on, every consultation streams the whole instances collection (E1)", "backend", "RC-126"),
     "Z6_visits_read_one_after_the_other": ([(SA, '    sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]\n',
         '    sources = [getattr(await _meta(s), "file_id", None) for s in specs]\n')],
         "the comparison reads the two visits one after the other (E2)", "backend", "RC-123"),
@@ -566,8 +604,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the answer for file A is shown once B is selected", "vitest", "RC-122"),
     "V9_stale_run_starts": ([(CARD, "      if (currentFile.current !== fileAtClick || fresh.subject?.file_id !== fileAtClick) return;   // stale: never runs\n", "")],
         "a run of A starts while B is selected", "vitest", "RC-122"),
-    "V10_final_consultation_without_the_skull": ([(CARD, "      return requestQualityGate(run.fileId, attestedAtRun.current, skullFromProvenance(run.provenance)).then((r) => {\n",
-        "      return requestQualityGate(run.fileId, attestedAtRun.current).then((r) => {\n")],
+    "V10_final_consultation_without_the_skull": ([(CARD, "      return requestQualityGate(run.fileId, attestedAtRun.current, skullFromProvenance(run.provenance), runToken.current).then((r) => {\n",
+        "      return requestQualityGate(run.fileId, attestedAtRun.current, undefined, runToken.current).then((r) => {\n")],
         "the server never sees the skull outcome that releases the output", "vitest", "RC-126"),
     "V11_gate_panel_next_to_rc062": ([(LRP, "      {result.quality_gate && !rc062Governs && <QualityGatePanel", "      {result.quality_gate && <QualityGatePanel")],
         "'the gate allows' shown next to 'no automatic candidates'", "vitest", "RC-127"),
@@ -758,12 +796,14 @@ def main():
                            "GOOGLE_CLOUD_PROJECT=mstool-offline-tests, ANTHROPIC_API_KEY removed",
         }
         res["retired"] = RETIRED
+        res["labelling_only"] = LABELLING_ONLY
         res["baseline"] = {"backend": run_backend(copy, env), "node": run_node(copy, env)}
         print("baseline", json.dumps({k: (v["passed"], v["failed"]) for k, v in res["baseline"].items()}))
         assert all(v["failed"] == 0 for v in res["baseline"].values()), "the unmutated copy does not pass"
         res["mutations"] = {}
         for name, (edits, what, runner, controls) in M.items():
-            entry = {"reintroduces": what, "runner": runner, "controls": controls}
+            entry = {"reintroduces": what, "runner": runner, "controls": controls,
+                     **({"labelling_only": True} if name in LABELLING_ONLY else {})}
             if runner == "vitest" and not has_node_modules():
                 entry.update({"status": "not_run", "reason": "not run (no node_modules): vitest runs in GitHub Actions"})
                 res["mutations"][name] = entry
