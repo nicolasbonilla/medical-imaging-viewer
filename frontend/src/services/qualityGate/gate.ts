@@ -58,6 +58,8 @@ export interface ServerGateResponse extends GateResult {
   platform?: GatePlatform;
   /** G18: the file the answer was made for, and its version on the server (null when unknown) */
   subject?: { file_id: string; version: string | null };
+  /** K5 (twelfth review): the single-use token of a consultation that allows a run, sent back with the final one */
+  run_token?: string;
 }
 
 type Obj = Record<string, unknown>;
@@ -122,7 +124,9 @@ export function serverSequenceClass(r: ServerGateResponse | null | undefined): s
 }
 
 /** RC-125 input: what the worker says the model read — the file after the skull gates passed, or after the app
- *  removed the skull; anything else is unknown. The browser REPORTS it; the server decides with it. */
+ *  removed the skull; anything else is unknown. CLIENT-REPORTED (twelfth review, K4): the browser reports it and the
+ *  server cannot verify it — the worker's skull gates (RC-043) and RC-049 are the real controls; the worker produces no
+ *  result without one of these two outcomes, so 'unknown' comes only from a result without that report. */
 export function skullFromProvenance(provenance: { inputPreparation?: unknown } | null | undefined): 'stripped' | 'unknown' {
   const prep = provenance?.inputPreparation;
   return prep === 'as-uploaded' || prep === 'skull-removed' ? 'stripped' : 'unknown';

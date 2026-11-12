@@ -138,8 +138,10 @@ def _attestation(body) -> tuple:
 
 async def _gate_setup(specs, body, segmentation_service, storage_service, current_user, request):
     """The ONE gate set-up of the comparison and the SEL search (tenth review of PR #81): returns
-    (gate, metas, acq_memo, visit_check). With QUALITY_GATE_ENFORCED off: (None, {}, {}, None) — nothing is read and
-    the routes run as on the base branch (G26).
+    (gate, metas, acq_memo, visit_check, pair). With QUALITY_GATE_ENFORCED off: (None, {}, {}, None, None) — nothing is
+    read and the routes run as on the base branch (G26). Twelfth review (K1/K2): the gate carries a signed token of its
+    decision bound to the pair (both segmentation ids, source files and versions) and the clinician; the answer carries
+    the pair, which the report checks against the token.
 
     C2 (first review): the gate decides from the STORED records before any mask, image, registration or atlas is
     loaded. Second review, findings 2 and 4: each segmentation's metadata is read ONCE here (``metas``, for the
@@ -149,7 +151,7 @@ async def _gate_setup(specs, body, segmentation_service, storage_service, curren
     returned for the route (O3). E2: the independent reads run concurrently and each acquisition record is read once
     (``acq_memo``, reused by RC-062)."""
     if not settings.QUALITY_GATE_ENFORCED:
-        return None, {}, {}, None
+        return None, {}, {}, None, None
     attestation = _attestation(body)
     import asyncio
     for spec in specs:
@@ -170,7 +172,10 @@ async def _gate_setup(specs, body, segmentation_service, storage_service, curren
         return meta
 
     async def _header(source):
-        return await qg.visit_header_fields(storage_service, settings.GCS_BUCKET_NAME, source) if source else None
+        if not source:
+            return None, None
+        version = await qg.file_version(storage_service, settings.GCS_BUCKET_NAME, source)
+        return version, await qg.visit_header_fields(storage_service, settings.GCS_BUCKET_NAME, source, version_key=version)
 
     async def _records(source):
         if not source:
@@ -181,13 +186,16 @@ async def _gate_setup(specs, body, segmentation_service, storage_service, curren
 
     sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]
     # the visit check (a 400 for the same mask, visit or a reversed order: G35) and the reads, in ONE gather
-    visit_check, records, headers = await asyncio.gather(
+    visit_check, records, read = await asyncio.gather(
         _visit_check(specs[0], specs[1], sources[0], sources[1]),
         asyncio.gather(*(_records(s) for s in sources)), asyncio.gather(*(_header(s) for s in sources)))
-    gate = await asyncio.to_thread(qg.comparison_gate, *sources, headers=headers, records=list(records),
+    gate = await asyncio.to_thread(qg.comparison_gate, *sources, headers=[h for _, h in read], records=list(records),
                                    attestation=attestation, visit_ok=visit_check.get("status") == "ok",
                                    user=current_user, request=request)
-    return gate, metas, acq_memo, visit_check
+    pair = {label: {"id": spec.get("id"), "source": source, "version": qg.version_text(version)}
+            for label, spec, source, (version, _) in zip(("tp1", "tp2"), specs, sources, read)}
+    gate = {**gate, "token": qg.decision_token(gate, pair, getattr(current_user, "id", ""))}
+    return gate, metas, acq_memo, visit_check, pair
 
 
 def _sel_input_type_error():
@@ -785,10 +793,10 @@ async def compare_longitudinal(
         if not tp1_spec or not tp2_spec:
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
-        gate, metas, acq_memo, gate_visit_check = await _gate_setup(
+        gate, metas, acq_memo, gate_visit_check, pair = await _gate_setup(
             [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
         if gate is not None and gate.get("ai_output_allowed") is not True:
-            return qg.abstained_comparison(gate)
+            return {**qg.abstained_comparison(gate), "pair": pair}
 
         async def load_mask(spec):
             """Return (mask, voxel_spacing, source_intensity, nib_img, source_file_id) —
@@ -974,6 +982,8 @@ async def compare_longitudinal(
             binding=binding, stored_review=stored_review,
             visit_check=visit_check, review_read_failed=review_read_failed, gate=gate,
         )
+        if gate is not None:
+            result["pair"] = pair                     # K2: the pair the signed decision is bound to
         # G31 (eighth review): what the user finally received — released only when the comparison is shown
         qg.audit_comparison_outcome(gate, released=result.get("abstained") is not True, withheld_by="rc062",
                                     user=current_user, request=request, study_key=qg.study_of(source_tp2) or "")
@@ -1116,11 +1126,12 @@ async def detect_slowly_expanding_lesions(
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
         if settings.QUALITY_GATE_ENFORCED and any(s.get("type") != "segmentation" for s in (tp1_spec, tp2_spec)):
             _sel_input_type_error()                  # gate on: before the gate (it needs each source image)
-        gate, metas, acq_memo, gate_visit_check = await _gate_setup(
+        gate, metas, acq_memo, gate_visit_check, pair = await _gate_setup(
             [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate), "sels": [], "n_existing": 0,
-                    "n_sel": 0, "registration_verified": False, "adjudication_required": True, "quality_gate": gate}
+                    "n_sel": 0, "registration_verified": False, "adjudication_required": True, "quality_gate": gate,
+                    "pair": pair}
 
         async def _load(spec):
             if spec.get("type") != "segmentation":   # gate off: where the base branch checked it (G26)
@@ -1154,7 +1165,7 @@ async def detect_slowly_expanding_lesions(
                 "sels": [], "n_existing": 0, "n_sel": 0,
                 "acquisition_check": acquisition_check, "visit_check": visit_check,
                 "registration_verified": False, "adjudication_required": True,
-                **({"quality_gate": gate, "withheld_by": "rc062"} if gate is not None else {}),
+                **({"quality_gate": gate, "pair": pair, "withheld_by": "rc062"} if gate is not None else {}),
             }
         if intensity_tp1 is None or intensity_tp2 is None:
             raise HTTPException(status_code=422,
@@ -1181,7 +1192,7 @@ async def detect_slowly_expanding_lesions(
             "n_sel": sel.n_sel,
             "background_expanding_fraction": sel.background_expanding_fraction,
             "voxel_expansion_floor": sel.voxel_expansion_floor,
-            **({"quality_gate": gate} if gate is not None else {}),
+            **({"quality_gate": gate, "pair": pair} if gate is not None else {}),
             **({"withheld_by": "sel"} if gate is not None and sel.ok is not True else {}),   # G30 extended (ninth review)
             # Class C candidate firewall.
             "registration_verified": False,

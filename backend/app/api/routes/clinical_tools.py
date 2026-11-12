@@ -14,7 +14,7 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field, StrictBool
-from typing import List, Dict, Any, Literal
+from typing import List, Dict, Any, Literal, Optional
 
 from app.security import get_current_active_user
 from app.security.models import User
@@ -88,9 +88,12 @@ async def skull_strip(
 class QualityGateRequest(BaseModel):
     file_id: str = Field(..., min_length=1, max_length=500)
     physician_confirmed_flair: StrictBool = False   # S3: a deliberate attestation, never coerced from "true"/1
-    # G17: 'pending' before the run; at the final consultation the outcome the browser reports for the image the
-    # AI read, so the decision that releases or withholds the output is decided and audited here.
+    # G17: 'pending' before the run; at the final consultation the outcome the browser REPORTS for the image the AI
+    # read (K4, twelfth review: client-reported — the server cannot verify it; RC-043 / RC-049 are the real controls).
     skull: Literal["pending", "stripped", "unknown"] = "pending"
+    # K5 (twelfth review): the single-use token of the consultation that allowed the run; only a final consultation
+    # presenting it is recorded as the AI run (CLINICAL_AI_RUN)
+    run_token: Optional[str] = Field(default=None, max_length=4096)
 
 
 @router.post("/quality-gate")
@@ -101,8 +104,12 @@ async def quality_gate(
     current_user: User = Depends(get_current_active_user),
 ):
     """The single quality gate before the in-browser AI (REQ-FUNC-117, REQ-SAFE-052/054; RC-122, RC-126).
-    Read only, nothing stored. The inputs are derived here from the stored file (never from the client, never
-    from the file name); the decision comes through the agent platform (approval, kill switches: fail closed).
+    Read only, nothing stored. The inputs are derived here from the stored file (never from the file name) — except
+    the skull outcome, which is client-reported: the in-browser pipeline reports it and the server cannot verify it
+    (twelfth review, K4; RC-043 / RC-049 in the browser are the real controls, the gate records the report and
+    withholds the output unless it says 'stripped'). The decision comes through the agent platform (approval, kill
+    switches: fail closed). K5: a consultation that allows a run returns a single-use run token; only the final
+    consultation presenting it is recorded as the AI run.
     The response carries the derived inputs (the browser re-checks the decision with the same rule, gate.ts) and
     its subject — the file id it was made for and the file's version (G18: a stale answer never acts).
 
@@ -132,8 +139,15 @@ async def quality_gate(
     inputs, version = await qg.single_study_inputs(paths[0], storage_service, bucket=get_settings().GCS_BUCKET_NAME,
                                                    physician_confirmed_flair=body.physician_confirmed_flair,
                                                    skull=body.skull)
-    result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)
-    return {**result, "inputs": inputs, "subject": {"file_id": body.file_id, "version": version}}
+    user_id = str(getattr(current_user, "id", ""))
+    ran = body.skull != "pending" and qg.spend_run_token(body.run_token, file_id=paths[0], version=version,
+                                                         user_id=user_id, attested=body.physician_confirmed_flair)
+    result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor,
+                                     releases_output=ran)
+    answer = {**result, "inputs": inputs, "subject": {"file_id": body.file_id, "version": version}}
+    if body.skull == "pending" and result.get("ai_may_run") is True:
+        answer["run_token"] = qg.run_token(paths[0], version, user_id, body.physician_confirmed_flair)
+    return answer
 
 
 @router.get("/tools", response_model=List[Dict[str, Any]])

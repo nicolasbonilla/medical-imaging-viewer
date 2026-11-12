@@ -4,7 +4,6 @@ notice give the same warnings (I4, server side), one audit record per consultati
 spacing and the visit check. DRAFT, PENDING owner approval."""
 import inspect
 import json
-import uuid
 from pathlib import Path
 
 import nibabel as nib
@@ -29,26 +28,33 @@ COUNTS = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.5, "total_lesions_tp1": 3, "t
           "status_counts": {"new": 1, "enlarged": 0, "resolved": 0, "shrunk": 0, "stable": 3}}
 
 
+TEST_PAIR = {"tp1": {"id": "s1", "source": None, "version": None}, "tp2": {"id": "s2", "source": None, "version": None}}
+
+
 def served(gate, monkeypatch):
-    """A gate decision as the SERVER returned and recorded it (I1): the gate enforced, the decision kept under its trace
-    id — what every report test feeds the report path with, since the report trusts nothing else."""
+    """A gate decision as the SERVER returned it (I1; twelfth review K1/K2): the gate enforced, the decision with its
+    SIGNED token for the test pair — what every report test feeds the report path with; the report trusts nothing
+    else. The longitudinal block names the same pair (paired)."""
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
-    gate = {**gate, "trace_id": uuid.uuid4().hex}
-    qg._remember(gate)
-    return gate
+    return {**gate, "token": qg.decision_token(gate, TEST_PAIR, "id-dr_rev")}
+
+
+def paired(lng):
+    """The longitudinal block as the comparison returned it: with the pair its signed decision is bound to (K2)."""
+    return {**lng, "pair": TEST_PAIR}
 
 
 def _decision(visit, monkeypatch):
-    """A comparison decision the SERVER made and returned (with its trace id)."""
+    """A comparison decision the SERVER made and returned (with its signed token)."""
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
-    return qg.run_quality_gate({"mode": "comparison", "visits": [dict(visit), dict(visit)], "rc062_withholds": False},
-                               study_key="s", releases_output=False)
+    return served(qg.run_quality_gate({"mode": "comparison", "visits": [dict(visit), dict(visit)], "rc062_withholds": False},
+                                      study_key="s", releases_output=False), monkeypatch)
 
 
 def _report(route, monkeypatch, lng):
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     route.provider.calls.clear()
-    r = _post(route, {**_measurements(), "longitudinal": lng})
+    r = _post(route, {**_measurements(), "longitudinal": paired(lng)})
     assert r.status_code == 200, r.text
     return route.provider.prompt(), r.json()["content"]          # the model's text and the draft with its notice
 
@@ -73,10 +79,10 @@ def test_rc127_i1_a_flipped_decision_cannot_turn_a_stop_into_a_clean_comparison(
     assert qg.reason_sentence("sequence_not_flair") in prompt and qg.reason_sentence("sequence_not_flair") in text
 
 
-@pytest.mark.parametrize("trace", ["0123456789abcdef0123456789abcdef", None, "not-a-trace", ["x"]])
+@pytest.mark.parametrize("trace", ["qg1.e30.e30", None, "not-a-token", ["x"]])
 def test_rc127_i1_an_unknown_forged_or_missing_trace_is_not_a_gate_decision(route, monkeypatch, trace):
     server = _decision(WARNED, monkeypatch)
-    forged = {**server, "trace_id": trace, "codes": [], "checks": [], "decision": "proceed", "ai_output_allowed": True}
+    forged = {**server, "token": trace, "codes": [], "checks": [], "decision": "proceed", "ai_output_allowed": True}
     prompt, text = _report(route, monkeypatch, {**COUNTS, "quality_gate": forged})
     assert "New-lesion candidates" not in prompt, "I1: an unverified gate block was reported as a clean comparison"
     note = qg.reason_sentence("gate_not_established")
@@ -145,7 +151,9 @@ def test_rc127_i4_the_shared_fixture_names_the_warnings_the_report_notice_gives(
 def _records(monkeypatch):
     from app.core.logging import audit as A
     seen = []
-    monkeypatch.setattr(A.AuditLogger, "log_event", lambda self, event, durable=True: seen.append(event.event_type))
+    monkeypatch.setattr(A.AuditLogger, "log_event",
+                        lambda self, event, durable=True: seen.append(event.event_type if event.outcome == A.AuditOutcome.SUCCESS
+                                                                      else (event.event_type, event.outcome)))
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
     data["agents"]["quality-gate"]["approval"]["status"] = "approved"     # IN MEMORY, for the test only
     monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry(data, switches=R.InMemoryKillSwitches({"quality-gate": True}),
@@ -158,16 +166,21 @@ def test_rc126_i5_one_audit_record_per_consultation(single, monkeypatch):
     A, seen = _records(monkeypatch)
     img = nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 1.0, 1.0])).to_bytes()
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(img))
-    released = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "stripped"}).json()
+    run = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True}).json()     # allows the run (K5)
+    seen.clear()
+    released = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True, "skull": "stripped",
+                                      "run_token": run["run_token"]}).json()
     assert released["ai_output_allowed"] is True
     assert seen == [A.AuditEventType.CLINICAL_AI_RUN], seen
     seen.clear()
     client.post(URL, json={"file_id": FILE})
     assert seen == [A.AuditEventType.QUALITY_GATE_CONSULTATION], seen
     seen.clear()
+    # twelfth review (K3, which supersedes I5's "no record for a 404"): a request the route did not record — here the
+    # gate not enabled — leaves the middleware's own record, as for any route: one, and not a successful consultation
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", False)
     assert client.post(URL, json={"file_id": FILE}).status_code == 404
-    assert A.AuditEventType.QUALITY_GATE_CONSULTATION not in seen, seen
+    assert seen == [(A.AuditEventType.QUALITY_GATE_CONSULTATION, A.AuditOutcome.FAILURE)], seen
 
 
 # ----------------------------------------------------------------------------- one place

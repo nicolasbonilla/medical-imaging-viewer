@@ -9,13 +9,15 @@ export type ReportedSkull = 'pending' | 'stripped' | 'unknown';
 
 /** G18: the answer always names the file it was made for; an answer for another file is unavailable. */
 export async function requestQualityGate(fileId: string, physicianConfirmedFlair: boolean,
-  skull: ReportedSkull = 'pending'): Promise<ServerGateResponse> {
+  skull: ReportedSkull = 'pending', runToken?: string | null): Promise<ServerGateResponse> {
   const unavailable = (): ServerGateResponse => ({ ...gateUnavailable(), subject: { file_id: fileId, version: null } });
   try {
     const { data } = await apiClient.post('/api/v1/clinical/quality-gate', {
       file_id: fileId,
       physician_confirmed_flair: physicianConfirmedFlair === true,
       skull,
+      // K5 (twelfth review of PR #81): the token of the consultation that allowed the run, with the final one only
+      ...(skull !== 'pending' && typeof runToken === 'string' ? { run_token: runToken } : {}),
     });
     const answer = data as ServerGateResponse;
     return isGateResult(answer) && answer.subject?.file_id === fileId ? answer : unavailable();

@@ -295,6 +295,7 @@ DETAIL_KEYS = frozenset({
     "revoked_sessions", "rotation_count", "deduplicated_window_s", "role", "durable_suppressed",
     # the single quality gate (tenth review of PR #81, S4): its codes, visit labels and flags reach the durable record
     "causes", "warnings", "attested_visits", "decision", "mode", "released", "withheld_by",
+    "skull_report",            # K4 (twelfth review): the skull outcome as the browser reported it, labelled as such
 })
 
 # Review m10: identifiers that must not be stored (typed login names, file names, MRNs, accession

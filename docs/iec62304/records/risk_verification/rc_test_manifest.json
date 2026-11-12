@@ -1440,7 +1440,7 @@
       "failing_first": "commit efad1cf; sixth review: commit 4b91754 (G27, A1-A4, U1-U3 on 0fa8a93); seventh review: commit 02c2adb (S1, G28, G29, R1, R2, E1, E2 on 302e00d); eighth review: commit 1ab0916 (S1, G30, G31, G32, U1, E1, E2 on da03c6a)"
     },
     "RC-125": {
-      "description": "In a single study the image the AI reads must be skull-free (as uploaded after the skull gates, or skull-removed); skull present or unknown abstains; not read yet = pending, the output is not shown",
+      "description": "In a single study the image the AI reads must be skull-free (as uploaded after the skull gates, or skull-removed); skull present or unknown abstains; not read yet = pending, the output is not shown. Twelfth review of PR #81 (K4): the skull outcome is client-reported — the in-browser pipeline reports it and the server cannot verify it; the real controls are the worker's skull gates (RC-043) and RC-049, which produce no result without one of the two outcomes; the gate records the report (labelled client_reported in the audit) and withholds the output unless it says 'stripped'",
       "hazard": "HAZ-025, HAZ-001",
       "status": "implemented",
       "implementation": "backend/app/services/quality_gate.py (_skull_check); frontend/src/services/qualityGate/gate.ts; frontend/src/components/BrowserFlamesCard.tsx",

@@ -211,8 +211,11 @@ def test_rc122_o4_the_word_sets_follow_the_vocabulary_and_the_cache_is_bounded()
         v["other_words"].append(f"w{i}")
         qg._compiled(v)
     assert len(qg._COMPILED) <= qg.COMPILED_MAX
+    frozen = qg._policy()["sequence"]["vocabulary"]                            # the shipped vocabulary is immutable
     with pytest.raises(TypeError):
-        qg._policy()["sequence"]["vocabulary"]["other_words"].append("x")     # the shipped vocabulary is immutable
+        frozen["other_words"] = ["x"]
+    with pytest.raises(AttributeError):
+        frozen["other_words"].append("x")
 
 
 # ----------------------------------------------------------------------------- O5

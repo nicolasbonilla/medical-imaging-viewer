@@ -210,12 +210,12 @@ def test_rc126_a3_correcting_the_series_description_invalidates_the_cached_decis
 
 # ----------------------------------------------------------------------------- A4
 def _stopped(code, monkeypatch):
-    from tests.unit.test_rc122_review11 import served           # I1 (eleventh review): the server's record
+    from tests.unit.test_rc122_review11 import paired, served   # I1 / K2: the server's signed, pair-bound decision
     gate = qg.evaluate({"mode": "comparison", "platform": {"allowed": True, "code": None}, "visits": [
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
         {"sequence": "T1", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
     assert code in gate["codes"]
-    return qg.abstained_comparison(served(gate, monkeypatch))
+    return paired(qg.abstained_comparison(served(gate, monkeypatch)))
 
 
 @pytest.mark.parametrize("lang", ["en", "es", "de"])
@@ -228,7 +228,7 @@ def test_rc127_a4_the_report_notice_gives_the_gate_s_reason_when_the_gate_stops(
 
 def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report(monkeypatch):
     from app.api.routes.ai_report import longitudinal_notice
-    from tests.unit.test_rc122_review11 import served           # I1 (eleventh review): the server's record
+    from tests.unit.test_rc122_review11 import TEST_PAIR, served   # I1 / K2: signed and pair-bound
     codes = qg.load_policy()["codes"]
     for code in codes:
         assert qg.CAVEAT_REASONS[code] == qg.reason_sentence(code, "en"), code
@@ -236,7 +236,7 @@ def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report(monkeypatch
             assert qg.CAVEAT_REASONS[code] in qg.gate_caveat({"codes": [code]})
         for lang in ("es", "de"):
             assert qg.reason_sentence(code, lang) and qg.reason_sentence(code, lang) != qg.reason_sentence(code, "en"), (code, lang)
-    warned = {"abstained": False, "change_candidates": {"new": 0, "enlarging": 0},
+    warned = {"abstained": False, "change_candidates": {"new": 0, "enlarging": 0}, "pair": TEST_PAIR,
               "quality_gate": served({"mode": "comparison", "ai_output_allowed": True, "codes": ["thickness_at_least"]},
                                      monkeypatch)}
     for lang in ("en", "es", "de"):

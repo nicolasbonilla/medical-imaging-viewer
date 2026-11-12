@@ -479,6 +479,10 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
         actor = current_actor()
         etype = (AuditEventType.QUALITY_GATE_CONSULTATION if event.get("event") == "agent.consultation"
                  else AuditEventType.CLINICAL_AI_RUN)
+        if actor.request is not None:
+            # twelfth review of PR #81 (K3): the request's own marker that its route wrote the authoritative record —
+            # the audit middleware then adds none (and only then)
+            actor.request.state.audit_recorded = True
         emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
                    # G31 (eighth review of PR #81) / S4 (tenth): structured details, kept whole by the durable record

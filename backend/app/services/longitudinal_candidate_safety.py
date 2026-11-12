@@ -412,18 +412,24 @@ def source_refs(file_id, study_service=None):
 
 def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
     """The acquisition record stored with a source image (instance document), or None. Never raises. Seventh review
-    of PR #81 (E1): ONE instance document is read — a query on the file, limit 1 — never the whole collection."""
+    of PR #81 (E1): with the gate on, ONE instance document is read — a query on the file, limit 1; with it off, the
+    base read (twelfth review, O2: G26)."""
     try:
         refs = source_refs(file_id, study_service)
         if refs is None:
             return None
         instances = refs[1].collection("instances")
-        try:
-            from google.cloud.firestore_v1.base_query import FieldFilter
-            query = instances.where(filter=FieldFilter("gcs_object_name", "==", file_id))
-        except ImportError:  # pragma: no cover — the SDK is installed in the service
-            query = instances.where("gcs_object_name", "==", file_id)
-        for doc in query.limit(1).stream():
+        from app.core.config import get_settings
+        if get_settings().QUALITY_GATE_ENFORCED:     # E1 (seventh review of PR #81): one document, by query
+            try:
+                from google.cloud.firestore_v1.base_query import FieldFilter
+                query = instances.where(filter=FieldFilter("gcs_object_name", "==", file_id))
+            except ImportError:  # pragma: no cover — the SDK is installed in the service
+                query = instances.where("gcs_object_name", "==", file_id)
+            docs = query.limit(1).stream()
+        else:                                         # O2 (twelfth review): the flags off read as the base read (G26)
+            docs = instances.stream()
+        for doc in docs:
             data = doc.to_dict() or {}
             if data.get("gcs_object_name") == file_id:
                 acq = data.get("acquisition")

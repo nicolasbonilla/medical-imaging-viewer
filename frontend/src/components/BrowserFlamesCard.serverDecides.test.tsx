@@ -14,12 +14,14 @@ const h = vi.hoisted(() => ({
   flames: {} as Record<string, unknown>,
   answer: (() => Promise.resolve(null)) as (fileId: string, confirmed: boolean, skull: string) => Promise<unknown>,
   calls: [] as [string, boolean, string][],
+  tokens: [] as (string | null)[],
   panels: [] as string[],
 }));
 vi.mock('@/hooks/useBrowserFlames', () => ({ useBrowserFlames: () => h.flames }));
 vi.mock('@/services/qualityGate/api', () => ({
-  requestQualityGate: (fileId: string, confirmed: boolean, skull = 'pending') => {
+  requestQualityGate: (fileId: string, confirmed: boolean, skull = 'pending', runToken?: string | null) => {
     h.calls.push([fileId, confirmed, skull]);
+    h.tokens.push(runToken ?? null);
     return h.answer(fileId, confirmed, skull);
   },
 }));
@@ -68,6 +70,7 @@ const flames = (status: string, res: unknown = null) => Object.assign(h.flames, 
 beforeEach(() => {
   for (const k of Object.keys(h.flames)) delete h.flames[k];
   h.calls.length = 0;
+  h.tokens.length = 0;
   h.panels.length = 0;
   useViewerStore.setState({
     currentSeries: { id: 's', name: 'flair', format: 'nifti', file_id: FILE, total_slices: 4, metadata: { rows: 3, columns: 2 } },
@@ -96,7 +99,7 @@ describe('A1: the card shows the server answer as it is', () => {
 describe('I6 (eleventh review): two consultations per run, not three', () => {
   it('rc126 a run without an attestation uses the preflight answer: at most 2 requests per run', async () => {
     flames('idle');
-    h.answer = (f, _c, skull) => Promise.resolve(skull === 'pending' ? answer('pending', ['skull_pending'], {}, f)
+    h.answer = (f, _c, skull) => Promise.resolve(skull === 'pending' ? answer('pending', ['skull_pending'], { run_token: 'rt-1' }, f)
       : answer('proceed', [], {}, f));
     const { rerender } = render(<BrowserFlamesCard flairFileId={FILE} />);
     await waitFor(() => expect(h.calls.length).toBe(1));
@@ -110,6 +113,7 @@ describe('I6 (eleventh review): two consultations per run, not three', () => {
     expect(await screen.findByText(/AI draft ready/)).toBeInTheDocument();
     expect(h.calls.length).toBeLessThanOrEqual(2);
     expect(h.calls.map((c) => c[2])).toEqual(['pending', 'stripped']);
+    expect(h.tokens).toEqual([null, 'rt-1']);           // K5 (twelfth review): the final one presents the run token
   });
 });
 

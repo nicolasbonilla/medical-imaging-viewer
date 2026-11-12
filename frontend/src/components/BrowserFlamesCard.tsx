@@ -76,9 +76,9 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   // selected one never acts. One request at a time: Run is disabled while it is in flight.
   const currentFile = useRef(flairFileId);
   currentFile.current = flairFileId;
-  const inFlight = useRef(false);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false);                   // O5 (twelfth review): the one "request in flight" state
   const runVersion = useRef<string | null>(null);
+  const runToken = useRef<string | null>(null);               // K5: the token of the consultation that allowed the run
   useEffect(() => setAttested(false), [flairFileId]);
   // E1: ONE (debounced) consultation per file before the run. U1 (tenth review): its automatic retries are state —
   // one timer per rate-limited answer, none while in flight, at most 3 (G29), "Check again" after the last answer.
@@ -89,7 +89,6 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const preflight = before.answer;
   const preflightStuck = gateOn && preflight !== null && before.settled && askable(preflight);
   const canAttest = gateOn && (preflight?.attestable_visits ?? []).includes('study');
-  const gateBefore: GateResult | null = preflight;
   // U3: the final decision belongs to the RUN (its result object), never to the file: a re-run of the same file never
   // shows the previous run's decision, not even on its first render. G17: the server decides (and audits) the
   // releasing decision with the skull outcome reported here. G27: the server's answer is shown as it is; no answer of
@@ -98,7 +97,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     gateOn && doneResult && doneResult.fileId === flairFileId ? doneResult : null,
     () => {
       const run = doneResult as NonNullable<typeof doneResult>;
-      return requestQualityGate(run.fileId, attestedAtRun.current, skullFromProvenance(run.provenance)).then((r) => {
+      return requestQualityGate(run.fileId, attestedAtRun.current, skullFromProvenance(run.provenance), runToken.current).then((r) => {
         if (r.subject?.file_id !== run.fileId || run.fileId !== currentFile.current) return null;
         const changed = runVersion.current !== null && r.subject?.version != null && r.subject.version !== runVersion.current;
         return { gate: !changed && isGateResult(r) ? r : gateUnavailable(), retry: !changed };
@@ -134,7 +133,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
       return;
     }
-    if (inFlight.current) return;                                    // G18: one request per click
+    if (busy) return;                                                // G18: one request per click
     // The attestation reaches the backend (and its audit, with the clinician) only now, deliberately.
     const attestation = canAttest && attested;
     const fileAtClick = flairFileId;
@@ -143,22 +142,20 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     if (!attestation && preflight?.ai_may_run === true && preflight.subject?.file_id === fileAtClick) {
       attestedAtRun.current = false;
       runVersion.current = preflight.subject?.version ?? null;
+      runToken.current = preflight.run_token ?? null;
       void flames.run(fileAtClick, { seriesDescription, clinicianConfirmedFlair: true, qualityGate: true,
         gateSequenceClass: serverSequenceClass(preflight) });
       return;
     }
-    inFlight.current = true;
     setBusy(true);
     void requestQualityGate(fileAtClick, attestation).then((fresh) => {
-      inFlight.current = false;
       setBusy(false);
       if (currentFile.current !== fileAtClick || fresh.subject?.file_id !== fileAtClick) return;   // stale: never runs
-      if (!fresh.ai_may_run) {
-        before.show(fresh);
-        return;
-      }
+      before.show(fresh);              // O3 (twelfth review): the "before" panel shows the decision the run follows
+      if (!fresh.ai_may_run) return;
       attestedAtRun.current = attestation;
       runVersion.current = fresh.subject?.version ?? null;
+      runToken.current = fresh.run_token ?? null;
       // G27: RC-049 in the worker takes the sequence class the server derived for this file
       void flames.run(fileAtClick, { seriesDescription, clinicianConfirmedFlair: true, qualityGate: true,
         gateSequenceClass: serverSequenceClass(fresh) });
@@ -232,7 +229,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
               <span className="text-gray-400 break-all">{flairFileId ? `(${flairName ?? flairFileId.split('/').pop()})` : ''}</span>
             </span>
           </label>
-          {gateOn && (gateBefore ? <QualityGatePanel result={gateBefore} testId="quality-gate-before" />
+          {gateOn && (preflight ? <QualityGatePanel result={preflight} testId="quality-gate-before" />
             : <p className="text-[9px] text-gray-400" data-testid="quality-gate-checking">{t('qualityGate.checking')}</p>)}
           {gateOn && before.left !== null && (
             <p className="text-[9px] text-sky-200" role="status" data-testid="quality-gate-retry">

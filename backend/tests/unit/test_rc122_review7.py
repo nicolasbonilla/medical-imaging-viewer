@@ -142,7 +142,9 @@ class _Coll(_Query):
         return _Ref(self.tree.get(name, {}), self.counter)
 
 
-def test_rc126_e1_the_stored_records_are_read_without_streaming_the_instances():
+def test_rc126_e1_the_stored_records_are_read_without_streaming_the_instances(monkeypatch):
+    import app.api.routes.segmentation_analysis as sa
+    monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)   # E1 is the gate-on read (O2: off = the base)
     file_id = "patients/p/studies/st/series/se/f42.nii.gz"
     instances = [{"gcs_object_name": f"patients/p/studies/st/series/se/f{i}.nii.gz",
                   "acquisition": {"manufacturer": "SIEMENS", "n": i}} for i in range(500)]

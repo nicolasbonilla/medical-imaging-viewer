@@ -291,6 +291,10 @@ class Settings(BaseSettings):
     # closed — while the 'quality-gate' agent is not approved or a switch is off, NO comparison shows candidates
     # (owner decision D-QG-2: switch it on together with MSTOOL_AGENTS_SWITCH / MSTOOL_AGENT_SWITCH__QUALITY_GATE).
     QUALITY_GATE_ENFORCED: bool = Field(default=False)
+    # Twelfth review of PR #81 (K1/K5): the DEDICATED HMAC-SHA256 secret of the gate's signed decision and run tokens
+    # (Secret Manager in production). Empty: a key derived from the server secret for this purpose only is used (never
+    # the JWT signing key itself) — set it before switching the gate on (D-QG-2).
+    QUALITY_GATE_TOKEN_SECRET: str = Field(default="")
 
     # Security Middleware Configuration (ISO 27001 A.14.2.1)
     RATE_LIMIT_ENABLED: bool = Field(default=True)

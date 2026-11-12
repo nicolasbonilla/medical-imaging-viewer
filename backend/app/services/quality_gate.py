@@ -12,7 +12,8 @@ proceed. It consolidates checks that exist elsewhere and CALLS them rather than 
              research inventory keeps its own base heuristic; never the file name;
 - thickness  from ``acquisition_geometry`` (RC-054): native / at_least / not_determinable;
 - scanner    of two visits through ``longitudinal_candidate_safety.compare_acquisitions`` (RC-062);
-- skull      the outcome of the skull gates / skull removal of the in-browser AI (RC-101).
+- skull      the outcome of the skull gates / skull removal as the in-browser pipeline REPORTS it (client-reported:
+             the server cannot verify it; RC-043 / RC-049 in the browser are the real controls; twelfth review, K4).
 
 ONE implementation (sixth review of PR #81, G27): the rule, the policy and the sequence classifier exist only here.
 The browser sends its inputs (the file, the physician's attestation, the skull outcome its worker reports) and shows
@@ -28,13 +29,19 @@ fail closed), records one trace with one child span per check that ran, and one 
 from __future__ import annotations
 
 import asyncio
-import copy
+import base64
+import hashlib
+import hmac
 import io
 import json
 import math
 import re
+import secrets
+import threading
+import time
 from collections import OrderedDict
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Dict, List, Optional
 
 from app.services import longitudinal_candidate_safety as lcs
@@ -55,17 +62,29 @@ _LETTERS = re.compile(r"[a-z]*")
 _POLICY: Optional[Dict[str, Any]] = None
 
 
+def _freeze(value: Any) -> Any:
+    if isinstance(value, dict):
+        return MappingProxyType({k: _freeze(v) for k, v in value.items()})
+    if isinstance(value, list):
+        return tuple(_freeze(v) for v in value)
+    return value
+
+
 def _policy() -> Dict[str, Any]:
-    """The shipped policy, cached and read only (no copy per call; E3)."""
+    """The shipped policy, cached and read only (no copy per call; E3). Twelfth review (O4): its vocabulary is
+    IMMUTABLE, so the word sets built from it can never go stale."""
     global _POLICY
     if _POLICY is None:
-        _POLICY = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
+        policy = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
+        policy["sequence"]["vocabulary"] = _freeze(policy["sequence"]["vocabulary"])
+        _POLICY = policy
     return _POLICY
 
 
 def load_policy() -> Dict[str, Any]:
-    """A deep copy of the shipped policy, for a caller that changes it (the cached original is never handed out)."""
-    return copy.deepcopy(_policy())
+    """A fresh, changeable copy of the shipped policy, for a caller that changes it (the cached one is never handed
+    out)."""
+    return json.loads(POLICY_PATH.read_text(encoding="utf-8"))
 
 
 # ----------------------------------------------------------------------------- the rule (pure)
@@ -284,15 +303,33 @@ def _weighted(token: str, prefix: str) -> bool:
     return token.startswith(prefix) and _LETTERS.fullmatch(token[len(prefix):]) is not None
 
 
-_COMPILED: Dict[int, tuple] = {}
+COMPILED_MAX = 8
+_COMPILED: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
+_FROZEN_KEYS: Dict[int, tuple] = {}
+
+
+def _vocab_key(vocab) -> str:
+    """O4 (twelfth review): the cache key is the vocabulary's CONTENT, so a vocabulary changed in place never reuses
+    stale word sets; the immutable shipped vocabulary's digest is computed once (it cannot change)."""
+    if isinstance(vocab, MappingProxyType):
+        hit = _FROZEN_KEYS.get(id(vocab))
+        if hit is not None and hit[0] is vocab:
+            return hit[1]
+    plain = lambda v: dict(v) if isinstance(v, MappingProxyType) else list(v)  # noqa: E731
+    key = hashlib.sha256(json.dumps(vocab, sort_keys=True, default=plain).encode("utf-8")).hexdigest()
+    if isinstance(vocab, MappingProxyType):
+        _FROZEN_KEYS[id(vocab)] = (vocab, key)
+    return key
 
 
 def _compiled(vocab: Dict[str, Any]) -> Dict[str, Any]:
-    """The vocabulary's word sets and its inversion-time regex, built ONCE per policy (fifth review of PR #81,
-    cleanup): the shipped policy's at import, a test's own policy on first use."""
-    hit = _COMPILED.get(id(vocab))
-    if hit is not None and hit[0] is vocab:
-        return hit[1]
+    """The vocabulary's word sets and its inversion-time regex, built once per vocabulary CONTENT (fifth review,
+    cleanup; twelfth review, O4: keyed by a content digest, at most COMPILED_MAX kept)."""
+    key = _vocab_key(vocab)
+    hit = _COMPILED.get(key)
+    if hit is not None:
+        _COMPILED.move_to_end(key)
+        return hit
     c = {
         "other": frozenset(vocab["other_words"]),
         "weak": frozenset(vocab.get("weak_other_words", ())),
@@ -305,7 +342,9 @@ def _compiled(vocab: Dict[str, Any]) -> Dict[str, Any]:
         "image_type_other": frozenset(vocab["image_type_other"]),
         "ti": re.compile(vocab["ti_text_pattern"], re.IGNORECASE),
     }
-    _COMPILED[id(vocab)] = (vocab, c)
+    _COMPILED[key] = c
+    while len(_COMPILED) > COMPILED_MAX:
+        _COMPILED.popitem(last=False)
     return c
 
 
@@ -593,13 +632,29 @@ HEADER_PREFIX_MAX = 4 * 1024 * 1024
 _PIXEL_DATA_TAGS = (b"\xe0\x7f\x10\x00", b"\x7f\xe0\x00\x10")
 
 
+NIFTI_DECOMPRESSED_MAX = 16 * 1024 * 1024      # O1 (twelfth review): a header with its extensions, at most 16 MiB
+
+
 def _nifti_prefix(data: bytes) -> bytes:
+    """The decompressed start of a (gzip) NIfTI: its first 544 bytes give sizeof_hdr and vox_offset, then everything up
+    to vox_offset (the header and every extension), capped at NIFTI_DECOMPRESSED_MAX (twelfth review, O1)."""
+    import struct
     import zlib
     if data[:2] != b"\x1f\x8b":
         return data
     try:
-        return zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(data, 1 << 20)
-    except zlib.error:
+        d = zlib.decompressobj(16 + zlib.MAX_WBITS)
+        head = d.decompress(data, 544)
+        size, endian = _nifti_sizeof_hdr(head)
+        want = 1 << 20
+        if size and len(head) >= (112 if size == 348 else 176):
+            vox = (struct.unpack(endian + "f", head[108:112])[0] if size == 348
+                   else struct.unpack(endian + "q", head[168:176])[0])
+            if isinstance(vox, (int, float)) and math.isfinite(vox) and vox > 0:
+                want = int(min(max(vox, size + 4), NIFTI_DECOMPRESSED_MAX))
+        rest = d.decompress(d.unconsumed_tail, want - len(head)) if want > len(head) else b""
+        return head + rest
+    except (zlib.error, struct.error, ValueError):
         return b""
 
 
@@ -729,7 +784,8 @@ def stored_records(file_path: str, study_service=None):
 
 async def single_study_inputs(file_path: str, storage_service, *, bucket: str,
                               physician_confirmed_flair: bool = False, skull: str = "pending"):
-    """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file (visit_inputs):
+    """Gate inputs of a study opened for AI analysis, derived ON THE SERVER from the stored file (visit_inputs) — except
+    the skull outcome, which the in-browser pipeline reports (client-reported, K4):
     its header, else the stored series and acquisition records, and the RC-054 geometry. Header only, parsed off the
     event loop, cached per file version (E1). Anything unreadable stays unknown, so the gate warns or abstains; it
     never raises. Returns (inputs, file version or None). Every consultation is evaluated (tenth review, S1): the
@@ -743,7 +799,13 @@ async def single_study_inputs(file_path: str, storage_service, *, bucket: str,
 
     (key, fields), (acq, stored) = await asyncio.gather(header(), asyncio.to_thread(stored_records, file_path))
     visit = visit_inputs(fields, acq, stored, physician_confirmed_flair=physician_confirmed_flair, skull=skull)
-    return {"mode": "single", "visits": [visit]}, (":".join(str(v) for v in key[1:]) if key else None)
+    return {"mode": "single", "visits": [visit]}, version_text(key)
+
+
+def version_text(key: Optional[tuple]) -> Optional[str]:
+    """A stored file's version as text (size:checksum:created), or None when unknown — the subject of an answer and
+    the version a signed token binds."""
+    return ":".join(str(v) for v in key[1:]) if key else None
 
 
 def actor_for(user, request=None):
@@ -811,46 +873,125 @@ def rate_limited_response(wait: int):
         "details": {"code": "gate_rate_limited", "retry_after_s": wait}}})
 
 
-# Eleventh review of PR #81 (I1): the server's OWN record of every gate decision it returned, by trace id — the report
-# path reads the decision from here and never from the client's copy. Bounded; per server instance (a decision made on
-# another instance, or before a restart, is "not established", never trusted).
-DECISION_STORE_MAX = 4096
-_DECISIONS: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
-_TRACE_ID = re.compile(r"[0-9a-f]{32}")
+# ----------------------------------------------------------------------------- signed decisions (twelfth review)
+# K1/K2: every comparison / SEL decision is returned with a compact token signed with HMAC-SHA256, binding the pair
+# (both segmentation ids, source files and versions), the clinician, the decision, its causes and warnings, the policy
+# version, the issue time and the expiry. The report verifies it — across instances and restarts, nothing is kept in
+# memory. K5: the consultation that allows a run returns a single-use run token; only a final consultation presenting
+# it (same file, version, clinician and attestation) is recorded as the AI run.
+TOKEN_PREFIX = "qg1"
+DECISION_TOKEN_TTL_S = 24 * 3600
+RUN_TOKEN_TTL_S = 2 * 3600
+RUN_TOKENS_SPENT_MAX = 8192
+_RUN_TOKENS_SPENT: "OrderedDict[str, float]" = OrderedDict()
+_RUN_TOKENS_LOCK = threading.Lock()
 
 
-def _remember(result: Dict[str, Any]) -> None:
-    trace = result.get("trace_id")
-    if isinstance(trace, str) and _TRACE_ID.fullmatch(trace):
-        _DECISIONS[trace] = copy.deepcopy(result)
-        while len(_DECISIONS) > DECISION_STORE_MAX:
-            _DECISIONS.popitem(last=False)
+def _now() -> float:
+    return time.time()
 
 
-def stored_decision(block: Any) -> Optional[Dict[str, Any]]:
-    """The decision the server returned for a comparison, looked up by the trace id of a (client-sent) gate block; None
-    when the trace id is missing, malformed, unknown, or names a decision that was not a comparison's."""
-    trace = block.get("trace_id") if isinstance(block, dict) else None
-    decision = _DECISIONS.get(trace) if isinstance(trace, str) and _TRACE_ID.fullmatch(trace) else None
-    return decision if decision is not None and decision.get("mode") == "comparison" else None
+def _token_key() -> Optional[bytes]:
+    """The HMAC-SHA256 key of the gate's tokens: the DEDICATED secret QUALITY_GATE_TOKEN_SECRET (settings / Secret
+    Manager). Without it, a key DERIVED from the server secret for this purpose only (HMAC-SHA256 with a domain label,
+    as the audit's identifier hash does) — the JWT signing key itself is never used as this key. None when neither is
+    configured: nothing is signed or accepted (every report: not established)."""
+    from app.core.config import get_settings
+    settings = get_settings()
+    dedicated = getattr(settings, "QUALITY_GATE_TOKEN_SECRET", "") or ""
+    if dedicated:
+        return dedicated.encode("utf-8")
+    base = getattr(settings, "SECRET_KEY", "") or ""
+    return hmac.new(base.encode("utf-8"), b"mstool-quality-gate-token-v1", hashlib.sha256).digest() if base else None
+
+
+def _b64(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _sign(key: bytes, body: str) -> str:
+    return _b64(hmac.new(key, f"{TOKEN_PREFIX}.{body}".encode("ascii"), hashlib.sha256).digest())
+
+
+def sign_token(payload: Dict[str, Any]) -> Optional[str]:
+    key = _token_key()
+    if key is None:
+        return None
+    body = _b64(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
+    return f"{TOKEN_PREFIX}.{body}.{_sign(key, body)}"
+
+
+def verify_token(token: Any, kind: str) -> Optional[Dict[str, Any]]:
+    """The payload of a token this server signed, of this kind and not expired; None for anything else. Never raises."""
+    try:
+        key = _token_key()
+        if key is None or not isinstance(token, str) or len(token) > 8192:
+            return None
+        prefix, body, sig = token.split(".")
+        if prefix != TOKEN_PREFIX or not hmac.compare_digest(_sign(key, body), sig):
+            return None
+        payload = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)))
+        exp = payload.get("exp") if isinstance(payload, dict) else None
+        if payload.get("kind") != kind or isinstance(exp, bool) or not isinstance(exp, (int, float)) or exp <= _now():
+            return None
+        return payload
+    except Exception:  # noqa: BLE001 — not a token of this server
+        return None
+
+
+def decision_token(gate: Dict[str, Any], pair: Dict[str, Any], user_id: Any) -> Optional[str]:
+    """K1/K2: the signed, pair-bound record of a comparison / SEL decision this server returned."""
+    account, now = explain(gate), int(_now())
+    return sign_token({"kind": "decision", "pair": pair, "user": str(user_id or ""), "decision": gate.get("decision"),
+                       "ai_output_allowed": gate.get("ai_output_allowed") is True, "causes": account["causes"],
+                       "warnings": account["warnings"], "policy_version": gate.get("policy_version"),
+                       "iat": now, "exp": now + DECISION_TOKEN_TTL_S})
 
 
 def report_account(longitudinal: Any) -> Optional[Dict[str, Any]]:
-    """I1: the gate's account of a report's longitudinal block, from the SERVER's record only — the decision, its causes
-    and its warnings; the client's copy is used only for its trace id. None while the gate is not enforced (the base
-    report). A missing, unknown or mismatched trace id: comparability NOT established by the gate — treated as a stop,
-    with a plain note (gate_not_established), never as a clean comparison. The ONE hook of the report path (when PR #78
-    lands, the notice built from it moves into the verified report's code-written notices)."""
+    """I1 / K1 / K2: the gate's account of a report's longitudinal block, from the SIGNED decision only — its
+    decision, causes and warnings; the client's copy gives nothing else. None while the gate is not enforced (the base
+    report). A missing, forged, expired or tampered token, or one signed for another pair than the block's: the
+    comparability is NOT established by the gate — a stop with a plain note (gate_not_established), never a clean
+    comparison. The ONE hook of the report path (when PR #78 lands, its notice moves into the verified report)."""
     from app.core.config import get_settings
     if not get_settings().QUALITY_GATE_ENFORCED or not isinstance(longitudinal, dict):
         return None
-    decision = stored_decision(longitudinal.get("quality_gate"))
-    if decision is None:
+    block = longitudinal.get("quality_gate")
+    payload = verify_token(block.get("token") if isinstance(block, dict) else None, "decision")
+    if payload is None or not isinstance(payload.get("pair"), dict) or payload["pair"] != longitudinal.get("pair"):
         return {"established": False, "stopped": True, "causes": ["gate_not_established"], "warnings": []}
-    account = explain(decision)
-    stopped = decision.get("ai_output_allowed") is not True
-    return {"established": True, "stopped": stopped, "causes": account["causes"] if stopped else [],
-            "warnings": account["warnings"]}
+    codes = lambda v: [c for c in v if isinstance(c, str)] if isinstance(v, list) else []  # noqa: E731
+    stopped = payload.get("ai_output_allowed") is not True
+    return {"established": True, "stopped": stopped, "causes": codes(payload.get("causes")) if stopped else [],
+            "warnings": codes(payload.get("warnings"))}
+
+
+def run_token(file_id: str, version: Optional[str], user_id: Any, attested: bool) -> Optional[str]:
+    """K5: the single-use token of a consultation that allows a run, for this file version, clinician and attestation."""
+    now = int(_now())
+    return sign_token({"kind": "run", "file": file_id, "version": version, "user": str(user_id or ""),
+                       "attested": attested is True, "nonce": secrets.token_hex(16), "iat": now, "exp": now + RUN_TOKEN_TTL_S})
+
+
+def spend_run_token(token: Any, *, file_id: str, version: Optional[str], user_id: Any, attested: bool) -> bool:
+    """K5: True ONCE for a run token this server issued for exactly this file, version, clinician and attestation (it
+    is spent by the first final consultation that presents it). KNOWN LIMITATION: the spent set is per server instance."""
+    payload = verify_token(token, "run")
+    if (payload is None or payload.get("file") != file_id or payload.get("version") != version
+            or payload.get("user") != str(user_id or "") or payload.get("attested") is not (attested is True)):
+        return False
+    nonce = payload.get("nonce")
+    with _RUN_TOKENS_LOCK:
+        now = _now()
+        while _RUN_TOKENS_SPENT and next(iter(_RUN_TOKENS_SPENT.values())) <= now:
+            _RUN_TOKENS_SPENT.popitem(last=False)                       # expired: can never verify again anyway
+        if not isinstance(nonce, str) or nonce in _RUN_TOKENS_SPENT:
+            return False
+        _RUN_TOKENS_SPENT[nonce] = payload["exp"]
+        while len(_RUN_TOKENS_SPENT) > RUN_TOKENS_SPENT_MAX:
+            _RUN_TOKENS_SPENT.popitem(last=False)
+    return True
 
 
 def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None, releases_output: bool = True,
@@ -903,7 +1044,8 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
         # G31 (eighth review): a comparison's gate decision releases nothing by itself (RC-062 and SEL come after; the
         # route records the outcome); structured details keep every cause and attested visit
         event = "agent.run" if releases_output and result.get("ai_output_allowed") is True else "agent.consultation"
-        details = {**explain(result), "decision": result.get("decision"), "mode": result.get("mode")}
+        details = {**explain(result), "decision": result.get("decision"), "mode": result.get("mode"),
+                   **_skull_report(inputs)}
         if state["refusal"]:
             reg.audit("denied", state["refusal"], event=event, agent_id=AGENT_ID,
                       study_key=study_key or None, trace_id=state["trace_id"], details=details)
@@ -911,8 +1053,15 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
             # S3: the physician's attestation is recorded with the run's actor (the authenticated clinician)
             reg.audit("success", audit_code(result), event=event, agent_id=AGENT_ID,
                       study_key=study_key or None, trace_id=state["trace_id"], details=details)
-    _remember(result)                                 # I1: the report reads this record, never the client's copy
     return result
+
+
+def _skull_report(inputs: Any) -> Dict[str, str]:
+    """K4 (twelfth review): the skull outcome of a single study is what the in-browser pipeline REPORTS — the server
+    cannot verify it (RC-043 / RC-049 in the browser are the real controls); the audit says so."""
+    visits = inputs.get("visits") if isinstance(inputs, dict) and inputs.get("mode") == "single" else None
+    skull = visits[0].get("skull") if isinstance(visits, list) and visits and isinstance(visits[0], dict) else None
+    return {"skull_report": f"client_reported:{skull}"} if isinstance(skull, str) and skull.isidentifier() else {}
 
 
 # ----------------------------------------------------------------------------- comparison wiring
