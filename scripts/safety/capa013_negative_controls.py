@@ -239,7 +239,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "A15_sel_not_gated": ([(SA, '        if lcs.rc062_withholds(acquisition_check, visit_check):   # G25: RC-062\'s one predicate (the gate stopped above)\n',
                             "        if False:\n")],
                           "slowly-expanding lesions searched when the change candidates are withheld (review finding)"),
-    "A16_visit_check_skipped": ([(SA, "        visit_check = await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # review of PR #63\n",
+    "A16_visit_check_skipped": ([(SA, "        visit_check = gate_visit_check or await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # review of PR #63; O3\n",
                                   '        visit_check = {"status": "ok"}\n')],
                                 "the comparison route does not check the visits"),
     "F16_load_shown_when_abstained": ([(P, '      {!abstained && (\n      <div data-testid="longitudinal-burden"',
