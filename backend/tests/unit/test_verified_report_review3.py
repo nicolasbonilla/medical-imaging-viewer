@@ -278,6 +278,7 @@ def test_rc106_t3_with_the_pinned_sdk_the_http_request_itself_is_cancelled(monke
             return httpx.Response(500)
 
     monkeypatch.setattr(VR, "LLM_DEADLINE_S", 0.5)
+    monkeypatch.setattr(VR, "MIN_LLM_BUDGET_S", 0.1)   # (tenth review, I18: the minimum scaled with the test's deadline)
     svc = BRS.BrainReportService()
     svc._settings = SimpleNamespace(ANTHROPIC_API_KEY="test-not-a-key", CLAUDE_MODEL="claude-sonnet-5-5",
                                     CLAUDE_MAX_TOKENS=4096, REPORT_LLM_ENABLED=True)
