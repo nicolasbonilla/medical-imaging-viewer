@@ -1214,6 +1214,23 @@ Negative controls: 151 mutations in a throwaway copy (baseline and restored copy
 
 **HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a transient read error no longer blocks a study until the cache expires; an exam-level field no longer blocks a real FLAIR; the audit keeps every attested visit.
 
+### C.16 Eleventh independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| I1 | The report took who withheld a pair, its causes and its warnings from the CLIENT's copy of the gate (Class C integrity) | RC-127 | the server's record by trace id only; unknown = not established (D-QG-19) | I1 |
+| I2 | A list in place of a code made `explain` raise: the report route answered 500 | RC-127 | malformed entries ignored, never raises | I2 |
+| I3 | Flags off, the inventory read "AX_T2*.nii.gz" as T2 (SWI on the base): the G20 hygiene dropped '*' | RC-122 | only identifier tokens dropped | I3, G26 |
+| I4 | RC-062's line hid the gate's warnings in the comparison panel | RC-127 | the warnings listed next to it | I4 |
+| I5 | Two audit records per consultation, and a consultation record for a 404 | RC-126 | the route's record only (D-QG-20) | I5 |
+| I6 | Three consultations per run | RC-126 | the preflight answer used when nothing changed | I6 |
+
+Failing first (commit `cd07ab1`, on the code of 8cb55f2): backend `test_rc122_review11.py` **13 of 20 failed** — I1 6, I2 3, I3 2, I5 1, one place 1 (I4's server-side check of the shared fixture passed: it checks the fixture, not the code); the G26 file-name corpus: **15 of 100** differed from the base; browser (GitHub Actions run 43249481506): **I4 1 of 1, I6 1 of 1** failed. After the fixes: all pass.
+
+Negative controls: 159 mutations in a throwaway copy (baseline and restored copy: backend 262 / 0, RC-049 browser harness 4 / 0): 132 run, **132 detected, 0 survived, 0 invalid**; 27 component mutations not run locally (no node_modules; vitest runs in CI). 7 re-anchored (X7, AB10, Y8, AA4, Z3, AB5, AC4); 8 new (AD1 the report trusts the client block, AD2 an unverified gate treated as clean, AD3 decisions not recorded, AD4 explain not type-safe, AD5 file-name punctuation dropped, AD6 the middleware duplicates the record, V31 RC-062's line hides the warnings, V32 three consultations per run). Per control: RC-122 53 / 53, RC-123 25 / 25, RC-124 6 / 6, RC-125 4 / 4, RC-126 29 / 29, RC-127 22 / 22. Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json`.
+
+**HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a client can no longer make the report hide a gate warning or present a stopped pair as clean.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
