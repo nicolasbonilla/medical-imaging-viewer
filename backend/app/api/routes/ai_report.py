@@ -11,6 +11,7 @@ import re
 import unicodedata
 
 from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi.routing import APIRoute
 from typing import Optional, List, Dict, Any, Literal, Tuple
 from pydantic import BaseModel, Field
 
@@ -23,6 +24,7 @@ from app.security.resource_access import authorize_mask_specs
 from app.services.report_payload_guard import (
     FREE_TEXT_FIELDS,
     PatientIdentifiers,
+    IdentifierInPrompt,
     ImplausibleMeasurement,
     PatientRecordUnavailable,
     ProviderGuardError,
@@ -31,11 +33,76 @@ from app.services.report_payload_guard import (
 # fourth review of PR #78, Q7: the blocks the verified report writes — one source
 from app.services.verified_report import RENDERED_FINDINGS
 
+from app.core.exceptions import AppException
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/ai/report", tags=["AI Report"])
+router = APIRouter(prefix="/ai/report", tags=["AI Report"])   # (route class set below, once ReportError exists)
+
+# Tenth independent review of PR #78, I16 (DRAFT, PENDING owner approval): every error this route returns carries a
+# machine-readable code (`error.code`; its parameters in `error.details`) — the report panel maps the code to its own
+# message (AIReportPanel.tsx), never a message prefix. One list, checked against the shared fixture
+# backend/tests/fixtures/report_error_codes.json by the backend and the frontend tests.
+REPORT_ERROR_CODES = frozenset({
+    "nothing_to_report",            # 422 CAPA-008: nothing the verified report can write (after the route's substitutions)
+    "segmentation_required",        # 400 CAPA-014: no analysed segmentation named
+    "segmentation_not_found",       # 404 RC-029: not found, or not one the caller may read
+    "segmentation_conflict",        # 409 PRB-003: a block names another segmentation
+    "request_invalid",              # 400 a reference the shared checks refuse
+    "geometry_unreadable",          # 422 the voxel geometry of the source image could not be read
+    "lesion_table_failed",          # 422 the server-side lesion table could not be computed
+    "implausible_measurement",      # 422 RC-064: a measurement outside its plausible range (details.field)
+    "patient_record_unavailable",   # 503 RC-065: the patient's record could not be read; nothing sent
+    "identifier_in_prompt",         # 503 RC-065: the tripwire found an identifier; nothing sent
+    "label_in_record",              # 503 R8: a request label reached the record; nothing sent
+    "not_sent",                     # 503 any other refusal of the privacy checks; nothing sent
+    "report_failed",                # 500 an internal failure
+})
+
+
+class ReportError(AppException):
+    """An error of the report route with its code (I16): {"error": {"code", "message", "details"}}."""
+
+    def __init__(self, code: str, status_code: int, message: str, details: Optional[Dict[str, Any]] = None):
+        assert code in REPORT_ERROR_CODES, code
+        super().__init__(message=message, status_code=status_code, error_code=code, details=details or {})
+
+
+# A shared check (authorization, the segmentation store) answers with a plain HTTP error: coded by its status.
+_CODE_OF_STATUS = {400: "request_invalid", 404: "segmentation_not_found", 409: "segmentation_conflict"}
+
+
+def _coded(e: HTTPException) -> ReportError:
+    return ReportError(_CODE_OF_STATUS[e.status_code], e.status_code, str(e.detail))
+
+
+class _CodedErrorsRoute(APIRoute):
+    """The routes of this router: an HTTP error a shared check raises inside the route (authorization of the
+    segmentation, the segmentation store) leaves with its code too. The sign-in's own answers (401, 403 of an inactive
+    account) and the other statuses pass unchanged."""
+
+    def get_route_handler(self):
+        handler = super().get_route_handler()
+
+        async def coded(request):
+            try:
+                return await handler(request)
+            except HTTPException as e:
+                if e.status_code not in _CODE_OF_STATUS:
+                    raise
+                raise _coded(e) from e
+
+        return coded
+
+
+router.route_class = _CodedErrorsRoute
+
+
+NOTHING_TO_REPORT_DETAIL = (
+    "No measurement the verified report can write was supplied (lesion analysis, DIS assessment, longitudinal "
+    "comparison, or total brain or intracranial volume). A report without measurements would be invented; open a "
+    "segmentation and run its analysis first.")
 
 # CAPA-014 (RC-065, HAZ-016): the draft is written by an external model provider from measurements only.
 # Before the call the final prompt is checked against the record of the patient the analysed
@@ -288,8 +355,8 @@ def drop_unverifiable_decisions(longitudinal: Any) -> Any:
 
 
 # Release 2026-10-25 (integration review of PR #69, item 6): the 422 of a lesion table that cannot be computed starts
-# with this phrase; the report panel recognises it (AIReportPanel.tsx) and shows its own message instead of
-# CAPA-008's "no measurements".
+# with this phrase (tenth review of PR #78, I16: the report panel reads its code, geometry_unreadable /
+# lesion_table_failed, no longer the phrase).
 GEOMETRY_UNREADABLE_PHRASE = "The image geometry could not be read; report not generated"
 # Review of PR #69, n1: any other failure of the server-side lesion table says so (not "geometry").
 LESION_TABLE_FAILED_PHRASE = "The lesion measurements could not be computed on the server; report not generated"
@@ -340,17 +407,13 @@ async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
         logger.error(f"[Report] Lesion measurements could not be computed for the report: {e}")
         from app.utils import VoxelSpacingUnavailableError
         if isinstance(e, VoxelSpacingUnavailableError):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=(f"{GEOMETRY_UNREADABLE_PHRASE}: the lesion measurements of segmentation {segmentation_id} "
-                        "could not be computed on the server (the source image or its voxel geometry could not be "
-                        "read). Nothing was sent."),
-            )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(f"{LESION_TABLE_FAILED_PHRASE} ({type(e).__name__}) for segmentation {segmentation_id}. "
-                    "Nothing was sent."),
-        )
+            raise ReportError(
+                "geometry_unreadable", status.HTTP_422_UNPROCESSABLE_ENTITY,
+                f"{GEOMETRY_UNREADABLE_PHRASE}: the lesion measurements of segmentation {segmentation_id} could not be "
+                "computed on the server (the source image or its voxel geometry could not be read). Nothing was sent.")
+        raise ReportError(
+            "lesion_table_failed", status.HTTP_422_UNPROCESSABLE_ENTITY,
+            f"{LESION_TABLE_FAILED_PHRASE} ({type(e).__name__}) for segmentation {segmentation_id}. Nothing was sent.")
 
 
 # =============================================================================
@@ -487,13 +550,16 @@ def get_report_service():
                 "record of the patient of `segmentation_id` before it is sent (CAPA-014). 422 when nothing the "
                 "verified report can write is supplied (CAPA-008); 400 when no segmentation is; 404 when the "
                 "caller may not access the segmentation; 503 when the check cannot run or finds an identifier "
-                "(nothing is sent).",
+                "(nothing is sent). Every error carries a machine-readable `error.code` (REPORT_ERROR_CODES; "
+                "parameters in `error.details`).",
 )
 async def generate_report(
     request: ReportGenerateRequest,
     current_user: User = Depends(get_current_active_user),
 ):
-    """Generate a draft brain MRI report from measurements computed by the device."""
+    """Generate a draft brain MRI report from measurements computed by the device. Every error carries its code
+    (tenth review of PR #78, I16): the route's own as ReportError; a shared check's HTTP error is coded by the
+    router's route class (_CodedErrorsRoute)."""
     started = verified_report.now()   # REQ-SAFE-019 (sixth review of PR #78, W7): the 30 s count from here
     logger.info(
         f"[Report] Generate request: template={request.template_type}, "
@@ -504,20 +570,13 @@ async def generate_report(
     # aligned with what the verified report can write — zone statistics, segmentation labels, anomalies or structure
     # volumes alone would give an empty report.
     if not verified_report.renderable(request.findings, request.volumetry):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                "No measurement the verified report can write was supplied (lesion analysis, DIS "
-                "assessment, longitudinal comparison, or total brain or intracranial volume). A report "
-                "without measurements would be invented; open a segmentation and run its analysis first."
-            ),
-        )
+        raise ReportError("nothing_to_report", status.HTTP_422_UNPROCESSABLE_ENTITY, NOTHING_TO_REPORT_DETAIL)
 
     # CAPA-014 (RC-065, HAZ-016): the patient the prompt is checked against — authorized for this
     # caller (404 otherwise, as every object route) and read from the server's own record.
-    # 400, not 422: the report panel reads every 422 as "no measurements" (CAPA-008).
+    # (400; tenth review, I16: the panel reads the code, segmentation_required)
     if not request.segmentation_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SUBJECT_REQUIRED_DETAIL)
+        raise ReportError("segmentation_required", status.HTTP_400_BAD_REQUEST, SUBJECT_REQUIRED_DETAIL)
     patient_id = await authorize_segmentation_id(request.segmentation_id, current_user)
     service = get_report_service()
 
@@ -540,11 +599,9 @@ async def generate_report(
         block = findings.get(key)
         named = block.get("segmentation_id") if isinstance(block, dict) else None
         if named and report_sid and named != report_sid:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(f"The {key.replace('_', ' ')} belongs to another segmentation than this report "
-                        "(segmentation_id differs); nothing was sent."),
-            )
+            raise ReportError("segmentation_conflict", status.HTTP_409_CONFLICT,
+                              f"The {key.replace('_', ' ')} belongs to another segmentation than this report "
+                              "(segmentation_id differs); nothing was sent.")
     if report_sid and "lesion_analysis" in findings:
         # Second review of PR #68, N7: the lesion table is derived on the server for the report's own segmentation
         # — a client table (with, without or with another `segmentation_id`) never reaches the model.
@@ -557,16 +614,19 @@ async def generate_report(
         if not (others or verified_report.renderable_volumetry(request.volumetry)
                 or gate.is_evaluated(findings["dis_assessment"])):
             # A "not evaluated" DIS state is not a measurement: the model would draft from nothing (RC-034).
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=("No measurement was supplied: dissemination in space was not evaluated (the segmentation "
-                        "has not been confirmed by a radiologist), and nothing else was measured. A report "
-                        "without measurements would be invented; run the lesion analysis first."),
-            )
+            raise ReportError("nothing_to_report", status.HTTP_422_UNPROCESSABLE_ENTITY,
+                              "No measurement was supplied: dissemination in space was not evaluated (the segmentation "
+                              "has not been confirmed by a radiologist), and nothing else was measured. A report "
+                              "without measurements would be invented; run the lesion analysis first.")
     dis_evaluated = gate.is_evaluated(findings.get("dis_assessment"))
     if not dis_evaluated and isinstance(findings.get("lesion_analysis"), dict):
         # Finding 3: regions of a segmentation no radiologist confirmed are not passed to the model.
         findings["lesion_analysis"] = gate.without_region_breakdown(findings["lesion_analysis"])
+    # Tenth review of PR #78, I19 (CAPA-008): "nothing to write" is decided again on what is left AFTER the route's own
+    # substitutions — a block that held only an unverifiable reader decision is empty now, and a draft of the
+    # limitations alone would be written from nothing
+    if not verified_report.renderable(findings, request.volumetry):
+        raise ReportError("nothing_to_report", status.HTTP_422_UNPROCESSABLE_ENTITY, NOTHING_TO_REPORT_DETAIL)
 
     try:
         result = await service.generate_report(
@@ -594,26 +654,31 @@ async def generate_report(
 
     except ImplausibleMeasurement as e:
         # Ninth review of PR #78, I14: a measurement outside its plausible range is never written as a fact — the
-        # request is refused (422) naming the measurement, whatever the AI comments' state; the clinician corrects the
-        # input. Nothing about the AI service: nothing was going to be sent.
-        logger.warning("[Report] A measurement is outside its plausible range; no draft written")
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                            detail=f"{str(e)[:1].upper()}{str(e)[1:]}. Correct the input; no draft was written.")
+        # request is refused (422) naming the measurement, whatever the AI comments' state. Tenth review, I16: the
+        # value was computed by the server's own analysis, so the physician is asked to re-run the analysis or check
+        # the segmentation (never to "correct the input"); the code and the field let the panel name the measurement.
+        logger.warning("[Report] A measurement is outside its plausible range; no draft written",
+                       extra={"measurement_field": e.field})
+        raise ReportError("implausible_measurement", status.HTTP_422_UNPROCESSABLE_ENTITY,
+                          f"A measurement computed by the segmentation analysis is outside its plausible range: "
+                          f"{e.field or 'unknown'}. No draft was written; re-run the analysis or check the segmentation.",
+                          {"field": e.field})
     except ProviderGuardError as e:
         # CAPA-014 (RC-065): the service refused to send; the message names categories, no identifier.
         logger.warning("[Report] Not sent: the identifier check refused the request",
                        extra={"privacy_check": "refused"})
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                            detail=NOT_SENT_DETAIL.format(reason=str(e)))
+        from app.services.brain_report_service import LabelInRecord
+        code = ("patient_record_unavailable" if isinstance(e, PatientRecordUnavailable)
+                else "identifier_in_prompt" if isinstance(e, IdentifierInPrompt)
+                else "label_in_record" if isinstance(e, LabelInRecord) else "not_sent")
+        raise ReportError(code, status.HTTP_503_SERVICE_UNAVAILABLE, NOT_SENT_DETAIL.format(reason=str(e)))
     # Second review of PR #78 (F): no `except RuntimeError` any more — a missing provider key is no error of the
     # verified report (measurements-only draft, reason "not_configured"), so any RuntimeError is an internal failure
     except Exception as e:
         logger.error(f"[Report] Generation failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            # the class name only: an internal message never reaches the client (second review of PR #78, F)
-            detail=f"Report generation failed ({type(e).__name__}).",
-        )
+        # the class name only: an internal message never reaches the client (second review of PR #78, F)
+        raise ReportError("report_failed", status.HTTP_500_INTERNAL_SERVER_ERROR,
+                          f"Report generation failed ({type(e).__name__}).")
 
 
 @router.get(

@@ -49,5 +49,5 @@
     "total_brain_volume_ml": "total brain volume",
     "intracranial_volume_ml": "intracranial volume"
   },
-  "unknown_field": "a measurement"
+  "unknown_field": "measurement"
 }

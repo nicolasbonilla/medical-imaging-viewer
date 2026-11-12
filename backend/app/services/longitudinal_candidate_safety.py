@@ -28,7 +28,6 @@ Risk controls (REQ-SAFE-037):
 from __future__ import annotations
 
 import copy
-import functools
 import hashlib
 import inspect
 import json
@@ -138,15 +137,28 @@ def load_false_candidate_evidence(path: Optional[Path] = None) -> Optional[Dict[
     return out
 
 
-@functools.lru_cache(maxsize=4)
+_EVIDENCE_FILES: Dict[str, Dict[str, Any]] = {}
+
+
 def _read_evidence_asset(path_str: str) -> Optional[Dict[str, Any]]:
-    """The parsed asset file, read once per path (finding 7); None when unreadable."""
+    """The parsed asset file, read once per path (ninth review of PR #78, finding 7); None when unreadable. Tenth
+    review, finding 7: only a successful read is kept — a transient read error is not remembered, so the next record
+    tries again instead of withholding the rate until the server restarts."""
+    kept = _EVIDENCE_FILES.get(path_str)
+    if kept is not None:
+        return kept
     try:
         asset = json.loads(Path(path_str).read_text(encoding="utf-8"))
     except Exception as e:  # noqa: BLE001
         logger.warning(f"[RC-061] evidence asset unreadable: {e}")
         return None
-    return asset if isinstance(asset, dict) else None
+    if not isinstance(asset, dict):
+        return None
+    _EVIDENCE_FILES[path_str] = asset
+    return asset
+
+
+_read_evidence_asset.cache_clear = _EVIDENCE_FILES.clear     # (tests start from an empty store)
 
 
 def _fmt(x: float) -> str:

@@ -64,7 +64,20 @@ class IdentifierInPrompt(ProviderGuardError):
 
 class ImplausibleMeasurement(ProviderGuardError):
     """A number is outside the physical range of its field: a date, a record number or a phone number put
-    into a number field cannot be told from a measurement, so nothing is sent."""
+    into a number field cannot be told from a measurement, so nothing is sent. `field` names the measurement (tenth
+    review of PR #78, I16: the route's error carries it, the report panel names it)."""
+
+    def __init__(self, message: str, field: Optional[str] = None):
+        super().__init__(message)
+        self.field = field
+
+
+def is_patient_number(n: Any, forms: FrozenSet[str]) -> bool:
+    """RC-065: a whole number equal to one of the patient's own numbers (`PatientIdentifiers.number_forms`). The ONE
+    rule of the projection and of the check on the projected payload (tenth review of PR #78, finding 9)."""
+    if isinstance(n, bool) or not isinstance(n, (int, float)) or not math.isfinite(n):
+        return False
+    return n == int(n) and str(abs(int(n))) in forms
 
 
 FREE_TEXT_FIELDS = ("clinical_indication", "technique", "additional_observations")
@@ -242,10 +255,10 @@ class _Projector:
         slack = 1e-6 * max(1.0, abs(high))       # a rounding error at an edge (100.00000001 %) is not a refusal
         if not low - slack <= n <= high + slack:
             if outside is _REFUSE:
-                raise ImplausibleMeasurement(f"a measurement is outside its plausible range: {name}")
+                raise ImplausibleMeasurement(f"a measurement is outside its plausible range: {name}", field=name)
             self.counts["values_out_of_range"] += 1
             return outside                        # not sent
-        if n == int(n) and str(abs(int(n))) in self.patient_numbers:
+        if is_patient_number(n, self.patient_numbers):
             raise IdentifierInPrompt("identifier check failed (patient_number_in_a_number_field)")
         return n
 
@@ -417,7 +430,7 @@ def assert_no_patient_numbers(payload: "ProviderPayload", identifiers: "PatientI
                 yield from numbers(y)
 
     for n in numbers([payload.findings, payload.volumetry]):
-        if n == n and n not in (float("inf"), float("-inf")) and n == int(n) and str(abs(int(n))) in forms:
+        if is_patient_number(n, forms):       # (tenth review, finding 9: the projection's own rule)
             raise IdentifierInPrompt("identifier check failed (patient_number_in_a_number_field)")
 
 

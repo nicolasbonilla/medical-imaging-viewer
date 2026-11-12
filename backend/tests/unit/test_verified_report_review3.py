@@ -149,7 +149,9 @@ def _flow(replies):
 
 
 @pytest.mark.parametrize("replies,reason", [
-    ([VR.ModelReply(text=BAD), VR.ProviderFailure(VR.REASON_TIMEOUT, "TimeoutError")], VR.REASON_TIMEOUT),
+    # (amended with the tenth review of PR #78, I18: a retry cut by the time budget is a failed check — the answer
+    # before it failed the check and is withheld; never "the AI service timed out")
+    ([VR.ModelReply(text=BAD), VR.ProviderFailure(VR.REASON_TIMEOUT, "TimeoutError")], VR.REASON_BLOCKED),
     ([VR.ModelReply(text=BAD), VR.ProviderFailure(VR.REASON_PROVIDER, "APIError")], VR.REASON_PROVIDER),
     ([VR.ModelReply(text=BAD), VR.ModelReply(text="", stop_reason="refusal")], VR.REASON_REFUSAL),
     ([VR.ProviderFailure(VR.REASON_PROVIDER, "APIError")], VR.REASON_PROVIDER),
@@ -231,6 +233,7 @@ class _AsyncClient:
 
 def test_rc106_t3_the_provider_call_is_awaited_and_cancelled_at_the_deadline(monkeypatch):
     monkeypatch.setattr(VR, "LLM_DEADLINE_S", 0.5)
+    monkeypatch.setattr(VR, "MIN_LLM_BUDGET_S", 0.1)   # (tenth review, I18: the minimum scaled with the test's deadline)
     client = _AsyncClient(delay=5.0)
     t0 = time.monotonic()
     result = _generate(_service(client), {"lesion_analysis": {"total_count": 7}})

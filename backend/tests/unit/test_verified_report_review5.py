@@ -277,10 +277,11 @@ def test_rc065_v5_when_a_request_will_be_sent_the_identifiers_are_still_required
     with pytest.raises(PatientRecordUnavailable):
         _generate(_service(client), {"lesion_analysis": LESIONS}, identifiers=None)
     assert client.calls == []
-    # and with them, the patient's own numbers are refused in every number field (provider-only check, kept)
-    with pytest.raises(Exception) as refused:
-        _generate(_service(client), {"lesion_analysis": {**LESIONS, "total_burden_mm3": 1011980.0}}, identifiers=IDS)
-    assert type(refused.value).__name__ == "IdentifierInPrompt" and client.calls == []
+    # and with them, the patient's own numbers are refused in every number field (provider-only check, kept). (Amended
+    # with the tenth review of PR #78, finding 5: refused = nothing sent, a measurements-only draft with the privacy
+    # reason, no longer an exception)
+    result = _generate(_service(client), {"lesion_analysis": {**LESIONS, "total_burden_mm3": 1011980.0}}, identifiers=IDS)
+    assert result["verification"]["reason"] == VR.REASON_PRIVACY and client.calls == []
 
 
 # ═══════════════════════════════════════════════════════════════════════ V6 — limitations consistent with the labels

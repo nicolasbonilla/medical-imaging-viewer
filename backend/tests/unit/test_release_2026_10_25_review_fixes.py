@@ -268,5 +268,7 @@ def test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_t
     assert message.startswith(phrase) and "report not generated" in message and "Nothing was sent" in message
     assert "No measurement" not in message
     assert provider.calls == []
+    # (amended with the tenth review of PR #78, I16: the panel reads the server's code, no longer the phrase)
+    assert r.json()["error"]["code"] == "geometry_unreadable"
     panel = (Path(__file__).resolve().parents[3] / "frontend/src/components/AIReportPanel.tsx").read_text("utf-8")
-    assert f"'{phrase}'" in panel, "the report panel must recognise the server's phrase"
+    assert "geometry_unreadable: ['report.geometryUnreadable'" in panel, "the report panel must map the server's code"

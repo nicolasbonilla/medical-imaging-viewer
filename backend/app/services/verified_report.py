@@ -58,6 +58,7 @@ frozen verifier in tests/unit/test_rc102_verified_report_flow.py:
 """
 from __future__ import annotations
 
+import asyncio
 import copy
 import hashlib
 import json
@@ -126,6 +127,9 @@ REASON_NOTHING_TO_COMMENT = "no_measurement_for_comment"  # no lesion, change, v
 REASON_INTERNAL_CHECK = "internal_check_error"  # the check itself failed after the model answered (5th review, V3)
 REASON_WIRING = "provider_wiring"               # the client returned something that is not an answer (4th review, Q5)
 REASON_TIME_BUDGET = "time_budget"              # too little of the request's 30 s was left for the model (6th, W7)
+# tenth review of PR #78, finding 5 (RC-065): a projected measurement equals one of the patient's own numbers — nothing
+# is sent and the measurements are delivered (as with the comments off), never a 503 without a draft
+REASON_PRIVACY = "identifier_check"
 
 # The fixed notes after a report without comments, in the report language (RC-103, RC-105, RC-106).
 WITHHELD: Dict[str, Dict[str, str]] = {
@@ -148,6 +152,9 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                     "above are complete.",
         "time": "Interpretive text not requested: too little of the time budget was left after the measurements "
                 "were computed. The measurements above are complete.",
+        "privacy": "Interpretive text not requested: a measurement equals one of the patient's own numbers (record "
+                   "number, phone or birth date), so nothing was sent to the AI service. The measurements above are "
+                   "complete.",
     },
     "es": {
         REASON_BLOCKED: "Texto interpretativo retenido por la comprobación de seguridad: los comentarios de la IA no "
@@ -170,6 +177,9 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                     "mediciones de arriba están completas.",
         "time": "Texto interpretativo no solicitado: quedaba muy poco del tiempo disponible después de calcular "
                 "las mediciones. Las mediciones de arriba están completas.",
+        "privacy": "Texto interpretativo no solicitado: una medición coincide con uno de los números propios del "
+                   "paciente (número de historia, teléfono o fecha de nacimiento), así que no se envió nada al servicio "
+                   "de IA. Las mediciones de arriba están completas.",
     },
     "de": {
         REASON_BLOCKED: "Interpretierender Text von der Sicherheitsprüfung zurückgehalten: Die KI-Kommentare haben die "
@@ -191,13 +201,16 @@ WITHHELD: Dict[str, Dict[str, str]] = {
                     "werden. Die Messwerte oben sind vollständig.",
         "time": "Interpretierender Text nicht angefordert: Nach der Berechnung der Messwerte blieb zu wenig "
                 "Zeit. Die Messwerte oben sind vollständig.",
+        "privacy": "Interpretierender Text nicht angefordert: Ein Messwert stimmt mit einer eigenen Nummer der "
+                   "Patientin oder des Patienten überein (Aktennummer, Telefon oder Geburtsdatum); daher wurde nichts "
+                   "an den KI-Dienst gesendet. Die Messwerte oben sind vollständig.",
     },
 }
 _NOTE_OF_REASON = {
     REASON_BLOCKED: REASON_BLOCKED, REASON_FEEDBACK_PRIVACY: REASON_FEEDBACK_PRIVACY,
     REASON_PROVIDER: "unavailable", REASON_TIMEOUT: "unavailable", REASON_REFUSAL: "unavailable",
     REASON_MODEL_UNAVAILABLE: "unavailable", REASON_WIRING: "unavailable", REASON_INTERNAL_CHECK: "internal",
-    REASON_TIME_BUDGET: "time",
+    REASON_TIME_BUDGET: "time", REASON_PRIVACY: "privacy",
     # fourth review of PR #78, Q4: no provider key is "not requested — not configured", as the state says
     REASON_NOT_CONFIGURED: "not_configured",
     REASON_OFF: "off", REASON_MODEL_NOT_ALLOWED: "model", REASON_NOTHING_TO_COMMENT: "nothing",
@@ -1346,12 +1359,18 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
         request = {**request_meta, "system": SYSTEM_PROMPT, "messages": messages}
         record = {"attempt": attempt + 1, "prompt_sha256": prompt_sha256(request),
                   "model_id": request_meta.get("model")}
-        if remaining <= 0:
-            record.update({"verdict": "not_sent", "rule_ids": [], "latency_ms": 0, "error": REASON_TIMEOUT})
+        if remaining < MIN_LLM_BUDGET_S:
+            # Tenth review of PR #78, I18 (REQ-SAFE-019): no request is sent with less than MIN_LLM_BUDGET_S left —
+            # retries included (the attempt is recorded as not sent, for the time budget). A retry skipped for lack of
+            # time is a failed check: the AI answered and its text failed the check, so it is withheld — never "the AI
+            # service timed out".
+            record.update({"verdict": "not_sent", "rule_ids": [], "latency_ms": 0, "error": REASON_TIME_BUDGET})
             attempts.append(record)
             on_attempt(record)
-            return measurements_only(view, lang, REASON_TIMEOUT, attempts, outcome=_after_asking(attempts),
-                                     tokens=tuple(tokens), model_answered=answered)
+            if attempt:
+                return measurements_only(view, lang, REASON_BLOCKED, attempts, outcome=OUTCOME_WITHHELD,
+                                         tokens=tuple(tokens), model_answered=answered)
+            return measurements_only(view, lang, REASON_TIME_BUDGET, attempts, outcome=_after_asking(attempts))
         t0 = clock()
         try:
             reply = await call(SYSTEM_PROMPT, copy.deepcopy(messages), remaining)
@@ -1360,8 +1379,21 @@ async def run_flow(view: Dict[str, Any], language: str, call: Call, *, request_m
                            "error": e.error})
             attempts.append(record)
             on_attempt(record)
+            if attempt and e.reason == REASON_TIMEOUT:
+                # I18: a retry cut by the time budget — the answer before it failed the check and is withheld
+                return measurements_only(view, lang, REASON_BLOCKED, attempts, outcome=OUTCOME_WITHHELD,
+                                         tokens=tuple(tokens), model_answered=answered)
             return measurements_only(view, lang, e.reason, attempts, outcome=_after_asking(attempts),
                                      tokens=tuple(tokens), model_answered=answered)
+        except asyncio.CancelledError:
+            # Tenth review of PR #78, I17 (RC-104): a call cancelled in flight (the client went away, the server stops)
+            # was sent and may be paid — it is recorded before the cancellation goes on, so the verification record
+            # the service writes counts it
+            record.update({"verdict": "error", "rule_ids": [], "latency_ms": int((clock() - t0) * 1000),
+                           "error": "CancelledError"})
+            attempts.append(record)
+            on_attempt(record)
+            raise
         latency = int((clock() - t0) * 1000)
         tokens[0] += int(reply.input_tokens or 0)
         tokens[1] += int(reply.output_tokens or 0)

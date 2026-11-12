@@ -98,6 +98,7 @@ def test_rc102_r1_dis_evaluated_without_lesion_analysis_gives_a_report():
 # ── R2
 def test_rc106_r2_one_draft_never_waits_beyond_its_time_budget(monkeypatch):
     monkeypatch.setattr(VR, "LLM_DEADLINE_S", 0.6)
+    monkeypatch.setattr(VR, "MIN_LLM_BUDGET_S", 0.1)   # (tenth review, I18: the minimum scaled with the test's deadline)
     client = _Client(delay=3.0)
     t0 = time.monotonic()
     result = _generate(_service(client), {"lesion_analysis": {"total_count": 7, "total_burden_mm3": 10.0,

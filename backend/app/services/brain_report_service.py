@@ -215,8 +215,9 @@ class _ReportAudit:
         called = self.attempts_recorded
         if called:
             # seventh review of PR #78, finding 3 (I8): an exception AFTER one or more model calls is an error with the
-            # attempts really made — never "not sent, 0 attempts"
-            details = {"report_outcome": "error", "interpretive_text": "withheld", "attempts": called,
+            # attempts really made — never "not sent, 0 attempts" (tenth review, I17: a cancelled request too)
+            details = {"report_outcome": "cancelled" if isinstance(exc, asyncio.CancelledError) else "error",
+                       "interpretive_text": "withheld", "attempts": called,
                        "llm_reason": _refusal_code(exc) if refused else None, "error": type(exc).__name__}
         else:
             details = {"report_outcome": "not_sent" if refused else "error", "interpretive_text": "not_sent",
@@ -492,8 +493,10 @@ class BrainReportService:
             # Sixth review of PR #78, W4/W5: decide once (the one gate, before the record), then build the record once.
             # Fifth review, V5: the measurement checks (ranges) always run — they protect the code-written text; the
             # patient's own numbers are checked only when a request can be sent.
-            # Eighth review of PR #78, finding 3: decide FIRST (the one gate with the record, the time budget), then
-            # read the patient record only if a call will happen; the projection and the record are built once (W4).
+            # Eighth review of PR #78, finding 3: decide FIRST (the one gate with the record), then read the patient
+            # record only if a call may happen; the projection and the record are built once (W4). Tenth review,
+            # finding 8: the time budget is decided once, after the record and the word list (an unreadable record
+            # then matters only if a call would have happened).
             allowed, reason = self.interpretive_text_gate()
             ids = None
             payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)
@@ -502,35 +505,63 @@ class BrainReportService:
                                               review_source=_review_source(findings), not_included=not_included)
             if allowed:
                 allowed, reason = self.interpretive_text_gate(view)    # the record: is there something to comment?
-            # RC-066: record that the check ran and what was withheld (counts) — never the payload.
-            # (second review, C: the fields the report does not render are counted here — they are not projected)
+            # RC-066: what was withheld (counts) — never the payload. (second review, C: the fields the report does not
+            # render are counted here — they are not projected)
             withheld = {**payload.withheld,
                         "unknown_fields": sum(1 for k in (findings if isinstance(findings, dict) else {})
                                               if k not in _KNOWN_FIELDS),
                         "not_included_fields": len(not_included)}
-            logger.info(
-                "[Report] Structured payload checked before the model provider call",
-                extra={"report_id": report_id, "privacy_check": "passed", "withheld": withheld},
-            )
-
-            budget = verified_report.LLM_DEADLINE_S
+            # Tenth review of PR #78, I17: the privacy state the record states is the one that RAN — "not_run" until
+            # the patient-number check and the identifier tripwire have both passed
+            privacy = "not_run"
+            record_error: Optional[PatientRecordUnavailable] = None
             if reason is None:
-                # REQ-SAFE-019 (sixth review, W7): what is left of the request's 30 s, minus the response margin
+                # a call may happen: the patient's record (the route's lazy reader; seventh review, finding 8)
+                try:
+                    ids = await identifiers() if callable(identifiers) else identifiers
+                    if not isinstance(ids, PatientIdentifiers):
+                        # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers nothing can be checked
+                        raise PatientRecordUnavailable("the patient's identifiers were not supplied")
+                except PatientRecordUnavailable as e:
+                    # (tenth review, finding 8: the time left is known only after the record was read — an unreadable
+                    # record refuses the request below only if a call would have happened; eighth review, finding 3)
+                    record_error = e
+            if reason is None and record_error is None:
+                try:
+                    # the patient's own numbers in the projected payload (the projection's own rule, finding 9)
+                    assert_no_patient_numbers(payload, ids)
+                except IdentifierInPrompt:
+                    # tenth review, finding 5: a measurement equal to a patient number — nothing is sent; the
+                    # clinician still gets the measurements, with the privacy reason (as with the comments off)
+                    reason, privacy = verified_report.REASON_PRIVACY, "refused"
+                    logger.warning("[Report] A measurement equals one of the patient's own numbers; nothing sent, "
+                                   "measurements only", extra={"report_id": report_id, "privacy_check": "refused"})
+            if reason is None and record_error is None:
+                sent_text = verified_report.first_user_message(view, lang)
+                # R8: the record carries only code-chosen strings; a placeholder of a request label in it would
+                # mean a label of the request reached the model — nothing is sent (fail closed)
+                if UNLISTED.rstrip("]") in sent_text:
+                    raise LabelInRecord("a label of the request reached the measurement record")
+                # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
+                assert_prompt_carries_no_identifier(sent_text, ids)
+                privacy = "passed"
+            if reason is None:
+                # REQ-SAFE-019 (ninth review, finding 1; tenth review, finding 8 / I18): what is left of the request's
+                # 30 s, computed ONCE, here — after the record and the device-word list, just before the call; run_flow
+                # counts on the same clock before each request and sends none with less than MIN_LLM_BUDGET_S
                 left = (verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S
                         - (verified_report.now() - started))
-                budget = min(verified_report.LLM_DEADLINE_S, left)
                 if left < verified_report.MIN_LLM_BUDGET_S:
+                    # nothing will be sent: an unreadable record does not matter (eighth review, finding 3)
                     reason = verified_report.REASON_TIME_BUDGET
                     logger.warning("[Report] Too little of the time budget left for the AI comments; measurements only",
-                                   extra={"report_id": report_id, "llm_budget_s": round(budget, 2)})
-            if reason is None:
-                # a call will happen: the patient's record (the route's lazy reader; seventh review, finding 8)
-                ids = await identifiers() if callable(identifiers) else identifiers
-                if not isinstance(ids, PatientIdentifiers):
-                    # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check against
-                    raise PatientRecordUnavailable("the patient's identifiers were not supplied")
-                # the patient's own numbers in the projected payload refuse the request (same rule as the projection)
-                assert_no_patient_numbers(payload, ids)
+                                   extra={"report_id": report_id, "llm_budget_s": round(left, 2)})
+                elif record_error is not None:
+                    raise record_error   # a call would happen: without the patient's record nothing is sent
+            # RC-066 (tenth review, I17): written after the checks — "passed" only when both ran and passed
+            logger.info("[Report] Structured payload checked before the model provider call" if privacy == "passed"
+                        else "[Report] Measurements-only draft: nothing is sent to the model provider",
+                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld})
             if reason is not None:
                 if reason == verified_report.REASON_MODEL_NOT_ALLOWED:
                     retired = RETIRED_OR_RETIRING_MODELS.get(model_id) if isinstance(model_id, str) else None
@@ -540,24 +571,7 @@ class BrainReportService:
                                  extra={"report_id": report_id, "model": str(model_id)[:64]})
                 result = verified_report.measurements_only(view, lang, reason)
             else:
-                sent_text = verified_report.first_user_message(view, lang)
-                # R8: the record carries only code-chosen strings; a placeholder of a request label in it would
-                # mean a label of the request reached the model — nothing is sent (fail closed)
-                if UNLISTED.rstrip("]") in sent_text:
-                    raise LabelInRecord("a label of the request reached the measurement record")
-                # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
-                assert_prompt_carries_no_identifier(sent_text, ids)
-                # Ninth review of PR #78, finding 1 (REQ-SAFE-019): what is left of the request's 30 s is recomputed HERE,
-                # after the record and the device-word list, and run_flow counts on the same clock before each call
-                left = (verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S
-                        - (verified_report.now() - started))
                 budget = min(verified_report.LLM_DEADLINE_S, left)
-            if reason is None and left < verified_report.MIN_LLM_BUDGET_S:
-                reason = verified_report.REASON_TIME_BUDGET
-                logger.warning("[Report] Too little of the time budget left for the AI comments; measurements only",
-                               extra={"report_id": report_id, "llm_budget_s": round(left, 2)})
-                result = verified_report.measurements_only(view, lang, reason)
-            elif reason is None:
                 result = await verified_report.run_flow(
                     view, lang, self._model_call(model_id),
                     request_meta={"model": model_id, "max_tokens": int(self._settings.CLAUDE_MAX_TOKENS),
@@ -581,7 +595,9 @@ class BrainReportService:
                 text = f"{text}\n\n> {AUTOMATIC_MARKING_NOTICE[lang]}"
             content = _apply_disclaimer(text, language)
             change = verified_report.change_notice(view, lang)
-        except Exception as e:  # noqa: BLE001 — audited, then raised as before (the route answers 503 / 500)
+        except BaseException as e:  # noqa: BLE001 — every exit is audited, then raised as before (the route answers
+            # 503 / 500). Tenth review of PR #78, I17: BaseException — a request cancelled during a model call
+            # (asyncio.CancelledError) still writes its verification record with the paid calls (RC-104)
             audit.not_sent(e)
             raise
         audit.outcome(result, model_id if reason is None else None)

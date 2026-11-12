@@ -1284,8 +1284,11 @@ def test_r2_the_patients_own_numbers_in_a_number_field_refuse(route, path, value
     findings = _measurements()
     _set(findings, path, value)
     r = _post(route, findings)
-    assert r.status_code == 503, r.text
-    assert "nothing was sent" in r.text.lower() and "1234567" not in r.text
+    # (amended with the tenth review of PR #78, finding 5: nothing is sent, and the clinician gets the measurements-only
+    # draft with the privacy reason — never a 503 without a draft)
+    assert r.status_code == 200, r.text
+    assert r.json()["verification"]["reason"] == "identifier_check"
+    assert r.json()["verification"]["interpretive_text"] == "not_requested"
     assert route.provider.calls == []   # fifth review of PR #78, V5 (amended): the route first asks whether a request can be sent (a client look-up, nothing sent) — `created` is no longer a proxy for 'nothing sent'
 
 
