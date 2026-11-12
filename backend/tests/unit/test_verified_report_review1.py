@@ -215,6 +215,9 @@ def _outcomes(sink):
 
 
 def test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited(sink, monkeypatch):
+    # (amended with the tenth review of PR #78: the device-word list is built first, from the real first messages —
+    # built while the altered message is in place it would take the name as a device word; order-dependent otherwise)
+    BRS._fixed_prompt_word_lists()
     original = VR.first_user_message
     monkeypatch.setattr(VR, "first_user_message", lambda view, lang: original(view, lang) + "\nTestgiven Testfamily")
     client = _Client()

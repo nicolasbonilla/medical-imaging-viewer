@@ -278,6 +278,11 @@ async def test_rc102_no_free_text_reaches_the_llm_in_any_attempt():
 async def test_rc102_the_first_request_is_checked_for_identifiers(monkeypatch):
     """RC-065 extended to the verified report: were the patient's name in the first request, nothing is sent."""
     from app.services.report_payload_guard import IdentifierInPrompt
+    from app.services import brain_report_service as BRS
+    # (amended with the tenth review of PR #78: the device's own word list is built once per process from the real
+    # first messages — built while this test's altered message was in place, it took the name as a device word, and the
+    # outcome depended on test order; it is built first, with nothing altered)
+    BRS.assert_prompt_carries_no_identifier("warm-up", IDS)
     original = VR.first_user_message
     monkeypatch.setattr(VR, "first_user_message", lambda view, lang: original(view, lang) + "\nTestgiven Testfamily")
     client = _Client("[FINDINGS_COMMENT]\nSmall.\n[IMPRESSION_COMMENT]\nReview.")
