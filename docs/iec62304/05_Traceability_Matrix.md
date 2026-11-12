@@ -479,6 +479,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | REQ-SAFE-052 | HAZ-025, HAZ-007, HAZ-001 | RC-122, RC-123, RC-125 | `quality_gate.py` (calls `compare_acquisitions`, `detect_sequence`, reads `acquisition_geometry`) | `test_quality_gate_matrix.py` (G1, G3, G10), `test_rc123_rc062_monotonicity.py` (G24, G25, R4), `test_rc122_quality_gate_wiring.py` |
 | REQ-SAFE-053 | HAZ-025, HAZ-015 | RC-124 | `quality_gate_policy.json` (`thickness.evidence_asset`) | `test_quality_gate_matrix.py` (G7) |
 | REQ-SAFE-054 | HAZ-025, HAZ-020 | RC-126, RC-127 | `agents.json` (`quality-gate`), `tracing.py`, `quality_gate.py` (`run_quality_gate`), `qualityGate.cases.v1.json` | `test_quality_gate_matrix.py` (G4, G5, G6), `gate.test.ts`, `test_rc122_quality_gate_wiring.py` |
+| REQ-SAFE-052d | HAZ-025, HAZ-007, HAZ-001 | RC-122, RC-123, RC-126, RC-127 | `headerEvidence.ts` (base path with the flag off), `dataset_inventory.py` (base patterns + G20 hygiene), `segmentation_analysis.py` (attestation read only when enforced), `longitudinal_candidate_safety.rc062_withholds`, `quality_gate.py` (weak words, consultation cache, `rate_limit_evaluation`, `agent.consultation`), `clinical_tools.py`, `audit.py` (`QUALITY_GATE_CONSULTATION`), `LongitudinalCompare.tsx`, `qualityGate/api.ts` | `test_rc122_flags_off_identity.py` (G26 b, c; G19 extension), `headerEvidence.flagsOff.test.ts` (G26 a; F5), `test_rc122_quality_gate_wiring.py` (F3, F4), `LongitudinalCompare.qualityGate.test.tsx` (F1, F2), `qualityGate/api.test.ts` (F3) |
 
 ---
 

@@ -46,9 +46,11 @@ OUT = os.path.join(ROOT, "docs/iec62304/records/risk_verification/QUALITY-GATE_n
 PY = sys.executable
 
 BACKEND_TESTS = ["tests/unit/test_quality_gate_matrix.py", "tests/unit/test_rc122_quality_gate_wiring.py",
-                 "tests/unit/test_rc123_rc062_monotonicity.py"]
+                 "tests/unit/test_rc123_rc062_monotonicity.py", "tests/unit/test_rc122_flags_off_identity.py"]
 VITEST_TESTS = ["src/components/BrowserFlamesCard.qualityGate.test.tsx", "src/components/QualityGatePanel.test.tsx",
-                "src/services/qualityGate/gate.test.ts"]
+                "src/services/qualityGate/gate.test.ts", "src/services/flames/__tests__/headerEvidence.flagsOff.test.ts",
+                "src/components/LongitudinalCompare.qualityGate.test.tsx", "src/components/LongitudinalResultPanel.qualityGate.test.tsx",
+                "src/services/qualityGate/api.test.ts"]
 COPY_TREES = ["backend/app", "backend/data"]
 COPY_FILES = ["backend/pytest.ini", "backend/tests/__init__.py", "backend/tests/conftest.py",
               "backend/tests/unit/__init__.py", *("backend/" + t for t in BACKEND_TESTS),
@@ -56,7 +58,10 @@ COPY_FILES = ["backend/pytest.ini", "backend/tests/__init__.py", "backend/tests/
               "frontend/src/config/qualityGate.sequences.v1.json", "frontend/src/services/flames/headerEvidence.ts",
               "frontend/src/config/qualityGate.pre_pr_snapshot.v1.json",
               "frontend/src/i18n/locales/en.json", "frontend/src/i18n/locales/es.json",
-              "frontend/src/i18n/locales/de.json", "frontend/src/services/qualityGate/gate.ts"]
+              "frontend/src/i18n/locales/de.json", "frontend/src/services/qualityGate/gate.ts",
+              # fifth review of PR #81 (G26): the flags-off snapshot, its generator and the route harness
+              "frontend/src/config/qualityGate.flags_off_snapshot.v1.json",
+              "scripts/safety/quality_gate_flags_off_snapshot.py", "backend/tests/unit/_flags_off_harness.py"]
 IMPORT_PROBE = ("import sys; sys.path.insert(0, 'backend'); import app.services.quality_gate, app.agent_platform.registry, "
                 "app.agent_platform.tracing, app.api.routes.clinical_tools, app.api.routes.segmentation_analysis")
 
@@ -78,6 +83,10 @@ AM = "backend/app/core/logging/audit_middleware.py"
 RPG = "backend/app/services/report_payload_guard.py"
 BRS = "backend/app/services/brain_report_service.py"
 AIR = "backend/app/api/routes/ai_report.py"
+LCS = "backend/app/services/longitudinal_candidate_safety.py"
+REG = "backend/app/agent_platform/registry.py"
+LC = "frontend/src/components/LongitudinalCompare.tsx"
+API = "frontend/src/services/qualityGate/api.ts"
 EN = "frontend/src/i18n/locales/en.json"
 CMP_ACTION = ("If you are sure this visit's image is a T2-FLAIR, tick its confirmation box below and compare again. "
               "Otherwise compare the images visually with the overlay.")
@@ -149,8 +158,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the approval and the kill switches are not read", "backend", "RC-126"),
     "Q20_trace_omits_checks": ([(QG, '                for c in result["checks"]:\n', '                for c in result["checks"][:1]:\n')],
         "the trace records only the first check", "backend", "RC-126"),
-    "Q21_success_not_audited": ([(QG, '            reg.audit("success", audit_code(result), event="agent.run", agent_id=AGENT_ID,\n',
-        '            (lambda *a, **k: None)("success", audit_code(result), event="agent.run", agent_id=AGENT_ID,\n')],
+    "Q21_success_not_audited": ([(QG, '            reg.audit("success", audit_code(result), event=event, agent_id=AGENT_ID,\n',
+        '            (lambda *a, **k: None)("success", audit_code(result), event=event, agent_id=AGENT_ID,\n')],
         "a consultation that lets the AI run leaves no audit record", "backend", "RC-126"),
     "Q22_trace_attribute_dropped": ([(TR, '    "mstool.gate.status": lambda v: v in ("pass", "warn", "pending", "abstain"),\n', '')],
         "the trace allow-list loses the check status", "backend", "RC-126"),
@@ -217,19 +226,24 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "F10_ts_underscore_kept_in_tokens": ([(TS, "  return s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);\n",
         "  return s.toLowerCase().split(/[^a-z0-9_]+/).filter(Boolean);\n")],
         "the browser keeps '_' inside tokens", "node", "RC-122, RC-127"),
-    "F11_ts_t1_flair_accepted": ([(TS, "  if (isOther || (flair && t1)) return 'other';", "  if (isOther) return 'other';")],
+    "F11_ts_t1_flair_accepted": ([(TS, "  const cls = isOther || (flair && t1) ? 'other' : flair",
+        "  const cls = isOther ? 'other' : flair")],
         "the browser takes a T1-weighted FLAIR as a FLAIR", "node", "RC-122, RC-127"),
     "F12_ts_no_attestation_in_a_comparison": ([(FPOL, '    "confirmation_modes": ["single", "comparison"],\n', '    "confirmation_modes": ["single"],\n')],
         "the browser's policy copy drops the comparison attestation", "node", "RC-122"),
     # ── second review of PR #81 ──
-    "S1_inventory_not_routed": ([(DI, '    if found["class"] == SEQ_FLAIR:\n', '    if found["class"] in (SEQ_FLAIR, "unknown"):\n')],
-        "the dataset inventory calls an unnamed image a FLAIR (a second, disagreeing classifier)", "backend", "RC-122"),
+    "S1_inventory_routed_to_the_gate": ([(DI, '    for label, patterns in _SEQUENCE_PATTERNS:\n',
+        '    from app.services.quality_gate import classify_sequence\n    found = classify_sequence(blob)\n'
+        '    return SEQ_FLAIR if found["class"] == SEQ_FLAIR else (found["family"] or found["weighting"])\n'
+        '    for label, patterns in _SEQUENCE_PATTERNS:\n')],
+        "the research inventory answers differently with the flags off (routed to the gate's classifier; G26 b)", "backend", "RC-122"),
     "S2_tirm_not_a_flair_name": ([(POL, '      "flair_words": ["tirm"],\n', '      "flair_words": [],\n')],
         "a Siemens TIRM FLAIR is not recognised (the gate and RC-049 disagree)", "backend", "RC-122"),
     "S3_text_inversion_time_ignored": ([(QG, '        (v for v in (text_inversion_time_ms(t, policy) for t in texts) if v is not None), None)\n',
         '        (v for v in () if v is not None), None)\n')],
         "'FLAIR TI=900' in the text taken as a FLAIR", "backend", "RC-122"),
-    "S4_server_ignores_the_skull_outcome": ([(CT, '                                                   skull=body.skull)\n', '                                                   skull="pending")\n')],
+    "S4_server_ignores_the_skull_outcome": ([(CT, '                                                   skull=body.skull, version_key=version_key)\n',
+        '                                                   skull="pending", version_key=version_key)\n')],
         "the server never decides the releasing decision (the browser alone does)", "backend", "RC-126"),
     "S5_audit_without_the_deciding_code": ([(QG, '    return f"quality_gate.{decision}" + (f".{deciding}" if deciding else "") + attested\n',
         '    return f"quality_gate.{decision}" + attested\n')],
@@ -239,7 +253,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the endpoint answers while the gate is not enforced", "backend", "RC-126"),
     "S7_platform_after_the_io": ([(CT, '    if not qg.platform_allows():\n', '    if False:\n')],
         "a refused gate still authorizes and downloads the file", "backend", "RC-126"),
-    "S8_no_rate_limit": ([(CT, '    if not qg.allow_consultation(str(getattr(current_user, "id", ""))):   # first: refused calls are limited too\n', '    if False:\n')],
+    "S8_no_rate_limit": ([(CT, '        wait = qg.rate_limit_evaluation(user_id)\n', '        wait = None\n')],
         "the endpoint can trigger unbounded downloads", "backend", "RC-126"),
     "S9_whole_file_downloaded": ([(QG, '    ranged = getattr(storage_service, "download_file_range", None)\n', '    ranged = None\n')],
         "the header check downloads the whole image", "backend", "RC-122"),
@@ -304,14 +318,16 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the D-QG-10 relaxation of RC-062 reintroduced (HAZ-007)", "backend", "RC-123"),
     "X2_a_warned_gate_lifts_rc062": ([(QG, '    out = {**result, "quality_gate": gate}\n', '    out = {**result, "quality_gate": gate, "abstained": False}\n')],
         "a gate that only warns lifts an RC-062 abstention", "backend", "RC-123"),
-    "X3_sel_keeps_its_own_rule": ([(SA, '        if qg.comparison_withheld(acquisition_check, visit_check, gate)["withheld"]:   # G25: one verdict\n',
+    "X3_sel_keeps_its_own_rule": ([(SA, '        if lcs.rc062_withholds(acquisition_check, visit_check):   # G25: RC-062\'s one predicate (the gate stopped above)\n',
         '        if acquisition_check["status"] != "same":\n')],
         "SEL decides comparability with its own rule", "backend", "RC-123"),
-    "X4_shared_verdict_ignores_the_gate": ([(QG, '    stops = gate is not None and gate.get("ai_output_allowed") is not True\n', '    stops = False\n')],
-        "the shared comparability verdict ignores the gate's abstention", "backend", "RC-123"),
-    "X5_shared_verdict_ignores_visit_order": ([(QG, '                                   stored_review=None, visit_check=visit_check).get("abstained") is True\n',
-        '                                   stored_review=None, visit_check={"status": "ok"}).get("abstained") is True\n')],
-        "the shared comparability verdict ignores an unknown visit order", "backend", "RC-123"),
+    "X4_sel_ignores_the_gate": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n'
+        '            return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate),',
+        '        if False:\n            return {"ok": False, "abstained": True, "reason": qg.gate_caveat(gate),')],
+        "the SEL search ignores the gate's abstention", "backend", "RC-123"),
+    "X5_shared_predicate_ignores_visit_order": ([(LCS, '    return acquisition_check.get("status") != "same" or visit_check.get("status") != "ok"\n',
+        '    return acquisition_check.get("status") != "same"\n')],
+        "the one RC-062 predicate ignores an unknown visit order", "backend", "RC-123"),
     "X6_warnings_not_in_the_caveat": ([(QG, '    if reasons:                                       # R4: a warned comparison says so (the assistant reads this)\n',
         '    if False:\n')],
         "a warned comparison looks clean to the assistant", "backend", "RC-127"),
@@ -323,6 +339,65 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "X9_report_notice_silent": ([(AIR, '    if reasons:\n        lines.append(gw["lead"] + " " + "; ".join(reasons) + ".")\n',
         '    if False:\n        lines.append(gw["lead"] + " " + "; ".join(reasons) + ".")\n')],
         "the code-written notice of the draft omits the gate's warnings", "backend", "RC-127"),
+    # ── fifth review of PR #81: G26 flags-off identity, D-QG-12, F1-F5, cleanup ──
+    "W1_rc049_gate_path_with_the_flag_off": ([(HE, "  return (options.qualityGate ?? FEATURES.QUALITY_GATE)\n", "  return (options.qualityGate ?? true)\n")],
+        "the in-browser AI's header evidence changes with VITE_ENABLE_QUALITY_GATE off (G26 a)", "node", "RC-122"),
+    "W2_rc049_base_rule_changed": ([(HE, "|LOCALI[SZ]ER|SCOUT)\\b/;\n", "|LOCALI[SZ]ER|SCOUT|CAL)\\b/;\n")],
+        "the base RC-049 rule is edited, so production answers change with the flag off (G26 a)", "node", "RC-122"),
+    "W5_attestation_parsed_with_the_gate_off": ([(SA, '    if not settings.QUALITY_GATE_ENFORCED:\n        return None\n    attestation = _attestation(body)\n',
+        '    attestation = _attestation(body)\n    if not settings.QUALITY_GATE_ENFORCED:\n        return None\n')],
+        "a malformed quality_gate_attestation gives 400 with the gate off (G26 c)", "backend", "RC-122"),
+    "W6_sel_type_checked_early_with_the_gate_off": ([(SA, '        if settings.QUALITY_GATE_ENFORCED and any(s.get("type") != "segmentation" for s in (tp1_spec, tp2_spec)):\n',
+        '        if any(s.get("type") != "segmentation" for s in (tp1_spec, tp2_spec)):\n')],
+        "the SEL search checks its inputs in another order with the gate off (G26 c)", "backend", "RC-123"),
+    "W7_weak_words_always_other": ([(QG, '    is_other = bool(hits - c["weak"]) or (bool(hits) and not flair)\n', '    is_other = bool(hits)\n')],
+        "'AX FLAIR CAL', 'FLAIR loc', 'sag_flair_dir-AP' rejected with the gate on (D-QG-12, G19 extension)", "backend", "RC-122"),
+    "W8_ts_weak_words_always_other": ([(TS, "  const isOther = hits.some((x) => !w.weak.has(x)) || (hits.length > 0 && !flair);\n",
+        "  const isOther = hits.length > 0;\n")],
+        "the browser rejects 'AX FLAIR CAL' with the gate on (D-QG-12)", "node", "RC-122"),
+    "W9_weak_word_alone_names_no_sequence": ([(QG, '    is_other = bool(hits - c["weak"]) or (bool(hits) and not flair)\n', '    is_other = bool(hits - c["weak"])\n')],
+        "a localizer or calibration series ('AX LOC') is no longer 'other' (D-QG-12)", "backend", "RC-122"),
+    "W11_consultation_cache_off": ([(QG, '    if key is None or key not in _CONSULTATIONS:\n        return None\n', '    if True:\n        return None\n')],
+        "every repeated consultation reads the file and counts against the limit (F3)", "backend", "RC-126"),
+    "W12_cached_answers_counted": ([(CT, '    cached = qg.cached_consultation(key)\n',
+        '    limited = _over_limit()\n    if limited is not None:\n        return limited\n    cached = qg.cached_consultation(key)\n')],
+        "a consultation served from the cache counts against the limit (F3)", "backend", "RC-126"),
+    "W13_release_decision_cached": ([(QG, '    if not version_key or skull != "pending":\n', '    if not version_key:\n')],
+        "a decision that releases the AI output is served from the cache, not decided and audited again (F3, F4)", "backend", "RC-126"),
+    "W14_cache_ignores_the_attestation": ([(QG, '    return (*version_key, physician_confirmed_flair is True, skull, _policy()["policy_version"])\n',
+        '    return (*version_key, skull, _policy()["policy_version"])\n')],
+        "the answer without the physician's attestation is served after the attestation (F3)", "backend", "RC-122, RC-126"),
+    "W17_retry_seconds_dropped": ([(CT, '"details": {"code": "gate_rate_limited", "retry_after_s": wait}}})',
+        '"details": {"code": "gate_rate_limited"}}})')],
+        "over the limit, the physician is not told how long to wait (F3)", "backend", "RC-127"),
+    "W18_consultation_audited_as_an_ai_run": ([(QG, '        event = "agent.run" if result.get("ai_output_allowed") is True else "agent.consultation"\n',
+        '        event = "agent.run"\n')],
+        "every consultation is recorded as an AI run (F4)", "backend", "RC-126"),
+    "W19_route_audited_as_an_ai_run": ([(AM, '    ("POST", "/api/v1/clinical/quality-gate"): (E.QUALITY_GATE_CONSULTATION, "image"),',
+        '    ("POST", "/api/v1/clinical/quality-gate"): (E.CLINICAL_AI_RUN, "image"),')],
+        "opening an image records an AI run (F4)", "backend", "RC-126"),
+    "W20_sink_maps_every_event_to_an_ai_run": ([(REG, '        etype = (AuditEventType.QUALITY_GATE_CONSULTATION if event.get("event") == "agent.consultation"\n'
+        '                 else AuditEventType.CLINICAL_AI_RUN)\n', '        etype = AuditEventType.CLINICAL_AI_RUN\n')],
+        "the server log records a consultation as an AI run (F4)", "backend", "RC-126"),
+    "W21_ts_text_reason_reads_the_inversion_time": ([(HE, "    const cls = classifyText(raw);                     // F5: the words alone, never the inversion time\n",
+        "    const cls = classifyFields({ description: raw }, ti ?? null).class;\n")],
+        "a FLAIR description reported as 'another sequence' because of a short inversion time (F5)", "node", "RC-127"),
+    "W22_present_comparison_keeps_its_own_rule": ([(LCS, '    if rc062_withholds(acquisition_check, visit_check):   # RC-062\n',
+        '    if acquisition_check.get("status") != "same":   # RC-062\n')],
+        "compare and SEL decide comparability with two rules (cleanup, G25)", "backend", "RC-123"),
+    "V14_attestation_not_kept_for_the_pair": ([(LC, "    return attested.current?.pair === pairKey ? attested.current.value : undefined;\n",
+        "    return isAttestation(given) ? given : undefined;\n")],
+        "the refresh after a radiologist decision drops the physician's attestation (F1)", "vitest", "RC-122"),
+    "V15_attestation_kept_across_pairs": ([(LC, "    return attested.current?.pair === pairKey ? attested.current.value : undefined;\n",
+        "    return attested.current?.value;\n"), (LC, "    attested.current = null;\n", "")],
+        "an attestation given for one pair is sent for another (F1)", "vitest", "RC-122"),
+    "V16_sel_without_the_attestation": ([(LC, "        attestationFor(),\n", "")],
+        "the SEL search never sends the pair's attestation (F2)", "vitest", "RC-122"),
+    "V17_sel_shows_the_english_reason": ([(LC, "                {selResult.quality_gate && selResult.quality_gate.ai_output_allowed !== true ? (\n",
+        "                {false ? (\n")],
+        "a gate stop in the SEL search is shown as the backend's English reason (F2)", "vitest", "RC-127"),
+    "V18_rate_limit_shown_as_unavailable": ([(API, "    if (response?.status === 429) {\n", "    if (false) {\n")],
+        "'too many checks' shown as 'the check could not be completed' (F3)", "vitest", "RC-127"),
     # ── browser rule (G4 parity harness under Node) ──
     "F1_ts_confirmation_overrides_another_sequence": ([(TS, "  return mk('sequence', label, 'abstain', 'sequence_not_flair', { sequence: seq });\n",
         "  return visit.physician_confirmed_flair === true ? mk('sequence', label, 'warn', 'sequence_confirmed_by_physician', { sequence: seq })\n"
@@ -429,7 +504,8 @@ fail('rc125_pending_hides', server.ai_output_allowed === false);
 const CORPUS = JSON.parse(readFileSync(process.env.QG_CORPUS, 'utf-8'));
 const BS = String.fromCharCode(92);
 const evOf = (c) => headerContrastEvidence(c.text ? [c.text] : [], { ...(c.inversion_time_ms ? { inversionTimeMs: c.inversion_time_ms } : {}),
-  ...(c.sequence_name ? { sequenceName: c.sequence_name } : {}), ...(c.image_type ? { imageType: c.image_type.split(BS) } : {}) }, null);
+  ...(c.sequence_name ? { sequenceName: c.sequence_name } : {}), ...(c.image_type ? { imageType: c.image_type.split(BS) } : {}) }, null,
+  { qualityGate: true });                                            // gate ON (G15 restated)
 const keyOf = (c) => '[' + [c.text ?? null, c.sequence_name ?? null, c.image_type ?? null, c.inversion_time_ms ?? null].map((x) => JSON.stringify(x)).join(', ') + ']';
 fail('g12_corpus', CORPUS.cases.every((c) => classifyFields({ description: c.text, sequence_name: c.sequence_name ?? null,
   image_type: c.image_type ?? null }, c.inversion_time_ms).class === c.expected));
@@ -446,7 +522,19 @@ fail('g15_rc049_same_class', CORPUS.cases.every((c) => {
 const forged = { ...evaluateGate({ mode: 'single', visits: [{ ...F.matrix.base_visit, skull: 'stripped' }], platform: { allowed: true, code: null } }),
   inputs: { mode: 'single', visits: [{ ...F.matrix.base_visit, sequence: 'T1', skull: 'stripped' }] }, platform: { allowed: true, code: null } };
 fail('g17_forged_answer_not_used', confirmServerDecision(forged, 'stripped').ai_output_allowed === false);
-console.log(JSON.stringify({ failures, checks: 15 }));
+// fifth review of PR #81: G26 (a) with the flag off (FEATURES stubbed off), F5, D-QG-12
+const OFF = JSON.parse(readFileSync(process.env.QG_FLAGS_OFF, 'utf-8'));
+const dig = (r) => createHash('sha256').update(JSON.stringify(r), 'utf8').digest('hex').slice(0, 16);
+fail('g26_rc049_flag_off_is_the_base', OFF.corpus.every((c, i) => {
+  const e = headerContrastEvidence([c.text], { ...(c.inversion_time_ms ? { inversionTimeMs: c.inversion_time_ms } : {}),
+    ...(c.sequence_name ? { sequenceName: c.sequence_name } : {}) }, null);
+  return e.verdict === OFF.rc049[i][0] && dig(e.reasons) === OFF.rc049[i][1];
+}));
+const f5 = headerContrastEvidence(['AX T2 FLAIR'], { inversionTimeMs: 900 }, null, { qualityGate: true });
+fail('f5_text_reason_without_the_inversion_time', f5.verdict === 'contradicts' && !f5.reasons.some((r) => r.includes('names another sequence')));
+fail('dqg12_weak_words', ['AX FLAIR CAL', 'FLAIR loc', 'sag_flair_dir-AP'].every((t) => classifyFields({ description: t }).class === 'FLAIR')
+  && ['AX LOC', 'cal', 'dir-AP'].every((t) => classifyFields({ description: t }).class === 'other'));
+console.log(JSON.stringify({ failures, checks: 18 }));
 """
 
 
@@ -514,6 +602,9 @@ def node_files(copy):
         fh.write(src)
     he = open(os.path.join(copy, HE), encoding="utf-8").read()
     assert he.count("from '@/services/qualityGate/gate'") == 1, "the gate import of headerEvidence.ts changed"
+    flag = "import { FEATURES } from '@/config/features';"
+    assert he.count(flag) == 1, "the flag import of headerEvidence.ts changed"
+    he = he.replace(flag, "const FEATURES = { QUALITY_GATE: false };   // the flag OFF, as in production today (G26)")
     with open(os.path.join(work, "headerEvidence.ts"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(he.replace("from '@/services/qualityGate/gate'", "from './gate.ts'"))
     with open(os.path.join(work, "package.json"), "w", encoding="utf-8") as fh:
@@ -527,7 +618,8 @@ def node_env(copy, env):
     return {**env, "QG_POLICY": os.path.join(copy, FPOL), "QG_FIXTURE": os.path.join(copy, "frontend/src/config/qualityGate.cases.v1.json"),
             "QG_BACKEND_POLICY": os.path.join(copy, POL), "NODE_NO_WARNINGS": "1",
             "QG_CORPUS": os.path.join(copy, "frontend/src/config/qualityGate.sequences.v1.json"),
-            "QG_SNAPSHOT": os.path.join(copy, "frontend/src/config/qualityGate.pre_pr_snapshot.v1.json")}
+            "QG_SNAPSHOT": os.path.join(copy, "frontend/src/config/qualityGate.pre_pr_snapshot.v1.json"),
+            "QG_FLAGS_OFF": os.path.join(copy, "frontend/src/config/qualityGate.flags_off_snapshot.v1.json")}
 
 
 def probe(runner, copy, env, files):
@@ -605,7 +697,8 @@ def main():
             "method": "one mutation at a time in a throwaway copy (never the worktree); every anchor exactly once; the "
                       "mutant must compile/import (or parse / load under Node) before its kill counts; bound tests: "
                       "backend pytest (JUnit) or the Node G4 parity harness; original bytes restored and hash-checked",
-            "bound_tests": {"backend": BACKEND_TESTS, "node": "G4 parity harness (shared fixture, matrix digest, G1, G6, G11, RC-125)",
+            "bound_tests": {"backend": BACKEND_TESTS, "node": "G4 parity harness (shared fixture, matrix digest, G1, G6, G11, "
+                                                             "RC-125, G12, G13, G15, G17, G19, G26 a, F5, D-QG-12)",
                             "vitest": VITEST_TESTS},
             "source_sha256": {f: _sha(b) for f, b in raw.items()},
             "environment": "offline: GOOGLE_APPLICATION_CREDENTIALS -> missing file, CLOUDSDK_CONFIG -> empty folder, "

@@ -1107,6 +1107,25 @@ Negative controls (every test run inside the throwaway copy): 106 mutations, **9
 
 **HAZ-007 residual:** this PR leaves the residual risk of HAZ-007 for RC-062 UNCHANGED (RC-062 behaves exactly as on the base branch, gate on or off). D-QG-10 is no longer implemented: it is recorded as an owner decision about a possible FUTURE, separate change to RC-062, which would need its own risk assessment of the HAZ-007 residual.
 
+### C.10 Fifth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| G26 | With both flags OFF the PR still changed production: RC-049's header evidence used the gate's classifier ('AX FLAIR CAL', 'FLAIR loc', 'sag_flair_dir-AP' were refused by the in-browser AI), `dataset_inventory` routed to it ('AX T2 FLAIR POST GD' → T2, 'FSE' → none), and a malformed `quality_gate_attestation` gave 400 | RC-049, RC-122, RC-123 | RC-049 keeps its base code path while `VITE_ENABLE_QUALITY_GATE` is off (the gate's classifier only when on); the inventory keeps its base patterns (one documented difference: the G20 hygiene of the arguments after the first); the attestation is read only when `QUALITY_GATE_ENFORCED` is on; the SEL input type is checked where the base checked it | G26 (generated corpus) |
+| G19x | With the gate ON, weak words alone turned a FLAIR into 'other' | RC-122 | D-QG-12: `cal`, `loc`, `dir`, `mag` are 'other' only without a FLAIR name; every other word decided and justified per word (design §3a) | G19 extension |
+| F1 | The refresh after a radiologist decision re-compared without the attestation | RC-122 | the attestation is kept for its pair until the pair or a file changes | vitest |
+| F2 | SEL never sent the attestation; the UI showed the gate's stop as the backend's English reason | RC-122, RC-127 | `detectSELs` sends it; SEL gate results shown with `QualityGatePanel` in en/es/de | vitest |
+| F3 | Every consultation counted; over the limit the physician read "unavailable" | RC-126, RC-127 | server cache per (file, version, attestation, skull, policy version); only real evaluations count; a release decision is never served from the cache; 429 with the seconds to wait (`gate_rate_limited`, "wait N s"); per-instance limit recorded as a known limitation | wiring + vitest |
+| F4 | A consultation was recorded as an AI run | RC-126 | `QUALITY_GATE_CONSULTATION` for the route and for gate decisions that release nothing (`agent.consultation`); only a releasing decision is `agent.run` / CLINICAL_AI_RUN | wiring (10 images → 0 CLINICAL_AI_RUN) |
+| F5 | A FLAIR description was reported as "names another sequence" because of a short inversion time | RC-127 | each text's reason from its words alone (`classifyText`); the inversion time has its own reason | node harness + vitest |
+| — | Cleanup | RC-123 | one RC-062 predicate `rc062_withholds` (used by `present_comparison` and SEL; same rule); `_classify_tokens` returns (class, T1, T2) and is reused; word sets and regexes built once per policy | G24, G25 |
+
+Failing first (commit `d005590`, on the code of f4f33b5), with both flags off: **(a) RC-049: 1 634 of 2 400 generated entries differed** (1 164 verdicts, 470 reasons only); **(b) inventory: 1 176 of 2 400 `detect_sequence` answers and 641 of 800 group answers differed**; **(c) routes: 192 of 288 answers differed** (216 of 384 after the route corpus was extended with the SEL input-type order); **G19 extension: 194 base FLAIR acceptances lost without a documented decision**. After the fixes: 0 / 0 / 0 and 0.
+
+Negative controls: NC_RESULT_PLACEHOLDER
+
+**HAZ-007 residual:** unchanged (RC-062's rule is the base branch's; its predicate is only named and shared).
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

@@ -13,7 +13,6 @@ inversion time). DRAFT, PENDING owner approval.
 """
 import importlib.util
 import json
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -73,13 +72,10 @@ def test_rc122_g26_b_g20_hygiene_is_the_only_documented_difference():
     as its descriptive file name — directories, extension and identifier tokens are not classified. The first
     argument is read exactly as on the base."""
     from app.services import dataset_inventory as inv
-    base_ns = {"__name__": "base_inventory"}
-    src = subprocess.run(["git", "show", "5ee06b7:backend/app/services/dataset_inventory.py"], cwd=REPO,
-                         capture_output=True, text=True, encoding="utf-8")
-    if src.returncode != 0:
-        pytest.skip("the base commit is not in this clone")
-    exec(compile(src.stdout, "base_inventory", "exec"), base_ns)
-    base = base_ns["detect_sequence"]
+
+    def base(*texts):
+        """The base read every argument whole, joined by spaces — exactly what the first argument still is (G26 b)."""
+        return inv.detect_sequence(" ".join(t for t in texts if t))
     fid = "patients/9f0c/studies/swi_runs/series/s1/7a3f9e21-0c4d-4b1e-9a7f-2b6c1d0e8f11.nii.gz"
     assert base("", fid) == "SWI"                       # the base read a directory name
     assert inv.detect_sequence("", fid) is None          # now only the descriptive file name, here none
