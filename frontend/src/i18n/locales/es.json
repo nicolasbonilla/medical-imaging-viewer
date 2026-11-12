@@ -1558,6 +1558,11 @@
         "message": "No se encontró la imagen, o usted no tiene acceso a ella, así que la IA no se ejecuta.",
         "action": "Compruebe que la imagen sigue en el estudio y que puede abrirla; después vuelva a seleccionarla."
       },
+      "source_image_missing": {
+        "message": "Una máscara de esta comparación no tiene imagen de origen, así que no se pueden comprobar su secuencia ni su grosor de corte y la IA no la compara.",
+        "action": "Compare dos segmentaciones hechas sobre imágenes guardadas, o compare las imágenes visualmente con la superposición.",
+        "action_comparison": "Compare dos segmentaciones hechas sobre imágenes guardadas, o compare las imágenes visualmente con la superposición."
+      },
       "gate_rate_limited": {
         "message": "Demasiados controles de calidad en poco tiempo, así que la IA todavía no se ejecuta. Espere {{seconds}} s.",
         "action": "Espere {{seconds}} segundos y vuelva a intentarlo; el control se repite solo al volver a seleccionar la imagen."

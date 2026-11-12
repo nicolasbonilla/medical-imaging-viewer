@@ -370,7 +370,9 @@ export function LongitudinalCompare({
                 {selResult.quality_gate && selResult.quality_gate.ai_output_allowed === true && selResult.ok && (
                   <QualityGatePanel result={selResult.quality_gate} testId="sel-quality-gate" />
                 )}
-                {selResult.quality_gate && selResult.quality_gate.ai_output_allowed === true && !selResult.ok && (
+                {/* G30 extended (ninth review): the RC-062 note only when RC-062 withheld it; an SEL failure states its own reason */}
+                {selResult.quality_gate && selResult.quality_gate.ai_output_allowed === true && !selResult.ok
+                  && selResult.abstained === true && (
                   <p className="text-[9px] text-gray-400" data-testid="sel-quality-gate-governed">{t('qualityGate.governedByRc062')}</p>
                 )}
                 {selResult.quality_gate && selResult.quality_gate.ai_output_allowed !== true ? (

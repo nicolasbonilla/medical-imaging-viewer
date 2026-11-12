@@ -43,6 +43,7 @@
     "skull_present": {"en": "an image still has its skull", "es": "una imagen aún conserva el cráneo", "de": "ein Bild enthält noch den Schädel"},
     "skull_unknown": {"en": "it cannot be confirmed that the skull was removed", "es": "no se puede confirmar que se haya retirado el cráneo", "de": "es lässt sich nicht bestätigen, dass der Schädel entfernt wurde"},
     "skull_pending": {"en": "the skull has not been checked yet", "es": "el cráneo aún no se ha comprobado", "de": "der Schädel wurde noch nicht geprüft"},
+    "source_image_missing": {"en": "a mask has no source image to check", "es": "una máscara no tiene imagen de origen que comprobar", "de": "zu einer Maske gibt es kein Ursprungsbild, das sich prüfen ließe"},
     "header_unreadable": {"en": "an image header could not be read", "es": "no se pudo leer la cabecera de una imagen", "de": "der Bildkopf eines Bildes konnte nicht gelesen werden"}
   }
 }

@@ -383,6 +383,18 @@ def source_series_ref(file_id, study_service=None):
     return db.collection("studies").document(m.group(1)).collection("series").document(m.group(2))
 
 
+def source_study_ref(file_id, study_service=None):
+    """The Firestore reference of a source image's STUDY (studies/{study}), through the same file-id lookup."""
+    m = _FILE_ID_RE.fullmatch(str(file_id or ""))
+    if not m:
+        return None
+    if study_service is None:
+        from app.core.container import get_study_service
+        study_service = get_study_service()
+    db = getattr(study_service, "db", None)
+    return None if db is None else db.collection("studies").document(m.group(1))
+
+
 def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
     """The acquisition record stored with a source image (instance document), or None. Never raises. Seventh review
     of PR #81 (E1): ONE instance document is read — a query on the file, limit 1 — never the whole collection."""

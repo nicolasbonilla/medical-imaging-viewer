@@ -6,7 +6,7 @@
     "DATA RULE (REQ-SAFE-053, RC-124): no threshold or figure here may come from non-commercial data. The thickness band limits are the limits pre-registered in the Paper A v0.3 protocol and only NAME the band in a warning. Until a v3 evidence asset with a licence on commercial_licence_allowlist is set in thickness.evidence_asset (the hook, null today), the thickness check warns and never abstains."
   ],
   "policy_id": "quality-gate",
-  "policy_version": "1.8.0-draft",
+  "policy_version": "1.9.0-draft",
   "status": "DRAFT, PENDING owner approval",
   "modes": {
     "single": { "visits": ["study"], "checks": ["platform", "sequence", "thickness", "skull"] },
@@ -22,8 +22,8 @@
       "$comment": "First review of PR #81 (S1, S2): the series description is split into tokens on every non-alphanumeric character (after splitting camelCase, '*' read as 'star', '+C' as 'postcontrast'); the class comes from the tokens, never from word-boundary regexes. Any other_words token, or a T1 weighting with a FLAIR name, is 'other' and ALWAYS abstains. Only a FLAIR, T2-FLAIR or dark-fluid name is FLAIR. Third review (G19): FIELD-AWARE - the description (SeriesDescription, ProtocolName, NIfTI descrip) by these tokens; the DICOM SequenceName by sequence_name_codes on its letters after a leading '*' (a Siemens prefix there, never T2*; an unlisted code says nothing); the DICOM ImageType by image_type_other (anything else says nothing). Corpus: backend/tests/fixtures/quality_gate/sequences.v1.json (G12, server test data). Second review (G15), restated in the fifth and made structural in the sixth (G27): this is the ONE sequence classifier, on the server only - with the gate on the RC-049 header evidence of the in-browser AI takes the class the server returns (with the gate off it keeps its base rules, G26; dataset_inventory is a research inventory that always keeps its base heuristic); TIRM is a FLAIR name; 'TI=' / 'TI:' in the text is an inversion time (seconds below ti_seconds_below).",
       "flair_substring": "flair",
       "flair_words": ["tirm"],
-      "flair_compounds": ["darkfluid", "fluidattenuated"],
-      "flair_pairs": [["dark", "fluid"], ["fluid", "attenuated"]],
+      "flair_compounds": ["darkfluid", "darkfl", "fluidattenuated"],
+      "flair_pairs": [["dark", "fluid"], ["dark", "fl"], ["da", "fl"], ["fluid", "attenuated"]],
       "t1_prefix": "t1",
       "t2_prefix": "t2",
       "t1_words": ["mprage", "mp2rage", "bravo", "spgr", "fspgr", "tfl", "tfl3d", "tfe"],
@@ -42,10 +42,10 @@
       "ti_seconds_below": 10,
       "sequence_name_codes": {"tfl": "T1", "tfe": "T1", "fl": "other", "fgre": "other", "efgre": "other", "gre": "other",
         "ffe": "other", "fe": "other", "swi": "other", "ep": "other", "epi": "other", "epse": "other", "epfid": "other"},
-      "image_type_other": ["derived", "secondary", "mpr", "mip", "minip", "projection", "reformatted", "reformat",
+      "image_type_other": ["secondary", "mpr", "mip", "minip", "projection", "reformatted", "reformat",
         "resampled", "subtraction", "localizer", "screen", "adc", "trace", "tracew", "fa", "colfa", "diffusion",
         "perfusion", "exp"],
-      "$comment_image_type": "Seventh review of PR #81 (S1; D-QG-7, D-QG-11): an ImageType value that says the image is NOT an original acquisition makes it other (abstains): DERIVED (value 1: computed from other images), SECONDARY (value 2: made after the examination, a secondary capture), MPR / reformatted / RESAMPLED (re-sliced: interpolated voxels), MIP / minIP / PROJECTION IMAGE (projections), SUBTRACTION, LOCALIZER, SCREEN SAVE, and parametric maps (ADC, TRACEW, FA, perfusion, exponential). ORIGINAL / PRIMARY and the vendor flags of an original acquisition (M, ND, NORM, DIS2D, OTHER, M_SE) say nothing."
+      "$comment_image_type": "Ninth review of PR #81 (G33; D-QG-7, D-QG-11, D-QG-14 updated): ONLY an ImageType that says the image is not an acquisition makes it other (abstains): SECONDARY (made after the examination: a secondary capture, also DERIVED\\SECONDARY), MPR / reformatted / RESAMPLED (re-sliced), MIP / minIP / PROJECTION IMAGE, SUBTRACTION, LOCALIZER, SCREEN SAVE and parametric maps (ADC, TRACEW, FA, perfusion, exponential). DERIVED\\PRIMARY with on-scanner corrections (NORM, DIS2D, DIS3D, FILTERED, MFSPLIT) is the acquisition as the scanner delivers it: it says nothing and gives no warning. 'da-fl', 'dark-fl', 'darkfluid' and 'dark_fluid' are dark-fluid names (FLAIR)."
     }
   },
   "mode_actions": {
@@ -102,6 +102,7 @@
     "skull_unknown": "abstain",
     "skull_pending": "pending",
     "scanner_not_recorded": "warn",
-    "header_unreadable": "abstain"
+    "header_unreadable": "abstain",
+    "source_image_missing": "abstain"
   }
 }

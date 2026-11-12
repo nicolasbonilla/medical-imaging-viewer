@@ -20,7 +20,7 @@ from tests.unit.test_rc122_quality_gate_wiring import PAIR, _registry, compare  
 @pytest.mark.parametrize("image_type, expected", [
     ("ORIGINAL\\PRIMARY", "FLAIR"), ("ORIGINAL\\PRIMARY\\M\\ND\\NORM", "FLAIR"), ("ORIGINAL\\PRIMARY\\OTHER", "FLAIR"),
     ("ORIGINAL\\PRIMARY\\M_SE\\M\\SE", "FLAIR"), ("ORIGINAL\\PRIMARY\\M\\DIS2D", "FLAIR"),
-    ("DERIVED\\PRIMARY", "other"), ("DERIVED\\SECONDARY", "other"), ("ORIGINAL\\SECONDARY", "other"),
+    ("DERIVED\\PRIMARY", "FLAIR"), ("DERIVED\\SECONDARY", "other"), ("ORIGINAL\\SECONDARY", "other"),   # G33 (ninth)
     ("DERIVED\\SECONDARY\\MPR", "other"), ("DERIVED\\PRIMARY\\PROJECTION IMAGE", "other"),
     ("DERIVED\\PRIMARY\\SUBTRACTION", "other"), ("DERIVED\\SECONDARY\\RESAMPLED", "other"),
     ("DERIVED\\SECONDARY\\CSA RESAMPLED", "other"), ("DERIVED\\PRIMARY\\MPR\\ND\\NORM", "other"),
@@ -153,7 +153,7 @@ def test_rc126_e1_the_stored_records_are_read_without_streaming_the_instances():
     service = type("S", (), {"db": type("D", (), {"collection": lambda self, name: _Coll(db.tree.get(name, {}), counter)})()})()
     acq, desc = qg.stored_records(file_id, study_service=service)
     assert acq == {"manufacturer": "SIEMENS", "n": 42} and desc == "AX T2 FLAIR"
-    assert counter["docs"] <= 2, f"{counter['docs']} documents read to build one cache key"
+    assert counter["docs"] <= 3, f"{counter['docs']} documents read to build one cache key"   # + the study (G34)
 
 
 def test_rc123_e2_the_comparison_reads_both_visits_concurrently(compare, monkeypatch):

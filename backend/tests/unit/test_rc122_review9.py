@@ -103,7 +103,8 @@ def test_rc123_g35_validation_precedes_the_gate(compare, monkeypatch, body):
     assert off[0] == 400 and on == off, (off, on)
 
 
-def test_rc123_g35_an_instance_pair_abstains_for_its_true_reason():
+def test_rc123_g35_an_instance_pair_abstains_for_its_true_reason(monkeypatch):
+    monkeypatch.setattr(qg, "_REGISTRY", _registry())
     gate = qg.comparison_gate(None, None, headers=[None, None], records=[None, None], visit_ok=True)
     assert "source_image_missing" in gate["codes"] and "header_unreadable" not in gate["codes"]
     assert "sequence_missing" not in gate["codes"]

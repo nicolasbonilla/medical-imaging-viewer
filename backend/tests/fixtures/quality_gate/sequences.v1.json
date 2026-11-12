@@ -209,7 +209,7 @@
   {"vendor": "Siemens", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "image_type": "ORIGINAL\\PRIMARY\\M\\DIS2D"},
   {"vendor": "GE", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "image_type": "ORIGINAL\\PRIMARY\\OTHER"},
   {"vendor": "Philips", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "image_type": "ORIGINAL\\PRIMARY\\M_SE\\M\\SE"},
-  {"vendor": "any", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "other", "image_type": "DERIVED\\PRIMARY"},
+  {"vendor": "any", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "FLAIR", "image_type": "DERIVED\\PRIMARY"},
   {"vendor": "any", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "other", "image_type": "DERIVED\\SECONDARY"},
   {"vendor": "any", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "other", "image_type": "ORIGINAL\\SECONDARY"},
   {"vendor": "any", "text": "AX T2 FLAIR", "inversion_time_ms": null, "expected": "other", "image_type": "DERIVED\\PRIMARY\\PROJECTION IMAGE"},

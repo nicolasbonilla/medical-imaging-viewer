@@ -1540,6 +1540,11 @@
         "message": "Das Bild wurde nicht gefunden, oder Sie haben keinen Zugriff darauf, daher läuft die KI nicht.",
         "action": "Prüfen Sie, ob das Bild noch in der Untersuchung ist und Sie es öffnen dürfen; wählen Sie es dann erneut."
       },
+      "source_image_missing": {
+        "message": "Zu einer Maske dieses Vergleichs gibt es kein Ursprungsbild, daher lassen sich Sequenz und Schichtdicke nicht prüfen und die KI vergleicht sie nicht.",
+        "action": "Vergleichen Sie zwei Segmentierungen auf gespeicherten Bildern, oder vergleichen Sie die Bilder visuell mit der Überlagerung.",
+        "action_comparison": "Vergleichen Sie zwei Segmentierungen auf gespeicherten Bildern, oder vergleichen Sie die Bilder visuell mit der Überlagerung."
+      },
       "gate_rate_limited": {
         "message": "Zu viele Qualitätsprüfungen in kurzer Zeit, daher läuft die KI noch nicht. Warten Sie {{seconds}} s.",
         "action": "Warten Sie {{seconds}} Sekunden und versuchen Sie es erneut; die Prüfung wird beim erneuten Auswählen des Bildes wiederholt."

@@ -132,6 +132,12 @@ async def quality_gate(
             "code": "HTTP_429", "message": "Too many quality-gate checks; try again shortly",
             "details": {"code": "gate_rate_limited", "retry_after_s": wait}}})
 
+    # O1 (ninth review): a cheap per-user counter of EVERY request, before any authorization, storage or Firestore read
+    request_wait = qg.rate_limit_request(user_id)
+    if request_wait is not None:
+        return JSONResponse(status_code=429, headers={"Retry-After": str(request_wait)}, content={"error": {
+            "code": "HTTP_429", "message": "Too many quality-gate checks; try again shortly",
+            "details": {"code": "gate_rate_limited", "retry_after_s": request_wait}}})
     if not qg.platform_allows():
         limited = _over_limit()                    # a refusal is a real, audited evaluation: counted too
         if limited is not None:
@@ -148,6 +154,8 @@ async def quality_gate(
     cached = qg.cached_consultation(key)
     if cached is not None:                         # F3: the same answer again, not counted, not re-audited
         answer, version = cached
+        if body.physician_confirmed_flair:          # O2 (ninth review): every attestation is audited, cache or not
+            qg.audit_cached_attestation(answer, user=current_user, request=request, study_key=qg.study_of(paths[0]) or "")
         return {**answer, "subject": {"file_id": body.file_id, "version": version}}
     limited = _over_limit()
     if limited is not None:

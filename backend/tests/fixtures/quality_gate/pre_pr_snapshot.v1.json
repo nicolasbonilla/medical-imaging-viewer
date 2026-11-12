@@ -180,7 +180,6 @@
   "[\"FLAIR pc\", null, null, null]": "D-QG-12 (fifth review of PR #81): a phase, phase-contrast, echo-planar or diffusion-trace FLAIR is 'other' (abstains)",
   "[\"TRA-FLAIR-EPI\", null, null, null]": "D-QG-12 (fifth review of PR #81): a phase, phase-contrast, echo-planar or diffusion-trace FLAIR is 'other' (abstains)",
   "[\"flair-trace-ax\", null, null, null]": "D-QG-12 (fifth review of PR #81): a phase, phase-contrast, echo-planar or diffusion-trace FLAIR is 'other' (abstains)",
-  "[\"AX T2 FLAIR\", null, \"DERIVED\\\\PRIMARY\", null]": "D-QG-7: a reformatted, projected, derived or subtracted FLAIR is 'other' (abstains)",
   "[\"AX T2 FLAIR\", null, \"DERIVED\\\\SECONDARY\", null]": "D-QG-11 (seventh review of PR #81): an ImageType that is not an original acquisition (secondary, resampled, screen save, localizer) is 'other' (abstains)",
   "[\"AX T2 FLAIR\", null, \"ORIGINAL\\\\SECONDARY\", null]": "D-QG-11 (seventh review of PR #81): an ImageType that is not an original acquisition (secondary, resampled, screen save, localizer) is 'other' (abstains)",
   "[\"AX T2 FLAIR\", null, \"DERIVED\\\\PRIMARY\\\\PROJECTION IMAGE\", null]": "D-QG-7: a reformatted, projected, derived or subtracted FLAIR is 'other' (abstains)",

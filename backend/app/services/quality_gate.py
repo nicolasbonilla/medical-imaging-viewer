@@ -47,7 +47,7 @@ DECISIONS = ("abstain", "pending", "proceed_with_warnings", "proceed")
 STATUSES = ("pass", "warn", "pending", "abstain")
 VISIT_LABELS = ("study", "tp1", "tp2")
 # Tokeniser of a series description (first review of PR #81, S1/S2): no word-boundary regex — '_' is a word
-# character for \b, so 'AX_DWI_B1000' was read as naming no sequence. The SAME steps are in gate.ts.
+# character for \b, so 'AX_DWI_B1000' was read as naming no sequence.
 _CAMEL = re.compile(r"([a-z])([A-Z])")
 _PLUS_C = re.compile(r"\+\s*[cC](?![A-Za-z])")
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
@@ -239,6 +239,9 @@ def _evaluate(inputs, policy) -> Dict[str, Any]:
         return _result([platform, _check("input", None, "abstain", "gate_input_invalid")], policy)
     checks = [platform]
     for label, visit in zip(spec["visits"], visits):
+        if visit.get("header") == "no_source":         # G35 (ninth review): the TRUE reason, and nothing else
+            checks.append(_check("input", label, policy["codes"]["source_image_missing"], "source_image_missing"))
+            continue
         if visit.get("header") == "unreadable":        # the header could not be read at all (third review)
             checks.append(_check("input", label, policy["codes"]["header_unreadable"], "header_unreadable"))
         checks.append(_sequence_check(visit, label, policy, mode))
@@ -260,7 +263,7 @@ def evaluate(inputs, policy: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
 
 
 def canonical(result: Dict[str, Any]) -> str:
-    """The decision as one line, identical in gate.ts (G4): decision|codes|check@visit:status:code[param];..."""
+    """The decision as one line: decision|codes|check@visit:status:code[param];..."""
     parts = []
     for c in result.get("checks", []):
         p = c.get("params") or {}
@@ -329,15 +332,6 @@ def _classify_tokens(tokens: List[str], vocab: Dict[str, Any]) -> tuple:
     if flair:
         return "FLAIR", t1, t2
     return ("T1" if t1 else "T2" if t2 else "unknown"), t1, t2
-
-
-def classify_text(text: Any, policy: Optional[Dict[str, Any]] = None) -> Optional[str]:
-    """The class ONE description names by its words alone — never by an inversion time (fifth review of PR #81,
-    F5); None for no words. Same as gate.ts classifyText."""
-    tokens = sequence_tokens(text) if isinstance(text, str) else []
-    if not tokens:
-        return None
-    return _classify_tokens(tokens, (policy if policy is not None else _policy())["sequence"]["vocabulary"])[0]
 
 
 def text_inversion_time_ms(text: Any, policy: Optional[Dict[str, Any]] = None) -> Optional[float]:
@@ -414,7 +408,7 @@ def classify_fields(fields: Dict[str, Any], inversion_time_ms: Any = None,
 def classify_sequence(series_description: Any, inversion_time_ms: Any = None,
                       policy: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[str]]:
     """The description field alone through classify_fields (G15): the class, plus the weighting (T1/T2) and family
-    (SWI/PD) the dataset inventory reports. Same rules as gate.ts and headerEvidence.ts (both route to it)."""
+    (SWI/PD)."""
     return classify_fields({"description": series_description}, inversion_time_ms, policy)
 
 
@@ -462,14 +456,24 @@ def scanner_from_acquisition_record(acq: Optional[dict]) -> Optional[Dict[str, A
 
 
 def read_source_series_description(file_id, study_service=None) -> Optional[str]:
-    """The series description stored for a source image's series (PACS import), or None. Never raises."""
+    """The series description stored for a source image's series (PACS import), or None. Never raises. Ninth review of
+    PR #81 (G34): IMAGE-LEVEL only — a description copied from the STUDY (marked series_description_source = "study",
+    or equal to the study's study_description) is not the series' own and is ignored."""
     try:
         series = lcs.source_series_ref(file_id, study_service)
         if series is None:
             return None
         doc = series.get()
-        value = (doc.to_dict() or {}).get("series_description") if getattr(doc, "exists", False) else None
-        return value if isinstance(value, str) and value.strip() else None
+        data = (doc.to_dict() or {}) if getattr(doc, "exists", False) else {}
+        value = data.get("series_description")
+        if not isinstance(value, str) or not value.strip() or data.get("series_description_source") == "study":
+            return None
+        study = lcs.source_study_ref(file_id, study_service)
+        study_doc = study.get() if study is not None else None
+        study_desc = ((study_doc.to_dict() or {}).get("study_description")
+                      if study_doc is not None and getattr(study_doc, "exists", False) else None)
+        same = isinstance(study_desc, str) and " ".join(study_desc.split()).lower() == " ".join(value.split()).lower()
+        return None if same else value
     except Exception:  # noqa: BLE001 — unknown description: the sequence is "missing", the gate abstains
         return None
 
@@ -641,10 +645,6 @@ def _inspect_header_prefix(data: bytes):
     return len(raw) >= vox_offset, (data, raw)
 
 
-def _header_complete(data: bytes) -> bool:
-    return _inspect_header_prefix(data)[0]
-
-
 async def _read_header_fields(storage_service, bucket: str, file_path: str) -> Dict[str, Any]:
     """E1 / second review, finding 3 / eighth review: the header only, through the ONE ranged header reader of the
     app (displayed_image_check.read_header_prefix: bounded ranges, retried larger while the header runs longer, one
@@ -709,7 +709,7 @@ def visit_inputs(fields: Dict[str, Any], acquisition: Optional[dict], stored_des
         recorded = thickness_from_acquisition_record(acq, policy["thickness"]["thin_limit_mm"])
         thickness = recorded if recorded is not None else thickness
     return {
-        **({"header": "unreadable"} if fields.get("unreadable") else {}),
+        **({"header": "no_source"} if fields.get("no_source") else {"header": "unreadable"} if fields.get("unreadable") else {}),
         "sequence": classify_fields(header_classifier_fields(fields, stored_description), ti, policy)["class"],
         "physician_confirmed_flair": physician_confirmed_flair is True,
         "thickness": dict(thickness) if isinstance(thickness, dict) else None,
@@ -751,9 +751,6 @@ def actor_for(user, request=None):
                       role=str(getattr(role, "value", role)) if role is not None else None, request=request)
 
 
-_UNREAD = object()
-
-
 # ----------------------------------------------------------------------------- through the platform
 _REGISTRY = None
 
@@ -778,6 +775,35 @@ def platform_allows(registry=None) -> bool:
 
 RATE_LIMIT_PER_MINUTE = 30
 _LIMITER = None
+REQUEST_LIMIT_PER_MINUTE = 120       # O1 (ninth review): every request, before any authorization or storage read
+_REQUEST_LIMITER = None
+
+
+def rate_limit_request(user_id: str) -> Optional[int]:
+    """O1 (ninth review of PR #81): a cheap per-user counter of EVERY consultation request, checked before any
+    authorization lookup, storage metadata or Firestore read (the cached path included); None when allowed, else the
+    seconds to wait. Real evaluations keep their own lower limit (rate_limit_evaluation)."""
+    global _REQUEST_LIMITER
+    from app.core.security.rate_limiter import RateLimiter, RateLimitScope
+    if _REQUEST_LIMITER is None:
+        _REQUEST_LIMITER = RateLimiter(redis_client=None, default_limit=REQUEST_LIMIT_PER_MINUTE, default_window=60)
+    allowed, meta = _REQUEST_LIMITER.check_rate_limit(f"quality_gate_requests:{user_id}", limit=REQUEST_LIMIT_PER_MINUTE,
+                                                      window=60, scope=RateLimitScope.PER_USER, user_id=user_id)
+    if allowed:
+        return None
+    wait = lcs._number((meta or {}).get("retry_after")) if isinstance(meta, dict) else None
+    return max(1, min(60, int(math.ceil(wait)))) if wait is not None and wait > 0 else 60
+
+
+def audit_cached_attestation(answer: Dict[str, Any], *, user=None, request=None, study_key: str = "", registry=None) -> None:
+    """O2 (ninth review of PR #81): an attestation is ALWAYS audited, also when its decision comes from the cache — one
+    record per attested consultation, under the clinician who sent it."""
+    from app.agent_platform import registry as R
+    reg = registry if registry is not None else default_registry()
+    details = {**explain(answer), "decision": answer.get("decision"), "mode": answer.get("mode"), "cached": True}
+    with R.audit_actor(actor_for(user, request) if user is not None else None):
+        reg.audit("success", audit_code(answer), event="agent.consultation", agent_id=AGENT_ID,
+                  study_key=study_key or None, trace_id=answer.get("trace_id"), details=details)
 
 
 def new_rate_limiter():
@@ -865,7 +891,7 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
                 if not isinstance(inputs, dict):
                     payload["mode"] = None
                 result = evaluate(payload, policy)
-                result["platform"] = payload["platform"]          # the browser re-evaluates with it (gate.ts)
+                result["platform"] = payload["platform"]          # shown by the browser with the decision
                 for c in result["checks"]:
                     with tr.span(f"gate_check {c['check']}", "INTERNAL", {
                         "mstool.operation.name": "gate_check", "mstool.gate.check": c["check"],
@@ -1016,7 +1042,7 @@ def comparison_gate(source_tp1, source_tp2, *, headers=None, records=None, attes
     visits, acqs, spacings = [], [], []
     for s, rec, h, att in zip((source_tp1, source_tp2), given_rec, given_hdr, attestation):
         acq, stored = rec if isinstance(rec, tuple) else (stored_records(s) if s else (None, None))
-        fields = h if isinstance(h, dict) else {**_NO_HEADER, "unreadable": True}
+        fields = h if isinstance(h, dict) else {**_NO_HEADER, "no_source": True} if not s else {**_NO_HEADER, "unreadable": True}
         acqs.append(acq if isinstance(acq, dict) else None)
         spacings.append(tuple(fields["voxel_spacing_mm"]) if fields.get("voxel_spacing_mm") else None)
         visits.append(visit_inputs(fields, acq, stored, physician_confirmed_flair=att is True, with_scanner=True))
