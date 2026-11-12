@@ -5,6 +5,7 @@
  * rate-limited or unavailable answer by itself after the server's wait with a countdown, and keys the final decision
  * to the RUN, so a re-run of the same file never shows the previous run's decision.
  */
+import type { ReactElement } from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@/i18n/config';
@@ -28,10 +29,10 @@ vi.mock('@/config/features', async (importOriginal) => {
 });
 vi.mock('./QualityGatePanel', async (importOriginal) => {
   const mod = await importOriginal<typeof import('./QualityGatePanel')>();
-  const Real = mod.QualityGatePanel;
+  const Real = mod.QualityGatePanel as unknown as (p: Record<string, unknown>) => ReactElement;
   const Spy = (props: { result: { decision: string }; testId?: string }) => {
     h.panels.push(`${props.testId}:${props.result.decision}`);
-    return <Real {...(props as never)} />;
+    return <Real {...(props as unknown as Record<string, unknown>)} />;
   };
   return { ...mod, QualityGatePanel: Spy, default: Spy };
 });
