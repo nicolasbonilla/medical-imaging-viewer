@@ -146,3 +146,22 @@ def test_rc123_r4_the_report_draft_states_the_gate_warnings():
     for lang, word in (("en", "Quality"), ("es", "calidad"), ("de", "Qualität")):
         notice = longitudinal_notice(lng, lang)
         assert notice and word in notice, (lang, notice)
+
+
+def test_rc123_g25_the_gate_alone_withholds_in_compare_and_sel():
+    """A pair RC-062 finds comparable is still withheld, by compare AND by SEL, when the gate stops it (another sequence,
+    the platform switched off) — the shared verdict carries the gate's abstention."""
+    record = {**SEQUENCE, "manufacturer": "SIEMENS", "manufacturer_model_name": "Prisma", "magnetic_field_strength_t": 3.0,
+              "slice_thickness_mm": 3.0, "mr_acquisition_type": "2D"}
+    check = lcs.compare_acquisitions(record, record, (1.0, 1.0, 3.0), (1.0, 1.0, 3.0))
+    assert check["status"] == "same"
+    visit = {"status": "ok"}
+    stops = [qg.evaluate({"mode": "comparison", "platform": ON, "visits": [_visit(record), {**_visit(record), "sequence": "T1"}]}),
+             qg.evaluate({"mode": "comparison", "platform": {"allowed": False, "code": "agent_switched_off"},
+                          "visits": [_visit(record), _visit(record)]})]
+    for gate in stops:
+        assert gate["ai_output_allowed"] is False
+        assert qg.present_gated_comparison(dict(RESULT), acquisition_check=check, evidence=None, binding=BINDING,
+                                           stored_review=REVIEW, visit_check=visit, gate=gate)["abstained"] is True
+        verdict = qg.comparison_withheld(check, visit, gate)
+        assert verdict == {"withheld": True, "rc062": False, "gate": True}, verdict
