@@ -1379,6 +1379,92 @@
       "change": "agent platform core (DRAFT, PENDING owner approval; branch feat/agent-platform, draft PR #79; not merged, not deployed; a tested library not yet in the path of any live agent — Integration_Plan.md)",
       "negative_control": "Latest result of each of the 42 current mutations of RC-121 (rounds in a throwaway copy, 2026-11-10/11, the last in round 9 of PR #79): 42 of 42 detected (AA10_study_resolver_hook_removed, AA11_storage_ref_study_hook_removed, AA12_patient_dependency_hook_removed, AA13_capability_not_sent, AA14_capability_not_required, AA15_capability_not_current_in_tools, AA16_output_schema_optional, AA1_backend_scope_patient_unchecked, AA2_backend_scope_not_bound_to_its_user, AA3_backend_scope_study_unchecked, AA4_storage_path_study_unchecked, AA5_scope_signature_not_checked, AA6_scope_expiry_not_checked, AA7_agent_routes_unrestricted, AA8_admin_bypass_for_agent_listing, AA9_resolver_patient_hook_removed, BB10_patient_spellings_differ, BB11_pass_returned_to_the_model, BB1_assistant_unscoped_passes_the_backend, BB2_assistant_marker_not_sent, BB3_no_local_session_check, BB4_session_never_expires, BB8_refusal_becomes_500, BB9_issuance_reimplemented, CC10_issuance_continues_after_a_refusal, CC1_confirmation_not_required, CC2_no_elicitation_still_opens, CC3_old_session_survives_a_new_request, CC4_patient_switch_not_audited, CC6_path_traversal_passes, CC7_loose_file_parameter, CC9_scope_optional_for_the_assistant, DD1_chokepoint_denial_not_audited, DD2_study_resolver_denial_not_audited, DD3_segmentation_denial_not_audited, DD4_storage_ref_denial_not_audited, DD5_patient_dependency_denial_not_audited, DD6_denial_audited_with_another_reason, EE1_ticket_redeemed_twice, EE2_replay_not_audited, EE3_shared_store_not_atomic, EE4_memory_store_forgets); last restored suite 618 passed / 0 failed, against a clean baseline. Earlier rounds kept in the record. Record: docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json",
       "failing_first": "docs/iec62304/records/risk_verification/AGENT-PLATFORM_failing_first_2026-11-10.json"
+    },
+    "RC-122": {
+      "description": "One deterministic quality gate before every AI step and before its output is shown: FLAIR only (a physician confirmation lifts unknown/missing with a warning, never a header naming another sequence); unknown never passes; any abstention wins; output only on proceed / proceed_with_warnings",
+      "hazard": "HAZ-025",
+      "status": "implemented",
+      "implementation": "backend/app/services/quality_gate.py; quality_gate_policy.json; frontend/src/services/qualityGate/gate.ts",
+      "tests": [
+        "tests/unit/test_quality_gate_matrix.py",
+        "tests/unit/test_rc122_quality_gate_wiring.py",
+        "frontend/src/services/qualityGate/gate.test.ts"
+      ],
+      "requirement": "REQ-FUNC-117, REQ-SAFE-052",
+      "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate stacked on draft PR #79; not merged, not deployed; OFF behind VITE_ENABLE_QUALITY_GATE and QUALITY_GATE_ENFORCED)",
+      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "failing_first": "commit efad1cf (3200-case matrix against a no-gate baseline: 18 failed, 5 passed)"
+    },
+    "RC-123": {
+      "description": "A change of manufacturer, model or field strength between compared visits, or any of them missing, abstains; the scanner check calls RC-062 compare_acquisitions (never looser than RC-062); an abstention withholds the RC-062 fields",
+      "hazard": "HAZ-025, HAZ-007",
+      "status": "implemented",
+      "implementation": "backend/app/services/quality_gate.py (_scanner_check, apply_to_comparison, comparison_gate); app/api/routes/segmentation_analysis.py",
+      "tests": [
+        "tests/unit/test_quality_gate_matrix.py",
+        "tests/unit/test_rc122_quality_gate_wiring.py"
+      ],
+      "requirement": "REQ-SAFE-052",
+      "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
+      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "failing_first": "commit efad1cf"
+    },
+    "RC-124": {
+      "description": "Data rule: the thickness check warns and explains and never abstains until a v3 evidence asset with a commercial licence (CC0-1.0, CC-BY-4.0) is set through the marked hook; the shipped policy has none and cites no non-commercial cohort",
+      "hazard": "HAZ-025, HAZ-015",
+      "status": "implemented",
+      "implementation": "backend/app/services/quality_gate_policy.json (thickness.evidence_asset: null); quality_gate.py (_evidence_abstain_bands); frontend/src/services/qualityGate/gate.ts",
+      "tests": [
+        "tests/unit/test_quality_gate_matrix.py",
+        "frontend/src/services/qualityGate/gate.test.ts"
+      ],
+      "requirement": "REQ-SAFE-053",
+      "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
+      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "failing_first": "commit efad1cf"
+    },
+    "RC-125": {
+      "description": "In a single study the image the AI reads must be skull-free (as uploaded after the skull gates, or skull-removed); skull present or unknown abstains; not read yet = pending, the output is not shown",
+      "hazard": "HAZ-025, HAZ-001",
+      "status": "implemented",
+      "implementation": "backend/app/services/quality_gate.py (_skull_check); frontend/src/services/qualityGate/gate.ts; frontend/src/components/BrowserFlamesCard.tsx",
+      "tests": [
+        "tests/unit/test_quality_gate_matrix.py",
+        "frontend/src/services/qualityGate/gate.test.ts"
+      ],
+      "requirement": "REQ-SAFE-052",
+      "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
+      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "failing_first": "commit efad1cf"
+    },
+    "RC-126": {
+      "description": "The gate is the registered agent quality-gate (no model, no tool): approval and both kill switches read at every consultation, fail closed (not approved / off / unreadable / unreachable: no AI step, reason shown); one trace with one child span per check that ran and one agent.run audit record; the registry records the policy SHA-256",
+      "hazard": "HAZ-025, HAZ-020",
+      "status": "implemented",
+      "implementation": "backend/app/agent_platform/agents.json (quality-gate, pending); tracing.py (gate attributes); app/services/quality_gate.py (run_quality_gate)",
+      "tests": [
+        "tests/unit/test_quality_gate_matrix.py",
+        "tests/unit/test_rc122_quality_gate_wiring.py"
+      ],
+      "requirement": "REQ-SAFE-054",
+      "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
+      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "failing_first": "commit efad1cf"
+    },
+    "RC-127": {
+      "description": "One decision everywhere and the reason shown: backend and frontend identical on a shared fixture read by pytest and vitest; every code with a plain message and an action in en/es/de; the panel shows the result before any AI output and no AI result is shown when the final decision does not allow it",
+      "hazard": "HAZ-025",
+      "status": "implemented",
+      "implementation": "frontend/src/config/qualityGate.cases.v1.json; qualityGatePolicy.v1.json; src/components/QualityGatePanel.tsx; src/i18n/locales/*.json (qualityGate)",
+      "tests": [
+        "tests/unit/test_quality_gate_matrix.py",
+        "frontend/src/services/qualityGate/gate.test.ts",
+        "frontend/src/components/QualityGatePanel.test.tsx"
+      ],
+      "requirement": "REQ-FUNC-118, REQ-SAFE-054",
+      "change": "single quality gate (DRAFT, PENDING owner approval; branch feat/quality-gate)",
+      "negative_control": "Record: docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json",
+      "failing_first": "commit efad1cf"
     }
   },
   "unverified_controls_note": [

@@ -1473,6 +1473,7 @@
     "title": "Qualitätsprüfung vor der KI",
     "draft": "Entwurf — Freigabe ausstehend",
     "aiHidden": "Das KI-Ergebnis wird nicht angezeigt, weil die Qualitätsprüfung es nicht zulässt.",
+    "checking": "Das Bild wird vor der KI geprüft …",
     "decision": {
       "abstain": "Die KI läuft für diesen Schritt nicht",
       "pending": "Die KI darf starten; ihr Ergebnis erscheint erst nach der letzten Prüfung",

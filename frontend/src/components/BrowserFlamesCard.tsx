@@ -28,6 +28,10 @@ import { FLAMES_FOLD0_MODEL } from '@/services/flames/plan';
 import { FLAMES_NOTICES } from '@/services/flames/notices';
 import { AutomaticMarkingNotice } from './AutomaticMarkingNotice';
 import { currentEnvironment, estimateDuration, formatElapsed } from '@/services/flames/runtimeEstimate';
+import { FEATURES } from '@/config/features';
+import { QualityGatePanel } from './QualityGatePanel';
+import { requestQualityGate } from '@/services/qualityGate/api';
+import { finalBrowserGate, type GateResult } from '@/services/qualityGate/gate';
 
 interface BrowserFlamesCardProps {
   flairFileId: string;
@@ -49,6 +53,32 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const [sequenceConfirmed, setSequenceConfirmed] = useState(false);
   useEffect(() => setSequenceConfirmed(false), [flairFileId]);
 
+  // Single quality gate (REQ-FUNC-117/118, RC-122..RC-127; DRAFT, behind VITE_ENABLE_QUALITY_GATE). Consulted before
+  // the run (the backend's decision; skull still pending) and again before the result is shown (the backend's fresh
+  // answer with the worker's skull outcome). Until the final answer arrives, nothing of the result is shown.
+  const gateOn = FEATURES.QUALITY_GATE;
+  const [preflight, setPreflight] = useState<GateResult | null>(null);
+  const [finalGate, setFinalGate] = useState<GateResult | null>(null);
+  useEffect(() => {
+    if (!gateOn || !flairFileId) return;
+    let live = true;
+    setPreflight(null);
+    void requestQualityGate(flairFileId, sequenceConfirmed).then((r) => { if (live) setPreflight(r); });
+    return () => { live = false; };
+  }, [gateOn, flairFileId, sequenceConfirmed]);
+  const doneResult = flames.status === 'done' ? flames.result : null;
+  useEffect(() => {
+    if (!gateOn) return;
+    setFinalGate(null);
+    if (!doneResult) return;
+    let live = true;
+    void requestQualityGate(doneResult.fileId, doneResult.provenance?.sequenceEvidence === 'clinician')
+      .then((r) => { if (live) setFinalGate(finalBrowserGate(r, doneResult.provenance)); });
+    return () => { live = false; };
+  }, [gateOn, doneResult]);
+  const gateAllowsRun = !gateOn || preflight?.ai_may_run === true;
+  const gateAllowsOutput = !gateOn || finalGate?.ai_output_allowed === true;
+
   const running = flames.status === 'running';
   const estimate = useMemo(() => estimateDuration(currentEnvironment()), []);
   const grid = flames.result ? checkDraftGrid(flames.result.fileId, flames.result.dims, currentSeries) : null;
@@ -68,7 +98,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     // Header evidence for the FLAIR gate: the series description the app holds for THIS file only.
     const seriesDescription =
       currentSeries?.file_id === flairFileId ? currentSeries?.metadata?.series_description ?? null : null;
-    if (!sequenceConfirmed) return;
+    if (!sequenceConfirmed || !gateAllowsRun) return;
     void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
   };
 
@@ -139,9 +169,11 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
               <span className="text-gray-400 break-all">{flairFileId ? `(${flairName ?? flairFileId.split('/').pop()})` : ''}</span>
             </span>
           </label>
+          {gateOn && (preflight ? <QualityGatePanel result={preflight} testId="quality-gate-before" />
+            : <p className="text-[9px] text-gray-400" data-testid="quality-gate-checking">{t('qualityGate.checking')}</p>)}
           <button
             onClick={handleRun}
-            disabled={!flairFileId || !sequenceConfirmed}
+            disabled={!flairFileId || !sequenceConfirmed || !gateAllowsRun}
             className="w-full px-3 py-1.5 bg-amber-700 hover:bg-amber-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-[11px] font-medium transition-colors"
           >
             {t('clinical.browserFlames.run', 'Segment in this browser')}
@@ -173,7 +205,15 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
         </p>
       )}
 
-      {flames.status === 'done' && flames.result && (
+      {gateOn && flames.status === 'done' && flames.result && (
+        finalGate ? <QualityGatePanel result={finalGate} testId="quality-gate-after" />
+          : <p className="text-[9px] text-gray-400" data-testid="quality-gate-checking">{t('qualityGate.checking')}</p>
+      )}
+      {gateOn && flames.status === 'done' && flames.result && finalGate && !finalGate.ai_output_allowed && (
+        <p className="text-[10px] text-red-200" role="alert" data-testid="quality-gate-output-hidden">{t('qualityGate.aiHidden')}</p>
+      )}
+
+      {flames.status === 'done' && flames.result && gateAllowsOutput && (
         <div className="space-y-1">
           {empty ? (
             <div className="text-[10px] text-red-200 bg-red-900/40 border border-red-500/50 rounded p-1.5" role="alert" data-testid="browser-flames-empty">

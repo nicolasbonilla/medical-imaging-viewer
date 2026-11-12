@@ -1480,6 +1480,7 @@
     "title": "Quality check before the AI",
     "draft": "Draft — pending approval",
     "aiHidden": "The AI result is not shown, because the quality check does not allow it.",
+    "checking": "Checking the image before the AI…",
     "decision": {
       "abstain": "The AI does not run for this step",
       "pending": "The AI may start; its result is shown only after the last check",

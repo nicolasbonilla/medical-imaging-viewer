@@ -424,6 +424,9 @@ export interface LongitudinalResult {
   review_binding?: { tp1_mask_sha256: string; tp2_mask_sha256: string } | null;
   /** RC-062: true when the acquisition of the two visits differs or could not be established. */
   abstained?: boolean;
+  /** Single quality gate (RC-123/RC-126; DRAFT): sent only when the backend enforces it (QUALITY_GATE_ENFORCED);
+   *  when it does not allow the output, the comparison is abstained as for RC-062. */
+  quality_gate?: import('@/services/qualityGate/gate').GateResult;
   acquisition_check?: LongitudinalAcquisitionCheck;
   /** Visit 2 later than visit 1 and a different visit; "unknown" makes the comparison abstain. */
   visit_check?: LongitudinalVisitCheck;

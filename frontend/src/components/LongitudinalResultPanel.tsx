@@ -23,6 +23,7 @@ import {
 import { segmentationAPI } from '@/api/segmentation';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { LongitudinalOverlayLegend } from './LongitudinalOverlayLegend';
+import { QualityGatePanel } from './QualityGatePanel';
 import type { LongitudinalResult, LesionChange } from '@/types';
 
 const REGION_CODES: Record<string, string> = {
@@ -233,6 +234,9 @@ export function LongitudinalResultPanel({
           <span>{t('longitudinal.indexAligned')}</span>
         )}
       </div>
+
+      {/* Single quality gate (RC-123/RC-127; DRAFT): present only when the backend enforces it. */}
+      {result.quality_gate && <QualityGatePanel result={result.quality_gate} testId="longitudinal-quality-gate" />}
 
       {abstained ? abstentionBox() : (
         <>

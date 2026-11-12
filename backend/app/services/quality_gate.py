@@ -390,6 +390,7 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
                 if not isinstance(inputs, dict):
                     payload["mode"] = None
                 result = evaluate(payload, policy)
+                result["platform"] = payload["platform"]          # the browser re-evaluates with it (gate.ts)
                 for c in result["checks"]:
                     with tr.span(f"gate_check {c['check']}", "INTERNAL", {
                         "mstool.operation.name": "gate_check", "mstool.gate.check": c["check"],
@@ -402,6 +403,7 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
                     span.set("mstool.refusal.code", str(state["refusal"]))
         except Exception:  # noqa: BLE001 — a platform fault: abstain, audited as a failure
             result = _result([_check("platform", None, "abstain", policy["platform"]["otherwise"])], policy)
+            result["platform"] = {"allowed": False, "code": str(R.RefusalCode.RUN_INTERNAL_ERROR)}
             result["trace_id"] = state.get("trace_id")
             reg.audit("failure", R.RefusalCode.RUN_INTERNAL_ERROR, event="agent.run", agent_id=AGENT_ID,
                       study_key=study_key or None, trace_id=state.get("trace_id"))
