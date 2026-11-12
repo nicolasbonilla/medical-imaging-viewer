@@ -1160,6 +1160,23 @@ Negative controls (every test run inside the throwaway copy; full run on `ea9d15
 
 **HAZ-007 residual:** unchanged.
 
+### C.13 Eighth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| S1 (safety) | With the browser gate on, an RC-049 call without the server's class answered "none", so the header no longer refused a T1 / DWI; the written TI was dropped | RC-122 (RC-049) | fail closed: `no_server_decision`, refused by the contrast gate; the text TI kept on every path | vitest + Node harness |
+| G30 | Reasons mixed causes and warnings; the report model read "acquisition not comparable" for a gate stop; "index-aligned" claimed for a pair never loaded | RC-127 | one account (`explain`) for the caveat, the notice, the report payload and the model's text; no alignment line for a gate stop | G30 (matrix) |
+| G31 | A pair RC-062 withheld was recorded as an AI run; attested visits cut at 64 characters | RC-126 | outcome recorded where the user receives it (released / withheld_by); structured details | G31 |
+| G32 | An attestation offered when RC-062 would withhold anyway (no scanner recorded) | RC-122 | RC-062 predicted by the gate | G32 (matrix + both-missing) |
+| U1 | Every 404 read as "gate not enabled" | RC-126, RC-127 | explicit header code; other 404 / 403 = not found or no access | unit + vitest |
+| E1, E2 | Two header readers, two decompressions; sequential record reads | RC-122, RC-123 | one reader, one decompression per round; concurrent stored_records | unit |
+
+Failing first (commit `1ab0916`, on the code of da03c6a): backend `test_rc122_review8.py` **12 of 12 failed** — G30 6 (the caveat gave warnings as causes in **1 824 of the 2 280** matrix pairs the gate stops; the report model and the notice disagreed in en/es/de; RC-062's reason mixed with the gate's), G31 2, G32 1 (**1 200** futile end-to-end offers, both-missing scanners included), U1 1, E1 1, E2 1; browser (GitHub Actions) **5 failed** — S1 2, U1 2, G30 panel 1. After the fixes: all pass. This PR had also moved 6 anchors of the CAPA-013 negative controls (B2, A1, A7, F13, A11, A15); they are re-anchored to the same defects.
+
+Negative controls (every test run inside the throwaway copy; full run on `1f61865`): 141 mutations (11 re-anchored to the shared header reader, 1 retired — no file name reaches the reader any more —, 12 new for S1, G30, G31, G32, U1, E1, E2), **118 run, 117 detected, 1 survived, 0 invalid**; 23 component mutations not run (no node_modules; vitest runs in GitHub Actions). The survivor, AA7 (RC-062 not predicted), lived because in the matrix every pair RC-062 withholds is also stopped by the gate's scanner check; a G32 test now covers a pair the scanner check passes and RC-062 withholds on its own field (2D / 3D) (commit `519d5c7`), and the re-run detected it: **0 survived after the follow-up**. Per control: RC-122 48/48, RC-123 20/20, RC-124 6/6, RC-125 4/4, RC-126 32/32, RC-127 16/16. Baseline and restored copy: backend 179 / 0 (180 / 0 with the new test), RC-049 browser harness 4 / 0.
+
+**HAZ-007 residual:** unchanged.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
