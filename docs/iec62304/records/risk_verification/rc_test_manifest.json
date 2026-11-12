@@ -1396,12 +1396,12 @@
       "failing_first": "commit efad1cf (3200-case matrix against a no-gate baseline: 18 failed, 5 passed)"
     },
     "RC-123": {
-      "description": "A change of manufacturer, model or field strength between compared visits, or any of them missing, abstains; the scanner check calls RC-062 compare_acquisitions (never looser than RC-062); an abstention withholds the RC-062 fields",
+      "description": "The single quality gate only ADDS to RC-062 and never removes an RC-062 abstention (fourth review of PR #81): a scanner change or a one-sided/partial record abstains; nothing recorded in either visit only warns and RC-062 (byte-identical to the base branch) decides; compare answers through present_gated_comparison and compare/SEL share one comparability verdict (comparison_withheld)",
       "hazard": "HAZ-025, HAZ-007",
       "status": "implemented",
-      "implementation": "backend/app/services/quality_gate.py (_scanner_check, apply_to_comparison, comparison_gate); app/api/routes/segmentation_analysis.py",
+      "implementation": "backend/app/services/quality_gate.py (_scanner_check, present_gated_comparison, comparison_withheld, apply_to_comparison, comparison_gate); app/api/routes/segmentation_analysis.py",
       "tests": [
-        "tests/unit/test_quality_gate_matrix.py",
+        "tests/unit/test_rc123_rc062_monotonicity.py",
         "tests/unit/test_rc122_quality_gate_wiring.py"
       ],
       "requirement": "REQ-SAFE-052",
