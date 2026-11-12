@@ -47,7 +47,8 @@ PY = sys.executable
 
 BACKEND_TESTS = ["tests/unit/test_quality_gate_matrix.py", "tests/unit/test_rc122_quality_gate_wiring.py",
                  "tests/unit/test_rc123_rc062_monotonicity.py", "tests/unit/test_rc122_flags_off_identity.py",
-                 "tests/unit/test_rc122_one_gate.py", "tests/unit/test_rc122_review7.py"]
+                 "tests/unit/test_rc122_one_gate.py", "tests/unit/test_rc122_review7.py",
+                 "tests/unit/test_rc122_review8.py"]
 VITEST_TESTS = ["src/components/BrowserFlamesCard.qualityGate.test.tsx", "src/components/QualityGatePanel.test.tsx",
                 "src/services/qualityGate/gate.test.ts", "src/services/flames/__tests__/headerEvidence.flagsOff.test.ts",
                 "src/components/LongitudinalCompare.qualityGate.test.tsx", "src/components/LongitudinalResultPanel.qualityGate.test.tsx",
@@ -62,7 +63,7 @@ COPY_FILES = ["backend/pytest.ini", "backend/tests/__init__.py", "backend/tests/
               "frontend/src/i18n/locales/en.json", "frontend/src/i18n/locales/es.json",
               "frontend/src/i18n/locales/de.json", "frontend/src/services/qualityGate/gate.ts",
               "frontend/src/components/BrowserFlamesCard.tsx", "frontend/src/components/QualityGatePanel.tsx",
-              "frontend/src/services/qualityGate/api.ts",
+              "frontend/src/services/qualityGate/api.ts", "frontend/src/services/flames/contrastGate.ts",
               "frontend/src/components/LongitudinalResultPanel.tsx", "frontend/src/components/LongitudinalCompare.tsx",
               # fifth review of PR #81 (G26): the flags-off snapshot, its generator and the route harness
               "frontend/src/config/qualityGate.flags_off_snapshot.v1.json",
@@ -89,6 +90,8 @@ RPG = "backend/app/services/report_payload_guard.py"
 BRS = "backend/app/services/brain_report_service.py"
 AIR = "backend/app/api/routes/ai_report.py"
 LCS = "backend/app/services/longitudinal_candidate_safety.py"
+DIC = "backend/app/services/displayed_image_check.py"
+CG = "frontend/src/services/flames/contrastGate.ts"
 REG = "backend/app/agent_platform/registry.py"
 LC = "frontend/src/components/LongitudinalCompare.tsx"
 API = "frontend/src/services/qualityGate/api.ts"
@@ -210,8 +213,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "a comparison stopped on the sequence says nothing about what to do", "backend", "RC-127"),
     "R8_gate_after_loading": ([(SA, '        if gate is not None and gate.get("ai_output_allowed") is not True:\n            return qg.abstained_comparison(gate)\n', '        pass\n')],
         "the comparison loads masks, images, registration and atlas before the gate stops it", "backend", "RC-123"),
-    "R10_raw_codes_in_caveat": ([(QG, '    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in (gate.get("codes") or ["gate_unavailable"])]\n',
-        '    reasons = list(gate.get("codes") or ["gate_unavailable"])\n')],
+    "R10_raw_codes_in_caveat": ([(QG, '    reasons = [CAVEAT_REASONS.get(c, "a quality check did not pass") for c in explain(gate)["causes"]]\n',
+        '    reasons = list(explain(gate)["causes"])\n')],
         "the caveat shows raw codes instead of plain reasons", "backend", "RC-123, RC-127"),
     "R11_pixels_decoded": ([(QG, '        ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True, force=True)\n',
         '        imaging_service.load_dicom(data)\n        ds = pydicom.dcmread(io.BytesIO(data), force=True)\n')],
@@ -219,8 +222,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "R12_header_cache_off": ([(QG, '            if key and not fields.get("unreadable"):\n                _HEADER_CACHE[key] = fields\n',
         '            if False:\n                _HEADER_CACHE[key] = fields\n')],
         "every consultation downloads and parses the file again", "backend", "RC-122"),
-    "R13_parsed_on_the_event_loop": ([(QG, '        data = await storage_service.download_file(bucket, file_path)\n        return await asyncio.to_thread(read_header_fields, data)\n',
-        '        data = await storage_service.download_file(bucket, file_path)\n        return read_header_fields(data)\n')],
+    "R13_parsed_on_the_event_loop": ([(QG, '    return await asyncio.to_thread(read_header_fields, data, decoded)\n', '    return read_header_fields(data, decoded)\n')],
         "the header is parsed on the event loop", "backend", "RC-122"),
     "R14_acquisition_read_twice": ([(SA, '    if file_id not in memo:\n        memo[file_id] = _source_acquisition(file_id)\n    return memo[file_id]\n',
         '    return _source_acquisition(file_id)\n')],
@@ -245,17 +247,15 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "S5_audit_without_the_deciding_code": ([(QG, '    return f"quality_gate.{decision}" + (f".{deciding}" if deciding else "") + attested\n',
         '    return f"quality_gate.{decision}" + attested\n')],
         "shown and withheld outputs are not told apart in the audit", "backend", "RC-126"),
-    "S6_endpoint_not_behind_the_flag": ([(CT, '    if not get_settings().QUALITY_GATE_ENFORCED:\n        raise HTTPException(status_code=404, detail="Not Found")\n',
-        '    if False:\n        raise HTTPException(status_code=404, detail="Not Found")\n')],
+    "S6_endpoint_not_behind_the_flag": ([(CT, '    if not get_settings().QUALITY_GATE_ENFORCED:\n        # U1', '    if False:\n        # U1')],
         "the endpoint answers while the gate is not enforced", "backend", "RC-126"),
     "S7_platform_after_the_io": ([(CT, '    if not qg.platform_allows():\n', '    if False:\n')],
         "a refused gate still authorizes and downloads the file", "backend", "RC-126"),
     "S8_no_rate_limit": ([(CT, '        wait = qg.rate_limit_evaluation(user_id)\n', '        wait = None\n')],
         "the endpoint can trigger unbounded downloads", "backend", "RC-126"),
-    "S9_whole_file_downloaded": ([(QG, '    ranged = getattr(storage_service, "download_file_range", None)\n', '    ranged = None\n')],
+    "S9_whole_file_downloaded": ([(DIC, '    ranged = getattr(storage_service, "download_file_range", None)\n', '    ranged = None\n')],
         "the header check downloads the whole image", "backend", "RC-122"),
-    "S10_no_range_retry": ([(QG, '        if len(data) < size or size >= HEADER_PREFIX_MAX or await asyncio.to_thread(_header_complete, data):\n',
-        '        if True:\n')],
+    "S10_no_range_retry": ([(DIC, '        if complete or len(raw) < size or size >= largest:\n', '        if True:\n')],
         "a header longer than the first range is read truncated", "backend", "RC-122"),
     "S11_unreadable_metadata_is_a_500": ([(SA, '        except Exception as e:  # noqa: BLE001 — unknown source: the gate abstains with its reason\n',
         '        except ZeroDivisionError as e:  # noqa: BLE001\n')],
@@ -286,16 +286,13 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "'true', 1 or unknown visits accepted as an attestation", "backend", "RC-122"),
     "U9_unreadable_header_silent": ([(QG, '    return {**_NO_HEADER, "unreadable": True}\n', '    return dict(_NO_HEADER)\n')],
         "an unreadable header passes silently as 'missing'", "backend", "RC-122"),
-    "U10_format_from_the_file_name": ([(QG, '    fmt = sniff_format(data)                         # magic bytes, never the file name (third review, other 1)\n',
-        '    fmt = getattr(imaging_service.detect_format(data, name), "value", None)\n')],
-        "the header format is guessed from the file name", "backend", "RC-122"),
-    "U11_completeness_on_the_loop": ([(QG, '        if len(data) < size or size >= HEADER_PREFIX_MAX or await asyncio.to_thread(_header_complete, data):\n',
-        '        if len(data) < size or size >= HEADER_PREFIX_MAX or _header_complete(data):\n')],
+    "U11_completeness_on_the_loop": ([(DIC, '        return await asyncio.to_thread(inspect, raw) if in_thread else inspect(raw)\n',
+        '        return inspect(raw)\n')],
         "the header completeness check runs on the event loop", "backend", "RC-122"),
     "U12_gate_on_the_loop": ([(CT, '    result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)\n',
         '    result = qg.run_quality_gate(inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor)\n')],
         "the gate runs on the event loop", "backend", "RC-126"),
-    "U13_default_ranges_download_repeatedly": ([(QG, '    if ranged is None or getattr(type(storage_service), "download_file_range", None) is IStorageService.download_file_range:\n',
+    "U13_default_ranges_download_repeatedly": ([(DIC, '    if ranged is None or getattr(type(storage_service), "download_file_range", None) is IStorageService.download_file_range:\n',
         '    if ranged is None:\n')],
         "a storage without real ranges downloads the whole file on every retry", "backend", "RC-122"),
     # ── fourth review of PR #81 ──
@@ -356,7 +353,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "W17_retry_seconds_dropped": ([(CT, '"details": {"code": "gate_rate_limited", "retry_after_s": wait}}})',
         '"details": {"code": "gate_rate_limited"}}})')],
         "over the limit, the physician is not told how long to wait (F3)", "backend", "RC-127"),
-    "W18_consultation_audited_as_an_ai_run": ([(QG, '        event = "agent.run" if result.get("ai_output_allowed") is True else "agent.consultation"\n',
+    "W18_consultation_audited_as_an_ai_run": ([(QG, '        event = "agent.run" if releases_output and result.get("ai_output_allowed") is True else "agent.consultation"\n',
         '        event = "agent.run"\n')],
         "every consultation is recorded as an AI run (F4)", "backend", "RC-126"),
     "W19_route_audited_as_an_ai_run": ([(AM, '    ("POST", "/api/v1/clinical/quality-gate"): (E.QUALITY_GATE_CONSULTATION, "image"),',
@@ -395,7 +392,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Y5_cache_ignores_the_records": ([(QG, '    digest = hashlib.sha256(json.dumps(records, sort_keys=True, default=str).encode("utf-8")).hexdigest()\n',
         '    digest = ""\n')],
         "a corrected series description or acquisition record still serves the old decision (A3)", "backend", "RC-126"),
-    "Y6_answer_names_no_attestable_visit": ([(QG, '        "attestable_visits": _attestable_visits(checks, policy, mode),\n',
+    "Y6_answer_names_no_attestable_visit": ([(QG, '        "attestable_visits": _attestable_visits(checks, policy, mode, rc062_withholds),\n',
         '        "attestable_visits": [],\n')],
         "the browser is never told which visit the physician may attest (G27)", "backend", "RC-122"),
     "Y7_action_ignores_the_mode": ([(QG, '    return key if isinstance(key, str) else "action"\n', '    return "action"\n')],
@@ -426,14 +423,45 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "V23_attestable_visits_not_from_the_answer": ([(LRP, "  const visits = (['tp1', 'tp2'] as const).filter((v) => (gate.attestable_visits ?? []).includes(v));\n",
         "  const visits = (['tp1', 'tp2'] as const).filter(() => true);\n")],
         "the comparison offers an attestation for a visit the server did not name (G27)", "vitest", "RC-122"),
+    # ── eighth review of PR #81: S1 fail closed, G30, G31, G32, U1, E1, E2 ──
+    "AA1_rc049_none_without_server_class": ([(HE, "    return { verdict: 'no_server_decision', reasons:", "    return { verdict: 'none', reasons:")],
+        "with the gate on and no server class, RC-049 stops rejecting T1/DWI from the header (S1)", "node", "RC-122"),
+    "AA2_text_inversion_time_dropped": ([(HE, "  if (ti === undefined) {\n    for (const t of headerText) {", "  if (false) {\n    for (const t of headerText) {")],
+        "the inversion time written in the text is lost with the gate on (S1)", "node", "RC-122"),
+    "AA3_warnings_given_as_causes": ([(QG, '    causes = unique(c for c, st, _ in pairs if st == "abstain")\n',
+        '    causes = unique(c for c, st, _ in pairs if st in ("abstain", "warn"))\n')],
+        "a warning (thick slices, an attestation) is stated as the reason a pair was withheld (G30)", "backend", "RC-127"),
+    "AA4_report_model_reads_rc062_reason": ([(RPG, '            o = {"abstained": True, "abstained_by": "quality_gate" if stopped else "rc062"}\n',
+        '            o = {"abstained": True}\n')],
+        "the report model says 'acquisition not comparable' when the gate stopped the pair (G30)", "backend", "RC-127"),
+    "AA5_comparison_released_before_rc062": ([(QG, "                            actor=actor_for(user, request) if user is not None else None, releases_output=False)\n",
+        "                            actor=actor_for(user, request) if user is not None else None, releases_output=True)\n")],
+        "a pair RC-062 then withholds is recorded as an AI run (G31)", "backend", "RC-126"),
+    "AA6_audit_details_dropped": ([(REG, '            "details": _plain_details(details),\n', '            "details": None,\n')],
+        "the audit keeps only a packed code cut at 64 characters (G31)", "backend", "RC-126"),
+    "AA7_rc062_not_predicted": ([(QG, '    if mode == "comparison" and (rc062_withholds is not False\n', '    if mode == "comparison" and (False\n')],
+        "an attestation is offered for a pair RC-062 will withhold anyway (G32)", "backend", "RC-122"),
+    "AA8_404_without_the_gate_code": ([(CT, '                            headers={"X-Quality-Gate-Code": "gate_not_enabled",\n',
+        '                            headers={"X-Unused": "gate_not_enabled",\n')],
+        "the browser cannot tell 'gate not enabled' from 'not found or no access' (U1)", "backend", "RC-126, RC-127"),
+    "AA9_prefix_decompressed_twice": ([(QG, '    raw = decoded if decoded is not None else _nifti_prefix(data)\n', '    raw = _nifti_prefix(data)\n')],
+        "each header round is decompressed twice (E1)", "backend", "RC-122"),
+    "AA10_records_read_on_the_loop": ([(SA, '        acq, desc = await asyncio.to_thread(qg.stored_records, source)   # E2 (eighth review): one read of each record\n',
+        '        acq, desc = qg.stored_records(source)\n')],
+        "the two visits' stored records are read one after the other, on the event loop (E2)", "backend", "RC-123"),
+    "V27_contrast_gate_ignores_no_server_decision": ([(CG, "  if (header.verdict === 'no_server_decision') {\n", "  if (false) {\n")],
+        "the worker runs the AI without a decision of the gate's server (S1)", "vitest", "RC-122"),
+    "V28_alignment_claimed_for_a_gate_stop": ([(LRP, "      {!gateStopped && <div className=\"flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400\">\n",
+        "      {true && <div className=\"flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400\">\n")],
+        "the panel says 'index-aligned' for a pair the gate stopped before loading (G30)", "vitest", "RC-127"),
     # ── seventh review of PR #81: S1, G28, G29, R1, R2, E1, E2 ──
     "Z1_derived_image_type_original": ([(POL, '      "image_type_other": ["derived", "secondary", "mpr",', '      "image_type_other": ["mpr",')],
         "a derived or secondary DICOM (ImageType DERIVED / SECONDARY) passes as an original FLAIR (S1)", "backend", "RC-122"),
     "Z2_futile_attestation_offered": ([(QG, '    return [c["visit"] for c in liftable] if abstaining and len(liftable) == len(abstaining) else []\n',
         '    return [c["visit"] for c in liftable]\n')],
         "an attestation is offered (and audited) when an unreadable header or a scanner change stops the AI anyway (G28)", "backend", "RC-122, RC-126"),
-    "Z3_report_reads_any_code": ([(AIR, '            codes = [c for c in gate.get("codes") if isinstance(c, str)] if isinstance(gate.get("codes"), list) else []\n',
-        '            codes = list(gate.get("codes") or [])\n')],
+    "Z3_report_reads_any_code": ([(QG, '        pairs = [(c, statuses.get(c), None) for c in codes if isinstance(c, str) and c in statuses]\n',
+        '        pairs = [(c, statuses.get(c), None) for c in codes]\n')],
         "a malformed quality_gate in a report body breaks the draft (R1)", "backend", "RC-127"),
     "Z4_no_record_thickness_fallback": ([(QG, '    if not isinstance(thickness, dict) or thickness.get("state") == "not_determinable":\n',
         '    if not isinstance(thickness, dict):\n')],
@@ -449,8 +477,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "V25_no_retry_cap": ([(CARD, "  const preflightWait = preflightBase !== null && preflightRetries.current < MAX_AUTOMATIC_RETRIES\n",
         "  const preflightWait = preflightBase !== null\n")],
         "a rate limit that never lifts makes the browser ask forever (G29)", "vitest", "RC-126"),
-    "V26_404_shown_as_unavailable": ([(API, "    if (response?.status === 404) return { ...gateNotEnabled(), subject: { file_id: fileId, version: null } };\n", "")],
-        "the flag mismatch (server gate off) is shown as 'could not be completed' (G29)", "vitest", "RC-127"),
+    "V26_404_shown_as_unavailable": ([(API, "    if (response?.status === 404 && code === 'gate_not_enabled') return { ...gateNotEnabled(), subject: { file_id: fileId, version: null } };\n", "")],
+        "the flag mismatch (server gate off) is shown as 'not found or no access' (G29, U1)", "vitest", "RC-127"),
     # ── React components (vitest only) ──
     "V1_card_shows_output_without_the_final_check": ([(CARD, "      {flames.status === 'done' && flames.result && gateAllowsOutput && (\n",
         "      {flames.status === 'done' && flames.result && (\n")],
@@ -492,8 +520,13 @@ fail('g26_rc049_flag_off_is_the_base', OFF.corpus.every((c, i) => {
 const on = (text, cls) => headerContrastEvidence([text], {}, null, { qualityGate: true, serverSequenceClass: cls });
 fail('g27_rc049_takes_the_server_class', on('Sag T1 MPRAGE', 'FLAIR').verdict === 'supports'
   && on('AX T2 FLAIR', 'T1').verdict === 'contradicts' && on('AX T2 FLAIR', 'other').verdict === 'contradicts'
-  && on('AX T2 FLAIR', 'unknown').verdict === 'none' && on('AX T2 FLAIR', null).verdict === 'none');
-console.log(JSON.stringify({ failures, checks: 2 }));
+  && on('AX T2 FLAIR', 'unknown').verdict === 'none');
+// eighth review (S1): with the gate on and no server class, fail closed; the written TI stays evidence
+fail('s1_no_server_class_refuses', ['Sag T1 MPRAGE', 'AX DWI', 'AX T2 FLAIR'].every((t) =>
+  headerContrastEvidence([t], {}, null, { qualityGate: true }).verdict === 'no_server_decision'));
+fail('s1_text_inversion_time_kept', on('TI=2500', 'unknown').inversionTimeMs === 2500
+  && headerContrastEvidence(['TI=2500'], {}, null, { qualityGate: true }).inversionTimeMs === 2500);
+console.log(JSON.stringify({ failures, checks: 4 }));
 """
 
 
