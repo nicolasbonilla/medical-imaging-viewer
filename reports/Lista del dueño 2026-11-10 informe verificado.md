@@ -3,6 +3,50 @@
 **Estado:** borrador para su revisión y firma. No se ha unido a la copia principal ni se ha publicado nada.
 Propuesta de cambio en GitHub: https://github.com/nicolasbonilla/medical-imaging-viewer/pull/78 (borrador)
 
+## Para firmar — lista final (undécima revisión, la última ronda de correcciones)
+
+Todo lo de abajo está **en borrador**. Yo no he escrito ninguna aprobación a su nombre.
+
+### Lo que cambió en esta última ronda
+
+- Los dos avisos de qué se envía a la IA (el del panel y el del pie del informe) **decían que se envían el sexo y la edad, y no es así**. Ahora dicen exactamente lo que se envía, en los tres idiomas, y una prueba lo compara con los datos reales para que no vuelva a pasar.
+- Cuando faltaba uno de los recuentos de la comparación (resueltos, reducidos, estables), **desaparecían los tres**. Ahora salen los que hay y el que falta dice «no calculado».
+- Si el control de privacidad confunde una medida con un dato del paciente (por ejemplo 9,1175 ml leído como la fecha de nacimiento 9-11-75), **se entrega el informe de mediciones** con una nota, en lugar de un error sin informe.
+- El registro cuenta solo las preguntas que de verdad se enviaron a la IA; si al repetir ya no quedaba tiempo, se anota aparte.
+- Si la IA contestó, su texto no pasó la comprobación y al repetir falla el servicio, el informe dice que **el texto no pasó la comprobación** (no «no se pudo obtener»).
+- La lista de palabras propias del programa se prepara **al arrancar el servidor**, no durante el primer informe.
+- Controles negativos de esta ronda: 12 de 12 detectados; panel 1 de 1.
+
+### Sus decisiones (marque cada una)
+
+1. [ ] **Gravedad de HAZ-017** (el modelo de IA se retira): propuesta moderada (S3); antes del cambio frecuente, después remota.
+2. [ ] **Comentarios de la IA al lanzar:** recomiendo **apagados** (`REPORT_LLM_ENABLED=false`, solo medidas) hasta medir Claude Sonnet 5.5 en el estudio.
+3. [ ] **Respaldo automático del proveedor:** apagado (si Claude se niega, sale el informe con las medidas).
+4. [ ] **Recuento desde 20 lesiones:** el borrador solo dice el rango MAGNIMS 2021; el número exacto queda en el análisis de lesiones.
+5. [ ] **Lesiones nuevas pequeñas:** «Además se marcaron {k} lesiones nuevas de menos de {d} mm por debajo del tamaño mínimo de revisión, que no se propusieron como candidatos de cambio.»
+6. [ ] **Cantidades con negación** («no hay lesiones grandes»): no rechazarlas.
+7. [ ] **Instrucción «no escribas números con letras»:** solo junto con una nueva medición con Claude.
+8. [ ] **Aviso de candidatos sin la fecha de la medición** (la fuente sigue citada).
+9. [ ] **Medida imposible:** se rechaza (código 422) y el médico ve: «La medida «recuento de lesiones», calculada por el análisis de la segmentación, está fuera de su rango plausible, por lo que no se escribió ningún borrador. Vuelva a ejecutar el análisis o revise la segmentación. No se envió nada al servicio de IA.» (también en inglés y alemán).
+10. [ ] **Los 9 mensajes nuevos del panel** para cada error (apartado `report.errors` de los archivos de idioma).
+11. [ ] **Coincidencia con un dato del paciente** (un número o un patrón): informe de mediciones con la nota de privacidad, sin preguntar a la IA.
+12. [ ] **Orden ficha y tiempo:** la ficha del paciente se lee antes de decidir si queda tiempo; si no queda, no se envía nada.
+13. [ ] **Comparación incompleta:** cada recuento que falta se escribe «no calculado» (por ejemplo «0 resueltos, reducidos: no calculado y 3 estables»).
+14. [ ] **Los dos avisos nuevos de qué se envía** (panel y pie del informe), en los tres idiomas.
+15. [ ] **Las notas fijas** cuando el texto se retiene o no se pide, incluida la nota de privacidad nueva.
+16. [ ] **Pendiente que acepta dejar para otro cambio:** 6 controles antiguos (PRB-003 F5 y WF2, PRB-004 W11, versión 2026-10-25 I50, I53 e I55) ya estaban rotos antes de este cambio en archivos que no toca; no se cuentan como detectados.
+
+### Pasos exactos para firmar
+
+1. Lea esta lista y la descripción de la propuesta de cambio 78 en GitHub.
+2. Rellene y firme `docs/iec62304/templates/TPL-03_Code_Review_Checklist.pdf` (revisión de código) y `TPL-11_Document_Approval.pdf` (documentos 02, 03, 05 y 09 y el manifiesto de pruebas).
+3. En esos documentos, cambie cada «DRAFT, PENDING owner approval» por su aprobación, con su nombre y la fecha; guarde el cambio en la misma propuesta.
+4. En GitHub, apruebe la revisión de la propuesta 78 (hace falta al menos una aprobación) y quítele el estado de borrador.
+5. Espere a que las 7 pruebas de GitHub estén en verde y una la propuesta a la copia principal.
+6. Publique el servidor (`bash scripts/deploy_backend.sh`, proyecto brain-mri-476110) y el frontal; con la decisión 2, deje `REPORT_LLM_ENABLED=false` y no ponga el nombre del modelo antiguo en `CLAUDE_MODEL`.
+7. Después de publicar, pase `bash test_endpoints.sh` (9 de 9) y genere un informe de prueba; rellene `TPL-02_Release_Checklist.pdf`.
+8. Fecha límite: **30-11-2026** (ese día se retira el modelo que usa hoy la aplicación).
+
 ## Qué cambia para el médico
 
 - **Los números los escribe el programa, no la IA.** Recuento de lesiones (exacto por debajo de 20; por encima, el
