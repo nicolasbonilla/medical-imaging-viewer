@@ -459,6 +459,30 @@ def test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched(stran
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("platform", ["approved", "not_approved", "switched_off", "unknown"])
+def test_rc036_the_quality_gate_route_with_its_flag_on_gives_the_same_404(stranger, monkeypatch, platform):
+    """REQ-FUNC-117 (DRAFT; sixteenth review of PR #81, R1): the DENIED entry above runs with the gate's flag off, where
+    the route answers 404 before anything. With the flag ON, in every state of the agent, a caller without access gets
+    the same 404 — authorization precedes any answer of the gate."""
+    import json as _json
+    from app.agent_platform import registry as R
+    from app.core.config import get_settings
+    from app.services import quality_gate as qg
+    monkeypatch.setattr(get_settings(), "QUALITY_GATE_ENFORCED", True)
+    data = _json.loads((Path(qg.__file__).resolve().parents[1] / "agent_platform" / "agents.json").read_text(encoding="utf-8"))
+    if platform == "unknown":
+        del data["agents"]["quality-gate"]
+    elif platform != "not_approved":
+        data["agents"]["quality-gate"]["approval"]["status"] = "approved"
+    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry(
+        data, switches=R.InMemoryKillSwitches({"quality-gate": platform != "switched_off"}), audit=lambda e: None))
+    monkeypatch.setattr(qg, "_LIMITER", None)
+    r = _call(stranger, "post", "/clinical/quality-gate", {"file_id": FILE})
+    assert r.status_code == 404 and "decision" not in r.text, (platform, r.status_code, r.text[:200])
+    assert r.json() == _call(stranger, "post", "/clinical/skull-strip", {"file_id": FILE}).json()
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize("method,path,body", ADMIN_ONLY, ids=[f"{m} {p}" for m, p, _ in ADMIN_ONLY])
 def test_rc036_administrator_only_routes_refuse_other_roles(stranger, method, path, body):
     r = _call(stranger, method, path, body)

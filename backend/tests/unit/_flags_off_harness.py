@@ -135,5 +135,114 @@ def route_snapshot():
     return out
 
 
+# R5 (sixteenth review): the REPORT path with the flags off — what reaches the model provider (system prompt, user
+# prompt), the status and the draft returned — for generated longitudinal blocks, as the base answered them
+REPORT_ABSTAINED = {"absent": {}, "false": {"abstained": False}, "true": {"abstained": True}}
+REPORT_GATE = {
+    "none": {},
+    "stopped": {"quality_gate": {"decision": "abstain", "ai_output_allowed": False, "codes": ["sequence_not_flair"],
+                                 "token": "qg1.e30.e30"}},
+    "through": {"quality_gate": {"decision": "allow", "ai_output_allowed": True, "codes": [],
+                                 "warnings": ["thickness_unknown"], "token": "qg1.e30.e30"}},
+}
+REPORT_INJECTED = {"none": {}, "abstained_by": {"abstained_by": "quality_gate", "causes": ["sequence_not_flair"]},
+                   "warnings": {"quality_gate_warnings": ["thickness_unknown"]}}
+REPORT_PAIR = {"none": {}, "pair": {"pair": {"tp1": {"id": "s1", "source": None, "version": None},
+                                             "tp2": {"id": "s2", "source": None, "version": None}}}}
+REPORT_COUNTS = {"burden_tp1_ml": 1.25, "burden_tp2_ml": 1.5, "total_lesions_tp1": 3, "total_lesions_tp2": 4,
+                 "burden_delta_percent": 20.0, "status_counts": {"new": 1, "enlarged": 0, "resolved": 0, "shrunk": 0,
+                                                                 "stable": 3}}
+REPORT_VOLATILE = ("report_id", "processing_time_ms", "generated_at", "created_at")
+
+
+def report_snapshot():
+    from types import SimpleNamespace
+    from fastapi.testclient import TestClient
+    import app.api.routes.ai_report as ai_report
+    from app.core.config import get_settings
+    from app.main import app
+    from app.security import get_current_active_user
+    from app.security.models import User, UserRole
+    from app.services.brain_report_service import BrainReportService
+    from app.services.report_payload_guard import PatientIdentifiers, provider_payload
+
+    sent = []
+
+    class _Messages:
+        def create(self, **kw):
+            sent.append(kw)
+            return SimpleNamespace(content=[SimpleNamespace(text="Draft body.")],
+                                   usage=SimpleNamespace(input_tokens=1, output_tokens=1))
+
+    provider = SimpleNamespace(messages=_Messages())
+    record = SimpleNamespace(id=PATIENT, mrn="MRN-2025-0042", given_name="Quenby", middle_name=None,
+                             family_name="Zarathustra", birth_date="1978-03-15", city="Bogota",
+                             created_by="id-dr_rev")
+
+    class _Patients:
+        async def get_patient(self, pid, **kw):
+            return record
+
+    async def _authorized(*a, **k):
+        return PATIENT
+
+    async def _nothing(*a, **k):
+        return None
+
+    now = datetime(2026, 11, 12)
+    user = User(id="id-dr_rev", username="dr_rev", email="dr_rev@example.com", full_name="dr_rev",
+                role=UserRole.RADIOLOGIST, is_active=True, is_locked=False, email_verified=True,
+                created_at=now, updated_at=now)
+    settings = get_settings()
+    flag = getattr(settings, "QUALITY_GATE_ENFORCED", None)
+    saved = {k: getattr(ai_report, k) for k in ("authorize_segmentation_id", "authorize_mask_specs", "_patient_service")}
+    saved_client = BrainReportService._get_client
+    ai_report.authorize_segmentation_id = _authorized
+    ai_report.authorize_mask_specs = _nothing
+    ai_report._patient_service = lambda: _Patients()
+    BrainReportService._get_client = lambda self: provider
+    if flag is not None:
+        settings.QUALITY_GATE_ENFORCED = False
+    app.dependency_overrides[get_current_active_user] = lambda: user
+    out = {}
+    try:
+        client = TestClient(app, raise_server_exceptions=False)
+        for a_name, a in REPORT_ABSTAINED.items():
+            for g_name, g in REPORT_GATE.items():
+                for i_name, i in REPORT_INJECTED.items():
+                    for p_name, p in REPORT_PAIR.items():
+                        for language in ("en", "es"):
+                            sent.clear()
+                            body = {"segmentation_id": "s2", "language": language,
+                                    "findings": {"longitudinal": {**REPORT_COUNTS, **a, **g, **i, **p}}}
+                            r = client.post("/api/v1/ai/report/generate", json=body)
+                            try:
+                                answer = r.json()
+                            except Exception:  # noqa: BLE001
+                                answer = r.text
+                            if isinstance(answer, dict):
+                                answer = {k: v for k, v in answer.items() if k not in REPORT_VOLATILE}
+                            seen = {"answer": answer, "provider": [{k: kw.get(k) for k in ("system", "messages")}
+                                                                    for kw in sent]}
+                            key = f"report|{a_name}|{g_name}|{i_name}|{p_name}|{language}"
+                            out[key] = [r.status_code,
+                                        hashlib.sha256(_canonical(seen).encode("utf-8")).hexdigest()[:16]]
+                        # the RC-064 provider payload itself, byte for byte (not only the prompt the model reads)
+                        lng = ai_report.drop_unverifiable_decisions({**REPORT_COUNTS, **a, **g, **i, **p})
+                        payload = provider_payload({"longitudinal": lng}, None, PatientIdentifiers.from_record(record))
+                        fields = {k: getattr(payload, k, None) for k in ("findings", "volumetry", "unlisted", "withheld")}
+                        out[f"payload|{a_name}|{g_name}|{i_name}|{p_name}"] = [
+                            0, hashlib.sha256(_canonical(fields).encode("utf-8")).hexdigest()[:16]]
+    finally:
+        for k, v in saved.items():
+            setattr(ai_report, k, v)
+        BrainReportService._get_client = saved_client
+        if flag is not None:
+            settings.QUALITY_GATE_ENFORCED = flag
+        app.dependency_overrides.pop(get_current_active_user, None)
+    return out
+
+
 if __name__ == "__main__":  # pragma: no cover — used by the snapshot script on the base code
     print("G26-ROUTES:" + json.dumps(route_snapshot()), flush=True)   # marked: the app may log to stdout too
+    print("G26-REPORT:" + json.dumps(report_snapshot()), flush=True)

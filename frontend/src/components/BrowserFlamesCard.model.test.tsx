@@ -29,6 +29,10 @@
  *      attestation in effect at send time (the box offered and ticked); a final one carries its run's inputs;
  *  P9  (fifteenth review, S4) the "before" panel shows a decision for the CURRENT inputs (the attestation in effect),
  *      or it is marked stale with "Check again".
+ *  P10 (sixteenth review, R3) a run starts only if EVERY input in effect at start time — file, version, selection,
+ *      attestation, the "I confirm this is a T2-FLAIR" box — is what the click and its decision were for AND what
+ *      the user has now; the flags given to the run (clinicianConfirmedFlair) are the current ones, never those of
+ *      the time of the request (action: toggle the FLAIR confirmation while the Run's consultation is in flight).
  * Not observable in the browser, hence not claimed: a new version stored after the card's last consultation — the
  * server refuses to release that run (its run token names the old version).
  */
@@ -72,7 +76,7 @@ const HOUR = 3600 * 1000;
 const WITHHOLDS = FIXTURE.decisions['FLAIR|false|stripped|false'].ai_output_allowed === false;
 // K2: the real server replays a final consultation presented again with the same token and the identical request
 const REPLAYS = FIXTURE.run_token?.replays_identical_request === true;
-const PROPS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9'] as const;
+const PROPS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10'] as const;
 type Prop = typeof PROPS[number];
 
 function mulberry32(seed: number) {
@@ -99,6 +103,7 @@ const platformAnswer = (file: string, code: string, seconds?: number): Json => (
 });
 const vnum = (v: unknown) => (typeof v === 'string' && /^v\d+$/.test(v) ? Number(v.slice(1)) : null);
 const attestBox = () => document.querySelector('[data-testid="quality-gate-attest"] input') as HTMLInputElement | null;
+const flairBox = () => document.querySelector('[data-testid="browser-flames-confirm-sequence"] input') as HTMLInputElement | null;
 
 class World {
   file = A;
@@ -219,7 +224,18 @@ class World {
     return new Promise((resolve) => this.pending.push({ id, resolve, answer }));
   };
 
-  startRun(fileId: string) {
+  startRun(fileId: string, opts?: Json) {
+    // P10 (R3): every input in effect NOW is the click's and its decision's; the run's flags are the current ones
+    const c = this.click;
+    if (opts?.clinicianConfirmedFlair !== true || flairBox()?.checked !== true) {
+      this.violate('P10', `a run started with the FLAIR confirmation ${flairBox()?.checked === true ? 'ticked' : 'UNTICKED'} `
+        + `(clinicianConfirmedFlair ${String(opts?.clinicianConfirmedFlair)})`);
+    }
+    if (fileId !== this.file) this.violate('P10', 'a run started for a file that is no longer the selected one');
+    if (c && (c.sel !== this.sel || c.file !== fileId || c.attested !== (attestBox()?.checked === true))) {
+      this.violate('P10', `a run started for other inputs than its click's (selection ${c.sel} -> ${this.sel}, `
+        + `attestation ${c.attested} -> ${attestBox()?.checked === true})`);
+    }
     this.running = { id: ++this.runSeq, file: fileId, attested: attestBox()?.checked === true,
       knownVersion: this.known[fileId] ?? null, checked: false, startedAt: Date.now() };
     Object.assign(h.flames, { status: 'running', result: null });
@@ -242,10 +258,11 @@ const resultFor = (fileId: string) => ({
 });
 
 type Action = 'selectA' | 'selectB' | 'version' | 'attest' | 'run' | 'again' | 'r429' | 'finalOk' | 'finalFail'
-  | 'final429' | 'deliverOne' | 'deliverAll' | 'tick' | 'wait' | 'h2' | 'h24' | 'complete' | 'lost' | 'versionLost';
+  | 'final429' | 'deliverOne' | 'deliverAll' | 'tick' | 'wait' | 'h2' | 'h24' | 'complete' | 'lost' | 'versionLost'
+  | 'confirm';
 const WEIGHTS: [Action, number][] = [['selectA', 2], ['selectB', 2], ['version', 1], ['attest', 3], ['run', 4], ['again', 1],
   ['r429', 1], ['finalOk', 1], ['finalFail', 1], ['final429', 1], ['deliverOne', 4], ['deliverAll', 2], ['tick', 2],
-  ['wait', 1], ['h2', 1], ['h24', 0.5], ['complete', 2], ['lost', 1], ['versionLost', 0.5]];
+  ['wait', 1], ['h2', 1], ['h24', 0.5], ['complete', 2], ['lost', 1], ['versionLost', 0.5], ['confirm', 1]];
 const TOTAL = WEIGHTS.reduce((s, [, w]) => s + w, 0);
 function pick(rng: () => number): Action {
   let x = rng() * TOTAL;
@@ -270,6 +287,8 @@ const CORPUS: Record<string, Action[]> = {
   // (its run permission expired on the way), and a Run whose attestation is rescinded while the server is checking
   slowAnswer: ['selectB', 'tick', 'deliverAll', 'h2', 'run', 'h2', 'deliverAll'],
   rescindWhileChecking: ['selectA', 'tick', 'deliverAll', 'attest', 'tick', 'deliverAll', 'h2', 'run', 'attest', 'deliverAll'],
+  // sixteenth review (R3): the FLAIR confirmation unticked while the Run's consultation is in flight
+  unconfirmWhileChecking: ['selectB', 'tick', 'deliverAll', 'h2', 'run', 'confirm', 'deliverAll'],
 };
 
 async function play(actions: Action[] | null, seed: number): Promise<Partial<Record<Prop, string>>> {
@@ -279,7 +298,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
   for (const k of Object.keys(h.panels)) delete h.panels[k];
   for (const k of Object.keys(h.flames)) delete h.flames[k];
   Object.assign(h.flames, { status: 'idle', fraction: 0, message: '', error: null, startedAt: null, result: null,
-    run: (fileId: string) => world.startRun(fileId), cancel: () => undefined, reset: () => undefined });
+    run: (fileId: string, opts?: Json) => world.startRun(fileId, opts), cancel: () => undefined, reset: () => undefined });
   vi.useFakeTimers();
   vi.setSystemTime(new Date('2026-11-12T08:00:00Z'));
   const view = render(<BrowserFlamesCard flairFileId={world.file} />);
@@ -409,6 +428,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
         case 'h2': vi.setSystemTime(Date.now() + 3 * HOUR); break;
         case 'h24': vi.setSystemTime(Date.now() + 25 * HOUR); break;
         case 'complete': world.complete(); break;
+        case 'confirm': await click(confirmBox()); break;          // R3: toggle the FLAIR confirmation, any time
         default: break;
       }
       await sync();
@@ -467,12 +487,12 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
 }
 
 describe('M1: model-based test of the card and its consultations', () => {
-  it('rc126 rc122 rc127 P1-P9 hold over the seed corpus and the generated sequences', async () => {
+  it('rc126 rc122 rc127 P1-P10 hold over the seed corpus and the generated sequences', async () => {
     useViewerStore.setState({
       currentSeries: { id: 's', name: 'flair', format: 'nifti', file_id: A, total_slices: 4, metadata: { rows: 3, columns: 2 } },
     } as never);
     const runs = Number(process.env.QG_MODEL_RUNS ?? 2000);
-    const counts: Record<Prop, number> = { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0, P8: 0, P9: 0 };
+    const counts: Record<Prop, number> = { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0, P8: 0, P9: 0, P10: 0 };
     const examples: Partial<Record<Prop, string>> = {};
     const record = (name: string, v: Partial<Record<Prop, string>>) => {
       for (const p of PROPS) {
@@ -488,8 +508,9 @@ describe('M1: model-based test of the card and its consultations', () => {
       record(`seed ${seed}`, await play(null, seed));
     }
     // the counts per property, and the first example of each, are the test's report
+    if (process.env.QG_MODEL_REPORT) console.log('MODEL-COUNTS ' + JSON.stringify({ counts, examples }));
     expect({ counts, examples, sequences: runs + Object.keys(CORPUS).length })
-      .toEqual({ counts: { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0, P8: 0, P9: 0 }, examples: {},
+      .toEqual({ counts: { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0, P8: 0, P9: 0, P10: 0 }, examples: {},
         sequences: runs + Object.keys(CORPUS).length });
   }, 1_800_000);
 });

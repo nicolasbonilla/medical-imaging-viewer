@@ -93,6 +93,19 @@ def test_rc122_g26_c_compare_and_sel_are_the_base_with_the_gate_off():
     assert not bad, f"G26 (c): {len(bad)} of {len(got)} answers differ from the base; first: {bad[:6]}"
 
 
+def test_rc122_g26_r5_the_report_path_is_the_base_with_the_gate_off():
+    """R5 (sixteenth review of PR #81): with the gate off, the REPORT route answers byte-identically to the base — the
+    system prompt and the user prompt sent to the model provider (the RC-064 provider payload as the model reads it),
+    the status and the draft with its notices — on a generated matrix of longitudinal blocks (abstained or not, a
+    client-supplied gate block, client-injected gate keys, a pair, two languages)."""
+    from tests.unit._flags_off_harness import report_snapshot
+    snap = _snap()
+    got = report_snapshot()
+    assert set(got) == set(snap["report"]) and len(got) >= 100
+    bad = [(k, got[k], snap["report"][k]) for k in sorted(snap["report"]) if got[k] != snap["report"][k]]
+    assert not bad, f"R5: {len(bad)} of {len(got)} report answers differ from the base; first: {bad[:6]}"
+
+
 def test_rc122_g26_c_a_malformed_attestation_is_ignored_with_the_gate_off():
     from tests.unit._flags_off_harness import route_snapshot
     got = route_snapshot()
