@@ -1264,6 +1264,29 @@ Negative controls: 180 mutations in a throwaway copy (baseline and restored copy
 
 **HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a released output now always corresponds to exactly one confirmed run of the current inputs.
 
+### C.19 Fourteenth independent review of PR #81 (2026-11-13) — DRAFT, PENDING owner approval
+
+Ten findings; two (K1, K7) were regressions of the thirteenth review's own fixes, whose failing-first tests mocked the function directly above the real failure. New rule: every failing-first test fails through the REAL lowest layer's failure modes, injected at each of them.
+
+| # | Finding | Control | Fix | Invariant (injected at) |
+|---|---|---|---|---|
+| K1 | `emit_audit` returned True whenever `log_event` was called; `log_event` swallows its errors — the route's marker silenced the middleware and the consultation had no record; the same assumption on /auth | RC-126 | `AuditWrite`; the middleware silent only once the store confirms the route's record (D-QG-20 amended) | integrity False, build, stdout, durable raising, not made, given up, still retrying; /auth logout |
+| K2 | The single-use token was spent before the evaluation: a lost answer hid the run's result for good | RC-126 | idempotency key: claim + digest, replay of the stored decision, conflict, retryable claim, lease (D-QG-24 amended) | lost answer, withheld first answer, another request, failed evaluation, unavailable store; model P6 |
+| K3 | A run permission without a file version: Run silently never started | RC-126, RC-122 | `version_not_established` (D-QG-25); the card says why a click did not start | four storage shapes; model P7 |
+| K4 | A raw "{{band}}" in the comparison's warnings; empty slots elsewhere | RC-127 | one formatter with a defined fallback | every code × locale × display path × param shape; static |
+| K5 | Blocking Firestore create() on the event loop | RC-126 | off the loop | a store asserting its thread |
+| K6 | No outcome record on the post-gate error paths | RC-126 | `OutcomeRecord` on every path | each post-gate step of compare and SEL |
+| K7 | Non-code reason text kept (e-mail, file name) | RC-126 | closed registry of reasons (D-QG-26) | PII-like corpus, long valid compositions, literal reasons |
+| K8 | Header downloads and record reads not cancelled when the visit check refused the pair | RC-123 | visit check first | same-visit pair |
+| K9 | Two details filters with different limits | RC-126 | one filter | registry vs record |
+| K10 | RC-062's input read differently with the gate on and off | RC-122 | one read strategy (G26) | queryable and non-queryable store |
+
+Failing first (commit `a40acf3`, on the code of e8c5418): backend `test_rc122_review14.py` **44 of 53 failed** (K1 10, K2 3, K3 4, K5 1, K6 9, K7 13, K8 1, K9 1, K10 2; the others are guards); browser K4 **2 of 2 failed**; model test, of 2 006 sequences: **P6 2, P7 130 failed** (P1-P5 0; P7 125 with the final test). After the fixes: 2 006 of 2 006 sequences hold P1-P7 (with the final test — whose P7 also exempts a click followed by a change of file and back — the code of e8c5418 fails P6 2 and P7 125); all backend tests pass.
+
+Negative controls: 195 controls after this round (2 retired with their reason — AF4: the marker became the durable confirmation, AG1 / AG1b instead; AE9: no flag-dependent read strategy any more, AG10 instead — 12 re-anchored, 17 new). In throwaway copies, on 771b710: backend (baseline and restored copy 338 / 0, RC-049 browser harness 4 / 0) the 22 new and re-anchored backend controls AG1, AG1b, AG2, AG2b, AG3, AG3b, AG5, AG6, AG7, AG8, AG9, AG10, U12, W17, AF2, AF5, AE5, AE6, AE7, AD6, AB5, AA6 — **22 detected, 0 survived, 0 invalid**; the full run of every control was started and stopped after its first 19 (Q1-Q19, all detected) to keep the owner's computer lightly loaded (about 3 h); the untouched controls keep their thirteenth-review result (e8c5418). Browser (vitest, a throwaway copy of the frontend with node_modules through a junction removed as a link only): AG4, AG4b, V22, V9, V42, V43, V44 and again V35, V36, V37, V39, V40, V41 — **13 detected**; V22 first appeared to survive because two of its bound test files read the server's policy and could not load in the copy: the copy now includes it and a test file that fails to load makes a run INVALID, never a result (re-run: detected). V38 stays equivalent in the harness. Record: 195 controls, 168 run, **167 detected, 0 survived, 0 invalid**, 1 equivalent in the harness, 27 other component controls not run locally (their tests run in CI). Per control (evidence): RC-122 65 / 65, RC-123 26 / 26, RC-124 6 / 6, RC-125 3 / 3 (+ 1 labelling only), RC-126 46 / 46 (+ 1 equivalent in the harness), RC-127 27 / 27. Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (fourteenth_review, vitest_m1, retired).
+
+**HAZ-025 / HAZ-001:** a released output still corresponds to exactly one confirmed run of the current inputs, now also when its answer is lost; no audit trail gap from an unconfirmed record.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

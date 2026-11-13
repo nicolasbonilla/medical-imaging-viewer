@@ -74,14 +74,16 @@
   "Y5_cache_ignores_the_records": "the consultation cache and its key were removed (S1)",
   "AB7_request_counter_after_the_reads": "the two limits were merged into ONE before any read (S1); S8_no_rate_limit and AC7_limit_after_the_reads cover it",
   "AB8_cached_attestation_not_audited": "the cached path was removed (S1): an attestation is always evaluated and audited",
-  "S5_audit_without_the_deciding_code": "the deciding code moved from the packed audit code to structured details (S4); AA6_audit_details_dropped and AC5_durable_record_drops_the_details cover it"
+  "S5_audit_without_the_deciding_code": "the deciding code moved from the packed audit code to structured details (S4); AA6_audit_details_dropped and AC5_durable_record_drops_the_details cover it",
+  "AF4_marker_before_the_record": "the route's marker became the durable confirmation of its record (fourteenth review, K1); AG1 and AG1b sabotage the confirmation",
+  "AE9_indexed_query_with_the_flags_off": "the read strategy no longer depends on the flags (fourteenth review, K10); AG10 sabotages the one strategy"
  },
  "labelling_only": {
   "Q13_unknown_skull_passes": "the browser reports 'unknown' only for a result without the worker's skull report, which this app's worker never produces (RC-043 refuses first); the control tests how the server handles a client-reported value"
  },
  "baseline": {
   "backend": {
-   "passed": 285,
+   "passed": 338,
    "failed": 0,
    "failing_tests": [],
    "returncode": 0
@@ -108,7 +110,8 @@
      "test_rc123_f1_an_attestation_never_lifts_another_sequence_in_a_comparison"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q2_unknown_sequence_passes": {
    "reintroduces": "an image whose header names no sequence is taken as a FLAIR",
@@ -129,7 +132,8 @@
      "test_rc127_g27_the_answer_carries_what_the_browser_shows"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q3_confirmation_leaves_no_warning": {
    "reintroduces": "a physician-confirmed unknown sequence passes silently",
@@ -153,7 +157,8 @@
      "test_rc126_s4_the_real_audit_record_keeps_every_attested_visit"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q4_unknown_thickness_passes": {
    "reintroduces": "an unreadable slice thickness passes without a word",
@@ -170,7 +175,8 @@
      "test_rc127_i1_a_tampered_block_cannot_drop_the_server_s_warnings"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q5_lower_bound_taken_as_thin": {
    "reintroduces": "a lower bound (NIfTI grid, derived image) taken as a thin acquisition",
@@ -184,7 +190,8 @@
      "test_rc122_g3_values_outside_the_known_set_never_pass"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q6_gate_fault_passes": {
    "reintroduces": "a malformed input or a fault inside the gate yields a pass",
@@ -198,7 +205,8 @@
      "test_rc122_g3_values_outside_the_known_set_never_pass"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q7_scanner_change_ignored": {
    "reintroduces": "a change of manufacturer or field strength between visits is ignored",
@@ -213,7 +221,8 @@
      "test_rc123_a_scanner_change_stops_the_comparison_in_the_gate_and_in_rc062"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q8_unknown_scanner_passes": {
    "reintroduces": "an unrecorded scanner is taken as the same scanner",
@@ -227,7 +236,8 @@
      "test_rc122_g3_no_pass_from_an_unknown_value_and_proceed_only_when_everything_is_known_and_good"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q9_abstention_does_not_withhold": {
    "reintroduces": "a comparison the gate stops still carries lesion counts and loads",
@@ -243,7 +253,8 @@
      "test_rc123_g25_the_gate_alone_withholds_in_compare_and_sel"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q10_route_ignores_the_gate": {
    "reintroduces": "the longitudinal route consults the gate but shows the candidates anyway",
@@ -266,7 +277,8 @@
      "test_rc126_g31_a_comparison_rc062_withholds_is_recorded_as_withheld_never_released"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q11_hook_ignores_the_licence": {
    "reintroduces": "an evidence asset with a non-commercial licence makes the thickness abstain",
@@ -280,7 +292,8 @@
      "test_rc124_g7_the_v3_hook_abstains_only_with_a_commercial_licence"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q12_thickness_abstains_on_bands": {
    "reintroduces": "thick bands abstain on figures from non-commercial cohorts (before the v3 evidence)",
@@ -303,7 +316,8 @@
      "test_rc127_g30_reviewer_case_thickness_thick_is_never_a_cause"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q13_unknown_skull_passes": {
    "reintroduces": "an unknown skull state lets the output through",
@@ -322,7 +336,8 @@
      "test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q14_pending_allows_output": {
    "reintroduces": "the AI output is shown while the skull has not been checked",
@@ -339,7 +354,8 @@
      "test_rc126_m1_the_card_model_plays_the_server_s_own_decisions"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q15_skull_not_checked": {
    "reintroduces": "the single-study gate never checks the skull",
@@ -361,7 +377,8 @@
      "test_rc126_m1_the_card_model_plays_the_server_s_own_decisions"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q16_server_says_skull_stripped": {
    "reintroduces": "the server claims a skull-free image before it was read",
@@ -377,7 +394,8 @@
      "test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q17_platform_off_continues": {
    "reintroduces": "with the kill switch off the other checks still run and can let the AI through",
@@ -400,7 +418,8 @@
      "test_rc126_the_single_study_route_is_refused_while_the_agent_is_not_approved"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q18_malformed_switch_accepted": {
    "reintroduces": "a malformed platform answer ('true' as text) counts as switched on",
@@ -414,7 +433,8 @@
      "test_rc126_g6_platform_not_on_means_no_ai_step_and_the_reason[malformed]"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q19_registry_not_consulted": {
    "reintroduces": "the approval and the kill switches are not read",
@@ -433,7 +453,8 @@
      "test_rc126_the_single_study_route_is_refused_while_the_agent_is_not_approved"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (interrupted full run)"
   },
   "Q20_trace_omits_checks": {
    "reintroduces": "the trace records only the first check",
@@ -1221,13 +1242,14 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 284,
+    "passed": 337,
     "failed": 1,
     "failing_tests": [
      "test_rc126_the_rate_limit_comes_first_and_the_gate_runs_off_the_loop"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "U13_default_ranges_download_repeatedly": {
    "reintroduces": "a storage without real ranges downloads the whole file on every retry",
@@ -1492,13 +1514,14 @@
    "controls": "RC-127",
    "status": "detected",
    "result": {
-    "passed": 284,
+    "passed": 337,
     "failed": 1,
     "failing_tests": [
      "test_rc126_f3_every_consultation_counts_and_over_the_limit_gets_the_wait"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "W18_consultation_audited_as_an_ai_run": {
    "reintroduces": "every consultation is recorded as an AI run (F4)",
@@ -1776,8 +1799,12 @@
    "reintroduces": "the panel ignores the action the answer names (G27)",
    "runner": "vitest",
    "controls": "RC-127",
-   "status": "not_run",
-   "reason": "not run (no node_modules): vitest runs in GitHub Actions"
+   "status": "detected",
+   "result": {
+    "passed": 0,
+    "failed": 2,
+    "violations": {}
+   }
   },
   "V23_attestable_visits_not_from_the_answer": {
    "reintroduces": "the comparison offers an attestation for a visit the server did not name (G27)",
@@ -1807,13 +1834,15 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 284,
-    "failed": 1,
+    "passed": 336,
+    "failed": 2,
     "failing_tests": [
+     "test_rc126_k2_an_unavailable_store_fails_closed",
      "test_rc126_m2_an_unexpired_token_is_never_forgotten_and_a_full_store_fails_closed"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "AF3_report_ignores_the_clinician": {
    "reintroduces": "a colleague's report uses another clinician's gate decision (M3)",
@@ -1829,33 +1858,21 @@
     "returncode": 1
    }
   },
-  "AF4_marker_before_the_record": {
-   "reintroduces": "a failed audit write still silences the middleware: the request leaves no record (A1)",
-   "runner": "backend",
-   "controls": "RC-126",
-   "status": "detected",
-   "result": {
-    "passed": 284,
-    "failed": 1,
-    "failing_tests": [
-     "test_rc126_a1_the_route_s_marker_is_set_only_after_its_record_was_written"
-    ],
-    "returncode": 1
-   }
-  },
   "AF5_long_reason_dropped": {
    "reintroduces": "an audit reason longer than 64 characters is dropped (A2)",
    "runner": "backend",
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 284,
-    "failed": 1,
+    "passed": 336,
+    "failed": 2,
     "failing_tests": [
-     "test_rc126_a2_no_audit_reason_is_ever_lost"
+     "test_rc126_a2_no_audit_reason_is_ever_lost",
+     "test_rc126_k7_every_valid_long_composition_persists_in_full"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "V35_used_token_reused": {
    "reintroduces": "a re-run presents the run token of an earlier run (M1, P2)",
@@ -1867,7 +1884,8 @@
     "failed": 1,
     "violations": {
      "P2": "corpus rerun: run 2 presents the run token of run 1",
-     "P4": "corpus rerun: a fresh run the server allows does not reach a released output"
+     "P3": "corpus rerun: the \\",
+     "P4": "corpus rerun: a fresh run the server allows was not released though the card knew the newest version"
     }
    }
   },
@@ -1880,8 +1898,7 @@
     "passed": 0,
     "failed": 1,
     "violations": {
-     "P3": "seed 20262847: the \\",
-     "P5": "seed 20262847: file A is attestable, but the attestation is not offered"
+     "P3": "seed 20261166: the \\"
     }
    }
   },
@@ -1933,7 +1950,7 @@
     "passed": 0,
     "failed": 1,
     "violations": {
-     "P1": "seed 20261192: run 1 (file A, attested false, v1) started with a decision for A, attested true, v1"
+     "P3": "seed 20261166: the \\"
     }
    }
   },
@@ -1946,7 +1963,7 @@
     "passed": 0,
     "failed": 1,
     "violations": {
-     "P3": "seed 20261217: the \\"
+     "P4": "corpus noVersion: settled, Run is disabled though the server allows a run of A (attested)"
     }
    }
   },
@@ -2021,15 +2038,23 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 282,
-    "failed": 3,
+    "passed": 328,
+    "failed": 10,
     "failing_tests": [
      "test_rc126_a1_the_route_s_marker_is_set_only_after_its_record_was_written",
      "test_rc126_i5_one_audit_record_per_consultation",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[build]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_false]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_none]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_pending]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_raises]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[integrity]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[stdout]",
      "test_rc126_k3_a_refused_access_leaves_exactly_one_audit_record"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "AE6_release_without_a_run": {
    "reintroduces": "a final consultation with no run is recorded as an AI run (K5)",
@@ -2037,13 +2062,16 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 284,
-    "failed": 1,
+    "passed": 335,
+    "failed": 3,
     "failing_tests": [
+     "test_rc126_k2_an_unavailable_store_fails_closed",
+     "test_rc126_k2_another_request_with_the_same_token_is_refused",
      "test_rc126_k5_only_a_real_run_is_recorded_as_a_release"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "AE7_run_token_reusable": {
    "reintroduces": "one run is recorded as several AI runs: the spent tokens are forgotten (K5, M2)",
@@ -2051,15 +2079,19 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 282,
-    "failed": 3,
+    "passed": 332,
+    "failed": 6,
     "failing_tests": [
+     "test_rc126_k2_a_lost_final_answer_is_replayed_identically_and_audited_as_a_replay",
+     "test_rc126_k2_another_request_with_the_same_token_is_refused",
+     "test_rc126_k2_the_card_model_s_fake_server_replays_as_the_real_server_does",
      "test_rc126_k5_only_a_real_run_is_recorded_as_a_release",
      "test_rc126_m2_an_unexpired_token_is_never_forgotten_and_a_full_store_fails_closed",
      "test_rc126_m2_spendable_once_before_expiry_by_the_same_user_for_the_same_file_and_version"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "AE8_nifti_prefix_capped_at_1_mib": {
    "reintroduces": "a header with extensions beyond 1 MiB is unreadable (O1)",
@@ -2071,20 +2103,6 @@
     "failed": 1,
     "failing_tests": [
      "test_rc122_o1_a_header_with_extensions_beyond_1_mib_is_read"
-    ],
-    "returncode": 1
-   }
-  },
-  "AE9_indexed_query_with_the_flags_off": {
-   "reintroduces": "with the flags off the acquisition record is read differently from the base (O2, G26)",
-   "runner": "backend",
-   "controls": "RC-122",
-   "status": "detected",
-   "result": {
-    "passed": 284,
-    "failed": 1,
-    "failing_tests": [
-     "test_rc122_g26_o2_the_base_read_of_an_acquisition_record_with_the_flags_off"
     ],
     "returncode": 1
    }
@@ -2153,14 +2171,16 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 283,
-    "failed": 2,
+    "passed": 335,
+    "failed": 3,
     "failing_tests": [
      "test_rc126_i5_one_audit_record_per_consultation",
+     "test_rc126_k1_a_durable_route_record_is_the_one_record",
      "test_rc126_k5_only_a_real_run_is_recorded_as_a_release"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "V31_governed_without_the_warnings": {
    "reintroduces": "RC-062's line hides the gate's warnings for the pair (I4)",
@@ -2387,16 +2407,18 @@
    "controls": "RC-123",
    "status": "detected",
    "result": {
-    "passed": 281,
-    "failed": 4,
+    "passed": 333,
+    "failed": 5,
     "failing_tests": [
      "test_rc123_g35_validation_precedes_the_gate[body0]",
      "test_rc123_g35_validation_precedes_the_gate[body1]",
+     "test_rc123_k8_a_same_visit_pair_starts_no_read",
      "test_rc123_o3_the_visit_records_are_read_once_per_request",
      "test_rc123_one_voxel_spacing_helper_and_the_visit_check_in_the_same_gather"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "AB6_instance_read_as_unreadable_header": {
    "reintroduces": "a mask without a source image is reported as an unreadable header (G35)",
@@ -2535,8 +2557,8 @@
    "controls": "RC-126",
    "status": "detected",
    "result": {
-    "passed": 277,
-    "failed": 8,
+    "passed": 329,
+    "failed": 9,
     "failing_tests": [
      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
      "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation",
@@ -2544,11 +2566,13 @@
      "test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records",
      "test_rc126_g31_a_comparison_rc062_withholds_is_recorded_as_withheld_never_released",
      "test_rc126_g31_the_audit_keeps_every_attested_visit_in_structured_fields",
+     "test_rc126_k9_the_registry_and_the_record_use_one_details_filter",
      "test_rc126_o2_every_attestation_is_audited_also_from_the_cache",
      "test_rc126_s4_the_real_audit_record_keeps_every_attested_visit"
     ],
     "returncode": 1
-   }
+   },
+   "round": "fourteenth review (targeted)"
   },
   "AA7_rc062_not_predicted": {
    "reintroduces": "an attestation is offered for a pair RC-062 will withhold anyway (G32)",
@@ -2779,8 +2803,14 @@
    "reintroduces": "a run of A starts while B is selected, or after the attestation was rescinded",
    "runner": "vitest",
    "controls": "RC-122",
-   "status": "not_run",
-   "reason": "not run (no node_modules): vitest runs in GitHub Actions"
+   "status": "detected",
+   "result": {
+    "passed": 0,
+    "failed": 1,
+    "violations": {
+     "P1": "corpus late: run 1 (file A, attested false, v1) started with a decision for A, attested true, v1"
+    }
+   }
   },
   "V10_final_consultation_without_the_skull": {
    "reintroduces": "the server never sees the skull outcome that releases the output",
@@ -2795,6 +2825,285 @@
    "controls": "RC-127",
    "status": "not_run",
    "reason": "not run (no node_modules): vitest runs in GitHub Actions"
+  },
+  "AG1_unconfirmed_route_record_silences_the_middleware": {
+   "reintroduces": "a route record the store never confirmed still silences the middleware: the request has no record (K1)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 327,
+    "failed": 11,
+    "failing_tests": [
+     "test_rc126_a1_the_route_s_marker_is_set_only_after_its_record_was_written",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[build]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_false]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_none]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_pending]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_raises]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[integrity]",
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[stdout]",
+     "test_rc126_k1_platform_wide_an_auth_route_s_unconfirmed_record_never_silences_the_middleware[durable_false]",
+     "test_rc126_k1_platform_wide_an_auth_route_s_unconfirmed_record_never_silences_the_middleware[durable_none]",
+     "test_rc126_k1_platform_wide_an_auth_route_s_unconfirmed_record_never_silences_the_middleware[durable_pending]"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG1b_dropped_write_counts_as_written": {
+   "reintroduces": "a durable write the store gave up counts as a durable record (K1)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 336,
+    "failed": 2,
+    "failing_tests": [
+     "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_false]",
+     "test_rc126_k1_platform_wide_an_auth_route_s_unconfirmed_record_never_silences_the_middleware[durable_false]"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG2_lost_answer_not_replayed": {
+   "reintroduces": "a lost final answer is re-evaluated instead of replayed: the run's result is hidden for good (K2)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 336,
+    "failed": 2,
+    "failing_tests": [
+     "test_rc126_k2_a_lost_final_answer_is_replayed_identically_and_audited_as_a_replay",
+     "test_rc126_k2_a_withheld_first_answer_is_never_replayed_as_more_permissive"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG2b_another_request_replays": {
+   "reintroduces": "another request presenting the same token gets the stored (released) decision: more permissive (K2)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 334,
+    "failed": 4,
+    "failing_tests": [
+     "test_rc126_k2_another_request_with_the_same_token_is_refused",
+     "test_rc126_k2_the_card_model_s_fake_server_replays_as_the_real_server_does",
+     "test_rc126_m2_an_unexpired_token_is_never_forgotten_and_a_full_store_fails_closed",
+     "test_rc126_m2_spendable_once_before_expiry_by_the_same_user_for_the_same_file_and_version"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG3_permission_without_a_version": {
+   "reintroduces": "an allowed consultation without an established file version: a run the browser can never start (K3)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 335,
+    "failed": 3,
+    "failing_tests": [
+     "test_rc126_k3_a_run_permission_always_names_the_file_version[_Bare]",
+     "test_rc126_k3_a_run_permission_always_names_the_file_version[_NoVersion]",
+     "test_rc126_k3_a_run_permission_always_names_the_file_version[_NullVersion]"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG3b_version_check_not_evaluated": {
+   "reintroduces": "the gate ignores that the file's version is unknown (K3)",
+   "runner": "backend",
+   "controls": "RC-122",
+   "status": "detected",
+   "result": {
+    "passed": 333,
+    "failed": 5,
+    "failing_tests": [
+     "test_rc126_k2_the_card_model_s_fake_server_replays_as_the_real_server_does",
+     "test_rc126_k3_a_run_permission_always_names_the_file_version[_Bare]",
+     "test_rc126_k3_a_run_permission_always_names_the_file_version[_NoVersion]",
+     "test_rc126_k3_a_run_permission_always_names_the_file_version[_NullVersion]",
+     "test_rc126_m1_the_card_model_plays_the_server_s_own_decisions"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG5_store_on_the_event_loop": {
+   "reintroduces": "the blocking single-use store runs on the event loop (K5)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 337,
+    "failed": 1,
+    "failing_tests": [
+     "test_rc126_k5_the_single_use_store_is_never_called_on_the_event_loop"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG6_error_path_without_outcome": {
+   "reintroduces": "an allowed pair that fails after the gate leaves no outcome record (K6)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 329,
+    "failed": 9,
+    "failing_tests": [
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-comparison_fails]",
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-evidence_read_fails]",
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-grid_mismatch]",
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-mask_missing]",
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-presentation_fails]",
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[sel-detection_fails]",
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[sel-grid_mismatch]",
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[sel-intensities_missing]",
+     "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[sel-mask_missing]"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG7_unregistered_reason_persisted": {
+   "reintroduces": "an e-mail, a file name or a sentence persists as an audit reason (K7)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 325,
+    "failed": 13,
+    "failing_tests": [
+     "test_rc126_k7_no_pii_like_reason_ever_persists[/data/patients/MRN-889911/t1.nii]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[1.2.840.113619.2.55.3.604688]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[C:\\\\Users\\\\drsmith\\\\scan.dcm]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[Juan Perez Gomez]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[MRN889911]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[Patient John Smith has new lesions]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[agent.consultation:patient_12345]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[agent.run:jane.doe@hospital.org]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[agent.run:lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[jane.doe@hospital.org]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[patient_12345_flair.nii.gz]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[quality_gate.withheld.patient_12345]",
+     "test_rc126_k7_no_pii_like_reason_ever_persists[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG8_reads_before_the_visit_check": {
+   "reintroduces": "a pair the visit check refuses still downloads headers and reads records (K8)",
+   "runner": "backend",
+   "controls": "RC-123",
+   "status": "detected",
+   "result": {
+    "passed": 336,
+    "failed": 2,
+    "failing_tests": [
+     "test_rc123_k8_a_same_visit_pair_starts_no_read",
+     "test_rc123_one_voxel_spacing_helper_and_the_visit_check_in_the_same_gather"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG9_second_details_filter": {
+   "reintroduces": "agent records keep details the audit record's filter would drop (K9)",
+   "runner": "backend",
+   "controls": "RC-126",
+   "status": "detected",
+   "result": {
+    "passed": 337,
+    "failed": 1,
+    "failing_tests": [
+     "test_rc126_k9_the_registry_and_the_record_use_one_details_filter"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG10_read_strategy_follows_the_flag": {
+   "reintroduces": "RC-062's acquisition record is read differently with the gate on and off (K10, G26)",
+   "runner": "backend",
+   "controls": "RC-122",
+   "status": "detected",
+   "result": {
+    "passed": 337,
+    "failed": 1,
+    "failing_tests": [
+     "test_rc123_g26_k10_rc062_s_input_is_the_same_with_the_gate_on_and_off[True]"
+    ],
+    "returncode": 1
+   },
+   "round": "fourteenth review (targeted)"
+  },
+  "AG4_raw_placeholder_fallback": {
+   "reintroduces": "a missing or unknown param leaves an empty slot in the clinician's sentence (K4)",
+   "runner": "vitest",
+   "controls": "RC-127",
+   "status": "detected",
+   "result": {
+    "passed": 0,
+    "failed": 1,
+    "violations": {}
+   }
+  },
+  "AG4b_warnings_without_params": {
+   "reintroduces": "the comparison's warnings under RC-062 show the fallback instead of the real band or fields (K4)",
+   "runner": "vitest",
+   "controls": "RC-127",
+   "status": "detected",
+   "result": {
+    "passed": 0,
+    "failed": 1,
+    "violations": {}
+   }
+  },
+  "V42_no_start_said_nothing": {
+   "reintroduces": "a Run click that cannot start says nothing (K3, P7)",
+   "runner": "vitest",
+   "controls": "RC-122",
+   "status": "detected",
+   "result": {
+    "passed": 0,
+    "failed": 1,
+    "violations": {}
+   }
+  },
+  "V43_changed_inputs_said_nothing": {
+   "reintroduces": "a Run click whose inputs changed while checking says nothing (P7)",
+   "runner": "vitest",
+   "controls": "RC-122",
+   "status": "detected",
+   "result": {
+    "passed": 0,
+    "failed": 1,
+    "violations": {}
+   }
+  },
+  "V44_unknown_version_not_asked_again": {
+   "reintroduces": "an unknown file version is never checked again: Run stays disabled for good (K3, P4)",
+   "runner": "vitest",
+   "controls": "RC-122",
+   "status": "detected",
+   "result": {
+    "passed": 0,
+    "failed": 1,
+    "violations": {
+     "P4": "seed 20261115: settled, Run is disabled though the server allows a run of B"
+    }
+   }
   }
  },
  "restored": {
@@ -2811,21 +3120,22 @@
   }
  },
  "summary": {
-  "mutations": 180,
-  "run": 151,
-  "detected": 150,
+  "mutations": 195,
+  "run": 168,
+  "detected": 167,
   "survived": 0,
   "invalid": 0,
-  "not_run": 29,
+  "not_run": 27,
+  "equivalent_in_harness": 1,
+  "note": "untouched controls carry their thirteenth-review result (commit e8c5418); new and re-anchored controls were run on 771b710 (fourteenth_review)",
   "restored_backend": [
-   285,
+   338,
    0
   ],
   "restored_node": [
    4,
    0
-  ],
-  "equivalent_in_harness": 1
+  ]
  },
  "vitest_m1": [
   {
@@ -2979,9 +3289,774 @@
     "violations": {}
    },
    "why": "follow-up: V37 and V41 SURVIVED the first run, so the model was strengthened (P2: no run starts with a token already expired; P3: the 'before' panel shows the newest version the server named; P4: a second attempt only when the card could not know the newest version) and the three survivors were run again on the strengthened test (working tree of 95eb18f, the test committed next); the real code passes 2 004 of 2 004"
+  },
+  {
+   "commit": "771b710d123a68d1369327fb3799d94e316a5aaa",
+   "test": [
+    "src/components/BrowserFlamesCard.model.test.tsx",
+    "src/services/qualityGate/gateText.test.tsx"
+   ],
+   "method": "the vitest mutants of the fourteenth review (and the card controls V35-V41 again), run against the model-based test and the gate-text test in a throwaway copy of the frontend (node_modules through a junction removed as a link only); baseline and restored copy with QG_MODEL_RUNS=200; each mutant with the CI's 2 000 seeded sequences + the corpus, stopping at the first violated property (QG_MODEL_STOP=1)",
+   "mutations": {
+    "AG4_raw_placeholder_fallback": {
+     "reintroduces": "a missing or unknown param leaves an empty slot in the clinician's sentence (K4)",
+     "controls": "RC-127",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {}
+     }
+    },
+    "AG4b_warnings_without_params": {
+     "reintroduces": "the comparison's warnings under RC-062 show the fallback instead of the real band or fields (K4)",
+     "controls": "RC-127",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {}
+     }
+    },
+    "V22_panel_action_not_from_the_answer": {
+     "reintroduces": "the panel ignores the action the answer names (G27)",
+     "controls": "RC-127",
+     "status": "invalid",
+     "result": {
+      "passed": 3,
+      "failed": 0,
+      "violations": {}
+     },
+     "reason": "INVALID for V22: two of its bound browser test files (QualityGatePanel, LongitudinalResultPanel) read the server's policy and could not load in this copy, so V22 could not be detected here; the copy now includes the policy and a test file that fails to load makes a run invalid, never a result (re-run below: detected)"
+    },
+    "V9_stale_run_starts": {
+     "reintroduces": "a run of A starts while B is selected, or after the attestation was rescinded",
+     "controls": "RC-122",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {
+       "P1": "corpus late: run 1 (file A, attested false, v1) started with a decision for A, attested true, v1"
+      }
+     }
+    },
+    "V42_no_start_said_nothing": {
+     "reintroduces": "a Run click that cannot start says nothing (K3, P7)",
+     "controls": "RC-122",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {}
+     }
+    },
+    "V43_changed_inputs_said_nothing": {
+     "reintroduces": "a Run click whose inputs changed while checking says nothing (P7)",
+     "controls": "RC-122",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {}
+     }
+    },
+    "V44_unknown_version_not_asked_again": {
+     "reintroduces": "an unknown file version is never checked again: Run stays disabled for good (K3, P4)",
+     "controls": "RC-122",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {
+       "P4": "seed 20261115: settled, Run is disabled though the server allows a run of B"
+      }
+     }
+    },
+    "V35_used_token_reused": {
+     "reintroduces": "a re-run presents the run token of an earlier run (M1, P2)",
+     "controls": "RC-126",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {
+       "P2": "corpus rerun: run 2 presents the run token of run 1",
+       "P3": "corpus rerun: the \\",
+       "P4": "corpus rerun: a fresh run the server allows was not released though the card knew the newest version"
+      }
+     }
+    },
+    "V36_rescinded_attestation_kept": {
+     "reintroduces": "an attested decision is shown and used while the attestation is not in effect (rescinded or no longer offered) (M1, P1/P3)",
+     "controls": "RC-122",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {
+       "P3": "seed 20261166: the \\"
+      }
+     }
+    },
+    "V37_token_lifetime_ignored": {
+     "reintroduces": "an expired run token starts a run whose output is then withheld (M1, P2/P4)",
+     "controls": "RC-126",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {
+       "P2": "corpus expiry: run 1 started with a run token that had already expired"
+      }
+     }
+    },
+    "V39_attestation_hidden_after_an_attested_run": {
+     "reintroduces": "the attestation is no longer offered after an attested run (M1, P5)",
+     "controls": "RC-122",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {
+       "P4": "corpus rescind: settled, Run is disabled though the server allows a run of A (attested)",
+       "P5": "corpus rescind: file A is attestable, but the attestation is not offered"
+      }
+     }
+    },
+    "V40_hidden_attestation_still_in_effect": {
+     "reintroduces": "an attestation no longer offered (a rate-limited preflight) is still shown and sent with Run (M1, P3/P5; seed 20262847)",
+     "controls": "RC-122",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {
+       "P3": "seed 20261166: the \\"
+      }
+     }
+    },
+    "V41_attested_decision_for_an_older_version": {
+     "reintroduces": "the attested decision of an older version is shown after the server named a newer one (M1, P3)",
+     "controls": "RC-122",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {
+       "P4": "corpus noVersion: settled, Run is disabled though the server allows a run of A (attested)"
+      }
+     }
+    }
+   },
+   "baseline": {
+    "passed": 3,
+    "failed": 0,
+    "violations": {}
+   },
+   "restored": {
+    "passed": 3,
+    "failed": 0,
+    "violations": {}
+   }
+  },
+  {
+   "commit": "771b710d123a68d1369327fb3799d94e316a5aaa",
+   "test": [
+    "src/components/BrowserFlamesCard.qualityGate.test.tsx",
+    "src/components/QualityGatePanel.test.tsx",
+    "src/services/qualityGate/gate.test.ts",
+    "src/services/flames/__tests__/headerEvidence.flagsOff.test.ts",
+    "src/components/LongitudinalCompare.qualityGate.test.tsx",
+    "src/components/LongitudinalResultPanel.qualityGate.test.tsx",
+    "src/services/qualityGate/api.test.ts",
+    "src/components/BrowserFlamesCard.serverDecides.test.tsx",
+    "src/components/BrowserFlamesCard.boundedTraffic.test.tsx",
+    "src/components/BrowserFlamesCard.retry.test.tsx",
+    "src/services/qualityGate/gateText.test.tsx"
+   ],
+   "method": "the vitest mutants of the fourteenth review (and the card controls V35-V41 again), run against the model-based test and the gate-text test in a throwaway copy of the frontend (node_modules through a junction removed as a link only); baseline and restored copy with QG_MODEL_RUNS=200; each mutant with the CI's 2 000 seeded sequences + the corpus, stopping at the first violated property (QG_MODEL_STOP=1)",
+   "mutations": {
+    "V22_panel_action_not_from_the_answer": {
+     "reintroduces": "the panel ignores the action the answer names (G27)",
+     "controls": "RC-127",
+     "status": "invalid",
+     "result": {
+      "passed": 61,
+      "failed": 0,
+      "violations": {}
+     },
+     "reason": "INVALID for V22: two of its bound browser test files (QualityGatePanel, LongitudinalResultPanel) read the server's policy and could not load in this copy, so V22 could not be detected here; the copy now includes the policy and a test file that fails to load makes a run invalid, never a result (re-run below: detected)"
+    }
+   },
+   "baseline": {
+    "passed": 61,
+    "failed": 0,
+    "violations": {}
+   },
+   "restored": {
+    "passed": 61,
+    "failed": 0,
+    "violations": {}
+   }
+  },
+  {
+   "commit": "771b710d123a68d1369327fb3799d94e316a5aaa",
+   "test": [
+    "src/components/BrowserFlamesCard.qualityGate.test.tsx",
+    "src/components/QualityGatePanel.test.tsx",
+    "src/services/qualityGate/gate.test.ts",
+    "src/services/flames/__tests__/headerEvidence.flagsOff.test.ts",
+    "src/components/LongitudinalCompare.qualityGate.test.tsx",
+    "src/components/LongitudinalResultPanel.qualityGate.test.tsx",
+    "src/services/qualityGate/api.test.ts",
+    "src/components/BrowserFlamesCard.serverDecides.test.tsx",
+    "src/components/BrowserFlamesCard.boundedTraffic.test.tsx",
+    "src/components/BrowserFlamesCard.retry.test.tsx",
+    "src/services/qualityGate/gateText.test.tsx"
+   ],
+   "method": "the vitest mutants of the fourteenth review (and the card controls V35-V41 again), run against the model-based test and the gate-text test in a throwaway copy of the frontend (node_modules through a junction removed as a link only); baseline and restored copy with QG_MODEL_RUNS=200; each mutant with the CI's 2 000 seeded sequences + the corpus, stopping at the first violated property (QG_MODEL_STOP=1)",
+   "mutations": {
+    "V22_panel_action_not_from_the_answer": {
+     "reintroduces": "the panel ignores the action the answer names (G27)",
+     "controls": "RC-127",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 2,
+      "violations": {}
+     }
+    },
+    "AG4_raw_placeholder_fallback": {
+     "reintroduces": "a missing or unknown param leaves an empty slot in the clinician's sentence (K4)",
+     "controls": "RC-127",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {}
+     }
+    },
+    "AG4b_warnings_without_params": {
+     "reintroduces": "the comparison's warnings under RC-062 show the fallback instead of the real band or fields (K4)",
+     "controls": "RC-127",
+     "status": "detected",
+     "result": {
+      "passed": 0,
+      "failed": 1,
+      "violations": {}
+     }
+    }
+   },
+   "baseline": {
+    "passed": 73,
+    "failed": 0,
+    "violations": {}
+   },
+   "restored": {
+    "passed": 73,
+    "failed": 0,
+    "violations": {}
+   },
+   "why": "fourteenth review: V22 (and AG4, AG4b again) against EVERY bound browser test except the model test, the copy holding the server's policy; detected"
   }
  ],
  "equivalent_in_harness": {
   "V38_final_asked_for_a_later_render": "the window it opens — a timer firing between a React commit and its passive effects, so the final request runs with a later render's closure — exists in a browser (passive effects flush after paint) but not under act() in jsdom, which flushes every effect before a timer can fire; the card keeps passing the request's own subject as a defence"
+ },
+ "fourteenth_review": {
+  "commit": "771b710d123a68d1369327fb3799d94e316a5aaa",
+  "method": "targeted run of the fourteenth review: every new control and every control re-anchored by this round's fixes, one mutation at a time in a throwaway copy (never the worktree), every anchor exactly once, the mutant must import (backend) before its kill counts, the bound backend tests (BACKEND_TESTS, now with test_rc122_review14.py) run inside the copy, original bytes restored and hash-checked",
+  "mutations": {
+   "AG1_unconfirmed_route_record_silences_the_middleware": {
+    "reintroduces": "a route record the store never confirmed still silences the middleware: the request has no record (K1)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 327,
+     "failed": 11,
+     "failing_tests": [
+      "test_rc126_a1_the_route_s_marker_is_set_only_after_its_record_was_written",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[build]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_false]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_none]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_pending]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_raises]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[integrity]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[stdout]",
+      "test_rc126_k1_platform_wide_an_auth_route_s_unconfirmed_record_never_silences_the_middleware[durable_false]",
+      "test_rc126_k1_platform_wide_an_auth_route_s_unconfirmed_record_never_silences_the_middleware[durable_none]",
+      "test_rc126_k1_platform_wide_an_auth_route_s_unconfirmed_record_never_silences_the_middleware[durable_pending]"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG1b_dropped_write_counts_as_written": {
+    "reintroduces": "a durable write the store gave up counts as a durable record (K1)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 336,
+     "failed": 2,
+     "failing_tests": [
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_false]",
+      "test_rc126_k1_platform_wide_an_auth_route_s_unconfirmed_record_never_silences_the_middleware[durable_false]"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG2_lost_answer_not_replayed": {
+    "reintroduces": "a lost final answer is re-evaluated instead of replayed: the run's result is hidden for good (K2)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 336,
+     "failed": 2,
+     "failing_tests": [
+      "test_rc126_k2_a_lost_final_answer_is_replayed_identically_and_audited_as_a_replay",
+      "test_rc126_k2_a_withheld_first_answer_is_never_replayed_as_more_permissive"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG2b_another_request_replays": {
+    "reintroduces": "another request presenting the same token gets the stored (released) decision: more permissive (K2)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 334,
+     "failed": 4,
+     "failing_tests": [
+      "test_rc126_k2_another_request_with_the_same_token_is_refused",
+      "test_rc126_k2_the_card_model_s_fake_server_replays_as_the_real_server_does",
+      "test_rc126_m2_an_unexpired_token_is_never_forgotten_and_a_full_store_fails_closed",
+      "test_rc126_m2_spendable_once_before_expiry_by_the_same_user_for_the_same_file_and_version"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG3_permission_without_a_version": {
+    "reintroduces": "an allowed consultation without an established file version: a run the browser can never start (K3)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 335,
+     "failed": 3,
+     "failing_tests": [
+      "test_rc126_k3_a_run_permission_always_names_the_file_version[_Bare]",
+      "test_rc126_k3_a_run_permission_always_names_the_file_version[_NoVersion]",
+      "test_rc126_k3_a_run_permission_always_names_the_file_version[_NullVersion]"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG3b_version_check_not_evaluated": {
+    "reintroduces": "the gate ignores that the file's version is unknown (K3)",
+    "runner": "backend",
+    "controls": "RC-122",
+    "status": "detected",
+    "result": {
+     "passed": 333,
+     "failed": 5,
+     "failing_tests": [
+      "test_rc126_k2_the_card_model_s_fake_server_replays_as_the_real_server_does",
+      "test_rc126_k3_a_run_permission_always_names_the_file_version[_Bare]",
+      "test_rc126_k3_a_run_permission_always_names_the_file_version[_NoVersion]",
+      "test_rc126_k3_a_run_permission_always_names_the_file_version[_NullVersion]",
+      "test_rc126_m1_the_card_model_plays_the_server_s_own_decisions"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG5_store_on_the_event_loop": {
+    "reintroduces": "the blocking single-use store runs on the event loop (K5)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 337,
+     "failed": 1,
+     "failing_tests": [
+      "test_rc126_k5_the_single_use_store_is_never_called_on_the_event_loop"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG6_error_path_without_outcome": {
+    "reintroduces": "an allowed pair that fails after the gate leaves no outcome record (K6)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 329,
+     "failed": 9,
+     "failing_tests": [
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-comparison_fails]",
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-evidence_read_fails]",
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-grid_mismatch]",
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-mask_missing]",
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[compare-presentation_fails]",
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[sel-detection_fails]",
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[sel-grid_mismatch]",
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[sel-intensities_missing]",
+      "test_rc126_k6_every_allowed_pair_leaves_exactly_one_outcome_record[sel-mask_missing]"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG7_unregistered_reason_persisted": {
+    "reintroduces": "an e-mail, a file name or a sentence persists as an audit reason (K7)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 325,
+     "failed": 13,
+     "failing_tests": [
+      "test_rc126_k7_no_pii_like_reason_ever_persists[/data/patients/MRN-889911/t1.nii]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[1.2.840.113619.2.55.3.604688]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[C:\\\\Users\\\\drsmith\\\\scan.dcm]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[Juan Perez Gomez]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[MRN889911]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[Patient John Smith has new lesions]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[agent.consultation:patient_12345]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[agent.run:jane.doe@hospital.org]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[agent.run:lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_lesion_]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[jane.doe@hospital.org]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[patient_12345_flair.nii.gz]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[quality_gate.withheld.patient_12345]",
+      "test_rc126_k7_no_pii_like_reason_ever_persists[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG8_reads_before_the_visit_check": {
+    "reintroduces": "a pair the visit check refuses still downloads headers and reads records (K8)",
+    "runner": "backend",
+    "controls": "RC-123",
+    "status": "detected",
+    "result": {
+     "passed": 336,
+     "failed": 2,
+     "failing_tests": [
+      "test_rc123_k8_a_same_visit_pair_starts_no_read",
+      "test_rc123_one_voxel_spacing_helper_and_the_visit_check_in_the_same_gather"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG9_second_details_filter": {
+    "reintroduces": "agent records keep details the audit record's filter would drop (K9)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 337,
+     "failed": 1,
+     "failing_tests": [
+      "test_rc126_k9_the_registry_and_the_record_use_one_details_filter"
+     ],
+     "returncode": 1
+    }
+   },
+   "AG10_read_strategy_follows_the_flag": {
+    "reintroduces": "RC-062's acquisition record is read differently with the gate on and off (K10, G26)",
+    "runner": "backend",
+    "controls": "RC-122",
+    "status": "detected",
+    "result": {
+     "passed": 337,
+     "failed": 1,
+     "failing_tests": [
+      "test_rc123_g26_k10_rc062_s_input_is_the_same_with_the_gate_on_and_off[True]"
+     ],
+     "returncode": 1
+    }
+   },
+   "U12_gate_on_the_loop": {
+    "reintroduces": "the gate runs on the event loop",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 337,
+     "failed": 1,
+     "failing_tests": [
+      "test_rc126_the_rate_limit_comes_first_and_the_gate_runs_off_the_loop"
+     ],
+     "returncode": 1
+    }
+   },
+   "W17_retry_seconds_dropped": {
+    "reintroduces": "over the limit, the physician is not told how long to wait (F3)",
+    "runner": "backend",
+    "controls": "RC-127",
+    "status": "detected",
+    "result": {
+     "passed": 337,
+     "failed": 1,
+     "failing_tests": [
+      "test_rc126_f3_every_consultation_counts_and_over_the_limit_gets_the_wait"
+     ],
+     "returncode": 1
+    }
+   },
+   "AF2_full_store_releases": {
+    "reintroduces": "a full or unreachable single-use store records a release anyway (M2: fail closed)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 336,
+     "failed": 2,
+     "failing_tests": [
+      "test_rc126_k2_an_unavailable_store_fails_closed",
+      "test_rc126_m2_an_unexpired_token_is_never_forgotten_and_a_full_store_fails_closed"
+     ],
+     "returncode": 1
+    }
+   },
+   "AF5_long_reason_dropped": {
+    "reintroduces": "an audit reason longer than 64 characters is dropped (A2)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 336,
+     "failed": 2,
+     "failing_tests": [
+      "test_rc126_a2_no_audit_reason_is_ever_lost",
+      "test_rc126_k7_every_valid_long_composition_persists_in_full"
+     ],
+     "returncode": 1
+    }
+   },
+   "AE5_refused_access_not_audited": {
+    "reintroduces": "an access refused with 404 on the quality-gate route leaves no audit trace (K3)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 328,
+     "failed": 10,
+     "failing_tests": [
+      "test_rc126_a1_the_route_s_marker_is_set_only_after_its_record_was_written",
+      "test_rc126_i5_one_audit_record_per_consultation",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[build]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_false]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_none]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_pending]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[durable_raises]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[integrity]",
+      "test_rc126_k1_a_route_record_that_is_not_durable_never_silences_the_middleware[stdout]",
+      "test_rc126_k3_a_refused_access_leaves_exactly_one_audit_record"
+     ],
+     "returncode": 1
+    }
+   },
+   "AE6_release_without_a_run": {
+    "reintroduces": "a final consultation with no run is recorded as an AI run (K5)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 335,
+     "failed": 3,
+     "failing_tests": [
+      "test_rc126_k2_an_unavailable_store_fails_closed",
+      "test_rc126_k2_another_request_with_the_same_token_is_refused",
+      "test_rc126_k5_only_a_real_run_is_recorded_as_a_release"
+     ],
+     "returncode": 1
+    }
+   },
+   "AE7_run_token_reusable": {
+    "reintroduces": "one run is recorded as several AI runs: the spent tokens are forgotten (K5, M2)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 332,
+     "failed": 6,
+     "failing_tests": [
+      "test_rc126_k2_a_lost_final_answer_is_replayed_identically_and_audited_as_a_replay",
+      "test_rc126_k2_another_request_with_the_same_token_is_refused",
+      "test_rc126_k2_the_card_model_s_fake_server_replays_as_the_real_server_does",
+      "test_rc126_k5_only_a_real_run_is_recorded_as_a_release",
+      "test_rc126_m2_an_unexpired_token_is_never_forgotten_and_a_full_store_fails_closed",
+      "test_rc126_m2_spendable_once_before_expiry_by_the_same_user_for_the_same_file_and_version"
+     ],
+     "returncode": 1
+    }
+   },
+   "AD6_middleware_duplicates_the_record": {
+    "reintroduces": "two audit records per consultation (I5)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 335,
+     "failed": 3,
+     "failing_tests": [
+      "test_rc126_i5_one_audit_record_per_consultation",
+      "test_rc126_k1_a_durable_route_record_is_the_one_record",
+      "test_rc126_k5_only_a_real_run_is_recorded_as_a_release"
+     ],
+     "returncode": 1
+    }
+   },
+   "AB5_visit_check_after_the_gate": {
+    "reintroduces": "the same mask, the same visit or a reversed order passes the gate instead of its 400 (G35)",
+    "runner": "backend",
+    "controls": "RC-123",
+    "status": "detected",
+    "result": {
+     "passed": 333,
+     "failed": 5,
+     "failing_tests": [
+      "test_rc123_g35_validation_precedes_the_gate[body0]",
+      "test_rc123_g35_validation_precedes_the_gate[body1]",
+      "test_rc123_k8_a_same_visit_pair_starts_no_read",
+      "test_rc123_o3_the_visit_records_are_read_once_per_request",
+      "test_rc123_one_voxel_spacing_helper_and_the_visit_check_in_the_same_gather"
+     ],
+     "returncode": 1
+    }
+   },
+   "AA6_audit_details_dropped": {
+    "reintroduces": "the audit keeps only a packed code cut at 64 characters (G31)",
+    "runner": "backend",
+    "controls": "RC-126",
+    "status": "detected",
+    "result": {
+     "passed": 329,
+     "failed": 9,
+     "failing_tests": [
+      "test_rc122_g13_the_attestation_is_a_strict_boolean_and_is_audited_with_the_user",
+      "test_rc123_f1_two_uploaded_niftis_can_be_compared_with_a_per_visit_attestation",
+      "test_rc125_k4_the_skull_outcome_is_recorded_as_reported_by_the_browser",
+      "test_rc126_g17_shown_and_hidden_outputs_leave_distinguishable_audit_records",
+      "test_rc126_g31_a_comparison_rc062_withholds_is_recorded_as_withheld_never_released",
+      "test_rc126_g31_the_audit_keeps_every_attested_visit_in_structured_fields",
+      "test_rc126_k9_the_registry_and_the_record_use_one_details_filter",
+      "test_rc126_o2_every_attestation_is_audited_also_from_the_cache",
+      "test_rc126_s4_the_real_audit_record_keeps_every_attested_visit"
+     ],
+     "returncode": 1
+    }
+   }
+  },
+  "baseline": {
+   "backend": {
+    "passed": 338,
+    "failed": 0,
+    "failing_tests": [],
+    "returncode": 0
+   },
+   "node": {
+    "passed": 4,
+    "failed": 0,
+    "failing_tests": []
+   }
+  },
+  "restored": {
+   "backend": {
+    "passed": 338,
+    "failed": 0,
+    "failing_tests": [],
+    "returncode": 0
+   },
+   "node": {
+    "passed": 4,
+    "failed": 0,
+    "failing_tests": []
+   }
+  },
+  "interrupted_full_run": {
+   "why": "stopped after its first mutants to keep the owner's computer lightly loaded (about 3 h for the full set); its results so far are kept",
+   "mutations": {
+    "Q1_confirmation_overrides_another_sequence": {
+     "status": "detected",
+     "failed_tests": 4
+    },
+    "Q2_unknown_sequence_passes": {
+     "status": "detected",
+     "failed_tests": 8
+    },
+    "Q3_confirmation_leaves_no_warning": {
+     "status": "detected",
+     "failed_tests": 12
+    },
+    "Q4_unknown_thickness_passes": {
+     "status": "detected",
+     "failed_tests": 4
+    },
+    "Q5_lower_bound_taken_as_thin": {
+     "status": "detected",
+     "failed_tests": 1
+    },
+    "Q6_gate_fault_passes": {
+     "status": "detected",
+     "failed_tests": 1
+    },
+    "Q7_scanner_change_ignored": {
+     "status": "detected",
+     "failed_tests": 2
+    },
+    "Q8_unknown_scanner_passes": {
+     "status": "detected",
+     "failed_tests": 1
+    },
+    "Q9_abstention_does_not_withhold": {
+     "status": "detected",
+     "failed_tests": 3
+    },
+    "Q10_route_ignores_the_gate": {
+     "status": "detected",
+     "failed_tests": 10
+    },
+    "Q11_hook_ignores_the_licence": {
+     "status": "detected",
+     "failed_tests": 1
+    },
+    "Q12_thickness_abstains_on_bands": {
+     "status": "detected",
+     "failed_tests": 17
+    },
+    "Q13_unknown_skull_passes": {
+     "status": "detected",
+     "failed_tests": 6
+    },
+    "Q14_pending_allows_output": {
+     "status": "detected",
+     "failed_tests": 5
+    },
+    "Q15_skull_not_checked": {
+     "status": "detected",
+     "failed_tests": 11
+    },
+    "Q16_server_says_skull_stripped": {
+     "status": "detected",
+     "failed_tests": 4
+    },
+    "Q17_platform_off_continues": {
+     "status": "detected",
+     "failed_tests": 10
+    },
+    "Q18_malformed_switch_accepted": {
+     "status": "detected",
+     "failed_tests": 1
+    },
+    "Q19_registry_not_consulted": {
+     "status": "detected",
+     "failed_tests": 6
+    }
+   }
+  }
  }
 }
