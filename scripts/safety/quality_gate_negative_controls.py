@@ -121,6 +121,7 @@ CMP_ACTION = ("If you are sure this visit's image is a T2-FLAIR, tick its confir
 # Tenth review of PR #81 (SIMPLIFY): controls RETIRED because the part they mutated no longer exists — kept here and in the
 # record with the reason, never silently dropped
 RETIRED = {
+    "V8_stale_preflight_applies": "the consultation hook's sequence check was removed (fifteenth review, less mechanism): an older request's answer never reaches the reducer (its effect is cleaned up) and an answer for another subject is never exposed; the full harness on GitHub Actions showed the check could not fail",
     "Z5_instances_streamed": "the indexed query of the acquisition record was withdrawn (fifteenth review, S3): RC-062's input is read as on the base, a scan; AH9 sabotages that",
     "AG10_read_strategy_follows_the_flag": "K10 was withdrawn (fifteenth review, S3): one read, the base's, whatever the flags; AH9 sabotages that",
     "V36_rescinded_attestation_kept": "the attested-decision slot was removed (fifteenth review, S4): one consultation for the current inputs; V45 sabotages it",
@@ -144,6 +145,8 @@ RETIRED = {
 # Twelfth review of PR #81 (K4): controls whose sabotaged check can never fail in this app test LABELLING only — they are
 # run and recorded, but never counted as evidence of a risk control.
 LABELLING_ONLY = {
+    "V40_hidden_attestation_still_in_effect": "with one consultation for the current inputs (fifteenth review, S4) the attestation can no longer be in effect while not offered (the offer comes from the last decision WITHOUT it, which only arrives while the box is unticked); the guard is kept, its control cannot fail (found by the full harness on GitHub Actions)",
+    "V33_stale_before_panel_after_an_attested_run": "with one consultation for the current inputs (S4) the decision shown and the one a Run asks again are for the same inputs; skipping the show changes no observable decision (found by the full harness on GitHub Actions)",
     "Q13_unknown_skull_passes": "the browser reports 'unknown' only for a result without the worker's skull report, which this app's worker never produces (RC-043 refuses first); the control tests how the server handles a client-reported value",
 }
 
@@ -720,8 +723,6 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the panel shows the decision but not why", "vitest", "RC-127"),
     "V7_rc062_box_for_a_gate_stop": ([(LRP, "      {abstained ? (gateStopped ? null : abstentionBox()) : (\n", "      {abstained ? abstentionBox() : (\n")],
         "the physician reads 'change of scanner or protocol' when the gate stopped the comparison", "vitest", "RC-127"),
-    "V8_stale_preflight_applies": ([(HOOK, "      if (a.seq !== null && a.seq !== s.seq) return s;          // the answer to an older request never acts\n", "")],
-        "the answer for file A is shown once B is selected", "vitest", "RC-122"),
     "V9_stale_run_starts": ([(CARD, "      if (selection.current !== selectionAtClick || currentFile.current !== fileAtClick\n        || fresh.subject?.file_id !== fileAtClick) return;\n      if (attestedNow.current !== attestation) {\n        setRunNotice({ kind: 'inputsChanged', code: null });\n        return;\n      }\n", "")],
         "a run of A starts while B is selected, or after the attestation was rescinded", "vitest", "RC-122"),
     "V10_final_consultation_without_the_skull": ([(CARD, "      return ask(run.fileId, of.attested, skullFromProvenance(run.provenance), of.token).then((r) => {\n",

@@ -136,7 +136,7 @@ def test_rc126_s2_the_unconfirmed_tag_is_exactly_true_and_no_request_is_left_wit
     if route in COVERED and route_wrote and (durable_in_time or sink_state == "off"):
         assert mine == [] and len(explicit) == 1, "a durable route record is the one record"
     budget = getattr(M, "_WAIT_BUDGET_S", M._FLUSH_WAIT_S)
-    assert elapsed <= budget + 0.6, f"the request waited {elapsed:.2f} s (budget {budget:.2f} s)"
+    assert elapsed <= budget + 0.3, f"the request waited {elapsed:.2f} s (budget {budget:.2f} s)"   # one budget, not two
 
 
 def test_rc126_s2_one_import_of_asyncio_in_the_middleware():

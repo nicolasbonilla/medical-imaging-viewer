@@ -37,7 +37,8 @@ function reducer<T>(s: State<T>, a: Action<T>): State<T> {
     case 'again':
       return { ...s, seq: s.seq + 1, attempt: 0, inFlight: true, wait: null };
     case 'answer':
-      if (a.seq !== null && a.seq !== s.seq) return s;          // the answer to an older request never acts
+      // fifteenth review (less mechanism): no sequence check — an older request's answer never reaches here (its
+      // effect was cleaned up: `live` false), and an answer for another subject is never exposed (`own`)
       return {
         // M1 (thirteenth review): an answer shown from elsewhere (a newer consultation) supersedes the request in
         // flight — its older answer can never overwrite this one

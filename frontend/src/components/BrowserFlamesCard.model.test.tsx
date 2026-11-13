@@ -266,6 +266,10 @@ const CORPUS: Record<string, Action[]> = {
   // fifteenth review (S4): an attested Run consultation answered 429, then its automatic retry after the wait
   attestedRetry: ['selectA', 'tick', 'deliverAll', 'attest', 'tick', 'deliverAll', 'r429', 'run', 'deliverAll', 'wait',
     'deliverAll', 'tick'],
+  // the negative-control pass on GitHub Actions (fifteenth review): a Run whose fresh answer arrives too late to start
+  // (its run permission expired on the way), and a Run whose attestation is rescinded while the server is checking
+  slowAnswer: ['selectB', 'tick', 'deliverAll', 'h2', 'run', 'h2', 'deliverAll'],
+  rescindWhileChecking: ['selectA', 'tick', 'deliverAll', 'attest', 'tick', 'deliverAll', 'h2', 'run', 'attest', 'deliverAll'],
 };
 
 async function play(actions: Action[] | null, seed: number): Promise<Partial<Record<Prop, string>>> {
