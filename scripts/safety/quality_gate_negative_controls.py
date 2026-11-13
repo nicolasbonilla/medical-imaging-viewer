@@ -121,6 +121,7 @@ CMP_ACTION = ("If you are sure this visit's image is a T2-FLAIR, tick its confir
 # Tenth review of PR #81 (SIMPLIFY): controls RETIRED because the part they mutated no longer exists — kept here and in the
 # record with the reason, never silently dropped
 RETIRED = {
+    "AH11_last_second_becomes_a_minute": "the gate's own rounding and clamp of Retry-After were deleted (fifteenth review, less mechanism): the limiter rounds up in ONE place and a blocked request always has 1..window seconds left, so the gate's clamp could never act (the full harness on GitHub Actions, run 43389227243, showed AH11 surviving); AH10 sabotages the limiter's rounding, AH13 the gate's use of it",
     "V8_stale_preflight_applies": "the consultation hook's sequence check was removed (fifteenth review, less mechanism): an older request's answer never reaches the reducer (its effect is cleaned up) and an answer for another subject is never exposed; the full harness on GitHub Actions showed the check could not fail",
     "Z5_instances_streamed": "the indexed query of the acquisition record was withdrawn (fifteenth review, S3): RC-062's input is read as on the base, a scan; AH9 sabotages that",
     "AG10_read_strategy_follows_the_flag": "K10 was withdrawn (fifteenth review, S3): one read, the base's, whatever the flags; AH9 sabotages that",
@@ -542,9 +543,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "AH10_retry_after_truncated": ([(RL, "        retry_after = math.ceil(entry['expires_at'] - now) if entry['count'] > limit else 0\n",
         "        retry_after = int(entry['expires_at'] - now) if entry['count'] > limit else 0\n")],
         "Retry-After shorter than the real time left (S5)", "backend", "RC-126"),
-    "AH11_last_second_becomes_a_minute": ([(QG, '    return 60 if wait is None else max(1, min(60, int(math.ceil(wait))))\n',
-        '    return max(1, min(60, int(math.ceil(wait)))) if wait else 60\n')],
-        "less than one second left becomes a 60-second wait (S5, finding 6)", "backend", "RC-126"),
+    "AH13_gate_ignores_the_limiters_time": ([(QG, '    return int(meta["retry_after"])\n', '    return 60\n')],
+        "the gate answers a fixed 60-second wait whatever time is left in the window (S5, finding 6)", "backend", "RC-126"),
     "AH12_header_grid_reads_1024_bytes": ([(SS, '        head = nifti_header.header_prefix(raw)\n', '        head = nifti_header.header_prefix(raw)[:1024]\n')],
         "the header grid fails on a NIfTI whose extensions run past 1024 bytes (S6)", "backend", "RC-122"),
     "V45_consultation_ignores_the_attestation": ([(CARD, "  const inputsNow = useMemo(() => (gateOn && flairFileId ? { file: flairFileId, attested: attestationOn } : null),\n",

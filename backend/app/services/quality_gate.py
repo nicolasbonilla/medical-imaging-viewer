@@ -841,10 +841,10 @@ def rate_limit(user_id: str) -> Optional[int]:
                                               scope=RateLimitScope.PER_USER, user_id=user_id)
     if allowed:
         return None
-    # S5 (fifteenth review): the limiter's remaining time, rounded UP and clamped to [1, window] — never a 60-second
-    # wait for the last second of a window (a 0 from the limiter is "less than one second left")
-    wait = lcs._number((meta or {}).get("retry_after")) if isinstance(meta, dict) else None
-    return 60 if wait is None else max(1, min(60, int(math.ceil(wait))))
+    # S5 (fifteenth review): the limiter's own remaining time, rounded UP in ONE place — the limiter's in-memory window
+    # (the gate's only one), where a blocked request always has 1..window seconds left. No second rounding or clamp
+    # here: the full negative-control pass showed it could never act (AH11, retired)
+    return int(meta["retry_after"])
 
 
 def rate_limited_response(wait: int, code: str = "gate_rate_limited"):
