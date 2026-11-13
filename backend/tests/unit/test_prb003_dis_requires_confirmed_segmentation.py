@@ -517,8 +517,13 @@ def test_rc071_the_confirmation_cannot_be_sent_by_the_client_on_create(client_fo
 
 # ---------------------------------------------------- RC-070 / RC-072: the AI report (HAZ-003, HAZ-008)
 def _prompt(findings, language="en"):
-    from app.services.brain_report_service import BrainReportService
-    return BrainReportService.__new__(BrainReportService)._build_findings_prompt(findings, language=language)
+    # (Amended for the third review of PR #78 (T5, DRAFT): the retired prompt builder was archived outside the shipped code; the control is checked on the request the device sends now (the verified report).)
+    from app.services import verified_report as VR
+    from app.services.report_payload_guard import provider_payload
+    f, v, not_included = VR.rendered_request(findings, None)
+    p = provider_payload(f, v)
+    return VR.first_user_message(VR.build_view(p.findings, p.volumetry, language, not_included=not_included),
+                                 language)
 
 
 @pytest.mark.unit
@@ -529,18 +534,26 @@ def _prompt(findings, language="en"):
     {"segmentation_id": "s"},                                                # a block without any flag
 ], ids=["legacy-met", "not-evaluated", "no-flag"])
 def test_rc070_report_prompt_never_states_met_or_not_met_unless_evaluated(block):
-    prompt = _prompt({"dis_assessment": block})
-    assert "DIS Assessment: MET" not in prompt and "NOT MET" not in prompt
-    assert "NOT EVALUATED" in prompt
+    from app.services.dis_review_gate import NOT_EVALUATED_LINE
+    # fifth review of PR #78, V9 (amended): the DIS line belongs to a report with lesion findings
+    prompt = _prompt({"dis_assessment": block, "lesion_analysis": {"total_count": 2}})
+    assert "brain criterion" not in prompt and "not met" not in prompt.lower() and '"dis_met_brain"' not in prompt
+    assert NOT_EVALUATED_LINE["en"] in prompt and '"status":"not evaluated"' in prompt
     assert "requires clinician review of the segmentation" in prompt
 
 
 @pytest.mark.unit
 def test_rc070_report_prompt_with_lesions_and_no_evaluated_dis_forbids_deriving_dis():
+    from app.services import verified_report as VR
+    from app.services.dis_review_gate import NOT_EVALUATED_LINE
+    # (amended with the seventh review of PR #78, I2: the route always sends the DIS block with a lesion analysis —
+    # here not evaluated; without any block the draft has no DIS line)
     prompt = _prompt({"lesion_analysis": {"total_count": 3, "regions": {
-        "Periventricular": {"lesion_count": 2, "total_volume_mm3": 30.0, "total_volume_ml": 0.03}}}})
-    assert "NOT EVALUATED" in prompt
-    assert "Do NOT state or imply dissemination in space" in prompt
+        "Periventricular": {"lesion_count": 2, "total_volume_mm3": 30.0, "total_volume_ml": 0.03}}},
+        "dis_assessment": {"evaluation_status": "not_evaluated"}})
+    assert NOT_EVALUATED_LINE["en"] in prompt and "periventricular" not in prompt.lower()
+    # (amended with the eighth review of PR #78, I10: the model says nothing about DIS — the code writes its state)
+    assert "say nothing about dissemination in space" in " ".join(VR.SYSTEM_PROMPT.split()).lower()
 
 
 @pytest.mark.unit
@@ -548,7 +561,8 @@ def test_rc070_report_prompt_states_the_result_of_an_evaluated_assessment():
     prompt = _prompt({"dis_assessment": {"evaluation_status": "evaluated", "dis_met": True,
                                          "regions_with_lesions": 2, "total_dis_regions": 5,
                                          "region_details": {"Periventricular": {"present": True}}}})
-    assert "DIS Assessment: MET" in prompt and "NOT EVALUATED" not in prompt
+    from app.services.dis_review_gate import NOT_EVALUATED_LINE
+    assert "the brain criterion is met" in prompt and NOT_EVALUATED_LINE["en"] not in prompt
 
 
 class _CapturingReport:
@@ -691,12 +705,31 @@ def test_rc072_report_draft_ends_with_the_not_evaluated_notice_in_its_language(r
     from app.api.routes.ai_report import AI_DRAFT_HEADING
     body = r.json()
     ai_text, content = body["ai_text"], body["content"]
-    assert ai_text.startswith("draft body")
-    notice = ai_text[len("draft body"):]
-    assert phrase in notice
-    from app.services import dis_review_gate as gate
-    assert gate.AUTOMATIC_MARKING_NOTICE[lang] in notice
     assert content.startswith(f"### {AI_DRAFT_HEADING[lang]}") and content.endswith(ai_text)
+    # Fifth review of PR #78 (V8, DRAFT — amended): the report service owns the DIS statement and the notice; the
+    # route adds none (the stubbed service's text is delivered alone). The real service, in each language: the
+    # findings state "not evaluated" once, and the notice on automatic marking follows.
+    assert ai_text.startswith("draft body") and phrase not in ai_text
+    import asyncio
+    from types import SimpleNamespace
+    from app.services import dis_review_gate as gate
+    from app.services.brain_report_service import BrainReportService
+    real = BrainReportService()
+    real._settings = SimpleNamespace(REPORT_LLM_ENABLED=False, CLAUDE_MODEL=None, CLAUDE_MAX_TOKENS=1,
+                                     ANTHROPIC_API_KEY="")
+    loop = asyncio.new_event_loop()     # not asyncio.run: it would unset the current loop of later tests
+    try:
+        # (amended with the seventh review of PR #78, I2/I5: the DIS block not evaluated, from an automatic marking — the route always sends one)
+        result = loop.run_until_complete(real.generate_report(
+            findings={"lesion_analysis": {"total_count": 2},
+                      "dis_assessment": {"evaluation_status": "not_evaluated",
+                                         "segmentation_review": {"source": "ai_draft"}}},
+            language=lang))
+    finally:
+        loop.close()
+    text = result["content"]
+    assert result["dis_evaluation"] == "not_evaluated" and text.count(phrase) == 1
+    assert text.index(gate.AUTOMATIC_MARKING_NOTICE[lang]) > text.index(phrase)
 
 
 @pytest.mark.unit

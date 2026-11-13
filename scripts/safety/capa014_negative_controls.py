@@ -57,6 +57,7 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/CAPA-014_review5_negative_controls_2026-10-25.json"
+OUT = os.environ.get("NC_OUT", OUT)     # (a later run writes its own record; the earlier one is kept)
 BACKEND_TESTS = ["tests/unit/test_capa014_report_provider_payload.py",
                  "tests/unit/test_capa009_object_authorization_everywhere.py",
                  "tests/unit/test_capa008_assistant_read_only.py",
@@ -100,9 +101,7 @@ def skip_generic(*names):
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     # ── RC-064: structured payload only ──
-    "P1_payload_bypassed": ([(BRS, "        payload = provider_payload(findings, volumetry, identifiers)   # the patient's own numbers refused (R2)\n",
-                              "        payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, "
-                              "\"unlisted\": {}})()\n")],
+    "P1_payload_bypassed": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            payload = type(\"P\", (), {\"findings\": findings, \"volumetry\": volumetry, \"withheld\": {}, \"unlisted\": {}})()\n")],
                             "the request's findings go to the prompt builder as received"),
     "P2_builder_prints_free_text": ([(BRS, "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n",
                                       "        if findings.get(\"clinician_entry\") is True:\n            parts.append(CLINICIAN_TEXT_INSTRUCTION)\n        if findings.get(\"clinical_indication\"):\n"
@@ -116,8 +115,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                 '    """The canonical label when `value` is one of the device\'s labels, otherwise None."""\n'
                                 '    return value if isinstance(value, str) else None\n')],
                               "labels outside the device's vocabulary sent"),
-    "P5_counts_not_coerced": ([(G, "        n = _number(value)\n        if n is None:\n            if value is not None:\n",
-                                "        n = _number(value)\n        if n is None:\n            return value\n            if value is not None:\n")],
+    "P5_counts_not_coerced": ([(G, "        n = finite_number(value)\n        if n is None:\n            if value is not None:\n",
+                                "        n = finite_number(value)\n        if n is None:\n            return value\n            if value is not None:\n")],
                               "any value printed where a number is expected (free text through number fields)"),
     "P6_any_sex_sent": ([(G, '    if f.get("patient_sex") in ("M", "F"):\n', '    if f.get("patient_sex"):\n'),
                          (BRS, '        if findings.get("patient_sex") in ("M", "F"):\n', '        if findings.get("patient_sex"):\n')],
@@ -126,7 +125,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                           "the exact age sent instead of the 5-year band"),
     "P8_no_90_or_older": ([(G, '    if years >= 90:\n        return "90 or older"\n', "")],
                           "ages of 90 and over sent in 5-year bands (93 -> 90-94)"),
-    "P9_payload_in_system_prompt": ([(BRS, "                system=system_prompt,\n", "                system=system_prompt + user_prompt,\n")],
+    "P9_payload_in_system_prompt": ([(BRS, "max_tokens=max_tokens, system=system, messages=messages,", "max_tokens=max_tokens, system=system + str(messages), messages=messages,")],
                                     "the system prompt no longer the fixed template"),
     # second independent review (N2, N3, N4)
     "P10_app_label_names_missing": ([(G, "    labels |= set(_EXTRA_LABELS) | set(APP_LABEL_NAMES)\n", "    labels |= set(_EXTRA_LABELS)\n")],
@@ -165,7 +164,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "P20_confidence_in_percent_refused": ([(G, "required=False,\n                                                     outside=None))\n",
                                             "required=False))\n")],
                                           "a confidence given in percent refuses the report"),
-    "P21_patient_numbers_not_checked": ([(G, "        if n == int(n) and str(abs(int(n))) in self.patient_numbers:\n", "        if False:\n")],
+    # (re-anchored with the tenth review of PR #78, finding 9: ONE rule, used by the projection and by the check on
+    # the projected payload)
+    "P21_patient_numbers_not_checked": ([(G, "    return n == int(n) and str(abs(int(n))) in forms\n", "    return False\n")],
                                         "the patient's record number sent as '1234567 voxels'"),
     "P22_synthetic_dis_without_state": ([(BRS, '        "dis_assessment": {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 1,\n',
                                           '        "dis_assessment": {"dis_met": True, "regions_with_lesions": 1,\n')],
@@ -179,7 +180,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                                 '    return f"{value:.1f}%"\n')],
                                               "'not available%' in the prompt"),
     # ── RC-065: detection-only tripwire and fail closed ──
-    "T1_tripwire_removed": ([(BRS, "        assert_prompt_carries_no_identifier(user_prompt, identifiers)\n", "")],
+    "T1_tripwire_removed": ([(BRS, "                assert_prompt_carries_no_identifier(sent_text, ids)\n", "")],
                             "no check of the final prompt"),
     "T2_name_check_removed": ([(G, "            if s in unique or (len(s) >= 4 and any(s in w for w in unique if w not in safe_words)):\n",
                                 "            if False:\n")],
@@ -228,8 +229,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                       '    "email": re.compile(r"[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}"),\n')],
                                     "the e-mail pattern of the first version (quadratic time)"),
     # second independent review (N5, N8, safe pairs)
-    "T23_template_words_exempt": ([(BRS, '    texts = [UNLISTED, "Structure Label"]\n',
-                                    '    texts = list(REPORT_TEMPLATES.values()) + [UNLISTED, "Structure Label"]\n')],
+    "T23_template_words_exempt": ([(BRS, '    texts: List[str] = []\n',
+                                    '    texts: List[str] = list(REPORT_TEMPLATES.values())\n')],
                                   "words of the system templates ('Pons', 'Filippi') never reported"),
     "T24_numeric_record_number_in_measurements": ([(G, '        return re.compile(rf"(?<![\\w.,]){chars}(?!\\w|[.,]\\d|\\s?(?:{_UNIT_AFTER}))")\n',
                                                     '        return re.compile(r"(?<![a-z0-9])" + r"[\\s\\-./_#:]{0,3}".join(chars) + r"(?![a-z0-9])")\n')],
@@ -241,7 +242,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                   "a patient named Deep White blocks every draft ('Deep White Matter')"),
     "T27_device_joined_words_reported": ([(G, "any(w in joined and w not in safe_words for w in unique)", "any(w in joined for w in unique)")],
                                          "a patient named Juxta Cortical blocks every draft ('Juxtacortical')"),
-    "F1_route_needs_no_segmentation": ([(AIR, "    if not request.segmentation_id:\n        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SUBJECT_REQUIRED_DETAIL)\n", "")],
+    "F1_route_needs_no_segmentation": ([(AIR, "    if not request.segmentation_id:\n        raise ReportError(\"segmentation_required\", status.HTTP_400_BAD_REQUEST, SUBJECT_REQUIRED_DETAIL)\n", "")],
                                        "a request without patient reference reaches the provider"),
     "F2_route_does_not_authorize": ([(AIR, "    patient_id = await authorize_segmentation_id(request.segmentation_id, current_user)\n",
                                       "    from app.security.resource_access import resolve_segmentation_patient_id, _segmentation_service\n"
@@ -254,7 +255,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "F4_incomplete_record_accepted": ([(G, "        if not (mrn and given and family and isinstance(birth, date)):\n",
                                         "        if not (mrn or given or family):\n")],
                                       "a record without record number, name or birth date accepted"),
-    "F5_service_sends_without_identifiers": ([(BRS, "        if not isinstance(identifiers, PatientIdentifiers):\n", "        if False:\n")],
+    "F5_service_sends_without_identifiers": ([(BRS, "                if not isinstance(ids, PatientIdentifiers):\n", "                if False:\n")],
                                              "the service builds and sends a prompt without the patient's identifiers"),
     "F6_assistant_omits_segmentation": ([(MCPS, '            "segmentation_id": segmentation_id,\n', "")],
                                         "the assistant's report tool sends no segmentation (every draft refused)"),
@@ -305,16 +306,18 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "M17_copied_text_keeps_heading_imitations": ([(AIR, '    out.append(without_reserved_heading_imitations(parts.get("ai_text") or "", language))\n',
                                                    '    out.append(parts.get("ai_text"))\n')],
                                                  "the copied text shows a second clinician's entry or application note"),
-    "M18_zero_width_space_joins_words": ([(AIR, '    text = text.replace("\\u200b", " ")\n', "")],
+    "M18_zero_width_space_joins_words": ([(G, '    text = text.replace("\\u200b", " ")\n', "")],
                                          "'zero\u200bwidth' becomes 'zerowidth'"),
-    "L1_raw_findings_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
-                                 '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "findings": findings},\n')],
+    # (L1-L3 re-anchored with the tenth review of PR #78, I17: the record is written after the checks, with the state
+    # that ran)
+    "L1_raw_findings_logged": ([(BRS, '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld})\n',
+                                 '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld, "findings": findings})\n')],
                                "the request's findings written to the log"),
-    "L2_prompt_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
-                           '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld, "prompt": user_prompt},\n')],
+    "L2_prompt_logged": ([(BRS, '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld})\n',
+                           '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld, "prompt": verified_report.first_user_message(view, lang)})\n')],
                          "the prompt written to the log"),
-    "L3_counts_not_logged": ([(BRS, '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},\n',
-                               '            extra={"report_id": report_id, "privacy_check": "passed", "withheld": {}},\n')],
+    "L3_counts_not_logged": ([(BRS, '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld})\n',
+                               '                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": {}})\n')],
                              "no record of what was withheld"),
     "C1_false_header_claim": ([(BRS, "Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):\n",
                                 "HIPAA compliance: patient data is de-identified before sending to Claude API.\n"
@@ -329,7 +332,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                   '     "brain_report_service.py _build_findings_prompt strips PHI; only age/sex/findings sent", ""),\n'
                                   '    ("RC-007b", "HAZ-003", "Withdrawn 2026-07-18; replaced by RC-064, RC-065 and RC-066 (CAPA-014)",\n')],
                                 "the record generator writes the withdrawn RC-007 statement again"),
-    "C4_stale_model_name": ([(TECHDOC, "                                              (claude-sonnet-4-5-20250929,\n",
+    # verified report (DRAFT, 2026-11-10): the documentation names the new default model; same defect re-introduced
+    "C4_stale_model_name": ([(TECHDOC, "                                              (claude-sonnet-5-5,\n",
                               "                                              (claude-3-5-sonnet,\n")],
                             "the technical documentation names a model the device does not use"),
     "U1_note_not_shown": ([(PANEL, "                {t('report.deidentificationNote')}\n", "                {''}\n")],
@@ -360,6 +364,14 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "U10_typed_fields_unlimited": ([(PANEL, "const MAX_TYPED_CHARS = 5000;\n", "const MAX_TYPED_CHARS = 524288;\n")],
                                    "the typed fields accept more than the draft shows, without a counter of the limit"),
 }
+
+# Third independent review of PR #78 (T5, DRAFT, PENDING owner approval): these mutations targeted the retired report
+# templates and findings-prompt builder, archived outside the shipped code (docs/archive/retired_report_prompt.py).
+# They are kept by name, not run; the controls they exercised are verified on the verified report by
+# scripts/safety/verified_report_negative_controls.py. Ninth review of PR #78, I15: T23 inserted the retired
+# REPORT_TEMPLATES name — an INVALID mutant (it died by NameError, before any test, and was counted as a kill).
+# Replaced by: verified_report_negative_controls.py (P1-P8, C1-C42, F1-F29; T23's RC-065 device words: F29).
+RETIRED_WITH_THE_TEMPLATES = {name: M.pop(name)[1] for name in ("P2_builder_prints_free_text", "P6_any_sex_sent", "P17_builder_prints_not_evaluated_as_not_met", "P22_synthetic_dis_without_state", "P23_synthetic_dis_without_absent_region", "M3_model_not_told", "M8_instruction_always_sent", "T23_template_words_exempt")}
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
 EXPECTED_UNDETECTED = {}
@@ -400,6 +412,14 @@ def run_for(paths):
 
 def sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+# Ninth review of PR #78: re-run only the named controls (NC_ONLY=name,name) — e.g. the re-anchored ones — in a
+# throwaway copy; the full table runs when it is unset.
+if os.environ.get("NC_ONLY"):
+    _only = set(os.environ["NC_ONLY"].split(","))
+    M = {k: v for k, v in M.items() if k in _only}
+    assert set(M) == _only, f"unknown control(s): {sorted(_only - set(M))}"
 
 
 def main():

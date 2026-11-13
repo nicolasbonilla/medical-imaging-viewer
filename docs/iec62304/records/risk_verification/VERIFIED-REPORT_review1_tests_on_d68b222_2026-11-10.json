@@ -1,0 +1,26 @@
+{
+  "executed": "2026-11-10",
+  "purpose": "failing-first: the tests of the independent review of PR #78 (findings R1-R10) on the reviewed head, before any correction",
+  "tree": "d68b222 (feat/report-agent-verified, reviewed head)",
+  "environment": "PRB-002 offline: missing credentials file, empty CLOUDSDK_CONFIG, GOOGLE_CLOUD_PROJECT=mstool-offline-tests, ANTHROPIC_API_KEY unset",
+  "test_file": "backend/tests/unit/test_verified_report_review1.py",
+  "test_sha256": "aedb980c80a2f859e6a698e3403b9fa9045a709184bca0d710ae3cb10b279648",
+  "summary": "15 failed, 6 warnings",
+  "failing_tests": [
+    "test_rc102_r10_an_infinite_value_is_not_computed",
+    "test_rc102_r1_dis_evaluated_without_lesion_analysis_gives_a_report",
+    "test_rc102_r3_measurements_not_in_the_verified_report_are_listed_never_dropped[de]",
+    "test_rc102_r3_measurements_not_in_the_verified_report_are_listed_never_dropped[en]",
+    "test_rc102_r3_measurements_not_in_the_verified_report_are_listed_never_dropped[es]",
+    "test_rc102_r3_the_api_says_which_measurements_are_not_included",
+    "test_rc102_r4_a_region_count_not_computed_is_never_written_0",
+    "test_rc102_r5_the_total_count_placeholder_follows_magnims_from_20_lesions",
+    "test_rc102_r6_the_report_never_contradicts_the_gate",
+    "test_rc102_r8_a_placeholder_in_the_record_stops_the_request",
+    "test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited",
+    "test_rc104_r7_a_request_refused_for_an_implausible_measurement_is_audited",
+    "test_rc106_r2_one_draft_never_waits_beyond_its_time_budget",
+    "test_rc106_r2_the_client_makes_no_retry_of_its_own",
+    "test_rc106_r9_the_allow_list_and_its_retirement_date_alone_decide"
+  ]
+}

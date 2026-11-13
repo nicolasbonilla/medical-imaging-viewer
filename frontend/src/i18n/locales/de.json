@@ -1051,7 +1051,36 @@
     "noMeasurements": "Für diese Untersuchung liegen keine Messwerte vor. Öffnen Sie zuerst eine Segmentierung und führen Sie deren Analyse aus: Ein Bericht ohne Messwerte wäre erfunden.",
     "geometryUnreadable": "Die Bildgeometrie konnte nicht gelesen werden; der Bericht wurde daher nicht erstellt. Es wurde nichts an den KI-Dienst gesendet.",
     "lesionTableFailed": "Die Läsionsmesswerte konnten auf dem Server nicht berechnet werden; der Bericht wurde daher nicht erstellt. Es wurde nichts an den KI-Dienst gesendet.",
-    "deidentificationNote": "An den KI-Dienst (Anthropic) werden nur die Messwerte, das Geschlecht und eine 5-Jahres-Altersspanne gesendet – keine Namen, Geburtsdaten, Patientennummern oder Freitext. Ihr Text in den Feldern oben wird hier in der Anwendung in den Entwurf übernommen; er wird nicht an den KI-Dienst gesendet.",
+    "errors": {
+      "segmentationRequired": "Öffnen Sie zuerst eine Segmentierung: Der Bericht wird für eine analysierte Segmentierung erstellt, und die Anfrage wird mit der Patientenakte abgeglichen. Es wurde nichts an den KI-Dienst gesendet.",
+      "segmentationNotFound": "Die Segmentierung dieses Berichts wurde nicht gefunden, oder Sie dürfen sie nicht öffnen. Es wurde nichts an den KI-Dienst gesendet.",
+      "segmentationConflict": "Die Messwerte gehören zu einer anderen Segmentierung als der geöffneten. Laden Sie die Segmentierung neu und versuchen Sie es erneut. Es wurde nichts an den KI-Dienst gesendet.",
+      "requestInvalid": "Die Anfrage für den Bericht war ungültig; daher wurde kein Entwurf erstellt. Es wurde nichts an den KI-Dienst gesendet.",
+      "implausibleMeasurement": "Der Messwert „{{measurement}}“, berechnet von der Segmentierungsanalyse, liegt außerhalb seines plausiblen Bereichs; daher wurde kein Entwurf erstellt. Führen Sie die Analyse erneut aus oder prüfen Sie die Segmentierung. Es wurde nichts an den KI-Dienst gesendet.",
+      "patientRecordUnavailable": "Die Patientenakte konnte nicht gelesen werden; daher konnte die Anfrage nicht geprüft werden, und es wurde nichts an den KI-Dienst gesendet. Versuchen Sie es später erneut.",
+      "labelInRecord": "Eine in der Anwendung eingegebene Bezeichnung hat den Messwertdatensatz erreicht; daher wurde nichts an den KI-Dienst gesendet und kein Entwurf erstellt. Bitte melden Sie diesen Fehler.",
+      "notSent": "Eine Sicherheitsprüfung hat die Anfrage abgelehnt; daher wurde nichts an den KI-Dienst gesendet und kein Entwurf erstellt.",
+      "reportFailed": "Der Bericht konnte wegen eines internen Fehlers nicht erstellt werden; es wurde kein Entwurf erstellt."
+    },
+    "measurementNames": {
+      "total_count": "Läsionsanzahl",
+      "total_burden_mm3": "Gesamtläsionsvolumen",
+      "total_burden_ml": "Gesamtläsionsvolumen",
+      "size_distribution": "Größenverteilung der Läsionen",
+      "lesion_count": "Läsionsanzahl einer Region",
+      "regions_with_lesions": "Anzahl der Regionen mit Läsionen",
+      "burden_tp1_ml": "Läsionsvolumen des vorherigen Termins",
+      "burden_tp2_ml": "Läsionsvolumen dieses Termins",
+      "total_lesions_tp1": "Läsionsanzahl des vorherigen Termins",
+      "total_lesions_tp2": "Läsionsanzahl dieses Termins",
+      "status_counts": "Änderungszahlen des Vergleichs",
+      "change_candidates": "Änderungskandidaten des Vergleichs",
+      "new_lesion_min_diameter_mm": "Mindestgröße einer neuen Läsion",
+      "total_brain_volume_ml": "Gesamthirnvolumen",
+      "intracranial_volume_ml": "intrakranielles Volumen",
+      "unknown": "unbekannt"
+    },
+    "deidentificationNote": "An den KI-Dienst (Anthropic) werden nur die Messwerte gesendet: die Läsionsanzahl, das Gesamtläsionsvolumen und die Größenklassen; die Läsionen je MAGNIMS-Region und die räumliche Dissemination, wenn eine Radiologin oder ein Radiologe die Segmentierung bestätigt hat; die Veränderungskandidaten zwischen zwei Untersuchungen, mit dem Läsionsvolumen jeder Untersuchung; das Gesamthirnvolumen und das intrakranielle Volumen; sowie ob die Segmentierung radiologisch bestätigt wurde und ob Sie die Felder oben ausgefüllt haben. Nichts, was die Patientin oder den Patienten identifiziert: keine Namen, Geburtsdaten, Patientennummern oder Freitexte. Ihr Text in den Feldern oben wird hier in der Anwendung zum Entwurf hinzugefügt; er wird nicht an den KI-Dienst gesendet.",
     "tokens": "Tokens",
     "copy": "Kopieren",
     "copied": "Kopiert!",
@@ -1064,6 +1093,12 @@
     }
   },
   "reportViewer": {
+    "verification": {
+      "delivered": "KI-Kommentare gegen die Messwerte geprüft",
+      "withheldCheck": "Interpretierender Text von der Prüfung zurückgehalten: nur Messwerte",
+      "withheldUnavailable": "Interpretierender Text vom KI-Dienst nicht verfügbar: nur Messwerte",
+      "notRequested": "Nur Messwerte: keine KI-Kommentare angefordert"
+    },
     "title": "Medizinischer Bericht",
     "print": "Drucken",
     "close": "Schließen",
@@ -1081,7 +1116,7 @@
     "institutionLabel": "Institution",
     "aiDisclaimer": "KI-generierter Bericht — Hinweis",
     "aiDisclaimerText": "Dieser Bericht wurde von einem künstlichen Intelligenzsystem erstellt und dient ausschließlich zu Informationszwecken. Er stellt keine medizinische Diagnose dar. Alle Befunde müssen von einem zertifizierten Radiologen überprüft und bestätigt werden. Das KI-Modell kann ungenaue oder unvollständige Informationen erzeugen.",
-    "aiDataNote": "KI-Entwurf des Modells von Anthropic, nur aus den Messwerten der Software, mit Geschlecht und 5-Jahres-Altersspanne. Es wurden keine Namen, Geburtsdaten, Patientennummern oder Freitexte gesendet. Die Angaben der Ärztin / des Arztes wurden in der Anwendung ergänzt.",
+    "aiDataNote": "KI-Entwurf des Modells von Anthropic, nur aus den Messwerten der Software: die Läsionsanzahl, das Gesamtläsionsvolumen und die Größenklassen; die Läsionen je MAGNIMS-Region und die räumliche Dissemination, wenn eine Radiologin oder ein Radiologe die Segmentierung bestätigt hat; die Veränderungskandidaten zwischen zwei Untersuchungen, mit dem Läsionsvolumen jeder Untersuchung; das Gesamthirnvolumen und das intrakranielle Volumen; sowie ob die Ärztin oder der Arzt die Felder der Anfrage ausgefüllt hat. Es wurden keine Namen, Geburtsdaten, Patientennummern oder Freitexte gesendet. Die Angaben der Ärztin / des Arztes wurden in der Anwendung ergänzt.",
     "model": "Modell",
     "processingTime": "Verarbeitungszeit",
     "tokens": "Tokens",
@@ -1319,6 +1354,7 @@
       "spacing_between_slices_mm": "Schichtabstand (mm)"
     },
     "candidatesSummary": "{{total}} unbestätigte Veränderungskandidaten ({{n}} neu ≥{{d}} mm, {{e}} vergrößert), die ein Radiologe einzeln prüft.",
+    "candidatesNotComputed": "Die Veränderungskandidaten wurden nicht berechnet; die Veränderung muss visuell beurteilt werden.",
     "candidatesReview": "Zu prüfen: {{awaiting}} · bestätigt: {{confirmed}} · verworfen: {{rejected}}.",
     "candidatesNoStatement": "Die Software trifft aus diesen Kandidaten keine Aussage über den Krankheitsverlauf; nur die Bestätigung durch einen Radiologen zählt.",
     "decisionsVoided": "Frühere Entscheidungen wurden zu inzwischen geänderten Segmentierungen erfasst; sie gelten nicht mehr.",

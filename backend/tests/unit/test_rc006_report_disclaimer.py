@@ -15,7 +15,7 @@ import pytest
 
 from app.services.brain_report_service import (
     REPORT_DISCLAIMERS,
-    REPORT_TEMPLATES,
+    TEMPLATE_IDS,
     _apply_disclaimer,
 )
 
@@ -83,12 +83,13 @@ class TestRC006CoversEveryTemplate:
     this test guards against a future template bypassing that path."""
 
     def test_rc006_all_templates_are_covered_by_a_single_enforcement_point(self):
-        assert len(REPORT_TEMPLATES) >= 5, (
-            f"expected at least 5 report templates, found {len(REPORT_TEMPLATES)}"
+        # (Amended for the third review of PR #78 (T5, DRAFT): the retired templates were archived outside the shipped code; the control is checked on what the device uses now (one verified structure for every template id).)
+        assert len(TEMPLATE_IDS) >= 5, (
+            f"expected at least 5 report template ids, found {len(TEMPLATE_IDS)}"
         )
         # Every template's output funnels through _apply_disclaimer; verify the
         # function is agnostic to template content.
-        for name in REPORT_TEMPLATES:
+        for name in TEMPLATE_IDS:
             out = _apply_disclaimer(f"report body for {name}", "en")
             assert out.startswith(REPORT_DISCLAIMERS["en"]), f"template '{name}' not covered"
 
@@ -97,8 +98,11 @@ class TestRC006NoFabricatedReferences:
     """CAPA-001: templates must not instruct the model to invent citations."""
 
     def test_no_template_asks_the_model_for_references(self):
-        forbidden = ["use real, published references", "cite 3-5"]
-        for name, template in REPORT_TEMPLATES.items():
+        # (Amended for the third review of PR #78 (T5, DRAFT): the retired templates were archived outside the shipped code; the control is checked on what the device uses now (one verified structure for every template id): the one system prompt and the regeneration request.)
+        from app.services import verified_report as VR
+        forbidden = ["use real, published references", "cite 3-5", "reference"]
+        for name, template in {"system": VR.SYSTEM_PROMPT,
+                               "regeneration": VR.REGENERATION_PREFIX + VR.REGENERATION_SUFFIX}.items():
             lowered = template.lower()
             for phrase in forbidden:
                 assert phrase not in lowered, (

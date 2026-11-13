@@ -1,0 +1,292 @@
+{
+  "executed": "2026-11-11T23:35:44",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/brain_report_service.py": "6235353cad3c40543f72c5d837b03bf68f2a91708ee61947d6f8579d92a623ed",
+    "backend/app/services/verified_report.py": "157d3ad65809858c14929b2181d712c65ef280c97b59e40f64a9b83c64a73520"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "b3b16e4ab8ceb1aea74382ee255aadf7d64339dbaf986b410ac4c5b71c86e562",
+    "tests/unit/test_rc103_verified_report_loop.py": "fbffbf9d30288f307c5935884cb622ed491df03f82143789b3eac90c89033956",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "fd42d0309ee427ed4dd3d5e1bf36b9b2d8ceb2fb242f2e37576c6d900a969aa2",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8",
+    "tests/unit/test_verified_report_review1.py": "21719a0f9de75dbf7c508d4c9d40708b6c72a2f6611c3352fbfffdff2398bdb8",
+    "tests/unit/test_verified_report_review2.py": "364f8daf280113d7001cbee6ff4ff99169f06bae5264d27df94126b214a188cb",
+    "tests/unit/test_verified_report_review2_dis.py": "cac14a7e8dfe21d7c3c399199e5089a5020f9d08bbe9bbcfbb80cfd6ee957a1a",
+    "tests/unit/test_verified_report_review3.py": "c8b2e9c9e6823ef8219d4ceea137666c41dcdf1f7297dbee188065a17535e3a0",
+    "tests/unit/test_verified_report_review4.py": "66dc5c7568c6d1f3e2f7f8f1c5c57a08ed3dee470a5f9f166780cfb46a3bce43",
+    "tests/unit/test_verified_report_review5.py": "29fe52419072cb16a394dcdf30918ef436a3e1619c58e9ae4def7622e8bc7511",
+    "tests/unit/test_verified_report_review6.py": "29d2044f5e00d156cd1d8910acdd133e7bf04e7eb303d567f9420be61bd97f18",
+    "tests/unit/test_verified_report_scenario_matrix.py": "8b08c61f1c62dffc43b272c4f2c40338bdea94b9f4cfbd8585bfc585ace1dca3"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py",
+    "tests/unit/test_verified_report_review5.py",
+    "tests/unit/test_verified_report_review6.py",
+    "tests/unit/test_verified_report_scenario_matrix.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 799,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "mutations": {
+    "C2_digits_allowed": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 793,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_a3_rejects_digits_and_bad_format",
+        "test_rc103_the_assembled_report_is_checked_not_only_the_comments",
+        "test_rc103_the_invented_technique_section_of_the_retired_template_is_refused",
+        "test_rc103_the_privacy_check_stops_a_regeneration_request",
+        "test_rc103_the_regeneration_request_lists_what_failed_in_the_benchmark_wording",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency"
+      ],
+      "reintroduces": "digits allowed in the comments",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:38:05",
+      "detected": true
+    },
+    "P1_unrendered_fields_validated": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 796,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc064_c_a_bad_value_in_a_field_the_report_does_not_render_never_blocks_it[llm_off]",
+        "test_rc064_c_a_bad_value_in_a_field_the_report_does_not_render_never_blocks_it[llm_on]",
+        "test_rc064_c_a_patient_number_in_a_field_never_sent_does_not_block_and_is_not_sent"
+      ],
+      "reintroduces": "C: a bad value in a field the report does not render refuses the whole report",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T23:39:13",
+      "detected": true
+    },
+    "P6_patient_numbers_checked_when_nothing_sent": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 798,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc105_v5_nothing_sent_keeps_the_measurement_checks_only"
+      ],
+      "reintroduces": "V5: provider-only refusals apply when nothing is sent",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T23:40:40",
+      "detected": true
+    },
+    "C34_count_heads_missed": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 795,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_w3_a_count_in_words_fails[El",
+        "test_rc103_w3_a_count_in_words_fails[The",
+        "test_rc103_w3_a_count_in_words_fails[There"
+      ],
+      "reintroduces": "W3: \"the total count of lesions is twenty-five\" passes the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:41:42",
+      "detected": true
+    },
+    "L9_below_size_line_split": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 797,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_the_code_written_report_passes_the_frozen_check_in_every_branch[case49-en]",
+        "test_rc103_i9_the_code_written_draft_passes_the_devices_own_verifier[en]"
+      ],
+      "reintroduces": "I9: the code-written below-size line fails the device's own check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:43:57",
+      "detected": true
+    },
+    "L10_notice_cites_an_unchecked_date": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 798,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_i9_the_code_written_draft_passes_the_devices_own_verifier[en]"
+      ],
+      "reintroduces": "I9: the change notice states numbers the record does not hold",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:45:54",
+      "detected": true
+    },
+    "C40_prompt_asks_for_a_dis_statement": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 798,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_i10_a_comment_that_obeys_each_rule_passes_the_check"
+      ],
+      "reintroduces": "I10: the instructions ask for a DIS sentence the check refuses",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:47:04",
+      "detected": true
+    },
+    "C41_sequence_names_counted_as_digits": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 798,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_i10_a_comment_that_obeys_each_rule_passes_the_check"
+      ],
+      "reintroduces": "I10: \"T1-weighted images were not provided\" (rule 1) fails the digits rule",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:48:34",
+      "detected": true
+    },
+    "L11_stable_count_required": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 797,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc065_every_draft_template_appears_in_the_synthetic_payloads",
+        "test_rc102_i11_the_draft_follows_the_shared_longitudinal_rule[stable"
+      ],
+      "reintroduces": "I11: the draft says \"not computed\" where the review screen shows the candidates",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:49:36",
+      "detected": true
+    },
+    "M23_record_read_before_deciding": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 797,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[nothing_to_comment]",
+        "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[too_little_time]"
+      ],
+      "reintroduces": "finding 3: an unreadable record refuses a draft that would send nothing",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T23:50:58",
+      "detected": true
+    },
+    "F28_empty_impression_heading": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 798,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_no_empty_impression_heading"
+      ],
+      "reintroduces": "finding 7: an empty Impression heading on a volumetry-only draft",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:51:50",
+      "detected": true
+    },
+    "C42_other_languages_cardinals_ignored": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 796,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_a_count_in_another_languages_words_fails[de-There",
+        "test_rc103_a_count_in_another_languages_words_fails[en-Hay",
+        "test_rc103_a_count_in_another_languages_words_fails[es-Es"
+      ],
+      "reintroduces": "finding 8: \"two lesions\" in a German report passes the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:53:11",
+      "detected": true
+    },
+    "F29_synthetic_payloads_without_the_matrix": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 702,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc065_every_draft_template_appears_in_the_synthetic_payloads"
+      ],
+      "reintroduces": "finding 6: branches of the draft missing from the RC-065 device words",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T23:54:24",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 799,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 13,
+    "detected": 13,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "cdba2c9f5be3e30bc4f6706b998604d5af5aab13",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "executed": "2026-11-12T02:30:31",
+  "design": "redesign after the independent review of PR #67: structured payload only, typed text merged locally, detection-only tripwire (the scrubbing module of the first version was removed)",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest offline per PRB-002, frontend vitest JSON reporter)",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "dd0a0afe200cce580e48b355d021218af105d37b57d1804fd424d233235735c2",
+    "backend/app/services/brain_report_service.py": "04011849fc9b3917c821f82fec1b204df0b23e22d54e30a7529ebaa143fcccfa",
+    "backend/app/services/report_payload_guard.py": "5096b995b0fe20528617349cd25b8862bf12774a933cfc37380b7037798a3b66"
+  },
+  "test_sha256": {
+    "tests/unit/test_capa014_report_provider_payload.py": "33b3e0538de384d564b1db5ae5a3a8f491574d0b5b4496b7b6d80795c5452ed5",
+    "tests/unit/test_capa009_object_authorization_everywhere.py": "d149a58de4e6a419fc1a2f88f95317cb143c2a237d0f11d322cf3d5c9fb334ad",
+    "tests/unit/test_capa008_assistant_read_only.py": "0b3f827dfa31dff7c97c50c6d84fc16eeb9060988921215c4e5845e1b6329167",
+    "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
+  },
+  "tests": [
+    "tests/unit/test_capa014_report_provider_payload.py",
+    "tests/unit/test_capa009_object_authorization_everywhere.py",
+    "tests/unit/test_capa008_assistant_read_only.py",
+    "tests/unit/test_brain_report_service.py",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx"
+  ],
+  "mutations": {
+    "P21_patient_numbers_not_checked": {
+      "suite": "backend",
+      "failed": 2,
+      "passed": 362,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_r2_the_patients_own_numbers_in_a_number_field_refuse[lesion_analysis.total_burden_mm3=1191975.0]",
+        "test_r2_the_patients_own_numbers_in_a_number_field_refuse[lesion_analysis.total_burden_mm3=1234567.0]"
+      ],
+      "reintroduces": "the patient's record number sent as '1234567 voxels'",
+      "applied": true,
+      "executed": "2026-11-12T02:30:54",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_provider_payload.py": "33b3e0538de384d564b1db5ae5a3a8f491574d0b5b4496b7b6d80795c5452ed5",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "d149a58de4e6a419fc1a2f88f95317cb143c2a237d0f11d322cf3d5c9fb334ad",
+        "tests/unit/test_capa008_assistant_read_only.py": "0b3f827dfa31dff7c97c50c6d84fc16eeb9060988921215c4e5845e1b6329167",
+        "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8"
+      }
+    },
+    "F1_route_needs_no_segmentation": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 363,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc065_no_segmentation_reference_no_provider_call"
+      ],
+      "reintroduces": "a request without patient reference reaches the provider",
+      "applied": true,
+      "executed": "2026-11-12T02:31:15",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_provider_payload.py": "33b3e0538de384d564b1db5ae5a3a8f491574d0b5b4496b7b6d80795c5452ed5",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "d149a58de4e6a419fc1a2f88f95317cb143c2a237d0f11d322cf3d5c9fb334ad",
+        "tests/unit/test_capa008_assistant_read_only.py": "0b3f827dfa31dff7c97c50c6d84fc16eeb9060988921215c4e5845e1b6329167",
+        "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8"
+      }
+    },
+    "L1_raw_findings_logged": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 363,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc066_logs_say_the_check_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "the request's findings written to the log",
+      "applied": true,
+      "executed": "2026-11-12T02:31:35",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_provider_payload.py": "33b3e0538de384d564b1db5ae5a3a8f491574d0b5b4496b7b6d80795c5452ed5",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "d149a58de4e6a419fc1a2f88f95317cb143c2a237d0f11d322cf3d5c9fb334ad",
+        "tests/unit/test_capa008_assistant_read_only.py": "0b3f827dfa31dff7c97c50c6d84fc16eeb9060988921215c4e5845e1b6329167",
+        "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8"
+      }
+    },
+    "L2_prompt_logged": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 364,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [],
+      "reintroduces": "the prompt written to the log",
+      "applied": true,
+      "executed": "2026-11-12T02:31:56",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_provider_payload.py": "33b3e0538de384d564b1db5ae5a3a8f491574d0b5b4496b7b6d80795c5452ed5",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "d149a58de4e6a419fc1a2f88f95317cb143c2a237d0f11d322cf3d5c9fb334ad",
+        "tests/unit/test_capa008_assistant_read_only.py": "0b3f827dfa31dff7c97c50c6d84fc16eeb9060988921215c4e5845e1b6329167",
+        "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8"
+      }
+    },
+    "L3_counts_not_logged": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 363,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc066_logs_say_the_check_ran_with_counts_never_the_payload"
+      ],
+      "reintroduces": "no record of what was withheld",
+      "applied": true,
+      "executed": "2026-11-12T02:32:16",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_provider_payload.py": "33b3e0538de384d564b1db5ae5a3a8f491574d0b5b4496b7b6d80795c5452ed5",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "d149a58de4e6a419fc1a2f88f95317cb143c2a237d0f11d322cf3d5c9fb334ad",
+        "tests/unit/test_capa008_assistant_read_only.py": "0b3f827dfa31dff7c97c50c6d84fc16eeb9060988921215c4e5845e1b6329167",
+        "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8"
+      }
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 364,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "failed": 0,
+      "passed": 13,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "expected_undetected": {},
+  "undetected": [
+    "L2_prompt_logged"
+  ],
+  "unexpected_undetected": [
+    "L2_prompt_logged"
+  ]
+}

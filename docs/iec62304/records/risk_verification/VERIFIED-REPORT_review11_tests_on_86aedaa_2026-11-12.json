@@ -1,0 +1,24 @@
+{
+  "executed": "2026-11-12",
+  "purpose": "failing-first: the eleventh (final) independent review's findings L1, L2, C1-C4, C7, M1, M2 and the invariant extensions (I4, I17, I18) on the reviewed head, before any correction",
+  "tree": "86aedaa (feat/report-agent-verified, head reviewed by the eleventh independent review)",
+  "status": "DRAFT, PENDING owner approval",
+  "test_file": "backend/tests/unit/test_verified_report_review11.py",
+  "shared_fixture": "backend/tests/fixtures/report_sent_fields.json",
+  "summary": "22 of 27 failed",
+  "violations": {
+    "L1": "6 of 6 notices (the panel's and the report viewer's, en/es/de) name none of the record's sent categories and state that sex and a 5-year age band are sent (the guard that the record's blocks are exactly the fixture's passed: the record itself is right)",
+    "L2_I4": "3 of 3 languages drop every computed resolved/shrunk/stable count when one is missing; over the matrix extension 48 of 64 cases lose a computed count",
+    "C1": "the reviewer's example (total lesion volume 9.1175 mL read as the birth date 9.11.75) raised IdentifierInPrompt: 503, no draft",
+    "C2_C7": "a retry skipped for the time budget counted as attempt 2 (verification and audit); with no request sent the response still named a model and a token count",
+    "C3": "5 of 6 failure types of a regeneration after a failed answer (5xx, 529, connection error, unavailable model, refusal) reported as provider_error / model_unavailable / refusal instead of failed_check (the timeout already passed, round 10)",
+    "C4": "the device-word list not built at startup; SCENARIO, SCENARIO_BASE, scenario_request, scenario_covering_cases in the Class C module",
+    "M1": "the panel names 3 measurements that can never be refused as implausible (total_dis_regions, total_volume_mm3, total_volume_ml: not rendered, so never range-checked)",
+    "M2": "unused provider_payload import in brain_report_service; unused verified_report.PASSED"
+  },
+  "passed_before_the_fix": [
+    "test_reg011_l1_the_record_sends_exactly_the_blocks_the_notices_describe (the drift guard)",
+    "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[timeout] (round 10)",
+    "test_rc106_c3_with_no_answer_ever_received_the_reason_stays_could_not_be_obtained x3 (the guard)"
+  ]
+}

@@ -64,7 +64,20 @@ class IdentifierInPrompt(ProviderGuardError):
 
 class ImplausibleMeasurement(ProviderGuardError):
     """A number is outside the physical range of its field: a date, a record number or a phone number put
-    into a number field cannot be told from a measurement, so nothing is sent."""
+    into a number field cannot be told from a measurement, so nothing is sent. `field` names the measurement (tenth
+    review of PR #78, I16: the route's error carries it, the report panel names it)."""
+
+    def __init__(self, message: str, field: Optional[str] = None):
+        super().__init__(message)
+        self.field = field
+
+
+def is_patient_number(n: Any, forms: FrozenSet[str]) -> bool:
+    """RC-065: a whole number equal to one of the patient's own numbers (`PatientIdentifiers.number_forms`). The ONE
+    rule of the projection and of the check on the projected payload (tenth review of PR #78, finding 9)."""
+    if isinstance(n, bool) or not isinstance(n, (int, float)) or not math.isfinite(n):
+        return False
+    return n == int(n) and str(abs(int(n))) in forms
 
 
 FREE_TEXT_FIELDS = ("clinical_indication", "technique", "additional_observations")
@@ -150,7 +163,9 @@ def vocabulary_label(value: Any) -> Optional[str]:
     return label_vocabulary().get(text.casefold())
 
 
-def _number(value: Any) -> Optional[float]:
+def finite_number(value: Any) -> Optional[float]:
+    """The one reader of a measurement value, shared by the payload and the verified report (third review of PR #78,
+    T6): an int or a finite float; a bool, a non-number, NaN or ±inf is not a number (None)."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
     if isinstance(value, float) and not math.isfinite(value):
@@ -158,11 +173,21 @@ def _number(value: Any) -> Optional[float]:
     return value
 
 
+
+def without_format_characters(text: str) -> str:
+    """`text` without Unicode format characters (soft hyphen, zero-width joiners, BOM, bidirectional controls); a
+    zero-width space becomes a space, so that the words it separated stay apart. Shared (fourth review of PR #78,
+    Q6): the verified report's check reads the comments with this rule, so the text checked is the text
+    delivered; the report route applies the same rule to the text it receives."""
+    text = text.replace("\u200b", " ")
+    return "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
+
+
 def age_band(value: Any) -> Optional[str]:
     """5-year band of an age in years ("45-49"); "90 or older" from 90. None when not an age."""
     if isinstance(value, str) and re.fullmatch(r"\s*\d{1,3}(?:\.\d{1,3})?\s*", value):
         value = float(value)
-    n = _number(value)
+    n = finite_number(value)
     if n is None or n < 0 or n > 130:
         return None
     years = int(n)
@@ -222,7 +247,7 @@ class _Projector:
         """The number; NOT_AVAILABLE (None when optional) when it is not a number. A whole number equal to one
         of the patient's own numbers refuses the request. Outside [low, high] the request is refused too,
         unless `outside` says what to use instead."""
-        n = _number(value)
+        n = finite_number(value)
         if n is None:
             if value is not None:
                 self.counts["values_not_numbers"] += 1
@@ -230,10 +255,10 @@ class _Projector:
         slack = 1e-6 * max(1.0, abs(high))       # a rounding error at an edge (100.00000001 %) is not a refusal
         if not low - slack <= n <= high + slack:
             if outside is _REFUSE:
-                raise ImplausibleMeasurement(f"a measurement is outside its plausible range: {name}")
+                raise ImplausibleMeasurement(f"a measurement is outside its plausible range: {name}", field=name)
             self.counts["values_out_of_range"] += 1
             return outside                        # not sent
-        if n == int(n) and str(abs(int(n))) in self.patient_numbers:
+        if is_patient_number(n, self.patient_numbers):
             raise IdentifierInPrompt("identifier check failed (patient_number_in_a_number_field)")
         return n
 
@@ -321,6 +346,15 @@ class _Projector:
         sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
         o["status_counts"] = {k: self.count(sc.get(k), "status_counts")
                               for k in ("new", "enlarged", "resolved", "shrunk", "stable")}
+        # fifth review of PR #78, V2: the reviewable change candidates (CAPA-013) — the figure the draft states, as the
+        # route's notice and the review screen
+        # seventh review of PR #78, finding 4: the minimum size the rule reviews (for the below-size line)
+        d = self.number(lng.get("new_lesion_min_diameter_mm"), "new_lesion_min_diameter_mm", 0, 100, required=False)
+        if d is not None:
+            o["new_lesion_min_diameter_mm"] = d
+        cc = lng.get("change_candidates")
+        if isinstance(cc, dict):
+            o["change_candidates"] = {k: self.count(cc.get(k), "change_candidates") for k in ("new", "enlarging")}
         return o
 
     def zone_stats(self, zs: dict) -> dict:
@@ -370,6 +404,36 @@ class _Projector:
         return o
 
 
+def project_measurements(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]]) -> "ProviderPayload":
+    """The measurement record's source (ninth review of PR #78, I14): the RC-064 projection of what the report renders,
+    with every measurement's plausible range checked (ImplausibleMeasurement) — run for every draft, comments on or
+    off. The patient's own numbers are checked apart (`assert_no_patient_numbers`), only when a call will happen."""
+    return provider_payload(findings, volumetry, None)
+
+
+def assert_no_patient_numbers(payload: "ProviderPayload", identifiers: "PatientIdentifiers") -> None:
+    """RC-065 (eighth review of PR #78, finding 3): the patient's own numbers in any number field of the PROJECTED
+    payload refuse the request — the same rule as `provider_payload(..., identifiers)`, run once it is known that a
+    request will be sent (the record is read only then)."""
+    forms = identifiers.number_forms()
+
+    def numbers(x):
+        if isinstance(x, bool):
+            return
+        if isinstance(x, (int, float)):
+            yield x
+        elif isinstance(x, dict):
+            for y in x.values():
+                yield from numbers(y)
+        elif isinstance(x, (list, tuple)):
+            for y in x:
+                yield from numbers(y)
+
+    for n in numbers([payload.findings, payload.volumetry]):
+        if is_patient_number(n, forms):       # (tenth review, finding 9: the projection's own rule)
+            raise IdentifierInPrompt("identifier check failed (patient_number_in_a_number_field)")
+
+
 def provider_payload(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]],
                      identifiers: Optional["PatientIdentifiers"] = None) -> ProviderPayload:
     """RC-064: the structured payload the provider may receive. The inputs are not modified.
@@ -382,8 +446,10 @@ def provider_payload(findings: Optional[Dict[str, Any]], volumetry: Optional[Dic
     p.counts["free_text_fields"] = sum(1 for k in FREE_TEXT_FIELDS if f.get(k))
     p.counts["unknown_fields"] = sum(1 for k in f if k not in _KNOWN_FIELDS)
     out: Dict[str, Any] = {}
-    if any(isinstance(f.get(k), str) and f[k].strip() for k in FREE_TEXT_FIELDS):
-        out["clinician_entry"] = True       # a flag only: the text itself is added to the draft by the route
+    entered = {k: True for k in FREE_TEXT_FIELDS if isinstance(f.get(k), str) and f[k].strip()}
+    if entered:
+        # flags only, one per typed field (sixth review of PR #78, W2): the text itself is added to the draft by the route
+        out["clinician_entry"] = entered
     band = age_band(f.get("patient_age"))
     if band:
         out["patient_age"] = band

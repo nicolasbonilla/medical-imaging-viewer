@@ -31,6 +31,7 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/PRB-003_negative_controls_2026-10-24.json"
+OUT = os.environ.get("NC_OUT", OUT)     # (a later run writes its own record; the earlier one is kept)
 BACKEND_TESTS = ["tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
                  "tests/unit/test_prb003_review1_findings.py",
                  "tests/unit/test_prb003_review2_findings.py",
@@ -78,8 +79,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "G1_route_gate_bypassed": ([(SA, '    if not state["confirmed"]:\n        logger.info("DIS not evaluated',
                                  '    if False:\n        logger.info("DIS not evaluated')],
                                "DIS computed on any loaded segmentation (the defect as found: paper A, 19/100 healthy)"),
-    "G2_confirmation_not_bound_to_the_mask": ([(GATE, '    bound = (has_record and getattr(record, "reviewed_mask_sha256", None) == current\n',
-                                                '    bound = (has_record\n')],
+    # (ninth review of PR #78, I15: re-anchored — the gate names it bound_to_mask now; the same defect)
+    "G2_confirmation_not_bound_to_the_mask": ([(GATE, '    bound_to_mask = (has_record and getattr(record, "reviewed_mask_sha256", None) == current\n',
+                                                '    bound_to_mask = (has_record\n')],
                                               "a confirmation given for another mask counts"),
     "G2b_confirmation_not_bound_to_the_labels": ([(GATE, '             and getattr(record, "reviewed_labels_sha256", None) == labels_digest\n',
                                                    '             and True\n')],
@@ -180,7 +182,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                             "lesion counts without an evaluated DIS reach the model with no rule against deriving DIS"),
     "R6_report_notice_removed": ([(AIR, '        if dis_text:   # PRB-003', '        if False:   # PRB-003')],
                                  "a draft without an evaluated DIS ends without the not-evaluated notice"),
-    "R7_report_from_an_unevaluated_dis_only": ([(AIR, '        if not (others or request.volumetry or gate.is_evaluated(findings["dis_assessment"])):\n',
+    "R7_report_from_an_unevaluated_dis_only": ([(AIR, '        if not (others or verified_report.renderable_volumetry(request.volumetry)\n                or gate.is_evaluated(findings["dis_assessment"])):\n',
                                                  '        if False:\n')],
                                                "a draft requested with no measurement but a 'not evaluated' DIS state (RC-034)"),
     "R8_dis_of_another_segmentation_carried_in": ([(AIR, '        if named and report_sid and named != report_sid:\n', '        if False:\n')],
@@ -409,6 +411,25 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                        "a correction of a small component is shown as a numbered lesion (m-1)"),
 }
 
+# Third independent review of PR #78 (T5, DRAFT, PENDING owner approval): these mutations targeted the retired report
+# templates and findings-prompt builder, archived outside the shipped code (docs/archive/retired_report_prompt.py).
+# They are kept by name, not run; the controls they exercised are verified on the verified report by
+# scripts/safety/verified_report_negative_controls.py.
+# Replaced by: verified_report_negative_controls.py (C5, D3-D6, F4, F25).
+RETIRED_WITH_THE_TEMPLATES = {name: M.pop(name)[1] for name in ("R4_prompt_states_met_for_an_unevaluated_block", "R5_prompt_lets_the_model_derive_dis", "R10_template_still_asks_for_dis", "W22_region_sections_kept", "W23_region_columns_kept")}
+# Fifth review of PR #78, V8: the route's DIS notice, its backstop scrub and the replaced-statement count were removed —
+# the report service owns the statement and the notice, and its check refuses any DIS statement of the model
+# (verified_report_negative_controls.py: C5, D3, D4, F25).
+# Replaced by: verified_report_negative_controls.py C5, D3, D4, F25.
+RETIRED_WITH_THE_ROUTE_NOTICE = {name: M.pop(name)[1] for name in ("R6_report_notice_removed", "R11_model_dis_statement_kept", "R12_misleading_notice_wording", "W21_replaced_count_not_stated")}
+
+# Ninth review of PR #78, I15: anchors already broken on origin/main, in LesionDashboard.tsx, which PR #78 does not
+# touch (the confirm flow was rewritten by a later change).
+# Replaced by: none yet — an OPEN ITEM for the change that owns this control (re-anchor it against the new code);
+# until then it is not run and no kill is claimed for it.
+NOT_RUN_ANCHORS_BROKEN_BEFORE = {name: M.pop(name)[1] for name in ("F5_confirm_offered_before_classification",
+                                                                     "WF2_confirm_without_acknowledgement")}
+
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
 EXPECTED_UNDETECTED = {}
 
@@ -459,6 +480,14 @@ def run_for(paths):
 
 def sha(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+# Ninth review of PR #78: re-run only the named controls (NC_ONLY=name,name) — e.g. the re-anchored ones — in a
+# throwaway copy; the full table runs when it is unset.
+if os.environ.get("NC_ONLY"):
+    _only = set(os.environ["NC_ONLY"].split(","))
+    M = {k: v for k, v in M.items() if k in _only}
+    assert set(M) == _only, f"unknown control(s): {sorted(_only - set(M))}"
 
 
 def main():

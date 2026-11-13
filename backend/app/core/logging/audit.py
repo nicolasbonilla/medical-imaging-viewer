@@ -90,6 +90,9 @@ class AuditEventType(str, Enum):
     CLINICAL_LESION_ANNOTATION = "clinical.lesion.annotation"
     CLINICAL_LONGITUDINAL_REVIEW = "clinical.longitudinal.review"
     CLINICAL_AI_REPORT_GENERATE = "clinical.ai_report.generate"
+    # RC-104 (REQ-SAFE-050; DRAFT, PENDING owner approval): each model attempt of the verified report and its outcome
+    CLINICAL_AI_REPORT_ATTEMPT = "clinical.ai_report.attempt"
+    CLINICAL_AI_REPORT_VERIFICATION = "clinical.ai_report.verification"
     CLINICAL_AI_RUN = "clinical.ai.run"
 
     # System Events (A.12.4.1)
@@ -291,6 +294,12 @@ _METHODS = {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 DETAIL_KEYS = frozenset({
     "template_type", "language", "decisions", "failed_attempts", "fields_changed", "new_role",
     "revoked_sessions", "rotation_count", "deduplicated_window_s", "role", "durable_suppressed",
+    # RC-104 (verified AI report, DRAFT): codes, counts and the SHA-256 of the request — never its text
+    "flow", "attempt", "model_id", "model_answered", "prompt_sha256", "verdict", "rule_ids", "latency_ms",
+    "stop_reason", "input_tokens", "output_tokens", "error", "report_outcome", "interpretive_text", "attempts",
+    "llm_reason",
+    # (eleventh review of PR #78, C2: a regeneration the time budget no longer allowed — a flag, not an attempt)
+    "retry_skipped_budget",
 })
 
 # Review m10: identifiers that must not be stored (typed login names, file names, MRNs, accession

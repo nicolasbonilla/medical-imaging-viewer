@@ -1,0 +1,656 @@
+{
+  "executed": "2026-11-11T15:51:10",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/main.py": "367f2fd9f76629becce1d1770807b29b73abb72f2e45a87cd206985e9c90027d",
+    "backend/app/services/brain_report_service.py": "9bd8114ad197aa48d51180c0067ca3a1960c72506bca64454a3c5c8384f57118",
+    "backend/app/services/report_claim_strict.py": "0d0b2c381e2d61c7d577490ef3c6ceab3c6687607bbe12fec79edcf6abb3c69b",
+    "backend/app/services/report_payload_guard.py": "29088cd6fbc96cc9229391d2ae1b075a638097bae9198658a0c83742247c014f",
+    "backend/app/services/verified_report.py": "7191ce2bb37e0c3872b62ecbc457e7f6e2330cddc6565d69c8d5f8f4f9f68087"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "9ec149a3bd40b274bfec9aca5bf6199b7a8f16af3b7a70c73536d04d0f477214",
+    "tests/unit/test_rc103_verified_report_loop.py": "fbffbf9d30288f307c5935884cb622ed491df03f82143789b3eac90c89033956",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "59de8ebc4499d276e07c2a437280133a9a9a3e76c07b9944a458c17bbae5b27c",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "9aed9d2dc841725a27ae9112ff1dc1036e12a797d55a8e0580d4f7d6b5ad233e",
+    "tests/unit/test_verified_report_review1.py": "6c78581d15bbe4a168158f109ceaef51ff31b407d89eda58e8717efdb6bbd93f",
+    "tests/unit/test_verified_report_review2.py": "ed50dece9bff0834dc1269d03523e5d9a745313832dbbe5a1d6288dd0d239c7a",
+    "tests/unit/test_verified_report_review2_dis.py": "7e4c81735d17344205384715200d593007e201260ad5494495b9f179396d17ef",
+    "tests/unit/test_verified_report_review3.py": "a913c9cdf9585d559a680d97ce84759bfbd1fedf37a72638c243d409de1fbaca",
+    "tests/unit/test_verified_report_review4.py": "48b448d42e25fd94dfa45382f0bda250a19ad78cac89f6aa905b2e9d2ebd5780",
+    "tests/unit/test_verified_report_review5.py": "79109636ddeb99d1d93b47a2864ee80839d81b46fd11e96706376301689809fa"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py",
+    "tests/unit/test_verified_report_review5.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 595,
+    "errors": 0,
+    "skipped": 29,
+    "failing_tests": []
+  },
+  "mutations": {
+    "C1_claim_check_not_run": {
+      "exit": 1,
+      "failed": 73,
+      "passed": 522,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_no_free_text_reaches_the_llm_in_any_attempt",
+        "test_rc103_a3_regenerates_then_blocks",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[de-Das",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-The",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-There",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[es-El",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-If",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-The",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-If",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-The",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-No",
+        "test_rc103_a_healthy_control_never_gets_diagnostic_wording",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Lesion",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment",
+        "test_rc103_candidates_must_be_called_candidates",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[de-Der",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[en-The",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Der",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Die",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[en-DIS",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[en-The",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-La",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Se",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]",
+        "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[consis\\u200dtent",
+        "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[the",
+        "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[trea\\xadtment",
+        "test_rc103_rule_ids_are_a_fixed_vocabulary",
+        "test_rc103_spanish_and_german[de-Die",
+        "test_rc103_spanish_and_german[es-La",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[##",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Dissemination",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Findings",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Most",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[No",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Starting",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Technique:",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[The",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[These",
+        "test_rc103_the_invented_technique_section_of_the_retired_template_is_refused",
+        "test_rc103_the_rc070_backstop_catches_what_the_frozen_rules_miss",
+        "test_rc103_v7_check_calls_the_one_verify_function",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency"
+      ],
+      "reintroduces": "the frozen claim check does not run on the answer",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T15:53:15",
+      "detected": true
+    },
+    "C3_headings_allowed": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 589,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Lesion",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[##"
+      ],
+      "reintroduces": "headings allowed in the comments (a section of the model's own)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T15:54:26",
+      "detected": true
+    },
+    "C15_headings_only_hash": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 590,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Lesion",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment"
+      ],
+      "reintroduces": "B: a bold or capital comment line is read as a heading and checked for nothing",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-11T15:55:41",
+      "detected": true
+    },
+    "C16_strict_rules_not_run": {
+      "exit": 1,
+      "failed": 44,
+      "passed": 551,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[de-Das",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-The",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-There",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[es-El",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-If",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-If",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-No",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[de-Der",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[en-The",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Der",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Die",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[en-The",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Se",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_the_ported_corpus",
+        "test_rc103_the_rc070_backstop_catches_what_the_frozen_rules_miss"
+      ],
+      "reintroduces": "A: only the frozen v2 rules run on the answer",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-11T15:56:52",
+      "detected": true
+    },
+    "K1_kill_switch_ignored": {
+      "exit": 1,
+      "failed": 7,
+      "passed": 588,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc104_a_report_without_model_call_is_audited_with_its_reason",
+        "test_rc105_the_kill_switch_calls_no_model[de]",
+        "test_rc105_the_kill_switch_calls_no_model[en]",
+        "test_rc105_the_kill_switch_calls_no_model[es]",
+        "test_rc105_the_kill_switch_works_without_a_provider_key",
+        "test_rc105_v5_kill_switch_off_needs_no_patient_record",
+        "test_rc105_v5_nothing_sent_keeps_the_measurement_checks_only"
+      ],
+      "reintroduces": "REPORT_LLM_ENABLED=false still calls the model",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T15:59:26",
+      "detected": true
+    },
+    "M10_sdk_retry_back": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 592,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_r2_the_client_makes_no_retry_of_its_own",
+        "test_rc106_t3_the_service_builds_the_async_client_without_retries",
+        "test_rc106_v4_one_cached_client_with_the_allowed_timeout_closed_on_shutdown"
+      ],
+      "reintroduces": "R2: the SDK retries with a fresh full timeout (about twice the 25 s budget)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:01:38",
+      "detected": true
+    },
+    "M13_sync_client_back": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 591,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_get_client_caches_instance",
+        "test_rc106_r2_the_client_makes_no_retry_of_its_own",
+        "test_rc106_t3_the_service_builds_the_async_client_without_retries",
+        "test_rc106_v4_one_cached_client_with_the_allowed_timeout_closed_on_shutdown"
+      ],
+      "reintroduces": "T3: the blocking client again (a request outlives the time budget in a worker thread)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:03:45",
+      "detected": true
+    },
+    "F22_indication_listed_not_available": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 592,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[de]",
+        "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[en]",
+        "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[es]"
+      ],
+      "reintroduces": "Q3: a typed indication is also listed as \"not available\"",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:05:12",
+      "detected": true
+    },
+    "P1_unrendered_fields_validated": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 592,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc064_c_a_bad_value_in_a_field_the_report_does_not_render_never_blocks_it[llm_off]",
+        "test_rc064_c_a_bad_value_in_a_field_the_report_does_not_render_never_blocks_it[llm_on]",
+        "test_rc064_c_a_patient_number_in_a_field_never_sent_does_not_block_and_is_not_sent"
+      ],
+      "reintroduces": "C: a bad value in a field the report does not render refuses the whole report",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:06:33",
+      "detected": true
+    },
+    "C29_number_words_allowed": {
+      "exit": 1,
+      "failed": 9,
+      "passed": 586,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_v1_fuzz_number_ordinal_and_count_words_fail_the_check_in_every_language",
+        "test_rc103_v1_the_reviewers_examples_fail[Ambas",
+        "test_rc103_v1_the_reviewers_examples_fail[Es",
+        "test_rc103_v1_the_reviewers_examples_fail[Lesions",
+        "test_rc103_v1_the_reviewers_examples_fail[Se",
+        "test_rc103_v1_the_reviewers_examples_fail[There",
+        "test_rc103_v1_the_reviewers_examples_fail[Twelve",
+        "test_rc103_v1_the_reviewers_examples_fail[Zwei"
+      ],
+      "reintroduces": "V1: a count written in words (\"Twelve lesions\") passes the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:07:44",
+      "detected": true
+    },
+    "C30_german_number_words_missed": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 593,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_v1_fuzz_number_ordinal_and_count_words_fail_the_check_in_every_language",
+        "test_rc103_v1_the_reviewers_examples_fail[Zwei"
+      ],
+      "reintroduces": "V1: German number words (\"zwei neue Kandidaten\") pass the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:08:58",
+      "detected": true
+    },
+    "L5_candidates_from_status_counts": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 592,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[de]",
+        "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[en]",
+        "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[es]"
+      ],
+      "reintroduces": "V2: the draft counts every new component, not the reviewable candidates",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:11:36",
+      "detected": true
+    },
+    "P5_candidates_not_projected": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 592,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[de]",
+        "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[en]",
+        "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[es]"
+      ],
+      "reintroduces": "V2: the reviewable candidates never reach the record",
+      "files": [
+        "backend/app/services/report_payload_guard.py"
+      ],
+      "executed": "2026-11-11T16:13:47",
+      "detected": true
+    },
+    "F23_check_error_not_caught": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc104_v3_an_exception_in_the_check_after_the_model_answered_is_withheld_and_audited"
+      ],
+      "reintroduces": "V3: an error inside the check after the model answered fails the request (500)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:15:15",
+      "detected": true
+    },
+    "A5_check_error_attempt_not_audited": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc104_v3_an_exception_in_the_check_after_the_model_answered_is_withheld_and_audited"
+      ],
+      "reintroduces": "V3: the answered attempt of an internal check error is not audited",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:16:58",
+      "detected": true
+    },
+    "M18_client_per_request": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 593,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_get_client_caches_instance",
+        "test_rc106_v4_one_cached_client_with_the_allowed_timeout_closed_on_shutdown"
+      ],
+      "reintroduces": "V4: a new client and connection pool on every request",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:18:37",
+      "detected": true
+    },
+    "M19_client_not_closed": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_v4_one_cached_client_with_the_allowed_timeout_closed_on_shutdown"
+      ],
+      "reintroduces": "V4: the shared client is never closed",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:20:06",
+      "detected": true
+    },
+    "M20_client_without_timeout": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_v4_one_cached_client_with_the_allowed_timeout_closed_on_shutdown"
+      ],
+      "reintroduces": "V4: the client is built without the allowed time budget",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:21:35",
+      "detected": true
+    },
+    "M21_not_closed_at_shutdown": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_v4_one_cached_client_with_the_allowed_timeout_closed_on_shutdown"
+      ],
+      "reintroduces": "V4: the application shutdown does not close the shared client",
+      "files": [
+        "backend/app/main.py"
+      ],
+      "executed": "2026-11-11T16:22:59",
+      "detected": true
+    },
+    "K3_record_read_when_nothing_is_sent": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc105_v5_kill_switch_off_needs_no_patient_record"
+      ],
+      "reintroduces": "V5: kill switch off, the route still needs the patient record (503)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:24:08",
+      "detected": true
+    },
+    "P6_patient_numbers_checked_when_nothing_sent": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc105_v5_nothing_sent_keeps_the_measurement_checks_only"
+      ],
+      "reintroduces": "V5: provider-only refusals apply when nothing is sent",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:25:24",
+      "detected": true
+    },
+    "P7_identifiers_not_required_when_sending": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc065_v5_when_a_request_will_be_sent_the_identifiers_are_still_required"
+      ],
+      "reintroduces": "V5: a request is sent without the patient's identifiers",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:26:35",
+      "detected": true
+    },
+    "F24_limitations_ignore_drawn_labels": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 592,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_v6_labels_drawn_on_contrast_and_t1_images_change_the_limitations[de]",
+        "test_rc102_v6_labels_drawn_on_contrast_and_t1_images_change_the_limitations[en]",
+        "test_rc102_v6_labels_drawn_on_contrast_and_t1_images_change_the_limitations[es]"
+      ],
+      "reintroduces": "V6: contrast-enhanced and T1-weighted imaging listed as not available although labels were drawn on them",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:28:04",
+      "detected": true
+    },
+    "C31_check_rebuilds_the_combination": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_v7_check_calls_the_one_verify_function"
+      ],
+      "reintroduces": "V7: check() rebuilds the combination itself (another path than the property tests)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:30:02",
+      "detected": true
+    },
+    "D3_service_notice_missing": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 591,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[de]",
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[en]",
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[es]",
+        "test_rc070_v8_the_service_owns_the_dis_notice_and_returns_a_typed_field"
+      ],
+      "reintroduces": "V8: the draft without an evaluated DIS has no notice on automatic marking",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:31:30",
+      "detected": true
+    },
+    "D4_dis_evaluation_not_typed": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 590,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc070_q6_the_notice_decides_on_an_explicit_fact_not_on_a_substring",
+        "test_rc070_v8_an_evaluated_dis_has_no_not_evaluated_statement",
+        "test_rc070_v8_the_service_owns_the_dis_notice_and_returns_a_typed_field",
+        "test_rc102_v9_no_dis_line_without_lesion_findings[longitudinal]",
+        "test_rc102_v9_no_dis_line_without_lesion_findings[volumetry]"
+      ],
+      "reintroduces": "V8: the response does not say whether DIS was evaluated",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T16:32:33",
+      "detected": true
+    },
+    "F25_dis_line_without_lesion_findings": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 593,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_v9_no_dis_line_without_lesion_findings[longitudinal]",
+        "test_rc102_v9_no_dis_line_without_lesion_findings[volumetry]"
+      ],
+      "reintroduces": "V9: a volumetry-only or longitudinal-only draft states \"DIS not evaluated\"",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T16:33:54",
+      "detected": true
+    },
+    "C32_criterion_counted_twice": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 594,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_v10_a_criterion_word_near_two_dis_names_is_counted_once"
+      ],
+      "reintroduces": "V10: a criterion word near two DIS names is counted twice",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-11T16:35:06",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 595,
+    "errors": 0,
+    "skipped": 29,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 28,
+    "detected": 28,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "b4c2432abb08c5da7ec7eabea08fc50507172a33",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}

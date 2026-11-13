@@ -1,0 +1,214 @@
+{
+  "executed": "2026-11-11T22:53:53",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/brain_report_service.py": "f7cc5ef451454551a8c8eea4b3d4f8be8da95dd92c53e4f58e3c1bb6149ffc4c",
+    "backend/app/services/verified_report.py": "3928b22c77b08776df2fde22e193e2b63eff7744d8641193f138e396570e1b1f"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "b3b16e4ab8ceb1aea74382ee255aadf7d64339dbaf986b410ac4c5b71c86e562",
+    "tests/unit/test_rc103_verified_report_loop.py": "fbffbf9d30288f307c5935884cb622ed491df03f82143789b3eac90c89033956",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "fd42d0309ee427ed4dd3d5e1bf36b9b2d8ceb2fb242f2e37576c6d900a969aa2",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8",
+    "tests/unit/test_verified_report_review1.py": "21719a0f9de75dbf7c508d4c9d40708b6c72a2f6611c3352fbfffdff2398bdb8",
+    "tests/unit/test_verified_report_review2.py": "364f8daf280113d7001cbee6ff4ff99169f06bae5264d27df94126b214a188cb",
+    "tests/unit/test_verified_report_review2_dis.py": "cac14a7e8dfe21d7c3c399199e5089a5020f9d08bbe9bbcfbb80cfd6ee957a1a",
+    "tests/unit/test_verified_report_review3.py": "c8b2e9c9e6823ef8219d4ceea137666c41dcdf1f7297dbee188065a17535e3a0",
+    "tests/unit/test_verified_report_review4.py": "66dc5c7568c6d1f3e2f7f8f1c5c57a08ed3dee470a5f9f166780cfb46a3bce43",
+    "tests/unit/test_verified_report_review5.py": "29fe52419072cb16a394dcdf30918ef436a3e1619c58e9ae4def7622e8bc7511",
+    "tests/unit/test_verified_report_review6.py": "29d2044f5e00d156cd1d8910acdd133e7bf04e7eb303d567f9420be61bd97f18",
+    "tests/unit/test_verified_report_scenario_matrix.py": "947f0df5f5bbcce603459186d0daf87e7233ad72a4a6e09dc5c158ff62d2fb24"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py",
+    "tests/unit/test_verified_report_review5.py",
+    "tests/unit/test_verified_report_review6.py",
+    "tests/unit/test_verified_report_scenario_matrix.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 671,
+    "errors": 0,
+    "skipped": 29,
+    "failing_tests": []
+  },
+  "mutations": {
+    "D5_dis_line_tied_to_lesions": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 666,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_i2_an_unevaluated_dis_is_stated_once_whatever_else_is_present",
+        "test_i5_the_automatic_marking_notice_only_for_an_automatic_review_source",
+        "test_rc102_dissemination_in_space_only_when_evaluated[de]",
+        "test_rc102_dissemination_in_space_only_when_evaluated[en]",
+        "test_rc102_dissemination_in_space_only_when_evaluated[es]"
+      ],
+      "reintroduces": "I2: an unevaluated DIS without a lesion analysis is silently dropped",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T22:55:02",
+      "detected": true
+    },
+    "F27_lesion_block_always": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 667,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_generate_report_none_findings_defaults_to_empty",
+        "test_i1_every_requested_block_once_and_no_block_that_was_not_requested",
+        "test_rc102_a_value_not_computed_is_written_not_computed_never_zero",
+        "test_rc102_r1_dis_evaluated_without_lesion_analysis_gives_a_report"
+      ],
+      "reintroduces": "I1: a volumetry-only draft writes \"lesion count: not computed\" and lesion impressions",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T22:55:25",
+      "detected": true
+    },
+    "A6_not_sent_after_calls": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 668,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_i8_the_audit_counts_every_model_call_also_after_an_exception[_apply_disclaimer]",
+        "test_i8_the_audit_counts_every_model_call_also_after_an_exception[change_notice]",
+        "test_i8_the_audit_counts_every_model_call_also_after_an_exception[regeneration_message]"
+      ],
+      "reintroduces": "I8: an exception after model calls is audited as not sent, 0 attempts",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T22:55:48",
+      "detected": true
+    },
+    "L8_small_new_lesions_dropped": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 670,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_i4_small_new_lesions_are_never_dropped_silently"
+      ],
+      "reintroduces": "I4: new lesions below the review size vanish from the draft",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T22:56:11",
+      "detected": true
+    },
+    "C39_german_compounds_missing": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 668,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_v1_fuzz_number_ordinal_and_count_words_fail_the_check_in_every_language",
+        "test_rc103_v1_the_reviewers_examples_fail[Es",
+        "test_rc103_w3_a_count_in_words_fails[Es"
+      ],
+      "reintroduces": "finding 5: \"einundzwanzig Läsionen\" passes the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T22:56:36",
+      "detected": true
+    },
+    "K4_all_not_available_commented": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 670,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_i7_the_model_is_called_only_when_something_computable_is_there"
+      ],
+      "reintroduces": "I7: the model is asked to comment on a lesion analysis without any value",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T22:57:01",
+      "detected": true
+    },
+    "D6_marking_notice_for_any_source": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 666,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_i5_the_automatic_marking_notice_only_for_an_automatic_review_source",
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[de]",
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[en]",
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[es]",
+        "test_rc070_v8_the_service_owns_the_dis_notice_and_returns_a_typed_field"
+      ],
+      "reintroduces": "I5: the automatic-marking notice on a manual segmentation",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T22:57:26",
+      "detected": true
+    },
+    "M22_record_read_when_nothing_is_sent": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 669,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc105_v5_kill_switch_off_needs_no_patient_record",
+        "test_rc105_v5_nothing_sent_keeps_the_measurement_checks_only"
+      ],
+      "reintroduces": "finding 8: the patient record is read (and its failure refuses) with nothing to send",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T22:57:52",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 671,
+    "errors": 0,
+    "skipped": 29,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 8,
+    "detected": 8,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "a9f7185868e75579b38d0afddfad10e07bb3e403",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}
