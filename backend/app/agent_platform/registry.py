@@ -489,7 +489,7 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
         actor = current_actor()
         etype = (AuditEventType.QUALITY_GATE_CONSULTATION if event.get("event") == "agent.consultation"
                  else AuditEventType.CLINICAL_AI_RUN)
-        write = emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
+        emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
                    # G31 (eighth review of PR #81) / S4 (tenth): structured details, kept whole by the durable record
                    details=event.get("details"),
@@ -498,14 +498,8 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
                    # cut — every code the platform writes is short by construction (test_rc122_review10.py)
                    reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}",
                    resource_type="agent_run", resource_ids=ids)
-        if actor.request is not None:
-            # K3 (twelfth review) / A1 (thirteenth) / K1 (fourteenth): the outcome of each record the route wrote; the
-            # middleware stays silent only when the store CONFIRMS them durable (an unconfirmed one leaves its record)
-            writes = getattr(actor.request.state, "audit_writes", None)
-            if not isinstance(writes, list):
-                writes = []
-                actor.request.state.audit_writes = writes
-            writes.append(write)
+        # R8 (sixteenth review): no side channel — the record's outcome reaches the middleware through the request's
+        # audit context (RequestAuditContext.explicit_writes), as every explicit record does
     except Exception:  # noqa: BLE001 — auditing never breaks the caller
         pass
 

@@ -114,7 +114,9 @@ async def quality_gate(
     its subject — the file id it was made for and the file's version (G18: a stale answer never acts).
 
     Second review of PR #81, finding 1: behind QUALITY_GATE_ENFORCED; the approval and both kill switches are read
-    BEFORE any I/O (a refusal reads, authorizes and downloads nothing). Tenth review (S1): no consultation cache — every
+    before any read of the study (a refusal downloads nothing and reads no stored record). Sixteenth review (R1): the
+    caller is authorized FIRST (CAPA-009), so a caller without access gets the same 404 as on every image route, in
+    every state of the agent — never a gate answer or record. Tenth review (S1): no consultation cache — every
     consultation is evaluated and audited (an attestation included); ONE per-user rate limit comes before any
     authorization, storage or Firestore read; over it, 429 with the seconds to wait (code gate_rate_limited)."""
     from fastapi.responses import JSONResponse
@@ -132,10 +134,12 @@ async def quality_gate(
     wait = qg.rate_limit(str(getattr(current_user, "id", "")))
     if wait is not None:
         return qg.rate_limited_response(wait)
+    # R1 (sixteenth review, CAPA-009): the caller is authorized for the file BEFORE any answer, audit or record of the
+    # gate, in every state of the agent — an unauthorized caller gets CAPA-009's 404, never a refusal of the gate
+    paths = await _authorized_inputs([body.file_id], None, None, current_user)
     if not qg.platform_allows():
         refused = await asyncio.to_thread(qg.run_quality_gate, {"mode": "single", "visits": []}, actor=actor)
         return {**refused, "subject": {"file_id": body.file_id, "version": None}}
-    paths = await _authorized_inputs([body.file_id], None, None, current_user)
     inputs, version = await qg.single_study_inputs(paths[0], storage_service, bucket=get_settings().GCS_BUCKET_NAME,
                                                    physician_confirmed_flair=body.physician_confirmed_flair,
                                                    skull=body.skull)

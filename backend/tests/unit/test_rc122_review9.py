@@ -114,9 +114,8 @@ def test_rc123_g35_an_instance_pair_abstains_for_its_true_reason(monkeypatch):
 # ----------------------------------------------------------------------------- G30 extended
 def test_rc127_g30_rc062_withholding_a_warned_pair_tells_the_model_the_same_warnings(monkeypatch):
     from tests.unit.test_rc122_review11 import paired, served   # I1 / K2: the server's signed, pair-bound decision
-    from app.api.routes.ai_report import longitudinal_notice
     from app.services.brain_report_service import BrainReportService
-    from app.services.report_payload_guard import _Projector
+    from tests.unit.test_rc122_review11 import notice_for, projected   # R2 (sixteenth review): the route's one account
     bad, seen = [], 0
     for key, _, inp in build_cases():
         if inp["mode"] != "comparison":
@@ -129,8 +128,8 @@ def test_rc127_g30_rc062_withholding_a_warned_pair_tells_the_model_the_same_warn
         lng = paired(qg.apply_to_comparison(lcs.present_comparison({"changes": []}, acquisition_check={
             "status": "not_established", "missing": [], "differing": []}, evidence=None, binding=None,
             stored_review=None, visit_check={"status": "ok"}), served(gate, monkeypatch)))
-        prompt = BrainReportService()._build_findings_prompt({"longitudinal": _Projector(report_user=TEST_USER).longitudinal(lng)}, language="en")
-        notice = longitudinal_notice(lng, "en", TEST_USER)
+        prompt = BrainReportService()._build_findings_prompt({"longitudinal": projected(lng)}, language="en")
+        notice = notice_for(lng, "en", TEST_USER)
         if any(qg.reason_sentence(w) not in prompt or qg.reason_sentence(w) not in notice for w in warnings):
             bad.append(key)
         if seen > 400 and not bad:

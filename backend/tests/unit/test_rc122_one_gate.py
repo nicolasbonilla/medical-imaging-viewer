@@ -140,6 +140,7 @@ def test_rc122_a1_the_server_reads_nifti_extensions_and_the_dicom_image_type():
 def test_rc122_a1_the_single_route_classifies_a_nifti_by_its_descrip(single, monkeypatch):
     client, _ = single
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(_nifti("Sag T1 MPRAGE")))
     body = client.post(URL, json={"file_id": FILE}).json()
@@ -180,6 +181,7 @@ def test_rc126_a2_each_clinician_s_attestation_is_audited_under_that_clinician(s
     monkeypatch.setattr(qg, "_REGISTRY", reg)
     monkeypatch.setattr(qg, "_LIMITER", None)
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())   # a fresh header cache per test
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(_nifti()))
     for user in _users():
         app.dependency_overrides[get_current_active_user] = (lambda u: (lambda: u))(user)
@@ -193,6 +195,7 @@ def test_rc126_a3_correcting_the_series_description_invalidates_the_cached_decis
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     monkeypatch.setattr(qg, "_LIMITER", None)
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())   # a fresh header cache per test
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_CountingStorage(_nifti()))
     desc = {"value": "Sag T1 MPRAGE"}
     monkeypatch.setattr(qg, "read_source_series_description", lambda fid, svc=None: desc["value"])
@@ -221,15 +224,15 @@ def _stopped(code, monkeypatch):
 
 @pytest.mark.parametrize("lang", ["en", "es", "de"])
 def test_rc127_a4_the_report_notice_gives_the_gate_s_reason_when_the_gate_stops(lang, monkeypatch):
-    from app.api.routes.ai_report import LONGITUDINAL_NOTICE, longitudinal_notice
-    notice = longitudinal_notice(_stopped("sequence_not_flair", monkeypatch), lang, TEST_USER)
+    from app.api.routes.ai_report import LONGITUDINAL_NOTICE
+    from tests.unit.test_rc122_review11 import notice_for          # R2 (sixteenth review): the route's one account
+    notice = notice_for(_stopped("sequence_not_flair", monkeypatch), lang, TEST_USER)
     assert notice and LONGITUDINAL_NOTICE[lang]["abstained"] not in notice, "RC-062's reason for a gate stop"
     assert qg.reason_sentence("sequence_not_flair", lang) in notice
 
 
 def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report(monkeypatch):
-    from app.api.routes.ai_report import longitudinal_notice
-    from tests.unit.test_rc122_review11 import TEST_PAIR, served   # I1 / K2: signed and pair-bound
+    from tests.unit.test_rc122_review11 import TEST_PAIR, notice_for, served   # I1 / K2: signed, pair-bound; R2
     codes = qg.load_policy()["codes"]
     for code in codes:
         assert qg.CAVEAT_REASONS[code] == qg.reason_sentence(code, "en"), code
@@ -241,5 +244,5 @@ def test_rc127_a4_one_table_of_reasons_for_the_caveat_and_the_report(monkeypatch
               "quality_gate": served({"mode": "comparison", "ai_output_allowed": True, "codes": ["thickness_at_least"]},
                                      monkeypatch)}
     for lang in ("en", "es", "de"):
-        assert qg.reason_sentence("thickness_at_least", lang) in longitudinal_notice(warned, lang, TEST_USER)
-    assert qg.CAVEAT_REASONS["thickness_at_least"] in longitudinal_notice(warned, "en", TEST_USER), "the drifted sentence"
+        assert qg.reason_sentence("thickness_at_least", lang) in notice_for(warned, lang, TEST_USER)
+    assert qg.CAVEAT_REASONS["thickness_at_least"] in notice_for(warned, "en", TEST_USER), "the drifted sentence"

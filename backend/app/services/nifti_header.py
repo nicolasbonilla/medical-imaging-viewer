@@ -23,13 +23,14 @@ def sizeof_hdr(raw: bytes) -> Tuple[Optional[int], Optional[str]]:
 
 
 def vox_offset(raw: bytes) -> Optional[float]:
-    """The header's vox_offset (where the voxels start), or None when it cannot be read."""
+    """The header's vox_offset (where the voxels start), or None when it cannot be read or cannot be true: not a
+    finite number, not positive, or past DECOMPRESSED_MAX (sixteenth review, R6: such a header is unreadable)."""
     size, endian = sizeof_hdr(raw)
     if size is None or len(raw) < (112 if size == 348 else 176):
         return None
     vox = (struct.unpack(endian + "f", raw[108:112])[0] if size == 348
            else struct.unpack(endian + "q", raw[168:176])[0])
-    return float(vox) if isinstance(vox, (int, float)) and math.isfinite(vox) and vox > 0 else None
+    return float(vox) if isinstance(vox, (int, float)) and math.isfinite(vox) and 0 < vox <= DECOMPRESSED_MAX else None
 
 
 def header_prefix(data: bytes) -> bytes:

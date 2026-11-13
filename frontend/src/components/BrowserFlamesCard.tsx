@@ -63,6 +63,12 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   // RC-049: the clinician must confirm the sequence of THIS file before each run (positive evidence, recorded).
   const [sequenceConfirmed, setSequenceConfirmed] = useState(false);
   useEffect(() => setSequenceConfirmed(false), [flairFileId]);
+  // R3 (sixteenth review): what is in effect NOW (the last render) — the FLAIR confirmation and this file's series
+  // description — read when a run starts, never from the time of the request
+  const confirmedNow = useRef(false);
+  confirmedNow.current = sequenceConfirmed;
+  const seriesNow = useRef<string | null>(null);
+  seriesNow.current = currentSeries?.file_id === flairFileId ? currentSeries?.metadata?.series_description ?? null : null;
 
   // Single quality gate (REQ-FUNC-117/118, RC-122..RC-127; DRAFT, behind VITE_ENABLE_QUALITY_GATE). Sixth review of
   // PR #81 (G27): the SERVER decides; the card sends its inputs (the file, the physician's attestation, the worker's
@@ -204,11 +210,19 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     const fileAtClick = flairFileId;
     const selectionAtClick = selection.current;
     const start = (decision: ServerGateResponse) => {
+      // R3 / P10 (sixteenth review): the ONE place a run starts — every input in effect NOW (file, selection,
+      // attestation, the FLAIR confirmation) must be the click's; a changed one is SAID (P7), never run on
+      if (currentFile.current !== fileAtClick || selection.current !== selectionAtClick
+        || attestedNow.current !== attestation || !confirmedNow.current) {
+        setRunNotice({ kind: 'inputsChanged', code: null });
+        return;
+      }
       runOf.current = { attested: attestation, version: decision.subject?.version ?? null, token: decision.run_token ?? null };
       if (decision.run_token) usedTokens.current.add(decision.run_token);       // P2: never used by a second run
-      // G27: RC-049 in the worker takes the sequence class the server derived for this file
-      void flames.run(fileAtClick, { seriesDescription, clinicianConfirmedFlair: true, qualityGate: true,
-        gateSequenceClass: serverSequenceClass(decision) });
+      // G27: RC-049 in the worker takes the sequence class the server derived for this file; the flags are the
+      // current ones (R3)
+      void flames.run(fileAtClick, { seriesDescription: seriesNow.current, clinicianConfirmedFlair: confirmedNow.current,
+        qualityGate: true, gateSequenceClass: serverSequenceClass(decision) });
     };
     // I6 (eleventh review): the decision already held for EXACTLY these inputs, with an unused, unexpired run token,
     // starts the run — two consultations per run; anything else (a re-run, an expired or used token, a newer version,

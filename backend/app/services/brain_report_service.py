@@ -817,11 +817,12 @@ class BrainReportService:
         volumetry: Optional[Dict[str, Any]] = None,
         language: str = "en",
         identifiers: Optional[PatientIdentifiers] = None,
-        report_user: Optional[str] = None,
+        gate_account: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
-        Generate a structured brain MRI report. ``report_user``: the clinician requesting it (a quality-gate decision
-        is used only when it was made for this clinician; thirteenth review of PR #81, M3).
+        Generate a structured brain MRI report. ``gate_account``: the quality gate's account of the longitudinal block,
+        computed once by the route for this clinician and this patient (sixteenth review of PR #81, R2; None: the gate
+        is off, the base report).
 
         Args:
             template_type: Report template (general, ms_activity, ms_lesion_burden)
@@ -853,7 +854,7 @@ class BrainReportService:
 
         system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
         # RC-064: structured payload only — measurements, fixed labels, sex, age band; no free text.
-        payload = provider_payload(findings, volumetry, identifiers, report_user=report_user)   # R2; M3
+        payload = provider_payload(findings, volumetry, identifiers, gate_account=gate_account)   # R2; M3; R2 (16th)
         # PRB-003 (RC-070; review of PR #68, finding 4): no DIS instruction in the template unless DIS was
         # evaluated on a classified, radiologist-confirmed segmentation (state set by the report route).
         # Release 2026-10-25 integration (PR #67 + PR #68): the variant is chosen on the DIS block the model
@@ -1021,6 +1022,19 @@ def _synthetic_payloads():
     # regions not confirmed (release 2026-10-25, item 1): the fixed line and the table without a region column
     yield {**base, "lesion_analysis": {**base["lesion_analysis"], "regions_confirmed": False},
            "dis_assessment": {"evaluation_status": "not_evaluated"}}, volumetry
+    # R4 (sixteenth review of PR #81): every shape the RC-064 projector gives the longitudinal block with the quality
+    # gate on, for EVERY reason code of the registry, one at a time and all together — DERIVED from the registry, so a
+    # new code can never be missed: stopped by the gate (also with no cause: its fallback sentence), withheld by RC-062
+    # with the gate's warnings, let through with warnings (the "QUALITY-GATE WARNINGS" line)
+    from app.services.quality_gate import CAVEAT_REASONS
+    codes = sorted(CAVEAT_REASONS)
+    counts = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": 2, "total_lesions_tp2": 2,
+              "burden_delta_percent": 1.0, "status_counts": {"new": 1}}
+    yield {"longitudinal": {"abstained": True, "abstained_by": "quality_gate", "causes": []}}, None
+    for group in [[c] for c in codes] + [codes]:
+        for lng in ({"abstained": True, "abstained_by": "quality_gate", "causes": group},
+                    {"abstained": True, "quality_gate_warnings": group}, {**counts, "quality_gate_warnings": group}):
+            yield ({**base, "longitudinal": lng}, volumetry) if group is codes else ({"longitudinal": lng}, None)
     # every value missing: what "not available" looks like in each block
     sparse = provider_payload({"lesion_analysis": {"regions": {"Lesion": {}}, "size_distribution": {"small": None},
                                                    "lesions": [{}]},

@@ -147,10 +147,13 @@ def test_rc127_m3_a_colleague_s_report_never_uses_another_clinician_s_decision(m
              "thickness": {"state": "native", "effective_mm": 1.0}}
     gate = qg.run_quality_gate({"mode": "comparison", "visits": [visit, dict(visit)], "rc062_withholds": False},
                                study_key="s", releases_output=False)
-    pair = {"tp1": {"id": "s1", "source": None, "version": None}, "tp2": {"id": "s2", "source": None, "version": None}}
+    p = "11111111-1111-1111-1111-111111111111"            # R2 (sixteenth review): the pair's files are its patient's
+    pair = {"tp1": {"id": "s1", "source": f"patients/{p}/studies/a/series/x/1.nii.gz", "version": None},
+            "tp2": {"id": "s2", "source": f"patients/{p}/studies/b/series/x/2.nii.gz", "version": None}}
     lng = {"pair": pair, "quality_gate": {**gate, "token": qg.decision_token(gate, pair, "id-dr_rev")}}
-    assert qg.report_account(lng, user_id="id-dr_rev")["established"] is True
-    assert qg.report_account(lng, user_id="id-colleague")["established"] is False
+    subject = {"patient": p, "owners": [p, p]}
+    assert qg.report_account(lng, user_id="id-dr_rev", subject=subject)["established"] is True
+    assert qg.report_account(lng, user_id="id-colleague", subject=subject)["established"] is False
 
 
 # ----------------------------------------------------------------------------- A1

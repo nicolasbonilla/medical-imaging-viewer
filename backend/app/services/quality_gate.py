@@ -665,22 +665,24 @@ def sniff_format(data: bytes, decoded: Optional[bytes] = None) -> Optional[str]:
 def _inspect_header_prefix(data: bytes):
     """One round of the ranged reader (E1, eighth review): decompress the prefix ONCE and say whether it holds the
     whole header — DICOM: the pixel data starts inside it; NIfTI: the header plus the extensions up to vox_offset.
-    Returns (complete, (prefix, decompressed NIfTI prefix or None)) so the parser never decompresses again."""
-    import struct
+    Returns (complete, (prefix, decompressed NIfTI prefix or None)) so the parser never decompresses again. R6
+    (sixteenth review): vox_offset through the ONE reader (nifti_header.vox_offset); a NaN, infinite, negative or
+    absurd one makes the header unreadable AT ONCE — nothing more is read."""
     raw = nifti_header.header_prefix(data)                        # the ONE decompression of this round
     fmt = sniff_format(data, raw)
     if fmt == "dicom":
         return any(tag in data for tag in _PIXEL_DATA_TAGS), (data, None)
     if fmt != "nifti":
         return False, (data, raw)
-    size, endian = nifti_header.sizeof_hdr(raw)
+    size, _endian = nifti_header.sizeof_hdr(raw)
     if size is None or len(raw) < size + 4:
         return False, (data, raw)
     if raw[size] == 0:
         return True, (data, raw)
-    vox_offset = (struct.unpack(endian + "f", raw[108:112])[0] if size == 348
-                  else struct.unpack(endian + "q", raw[168:176])[0])
-    return len(raw) >= vox_offset, (data, raw)
+    vox = nifti_header.vox_offset(raw)
+    if vox is None:
+        return True, (b"", b"")                                   # unreadable: the parser finds no header
+    return len(raw) >= vox, (data, raw)
 
 
 async def _read_header_fields(storage_service, bucket: str, file_path: str) -> Dict[str, Any]:
@@ -768,18 +770,41 @@ async def single_study_inputs(file_path: str, storage_service, *, bucket: str,
     the skull outcome, which the in-browser pipeline reports (client-reported, K4):
     its header, else the stored series and acquisition records, and the RC-054 geometry. Header only, parsed off the
     event loop, cached per file version (E1). Anything unreadable stays unknown, so the gate warns or abstains; it
-    never raises. Returns (inputs, file version or None). Every consultation is evaluated (tenth review, S1): the
-    header (file version, then the header cache or a ranged read) and the stored records are read concurrently.
+    never raises. Returns (inputs, file version or None). Every consultation is evaluated (tenth review, S1): the file
+    version first, then the header (its cache or a ranged read) and the stored records (cached per version, R7) are
+    read concurrently.
 
     ``skull``: 'pending' before the run; at the final consultation the outcome the browser reports ('stripped' /
     'unknown'), so the decision that releases or withholds the output is decided and audited here (G17)."""
-    async def header():
-        version = await file_version(storage_service, bucket, file_path)
-        return version, await visit_header_fields(storage_service, bucket, file_path, version_key=version)
-
-    (key, fields), (acq, stored) = await asyncio.gather(header(), asyncio.to_thread(stored_records, file_path))
+    key = await file_version(storage_service, bucket, file_path)
+    fields, (acq, stored) = await asyncio.gather(
+        visit_header_fields(storage_service, bucket, file_path, version_key=key), _version_records(key, file_path))
     visit = visit_inputs(fields, acq, stored, physician_confirmed_flair=physician_confirmed_flair, skull=skull)
     return {"mode": "single", "visits": [visit]}, version_text(key)
+
+
+# R7 (sixteenth review; efficiency only): the stored records of a consultation, read at most once per file version
+# within RECORDS_CACHE_TTL_S (bounded, oldest out) — like the header cache. Only a COMPLETE answer (both records
+# found) is remembered, so a failed or missing read is read again; an unknown version is read every time. RC-062's own
+# read path is untouched (D-QG-27): only the gate's consultation uses this.
+RECORDS_CACHE_MAX = 256
+RECORDS_CACHE_TTL_S = 300
+_RECORDS_CACHE: "OrderedDict[tuple, tuple]" = OrderedDict()      # file version -> (read at, (acquisition, description))
+
+
+async def _version_records(key: Optional[tuple], file_path: str):
+    hit = _RECORDS_CACHE.get(key) if key else None
+    if hit is not None and _now() - hit[0] <= RECORDS_CACHE_TTL_S:
+        _RECORDS_CACHE.move_to_end(key)
+        return hit[1]
+    read_at = _now()
+    records = await asyncio.to_thread(stored_records, file_path)
+    if key and all(r is not None for r in records):
+        _RECORDS_CACHE[key] = (read_at, records)
+        _RECORDS_CACHE.move_to_end(key)
+        while len(_RECORDS_CACHE) > RECORDS_CACHE_MAX:
+            _RECORDS_CACHE.popitem(last=False)
+    return records
 
 
 def version_text(key: Optional[tuple]) -> Optional[str]:
@@ -810,8 +835,9 @@ def default_registry():
 
 
 def platform_allows(registry=None) -> bool:
-    """Approval and both kill switches, read now, WITHOUT an audit record of its own: the route asks it before any
-    I/O, and a refusal is then audited once by run_quality_gate (second review of PR #81, finding 1)."""
+    """Approval and both kill switches, read now, WITHOUT an audit record of its own: the route asks it after
+    authorizing the caller (sixteenth review, R1) and before any read of the study, and a refusal is then audited once
+    by run_quality_gate (second review of PR #81, finding 1)."""
     from app.agent_platform import registry as R
     reg = registry if registry is not None else default_registry()
     with R.within_run():
@@ -1071,34 +1097,75 @@ def verify_token(token: Any, kind: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def pair_patient(pair: Any) -> Optional[str]:
+    """R2 (sixteenth review): the ONE patient both source files of a pair belong to — CAPA-007's own rule (a
+    segmentation's patient is its source file's: resolve_segmentation_patient_id) — or None."""
+    from app.security.storage_access import extract_patient_id_from_path
+    entries = [pair.get(t) if isinstance(pair, dict) else None for t in ("tp1", "tp2")]
+    owners = {extract_patient_id_from_path(str(e["source"])) if isinstance(e, dict) and e.get("source") else None
+              for e in entries}
+    return next(iter(owners)) if len(owners) == 1 else None
+
+
 def decision_token(gate: Dict[str, Any], pair: Dict[str, Any], user_id: Any) -> Optional[str]:
-    """K1/K2: the signed, pair-bound record of a comparison / SEL decision this server returned."""
+    """K1/K2: the signed, pair-bound record of a comparison / SEL decision this server returned. R2 (sixteenth review):
+    bound also to the patient of the pair (from its server-resolved source files) and to the study of each of the two
+    files (the files themselves are in the pair)."""
     account, now = explain(gate), int(_now())
-    return sign_token({"kind": "decision", "pair": pair, "user": str(user_id or ""), "decision": gate.get("decision"),
+    sources = [(pair.get(t) or {}).get("source") if isinstance(pair, dict) else None for t in ("tp1", "tp2")]
+    return sign_token({"kind": "decision", "pair": pair, "user": str(user_id or ""), "patient": pair_patient(pair),
+                       "studies": [study_of(s) for s in sources], "decision": gate.get("decision"),
                        "ai_output_allowed": gate.get("ai_output_allowed") is True, "causes": account["causes"],
                        "warnings": account["warnings"], "policy_version": gate.get("policy_version"),
                        "iat": now, "exp": now + DECISION_TOKEN_TTL_S})
 
 
-def report_account(longitudinal: Any, user_id: Any) -> Optional[Dict[str, Any]]:
+def report_account(longitudinal: Any, user_id: Any, subject: Any = None) -> Optional[Dict[str, Any]]:
     """I1 / K1 / K2: the gate's account of a report's longitudinal block, from the SIGNED decision only — its
     decision, causes and warnings; the client's copy gives nothing else. None while the gate is not enforced (the base
-    report). A missing, forged, expired or tampered token, one signed for another pair than the block's, or (M3,
-    thirteenth review) for another clinician than the one requesting the report: the comparability is NOT established
-    by the gate — a stop with a plain note (gate_not_established), never a clean comparison. The ONE hook of the report
-    path (when PR #78 lands, its notice moves into the verified report)."""
+    report). A missing, forged, expired or tampered token, one signed for another pair than the block's, (M3,
+    thirteenth review) for another clinician than the one requesting the report, or (R2, sixteenth review) for another
+    PATIENT than the report's: the comparability is NOT established by the gate — a stop with a plain note
+    (gate_not_established), never a clean comparison. ``subject``: the server's own facts, from STORED records
+    (report_subject) — the report's patient and the patient each segmentation of the pair belongs to now; the decision
+    is established only when the patient it was issued for is that patient and both segmentations still belong to it
+    (no subject: not established). The ONE hook of the report path, called once per report by the route."""
     from app.core.config import get_settings
     if not get_settings().QUALITY_GATE_ENFORCED or not isinstance(longitudinal, dict):
         return None
     block = longitudinal.get("quality_gate")
     payload = verify_token(block.get("token") if isinstance(block, dict) else None, "decision")
+    facts = subject if isinstance(subject, dict) else {}
+    patient = facts.get("patient")
     if (payload is None or not isinstance(payload.get("pair"), dict) or payload["pair"] != longitudinal.get("pair")
-            or not str(user_id or "") or payload.get("user") != str(user_id or "")):
+            or not str(user_id or "") or payload.get("user") != str(user_id or "")
+            or not patient or payload.get("patient") != patient or facts.get("owners") != [patient, patient]):
         return {"established": False, "stopped": True, "causes": ["gate_not_established"], "warnings": []}
     codes = lambda v: [c for c in v if isinstance(c, str)] if isinstance(v, list) else []  # noqa: E731
     stopped = payload.get("ai_output_allowed") is not True
     return {"established": True, "stopped": stopped, "causes": codes(payload.get("causes")) if stopped else [],
             "warnings": codes(payload.get("warnings"))}
+
+
+async def report_subject(longitudinal: Any, report_patient: Any) -> Optional[Dict[str, Any]]:
+    """R2 (sixteenth review): the server's own facts a report's gate account is bound to, from STORED records only —
+    the report's patient (the route resolved it from the report segmentation's record, CAPA-014) and the patient each
+    segmentation of the block's pair belongs to now (its stored record, CAPA-007's resolver; the account then requires
+    that pair to be the signed one). None while the gate is not enforced: nothing is read (the base report)."""
+    from app.core.config import get_settings
+    if not get_settings().QUALITY_GATE_ENFORCED or not isinstance(longitudinal, dict):
+        return None
+    from app.security import resource_access as ra
+    pair = longitudinal.get("pair") if isinstance(longitudinal.get("pair"), dict) else {}
+    owners = []
+    for label in ("tp1", "tp2"):
+        sid = pair[label].get("id") if isinstance(pair.get(label), dict) else None
+        try:
+            owners.append(await ra.resolve_segmentation_patient_id(sid, ra._segmentation_service())
+                          if isinstance(sid, str) and sid else None)
+        except Exception:  # noqa: BLE001 — unknown: not established
+            owners.append(None)
+    return {"patient": str(report_patient) if report_patient else None, "owners": owners}
 
 
 def run_token(file_id: str, version: Optional[str], user_id: Any, attested: bool) -> Optional[str]:

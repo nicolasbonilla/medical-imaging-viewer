@@ -286,9 +286,10 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
     "Y3_model_none_audited_invalid": (REG, "    if value is _UNSET or value is None:\n", "    if value is _UNSET:\n", "RC-110",
                                       "a run that chose no model is audited with model 'invalid'"),
     # fifth review of PR #81 (F4): the sink names the event type it emits (a consultation or an AI run)
-    "Y4_agent_audit_anonymous": (REG, "        write = emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,\n"
+    # sixteenth review of PR #81 (R8): the record's outcome is no longer kept by the sink (one channel), re-anchored
+    "Y4_agent_audit_anonymous": (REG, "        emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,\n"
                                       "                   username=actor.username, role=actor.role,\n",
-                                 "        write = emit_audit(etype, outcome,\n", "RC-110",
+                                 "        emit_audit(etype, outcome,\n", "RC-110",
                                  "agent audit records are anonymous and dropped under load"),
     "Y5_retirement_check_ignores_the_date": (CRD, '            for agent_id, model, state, _ in _card_retirements(today, agents) if state == "retired"]\n',
                                              '            for agent_id, model, state, _ in _card_retirements(today, agents) if False]\n', "RC-117", "the retirement check never reports a retired model"),

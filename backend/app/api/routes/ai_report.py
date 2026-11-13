@@ -331,16 +331,17 @@ def drop_unverifiable_decisions(longitudinal: Any) -> Any:
     return out
 
 
-def longitudinal_notice(longitudinal: Any, language: str, user_id: Any = None) -> Optional[str]:
-    """The fixed notice for a draft that received a longitudinal comparison, or None."""
+def longitudinal_notice(longitudinal: Any, language: str, account: Any = None) -> Optional[str]:
+    """The fixed notice for a draft that received a longitudinal comparison, or None. ``account``: the quality gate's
+    account the route computed ONCE (report_account; sixteenth review of PR #81, R2) — None with the gate off."""
     if not isinstance(longitudinal, dict) or not longitudinal:
         return None
     from app.services.longitudinal_candidate_safety import load_false_candidate_evidence
 
     texts = LONGITUDINAL_NOTICE.get(language, LONGITUDINAL_NOTICE["en"])
     from app.services import quality_gate as qg
-    # I1 (eleventh review): the SERVER's record of the gate's decision, read once — never the client's copy
-    account = qg.report_account(longitudinal, user_id)
+    # I1 (eleventh review): the SERVER's record of the gate's decision — never the client's copy; R2 (sixteenth): the
+    # one account of the route, the same object the provider payload was projected with (G30)
     warnings = account["warnings"] if account else []
     if account and account["stopped"]:
         # A4 (sixth review of PR #81): when the GATE stopped the comparison (or its decision is not established), the
@@ -668,6 +669,12 @@ async def generate_report(
                         "has not been confirmed by a radiologist), and nothing else was measured. A report "
                         "without measurements would be invented; run the lesion analysis first."),
             )
+    # R2 (sixteenth review of PR #81): the quality gate's account of the longitudinal block, computed ONCE, bound to this
+    # clinician and to this report's patient from STORED records (the report segmentation's, and the pair's own) — the
+    # provider payload and the code-written notice both use it (G30). None with the gate off: nothing is read.
+    from app.services import quality_gate as qg
+    gate_account = qg.report_account(findings.get("longitudinal"), str(getattr(current_user, "id", "") or ""),
+                                     await qg.report_subject(findings.get("longitudinal"), patient_id))
     dis_evaluated = gate.is_evaluated(findings.get("dis_assessment"))
     if not dis_evaluated and isinstance(findings.get("lesion_analysis"), dict):
         # Finding 3: regions of a segmentation no radiologist confirmed are not passed to the model.
@@ -681,7 +688,7 @@ async def generate_report(
             volumetry=request.volumetry,
             language=request.language,
             identifiers=identifiers,
-            report_user=str(getattr(current_user, "id", "") or ""),
+            gate_account=gate_account,
         )
         # Release 2026-10-25 (integration review of PR #69, item 2): CAPA-014's format-character rule (zero-width
         # space -> space, every other format character removed) is applied to the MODEL's text before the DIS check,
@@ -704,8 +711,7 @@ async def generate_report(
         # model, as fields of their own; they were never sent.
         unlisted = result.pop("unlisted_labels", None)
         parts = draft_parts(result["content"], request.language, request.findings, unlisted)
-        notice = longitudinal_notice(request.findings.get("longitudinal"), request.language,
-                                     str(getattr(current_user, "id", "") or ""))
+        notice = longitudinal_notice(request.findings.get("longitudinal"), request.language, gate_account)
         if notice:   # CAPA-013: appended in code, after the model, in the report language
             parts["ai_text"] = f"{parts['ai_text']}\n\n---\n\n> {notice}"
         dis_text = dis_notice(findings, request.language, replaced)

@@ -88,6 +88,7 @@ def test_rc126_s1_every_consultation_is_evaluated_and_nothing_caches_an_answer(s
 
 def test_rc122_s1_the_header_cache_never_keeps_a_failed_or_unreadable_read(monkeypatch):
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
     key = (FILE, 10, "v1", "2026-11-12")
 
     async def fails(*a):
@@ -246,7 +247,9 @@ def test_rc127_one_warnings_story():
     assert not hasattr(qg, "warning_codes"), "warnings come from explain() only"
     assert 'reason_lead("warned"' in inspect.getsource(qg.apply_to_comparison)
     src = inspect.getsource(air.longitudinal_notice)                 # eleventh review (I1): the server's record
-    assert src.count("report_account(") == 1 and "explain(" not in src
+    # R2 (sixteenth review): the notice reads the ONE account the route computed — computed once per report
+    assert "report_account(" not in src and "explain(" not in src
+    assert inspect.getsource(air.generate_report).count("report_account(") == 1
 
 
 def test_rc126_one_rate_limit_helper_and_one_429_builder():

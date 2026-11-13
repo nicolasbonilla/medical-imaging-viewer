@@ -70,28 +70,28 @@ def test_rc127_g30_reviewer_case_thickness_thick_is_never_a_cause():
 @pytest.mark.parametrize("lang", ["en", "es", "de"])
 def test_rc127_g30_reviewer_case_the_report_model_and_the_notice_give_the_same_cause(lang, monkeypatch):
     """A gate stop reaches the report model as the gate's causes — never as 'acquisition not comparable'."""
-    from app.api.routes.ai_report import LONGITUDINAL_NOTICE, longitudinal_notice
+    from app.api.routes.ai_report import LONGITUDINAL_NOTICE
     from app.services.brain_report_service import BrainReportService
-    from app.services.report_payload_guard import _Projector
+    from tests.unit.test_rc122_review11 import notice_for, projected   # R2 (sixteenth review): the route's one account
     gate = qg.evaluate({"mode": "comparison", "platform": PLATFORM_ON, "visits": [
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
         {"sequence": "T1", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
     from tests.unit.test_rc122_review11 import paired, served   # I1 / K2: the server's signed, pair-bound decision
     lng = paired(qg.abstained_comparison(served(gate, monkeypatch)))
-    guarded = _Projector(report_user=TEST_USER).longitudinal(lng)
+    guarded = projected(lng)
     assert guarded.get("abstained_by") == "quality_gate" and guarded.get("causes") == ["sequence_not_flair"]
     prompt = BrainReportService()._build_findings_prompt({"longitudinal": guarded}, language=lang)
     assert "could not be established as comparable" not in prompt
     assert qg.reason_sentence("sequence_not_flair") in prompt
-    notice = longitudinal_notice(lng, lang, TEST_USER)
+    notice = notice_for(lng, lang, TEST_USER)
     assert LONGITUDINAL_NOTICE[lang]["abstained"] not in notice
     assert qg.reason_sentence("sequence_not_flair", lang) in notice
     assert qg.reason_sentence("scanner_not_recorded", lang) not in notice.split(qg.reason_lead("warned", lang))[0]
 
 
 def test_rc127_g30_rc062_s_reason_only_when_rc062_withheld(monkeypatch):
-    from app.api.routes.ai_report import LONGITUDINAL_NOTICE, longitudinal_notice
-    from tests.unit.test_rc122_review11 import paired, served   # I1 / K2: the server's signed, pair-bound decision
+    from app.api.routes.ai_report import LONGITUDINAL_NOTICE
+    from tests.unit.test_rc122_review11 import notice_for, paired, served   # I1 / K2; R2: the route's one account
     warned = qg.evaluate({"mode": "comparison", "platform": PLATFORM_ON, "visits": [
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
@@ -99,10 +99,10 @@ def test_rc127_g30_rc062_s_reason_only_when_rc062_withheld(monkeypatch):
     rc062 = paired(qg.apply_to_comparison(lcs.present_comparison({"changes": []}, acquisition_check={"status": "not_established",
                                    "missing": [], "differing": []}, evidence=None, binding=None, stored_review=None,
                                    visit_check={"status": "ok"}), served(warned, monkeypatch)))
-    notice = longitudinal_notice(rc062, "en", TEST_USER)
+    notice = notice_for(rc062, "en", TEST_USER)
     assert LONGITUDINAL_NOTICE["en"]["abstained"] in notice
     assert qg.reason_sentence("scanner_not_recorded") in notice            # a warning, stated as a warning
-    stopped = longitudinal_notice(paired(qg.abstained_comparison(served({**warned, "ai_output_allowed": False, "decision": "abstain",
+    stopped = notice_for(paired(qg.abstained_comparison(served({**warned, "ai_output_allowed": False, "decision": "abstain",
         "codes": ["scanner_changed"], "checks": [{"check": "scanner", "visit": None, "status": "abstain",
                                                   "code": "scanner_changed", "params": {}}]}, monkeypatch))), "en", TEST_USER)
     assert LONGITUDINAL_NOTICE["en"]["abstained"] not in stopped

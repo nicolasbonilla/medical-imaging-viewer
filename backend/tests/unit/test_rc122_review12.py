@@ -22,8 +22,9 @@ from app.core.container import get_storage_service
 from app.main import app
 from app.services import longitudinal_candidate_safety as lcs
 from app.services import quality_gate as qg
+from tests.unit.test_rc122_review11 import in_context  # R8: the one channel, as the real log_event
 from tests.unit.test_rc122_quality_gate_wiring import (  # noqa: F401 — fixtures
-    ACQ, FILE, PAIR, REGISTRY, URL, _CountingStorage, _registry, compare, single,
+    ACQ, FILE, PAIR, PATIENT, REGISTRY, URL, _CountingStorage, _registry, compare, single,
 )
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -33,8 +34,9 @@ WARNED = {"sequence": "FLAIR", "physician_confirmed_flair": False, "scanner": SC
           "thickness": {"state": "not_determinable", "effective_mm": None}}
 COUNTS = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.5, "total_lesions_tp1": 3, "total_lesions_tp2": 4,
           "status_counts": {"new": 1, "enlarged": 0, "resolved": 0, "shrunk": 0, "stable": 3}}
-PAIR_A = {"tp1": {"id": "seg-a1", "source": "patients/p/studies/a1/series/x/1.nii.gz", "version": "10:v1:2026-11-12"},
-          "tp2": {"id": "seg-a2", "source": "patients/p/studies/a2/series/x/2.nii.gz", "version": "11:v1:2026-11-12"}}
+PAIR_A = {"tp1": {"id": "seg-a1", "source": f"patients/{PATIENT}/studies/a1/series/x/1.nii.gz", "version": "10:v1:2026-11-12"},
+          "tp2": {"id": "seg-a2", "source": f"patients/{PATIENT}/studies/a2/series/x/2.nii.gz", "version": "11:v1:2026-11-12"}}
+SUBJECT = {"patient": PATIENT, "owners": [PATIENT, PATIENT]}   # R2 (sixteenth review): the stored records agree
 PAIR_B = {**PAIR_A, "tp2": {**PAIR_A["tp2"], "id": "seg-b2"}}
 
 
@@ -57,13 +59,13 @@ def _signed(pair, monkeypatch, visit=WARNED):
 # ----------------------------------------------------------------------------- K1, K2
 def test_rc127_k1_the_report_reads_the_signed_decision_for_its_own_pair(monkeypatch):
     gate = _signed(PAIR_A, monkeypatch)
-    account = qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev")
+    account = qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev", SUBJECT)
     assert account["established"] is True and account["warnings"] == qg.explain(gate)["warnings"]
 
 
 def test_rc127_k2_the_decision_of_pair_a_in_a_report_for_pair_b_is_not_established(monkeypatch):
     gate = _signed(PAIR_A, monkeypatch)
-    account = qg.report_account({**COUNTS, "pair": PAIR_B, "quality_gate": gate}, "id-dr_rev")
+    account = qg.report_account({**COUNTS, "pair": PAIR_B, "quality_gate": gate}, "id-dr_rev", SUBJECT)
     assert account["established"] is False and account["causes"] == ["gate_not_established"]
 
 
@@ -72,7 +74,7 @@ def test_rc127_k1_a_second_instance_accepts_the_same_token(monkeypatch):
     spec = importlib.util.spec_from_file_location("quality_gate_second_instance", qg.__file__)
     fresh = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(fresh)                    # a fresh module state: nothing remembered from the first one
-    assert fresh.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev")["established"] is True
+    assert fresh.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev", SUBJECT)["established"] is True
     assert not hasattr(qg, "_DECISIONS"), "the per-instance decision store is retired"
 
 
@@ -81,9 +83,9 @@ def test_rc127_k1_a_tampered_or_expired_token_is_rejected(monkeypatch):
     head, body, sig = gate["token"].split(".")
     flipped = body[:-2] + ("A" if body[-2] != "A" else "B") + body[-1]
     for token in (f"{head}.{flipped}.{sig}", f"{head}.{body}.{sig[:-1]}x", "", None, ["x"], "qg1.e30.e30"):
-        assert qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": {**gate, "token": token}}, "id-dr_rev")["established"] is False
+        assert qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": {**gate, "token": token}}, "id-dr_rev", SUBJECT)["established"] is False
     monkeypatch.setattr(qg, "_now", lambda: 10 ** 11)                           # far after the expiry
-    assert qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev")["established"] is False
+    assert qg.report_account({**COUNTS, "pair": PAIR_A, "quality_gate": gate}, "id-dr_rev", SUBJECT)["established"] is False
 
 
 def test_rc123_k2_the_comparison_answers_with_its_pair_and_a_signed_decision(compare, monkeypatch):
@@ -92,9 +94,9 @@ def test_rc123_k2_the_comparison_answers_with_its_pair_and_a_signed_decision(com
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     res = client.post("/api/v1/segmentation/longitudinal/compare", json=PAIR).json()
     assert [res["pair"][t]["id"] for t in ("tp1", "tp2")] == ["s1", "s2"]
-    assert qg.report_account(res, "id-dr_rev")["established"] is True
+    assert qg.report_account(res, "id-dr_rev", SUBJECT)["established"] is True
     other = {**res, "pair": {**res["pair"], "tp2": {**res["pair"]["tp2"], "id": "s3"}}}
-    assert qg.report_account(other, "id-dr_rev")["established"] is False
+    assert qg.report_account(other, "id-dr_rev", SUBJECT)["established"] is False
 
 
 # ----------------------------------------------------------------------------- K3
@@ -142,7 +144,8 @@ def _types(monkeypatch):
     from app.core.logging import audit as A
     seen = []
     monkeypatch.setattr(A.AuditLogger, "log_event",
-                        lambda self, event, durable=True: (seen.append(event.event_type), A.AuditWrite(True, _durable_future()))[1])
+                        lambda self, event, durable=True: (seen.append(event.event_type),
+                                                           in_context(event, A.AuditWrite(True, _durable_future())))[1])
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
     data["agents"]["quality-gate"]["approval"]["status"] = "approved"     # IN MEMORY, for the test only
     monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry(data, switches=R.InMemoryKillSwitches({"quality-gate": True}),

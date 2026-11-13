@@ -133,6 +133,7 @@ def single(monkeypatch):
     monkeypatch.setattr(qg, "_RUN_TOKEN_MEMORY", None)
     # each test starts with an empty header cache (a file of the same path and size in another test is another file)
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
     monkeypatch.setattr(lcs, "read_source_acquisition", lambda fid, svc=None: None)
     monkeypatch.setattr(qg, "read_source_series_description", lambda fid, svc=None: None)
     app.dependency_overrides[get_current_active_user] = _user
@@ -149,7 +150,9 @@ def test_rc126_the_single_study_route_is_refused_while_the_agent_is_not_approved
     r = client.post("/api/v1/clinical/quality-gate", json={"file_id": "anything"})
     assert r.status_code == 200, r.text
     body = r.json()
-    assert state["paths"] == [], "a refusal authorizes, reads and downloads nothing (second review, finding 1)"
+    # second review, finding 1, amended in the sixteenth (R1): the caller is authorized FIRST (CAPA-009), then a refusal
+    # reads and downloads nothing
+    assert state["paths"] == [["anything"]], "authorized once, before the refusal"
     assert body["decision"] == "abstain" and body["ai_may_run"] is False and body["codes"] == ["gate_not_approved"]
     assert len(body["trace_id"]) == 32
 
@@ -244,6 +247,7 @@ def compare(monkeypatch):
     # whose header names no sequence (3 mm grid: a lower bound for the thickness)
     header = nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.diag([1.0, 1.0, 3.0, 1.0])).to_bytes()
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(_Storage(header))
     yield TestClient(app), records, (f1, f2)
     for dep in (get_current_active_user, get_segmentation_service, get_storage_service):
@@ -411,6 +415,7 @@ def test_rc122_e1_headers_only_off_the_event_loop_and_cached_per_file_version(si
     client, _ = single
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
     threads = []
     parse = qg.read_header_fields
 
@@ -500,7 +505,7 @@ def test_rc126_behind_the_flag_and_refused_before_any_io(single, monkeypatch):
     state["paths"].clear()
     body = client.post(URL, json={"file_id": FILE}).json()
     assert body["codes"] == ["gate_not_approved"] and body["subject"]["file_id"] == FILE
-    assert storage.downloads == 0 and state["paths"] == [], "nothing is authorized, read or downloaded"
+    assert storage.downloads == 0 and state["paths"] == [[FILE]], "authorized first (R1), then nothing read or downloaded"
 
 
 def test_rc126_a_per_user_rate_limit_bounds_the_reads(single, monkeypatch):
@@ -517,6 +522,7 @@ def test_rc122_the_header_is_read_with_a_bounded_range(single, monkeypatch):
     client, _ = single
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
 
     class _Ranged(_CountingStorage):
         def __init__(self, data):
@@ -643,6 +649,7 @@ def test_rc122_the_header_format_comes_from_magic_bytes_off_the_loop(single, mon
     client, _ = single
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     monkeypatch.setattr(qg, "_HEADER_CACHE", type(qg._HEADER_CACHE)())
+    monkeypatch.setattr(qg, "_RECORDS_CACHE", type(qg._HEADER_CACHE)(), raising=False)   # R7: per test
 
     class _NoDetect(ImagingService):
         def detect_format(self, data, name):

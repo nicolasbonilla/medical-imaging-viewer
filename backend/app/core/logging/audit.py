@@ -581,10 +581,22 @@ class AuditWrite:
 NOT_WRITTEN = AuditWrite(False, None)
 
 
+def durable_write_expected() -> bool:
+    """S2 / R8 (sixteenth review): THE rule for "a durable write is meant to be made" — a durable sink configured, any
+    backend but "off". Read by log_event for every record (AuditWrite.expected) and for a failed attempt; the
+    middleware reads AuditWrite.expected only."""
+    try:
+        from app.core.logging.audit_sink import get_durable_audit_sink
+        return getattr(get_durable_audit_sink(), "backend", "firestore") != "off"
+    except Exception:  # noqa: BLE001 — unknown: a durable record is expected
+        return True
+
+
 def _attempt_failed(event) -> "AuditWrite":
     """S2 (fifteenth review): an explicit record that could not be logged is still known to the request as an attempt,
-    so the middleware records the request itself — tagged as the route's record not being there."""
-    write = AuditWrite(False, None)
+    so the middleware records the request itself — tagged as the route's record not being there (when a durable write
+    was expected: the one rule)."""
+    write = AuditWrite(False, None, durable_write_expected())
     try:
         ctx = _request_audit.get()
         if ctx is not None and getattr(event, "source", None) == "explicit":
@@ -769,9 +781,8 @@ class AuditLogger:
             future, expected = None, False
             if durable:
                 from app.core.logging.audit_sink import get_durable_audit_sink
-                sink = get_durable_audit_sink()
-                expected = getattr(sink, "backend", "firestore") != "off"   # any sink but "off" is durable
-                future = sink.submit(record)
+                expected = durable_write_expected()                         # R8: the one rule
+                future = get_durable_audit_sink().submit(record)
             write = AuditWrite(True, future, expected)
             ctx = _request_audit.get()
             if ctx is not None:

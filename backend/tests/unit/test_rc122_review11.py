@@ -28,8 +28,30 @@ COUNTS = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.5, "total_lesions_tp1": 3, "t
           "status_counts": {"new": 1, "enlarged": 0, "resolved": 0, "shrunk": 0, "stable": 3}}
 
 
-TEST_PAIR = {"tp1": {"id": "s1", "source": None, "version": None}, "tp2": {"id": "s2", "source": None, "version": None}}
+TEST_PATIENT = "11111111-1111-1111-1111-111111111111"
+# R2 (sixteenth review): a pair's source files are its patient's (the decision is bound to that patient)
+TEST_PAIR = {"tp1": {"id": "s1", "source": f"patients/{TEST_PATIENT}/studies/st-1/series/se-1/1.nii.gz", "version": None},
+             "tp2": {"id": "s2", "source": f"patients/{TEST_PATIENT}/studies/st-2/series/se-1/2.nii.gz", "version": None}}
 TEST_USER = "reader-14"            # the clinician who compared AND requests the report (M3: the decision is bound to them)
+TEST_SUBJECT = {"patient": TEST_PATIENT, "owners": [TEST_PATIENT, TEST_PATIENT]}   # R2: the stored records agree
+
+
+def account(lng, user=TEST_USER):
+    """The report route's ONE account of the gate (R2, sixteenth review): for this clinician and the test patient, whose
+    stored records own the pair."""
+    return qg.report_account(lng, user, TEST_SUBJECT)
+
+
+def notice_for(lng, language, user=TEST_USER):
+    """The report route's notice, from its one account (R2)."""
+    from app.api.routes.ai_report import longitudinal_notice
+    return longitudinal_notice(lng, language, account(lng, user))
+
+
+def projected(lng, user=TEST_USER):
+    """The RC-064 projection of the longitudinal block, from the route's one account (R2)."""
+    from app.services.report_payload_guard import _Projector
+    return _Projector(gate_account=account(lng, user)).longitudinal(lng)
 
 
 def served(gate, monkeypatch):
@@ -52,8 +74,35 @@ def _decision(visit, monkeypatch):
                                       study_key="s", releases_output=False), monkeypatch)
 
 
+def in_context(event, write):
+    """What the real log_event does with an explicit record's outcome: it joins the request's audit context — the ONE
+    channel the middleware reads (R8, sixteenth review)."""
+    from app.core.logging import audit as A
+    ctx = A._request_audit.get()
+    if ctx is not None and event.source == "explicit":
+        ctx.explicit_writes.append(write)
+    return write
+
+
+class _StoredPair:
+    """The segmentation store as the report reads it (R2, sixteenth review): the pair's segmentations are the test
+    patient's (CAPA-007's resolver reads their source files)."""
+
+    async def get_metadata(self, sid):
+        return {"s1": type("M", (), {"file_id": TEST_PAIR["tp1"]["source"]})(),
+                "s2": type("M", (), {"file_id": TEST_PAIR["tp2"]["source"]})()}.get(sid)
+
+
 def _report(route, monkeypatch, lng):
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
+    # R2 (sixteenth review): the report's segmentation and the pair's are the test patient's, in the stored records
+    import app.api.routes.ai_report as ai_report
+    import app.security.resource_access as ra
+
+    async def _authorized(segmentation_id, user):
+        return TEST_PATIENT
+    monkeypatch.setattr(ai_report, "authorize_segmentation_id", _authorized)
+    monkeypatch.setattr(ra, "_segmentation_service", lambda: _StoredPair())
     route.provider.calls.clear()
     r = _post(route, {**_measurements(), "longitudinal": paired(lng)})
     assert r.status_code == 200, r.text
@@ -163,7 +212,7 @@ def _records(monkeypatch):
     monkeypatch.setattr(A.AuditLogger, "log_event",
                         lambda self, event, durable=True: (seen.append(event.event_type if event.outcome == A.AuditOutcome.SUCCESS
                                                                        else (event.event_type, event.outcome)),
-                                                           A.AuditWrite(True, _durable_future()))[1])
+                                                           in_context(event, A.AuditWrite(True, _durable_future())))[1])
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
     data["agents"]["quality-gate"]["approval"]["status"] = "approved"     # IN MEMORY, for the test only
     monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry(data, switches=R.InMemoryKillSwitches({"quality-gate": True}),
