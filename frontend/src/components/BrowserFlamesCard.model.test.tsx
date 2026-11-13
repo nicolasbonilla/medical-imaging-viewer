@@ -24,7 +24,11 @@
  *      permissive one (the fake server replays or refuses as the real one does: run_token in the fixture);
  *  P7  (fourteenth review, K3) after any Run click, either the run starts or a visible, specific message says why not
  *      (a stop for the inputs clicked, or the card's own notice) — never a silent no-op; also when the server cannot
- *      establish the file's version.
+ *      establish the file's version;
+ *  P8  (fifteenth review, S4) every consultation BEFORE the run — automatic retries included — is sent with the
+ *      attestation in effect at send time (the box offered and ticked); a final one carries its run's inputs;
+ *  P9  (fifteenth review, S4) the "before" panel shows a decision for the CURRENT inputs (the attestation in effect),
+ *      or it is marked stale with "Check again".
  * Not observable in the browser, hence not claimed: a new version stored after the card's last consultation — the
  * server refuses to release that run (its run token names the old version).
  */
@@ -68,7 +72,7 @@ const HOUR = 3600 * 1000;
 const WITHHOLDS = FIXTURE.decisions['FLAIR|false|stripped|false'].ai_output_allowed === false;
 // K2: the real server replays a final consultation presented again with the same token and the identical request
 const REPLAYS = FIXTURE.run_token?.replays_identical_request === true;
-const PROPS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7'] as const;
+const PROPS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9'] as const;
 type Prop = typeof PROPS[number];
 
 function mulberry32(seed: number) {
@@ -133,6 +137,10 @@ class World {
     const sk = String(skull ?? 'pending');
     const id = ++this.n;
     const final = sk !== 'pending';
+    if (!final && attested !== (attestBox()?.checked === true)) {    // P8: the inputs in effect at send time
+      this.violate('P8', `a consultation before the run was sent with attestation ${attested} while the box shows `
+        + `${attestBox()?.checked === true}`);
+    }
     let answer: Json;
     if (final && this.nextFinal !== 'ok') {
       answer = this.nextFinal === '429' ? platformAnswer(f, 'gate_rate_limited', 30) : platformAnswer(f, 'gate_unavailable');
@@ -255,6 +263,9 @@ const CORPUS: Record<string, Action[]> = {
   // fourteenth review: the final answer lost after the server released it (K2); a file whose version is unknown (K3)
   lost: ['selectB', 'tick', 'deliverAll', 'run', 'deliverAll', 'complete', 'lost', 'deliverAll', 'again', 'deliverAll'],
   noVersion: ['selectA', 'tick', 'deliverAll', 'versionLost', 'attest', 'run', 'deliverAll', 'tick', 'deliverAll'],
+  // fifteenth review (S4): an attested Run consultation answered 429, then its automatic retry after the wait
+  attestedRetry: ['selectA', 'tick', 'deliverAll', 'attest', 'tick', 'deliverAll', 'r429', 'run', 'deliverAll', 'wait',
+    'deliverAll', 'tick'],
 };
 
 async function play(actions: Action[] | null, seed: number): Promise<Partial<Record<Prop, string>>> {
@@ -287,6 +298,11 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
   };
   const check = () => {
     const before = screen.queryByTestId('quality-gate-before') ? h.panels['quality-gate-before'] : null;
+    if (before && before.inputs && !screen.queryByTestId('quality-gate-stale')                    // P9
+      && (before.inputs?.visits?.[0]?.physician_confirmed_flair === true) !== (attestBox()?.checked === true)) {
+      world.violate('P9', `the "before" panel shows a decision for attestation ${before.inputs?.visits?.[0]?.physician_confirmed_flair === true} `
+        + `while the attestation in effect is ${attestBox()?.checked === true}`);
+    }
     if (before) {
       if (before.subject?.file_id !== world.file) world.violate('P3', `the "before" panel shows a decision for another file`);
       if (before.inputs?.visits?.[0]?.physician_confirmed_flair === true && attestBox()?.checked !== true) {
@@ -444,12 +460,12 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
 }
 
 describe('M1: model-based test of the card and its consultations', () => {
-  it('rc126 rc122 rc127 P1-P7 hold over the seed corpus and the generated sequences', async () => {
+  it('rc126 rc122 rc127 P1-P9 hold over the seed corpus and the generated sequences', async () => {
     useViewerStore.setState({
       currentSeries: { id: 's', name: 'flair', format: 'nifti', file_id: A, total_slices: 4, metadata: { rows: 3, columns: 2 } },
     } as never);
     const runs = Number(process.env.QG_MODEL_RUNS ?? 2000);
-    const counts: Record<Prop, number> = { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0 };
+    const counts: Record<Prop, number> = { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0, P8: 0, P9: 0 };
     const examples: Partial<Record<Prop, string>> = {};
     const record = (name: string, v: Partial<Record<Prop, string>>) => {
       for (const p of PROPS) {
@@ -466,6 +482,7 @@ describe('M1: model-based test of the card and its consultations', () => {
     }
     // the counts per property, and the first example of each, are the test's report
     expect({ counts, examples, sequences: runs + Object.keys(CORPUS).length })
-      .toEqual({ counts: { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0 }, examples: {}, sequences: runs + Object.keys(CORPUS).length });
+      .toEqual({ counts: { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0, P8: 0, P9: 0 }, examples: {},
+        sequences: runs + Object.keys(CORPUS).length });
   }, 1_800_000);
 });
