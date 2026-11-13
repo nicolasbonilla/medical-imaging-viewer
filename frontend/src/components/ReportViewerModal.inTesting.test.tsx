@@ -75,6 +75,48 @@ describe('RC-130 — the AI comments are labelled as in testing (research stage)
     expect(screen.getByTestId('report-ai-in-testing').textContent).toContain('claude-sonnet-5-5');
   });
 
+  // Review of PR #82 (finding 2): the notice says "the AI comments below" — it must not sit above the clinician's own
+  // entry or the notes the code wrote, or it attributes them to the model.
+  it('rc130 sits after the clinician entry and the code-written notes, right before the model text', async () => {
+    await show('en', {
+      model: 'claude-sonnet-5-5', verification: verification('delivered', 'passed_0', null, 1),
+      disclaimer: 'DISCLAIMER-MARKER',
+      clinician_entry: { heading: 'Clinician', fields: [{ key: 'h', label: 'History', text: 'CLINICIAN-MARKER', truncated: false }] },
+      ai_draft_heading: 'Draft',
+      app_notes: [{ kind: 'placeholder', heading: null, text: 'APPNOTE-MARKER', lines: [] }],
+      ai_text: AI_TEXT,
+    });
+    const body = document.body.textContent ?? '';
+    const at = body.indexOf(screen.getByTestId('report-ai-in-testing').textContent ?? '');
+    for (const before of ['DISCLAIMER-MARKER', 'CLINICIAN-MARKER', 'APPNOTE-MARKER']) {
+      expect(body.indexOf(before)).toBeLessThan(at);
+    }
+    expect(at).toBeLessThan(body.indexOf(AI_TEXT));
+  });
+
+  // Review of PR #82 (finding 7): a report written in German keeps a German notice with the interface in English.
+  it('rc130 words the notice in the report language, not the interface language', async () => {
+    await act(async () => { await i18n.changeLanguage('en'); });
+    render(<ReportViewerModal isOpen onClose={() => {}} report={{ ...BASE, language: 'de', model: 'claude-sonnet-5-5',
+      ai_text: AI_TEXT, verification: verification('delivered', 'passed_0', null, 1) } as any} />);
+    const expected = String(locale('de').reportViewer.aiInTesting).replace('{{model}}', 'claude-sonnet-5-5');
+    expect(screen.getByTestId('report-ai-in-testing').textContent).toBe(expected);
+  });
+
+  // Review of PR #82 (finding 1): the text the model wrote must not leave the app without the label.
+  it('rc130 the viewer Copy button puts the notice first', async () => {
+    let copied = '';
+    Object.assign(navigator, { clipboard: { writeText: async (s: string) => { copied = s; } } });
+    await show('es', { model: 'claude-sonnet-5-5', content: 'CONTENT-MARKER', ai_text: AI_TEXT,
+                       verification: verification('delivered', 'passed_0', null, 1) });
+    const notice = String(locale('es').reportViewer.aiInTesting).replace('{{model}}', 'claude-sonnet-5-5');
+    const copyButton = screen.getAllByRole('button').find((b) => /copi|copy|kopier/i.test(b.textContent ?? ''));
+    expect(copyButton).toBeTruthy();
+    await act(async () => { copyButton!.click(); });
+    expect(copied.startsWith(notice)).toBe(true);
+    expect(copied).toContain('CONTENT-MARKER');
+  });
+
   it('rc130 the wording says in testing, not validated, research prototype, not for clinical use (en/es/de)', () => {
     const words: Record<string, RegExp[]> = {
       en: [/in testing/i, /not yet validated/i, /research prototype/i, /not for clinical use/i],
