@@ -351,6 +351,15 @@ export function ReportViewerModal({
 
                 {/* Report Body — Rendered Markdown */}
                 <div className="report-body px-12 py-8">
+                  {/* RC-130 (REQ-SAFE-060; HAZ-003, HAZ-017 — DRAFT, PENDING owner approval): research stage — the AI comments
+                      are in testing. Shown above the text whenever a model wrote text in the draft (the rule that
+                      names the model in the footer), never for a draft no model wrote. */}
+                  {modelWroteText && (
+                    <aside data-testid="report-ai-in-testing" role="note"
+                           className="mb-5 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900 font-sans">
+                      {t('reportViewer.aiInTesting', { model: report.model })}
+                    </aside>
+                  )}
                   {structured ? (
                     <>
                       {report.disclaimer && (

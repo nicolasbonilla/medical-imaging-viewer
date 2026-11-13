@@ -480,4 +480,12 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 
 ---
 
+> **Addendum 2026-11-13 (research stage, owner decision of the same day, PR #82 - DRAFT, PENDING owner approval): REQ-SAFE-060 -> RC-130 (HAZ-003, HAZ-017).**
+
+| Requirement | Risk control | Implementation | Test |
+|---|---|---|---|
+| REQ-SAFE-060 (AI comments labelled as in testing, above every text a model wrote; none on a draft no model wrote) | RC-130 | `ReportViewerModal.tsx` | UT-RC130 (`ReportViewerModal.inTesting.test.tsx`) |
+
+---
+
 *This matrix must be updated with each requirement change, design change, or new test.*
