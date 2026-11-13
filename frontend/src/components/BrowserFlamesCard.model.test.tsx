@@ -11,12 +11,13 @@
  *  P1  a run starts only with a server decision for the CURRENT file and attestation and the newest version the card
  *      knows (a rescinded attestation invalidates an attested decision);
  *  P2  every released output is recorded by exactly one server consultation that spent an unspent, unexpired run
- *      token issued for that run; no token is presented by two runs;
+ *      token issued for that run; no token is presented by two runs; no run starts with a token already expired;
  *  P3  the "before" and "final" panels never show a decision for other inputs: the file shown is the selected one, an
- *      attested decision only while the attestation is ticked, the version never goes back (a late response is
- *      discarded), the final decision is the current run's;
+ *      attested decision only while the attestation is ticked, the version is the newest the server named and never
+ *      goes back (a late response is discarded), the final decision is the current run's;
  *  P4  liveness: settled, the card shows a decision for the current file (never stuck on "checking"), and a fresh run
- *      the server allows is possible and released;
+ *      the server allows is possible and released (at the first attempt unless a newer version was stored after the
+ *      card's last consultation);
  *  P5  the attestation is offered whenever the server says the current file is attestable, also after an attested run.
  * Not observable in the browser, hence not claimed: a new version stored after the card's last consultation — the
  * server refuses to release that run (its run token names the old version).
@@ -74,7 +75,7 @@ function mulberry32(seed: number) {
 }
 
 interface Tok { file: string; version: string; attested: boolean; exp: number; spent: boolean; presentedBy: number | null }
-interface Run { id: number; file: string; attested: boolean; knownVersion: number | null; checked: boolean }
+interface Run { id: number; file: string; attested: boolean; knownVersion: number | null; checked: boolean; startedAt: number }
 interface Pending { resolve: (v: unknown) => void; answer: Json }
 
 const platformAnswer = (file: string, code: string, seconds?: number): Json => ({
@@ -101,6 +102,7 @@ class World {
   runSeq = 0;
   n = 0;
   lastShown: number | null = null;
+  lastUnseen = false;                                  // P4: the newest version was unknown to the card at the first attempt
   violations: Partial<Record<Prop, string>> = {};
 
   violate(p: Prop, why: string) { if (!this.violations[p]) this.violations[p] = why; }
@@ -135,6 +137,9 @@ class World {
             || (run.knownVersion !== null && vnum(tok.version) !== run.knownVersion)) {
             this.violate('P1', `run ${run.id} (file ${run.file === A ? 'A' : 'B'}, attested ${run.attested}, v${run.knownVersion}) `
               + `started with a decision for ${tok.file === A ? 'A' : 'B'}, attested ${tok.attested}, ${tok.version}`);
+          } else if (tok.exp <= run.startedAt) {
+            // a run started with a token that had already expired can never be released: a wasted AI run
+            this.violate('P2', `run ${run.id} started with a run token that had already expired`);
           }
         }
         if (tok && run) {
@@ -169,7 +174,7 @@ class World {
 
   startRun(fileId: string) {
     this.running = { id: ++this.runSeq, file: fileId, attested: attestBox()?.checked === true,
-      knownVersion: this.known[fileId] ?? null, checked: false };
+      knownVersion: this.known[fileId] ?? null, checked: false, startedAt: Date.now() };
     Object.assign(h.flames, { status: 'running', result: null });
   }
 
@@ -248,6 +253,8 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
       const v = vnum(before.subject?.version);
       if (v !== null) {
         if (world.lastShown !== null && v < world.lastShown) world.violate('P3', `the "before" panel went back from v${world.lastShown} to v${v}`);
+        const named = world.known[world.file];
+        if (named !== undefined && v < named) world.violate('P3', `the "before" panel shows v${v} though the server already named v${named}`);
         world.lastShown = Math.max(world.lastShown ?? 0, v);
       }
       const decided = !(before.codes ?? []).some((c: string) => c.startsWith('gate_'));
@@ -334,6 +341,13 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
     // final consultation does, and the server refuses to release that run)
     let released = false;
     for (let attempt = 0; attempt < 2 && !released; attempt += 1) {
+      // the second attempt is allowed ONLY when the card could not know the newest version before the first
+      const unseen = (world.known[world.file] ?? 0) < world.versions[world.file];
+      if (attempt === 1 && !world.lastUnseen) {
+        world.violate('P4', 'a fresh run the server allows was not released though the card knew the newest version');
+        break;
+      }
+      world.lastUnseen = unseen;
       if (confirmBox() && !confirmBox()!.checked) await click(confirmBox());
       if (world.file === A && attestBox() && !attestBox()!.checked) await click(attestBox());
       const b = runButton();
@@ -359,7 +373,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
 }
 
 describe('M1: model-based test of the card and its consultations', () => {
-  it('rc126 rc127 P1-P5 hold over the seed corpus and the generated sequences', async () => {
+  it('rc126 rc122 rc127 P1-P5 hold over the seed corpus and the generated sequences', async () => {
     useViewerStore.setState({
       currentSeries: { id: 's', name: 'flair', format: 'nifti', file_id: A, total_slices: 4, metadata: { rows: 3, columns: 2 } },
     } as never);
@@ -373,7 +387,9 @@ describe('M1: model-based test of the card and its consultations', () => {
     };
     for (const [name, actions] of Object.entries(CORPUS)) record(`corpus ${name}`, await play(actions, 1));
     const only = process.env.QG_MODEL_SEED ? [Number(process.env.QG_MODEL_SEED)] : null;
-    for (let i = 0; i < (only ? 1 : runs); i += 1) {
+    // negative controls only (QG_MODEL_STOP=1): stop at the first violated property — a mutant needs one failing sequence
+    const stop = () => process.env.QG_MODEL_STOP === '1' && PROPS.some((p) => counts[p] > 0);
+    for (let i = 0; i < (only ? 1 : runs) && !stop(); i += 1) {
       const seed = only ? only[0] : 20261113 + i;
       record(`seed ${seed}`, await play(null, seed));
     }

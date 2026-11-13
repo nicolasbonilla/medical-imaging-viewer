@@ -135,6 +135,15 @@ LABELLING_ONLY = {
     "Q13_unknown_skull_passes": "the browser reports 'unknown' only for a result without the worker's skull report, which this app's worker never produces (RC-043 refuses first); the control tests how the server handles a client-reported value",
 }
 
+# Thirteenth review of PR #81: a control whose defect cannot be PRODUCED under the test harness is reported as such when it
+# survives — never counted as evidence, never hidden.
+EQUIVALENT_IN_HARNESS = {
+    "V38_final_asked_for_a_later_render": "the window it opens — a timer firing between a React commit and its passive "
+        "effects, so the final request runs with a later render's closure — exists in a browser (passive effects flush "
+        "after paint) but not under act() in jsdom, which flushes every effect before a timer can fire; the card keeps "
+        "passing the request's own subject as a defence",
+}
+
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runner, controls)
     # ── RC-122: FLAIR only, unknown never passes ──
     "Q1_confirmation_overrides_another_sequence": ([(QG, '    return _check("sequence", label, "abstain", "sequence_not_flair", sequence=seq)\n',
@@ -787,7 +796,8 @@ def run_vitest(copy, env):
     try:
         data = json.loads(p.stdout[p.stdout.index("{"):])
     except Exception:  # noqa: BLE001
-        return {"passed": 0, "failed": 1, "failing_tests": ["vitest output unreadable"]}
+        # thirteenth review: an unreadable run (e.g. no vitest set-up in the copy) is INVALID, never a detection
+        return {"passed": 0, "failed": 0, "failing_tests": [], "error": "vitest output unreadable"}
     failed = [t["fullName"] for f in data.get("testResults", []) for t in f.get("assertionResults", []) if t["status"] == "failed"]
     return {"passed": data.get("numPassedTests", 0), "failed": len(failed), "failing_tests": failed}
 
@@ -861,7 +871,8 @@ def main():
                     entry.update({"status": "invalid", "reason": problem})
                 else:
                     out = run_vitest(copy, env) if runner == "vitest" else RUNNERS[runner](copy, env)
-                    entry.update({"status": "detected" if out["failed"] else "SURVIVED", "result": out})
+                    entry.update({"status": "invalid" if out.get("error") else "detected" if out["failed"] else "SURVIVED",
+                                  "result": out})
             finally:
                 for f in texts:
                     with open(os.path.join(copy, f), "wb") as fh:
