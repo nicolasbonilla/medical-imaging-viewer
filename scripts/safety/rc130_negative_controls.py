@@ -1,40 +1,55 @@
-"""RC-130 negative controls (PR #82), run inside Cloud Build on a git archive of the PR head.
+"""RC-130 negative controls (PR #82; REQ-SAFE-060; HAZ-003, HAZ-017) — DRAFT, PENDING owner approval.
 
-Each mutation is applied to a pristine copy of ONE file (its anchor must occur exactly once), the two RC-130 test
-files are run with vitest's JSON reporter, the file is restored byte for byte, and the outcome is classified:
-  killed  - at least one rc130 test FAILED by assertion while every test file loaded;
+Run off the owner's PC (Google Cloud Build, node:22) on an archive of the PR head:
+    python3 scripts/safety/rc130_negative_controls.py <repo root> <out.json>
+Each mutation is applied to a pristine copy of ONE file (its anchor must occur exactly once), the two RC-130 test files
+run with vitest's JSON reporter, the file is restored byte for byte, and the outcome is classified:
+  killed   - at least one rc130 test FAILED by assertion while every test file loaded;
   survived - every rc130 test passed;
-  invalid - a test file failed to load (a syntax/import error is never counted as a kill).
-A baseline run (no mutation) must pass first. Results: nc_rc130.json.
+  invalid  - a test file failed to load (a syntax or import error is never counted as a kill).
+A baseline run (no mutation) must pass first; a final run on the restored code must pass too.
+M follows the repository convention read by backend/tests/unit/test_negative_controls_validity.py:
+name -> (file, anchor, replacement or transform, what).
 """
 import json
 import os
 import subprocess
 import sys
 
-FRONT = sys.argv[1]
-OUT = sys.argv[2]
 TESTS = ["src/components/ReportViewerModal.inTesting.test.tsx", "src/utils/aiInTesting.test.ts"]
-U = "src/utils/aiInTesting.ts"
-V = "src/components/ReportViewerModal.tsx"
-P = "src/components/AIReportPanel.tsx"
+U = "frontend/src/utils/aiInTesting.ts"
+V = "frontend/src/components/ReportViewerModal.tsx"
+P = "frontend/src/components/AIReportPanel.tsx"
 
-MUTATIONS = [
-    ("N1 notice never shown", U, "  if (!modelWroteText(report)) return null;\n", "  return null;\n"),
-    ("N2 notice on a draft no model wrote", U, "  if (!modelWroteText(report)) return null;\n", "  if (false) return null;\n"),
-    ("N3 interface language instead of the report's", U, "  const lng = report.language || i18n.language;\n",
-     "  const lng = i18n.language;\n"),
-    ("N4 viewer copies without the notice", V, "await navigator.clipboard.writeText(textToCopy(report));",
-     "await navigator.clipboard.writeText(report.content);"),
-    ("N5 panel copies without the notice", P, "await navigator.clipboard.writeText(textToCopy(report));",
-     "await navigator.clipboard.writeText(report.content);"),
-    ("N6 notice above the clinician entry", V, None, None),  # special: move the structured-branch notice
-]
+_NOTICE = "                      {inTestingNotice && <InTestingNotice text={inTestingNotice} />}\n"
+_STRUCTURED_NOTICE = (_NOTICE + "                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>\n"
+                      "                        {report.ai_text ?? ''}")
+_DISCLAIMER = "                      {report.disclaimer && ("
 
 
-def run_tests(tag):
+def _notice_above_clinician_entry(text):
+    """N6: move the structured-branch notice above the disclaimer and the clinician's entry."""
+    assert text.count(_STRUCTURED_NOTICE) == 1 and text.count(_DISCLAIMER) == 1
+    return text.replace(_STRUCTURED_NOTICE, _STRUCTURED_NOTICE[len(_NOTICE):]).replace(_DISCLAIMER, _NOTICE + _DISCLAIMER)
+
+
+M = {
+    "N1": (U, "  if (!modelWroteText(report)) return null;\n", "  return null;\n", "notice never shown"),
+    "N2": (U, "  if (!modelWroteText(report)) return null;\n", "  if (false) return null;\n",
+           "notice on a draft no model wrote"),
+    "N3": (U, "  const lng = report.language || i18n.language;\n", "  const lng = i18n.language;\n",
+           "interface language instead of the report's"),
+    "N4": (V, "await navigator.clipboard.writeText(textToCopy(report));",
+           "await navigator.clipboard.writeText(report.content);", "viewer copies without the notice"),
+    "N5": (P, "await navigator.clipboard.writeText(textToCopy(report));",
+           "await navigator.clipboard.writeText(report.content);", "panel copies without the notice"),
+    "N6": (V, _STRUCTURED_NOTICE, _notice_above_clinician_entry, "notice above the clinician entry"),
+}
+
+
+def _run_tests(front, tag):
     out = os.path.join("/tmp", f"vitest_{tag}.json")
-    r = subprocess.run(["npx", "vitest", "run", *TESTS, "--reporter=json", f"--outputFile={out}"], cwd=FRONT,
+    r = subprocess.run(["npx", "vitest", "run", *TESTS, "--reporter=json", f"--outputFile={out}"], cwd=front,
                        capture_output=True, text=True)
     try:
         d = json.load(open(out, encoding="utf-8"))
@@ -52,37 +67,31 @@ def run_tests(tag):
     return {"exit": r.returncode, "loaded": not load_error, "failed": failed, "passed": passed}
 
 
-def apply(rel, old, new):
-    path = os.path.join(FRONT, rel)
-    src = open(path, encoding="utf-8", newline="").read()
-    if old is None:  # N6: move the structured notice above the disclaimer
-        line = "                      {inTestingNotice && <InTestingNotice text={inTestingNotice} />}\n"
-        key = line + "                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>\n                        {report.ai_text ?? ''}"
-        anchor = "                      {report.disclaimer && ("
-        assert src.count(key) == 1 and src.count(anchor) == 1, "N6 anchors"
-        mutated = src.replace(key, key[len(line):]).replace(anchor, line + anchor)
-    else:
-        assert src.count(old) == 1, (rel, old, src.count(old))
-        mutated = src.replace(old, new)
-    open(path, "w", encoding="utf-8", newline="").write(mutated)
-    return src
+def main(repo, out_path):
+    front = os.path.join(repo, "frontend")
+    results = {"baseline": _run_tests(front, "baseline"), "mutations": []}
+    assert results["baseline"]["exit"] == 0 and not results["baseline"]["failed"], results["baseline"]
+    for name, (rel, anchor, repl, what) in M.items():
+        path = os.path.join(repo, rel)
+        pristine = open(path, encoding="utf-8", newline="").read()
+        assert pristine.count(anchor) == 1, (name, rel, pristine.count(anchor))
+        mutated = repl(pristine) if callable(repl) else pristine.replace(anchor, repl, 1)
+        open(path, "w", encoding="utf-8", newline="").write(mutated)
+        res = _run_tests(front, name)
+        open(path, "w", encoding="utf-8", newline="").write(pristine)
+        if not res["loaded"]:
+            verdict = "invalid"
+        elif any((t or "").startswith("rc130") for t in res["failed"]):
+            verdict = "killed"
+        else:
+            verdict = "survived"
+        results["mutations"].append({"id": f"{name} {what}", "file": rel, "verdict": verdict,
+                                     "failed_tests": res["failed"], "passed": res["passed"]})
+        print(name, what, "->", verdict, len(res["failed"]), "failing")
+    results["restored"] = _run_tests(front, "restored")
+    json.dump(results, open(out_path, "w", encoding="utf-8"), indent=1)
+    print("baseline passed", results["baseline"]["passed"], "| restored failed", len(results["restored"]["failed"]))
 
 
-results = {"baseline": run_tests("baseline"), "mutations": []}
-assert results["baseline"]["exit"] == 0 and not results["baseline"]["failed"], results["baseline"]
-for name, rel, old, new in MUTATIONS:
-    pristine = apply(rel, old, new)
-    res = run_tests(name.split()[0])
-    open(os.path.join(FRONT, rel), "w", encoding="utf-8", newline="").write(pristine)
-    if not res["loaded"]:
-        verdict = "invalid"
-    elif any((t or "").startswith("rc130") for t in res["failed"]):
-        verdict = "killed"
-    else:
-        verdict = "survived"
-    results["mutations"].append({"id": name, "file": rel, "verdict": verdict, "failed_tests": res["failed"],
-                                 "passed": res["passed"]})
-    print(name, "->", verdict, len(res["failed"]), "failing")
-results["restored"] = run_tests("restored")
-json.dump(results, open(OUT, "w", encoding="utf-8"), indent=1)
-print("baseline passed", results["baseline"]["passed"], "| restored failed", len(results["restored"]["failed"]))
+if __name__ == "__main__":
+    main(sys.argv[1], sys.argv[2])
