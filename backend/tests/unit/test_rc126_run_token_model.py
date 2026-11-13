@@ -30,6 +30,7 @@ from tests.unit.test_rc122_quality_gate_wiring import FILE, REGISTRY, _Storage, 
 pytestmark = pytest.mark.unit
 URL = "/api/v1/clinical/quality-gate"
 RUNS = int(os.environ.get("QG_SERVER_MODEL_RUNS", "2000"))
+STOP = os.environ.get("QG_SERVER_MODEL_STOP") == "1"     # negative controls only: a mutant needs ONE failing sequence
 NEW = hasattr(qg, "RunLedger")                 # the fifteenth review's one-document ledger
 ACTIONS = [("final", 4), ("final_lost", 3), ("final_other", 2), ("lease", 2), ("fail_read", 1), ("fail_write", 1),
            ("ambiguous_write", 1), ("fail_audit", 1), ("eval_fault", 1), ("consult_raises", 1)]
@@ -247,6 +248,8 @@ def test_rc126_s1_ps1_ps6_hold_over_the_generated_lifecycles(server, monkeypatch
             for prop, why in _play(*server, mp, 20261115 + i).items():
                 counts[prop] += 1
                 examples.setdefault(prop, why)
+        if STOP and any(counts.values()):
+            break
     report = json.dumps({"sequences": RUNS, "counts": counts, "examples": examples})
     print("S1 server model:", report)
     assert counts == {p: 0 for p in counts}, report

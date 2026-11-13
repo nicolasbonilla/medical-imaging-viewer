@@ -792,6 +792,8 @@ def make_copy(dest):
 
 # S7 (fifteenth review): QG_NC_ONLY=backend (backend + Node harness) or vitest — one GitHub Actions job each
 ONLY = os.environ.get("QG_NC_ONLY") or None
+# QG_NC_SHARD=i/n: this job runs the backend controls whose index % n == i (the backend pass in parallel jobs)
+SHARD = tuple(int(x) for x in os.environ["QG_NC_SHARD"].split("/")) if os.environ.get("QG_NC_SHARD") else None
 
 
 def has_node_modules():
@@ -800,12 +802,17 @@ def has_node_modules():
     return os.environ.get("QG_NC_VITEST") == "1" and os.path.isdir(os.path.join(ROOT, "frontend", "node_modules"))
 
 
-def run_backend(copy, env):
+def run_backend(copy, env, mutant=True):
+    """The bound backend tests in the copy. A mutant runs the run-token model with QG_SERVER_MODEL_STOP (one failing
+    sequence suffices) and QG_NC_SERVER_MODEL_RUNS sequences (default 200; its deterministic tests stay whole); the
+    baseline and the restored copy with the CI's 2 000 (fifteenth review, S7)."""
+    if mutant:
+        env = {**env, "QG_SERVER_MODEL_STOP": "1", "QG_SERVER_MODEL_RUNS": os.environ.get("QG_NC_SERVER_MODEL_RUNS", "200")}
     xml_path = os.path.join(copy, "junit.xml")
     p = subprocess.run([PY, "-m", "pytest", *("backend/" + t for t in BACKEND_TESTS), "-q", "-p", "no:cacheprovider",
                         "--timeout=120", "-o", "log_cli=false", f"--junitxml={xml_path}"], cwd=run_cwd("backend", copy),
                        capture_output=True, text=True, encoding="utf-8", errors="replace",
-                       env={**env, "PYTHONPATH": os.path.join(copy, "backend")}, timeout=900)
+                       env={**env, "PYTHONPATH": os.path.join(copy, "backend")}, timeout=2400)
     failed, passed = [], 0
     if os.path.exists(xml_path):
         for case in ET.parse(xml_path).getroot().iter("testcase"):
@@ -935,7 +942,8 @@ def main():
         res["labelling_only"] = LABELLING_ONLY
         res["github_actions_run"] = os.environ.get("QG_NC_RUN_URL")
         res["only"] = ONLY
-        res["baseline"] = {} if ONLY == "vitest" else {"backend": run_backend(copy, env), "node": run_node(copy, env)}
+        res["shard"] = SHARD
+        res["baseline"] = {} if ONLY == "vitest" else {"backend": run_backend(copy, env, mutant=False), "node": run_node(copy, env)}
         if has_node_modules() and ONLY != "backend":
             res["baseline"]["vitest"] = run_vitest(copy, env, mutant=False)
         print("baseline", json.dumps({k: (v["passed"], v["failed"]) for k, v in res["baseline"].items()}))
@@ -948,6 +956,10 @@ def main():
                 entry.update({"status": "not_run", "reason": "not run (no node_modules): vitest runs in GitHub Actions"})
                 res["mutations"][name] = entry
                 print(f"{name:52s} NOT RUN (vitest)")
+                continue
+            if SHARD and runner != "vitest" and list(M).index(name) % SHARD[1] != SHARD[0]:
+                entry.update({"status": "not_run", "reason": f"run by another backend shard ({SHARD[0]}/{SHARD[1]})"})
+                res["mutations"][name] = entry
                 continue
             if (ONLY == "backend" and runner == "vitest") or (ONLY == "vitest" and runner != "vitest"):
                 entry.update({"status": "not_run", "reason": f"run by the {'vitest' if runner == 'vitest' else 'backend'} job"})
@@ -980,7 +992,7 @@ def main():
                     assert open(os.path.join(copy, f), "rb").read() == raw[f], f"{name}: {f} not restored"
             res["mutations"][name] = entry
             print(f"{name:52s} {entry['status']:9s} {entry.get('result', {}).get('failed', '')}")
-        res["restored"] = {} if ONLY == "vitest" else {"backend": run_backend(copy, env), "node": run_node(copy, env)}
+        res["restored"] = {} if ONLY == "vitest" else {"backend": run_backend(copy, env, mutant=False), "node": run_node(copy, env)}
         if has_node_modules() and ONLY != "backend":
             res["restored"]["vitest"] = run_vitest(copy, env, mutant=False)
         statuses = [m["status"] for m in res["mutations"].values()]

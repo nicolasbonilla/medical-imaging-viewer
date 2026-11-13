@@ -26,12 +26,17 @@ env:
 
 jobs:
   backend:
-    name: Negative controls — backend and Node harness
+    name: Negative controls — backend and Node harness (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2]
     env:
       QG_NC_ONLY: backend
-      QG_NC_OUT: nc-backend.json
+      QG_NC_SHARD: ${{ matrix.shard }}/3
+      QG_NC_OUT: nc-backend-${{ matrix.shard }}.json
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -54,8 +59,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: negative-controls-backend
-          path: nc-backend.json
+          name: negative-controls-backend-${{ matrix.shard }}
+          path: nc-backend-${{ matrix.shard }}.json
 
   browser:
     name: Negative controls — browser (vitest)
