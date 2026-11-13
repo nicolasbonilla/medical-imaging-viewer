@@ -419,15 +419,16 @@ def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, A
         if refs is None:
             return None
         instances = refs[1].collection("instances")
-        from app.core.config import get_settings
-        if get_settings().QUALITY_GATE_ENFORCED:     # E1 (seventh review of PR #81): one document, by query
+        # K10 (fourteenth review of PR #81): ONE read strategy whatever the flags — the limit-1 query on the file (E1);
+        # the scan only where the store answers no query (G26: RC-062's input is the same with the gate on and off)
+        try:
             try:
                 from google.cloud.firestore_v1.base_query import FieldFilter
                 query = instances.where(filter=FieldFilter("gcs_object_name", "==", file_id))
             except ImportError:  # pragma: no cover — the SDK is installed in the service
                 query = instances.where("gcs_object_name", "==", file_id)
             docs = query.limit(1).stream()
-        else:                                         # O2 (twelfth review): the flags off read as the base read (G26)
+        except (AttributeError, TypeError, NotImplementedError):   # a store without query support
             docs = instances.stream()
         for doc in docs:
             data = doc.to_dict() or {}

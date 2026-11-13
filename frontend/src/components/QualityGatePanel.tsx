@@ -7,7 +7,8 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { actionOf, type GateCheck, type GateResult } from '@/services/qualityGate/gate';
+import { actionOf, type GateResult } from '@/services/qualityGate/gate';
+import { formatGateMessage } from '@/services/qualityGate/gateText';
 
 const TONE: Record<GateResult['decision'], string> = {
   abstain: 'border-red-500/60 bg-red-950/30 text-red-100',
@@ -23,12 +24,6 @@ interface QualityGatePanelProps {
 
 export const QualityGatePanel: React.FC<QualityGatePanelProps> = ({ result, testId = 'quality-gate-panel' }) => {
   const { t } = useTranslation();
-  const params = (c: GateCheck) => ({
-    seconds: c.params?.seconds ?? '',
-    band: c.params?.band ? t(`qualityGate.band.${c.params.band}`) : '',
-    fields: (c.params?.fields ?? []).map((f) => t(`qualityGate.field.${f}`)).join(', '),
-    sequence: c.params?.sequence ? t(`qualityGate.sequenceName.${c.params.sequence}`) : '',
-  });
   const notOk = (result.checks ?? []).filter((c) => c.status !== 'pass' && c.code);
   return (
     <div
@@ -52,8 +47,9 @@ export const QualityGatePanel: React.FC<QualityGatePanelProps> = ({ result, test
                 {' · '}
                 {t(`qualityGate.status.${c.status}`)}:
               </span>{' '}
-              {t(`qualityGate.codes.${c.code}.message`, params(c))}{' '}
-              <span className="italic">{t(`qualityGate.codes.${c.code}.${actionOf(result, c.code as string)}`, params(c))}</span>
+              {/* K4 (fourteenth review): the ONE helper — every placeholder filled, a defined fallback otherwise */}
+              {formatGateMessage(t, c.code as string, 'message', c.params)}{' '}
+              <span className="italic">{formatGateMessage(t, c.code as string, actionOf(result, c.code as string), c.params)}</span>
             </li>
           ))}
         </ul>

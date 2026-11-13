@@ -47,36 +47,46 @@ def test_rc126_m2_a_token_is_issued_only_by_a_run_consultation_that_allows_the_r
                                                      "skull": "stripped"}).json()                # a final one: none
 
 
+def _claim(token, **wrong):
+    return qg.claim_final(token, **{"file_id": F, "version": V, "user_id": U, "attested": False, "skull": "stripped", **wrong})
+
+
 def test_rc126_m2_spendable_once_before_expiry_by_the_same_user_for_the_same_file_and_version(monkeypatch, memory_tokens):
+    """M2, as amended by K2 (fourteenth review): one claim per token — the identical request replays its decision,
+    another request is refused."""
     token = qg.run_token(F, V, U, False)
     for wrong in ({"file_id": F + "x"}, {"version": "11:v2:x"}, {"user_id": "id-other"}, {"attested": True}):
-        assert qg.spend_run_token(token, **{"file_id": F, "version": V, "user_id": U, "attested": False, **wrong}) is False
+        assert _claim(token, **wrong).status == "invalid"
     late = qg.run_token(F, V, U, False)
     monkeypatch.setattr(qg, "_now", lambda: 10 ** 11)
-    assert qg.spend_run_token(late, file_id=F, version=V, user_id=U, attested=False) is False   # expired
+    assert _claim(late).status == "invalid"                                          # expired
     monkeypatch.undo()
     monkeypatch.setenv("QUALITY_GATE_RUN_TOKEN_STORE", "memory")
-    assert qg.spend_run_token(token, file_id=F, version=V, user_id=U, attested=False) is True
-    assert qg.spend_run_token(token, file_id=F, version=V, user_id=U, attested=False) is False  # once
+    first = _claim(token)
+    assert first.status == "fresh"
+    qg.settle_final(first, {"decision": "proceed", "trace_id": "t1"})
+    again = _claim(token)
+    assert again.status == "replay" and again.answer == {"decision": "proceed", "trace_id": "t1"}
+    assert _claim(token, skull="unknown").status == "conflict"                       # once, for one request
 
 
 def test_rc126_m2_an_unexpired_token_is_never_forgotten_and_a_full_store_fails_closed(monkeypatch, memory_tokens, caplog):
     monkeypatch.setattr(qg, "RUN_TOKENS_SPENT_MAX", 3)
     first = qg.run_token(F, V, U, False)
-    assert qg.spend_run_token(first, file_id=F, version=V, user_id=U, attested=False) is True
+    assert _claim(first).status == "fresh"
     for _ in range(2):
-        assert qg.spend_run_token(qg.run_token(F, V, U, False), file_id=F, version=V, user_id=U, attested=False) is True
+        assert _claim(qg.run_token(F, V, U, False)).status == "fresh"
     with caplog.at_level(logging.WARNING):
-        assert qg.spend_run_token(qg.run_token(F, V, U, False), file_id=F, version=V, user_id=U, attested=False) is False
+        assert _claim(qg.run_token(F, V, U, False)).status == "unavailable"
     assert any("run token" in r.getMessage().lower() for r in caplog.records), "a refused release is logged"
-    assert qg.spend_run_token(first, file_id=F, version=V, user_id=U, attested=False) is False, "an unexpired token was forgotten"
+    assert _claim(first, skull="unknown").status == "conflict", "an unexpired token was forgotten"
 
 
 class _AlreadyExistsStore:
     """A durable single-use store as Firestore's create(): the second create of a document id fails."""
 
     def __init__(self):
-        self.ids = set()
+        self.docs = {}
 
     def collection(self, name):
         return self
@@ -84,26 +94,46 @@ class _AlreadyExistsStore:
     def document(self, doc_id):
         store = self
 
+        class _Snap:
+            def __init__(self, data):
+                self.exists, self._data = data is not None, data
+
+            def to_dict(self):
+                return dict(self._data) if self._data is not None else None
+
         class _Doc:
             def create(self, data):
                 from google.api_core.exceptions import AlreadyExists
-                if doc_id in store.ids:
+                if doc_id in store.docs:
                     raise AlreadyExists("exists")
-                store.ids.add(doc_id)
+                store.docs[doc_id] = dict(data)
+
+            def get(self):
+                return _Snap(store.docs.get(doc_id))
+
+            def update(self, data):
+                store.docs[doc_id].update(data)
         return _Doc()
 
 
 def test_rc126_m2_a_replay_after_a_reload_is_rejected_while_the_token_is_unexpired(monkeypatch):
+    """After a restart the durable ledger still knows the token: the identical request gets the SAME decision back
+    (K2), another request is refused — never a second fresh run."""
     durable = _AlreadyExistsStore()
     monkeypatch.delenv("QUALITY_GATE_RUN_TOKEN_STORE", raising=False)
     import app.core.firebase as fb
     monkeypatch.setattr(fb, "get_firestore_client", lambda *a, **k: durable)
     token = qg.run_token(F, V, U, False)
-    assert qg.spend_run_token(token, file_id=F, version=V, user_id=U, attested=False) is True
+    first = _claim(token)
+    assert first.status == "fresh"
+    qg.settle_final(first, {"decision": "proceed", "trace_id": "t1"})
     spec = importlib.util.spec_from_file_location("quality_gate_reloaded", qg.__file__)
     fresh = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(fresh)                                  # the module state reloaded (a restart)
-    assert fresh.spend_run_token(token, file_id=F, version=V, user_id=U, attested=False) is False
+    args = {"file_id": F, "version": V, "user_id": U, "attested": False}
+    again = fresh.claim_final(token, **args, skull="stripped")
+    assert again.status == "replay" and again.answer == {"decision": "proceed", "trace_id": "t1"}
+    assert fresh.claim_final(token, **args, skull="unknown").status == "conflict"
 
 
 # ----------------------------------------------------------------------------- M3
@@ -145,7 +175,8 @@ def test_rc126_a2_no_audit_reason_is_ever_lost(monkeypatch):
     from app.core.logging import audit as A
     built = []
     monkeypatch.setattr(A.AuditLogger, "log_event", lambda self, event, durable=True: built.append(A.build_audit_record(event)))
-    code = "quality_gate.some_very_long_code_name_that_never_fits.with_more_and_more_parts.attested_tp1_tp2"
+    # K7 (fourteenth review): a long reason persists in full only as a composition of REGISTERED codes
+    code = "quality_gate.withheld.http_422:run_not_confirmed:version_not_established:sequence_confirmed_by_physician"
     for prefix in sorted(R.AUDIT_EVENT_TYPES):
         built.clear()
         R.default_audit_sink({"event": prefix, "code": code, "outcome": "success", "agent_id": "quality-gate"})

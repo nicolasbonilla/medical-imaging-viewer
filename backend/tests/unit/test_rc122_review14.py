@@ -352,7 +352,7 @@ COMPARE_FAULTS = {
     "mask_missing": lambda mp: mp.setattr(_seg(), "get_mask", lambda sid: None),
     "grid_mismatch": lambda mp: mp.setattr(sa, "_require_comparable_grid",
                                            lambda a, b: (_ for _ in ()).throw(HTTPException(status_code=422, detail="grid"))),
-    "acquisition_compare_fails": lambda mp: _after(1, mp, lcs, "compare_acquisitions"),
+    "comparison_fails": lambda mp: _after(0, mp, sa, "compare_timepoints"),
     "presentation_fails": lambda mp: mp.setattr(qg, "present_gated_comparison",
                                                 lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x"))),
     "evidence_read_fails": lambda mp: _after(0, mp, lcs, "load_false_candidate_evidence", MemoryError()),

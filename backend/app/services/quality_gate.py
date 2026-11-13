@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import copy
 import hashlib
 import hmac
 import io
@@ -39,6 +40,7 @@ import math
 import os
 import re
 import secrets
+import threading
 import time
 from collections import OrderedDict
 from pathlib import Path
@@ -273,6 +275,9 @@ def _evaluate(inputs, policy) -> Dict[str, Any]:
             checks.append(_skull_check(visit, label))
     if "scanner" in spec["checks"]:
         checks.append(_scanner_check(visits, policy))
+    if mode == "single" and inputs.get("version_established") is False:
+        # K3 (fourteenth review): no stored-file version, no run permission — a stop with its reason, never a dead end
+        checks.append(_check("version", "study", policy["codes"]["version_not_established"], "version_not_established"))
     if mode == "single" and inputs.get("run_confirmed") is False:
         # thirteenth review (M1, P2): a final consultation that presents no valid run token of THIS run releases nothing
         checks.append(_check("run", "study", policy["codes"]["run_not_confirmed"], "run_not_confirmed"))
@@ -873,12 +878,13 @@ def rate_limit(user_id: str) -> Optional[int]:
     return max(1, min(60, int(math.ceil(wait)))) if wait is not None and wait > 0 else 60
 
 
-def rate_limited_response(wait: int):
-    """The ONE 429 answer of the gate: the seconds to wait in Retry-After and as data (code gate_rate_limited)."""
+def rate_limited_response(wait: int, code: str = "gate_rate_limited"):
+    """The ONE 429 answer of the gate: the seconds to wait in Retry-After and as data (code gate_rate_limited; K2,
+    fourteenth review: gate_run_in_progress while the same final consultation is still being decided)."""
     from fastapi.responses import JSONResponse
     return JSONResponse(status_code=429, headers={"Retry-After": str(wait)}, content={"error": {
         "code": "HTTP_429", "message": "Too many quality-gate checks; try again shortly",
-        "details": {"code": "gate_rate_limited", "retry_after_s": wait}}})
+        "details": {"code": code, "retry_after_s": wait}}})
 
 
 # ----------------------------------------------------------------------------- signed decisions (twelfth review)
@@ -890,25 +896,159 @@ def rate_limited_response(wait: int):
 TOKEN_PREFIX = "qg1"
 DECISION_TOKEN_TTL_S = 24 * 3600
 RUN_TOKEN_TTL_S = 2 * 3600
-# M2 (thirteenth review): a spent run token is recorded in the SAME single-use store as the agent scope's confirmation
-# tickets (PR #79, T1): a Firestore document per token (create() fails when it exists) — survives restarts and
-# instances; QUALITY_GATE_RUN_TOKEN_STORE=memory (offline tests only) keeps them in a bounded memory store that never
-# forgets an unexpired token. Full or unreachable: FAIL CLOSED — no release is recorded (a consultation instead).
+# M2 (thirteenth review) / K2 (fourteenth review): the run-token LEDGER — the idempotency-key pattern. A final
+# consultation CLAIMS its run token with a digest of the request (clinician, file, version, attestation, skull,
+# consultation kind); the decision delivered is SETTLED with it. The same token with the IDENTICAL request, within the
+# token's lifetime, replays the stored decision (a lost answer: never re-evaluated, never more permissive, audited as
+# a replay); another request with it is refused (run_not_confirmed); an evaluation that failed before its decision was
+# stored leaves the claim retryable (released at once, else after RUN_CLAIM_LEASE_S); while a claim is being decided,
+# the same request is asked to wait (429 gate_run_in_progress). Durable: Firestore, two small documents per AI run
+# (the claim, the decision; create() is atomic) — survives restarts and instances (D-QG-24, amended); memory
+# (QUALITY_GATE_RUN_TOKEN_STORE=memory) for the offline tests only, never forgetting an unexpired entry. Full or
+# unreachable: FAIL CLOSED — no release (run_not_confirmed), logged. Every call is blocking I/O: off the event loop (K5).
 RUN_TOKEN_COLLECTION = "quality_gate_run_tokens"
 RUN_TOKENS_SPENT_MAX = 100_000
+RUN_CLAIM_LEASE_S = 30
 _RUN_TOKEN_MEMORY = None
 
 
+class RunClaim:
+    """The ledger's answer to a final consultation's run token (K2). ``status``: invalid | unavailable | fresh |
+    replay | in_progress | conflict. (A plain class: this module is also loaded outside sys.modules, as a restart.)"""
+
+    __slots__ = ("status", "key", "digest", "expires_at", "answer", "wait_s")
+
+    def __init__(self, status: str, key: Optional[str] = None, digest: Optional[str] = None, expires_at: int = 0,
+                 answer: Optional[Dict[str, Any]] = None, wait_s: int = 0):
+        self.status, self.key, self.digest, self.expires_at, self.answer, self.wait_s = (
+            status, key, digest, expires_at, answer, wait_s)
+
+
+def _lease_wait(claimed_at: float, now: float) -> int:
+    return max(1, int(math.ceil(RUN_CLAIM_LEASE_S - (now - claimed_at))))
+
+
+class MemoryRunLedger:
+    """The run-token ledger in memory (offline tests only): bounded, never forgets an unexpired entry (full: raises)."""
+
+    def __init__(self, max_entries: Optional[int] = None):
+        self._entries: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
+        self._lock = threading.Lock()
+        self._max = max_entries if max_entries is not None else RUN_TOKENS_SPENT_MAX
+
+    def claim(self, key: str, digest: str, expires_at: int, now: float) -> RunClaim:
+        from app.security.agent_scope import AgentScopeError
+        with self._lock:
+            while self._entries and next(iter(self._entries.values()))["expires_at"] <= now:
+                self._entries.popitem(last=False)               # same lifetime: the oldest expire first
+            entry = self._entries.get(key)
+            if entry is None:
+                if len(self._entries) >= self._max:
+                    raise AgentScopeError("run token ledger full")
+                self._entries[key] = {"digest": digest, "claimed_at": now, "expires_at": int(expires_at), "answer": None}
+                return RunClaim("fresh")
+            if entry["digest"] != digest:
+                return RunClaim("conflict")
+            if entry["answer"] is not None:
+                return RunClaim("replay", answer=copy.deepcopy(entry["answer"]))
+            if now - entry["claimed_at"] >= RUN_CLAIM_LEASE_S:
+                entry["claimed_at"] = now                        # an abandoned claim of the same request: retried
+                return RunClaim("fresh")
+            return RunClaim("in_progress", wait_s=_lease_wait(entry["claimed_at"], now))
+
+    def settle(self, key: str, digest: str, answer: Dict[str, Any], expires_at: int) -> Dict[str, Any]:
+        with self._lock:
+            entry = self._entries.get(key)
+            if entry is not None and entry["digest"] == digest:
+                if entry["answer"] is None:                       # the first decision wins
+                    entry["answer"] = copy.deepcopy(answer)
+                return copy.deepcopy(entry["answer"])
+            return answer
+
+    def release(self, key: str, digest: str) -> None:
+        with self._lock:
+            entry = self._entries.get(key)
+            if entry is not None and entry["digest"] == digest and entry["answer"] is None:
+                entry["claimed_at"] = float("-inf")              # retryable at once by the same request
+
+
+class FirestoreRunLedger:
+    """The durable run-token ledger: per run, a claim document and a decision document, both written with create()
+    (atomic: the first wins); a retry of an abandoned claim takes it over by creating that lease window's document."""
+
+    COLLECTION = RUN_TOKEN_COLLECTION
+
+    def __init__(self, client=None):
+        self._client = client
+
+    def _col(self):
+        client = self._client
+        if client is None:
+            from app.core.firebase import get_firestore_client
+            client = get_firestore_client()
+        return client.collection(self.COLLECTION)
+
+    @staticmethod
+    def _expiry(expires_at: int):
+        from datetime import datetime, timedelta, timezone
+        return datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=min(int(expires_at), 253402300799))
+
+    def claim(self, key: str, digest: str, expires_at: int, now: float) -> RunClaim:
+        from app.security.agent_scope import AgentScopeError
+        from google.api_core.exceptions import AlreadyExists
+        try:
+            col = self._col()
+            try:
+                col.document(key).create({"digest": digest, "claimed_at": float(now), "expires_at": self._expiry(expires_at)})
+                return RunClaim("fresh")
+            except AlreadyExists:
+                pass
+            data = col.document(key).get().to_dict() or {}
+            if data.get("digest") != digest:
+                return RunClaim("conflict")
+            decided = col.document(f"{key}-decision").get()
+            if decided.exists:
+                stored = decided.to_dict() or {}
+                return RunClaim("replay", answer=json.loads(stored["answer"])) if stored.get("digest") == digest \
+                    else RunClaim("conflict")
+            claimed_at = float(data.get("claimed_at") or 0.0)
+            if now - claimed_at >= RUN_CLAIM_LEASE_S:
+                window = int((now - claimed_at) // RUN_CLAIM_LEASE_S)
+                try:
+                    col.document(f"{key}-lease-{window}").create({"digest": digest, "expires_at": self._expiry(expires_at)})
+                    return RunClaim("fresh")
+                except AlreadyExists:
+                    pass
+            return RunClaim("in_progress", wait_s=_lease_wait(claimed_at, now) if now - claimed_at < RUN_CLAIM_LEASE_S
+                            else RUN_CLAIM_LEASE_S)
+        except Exception as exc:  # noqa: BLE001 — unreachable store: fail closed
+            raise AgentScopeError("run token ledger unavailable") from exc
+
+    def settle(self, key: str, digest: str, answer: Dict[str, Any], expires_at: int) -> Dict[str, Any]:
+        from google.api_core.exceptions import AlreadyExists
+        col = self._col()
+        try:
+            col.document(f"{key}-decision").create({"digest": digest, "answer": json.dumps(answer, default=str),
+                                                    "expires_at": self._expiry(expires_at)})
+            return answer
+        except AlreadyExists:
+            stored = col.document(f"{key}-decision").get().to_dict() or {}
+            return json.loads(stored["answer"]) if stored.get("digest") == digest else answer
+
+    def release(self, key: str, digest: str) -> None:
+        col = self._col()
+        data = col.document(key).get().to_dict() or {}
+        if data.get("digest") == digest:
+            col.document(key).update({"claimed_at": 0.0})        # retryable now: the next window's lease is free
+
+
 def _run_token_store():
-    from app.security.agent_scope import FirestoreTicketStore, MemoryTicketStore
     global _RUN_TOKEN_MEMORY
     if os.environ.get("QUALITY_GATE_RUN_TOKEN_STORE") == "memory":
         if _RUN_TOKEN_MEMORY is None:
-            _RUN_TOKEN_MEMORY = MemoryTicketStore(max_entries=RUN_TOKENS_SPENT_MAX)
+            _RUN_TOKEN_MEMORY = MemoryRunLedger(max_entries=RUN_TOKENS_SPENT_MAX)
         return _RUN_TOKEN_MEMORY
-    store = FirestoreTicketStore()
-    store.COLLECTION = RUN_TOKEN_COLLECTION
-    return store
+    return FirestoreRunLedger()
 
 
 def _now() -> float:
@@ -1000,24 +1140,71 @@ def run_token(file_id: str, version: Optional[str], user_id: Any, attested: bool
                        "attested": attested is True, "nonce": secrets.token_hex(16), "iat": now, "exp": now + RUN_TOKEN_TTL_S})
 
 
-def spend_run_token(token: Any, *, file_id: str, version: Optional[str], user_id: Any, attested: bool) -> bool:
-    """K5 / M2: True ONCE for a run token this server issued for exactly this file, version, clinician and attestation,
-    before its expiry — spent in the durable single-use store (_run_token_store), so a replay is refused after a
-    restart or on another instance. A full or unreachable store fails CLOSED: False, logged (no release recorded)."""
+def _final_digest(*, user_id: Any, file_id: str, version: Optional[str], attested: bool, skull: str) -> str:
+    """K2: the digest of a final consultation's request — what makes a retry IDENTICAL."""
+    body = {"kind": "final", "user": str(user_id or ""), "file": file_id, "version": version,
+            "attested": attested is True, "skull": skull}
+    return hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def claim_final(token: Any, *, file_id: str, version: Optional[str], user_id: Any, attested: bool,
+                skull: str) -> RunClaim:
+    """K5 / M2 / K2: claim a final consultation's run token in the ledger. ``fresh`` only for a token this server issued
+    for exactly this file, version, clinician and attestation, before its expiry, not yet claimed by another request;
+    ``replay`` with the stored decision for the identical request; ``conflict`` for another request; ``in_progress``
+    while the same request is being decided; ``invalid`` / ``unavailable`` (fail closed, logged) otherwise. Blocking:
+    call it off the event loop."""
     payload = verify_token(token, "run")
-    if (payload is None or payload.get("file") != file_id or payload.get("version") != version
+    if (payload is None or payload.get("file") != file_id or payload.get("version") != version or not version
             or payload.get("user") != str(user_id or "") or payload.get("attested") is not (attested is True)
             or not isinstance(payload.get("nonce"), str)):
-        return False
+        return RunClaim("invalid")
+    key, expires_at = f"run-{payload['nonce']}", int(payload["exp"])
+    digest = _final_digest(user_id=user_id, file_id=file_id, version=version, attested=attested, skull=skull)
     try:
-        fresh = _run_token_store().consume(f"run-{payload['nonce']}", int(payload["exp"]))
+        claim = _run_token_store().claim(key, digest, expires_at, _now())
     except Exception as exc:  # noqa: BLE001 — full or unreachable: fail closed, never a release
         logger.warning("Quality gate: the run token store refused a run token (%s); the release is not recorded",
                        type(exc).__name__)
-        return False
-    if not fresh:
-        logger.warning("Quality gate: a run token was presented again; the release is not recorded")
-    return fresh is True
+        return RunClaim("unavailable")
+    if claim.status == "conflict":
+        logger.warning("Quality gate: a run token was presented again for another request; the release is not recorded")
+    claim.key, claim.digest, claim.expires_at = key, digest, expires_at
+    return claim
+
+
+def settle_final(claim: RunClaim, answer: Dict[str, Any]) -> Dict[str, Any]:
+    """K2: store the decision delivered for a fresh claim (the first decision wins) and return the one to deliver.
+    Blocking: off the event loop. A store that fails here leaves the claim to its lease (logged)."""
+    if claim.status != "fresh" or not claim.key:
+        return answer
+    try:
+        return _run_token_store().settle(claim.key, claim.digest, answer, claim.expires_at)
+    except Exception as exc:  # noqa: BLE001 — the decision was made and audited; its replay is not guaranteed
+        logger.warning("Quality gate: the run token store could not keep a decision (%s)", type(exc).__name__)
+        return answer
+
+
+def release_final(claim: RunClaim) -> None:
+    """K2: an evaluation that failed before its decision was stored leaves the claim retryable by the same request."""
+    if claim.status != "fresh" or not claim.key:
+        return
+    try:
+        _run_token_store().release(claim.key, claim.digest)
+    except Exception as exc:  # noqa: BLE001 — the lease frees it later
+        logger.warning("Quality gate: a failed run claim could not be released (%s)", type(exc).__name__)
+
+
+def audit_replay(answer: Dict[str, Any], *, actor=None, study_key: str = "", registry=None) -> None:
+    """K2: a stored decision delivered again for the identical request is audited as a REPLAY (a consultation record,
+    never a second release)."""
+    from app.agent_platform import registry as R
+    reg = registry if registry is not None else default_registry()
+    details = {**explain(answer), "decision": answer.get("decision"), "mode": answer.get("mode"),
+               "released": answer.get("ai_output_allowed") is True}
+    with R.audit_actor(actor):
+        reg.audit("success", "quality_gate.replayed", event="agent.consultation", agent_id=AGENT_ID,
+                  study_key=study_key or None, trace_id=answer.get("trace_id"), details=details)
 
 
 def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None, releases_output: bool = True,
@@ -1229,6 +1416,38 @@ def comparison_gate(source_tp1, source_tp2, *, headers=None, records=None, attes
                             actor=actor_for(user, request) if user is not None else None, releases_output=False)
 
 
+# K6 (fourteenth review): what a pair the gate allowed finally gave — every value is a registered audit code (K7)
+WITHHELD_BY = frozenset({"rc062", "sel", "unknown", "not_delivered", "error", "http_400", "http_403", "http_404",
+                         "http_409", "http_413", "http_422", "http_500", "http_503"})
+
+
+class OutcomeRecord:
+    """K6 (fourteenth review of PR #81): EXACTLY ONE outcome record (G31) per gate-consulting request whose pair the gate
+    allowed — released, or withheld:<by> — on EVERY path: the route records it where it knows the outcome; any path
+    that ends otherwise (an error, a 4xx after the gate, an early return) is recorded on close as withheld with its
+    error code. A pair the gate stopped has its gate record only (audit_comparison_outcome does nothing for it)."""
+
+    def __init__(self, gate: Any = None, *, pair: Optional[Dict[str, Any]] = None, user=None, request=None):
+        self.gate, self.user, self.request, self.done = gate, user, request, False
+        source = ((pair or {}).get("tp2") or {}).get("source") if isinstance(pair, dict) else None
+        self.study_key = (study_of(source) or "") if isinstance(source, str) else ""
+
+    def record(self, *, released: bool, withheld_by: Optional[str] = None, study_key: Optional[str] = None) -> None:
+        if self.done:
+            return
+        self.done = True
+        audit_comparison_outcome(self.gate, released=released, withheld_by=withheld_by, user=self.user,
+                                 request=self.request, study_key=study_key or self.study_key)
+
+    def close(self, exc: Optional[BaseException]) -> None:
+        if self.done:
+            return
+        status = getattr(exc, "status_code", None) if exc is not None else None
+        code = f"http_{status}" if isinstance(status, int) and f"http_{status}" in WITHHELD_BY else (
+            "error" if exc is not None else "not_delivered")
+        self.record(released=False, withheld_by=code)
+
+
 def audit_comparison_outcome(gate: Any, *, released: bool, withheld_by: Optional[str] = None, user=None, request=None,
                              study_key: str = "", registry=None) -> None:
     """G31 (eighth review of PR #81): what the user FINALLY received for a pair the gate allowed — released (an AI
@@ -1238,9 +1457,27 @@ def audit_comparison_outcome(gate: Any, *, released: bool, withheld_by: Optional
         return                                       # the gate's own record already says it stopped the pair
     from app.agent_platform import registry as R
     reg = registry if registry is not None else default_registry()
+    by = withheld_by if withheld_by in WITHHELD_BY else "unknown"
     details = {**explain(gate), "decision": gate.get("decision"), "mode": gate.get("mode"),
-               "released": released is True, "withheld_by": None if released else (withheld_by or "unknown")}
+               "released": released is True, "withheld_by": None if released else by}
     with R.audit_actor(actor_for(user, request) if user is not None else None):
         reg.audit("success", "quality_gate.released" if released else f"quality_gate.withheld.{details['withheld_by']}",
                   event="agent.run" if released else "agent.consultation", agent_id=AGENT_ID,
                   study_key=study_key or None, trace_id=gate.get("trace_id"), details=details)
+
+
+def _register_audit_reasons() -> None:
+    """K7 (fourteenth review of PR #81): every code the gate writes into an audit reason — its policy codes, its
+    decisions, its outcomes — in the closed registry of audit reasons."""
+    from app.core.logging.audit import register_reason_codes
+    try:
+        codes = set(_policy()["codes"])
+    except Exception:  # noqa: BLE001 — the policy is read again at every consultation; its codes register then
+        codes = set()
+    decisions = ("proceed", "proceed_with_warnings", "pending", "abstain")
+    codes |= {f"quality_gate.{d}" for d in decisions} | {f"quality_gate.{d}.attested" for d in decisions}
+    codes |= {"quality_gate.released", "quality_gate.replayed"} | {f"quality_gate.withheld.{w}" for w in WITHHELD_BY}
+    register_reason_codes(codes)
+
+
+_register_audit_reasons()

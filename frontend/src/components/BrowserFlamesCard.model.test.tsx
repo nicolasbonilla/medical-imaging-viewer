@@ -115,7 +115,8 @@ class World {
   unknownVersion: Record<string, boolean> = {};        // K3: the server cannot establish this file's version now
   loseNext = false;                                    // K2: the next answer is lost after the server decided it
   firstOf = new Map<number, boolean>();                // K2 / P6: a run's first evaluated release decision
-  click: { n: number; runs: number; file: string; attested: boolean } | null = null;   // P7: a Run click being answered
+  click: { n: number; runs: number; file: string; attested: boolean; sel: number } | null = null;   // P7: a click answered
+  sel = 0;                                             // P7: every change of the selected file (also there and back)
   violations: Partial<Record<Prop, string>> = {};
 
   violate(p: Prop, why: string) { if (!this.violations[p]) this.violations[p] = why; }
@@ -324,7 +325,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
       const stopShown = !!before && (before.ai_may_run !== true) && ((before.codes ?? []).some((x: string) => x.startsWith('gate_'))
         || (before.inputs?.visits?.[0]?.physician_confirmed_flair === true) === c.attested);
       const notice = !!screen.queryByTestId('quality-gate-run-not-started');
-      if (!started && world.file === c.file && !stopShown && !notice) {
+      if (!started && world.sel === c.sel && !stopShown && !notice) {      // the user did not move to another file
         world.violate('P7', `a Run click on ${c.file === A ? 'A' : 'B'} (attested ${c.attested}) neither started a run nor said why`);
       }
     }
@@ -355,7 +356,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
       switch (a) {
         case 'selectA': case 'selectB': {
           const next = a === 'selectA' ? A : B;
-          if (next !== world.file) { world.file = next; world.lastShown = null; }
+          if (next !== world.file) { world.file = next; world.lastShown = null; world.sel += 1; }
           await sync(400);
           if (confirmBox() && !confirmBox()!.checked) await click(confirmBox());
           break;
@@ -368,7 +369,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
           if (confirmBox() && !confirmBox()!.checked) await click(confirmBox());
           const b = runButton();
           if (b && !b.disabled) {
-            world.click = { n: world.n, runs: world.runSeq, file: world.file, attested: attestBox()?.checked === true };
+            world.click = { n: world.n, runs: world.runSeq, file: world.file, attested: attestBox()?.checked === true, sel: world.sel };
             await click(b);
           }
           break;
@@ -424,7 +425,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
         world.violate('P4', `settled, Run is disabled though the server allows a run of ${world.file === A ? 'A (attested)' : 'B'}`);
         break;
       }
-      world.click = { n: world.n, runs: world.runSeq, file: world.file, attested: attestBox()?.checked === true };
+      world.click = { n: world.n, runs: world.runSeq, file: world.file, attested: attestBox()?.checked === true, sel: world.sel };
       await click(b);
       await settle();
       check();

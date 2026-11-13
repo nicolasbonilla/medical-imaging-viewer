@@ -33,13 +33,16 @@ import { QualityGatePanel } from './QualityGatePanel';
 import { requestQualityGate } from '@/services/qualityGate/api';
 import {
   gateUnavailable, isGateResult, retryAfterSeconds, serverSequenceClass, skullFromProvenance,
-  type GateResult, type ServerGateResponse,
+  type GateParams, type GateResult, type ServerGateResponse,
 } from '@/services/qualityGate/gate';
 import { useGateConsultation } from '@/hooks/useGateConsultation';
+import { formatGateMessage } from '@/services/qualityGate/gateText';
 
-/** G29 / U1: an answer the physician may ask again for once no automatic retry is left (rate limited or unavailable). */
+/** G29 / U1: an answer the physician may ask again for once no automatic retry is left (rate limited or unavailable;
+ *  K3, fourteenth review: or the file's version could not be established — a later check can establish it). */
 const askable = (r: GateResult): boolean =>
-  retryAfterSeconds(r) !== null || (r.codes.length === 1 && r.codes[0] === 'gate_unavailable');
+  retryAfterSeconds(r) !== null || (r.codes.length === 1 && r.codes[0] === 'gate_unavailable')
+  || r.codes.includes('version_not_established');
 
 interface BrowserFlamesCardProps {
   flairFileId: string;
@@ -87,7 +90,10 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const [, setVersionsSeen] = useState(0);                   // re-render when a newer version is named
   // M1: the decision of the Run consultation WITH the attestation, for this file; shown and used only while ticked
   const [attestedDecision, setAttestedDecision] = useState<ServerGateResponse | null>(null);
-  useEffect(() => { setAttested(false); setAttestedDecision(null); selection.current += 1; }, [flairFileId]);
+  // K3 (fourteenth review, P7): a Run click that does not start a run says why — never a silent no-op
+  const [runNotice, setRunNotice] = useState<{ kind: 'notStarted' | 'inputsChanged'; code: string | null;
+    params?: GateParams | null } | null>(null);
+  useEffect(() => { setAttested(false); setAttestedDecision(null); setRunNotice(null); selection.current += 1; }, [flairFileId]);
   /** Every consultation goes through here: the answer is stamped with the time it was ASKED (its run token was issued
    *  later, so its lifetime is counted from no later than its real start), and the version the server names is kept
    *  when the request is the newest for its file (a late answer never lowers it). */
@@ -174,6 +180,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     setOpenError(null);
     setPendingDiscard(null);
     setEmptyAcknowledged(false);
+    setRunNotice(null);
     // Header evidence for the FLAIR gate: the series description the app holds for THIS file only.
     const seriesDescription =
       currentSeries?.file_id === flairFileId ? currentSeries?.metadata?.series_description ?? null : null;
@@ -205,12 +212,25 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     setBusy(true);
     void ask(fileAtClick, attestation).then((fresh) => {
       setBusy(false);
-      // P1 / P3: an answer for inputs that are no longer the current ones never acts (file, selection, attestation)
+      // P1 / P3: an answer for inputs that are no longer the current ones never acts (file, selection, attestation);
+      // another file shows its own state, a changed attestation is SAID (P7)
       if (selection.current !== selectionAtClick || currentFile.current !== fileAtClick
-        || fresh.subject?.file_id !== fileAtClick || attestedNow.current !== attestation) return;
+        || fresh.subject?.file_id !== fileAtClick) return;
+      if (attestedNow.current !== attestation) {
+        setRunNotice({ kind: 'inputsChanged', code: null });
+        return;
+      }
       if (attestation && fresh.inputs) setAttestedDecision(fresh);
       else before.show(fresh);         // O3: the "before" panel shows the decision the run follows
-      if (startable(fresh, fileAtClick, attestation)) start(fresh);
+      const answer: ServerGateResponse = fresh;      // (the type guard below narrows `fresh` only)
+      if (startable(fresh, fileAtClick, attestation)) {
+        start(fresh);
+        return;
+      }
+      // P7 (fourteenth review): not started — ALWAYS said, with the server's reason (the panel may show another
+      // consultation later, e.g. the automatic retry of a rate-limited one): never a silent no-op
+      const stop = (answer.checks ?? []).find((c) => c.status === 'abstain' && c.code);
+      setRunNotice({ kind: 'notStarted', code: stop?.code ?? null, params: stop?.params ?? null });
     });
   };
 
@@ -291,6 +311,12 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
           {preflightStuck && (
             <button type="button" onClick={before.again} data-testid="quality-gate-check-again"
               className="text-[9px] text-sky-200 underline hover:text-white">{t('qualityGate.checkAgain')}</button>
+          )}
+          {gateOn && runNotice && (
+            <p className="text-[9px] text-amber-200" role="alert" data-testid="quality-gate-run-not-started">
+              {t(runNotice.kind === 'inputsChanged' ? 'qualityGate.inputsChanged' : 'qualityGate.runNotStarted')}
+              {runNotice.code ? ` ${formatGateMessage(t, runNotice.code, 'message', runNotice.params)}` : ''}
+            </p>
           )}
           {gateOn && canAttest && (
             <label className="flex items-start gap-1 text-[9px] text-sky-100" data-testid="quality-gate-attest">

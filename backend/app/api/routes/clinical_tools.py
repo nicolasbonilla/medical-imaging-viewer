@@ -140,16 +140,35 @@ async def quality_gate(
                                                    physician_confirmed_flair=body.physician_confirmed_flair,
                                                    skull=body.skull)
     user_id = str(getattr(current_user, "id", ""))
-    ran = body.skull != "pending" and qg.spend_run_token(body.run_token, file_id=paths[0], version=version,
-                                                         user_id=user_id, attested=body.physician_confirmed_flair)
+    study_key = qg.study_of(paths[0]) or paths[0]
+    # K3 (fourteenth review): a stored file whose version cannot be established gets no run permission — the gate stops
+    # with its reason (version_not_established) instead of a permission the browser could never use
+    inputs["version_established"] = bool(version)
+    claim = None
     if body.skull != "pending":
-        inputs["run_confirmed"] = ran                 # M1 (thirteenth review, P2): no confirmed run, no released output
-    result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=qg.study_of(paths[0]) or paths[0], actor=actor,
-                                     releases_output=ran)
+        # K2 / K5 (fourteenth review): the run token CLAIMED in the ledger with the request's digest, off the event loop
+        claim = await asyncio.to_thread(qg.claim_final, body.run_token, file_id=paths[0], version=version,
+                                        user_id=user_id, attested=body.physician_confirmed_flair, skull=body.skull)
+        if claim.status == "replay":               # a lost answer: the stored decision, never re-evaluated
+            await asyncio.to_thread(qg.audit_replay, claim.answer, actor=actor, study_key=study_key)
+            return {**claim.answer, "replayed": True}
+        if claim.status == "in_progress":          # the same request is still being decided: wait, then ask again
+            return qg.rate_limited_response(claim.wait_s, code="gate_run_in_progress")
+        inputs["run_confirmed"] = claim.status == "fresh"   # M1 (thirteenth review, P2): no confirmed run, no output
+    ran = claim is not None and claim.status == "fresh"
+    try:
+        result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=study_key, actor=actor,
+                                         releases_output=ran)
+    except Exception:
+        if ran:                                    # K2: a failed evaluation never burns the token
+            await asyncio.to_thread(qg.release_final, claim)
+        raise
     answer = {**result, "inputs": inputs, "subject": {"file_id": body.file_id, "version": version}}
-    if body.skull == "pending" and result.get("ai_may_run") is True:
+    if body.skull == "pending" and result.get("ai_may_run") is True and version:
         answer["run_token"] = qg.run_token(paths[0], version, user_id, body.physician_confirmed_flair)
         answer["run_token_ttl_s"] = qg.RUN_TOKEN_TTL_S
+    if ran:                                        # K2: the decision delivered, kept for an identical retry
+        answer = await asyncio.to_thread(qg.settle_final, claim, answer)
     return answer
 
 

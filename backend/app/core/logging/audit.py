@@ -21,6 +21,7 @@ string, no description text, no image data; identifiers only, file names hashed.
 @module core.logging.audit
 """
 
+import asyncio
 import ipaddress
 import json
 import hashlib
@@ -33,7 +34,7 @@ import uuid
 from contextvars import ContextVar
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, Iterable, List, Set
 from pathlib import Path
 from dataclasses import dataclass, asdict, field
 
@@ -297,7 +298,47 @@ DETAIL_KEYS = frozenset({
     "causes", "warnings", "attested_visits", "decision", "mode", "released", "withheld_by",
     "skull_report",            # K4 (twelfth review): the skull outcome as the browser reported it, labelled as such
     "full_reason",             # A2 (thirteenth review): a reason longer than the code field, kept whole
+    "route_record",            # K1 (fourteenth review): the middleware's record where the route's could not be confirmed
 })
+
+# K7 (fourteenth review of PR #81): the CLOSED registry of audit reasons. A reason is persisted — in full, however long
+# (A2) — only when it is a registered code or ':'-joined registered codes; anything else is the fixed code
+# reason_unregistered: no text, no hash, no fragment of it reaches the trail (an e-mail, a file name, a sentence).
+# Registered here: the authentication and session codes; each module that writes other reasons registers its own
+# (the agent platform its event types and refusal codes, the agent scope, the quality gate).
+REASON_UNREGISTERED = "reason_unregistered"
+_REASON_TOKEN = re.compile(r"^[a-z][a-z0-9_.-]{0,63}$")
+_REASON_CODES: Set[str] = {
+    # authentication, sessions and accounts (routes/auth.py, routes/authentication.py, security/auth.py)
+    "refresh_cookie", "session_not_revoked", "store_unavailable", "unknown_session", "no_session", "password_change",
+    "passkey", "passkey_error", "passkey_invalid", "passkey_user_not_found", "username_exists", "email_exists",
+    "password_policy_violation", "self_registration", "captcha_required", "captcha_invalid", "user_not_found",
+    "account_locked", "account_inactive", "invalid_password", "excessive_failed_logins", "password_expired",
+    "invalid_current_password", "password_in_history", "foreign_origin", "user_unknown", "user_inactive", "user_locked", "reuse_detected",
+    "grace_replay",
+    # refresh-token refusals (security/refresh_tokens.py RefreshError codes)
+    "missing", "unknown", "revoked", "absolute_expired", "idle_expired",
+    # the security service's own actions (security/auth.py _AUDIT_EVENT_TYPES; the reason of a failed action)
+    "register_user", "register_user_failed", "privileged_account_created", "login_success", "login_failed",
+    "password_changed", "password_change_failed", "user_updated", "user_deleted", "logout",
+}
+_REASON_LOCK = threading.Lock()
+
+
+def register_reason_codes(codes: Iterable[str]) -> None:
+    """Add codes to the closed registry of audit reasons (K7). Only lower-case code tokens are accepted."""
+    with _REASON_LOCK:
+        for code in codes:
+            text = code.value if isinstance(code, Enum) else code
+            if isinstance(text, str) and _REASON_TOKEN.match(text):
+                _REASON_CODES.add(text)
+
+
+def registered_reason(value: Any) -> bool:
+    """True when the reason is a registered code or ':'-joined registered codes (K7)."""
+    if not isinstance(value, str) or not value:
+        return False
+    return all(token in _REASON_CODES for token in value.split(":"))
 
 # Review m10: identifiers that must not be stored (typed login names, file names, MRNs, accession
 # numbers) are reduced to HMAC-SHA-256 with a secret key — a plain SHA-256 of a small space (an MRN,
@@ -381,20 +422,18 @@ def _safe_ids(ids: Optional[Dict[str, Any]]) -> Dict[str, str]:
 _LONG_CODE_KEYS = frozenset({"full_reason"})
 
 
-def _long_code(value: Any) -> str:
-    return re.sub(r"[^A-Za-z0-9_.:-]", "_", str(value))[:512]
-
-
 def _reason(value: Any) -> tuple:
-    """A2 (thirteenth review of PR #81): the reason as a valid code of at most 64 characters — itself when it fits, else
-    its start and a stable hash of the whole — and the whole reason when it was shortened (never dropped)."""
+    """A2 (thirteenth review) + K7 (fourteenth review of PR #81): a REGISTERED reason as a valid code of at most 64
+    characters — itself when it fits, else its start and a stable hash of the whole — and the whole reason when it was
+    shortened (never dropped); any other reason is the fixed code reason_unregistered and nothing of it is kept."""
     if value is None:
         return None, None
     whole = value.value if isinstance(value, Enum) else str(value)
+    if not registered_reason(whole):
+        return REASON_UNREGISTERED, None
     if _CODE.match(whole):
         return whole, None
-    full = _long_code(whole)
-    return f"{full[:51]}-{hashlib.sha256(whole.encode('utf-8')).hexdigest()[:12]}", full
+    return f"{whole[:51]}-{hashlib.sha256(whole.encode('utf-8')).hexdigest()[:12]}", whole
 
 
 def _safe_details(details: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -403,7 +442,8 @@ def _safe_details(details: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         if k not in DETAIL_KEYS:
             continue
         if k in _LONG_CODE_KEYS:
-            out[k] = _long_code(v)
+            if registered_reason(v):                      # K7: only a registered composition, else nothing
+                out[k] = v
             continue
         if isinstance(v, bool) or (isinstance(v, (int, float)) and not isinstance(v, bool)):
             out[k] = v
@@ -495,14 +535,54 @@ def reset_audit_budget() -> None:
         _BUDGET.clear()
 
 
+class AuditWrite:
+    """K1 (fourteenth review of PR #81): the outcome of ONE log_event — ``logged``: the record was built, checked and
+    written to the server log; ``future``: its durable write, resolved True only once the append-only store holds it
+    (None when no durable write was made). The record EXISTS DURABLY iff ``await confirmed(...)`` is True: a failed
+    integrity check, a build, stdout or durable error, a write that was not made, given up or is still retrying are
+    all False. Durable writes are asynchronous (never block a request), so the answer is awaited, bounded."""
+
+    __slots__ = ("logged", "future")
+
+    def __init__(self, logged: bool = False, future: Any = None):
+        self.logged = logged is True
+        self.future = future
+
+    def durable_now(self) -> bool:
+        f = self.future
+        try:
+            return (self.logged and f is not None and f.done() and not f.cancelled() and f.exception() is None
+                    and f.result() is True)
+        except Exception:  # noqa: BLE001 — anything unexpected is not a durable record
+            return False
+
+    async def confirmed(self, timeout: float) -> bool:
+        """True iff the durable store holds the record, waiting at most ``timeout`` seconds (never raises)."""
+        f = self.future
+        if not self.logged or f is None:
+            return False
+        if not f.done() and timeout > 0:
+            try:
+                await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(f)), timeout)
+            except Exception:  # noqa: BLE001 — not confirmed in time: not a durable record
+                return False
+        return self.durable_now()
+
+
+NOT_WRITTEN = AuditWrite(False, None)
+
+
 # Per-request audit context (set by AuditMiddleware): the durable writes a request produced
 # (so the middleware can wait for them) and whether the code emitted its own explicit event.
 class RequestAuditContext:
-    __slots__ = ("futures", "explicit")
+    __slots__ = ("futures", "explicit", "explicit_writes")
 
     def __init__(self):
         self.futures: List[Any] = []
         self.explicit = False
+        # K1 (fourteenth review): the outcome of each explicit record, so the middleware stays silent only for a
+        # request whose own record is confirmed durable
+        self.explicit_writes: List[AuditWrite] = []
 
 
 _request_audit: ContextVar[Optional[RequestAuditContext]] = ContextVar("request_audit", default=None)
@@ -577,11 +657,12 @@ def emit_audit(
             trace_id=trace_id_of(request),
             source="explicit",
         )
-        get_audit_logger().log_event(event)
-        return True                    # thirteenth review of PR #81 (A1): the caller learns that the record was written
+        write = get_audit_logger().log_event(event)
+        # K1 (fourteenth review of PR #81): the write's real outcome — durable only once the store confirms it
+        return write if isinstance(write, AuditWrite) else NOT_WRITTEN
     except Exception as e:  # noqa: BLE001 — auditing must never break the request
         logger.error(f"Failed to emit audit event: {e}", exc_info=True)
-        return False
+        return NOT_WRITTEN
 
 
 class AuditLogger:
@@ -631,7 +712,9 @@ class AuditLogger:
                 within the deduplication window, a request that matched no route)
 
         Returns:
-            The Future of the durable write, or None.
+            K1 (fourteenth review of PR #81): the AuditWrite — whether the record was logged, and its durable write
+            (NOT_WRITTEN on a failed integrity check or any error: the caller is never told a record exists that does
+            not).
         """
         try:
             # Verify event integrity
@@ -643,7 +726,7 @@ class AuditLogger:
                         "event_type": event.event_type.value
                     }
                 )
-                return None
+                return NOT_WRITTEN
 
             if event.request_id is None:
                 event.request_id = get_request_id()
@@ -665,17 +748,19 @@ class AuditLogger:
             if durable:
                 from app.core.logging.audit_sink import get_durable_audit_sink
                 future = get_durable_audit_sink().submit(record)
+            write = AuditWrite(True, future)
             ctx = _request_audit.get()
             if ctx is not None:
                 if future is not None:
                     ctx.futures.append(future)
                 if event.source == "explicit":
                     ctx.explicit = True
+                    ctx.explicit_writes.append(write)
 
             # Alert on critical security events
             if event.severity == AuditSeverity.CRITICAL:
                 self._send_security_alert(event)
-            return future
+            return write
 
         except Exception as e:
             self.logger.error(
@@ -686,7 +771,7 @@ class AuditLogger:
                 },
                 exc_info=True
             )
-            return None
+            return NOT_WRITTEN
 
     @staticmethod
     def _write_stdout(record: Dict[str, Any], event: AuditEvent) -> None:

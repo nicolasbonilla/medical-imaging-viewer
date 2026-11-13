@@ -12,6 +12,7 @@ from fastapi.responses import Response
 from datetime import datetime
 from typing import Optional
 import inspect
+import sys
 import numpy as np
 
 import struct
@@ -189,10 +190,11 @@ async def _gate_setup(specs, body, segmentation_service, storage_service, curren
         return acq, desc
 
     sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]
-    # the visit check (a 400 for the same mask, visit or a reversed order: G35) and the reads, in ONE gather
-    visit_check, records, read = await asyncio.gather(
-        _visit_check(specs[0], specs[1], sources[0], sources[1]),
-        asyncio.gather(*(_records(s) for s in sources)), asyncio.gather(*(_header(s) for s in sources)))
+    # K8 (fourteenth review of PR #81): the cheap visit check FIRST (a 400 for the same mask, visit or a reversed order:
+    # G35) — a pair it refuses starts no header download and no record read; then the reads, concurrently
+    visit_check = await _visit_check(specs[0], specs[1], sources[0], sources[1])
+    records, read = await asyncio.gather(asyncio.gather(*(_records(s) for s in sources)),
+                                         asyncio.gather(*(_header(s) for s in sources)))
     gate = await asyncio.to_thread(qg.comparison_gate, *sources, headers=[h for _, h in read], records=list(records),
                                    attestation=attestation, visit_ok=visit_check.get("status") == "ok",
                                    user=current_user, request=request)
@@ -789,6 +791,7 @@ async def compare_longitudinal(
     Returns lesion-by-lesion changes (new, resolved, enlarged, shrunk, stable),
     total burden delta, and summary counts.
     """
+    outcome = qg.OutcomeRecord()                     # K6 (fourteenth review): one outcome record on every path
     try:
         body = await request.json()
         tp1_spec = body.get("tp1")
@@ -801,6 +804,7 @@ async def compare_longitudinal(
             [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             return {**qg.abstained_comparison(gate), "pair": pair}
+        outcome = qg.OutcomeRecord(gate, pair=pair, user=current_user, request=request)
 
         async def load_mask(spec):
             """Return (mask, voxel_spacing, source_intensity, nib_img, source_file_id) —
@@ -989,8 +993,8 @@ async def compare_longitudinal(
         if gate is not None:
             result["pair"] = pair                     # K2: the pair the signed decision is bound to
         # G31 (eighth review): what the user finally received — released only when the comparison is shown
-        qg.audit_comparison_outcome(gate, released=result.get("abstained") is not True, withheld_by="rc062",
-                                    user=current_user, request=request, study_key=qg.study_of(source_tp2) or "")
+        outcome.record(released=result.get("abstained") is not True, withheld_by="rc062",
+                       study_key=qg.study_of(source_tp2) or "")
 
         logger.info("Longitudinal comparison completed (unconfirmed candidates, registration unverified)", extra={
             "new": status_counts.get("new"),
@@ -1008,6 +1012,8 @@ async def compare_longitudinal(
     except Exception as e:
         logger.error("Longitudinal comparison failed", extra={"error": str(e)})
         raise HTTPException(status_code=500, detail=f"Longitudinal comparison failed: {str(e)}")
+    finally:
+        outcome.close(sys.exc_info()[1])             # K6: withheld with its error code when nothing was recorded
 
 
 @router.post("/longitudinal/review")
@@ -1121,6 +1127,7 @@ async def detect_slowly_expanding_lesions(
     closed (no SELs, never false ones); a reader must adjudicate. Requires
     segmentation-type inputs (SEL needs the source FLAIR intensities).
     """
+    outcome = qg.OutcomeRecord()                     # K6 (fourteenth review): one outcome record on every path
     try:
         body = await request.json()
         tp1_spec = body.get("tp1")
@@ -1134,6 +1141,7 @@ async def detect_slowly_expanding_lesions(
             [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
         if gate is not None and gate.get("ai_output_allowed") is not True:
             return qg.abstained_sel(gate, pair=pair)
+        outcome = qg.OutcomeRecord(gate, pair=pair, user=current_user, request=request)
 
         async def _load(spec):
             if spec.get("type") != "segmentation":   # gate off: where the base branch checked it (G26)
@@ -1159,8 +1167,7 @@ async def detect_slowly_expanding_lesions(
             spacing_tp1, _sp2,
         )
         if lcs.rc062_withholds(acquisition_check, visit_check):   # G25: RC-062's one predicate (the gate stopped above)
-            qg.audit_comparison_outcome(gate, released=False, withheld_by="rc062", user=current_user, request=request,
-                                        study_key=qg.study_of(source_tp2) or "")       # G31
+            outcome.record(released=False, withheld_by="rc062", study_key=qg.study_of(source_tp2) or "")   # G31
             return qg.abstained_sel(gate, pair=pair, reason=lcs._abstention_caveat(acquisition_check, visit_check),
                                     acquisition_check=acquisition_check, visit_check=visit_check,
                                     **({"withheld_by": "rc062"} if gate is not None else {}))
@@ -1179,8 +1186,7 @@ async def detect_slowly_expanding_lesions(
         logger.info("SEL detection completed", extra={
             "ok": sel.ok, "n_existing": sel.n_existing, "n_sel": sel.n_sel, "reason": sel.reason,
         })
-        qg.audit_comparison_outcome(gate, released=sel.ok is True, withheld_by="sel", user=current_user, request=request,
-                                    study_key=qg.study_of(source_tp2) or "")           # G31
+        outcome.record(released=sel.ok is True, withheld_by="sel", study_key=qg.study_of(source_tp2) or "")   # G31
         return {
             "ok": sel.ok,
             "reason": sel.reason,
@@ -1214,6 +1220,8 @@ async def detect_slowly_expanding_lesions(
     except Exception as e:
         logger.error("SEL detection failed", extra={"error": str(e)})
         raise HTTPException(status_code=500, detail=f"SEL detection failed: {str(e)}")
+    finally:
+        outcome.close(sys.exc_info()[1])             # K6: withheld with its error code when nothing was recorded
 
 
 # =============================================================================

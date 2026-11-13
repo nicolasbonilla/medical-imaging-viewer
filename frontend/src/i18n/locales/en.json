@@ -1482,6 +1482,9 @@
     "aiHidden": "The AI result is not shown, because the quality check does not allow it.",
     "retrying": "Checking again by itself in {{seconds}} s.",
     "checkAgain": "Check again",
+    "paramMissing": "not stated",
+    "runNotStarted": "The analysis did not start: the server's answer could not be used for this run. Press the button again.",
+    "inputsChanged": "The analysis did not start: the image or the confirmation changed while the server was checking. Press the button again.",
     "checking": "Checking the image before the AI…",
     "attest": "I confirm, on my own responsibility, that this image is a T2-FLAIR. Its header does not say so; my confirmation is recorded in the audit with my name.",
     "decision": {
@@ -1497,7 +1500,8 @@
       "thickness": "Slice thickness",
       "scanner": "Scanner",
       "skull": "Skull",
-      "run": "Run"
+      "run": "Run",
+      "version": "Version"
     },
     "status": {
       "pass": "OK",
@@ -1552,6 +1556,11 @@
         "message": "The server could not confirm the run of this result (its run permission was missing, already used or expired), so the result is not shown.",
         "action": "Run the analysis again.",
         "action_comparison": "Run the analysis again."
+      },
+      "version_not_established": {
+        "message": "The server could not establish the version of this stored file, so it cannot give a run permission for it.",
+        "action": "Check again in a moment; if it persists, select the image again.",
+        "action_comparison": "Check again in a moment; if it persists, select the images again."
       },
       "gate_not_established": {
         "message": "The quality check's decision for this pair could not be confirmed on the server, so no automatic change result is given.",

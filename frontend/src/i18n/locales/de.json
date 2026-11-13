@@ -1475,6 +1475,9 @@
     "aiHidden": "Das KI-Ergebnis wird nicht angezeigt, weil die Qualitätsprüfung es nicht zulässt.",
     "retrying": "Wird in {{seconds}} s automatisch erneut geprüft.",
     "checkAgain": "Erneut prüfen",
+    "paramMissing": "nicht angegeben",
+    "runNotStarted": "Die Analyse wurde nicht gestartet: die Antwort des Servers ließ sich für diesen Lauf nicht verwenden. Drücken Sie die Schaltfläche erneut.",
+    "inputsChanged": "Die Analyse wurde nicht gestartet: das Bild oder die Bestätigung änderte sich, während der Server prüfte. Drücken Sie die Schaltfläche erneut.",
     "checking": "Das Bild wird vor der KI geprüft …",
     "attest": "Ich bestätige in eigener Verantwortung, dass dieses Bild ein T2-FLAIR ist. Der Bildkopf sagt das nicht; meine Bestätigung wird mit meinem Namen im Prüfprotokoll gespeichert.",
     "decision": {
@@ -1490,7 +1493,8 @@
       "thickness": "Schichtdicke",
       "scanner": "Gerät",
       "skull": "Schädel",
-      "run": "Lauf"
+      "run": "Lauf",
+      "version": "Version"
     },
     "status": {
       "pass": "In Ordnung",
@@ -1545,6 +1549,11 @@
         "message": "Der Server konnte den Lauf dieses Ergebnisses nicht bestätigen (seine Laufberechtigung fehlte, war schon verwendet oder abgelaufen), daher wird das Ergebnis nicht angezeigt.",
         "action": "Führen Sie die Analyse erneut aus.",
         "action_comparison": "Führen Sie die Analyse erneut aus."
+      },
+      "version_not_established": {
+        "message": "Der Server konnte die Version dieser gespeicherten Datei nicht feststellen und kann daher keine Laufberechtigung dafür geben.",
+        "action": "Prüfen Sie gleich noch einmal; bleibt es so, wählen Sie das Bild erneut aus.",
+        "action_comparison": "Prüfen Sie gleich noch einmal; bleibt es so, wählen Sie die Bilder erneut aus."
       },
       "gate_not_established": {
         "message": "Die Entscheidung der Qualitätsprüfung für dieses Paar ließ sich auf dem Server nicht bestätigen, daher wird kein automatisches Veränderungsergebnis angegeben.",

@@ -149,12 +149,21 @@ def test_rc127_i4_the_shared_fixture_names_the_warnings_the_report_notice_gives(
 
 
 # ----------------------------------------------------------------------------- I5
+def _durable_future():
+    """A durable write the store confirmed (K1, fourteenth review: a stubbed logger reports a REAL outcome)."""
+    from concurrent.futures import Future
+    f = Future()
+    f.set_result(True)
+    return f
+
+
 def _records(monkeypatch):
     from app.core.logging import audit as A
     seen = []
     monkeypatch.setattr(A.AuditLogger, "log_event",
-                        lambda self, event, durable=True: seen.append(event.event_type if event.outcome == A.AuditOutcome.SUCCESS
-                                                                      else (event.event_type, event.outcome)))
+                        lambda self, event, durable=True: (seen.append(event.event_type if event.outcome == A.AuditOutcome.SUCCESS
+                                                                       else (event.event_type, event.outcome)),
+                                                           A.AuditWrite(True, _durable_future()))[1])
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
     data["agents"]["quality-gate"]["approval"]["status"] = "approved"     # IN MEMORY, for the test only
     monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry(data, switches=R.InMemoryKillSwitches({"quality-gate": True}),
@@ -189,4 +198,5 @@ def test_rc123_one_voxel_spacing_helper_and_the_visit_check_in_the_same_gather()
     src = inspect.getsource(sa)
     assert src.count("float(zooms[2])") == 0, "the voxel spacing is computed in one helper (lcs)"
     setup = inspect.getsource(sa._gate_setup)
-    assert "visit_check = await _visit_check(" not in setup and "_visit_check(specs[0]" in setup
+    # K8 (fourteenth review) supersedes O3's single gather: the cheap visit check FIRST, then the reads
+    assert "visit_check = await _visit_check(specs[0]" in setup

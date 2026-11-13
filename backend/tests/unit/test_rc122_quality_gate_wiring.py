@@ -108,6 +108,13 @@ class _Storage:
     async def download_file(self, bucket, path):
         return self.data
 
+    async def get_file_metadata(self, bucket, path):
+        # fourteenth review (K3): a stored file has a version (size, checksum, creation time); a file without one is
+        # tested explicitly (test_rc122_review14.py)
+        from app.core.interfaces.storage_interface import StorageObject
+        return StorageObject(bucket=bucket, name=path, size=len(self.data), content_type="application/octet-stream",
+                             checksum_sha256="v1", created_at="2026-11-12")
+
 
 @pytest.fixture
 def single(monkeypatch):

@@ -130,10 +130,19 @@ def test_rc125_k4_the_skull_outcome_is_recorded_as_reported_by_the_browser(singl
 
 
 # ----------------------------------------------------------------------------- K5
+def _durable_future():
+    """A durable write the store confirmed (K1, fourteenth review: a stubbed logger reports a REAL outcome)."""
+    from concurrent.futures import Future
+    f = Future()
+    f.set_result(True)
+    return f
+
+
 def _types(monkeypatch):
     from app.core.logging import audit as A
     seen = []
-    monkeypatch.setattr(A.AuditLogger, "log_event", lambda self, event, durable=True: seen.append(event.event_type))
+    monkeypatch.setattr(A.AuditLogger, "log_event",
+                        lambda self, event, durable=True: (seen.append(event.event_type), A.AuditWrite(True, _durable_future()))[1])
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
     data["agents"]["quality-gate"]["approval"]["status"] = "approved"     # IN MEMORY, for the test only
     monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry(data, switches=R.InMemoryKillSwitches({"quality-gate": True}),

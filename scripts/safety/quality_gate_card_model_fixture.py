@@ -50,7 +50,7 @@ def run_token_semantics():
     token = qg.run_token(f, v, u, False)
     args = {"file_id": f, "version": v, "user_id": u, "attested": False, "skull": "stripped"}
     if not hasattr(qg, "claim_final"):
-        first = qg.spend_run_token(token, **{k: a for k, a in args.items() if k != "skull"})
+        first = qg.spend_run_token(token, **{k: a for k, a in args.items() if k != "skull"})  # the server before K2
         again = qg.spend_run_token(token, **{k: a for k, a in args.items() if k != "skull"})
         return {"replays_identical_request": bool(first and again)}
     claim = qg.claim_final(token, **args)

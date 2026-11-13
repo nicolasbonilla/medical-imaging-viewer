@@ -163,6 +163,16 @@ FAILURE_CODES = frozenset({RefusalCode.MODEL_CALL_FAILED, RefusalCode.TOOL_FAILE
 # "agent.consultation" (fifth review of PR #81, F4): a run of a code-only agent (the single quality gate) whose
 # decision releases no AI output; audited as a consultation, never as an AI run.
 AUDIT_EVENT_TYPES = frozenset({"agent.decision", "agent.run", "agent.signoff_linked", "agent.consultation"})
+
+
+def _register_audit_reasons() -> None:
+    """K7 (fourteenth review of PR #81): the platform's audit reasons ('<event type>:<code>') in the closed registry of
+    audit reasons — its event types, every refusal code and its success codes."""
+    from app.core.logging.audit import register_reason_codes
+    register_reason_codes([*AUDIT_EVENT_TYPES, *(c.value for c in RefusalCode), "ok", "unknown", "signoff_linked"])
+
+
+_register_audit_reasons()
 _IN_RUN: "contextvars.ContextVar[bool]" = contextvars.ContextVar("mstool_agent_in_run", default=False)
 
 
@@ -479,7 +489,7 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
         actor = current_actor()
         etype = (AuditEventType.QUALITY_GATE_CONSULTATION if event.get("event") == "agent.consultation"
                  else AuditEventType.CLINICAL_AI_RUN)
-        written = emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
+        write = emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
                    # G31 (eighth review of PR #81) / S4 (tenth): structured details, kept whole by the durable record
                    details=event.get("details"),
@@ -488,29 +498,25 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
                    # cut — every code the platform writes is short by construction (test_rc122_review10.py)
                    reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}",
                    resource_type="agent_run", resource_ids=ids)
-        if written is True and actor.request is not None:
-            # twelfth review of PR #81 (K3) / thirteenth (A1): the request's own marker that its route WROTE the
-            # authoritative record — set only after it was written, so a failed write leaves the middleware's record
-            actor.request.state.audit_recorded = True
+        if actor.request is not None:
+            # K3 (twelfth review) / A1 (thirteenth) / K1 (fourteenth): the outcome of each record the route wrote; the
+            # middleware stays silent only when the store CONFIRMS them durable (an unconfirmed one leaves its record)
+            writes = getattr(actor.request.state, "audit_writes", None)
+            if not isinstance(writes, list):
+                writes = []
+                actor.request.state.audit_writes = writes
+            writes.append(write)
     except Exception:  # noqa: BLE001 — auditing never breaks the caller
         pass
 
 
-def _plain_details(details: Any) -> Optional[Dict[str, Any]]:
-    """Structured audit details: short keys with strings, booleans, None or lists of short strings — nothing else
-    (no free text from a request reaches the trail)."""
+def _record_details(details: Any) -> Optional[Dict[str, Any]]:
+    """K9 (fourteenth review of PR #81): the structured details of an agent record through the ONE filter of the audit
+    record (audit._safe_details: allow-listed keys, codes, flags and short code lists) — never a second, looser one."""
     if not isinstance(details, dict):
         return None
-    ok = lambda v: v is None or isinstance(v, bool) or (isinstance(v, str) and len(v) <= 64)  # noqa: E731
-    out = {}
-    for k, v in details.items():
-        if not isinstance(k, str) or len(k) > 32:
-            continue
-        if ok(v):
-            out[k] = v
-        elif isinstance(v, (list, tuple)) and all(isinstance(x, str) and len(x) <= 64 for x in v) and len(v) <= 32:
-            out[k] = list(v)
-    return out or None
+    from app.core.logging.audit import _safe_details
+    return _safe_details(details) or None
 
 
 _UNSET = object()
@@ -716,7 +722,7 @@ class AgentRegistry:
             "registry_version": self.version[:64],
             "reason": REASONS.get(code) if isinstance(code, RefusalCode) else None,
             # eighth review of PR #81 (G31): structured fields (codes, visit labels, booleans), never truncated
-            "details": _plain_details(details),
+            "details": _record_details(details),
         }
         record = {k: v for k, v in record.items() if v is not None}
         try:

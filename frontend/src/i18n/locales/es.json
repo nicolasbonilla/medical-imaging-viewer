@@ -1493,6 +1493,9 @@
     "aiHidden": "El resultado de la IA no se muestra, porque el control de calidad no lo permite.",
     "retrying": "Se vuelve a comprobar solo en {{seconds}} s.",
     "checkAgain": "Comprobar de nuevo",
+    "paramMissing": "no indicado",
+    "runNotStarted": "El análisis no empezó: la respuesta del servidor no se pudo usar para esta ejecución. Pulse el botón de nuevo.",
+    "inputsChanged": "El análisis no empezó: la imagen o la confirmación cambió mientras el servidor comprobaba. Pulse el botón de nuevo.",
     "checking": "Comprobando la imagen antes de la IA…",
     "attest": "Confirmo, bajo mi responsabilidad, que esta imagen es una FLAIR potenciada en T2. Su cabecera no lo indica; mi confirmación queda registrada en la auditoría con mi nombre.",
     "decision": {
@@ -1508,7 +1511,8 @@
       "thickness": "Grosor de corte",
       "scanner": "Equipo",
       "skull": "Cráneo",
-      "run": "Ejecución"
+      "run": "Ejecución",
+      "version": "Versión"
     },
     "status": {
       "pass": "Correcto",
@@ -1563,6 +1567,11 @@
         "message": "El servidor no pudo confirmar la ejecución de este resultado (su permiso de ejecución faltaba, ya se había usado o caducó), así que el resultado no se muestra.",
         "action": "Ejecute de nuevo el análisis.",
         "action_comparison": "Ejecute de nuevo el análisis."
+      },
+      "version_not_established": {
+        "message": "El servidor no pudo establecer la versión de este archivo guardado, así que no puede dar un permiso de ejecución para él.",
+        "action": "Vuelva a comprobar en un momento; si persiste, seleccione la imagen de nuevo.",
+        "action_comparison": "Vuelva a comprobar en un momento; si persiste, seleccione las imágenes de nuevo."
       },
       "gate_not_established": {
         "message": "No se pudo confirmar en el servidor la decisión del control de calidad para esta pareja, así que no se da ningún resultado automático de cambio.",

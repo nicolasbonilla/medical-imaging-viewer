@@ -25,6 +25,7 @@ import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { LongitudinalOverlayLegend } from './LongitudinalOverlayLegend';
 import { QualityGatePanel } from './QualityGatePanel';
 import type { GateResult, PairAttestation } from '@/services/qualityGate/gate';
+import { formatGateMessage } from '@/services/qualityGate/gateText';
 
 type Attestation = PairAttestation;
 
@@ -280,7 +281,7 @@ export function LongitudinalResultPanel({
           {/* I4 (eleventh review of PR #81): the gate's warnings for this pair stay visible, as in the report notice */}
           {(result.quality_gate.checks ?? []).filter((c) => c.status === 'warn' && c.code).map((c, i) => (
             <p key={`${c.code}-${c.visit ?? ''}-${i}`} className="text-amber-200" data-testid="longitudinal-quality-gate-warning"
-              data-code={c.code ?? ''}>{t(`qualityGate.codes.${c.code}.message`)}</p>
+              data-code={c.code ?? ''}>{formatGateMessage(t, c.code as string, 'message', c.params)}</p>
           ))}
         </div>
       )}

@@ -11,7 +11,7 @@
 
 export type GateDecision = 'abstain' | 'pending' | 'proceed_with_warnings' | 'proceed';
 export type GateStatus = 'pass' | 'warn' | 'pending' | 'abstain';
-export type GateCheckName = 'input' | 'platform' | 'sequence' | 'thickness' | 'scanner' | 'skull';
+export type GateCheckName = 'input' | 'platform' | 'sequence' | 'thickness' | 'scanner' | 'skull' | 'run' | 'version';
 export type GateVisitLabel = 'study' | 'tp1' | 'tp2';
 
 export interface GateParams {
