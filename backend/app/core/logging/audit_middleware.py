@@ -252,7 +252,7 @@ def _severity(status: int, clinical: bool) -> AuditSeverity:
 def _durable_backend() -> bool:
     try:
         from app.core.logging.audit_sink import get_durable_audit_sink
-        return get_durable_audit_sink().backend != "off"
+        return getattr(get_durable_audit_sink(), "backend", "firestore") != "off"
     except Exception:  # noqa: BLE001
         return True
 
@@ -342,7 +342,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 return False, False
             from app.core.logging.audit_sink import get_durable_audit_sink
             sink = get_durable_audit_sink()
-            waiting = sink.backend == "memory" or sink.is_healthy()
+            waiting = getattr(sink, "backend", None) == "memory" or sink.is_healthy()
             for write in writes:
                 remaining = max(0.0, deadline - asyncio.get_running_loop().time()) if waiting else 0.0
                 if not await write.confirmed(remaining):

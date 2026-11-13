@@ -770,7 +770,7 @@ class AuditLogger:
             if durable:
                 from app.core.logging.audit_sink import get_durable_audit_sink
                 sink = get_durable_audit_sink()
-                expected = sink.backend != "off"
+                expected = getattr(sink, "backend", "firestore") != "off"   # any sink but "off" is durable
                 future = sink.submit(record)
             write = AuditWrite(True, future, expected)
             ctx = _request_audit.get()
