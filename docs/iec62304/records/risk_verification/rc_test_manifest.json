@@ -1260,16 +1260,17 @@
       "note": "The pinned-SDK test (anthropic 0.44.0 on a local fake transport) runs where the SDK is installed (CI installs requirements.txt). LIMIT: the retirement table is maintained by hand at each SOUP review."
     },
     "RC-130": {
-      "description": "Every AI report whose draft holds text a model wrote shows, above that text (en/es/de), that the AI comments are in testing, the model, that MSTool-AI has not validated it in its registered study, and that the prototype is not for clinical use; a draft no model wrote shows no such notice",
+      "description": "Every AI report whose draft holds text a model wrote shows, right before that text (after the clinician's entry and the code-written notes) and in the report's language (en/es/de), that the AI comments are in testing, the model, that MSTool-AI has not validated it in its registered study, and that the prototype is not for clinical use; both Copy buttons put it first; a draft no model wrote shows no such notice",
       "hazard": "HAZ-003, HAZ-017",
-      "status": "unverified",
-      "implementation": "frontend/src/components/ReportViewerModal.tsx",
+      "status": "implemented",
+      "implementation": "frontend/src/utils/aiInTesting.ts; frontend/src/components/ReportViewerModal.tsx; frontend/src/components/AIReportPanel.tsx",
       "tests": [
-        "frontend/src/components/ReportViewerModal.inTesting.test.tsx"
+        "frontend/src/components/ReportViewerModal.inTesting.test.tsx",
+        "frontend/src/utils/aiInTesting.test.ts"
       ],
       "requirement": "REQ-SAFE-060",
       "change": "PR #82, research stage (owner decision 2026-11-13) — DRAFT, PENDING owner approval",
-      "note": "Unverified until its negative control (the notice removed, shown for a draft no model wrote, placed below the text) has run in CI and is recorded here; then the status becomes implemented."
+      "negative_control": "Executed 2026-11-13 by scripts/safety/rc130_negative_controls.py in Google Cloud Build on 7a07158 (off the owner's PC): 6/6 mutations detected (N1 notice never shown; N2 notice on a draft no model wrote; N3 interface language instead of the report's; N4 viewer copies without the notice; N5 panel copies without the notice; N6 notice above the clinician entry); baseline 19 passed, restored 19 passed / 0 failed. Record: docs/iec62304/records/risk_verification/RC-130_negative_controls_2026-11-13.json."
     }
   },
   "unverified_controls_note": [
