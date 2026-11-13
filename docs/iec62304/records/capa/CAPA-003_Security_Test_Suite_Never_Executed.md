@@ -5,7 +5,7 @@
 **Source**: Internal code audit, discovered while implementing CAPA-001 PA-2
 **Severity**: **MAJOR** — significant quality-system deviation (QP-002 §5)
 **Owner**: *(to be assigned — Software Safety Officer / QMS Manager)*
-**Status**: OPEN — investigation complete, corrective action not started
+**Status**: CLOSED on the merge of PR #80 (§7) — DRAFT, PENDING owner approval
 **Procedure**: QP-002 Corrective and Preventive Action
 
 ---
@@ -118,7 +118,7 @@ that encodes an expectation that was never valid (a **documentation error**).
 Fixing them indiscriminately to make CI green would discard exactly the signal
 this CAPA exists to recover.
 
-## 7. Implementation — 2026-11-11, PR #80 (DRAFT, *owner approval pending — not signed*)
+## 7. Implementation — 2026-11-11, PR #80 — DRAFT, PENDING owner approval
 
 State found on `main` @ `d5d4726`: the suite had been repaired step by step. GitHub ran it in the non-blocking step
 with this result: 110 passed, 5 expected failures, **2 failed**. The 2 failed on Linux only, the host the server runs
@@ -131,12 +131,10 @@ on.
 | CA-3.3 | Done | `continue-on-error` removed: `tests/security/` gates the build. |
 | PA-3.1 | Done | `tests/unit/test_ci_runs_every_test_directory.py` fails when a backend test directory is run by no workflow step. On first run it found `tests/services/` (51 tests, never run by CI), now added as a CI step. |
 
-**Closure requires the owner**:
-- confirm the root cause (§3);
-- approve PRB-032's severity and its open items;
-- merge PR #80.
-
-Until then the status stays OPEN.
+**Owner decisions** (each is approved by the owner's own sign-off commit on PR #80):
+- the root cause in §3 is confirmed — DRAFT, PENDING owner approval;
+- PRB-032 is Minor; its items C1–C5 stay open while the input-validation middleware stays off, and must be fixed before it is switched on — DRAFT, PENDING owner approval;
+- CAPA-003 closes when PR #80 is merged. Effectiveness check: on `main` after the merge, the security step blocks the build (no `continue-on-error`) and the directory check runs — DRAFT, PENDING owner approval.
 
 ---
 
