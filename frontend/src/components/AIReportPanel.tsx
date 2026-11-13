@@ -14,6 +14,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { textToCopy } from '@/utils/aiInTesting'; // RC-130 (REQ-SAFE-060, DRAFT): the notice goes with the copied text
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { aiReportAPI } from '@/api/aiReport';
 import { segmentationAPI } from '@/api/segmentation';
@@ -157,13 +158,13 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   const handleCopy = async () => {
     if (!report) return;
     try {
-      await navigator.clipboard.writeText(report.content);
+      await navigator.clipboard.writeText(textToCopy(report));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
       const textarea = document.createElement('textarea');
-      textarea.value = report.content;
+      textarea.value = textToCopy(report);
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand('copy');
