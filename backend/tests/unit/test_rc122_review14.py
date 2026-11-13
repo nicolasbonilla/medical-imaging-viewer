@@ -203,7 +203,7 @@ def test_rc126_k2_a_failed_evaluation_does_not_burn_the_token(versioned, monkeyp
     client, _ = versioned
     monkeypatch.setattr(qg, "_REGISTRY", _approved(lambda e: None))
     token = _run_token(client)
-    real, calls = qg.run_quality_gate, []
+    real, calls = qg.consult_quality_gate, []
 
     def flaky(*a, **k):
         calls.append(1)
@@ -211,7 +211,7 @@ def test_rc126_k2_a_failed_evaluation_does_not_burn_the_token(versioned, monkeyp
             raise RuntimeError("evaluation interrupted")
         return real(*a, **k)
 
-    monkeypatch.setattr(qg, "run_quality_gate", flaky)
+    monkeypatch.setattr(qg, "consult_quality_gate", flaky)
     lost = TestClient(app, raise_server_exceptions=False).post(QG_URL, json=_final(token))
     assert lost.status_code == 500
     again = TestClient(app).post(QG_URL, json=_final(token))
@@ -321,7 +321,7 @@ def test_rc126_k5_the_single_use_store_is_never_called_on_the_event_loop(version
     client, _ = versioned
     monkeypatch.setattr(qg, "_REGISTRY", _approved(lambda e: None))
     token = _run_token(client)
-    watch = _LoopWatchingStore(qg.MemoryRunLedger() if hasattr(qg, "MemoryRunLedger") else MemoryTicketStore())
+    watch = _LoopWatchingStore(qg.RunLedger(qg.MemoryDocs()) if hasattr(qg, "RunLedger") else MemoryTicketStore())
     monkeypatch.setattr(qg, "_run_token_store", lambda: watch)
     client.post(QG_URL, json=_final(token))
     assert watch.on_loop and not any(watch.on_loop), ("a blocking store call ran on the event loop", watch.on_loop)
@@ -469,8 +469,9 @@ def test_rc126_k9_the_registry_and_the_record_use_one_details_filter():
     events = []
     reg = _approved(events.append)
     reg.audit("success", "quality_gate.abstain", event="agent.consultation", agent_id="quality-gate", details=details)
-    assert events[0]["details"] == (A._safe_details(details) or None)
-    assert "_plain_details" not in inspect.getsource(R)
+    # fifteenth review (S6) supersedes K9's second filter: the details pass through, the record's builder filters ONCE
+    assert events[0]["details"] == details
+    assert "_plain_details" not in inspect.getsource(R) and "_safe_details" not in inspect.getsource(R)
 
 
 # ============================================================================= K10: one read strategy
@@ -525,5 +526,5 @@ def test_rc123_g26_k10_rc062_s_input_is_the_same_with_the_gate_on_and_off(monkey
         seen[enforced] = (lcs.read_source_acquisition(file_id), instances.queries, instances.scans)
     assert seen[True][0] == seen[False][0] == {"manufacturer": "SIEMENS"}
     assert seen[True][1:] == seen[False][1:], ("one read strategy whatever the flag", seen)
-    if queryable:
-        assert seen[False][1:] == (1, 0), "the limit-1 query, never the scan, where the store answers queries"
+    # fifteenth review (S3): K10 withdrawn — the ONE strategy is the base read, the scan, whatever the store answers
+    assert seen[False][1:] == (0, 1), "the base read: a scan of the series' instances"

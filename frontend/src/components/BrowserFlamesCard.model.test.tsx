@@ -435,7 +435,10 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
       }
       world.lastUnseen = unseen;
       if (confirmBox() && !confirmBox()!.checked) await click(confirmBox());
-      if (world.file === A && attestBox() && !attestBox()!.checked) await click(attestBox());
+      if (world.file === A && attestBox() && !attestBox()!.checked) {
+        await click(attestBox());
+        await settle();                // S4: ticking the attestation asks for the decision with it
+      }
       const b = runButton();
       if (!b || b.disabled) {
         world.violate('P4', `settled, Run is disabled though the server allows a run of ${world.file === A ? 'A (attested)' : 'B'}`);

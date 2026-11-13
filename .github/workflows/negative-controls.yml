@@ -1,0 +1,90 @@
+# Negative controls of the single quality gate (PR #81) — run OFF the owner's computer (fifteenth review, S7).
+# MANUAL only: never a required check, no secrets, the PRB-002 offline environment (no credentials, no Google Cloud
+# project). It runs the whole harness of scripts/safety/quality_gate_negative_controls.py — every mutation in a
+# throwaway copy, one at a time — the backend and Node controls in one job, the browser (vitest) controls in another,
+# and uploads each JSON record as an artifact.
+# Triggers: workflow_dispatch (once this file is on the default branch) and, before that, a push to a branch named
+# negative-controls/** (GitHub registers manual workflows from the default branch only). DRAFT, PENDING owner approval.
+name: Negative controls (manual)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["negative-controls/**"]
+
+permissions:
+  contents: read
+
+env:
+  GOOGLE_APPLICATION_CREDENTIALS: /nonexistent/credentials.json
+  GOOGLE_CLOUD_PROJECT: mstool-offline-tests
+  ENVIRONMENT: testing
+  JWT_SECRET_KEY: test-secret-key-minimum-32-characters-required-for-security
+  ENCRYPTION_MASTER_KEY: test-encryption-key-32-chars-min
+  GCS_BUCKET_NAME: test-bucket
+  QG_NC_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+jobs:
+  backend:
+    name: Negative controls — backend and Node harness
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      QG_NC_ONLY: backend
+      QG_NC_OUT: nc-backend.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'   # imports the .ts module under test as it is (type stripping)
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest-timeout
+      - name: Run the negative controls (throwaway copies)
+        run: |
+          mkdir -p "$RUNNER_TEMP/gcloud-empty"
+          CLOUDSDK_CONFIG="$RUNNER_TEMP/gcloud-empty" python scripts/safety/quality_gate_negative_controls.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: negative-controls-backend
+          path: nc-backend.json
+
+  browser:
+    name: Negative controls — browser (vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      QG_NC_ONLY: vitest
+      QG_NC_VITEST: "1"
+      QG_NC_OUT: nc-browser.json
+      QG_NC_MODEL_RUNS: "400"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install the frontend
+        working-directory: frontend
+        run: npm ci
+      - name: Run the negative controls (throwaway copies)
+        run: |
+          mkdir -p "$RUNNER_TEMP/gcloud-empty"
+          CLOUDSDK_CONFIG="$RUNNER_TEMP/gcloud-empty" python scripts/safety/quality_gate_negative_controls.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: negative-controls-browser
+          path: nc-browser.json

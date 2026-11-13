@@ -246,14 +246,18 @@ describe('the server decides the output, and no stale answer acts (G17, G18)', (
     await screen.findByTestId('quality-gate-before');
     fireEvent.click(screen.getByTestId('browser-flames-confirm-sequence').querySelector('input') as HTMLInputElement);
     fireEvent.click(screen.getByTestId('quality-gate-attest').querySelector('input') as HTMLInputElement);
+    // fifteenth review (S4): the attestation is a new input, so the decision WITH it is asked at once; this one cannot
+    // start a run (no run token), so the click asks again
+    await waitFor(() => expect(queue.length).toBe(2));
+    queue[1].resolve({ ...server({ ...VISIT, sequence: 'unknown', physician_confirmed_flair: true }, ON, FILE), run_token: null });
     const run = screen.getByRole('button', { name: /Segment in this browser/ });
     await waitFor(() => expect(run).not.toBeDisabled());
     fireEvent.click(run);
     fireEvent.click(run);
-    expect(queue.length).toBe(2);
+    expect(queue.length).toBe(3);
     expect(run).toBeDisabled();
     rerender(<BrowserFlamesCard flairFileId={B} />);
-    queue[1].resolve(server(VISIT, ON, FILE));
+    queue[2].resolve(server(VISIT, ON, FILE));
     await new Promise((r) => setTimeout(r, 50));
     expect(h.flames.run).not.toHaveBeenCalled();
   });

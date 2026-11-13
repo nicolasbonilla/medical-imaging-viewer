@@ -83,13 +83,20 @@ def test_rc126_m2_an_unexpired_token_is_never_forgotten_and_a_full_store_fails_c
 
 
 class _AlreadyExistsStore:
-    """A durable single-use store as Firestore's create(): the second create of a document id fails."""
+    """A durable store as Firestore's: one document per token, read and written inside a transaction (fifteenth review,
+    S1); the transaction runner is a plain call here (offline — the SDK's runs it in the service)."""
 
     def __init__(self):
         self.docs = {}
 
     def collection(self, name):
         return self
+
+    def transaction(self):
+        return self
+
+    def set(self, ref, data):
+        self.docs[ref.doc_id] = dict(data)
 
     def document(self, doc_id):
         store = self
@@ -102,17 +109,11 @@ class _AlreadyExistsStore:
                 return dict(self._data) if self._data is not None else None
 
         class _Doc:
-            def create(self, data):
-                from google.api_core.exceptions import AlreadyExists
-                if doc_id in store.docs:
-                    raise AlreadyExists("exists")
-                store.docs[doc_id] = dict(data)
+            def __init__(self):
+                self.doc_id = doc_id
 
-            def get(self):
+            def get(self, transaction=None):
                 return _Snap(store.docs.get(doc_id))
-
-            def update(self, data):
-                store.docs[doc_id].update(data)
         return _Doc()
 
 
@@ -122,7 +123,9 @@ def test_rc126_m2_a_replay_after_a_reload_is_rejected_while_the_token_is_unexpir
     durable = _AlreadyExistsStore()
     monkeypatch.delenv("QUALITY_GATE_RUN_TOKEN_STORE", raising=False)
     import app.core.firebase as fb
+    from google.cloud import firestore
     monkeypatch.setattr(fb, "get_firestore_client", lambda *a, **k: durable)
+    monkeypatch.setattr(firestore, "transactional", lambda fn: (lambda tx: fn(tx)))
     token = qg.run_token(F, V, U, False)
     first = _claim(token)
     assert first.status == "fresh"

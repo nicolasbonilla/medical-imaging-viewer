@@ -238,6 +238,7 @@ def server(single, monkeypatch):
     return client, TestClient(app, raise_server_exceptions=False)
 
 
+@pytest.mark.timeout(1500)                       # 2 000 lifecycles: several minutes on a laptop, about two in CI
 def test_rc126_s1_ps1_ps6_hold_over_the_generated_lifecycles(server, monkeypatch):
     counts = {p: 0 for p in ("PS1", "PS2", "PS3", "PS4", "PS5", "PS6")}
     examples = {}
@@ -249,3 +250,31 @@ def test_rc126_s1_ps1_ps6_hold_over_the_generated_lifecycles(server, monkeypatch
     report = json.dumps({"sequences": RUNS, "counts": counts, "examples": examples})
     print("S1 server model:", report)
     assert counts == {p: 0 for p in counts}, report
+
+
+def test_rc126_s1_a_decision_not_stored_fails_closed_and_is_retryable_at_once(server, monkeypatch):
+    """The store refuses the settlement of the first decision: the answer is the gate unavailable, no AI-run record;
+    the identical retry is a fresh claim AT ONCE (no 'in progress'), released, recorded once."""
+    if not NEW:
+        pytest.fail("the code has no one-document ledger (fifteenth review, S1)")
+    client, final_client = server
+    events = []
+    monkeypatch.setattr(qg, "_REGISTRY", _approved(events.append))
+    writes = {"n": 0}
+
+    def faults(kind, apply=None):
+        if kind == "write":
+            writes["n"] += 1
+            if writes["n"] == 2:                    # the claim's write goes through; the settlement's does not
+                raise _Unavailable("settle failed")
+        return apply() if apply is not None else None
+
+    monkeypatch.setattr(qg, "_run_token_store", (lambda st: (lambda: st))(qg.RunLedger(qg.MemoryDocs(faults=faults))))
+    token = client.post(URL, json={"file_id": FILE, "physician_confirmed_flair": True}).json()["run_token"]
+    body = {"file_id": FILE, "physician_confirmed_flair": True, "skull": "stripped", "run_token": token}
+    first = final_client.post(URL, json=body).json()
+    assert first["ai_output_allowed"] is False and first["codes"] == ["gate_unavailable"], first
+    assert not [e for e in events if e.get("event") == "agent.run"], "no AI-run record for a decision not stored"
+    again = final_client.post(URL, json=body)
+    assert again.status_code == 200 and again.json()["ai_output_allowed"] is True, again.text
+    assert len([e for e in events if e.get("event") == "agent.run"]) == 1

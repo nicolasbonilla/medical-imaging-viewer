@@ -156,19 +156,33 @@ async def quality_gate(
             return qg.rate_limited_response(claim.wait_s, code="gate_run_in_progress")
         inputs["run_confirmed"] = claim.status == "fresh"   # M1 (thirteenth review, P2): no confirmed run, no output
     ran = claim is not None and claim.status == "fresh"
+    # S1 (fifteenth review): evaluate (no audit) -> settle the decision in the token's document -> audit -> answer
     try:
-        result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=study_key, actor=actor,
-                                         releases_output=ran)
+        result, record = await asyncio.to_thread(qg.consult_quality_gate, inputs, study_key=study_key, actor=actor)
     except Exception:
         if ran:                                    # K2: a failed evaluation never burns the token
             await asyncio.to_thread(qg.release_final, claim)
         raise
-    answer = {**result, "inputs": inputs, "subject": {"file_id": body.file_id, "version": version}}
+    subject = {"file_id": body.file_id, "version": version}
+    answer = {**result, "inputs": inputs, "subject": subject}
     if body.skull == "pending" and result.get("ai_may_run") is True and version:
         answer["run_token"] = qg.run_token(paths[0], version, user_id, body.physician_confirmed_flair)
         answer["run_token_ttl_s"] = qg.RUN_TOKEN_TTL_S
-    if ran:                                        # K2: the decision delivered, kept for an identical retry
-        answer = await asyncio.to_thread(qg.settle_final, claim, answer)
+    if ran and (record.get("fault") or (result.get("platform") or {}).get("allowed") is not True):
+        await asyncio.to_thread(qg.release_final, claim)     # a platform fault or refusal is no decision to keep
+        ran = False
+    if ran:
+        stored = await asyncio.to_thread(qg.settle_final, claim, answer)
+        if stored is None:                         # not stored: FAIL CLOSED — no release, no AI-run record
+            await asyncio.to_thread(qg.release_final, claim)
+            failed = qg.unavailable_answer(subject, result.get("trace_id"))
+            await asyncio.to_thread(qg.audit_unavailable, failed, actor=actor, study_key=study_key)
+            return failed
+        if stored.get("trace_id") != answer.get("trace_id"):    # another attempt's decision was stored first
+            await asyncio.to_thread(qg.audit_replay, stored, actor=actor, study_key=study_key)
+            return {**stored, "replayed": True}
+    await asyncio.to_thread(qg.audit_quality_gate, result, record, study_key=study_key, actor=actor,
+                            releases_output=ran)
     return answer
 
 

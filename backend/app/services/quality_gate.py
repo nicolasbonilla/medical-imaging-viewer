@@ -50,6 +50,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, StrictBool
 
 from app.services import longitudinal_candidate_safety as lcs
+from app.services import nifti_header
 
 logger = logging.getLogger(__name__)
 
@@ -549,9 +550,9 @@ def _nifti_header_image(data: bytes, decoded: Optional[bytes] = None):
     """A NIfTI image whose header is read and whose voxels are NOT (nibabel's lazy array proxy). ``decoded``: the
     prefix already decompressed by the reader (E1, eighth review: one decompression per round)."""
     import nibabel as nib
-    raw = decoded if decoded is not None else _nifti_prefix(data)
+    raw = decoded if decoded is not None else nifti_header.header_prefix(data)
     holder = nib.FileHolder(fileobj=io.BytesIO(raw))
-    klass = nib.Nifti2Image if _nifti_sizeof_hdr(raw)[0] == 540 else nib.Nifti1Image
+    klass = nib.Nifti2Image if nifti_header.sizeof_hdr(raw)[0] == 540 else nib.Nifti1Image
     return klass.from_file_map({"header": holder, "image": holder})
 
 
@@ -645,48 +646,14 @@ HEADER_PREFIX_MAX = 4 * 1024 * 1024
 _PIXEL_DATA_TAGS = (b"\xe0\x7f\x10\x00", b"\x7f\xe0\x00\x10")
 
 
-NIFTI_DECOMPRESSED_MAX = 16 * 1024 * 1024      # O1 (twelfth review): a header with its extensions, at most 16 MiB
-
-
-def _nifti_prefix(data: bytes) -> bytes:
-    """The decompressed start of a (gzip) NIfTI: its first 544 bytes give sizeof_hdr and vox_offset, then everything up
-    to vox_offset (the header and every extension), capped at NIFTI_DECOMPRESSED_MAX (twelfth review, O1)."""
-    import struct
-    import zlib
-    if data[:2] != b"\x1f\x8b":
-        return data
-    try:
-        d = zlib.decompressobj(16 + zlib.MAX_WBITS)
-        head = d.decompress(data, 544)
-        size, endian = _nifti_sizeof_hdr(head)
-        want = 1 << 20
-        if size and len(head) >= (112 if size == 348 else 176):
-            vox = (struct.unpack(endian + "f", head[108:112])[0] if size == 348
-                   else struct.unpack(endian + "q", head[168:176])[0])
-            if isinstance(vox, (int, float)) and math.isfinite(vox) and vox > 0:
-                want = int(min(max(vox, size + 4), NIFTI_DECOMPRESSED_MAX))
-        rest = d.decompress(d.unconsumed_tail, want - len(head)) if want > len(head) else b""
-        return head + rest
-    except (zlib.error, struct.error, ValueError):
-        return b""
-
-
-def _nifti_sizeof_hdr(raw: bytes):
-    import struct
-    if len(raw) < 4:
-        return None, None
-    for endian in ("<", ">"):
-        size = struct.unpack(endian + "i", raw[:4])[0]
-        if size in (348, 540):
-            return size, endian
-    return None, None
+NIFTI_DECOMPRESSED_MAX = nifti_header.DECOMPRESSED_MAX   # O1 (twelfth review): header + extensions, at most 16 MiB
 
 
 def sniff_format(data: bytes, decoded: Optional[bytes] = None) -> Optional[str]:
     """The format from MAGIC BYTES only (third review, other 1): NIfTI sizeof_hdr 348/540 (raw or gzip), DICOM 'DICM' at
     128 or a preamble-less file starting with an explicit-VR group 0002/0008 element. None = not determinable.
     ``decoded``: the prefix the reader already decompressed (E1, eighth review: never decompressed twice)."""
-    if _nifti_sizeof_hdr(decoded if decoded is not None else _nifti_prefix(data))[0]:
+    if nifti_header.sizeof_hdr(decoded if decoded is not None else nifti_header.header_prefix(data))[0]:
         return "nifti"
     if data[128:132] == b"DICM":
         return "dicom"
@@ -700,13 +667,13 @@ def _inspect_header_prefix(data: bytes):
     whole header — DICOM: the pixel data starts inside it; NIfTI: the header plus the extensions up to vox_offset.
     Returns (complete, (prefix, decompressed NIfTI prefix or None)) so the parser never decompresses again."""
     import struct
-    raw = _nifti_prefix(data)                        # the ONE decompression of this round
+    raw = nifti_header.header_prefix(data)                        # the ONE decompression of this round
     fmt = sniff_format(data, raw)
     if fmt == "dicom":
         return any(tag in data for tag in _PIXEL_DATA_TAGS), (data, None)
     if fmt != "nifti":
         return False, (data, raw)
-    size, endian = _nifti_sizeof_hdr(raw)
+    size, endian = nifti_header.sizeof_hdr(raw)
     if size is None or len(raw) < size + 4:
         return False, (data, raw)
     if raw[size] == 0:
@@ -874,8 +841,10 @@ def rate_limit(user_id: str) -> Optional[int]:
                                               scope=RateLimitScope.PER_USER, user_id=user_id)
     if allowed:
         return None
+    # S5 (fifteenth review): the limiter's remaining time, rounded UP and clamped to [1, window] — never a 60-second
+    # wait for the last second of a window (a 0 from the limiter is "less than one second left")
     wait = lcs._number((meta or {}).get("retry_after")) if isinstance(meta, dict) else None
-    return max(1, min(60, int(math.ceil(wait)))) if wait is not None and wait > 0 else 60
+    return 60 if wait is None else max(1, min(60, int(math.ceil(wait))))
 
 
 def rate_limited_response(wait: int, code: str = "gate_rate_limited"):
@@ -896,16 +865,16 @@ def rate_limited_response(wait: int, code: str = "gate_rate_limited"):
 TOKEN_PREFIX = "qg1"
 DECISION_TOKEN_TTL_S = 24 * 3600
 RUN_TOKEN_TTL_S = 2 * 3600
-# M2 (thirteenth review) / K2 (fourteenth review): the run-token LEDGER — the idempotency-key pattern. A final
-# consultation CLAIMS its run token with a digest of the request (clinician, file, version, attestation, skull,
-# consultation kind); the decision delivered is SETTLED with it. The same token with the IDENTICAL request, within the
-# token's lifetime, replays the stored decision (a lost answer: never re-evaluated, never more permissive, audited as
-# a replay); another request with it is refused (run_not_confirmed); an evaluation that failed before its decision was
-# stored leaves the claim retryable (released at once, else after RUN_CLAIM_LEASE_S); while a claim is being decided,
-# the same request is asked to wait (429 gate_run_in_progress). Durable: Firestore, two small documents per AI run
-# (the claim, the decision; create() is atomic) — survives restarts and instances (D-QG-24, amended); memory
-# (QUALITY_GATE_RUN_TOKEN_STORE=memory) for the offline tests only, never forgetting an unexpired entry. Full or
-# unreachable: FAIL CLOSED — no release (run_not_confirmed), logged. Every call is blocking I/O: off the event loop (K5).
+# M2 (thirteenth review) / K2 (fourteenth) / S1 (fifteenth review): the run-token LEDGER — the idempotency-key
+# pattern with ONE document per token (request_digest, state claimed | decided, claimed_at, attempt, decision),
+# changed ONLY inside a transaction (Firestore: a transaction on the token's document; memory: under a lock).
+# A final consultation CLAIMS the token with a digest of its request; the gate is then evaluated WITHOUT any audit;
+# the decision is SETTLED in the document; only then is it audited and answered. The identical request within the
+# token's lifetime REPLAYS the stored decision (a lost answer: never re-evaluated, never more permissive, audited as a
+# replay); another request is refused (run_not_confirmed); a claim whose evaluation or settlement failed is released
+# (retryable at once by the same request); an abandoned claim is taken over INSIDE the transaction after
+# RUN_CLAIM_LEASE_S; while a live claim is being decided, the same request is asked to wait (429 gate_run_in_progress).
+# Full or unreachable: FAIL CLOSED — no release, logged. Every call is blocking I/O: off the event loop (K5).
 RUN_TOKEN_COLLECTION = "quality_gate_run_tokens"
 RUN_TOKENS_SPENT_MAX = 100_000
 RUN_CLAIM_LEASE_S = 30
@@ -913,142 +882,141 @@ _RUN_TOKEN_MEMORY = None
 
 
 class RunClaim:
-    """The ledger's answer to a final consultation's run token (K2). ``status``: invalid | unavailable | fresh |
-    replay | in_progress | conflict. (A plain class: this module is also loaded outside sys.modules, as a restart.)"""
+    """The ledger's answer to a final consultation's run token. ``status``: invalid | unavailable | fresh | replay |
+    in_progress | conflict. (A plain class: this module is also loaded outside sys.modules, as a restart.)"""
 
-    __slots__ = ("status", "key", "digest", "expires_at", "answer", "wait_s")
+    __slots__ = ("status", "key", "digest", "expires_at", "answer", "wait_s", "attempt")
 
     def __init__(self, status: str, key: Optional[str] = None, digest: Optional[str] = None, expires_at: int = 0,
-                 answer: Optional[Dict[str, Any]] = None, wait_s: int = 0):
-        self.status, self.key, self.digest, self.expires_at, self.answer, self.wait_s = (
-            status, key, digest, expires_at, answer, wait_s)
+                 answer: Optional[Dict[str, Any]] = None, wait_s: int = 0, attempt: int = 0):
+        self.status, self.key, self.digest, self.expires_at, self.answer, self.wait_s, self.attempt = (
+            status, key, digest, expires_at, answer, wait_s, attempt)
 
 
-def _lease_wait(claimed_at: float, now: float) -> int:
-    return max(1, int(math.ceil(RUN_CLAIM_LEASE_S - (now - claimed_at))))
+def _claim_step(doc, digest: str, expires_at: int, now: float):
+    """The claim, on the token's document as read in the transaction: (document to write or None, RunClaim)."""
+    if doc is None:
+        return ({"request_digest": digest, "state": "claimed", "claimed_at": float(now), "attempt": 1,
+                 "decision": None, "expires_at": int(expires_at)}, RunClaim("fresh", attempt=1))
+    if doc.get("request_digest") != digest:
+        return None, RunClaim("conflict")
+    if doc.get("state") == "decided":
+        return None, RunClaim("replay", answer=copy.deepcopy(doc.get("decision")))
+    elapsed = now - float(doc.get("claimed_at") or 0.0)
+    if elapsed >= RUN_CLAIM_LEASE_S:                     # released (claimed_at 0) or abandoned: taken over HERE
+        attempt = int(doc.get("attempt") or 0) + 1
+        return {**doc, "claimed_at": float(now), "attempt": attempt}, RunClaim("fresh", attempt=attempt)
+    return None, RunClaim("in_progress", wait_s=max(1, int(math.ceil(RUN_CLAIM_LEASE_S - elapsed))))
 
 
-class MemoryRunLedger:
-    """The run-token ledger in memory (offline tests only): bounded, never forgets an unexpired entry (full: raises)."""
+def _settle_step(doc, digest: str, attempt: int, answer: Dict[str, Any]):
+    """Settle a fresh claim's decision: the first decision stands; an attempt that no longer holds the claim settles
+    nothing (None: the caller fails closed)."""
+    if doc is None or doc.get("request_digest") != digest:
+        return None, None
+    if doc.get("state") == "decided":
+        return None, copy.deepcopy(doc.get("decision"))
+    if int(doc.get("attempt") or 0) != attempt:
+        return None, None
+    return {**doc, "state": "decided", "decision": copy.deepcopy(answer)}, copy.deepcopy(answer)
 
-    def __init__(self, max_entries: Optional[int] = None):
-        self._entries: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
+
+def _release_step(doc, digest: str, attempt: int):
+    """A claim whose evaluation or settlement failed: retryable AT ONCE by the same request (claimed_at 0)."""
+    if (doc is not None and doc.get("request_digest") == digest and doc.get("state") == "claimed"
+            and int(doc.get("attempt") or 0) == attempt):
+        return {**doc, "claimed_at": 0.0}, None
+    return None, None
+
+
+class MemoryDocs:
+    """The token documents in memory (QUALITY_GATE_RUN_TOKEN_STORE=memory: offline tests only): bounded, never forgets
+    an unexpired document (full: raises). ``faults`` (tests only) is called at each external call — ("read") and
+    ("write", apply) — to inject a failure there."""
+
+    def __init__(self, max_entries: Optional[int] = None, faults=None):
+        self._docs: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
         self._lock = threading.Lock()
         self._max = max_entries if max_entries is not None else RUN_TOKENS_SPENT_MAX
+        self._faults = faults
 
-    def claim(self, key: str, digest: str, expires_at: int, now: float) -> RunClaim:
+    def _call(self, kind: str, apply=None):
+        if self._faults is not None:
+            return self._faults(kind, apply)
+        return apply() if apply is not None else None
+
+    def peek(self, key: str) -> Optional[Dict[str, Any]]:
+        return copy.deepcopy(self._docs.get(key))
+
+    def transact(self, key: str, step, now: float):
         from app.security.agent_scope import AgentScopeError
         with self._lock:
-            while self._entries and next(iter(self._entries.values()))["expires_at"] <= now:
-                self._entries.popitem(last=False)               # same lifetime: the oldest expire first
-            entry = self._entries.get(key)
-            if entry is None:
-                if len(self._entries) >= self._max:
+            while self._docs and next(iter(self._docs.values()))["expires_at"] <= now:
+                self._docs.popitem(last=False)                  # same lifetime: the oldest expire first
+            self._call("read")
+            new, result = step(copy.deepcopy(self._docs.get(key)))
+            if new is not None:
+                if key not in self._docs and len(self._docs) >= self._max:
                     raise AgentScopeError("run token ledger full")
-                self._entries[key] = {"digest": digest, "claimed_at": now, "expires_at": int(expires_at), "answer": None}
-                return RunClaim("fresh")
-            if entry["digest"] != digest:
-                return RunClaim("conflict")
-            if entry["answer"] is not None:
-                return RunClaim("replay", answer=copy.deepcopy(entry["answer"]))
-            if now - entry["claimed_at"] >= RUN_CLAIM_LEASE_S:
-                entry["claimed_at"] = now                        # an abandoned claim of the same request: retried
-                return RunClaim("fresh")
-            return RunClaim("in_progress", wait_s=_lease_wait(entry["claimed_at"], now))
-
-    def settle(self, key: str, digest: str, answer: Dict[str, Any], expires_at: int) -> Dict[str, Any]:
-        with self._lock:
-            entry = self._entries.get(key)
-            if entry is not None and entry["digest"] == digest:
-                if entry["answer"] is None:                       # the first decision wins
-                    entry["answer"] = copy.deepcopy(answer)
-                return copy.deepcopy(entry["answer"])
-            return answer
-
-    def release(self, key: str, digest: str) -> None:
-        with self._lock:
-            entry = self._entries.get(key)
-            if entry is not None and entry["digest"] == digest and entry["answer"] is None:
-                entry["claimed_at"] = float("-inf")              # retryable at once by the same request
+                self._call("write", lambda: self._docs.__setitem__(key, copy.deepcopy(new)))
+            return result
 
 
-class FirestoreRunLedger:
-    """The durable run-token ledger: per run, a claim document and a decision document, both written with create()
-    (atomic: the first wins); a retry of an abandoned claim takes it over by creating that lease window's document."""
+class FirestoreDocs:
+    """The token documents in Firestore (`quality_gate_run_tokens`, one per token): read and written in ONE Firestore
+    transaction on the token's document; `ttl` (a timestamp) lets a TTL policy delete it after its expiry."""
 
     COLLECTION = RUN_TOKEN_COLLECTION
 
     def __init__(self, client=None):
         self._client = client
 
-    def _col(self):
+    def transact(self, key: str, step, now: float):
+        from datetime import datetime, timedelta, timezone
+        from google.cloud import firestore
         client = self._client
         if client is None:
             from app.core.firebase import get_firestore_client
             client = get_firestore_client()
-        return client.collection(self.COLLECTION)
+        ref = client.collection(self.COLLECTION).document(key)
 
-    @staticmethod
-    def _expiry(expires_at: int):
-        from datetime import datetime, timedelta, timezone
-        return datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=min(int(expires_at), 253402300799))
+        @firestore.transactional
+        def run(tx):
+            snap = ref.get(transaction=tx)
+            doc = snap.to_dict() if snap.exists else None
+            if doc is not None:
+                doc.pop("ttl", None)
+            new, result = step(doc)
+            if new is not None:
+                ttl = datetime(1970, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=min(int(new["expires_at"]), 253402300799))
+                tx.set(ref, {**new, "ttl": ttl})
+            return result
+        return run(client.transaction())
+
+
+class RunLedger:
+    """The run-token ledger over ONE document per token (S1, fifteenth review)."""
+
+    def __init__(self, docs):
+        self.docs = docs
 
     def claim(self, key: str, digest: str, expires_at: int, now: float) -> RunClaim:
-        from app.security.agent_scope import AgentScopeError
-        from google.api_core.exceptions import AlreadyExists
-        try:
-            col = self._col()
-            try:
-                col.document(key).create({"digest": digest, "claimed_at": float(now), "expires_at": self._expiry(expires_at)})
-                return RunClaim("fresh")
-            except AlreadyExists:
-                pass
-            data = col.document(key).get().to_dict() or {}
-            if data.get("digest") != digest:
-                return RunClaim("conflict")
-            decided = col.document(f"{key}-decision").get()
-            if decided.exists:
-                stored = decided.to_dict() or {}
-                return RunClaim("replay", answer=json.loads(stored["answer"])) if stored.get("digest") == digest \
-                    else RunClaim("conflict")
-            claimed_at = float(data.get("claimed_at") or 0.0)
-            if now - claimed_at >= RUN_CLAIM_LEASE_S:
-                window = int((now - claimed_at) // RUN_CLAIM_LEASE_S)
-                try:
-                    col.document(f"{key}-lease-{window}").create({"digest": digest, "expires_at": self._expiry(expires_at)})
-                    return RunClaim("fresh")
-                except AlreadyExists:
-                    pass
-            return RunClaim("in_progress", wait_s=_lease_wait(claimed_at, now) if now - claimed_at < RUN_CLAIM_LEASE_S
-                            else RUN_CLAIM_LEASE_S)
-        except Exception as exc:  # noqa: BLE001 — unreachable store: fail closed
-            raise AgentScopeError("run token ledger unavailable") from exc
+        return self.docs.transact(key, lambda doc: _claim_step(doc, digest, expires_at, now), now)
 
-    def settle(self, key: str, digest: str, answer: Dict[str, Any], expires_at: int) -> Dict[str, Any]:
-        from google.api_core.exceptions import AlreadyExists
-        col = self._col()
-        try:
-            col.document(f"{key}-decision").create({"digest": digest, "answer": json.dumps(answer, default=str),
-                                                    "expires_at": self._expiry(expires_at)})
-            return answer
-        except AlreadyExists:
-            stored = col.document(f"{key}-decision").get().to_dict() or {}
-            return json.loads(stored["answer"]) if stored.get("digest") == digest else answer
+    def settle(self, claim: "RunClaim", answer: Dict[str, Any], now: float) -> Optional[Dict[str, Any]]:
+        return self.docs.transact(claim.key, lambda doc: _settle_step(doc, claim.digest, claim.attempt, answer), now)
 
-    def release(self, key: str, digest: str) -> None:
-        col = self._col()
-        data = col.document(key).get().to_dict() or {}
-        if data.get("digest") == digest:
-            col.document(key).update({"claimed_at": 0.0})        # retryable now: the next window's lease is free
+    def release(self, claim: "RunClaim", now: float) -> None:
+        self.docs.transact(claim.key, lambda doc: _release_step(doc, claim.digest, claim.attempt), now)
 
 
-def _run_token_store():
+def _run_token_store() -> RunLedger:
     global _RUN_TOKEN_MEMORY
     if os.environ.get("QUALITY_GATE_RUN_TOKEN_STORE") == "memory":
         if _RUN_TOKEN_MEMORY is None:
-            _RUN_TOKEN_MEMORY = MemoryRunLedger(max_entries=RUN_TOKENS_SPENT_MAX)
+            _RUN_TOKEN_MEMORY = RunLedger(MemoryDocs(max_entries=RUN_TOKENS_SPENT_MAX))
         return _RUN_TOKEN_MEMORY
-    return FirestoreRunLedger()
+    return RunLedger(FirestoreDocs())
 
 
 def _now() -> float:
@@ -1149,11 +1117,11 @@ def _final_digest(*, user_id: Any, file_id: str, version: Optional[str], atteste
 
 def claim_final(token: Any, *, file_id: str, version: Optional[str], user_id: Any, attested: bool,
                 skull: str) -> RunClaim:
-    """K5 / M2 / K2: claim a final consultation's run token in the ledger. ``fresh`` only for a token this server issued
-    for exactly this file, version, clinician and attestation, before its expiry, not yet claimed by another request;
-    ``replay`` with the stored decision for the identical request; ``conflict`` for another request; ``in_progress``
-    while the same request is being decided; ``invalid`` / ``unavailable`` (fail closed, logged) otherwise. Blocking:
-    call it off the event loop."""
+    """Claim a final consultation's run token in the ledger. ``fresh`` only for a token this server issued for exactly
+    this file, version, clinician and attestation, before its expiry, not claimed by another request (or released, or
+    abandoned beyond the lease); ``replay`` with the stored decision for the identical request; ``conflict`` for
+    another request; ``in_progress`` while a live claim of the same request is being decided; ``invalid`` /
+    ``unavailable`` (fail closed, logged) otherwise. Blocking: call it off the event loop."""
     payload = verify_token(token, "run")
     if (payload is None or payload.get("file") != file_id or payload.get("version") != version or not version
             or payload.get("user") != str(user_id or "") or payload.get("attested") is not (attested is True)
@@ -1173,24 +1141,27 @@ def claim_final(token: Any, *, file_id: str, version: Optional[str], user_id: An
     return claim
 
 
-def settle_final(claim: RunClaim, answer: Dict[str, Any]) -> Dict[str, Any]:
-    """K2: store the decision delivered for a fresh claim (the first decision wins) and return the one to deliver.
-    Blocking: off the event loop. A store that fails here leaves the claim to its lease (logged)."""
+def settle_final(claim: RunClaim, answer: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """S1: store the decision of a fresh claim in its document, BEFORE it is audited or answered; returns the decision
+    to deliver (the first one stored for the token), or None when it could not be stored (a store failure, or the
+    claim taken over meanwhile): the caller then FAILS CLOSED — no release, no AI-run record. Blocking."""
     if claim.status != "fresh" or not claim.key:
-        return answer
+        return None
     try:
-        return _run_token_store().settle(claim.key, claim.digest, answer, claim.expires_at)
-    except Exception as exc:  # noqa: BLE001 — the decision was made and audited; its replay is not guaranteed
-        logger.warning("Quality gate: the run token store could not keep a decision (%s)", type(exc).__name__)
-        return answer
+        return _run_token_store().settle(claim, answer, _now())
+    except Exception as exc:  # noqa: BLE001 — not stored: fail closed
+        logger.warning("Quality gate: the run token store could not keep a decision (%s); nothing is released",
+                       type(exc).__name__)
+        return None
 
 
 def release_final(claim: RunClaim) -> None:
-    """K2: an evaluation that failed before its decision was stored leaves the claim retryable by the same request."""
+    """S1: a claim whose evaluation or settlement failed is retryable AT ONCE by the same request (best effort: a store
+    that fails here leaves it to the lease). Blocking."""
     if claim.status != "fresh" or not claim.key:
         return
     try:
-        _run_token_store().release(claim.key, claim.digest)
+        _run_token_store().release(claim, _now())
     except Exception as exc:  # noqa: BLE001 — the lease frees it later
         logger.warning("Quality gate: a failed run claim could not be released (%s)", type(exc).__name__)
 
@@ -1207,11 +1178,41 @@ def audit_replay(answer: Dict[str, Any], *, actor=None, study_key: str = "", reg
                   study_key=study_key or None, trace_id=answer.get("trace_id"), details=details)
 
 
+def unavailable_answer(subject: Dict[str, Any], trace_id: Optional[str] = None) -> Dict[str, Any]:
+    """S1: the fail-closed answer of a final consultation whose decision could not be stored: the gate unavailable."""
+    from app.agent_platform import registry as R
+    policy = _policy()
+    result = _result([_check("platform", None, "abstain", policy["platform"]["otherwise"])], policy)
+    result["platform"] = {"allowed": False, "code": str(R.RefusalCode.RUN_INTERNAL_ERROR)}
+    return {**result, "trace_id": trace_id, "subject": subject}
+
+
+def audit_unavailable(answer: Dict[str, Any], *, actor=None, study_key: str = "", registry=None) -> None:
+    """S1: a decision that could not be stored is recorded as a FAILED consultation (never an AI run)."""
+    from app.agent_platform import registry as R
+    reg = registry if registry is not None else default_registry()
+    with R.audit_actor(actor):
+        reg.audit("failure", "quality_gate.store_unavailable", event="agent.consultation", agent_id=AGENT_ID,
+                  study_key=study_key or None, trace_id=answer.get("trace_id"),
+                  details={"decision": answer.get("decision"), "mode": "single", "released": False})
+
+
 def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None, releases_output: bool = True,
                      trace_id: Optional[str] = None) -> Dict[str, Any]:
-    """The gate as the registered agent ``quality-gate`` (RC-126): the platform's approval and kill switches are
-    read now (fail closed); one trace (one child span per check that ran) and one ``agent.run`` audit record.
-    The caller's ``platform`` field, if any, is ignored: only the registry decides it."""
+    """The gate as the registered agent ``quality-gate`` (RC-126): consulted (consult_quality_gate), then audited
+    (audit_quality_gate) — one ``agent.run`` or ``agent.consultation`` record."""
+    result, record = consult_quality_gate(inputs, registry=registry, tracer=tracer, study_key=study_key, actor=actor,
+                                          trace_id=trace_id)
+    audit_quality_gate(result, record, registry=registry, study_key=study_key, actor=actor,
+                       releases_output=releases_output)
+    return result
+
+
+def consult_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "", actor=None,
+                         trace_id: Optional[str] = None):
+    """S1 (fifteenth review): the gate's decision through the platform — approval and kill switches read now (fail
+    closed), one trace with one child span per check — WITHOUT any audit record: returns (result, record), the record
+    to write once the decision is final (audit_quality_gate). The caller's ``platform`` field is ignored."""
     from app.agent_platform import registry as R
     from app.agent_platform import tracing as T
 
@@ -1243,30 +1244,38 @@ def run_quality_gate(inputs, *, registry=None, tracer=None, study_key: str = "",
                          "abstained" if result["decision"] == "abstain" else "delivered")
                 if state["refusal"]:
                     span.set("mstool.refusal.code", str(state["refusal"]))
-        except Exception:  # noqa: BLE001 — a platform fault: abstain, audited as a failure
+        except Exception:  # noqa: BLE001 — a platform fault: abstain, recorded as a failure
             result = _result([_check("platform", None, "abstain", policy["platform"]["otherwise"])], policy)
             result["platform"] = {"allowed": False, "code": str(R.RefusalCode.RUN_INTERNAL_ERROR)}
             result["trace_id"] = state.get("trace_id")
-            reg.audit("failure", R.RefusalCode.RUN_INTERNAL_ERROR, event="agent.consultation", agent_id=AGENT_ID,
-                      study_key=study_key or None, trace_id=state.get("trace_id"))
-            return result
+            return result, {"fault": True}
         result["trace_id"] = state["trace_id"]
-        # F4 (fifth review of PR #81): a consultation is not an AI run. Only a decision that releases an AI output
-        # (ai_output_allowed: the final consultation of a single study, or a comparison allowed) is linked to the AI
-        # run ("agent.run" -> CLINICAL_AI_RUN); every other one is a consultation ("agent.consultation").
-        # G31 (eighth review): a comparison's gate decision releases nothing by itself (RC-062 and SEL come after; the
-        # route records the outcome); structured details keep every cause and attested visit
-        event = "agent.run" if releases_output and result.get("ai_output_allowed") is True else "agent.consultation"
         details = {**explain(result), "decision": result.get("decision"), "mode": result.get("mode"),
                    **_skull_report(inputs)}
-        if state["refusal"]:
-            reg.audit("denied", state["refusal"], event=event, agent_id=AGENT_ID,
-                      study_key=study_key or None, trace_id=state["trace_id"], details=details)
+        return result, {"fault": False, "refusal": state["refusal"], "details": details}
+
+
+def audit_quality_gate(result: Dict[str, Any], record: Dict[str, Any], *, registry=None, study_key: str = "",
+                       actor=None, releases_output: bool) -> None:
+    """The ONE audit record of a consultation, written once its decision is final (S1). F4 (fifth review of PR #81): a
+    consultation is not an AI run — only a decision that releases an AI output (``releases_output`` and
+    ai_output_allowed) is the AI run ("agent.run" -> CLINICAL_AI_RUN); every other one is a consultation. G31 (eighth
+    review): a comparison's gate decision releases nothing by itself; structured details keep every cause and visit."""
+    from app.agent_platform import registry as R
+    reg = registry if registry is not None else default_registry()
+    with R.audit_actor(actor):
+        if record.get("fault"):
+            reg.audit("failure", R.RefusalCode.RUN_INTERNAL_ERROR, event="agent.consultation", agent_id=AGENT_ID,
+                      study_key=study_key or None, trace_id=result.get("trace_id"))
+            return
+        event = "agent.run" if releases_output and result.get("ai_output_allowed") is True else "agent.consultation"
+        if record.get("refusal"):
+            reg.audit("denied", record["refusal"], event=event, agent_id=AGENT_ID,
+                      study_key=study_key or None, trace_id=result.get("trace_id"), details=record.get("details"))
         else:
             # S3: the physician's attestation is recorded with the run's actor (the authenticated clinician)
             reg.audit("success", audit_code(result), event=event, agent_id=AGENT_ID,
-                      study_key=study_key or None, trace_id=state["trace_id"], details=details)
-    return result
+                      study_key=study_key or None, trace_id=result.get("trace_id"), details=record.get("details"))
 
 
 def _skull_report(inputs: Any) -> Dict[str, str]:
@@ -1476,7 +1485,8 @@ def _register_audit_reasons() -> None:
         codes = set()
     decisions = ("proceed", "proceed_with_warnings", "pending", "abstain")
     codes |= {f"quality_gate.{d}" for d in decisions} | {f"quality_gate.{d}.attested" for d in decisions}
-    codes |= {"quality_gate.released", "quality_gate.replayed"} | {f"quality_gate.withheld.{w}" for w in WITHHELD_BY}
+    codes |= {"quality_gate.released", "quality_gate.replayed", "quality_gate.store_unavailable"}
+    codes |= {f"quality_gate.withheld.{w}" for w in WITHHELD_BY}
     register_reason_codes(codes)
 
 

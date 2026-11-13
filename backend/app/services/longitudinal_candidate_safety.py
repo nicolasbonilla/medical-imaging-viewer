@@ -411,26 +411,15 @@ def source_refs(file_id, study_service=None):
 
 
 def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
-    """The acquisition record stored with a source image (instance document), or None. Never raises. Seventh review
-    of PR #81 (E1): with the gate on, ONE instance document is read — a query on the file, limit 1; with it off, the
-    base read (twelfth review, O2: G26)."""
+    """The acquisition record stored with a source image (instance document), or None. Never raises. The BASE read
+    (a scan of the series' instances), with and without the quality gate: RC-062's input path is an approved risk
+    control's and is not changed by PR #81 (fifteenth review, S3: the seventh review's indexed query is withdrawn;
+    G26). The one lookup of the source references (tenth review) gives the same documents as the base's."""
     try:
         refs = source_refs(file_id, study_service)
         if refs is None:
             return None
-        instances = refs[1].collection("instances")
-        # K10 (fourteenth review of PR #81): ONE read strategy whatever the flags — the limit-1 query on the file (E1);
-        # the scan only where the store answers no query (G26: RC-062's input is the same with the gate on and off)
-        try:
-            try:
-                from google.cloud.firestore_v1.base_query import FieldFilter
-                query = instances.where(filter=FieldFilter("gcs_object_name", "==", file_id))
-            except ImportError:  # pragma: no cover — the SDK is installed in the service
-                query = instances.where("gcs_object_name", "==", file_id)
-            docs = query.limit(1).stream()
-        except (AttributeError, TypeError, NotImplementedError):   # a store without query support
-            docs = instances.stream()
-        for doc in docs:
+        for doc in refs[1].collection("instances").stream():
             data = doc.to_dict() or {}
             if data.get("gcs_object_name") == file_id:
                 acq = data.get("acquisition")

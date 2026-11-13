@@ -197,8 +197,9 @@ def test_rc122_e1_one_ranged_header_reader_and_one_decompression_per_round(singl
     assert "read_header_prefix(" in inspect.getsource(dic._header_bytes)
     data = gzip.compress(nib.Nifti1Image(np.zeros((8, 8, 6), np.float32), np.eye(4)).to_bytes())
     calls = []
-    original = qg._nifti_prefix
-    monkeypatch.setattr(qg, "_nifti_prefix", lambda d: calls.append(1) or original(d))
+    from app.services import nifti_header      # fifteenth review (S6): the ONE NIfTI header reader
+    original = nifti_header.header_prefix
+    monkeypatch.setattr(nifti_header, "header_prefix", lambda d: calls.append(1) or original(d))
 
     class _Ranged:
         async def download_file_range(self, bucket, path, start, end):

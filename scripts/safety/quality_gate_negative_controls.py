@@ -50,7 +50,8 @@ BACKEND_TESTS = ["tests/unit/test_quality_gate_matrix.py", "tests/unit/test_rc12
                  "tests/unit/test_rc122_one_gate.py", "tests/unit/test_rc122_review7.py",
                  "tests/unit/test_rc122_review8.py", "tests/unit/test_rc122_review9.py", "tests/unit/test_rc122_review10.py",
                  "tests/unit/test_rc122_review11.py", "tests/unit/test_rc122_review12.py",
-                 "tests/unit/test_rc122_review13.py", "tests/unit/test_rc122_review14.py"]
+                 "tests/unit/test_rc122_review13.py", "tests/unit/test_rc122_review14.py", "tests/unit/test_rc122_review15.py",
+                 "tests/unit/test_rc126_run_token_model.py"]
 VITEST_TESTS = ["src/components/BrowserFlamesCard.qualityGate.test.tsx", "src/components/QualityGatePanel.test.tsx",
                 "src/services/qualityGate/gate.test.ts", "src/services/flames/__tests__/headerEvidence.flagsOff.test.ts",
                 "src/components/LongitudinalCompare.qualityGate.test.tsx", "src/components/LongitudinalResultPanel.qualityGate.test.tsx",
@@ -108,6 +109,9 @@ REG = "backend/app/agent_platform/registry.py"
 LC = "frontend/src/components/LongitudinalCompare.tsx"
 HOOK = "frontend/src/hooks/useGateConsultation.ts"
 GT = "frontend/src/services/qualityGate/gateText.ts"
+NH = "backend/app/services/nifti_header.py"
+RL = "backend/app/core/security/rate_limiter.py"
+SS = "backend/app/services/segmentation_service.py"
 AUD = "backend/app/core/logging/audit.py"
 API = "frontend/src/services/qualityGate/api.ts"
 EN = "frontend/src/i18n/locales/en.json"
@@ -117,6 +121,10 @@ CMP_ACTION = ("If you are sure this visit's image is a T2-FLAIR, tick its confir
 # Tenth review of PR #81 (SIMPLIFY): controls RETIRED because the part they mutated no longer exists — kept here and in the
 # record with the reason, never silently dropped
 RETIRED = {
+    "Z5_instances_streamed": "the indexed query of the acquisition record was withdrawn (fifteenth review, S3): RC-062's input is read as on the base, a scan; AH9 sabotages that",
+    "AG10_read_strategy_follows_the_flag": "K10 was withdrawn (fifteenth review, S3): one read, the base's, whatever the flags; AH9 sabotages that",
+    "V36_rescinded_attestation_kept": "the attested-decision slot was removed (fifteenth review, S4): one consultation for the current inputs; V45 sabotages it",
+    "V41_attested_decision_for_an_older_version": "the attested-decision slot was removed (fifteenth review, S4); the version staleness of the one decision is V33/P3",
     "AF4_marker_before_the_record": "the route's marker became the durable confirmation of its record (fourteenth review, K1); AG1 and AG1b sabotage the confirmation",
     "AE9_indexed_query_with_the_flags_off": "the read strategy no longer depends on the flags (fourteenth review, K10); AG10 sabotages the one strategy",
     "AD1_report_trusts_the_client_block": "the in-memory decision store and its lookup were replaced by signed, pair-bound tokens (twelfth review, K1/K2); AE1-AE4 sabotage the verification instead",
@@ -334,9 +342,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "U11_completeness_on_the_loop": ([(DIC, '        return await asyncio.to_thread(inspect, raw) if in_thread else inspect(raw)\n',
         '        return inspect(raw)\n')],
         "the header completeness check runs on the event loop", "backend", "RC-122"),
-    "U12_gate_on_the_loop": ([(CT, '        result = await asyncio.to_thread(qg.run_quality_gate, inputs, study_key=study_key, actor=actor,\n'
-        '                                         releases_output=ran)\n',
-        '        result = qg.run_quality_gate(inputs, study_key=study_key, actor=actor, releases_output=ran)\n')],
+    "U12_gate_on_the_loop": ([(CT, '        result, record = await asyncio.to_thread(qg.consult_quality_gate, inputs, study_key=study_key, actor=actor)\n',
+        '        result, record = qg.consult_quality_gate(inputs, study_key=study_key, actor=actor)\n')],
         "the gate runs on the event loop", "backend", "RC-126"),
     "U13_default_ranges_download_repeatedly": ([(DIC, '    if ranged is None or getattr(type(storage_service), "download_file_range", None) is IStorageService.download_file_range:\n',
         '    if ranged is None:\n')],
@@ -461,7 +468,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         '    return None, None\n')],
         "an audit reason longer than 64 characters is dropped (A2)", "backend", "RC-126"),
     # ── fourteenth review of PR #81: K1-K10, each through the real lower layer ──
-    "AG1_unconfirmed_route_record_silences_the_middleware": ([(AM, '                if not await write.confirmed(remaining):\n                    return False\n',
+    "AG1_unconfirmed_route_record_silences_the_middleware": ([(AM, '                if not await write.confirmed(remaining):\n                    return True, False\n',
         '                pass\n')],
         "a route record the store never confirmed still silences the middleware: the request has no record (K1)", "backend", "RC-126"),
     "AG1b_dropped_write_counts_as_written": ([(AUD, '                    and f.result() is True)\n', '                    )\n')],
@@ -469,8 +476,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "AG2_lost_answer_not_replayed": ([(CT, '        if claim.status == "replay":               # a lost answer: the stored decision, never re-evaluated\n',
         '        if False:\n')],
         "a lost final answer is re-evaluated instead of replayed: the run's result is hidden for good (K2)", "backend", "RC-126"),
-    "AG2b_another_request_replays": ([(QG, '            if entry["digest"] != digest:\n                return RunClaim("conflict")\n', '')],
-        "another request presenting the same token gets the stored (released) decision: more permissive (K2)", "backend", "RC-126"),
+    "AG2b_another_request_replays": ([(QG, '    if doc.get("request_digest") != digest:\n        return None, RunClaim("conflict")\n', '')],
+        "another request presenting the same token gets the stored (released) decision: more permissive (K2, PS6)", "backend", "RC-126"),
     "AG3_permission_without_a_version": ([(CT, '    inputs["version_established"] = bool(version)\n', '    inputs["version_established"] = True\n')],
         "an allowed consultation without an established file version: a run the browser can never start (K3)", "backend", "RC-126"),
     "AG3b_version_check_not_evaluated": ([(QG, '    if mode == "single" and inputs.get("version_established") is False:\n', '    if False:\n')],
@@ -496,34 +503,61 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         '    visit_check, records, read = await asyncio.gather(_visit_check(specs[0], specs[1], sources[0], sources[1]),\n'
         '        asyncio.gather(*(_records(s) for s in sources)), asyncio.gather(*(_header(s) for s in sources)))\n')],
         "a pair the visit check refuses still downloads headers and reads records (K8)", "backend", "RC-123"),
-    "AG9_second_details_filter": ([(REG, '    return _safe_details(details) or None\n', '    return dict(details) or None\n')],
-        "agent records keep details the audit record's filter would drop (K9)", "backend", "RC-126"),
-    "AG10_read_strategy_follows_the_flag": ([(LCS, '            docs = query.limit(1).stream()\n',
-        '            docs = query.limit(1).stream() if __import__("app.core.config", fromlist=["x"]).get_settings().QUALITY_GATE_ENFORCED else instances.stream()\n')],
-        "RC-062's acquisition record is read differently with the gate on and off (K10, G26)", "backend", "RC-122"),
+    "AG9_second_details_filter": ([(REG, '            "details": dict(details) if isinstance(details, dict) else None,\n',
+        '            "details": {k: v for k, v in details.items() if isinstance(v, str)} if isinstance(details, dict) else None,\n')],
+        "agent records filter their details a second, different way (K9, S6)", "backend", "RC-126"),
     "V42_no_start_said_nothing": ([(CARD, "      setRunNotice({ kind: 'notStarted', code: stop?.code ?? null, params: stop?.params ?? null });\n", "")],
         "a Run click that cannot start says nothing (K3, P7)", "vitest", "RC-122"),
     "V43_changed_inputs_said_nothing": ([(CARD, "        setRunNotice({ kind: 'inputsChanged', code: null });\n", "")],
         "a Run click whose inputs changed while checking says nothing (P7)", "vitest", "RC-122"),
     "V44_unknown_version_not_asked_again": ([(CARD, "  || r.codes.includes('version_not_established');\n", ";\n")],
         "an unknown file version is never checked again: Run stays disabled for good (K3, P4)", "vitest", "RC-122"),
+    # ── fifteenth review of PR #81: S1-S6, LESS mechanism ──
+    "AH1_release_audited_before_it_is_stored": ([(CT, '    if ran:\n        stored = await asyncio.to_thread(qg.settle_final, claim, answer)\n',
+        '    if ran:\n        await asyncio.to_thread(qg.audit_quality_gate, result, record, study_key=study_key, actor=actor, releases_output=True)\n'
+        '        stored = await asyncio.to_thread(qg.settle_final, claim, answer)\n')],
+        "the AI run is recorded before its decision is stored: a failed settlement and its retry record two AI runs (S1, PS1)", "backend", "RC-126"),
+    "AH2_unstored_decision_released": ([(QG, '                       type(exc).__name__)\n        return None\n\n\ndef release_final',
+        '                       type(exc).__name__)\n        return answer\n\n\ndef release_final')],
+        "a decision the store could not keep is released anyway (S1, PS5: fail closed)", "backend", "RC-126"),
+    "AH3_failed_claim_not_retryable_at_once": ([(QG, '        return {**doc, "claimed_at": 0.0}, None\n', '        return {**doc}, None\n')],
+        "a claim whose decision could not be stored blocks the same request as 'in progress' (S1, finding 5)", "backend", "RC-126"),
+    "AH4_no_takeover_of_an_abandoned_claim": ([(QG, '    if elapsed >= RUN_CLAIM_LEASE_S:                     # released (claimed_at 0) or abandoned: taken over HERE\n',
+        '    if False:\n')],
+        "an abandoned claim is never taken over: 'in progress' with no live claim (S1, PS3)", "backend", "RC-126"),
+    "AH6_tag_on_routes_not_covered": ([(AM, '**({"route_record": "unconfirmed"} if covered and not confirmed and _durable_backend() else {})},',
+        '**({"route_record": "unconfirmed"} if not confirmed and _durable_backend() else {})},')],
+        "every route that wrote a record is tagged unconfirmed, durable or not (S2, finding 1)", "backend", "RC-126"),
+    "AH7_sink_off_duplicates": ([(AUD, '        if not self.expected:\n            return True\n', '        if not self.expected:\n            return False\n')],
+        "with no durable backend every login writes two records (S2, finding 10)", "backend", "RC-126"),
+    "AH8_two_wait_budgets": ([(AM, '            await self._wait_for_durable(ctx, deadline)\n',
+        '            await self._wait_for_durable(ctx, asyncio.get_running_loop().time() + _WAIT_BUDGET_S)\n')],
+        "the confirmation and the flush each wait their own budget (S2, finding 2)", "backend", "RC-126"),
+    "AH9_rc062_input_by_query": ([(LCS, '        for doc in refs[1].collection("instances").stream():\n',
+        '        for doc in refs[1].collection("instances").where("gcs_object_name", "==", file_id).limit(1).stream():\n')],
+        "RC-062's input is read by a query, not the base read (S3, G26)", "backend", "RC-123"),
+    "AH10_retry_after_truncated": ([(RL, "        retry_after = math.ceil(entry['expires_at'] - now) if entry['count'] > limit else 0\n",
+        "        retry_after = int(entry['expires_at'] - now) if entry['count'] > limit else 0\n")],
+        "Retry-After shorter than the real time left (S5)", "backend", "RC-126"),
+    "AH11_last_second_becomes_a_minute": ([(QG, '    return 60 if wait is None else max(1, min(60, int(math.ceil(wait))))\n',
+        '    return max(1, min(60, int(math.ceil(wait)))) if wait else 60\n')],
+        "less than one second left becomes a 60-second wait (S5, finding 6)", "backend", "RC-126"),
+    "AH12_header_grid_reads_1024_bytes": ([(SS, '        head = nifti_header.header_prefix(raw)\n', '        head = nifti_header.header_prefix(raw)[:1024]\n')],
+        "the header grid fails on a NIfTI whose extensions run past 1024 bytes (S6)", "backend", "RC-122"),
+    "V45_consultation_ignores_the_attestation": ([(CARD, "  const inputsNow = useMemo(() => (gateOn && flairFileId ? { file: flairFileId, attested: attestationOn } : null),\n",
+        "  const inputsNow = useMemo(() => (gateOn && flairFileId ? { file: flairFileId, attested: false } : null),\n")],
+        "the consultation before the run ignores the attestation in effect (S4, P8/P9)", "vitest", "RC-122"),
     "V35_used_token_reused": ([(CARD, "    && typeof r.run_token === 'string' && !usedTokens.current.has(r.run_token)\n", "    && typeof r.run_token === 'string'\n")],
         "a re-run presents the run token of an earlier run (M1, P2)", "vitest", "RC-126"),
-    "V36_rescinded_attestation_kept": ([(CARD, "  const attestedShown = attestationOn && attestedDecision?.subject?.file_id === flairFileId\n",
-        "  const attestedShown = attestedDecision?.subject?.file_id === flairFileId\n")],
-        "an attested decision is shown and used while the attestation is not in effect (rescinded or no longer offered) (M1, P1/P3)", "vitest", "RC-122"),
     "V37_token_lifetime_ignored": ([(CARD, "    && Date.now() < (r.asked_at ?? 0) + (r.run_token_ttl_s ?? 0) * 1000 - 60_000;\n", "    && true;\n")],
         "an expired run token starts a run whose output is then withheld (M1, P2/P4)", "vitest", "RC-126"),
     "V38_final_asked_for_a_later_render": ([(CARD, "      const run = subject as NonNullable<typeof doneResult>;           // the run this request is for (M1)\n",
         "      const run = doneResult as NonNullable<typeof doneResult>;\n")],
         "a re-run while the final consultation is pending crashes the card (M1, P4)", "vitest", "RC-126"),
-    "V39_attestation_hidden_after_an_attested_run": ([(CARD, "  const canAttest = gateOn && (preflight?.attestable_visits ?? []).includes('study');\n",
-        "  const canAttest = gateOn && ((attested && attestedDecision?.subject?.file_id === flairFileId ? attestedDecision : preflight)?.attestable_visits ?? []).includes('study');\n")],
-        "the attestation is no longer offered after an attested run (M1, P5)", "vitest", "RC-122"),
+    "V39_attestation_hidden_after_an_attested_run": ([(CARD, " && a.inputs.visits?.[0]?.physician_confirmed_flair !== true) {\n", ") {\n")],
+        "the attestation is no longer offered after an attested decision (M1, P5)", "vitest", "RC-122"),
     "V40_hidden_attestation_still_in_effect": ([(CARD, "  const attestationOn = canAttest && attested;\n", "  const attestationOn = attested;\n")],
         "an attestation no longer offered (a rate-limited preflight) is still shown and sent with Run (M1, P3/P5; seed 20262847)", "vitest", "RC-122"),
-    "V41_attested_decision_for_an_older_version": ([(CARD, "    && attestedDecision.subject?.version === newestVersion ? attestedDecision : null;\n", "    ? attestedDecision : null;\n")],
-        "the attested decision of an older version is shown after the server named a newer one (M1, P3)", "vitest", "RC-122"),
     # ── twelfth review of PR #81: K1/K2 signed pair-bound decisions, K3 refused access audited, K5 a real run, O1-O4 ──
     "AE1_signature_not_checked": ([(QG, '        if prefix != TOKEN_PREFIX or not hmac.compare_digest(_sign(key, body), sig):\n',
         '        if prefix != TOKEN_PREFIX:\n')],
@@ -537,22 +571,22 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "AE4_unverified_gate_treated_as_clean": ([(QG, '        return {"established": False, "stopped": True, "causes": ["gate_not_established"], "warnings": []}\n',
         '        return None\n')],
         "a missing, forged or mismatched decision is reported as a clean comparison (I1, K1)", "backend", "RC-127"),
-    "AE5_refused_access_not_audited": ([(AM, '        if (method, template) in SELF_AUDITED_ROUTES and confirmed and status < 500:\n',
+    "AE5_refused_access_not_audited": ([(AM, '        if (method, template) in SELF_AUDITED_ROUTES and covered and confirmed and status < 500:\n',
         '        if (method, template) in SELF_AUDITED_ROUTES and status < 500:\n')],
         "an access refused with 404 on the quality-gate route leaves no audit trace (K3)", "backend", "RC-126"),
     "AE6_release_without_a_run": ([(CT, '        inputs["run_confirmed"] = claim.status == "fresh"   # M1 (thirteenth review, P2): no confirmed run, no output\n'
         '    ran = claim is not None and claim.status == "fresh"\n',
         '        inputs["run_confirmed"] = True\n    ran = claim is not None\n')],
         "a final consultation with no run is recorded as an AI run (K5)", "backend", "RC-126"),
-    "AE7_run_token_reusable": ([(QG, '        if _RUN_TOKEN_MEMORY is None:\n            _RUN_TOKEN_MEMORY = MemoryRunLedger(max_entries=RUN_TOKENS_SPENT_MAX)\n',
-        '        if True:\n            _RUN_TOKEN_MEMORY = MemoryRunLedger(max_entries=RUN_TOKENS_SPENT_MAX)\n')],
+    "AE7_run_token_reusable": ([(QG, '        if _RUN_TOKEN_MEMORY is None:\n            _RUN_TOKEN_MEMORY = RunLedger(MemoryDocs(max_entries=RUN_TOKENS_SPENT_MAX))\n',
+        '        if True:\n            _RUN_TOKEN_MEMORY = RunLedger(MemoryDocs(max_entries=RUN_TOKENS_SPENT_MAX))\n')],
         "one run is recorded as several AI runs: the spent tokens are forgotten (K5, M2)", "backend", "RC-126"),
-    "AE8_nifti_prefix_capped_at_1_mib": ([(QG, '                want = int(min(max(vox, size + 4), NIFTI_DECOMPRESSED_MAX))\n', '                want = 1 << 20\n')],
+    "AE8_nifti_prefix_capped_at_1_mib": ([(NH, '            want = int(min(max(vox, size + 4), DECOMPRESSED_MAX))\n', '            want = 1 << 20\n')],
         "a header with extensions beyond 1 MiB is unreadable (O1)", "backend", "RC-122"),
     "AE10_word_sets_keyed_by_identity": ([(QG, '    key = _vocab_key(vocab)\n', '    key = str(id(vocab))\n')],
         "a vocabulary changed in place keeps its stale word sets (O4)", "backend", "RC-122"),
-    "V33_stale_before_panel_after_an_attested_run": ([(CARD, "      if (attestation && fresh.inputs) setAttestedDecision(fresh);\n      else before.show(fresh);",
-        "      if (!attestation) before.show(fresh);")],
+    "V33_stale_before_panel_after_an_attested_run": ([(CARD, "      before.show(fresh);              // O3: the \"before\" panel shows the decision the run follows (same inputs)\n",
+        "      if (!attestation) before.show(fresh);\n")],
         "after an attested run the 'before' panel still says abstain (O3)", "vitest", "RC-127"),
     "V34_final_without_the_run_token": ([(CARD, "      return ask(run.fileId, of.attested, skullFromProvenance(run.provenance), of.token).then((r) => {\n",
         "      return ask(run.fileId, of.attested, skullFromProvenance(run.provenance)).then((r) => {\n")],
@@ -563,7 +597,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "a list in place of a code breaks the report with a 500 (I2)", "backend", "RC-127"),
     "AD5_file_name_punctuation_dropped": ([(DI, '    return "".join(kept).strip("-_. ")\n', '    return " ".join(t for t in kept if t[:1].isalnum())\n')],
         "'AX_T2*' in a file name reads as T2, not SWI: the flags-off inventory differs from the base (I3)", "backend", "RC-122"),
-    "AD6_middleware_duplicates_the_record": ([(AM, '        if (method, template) in SELF_AUDITED_ROUTES and confirmed and status < 500:\n',
+    "AD6_middleware_duplicates_the_record": ([(AM, '        if (method, template) in SELF_AUDITED_ROUTES and covered and confirmed and status < 500:\n',
         '        if False:\n')],
         "two audit records per consultation (I5)", "backend", "RC-126"),
     "V31_governed_without_the_warnings": ([(LRP, ".filter((c) => c.status === 'warn' && c.code)", ".filter(() => false)")],
@@ -634,14 +668,14 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "AA5_comparison_released_before_rc062": ([(QG, "                            actor=actor_for(user, request) if user is not None else None, releases_output=False)\n",
         "                            actor=actor_for(user, request) if user is not None else None, releases_output=True)\n")],
         "a pair RC-062 then withholds is recorded as an AI run (G31)", "backend", "RC-126"),
-    "AA6_audit_details_dropped": ([(REG, '            "details": _record_details(details),\n', '            "details": None,\n')],
+    "AA6_audit_details_dropped": ([(REG, '            "details": dict(details) if isinstance(details, dict) else None,\n', '            "details": None,\n')],
         "the audit keeps only a packed code cut at 64 characters (G31)", "backend", "RC-126"),
     "AA7_rc062_not_predicted": ([(QG, '    if mode == "comparison" and (rc062_withholds is not False\n', '    if mode == "comparison" and (False\n')],
         "an attestation is offered for a pair RC-062 will withhold anyway (G32)", "backend", "RC-122"),
     "AA8_404_without_the_gate_code": ([(CT, '                            headers={"X-Quality-Gate-Code": "gate_not_enabled",\n',
         '                            headers={"X-Unused": "gate_not_enabled",\n')],
         "the browser cannot tell 'gate not enabled' from 'not found or no access' (U1)", "backend", "RC-126, RC-127"),
-    "AA9_prefix_decompressed_twice": ([(QG, '    raw = decoded if decoded is not None else _nifti_prefix(data)\n', '    raw = _nifti_prefix(data)\n')],
+    "AA9_prefix_decompressed_twice": ([(QG, '    raw = decoded if decoded is not None else nifti_header.header_prefix(data)\n', '    raw = nifti_header.header_prefix(data)\n')],
         "each header round is decompressed twice (E1)", "backend", "RC-122"),
     "AA10_records_read_on_the_loop": ([(SA, '        acq, desc = await asyncio.to_thread(qg.stored_records, source)\n',
         '        acq, desc = qg.stored_records(source)\n')],
@@ -663,8 +697,6 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "Z4_no_record_thickness_fallback": ([(QG, '    if not isinstance(thickness, dict) or thickness.get("state") == "not_determinable":\n',
         '    if not isinstance(thickness, dict):\n')],
         "an undeterminable header thickness hides the record's thickness (R2)", "backend", "RC-124"),
-    "Z5_instances_streamed": ([(LCS, '            docs = query.limit(1).stream()\n', '            docs = instances.stream()\n')],
-        "with the gate on, every consultation streams the whole instances collection (E1)", "backend", "RC-126"),
     "Z6_visits_read_one_after_the_other": ([(SA, '    sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]\n',
         '    sources = [getattr(await _meta(s), "file_id", None) for s in specs]\n')],
         "the comparison reads the two visits one after the other (E2)", "backend", "RC-123"),
@@ -757,6 +789,10 @@ def make_copy(dest):
         shutil.copy2(os.path.join(ROOT, f), os.path.join(dest, f))
 
 
+# S7 (fifteenth review): QG_NC_ONLY=backend (backend + Node harness) or vitest — one GitHub Actions job each
+ONLY = os.environ.get("QG_NC_ONLY") or None
+
+
 def has_node_modules():
     """vitest mutants run only when asked (QG_NC_VITEST=1, thirteenth review: light load on the owner's computer) and
     when node_modules exists; otherwise they are recorded as not run (GitHub Actions runs vitest)."""
@@ -836,16 +872,24 @@ def run_node(copy, env):
     return {"passed": out["checks"] - len(out["failures"]), "failed": len(out["failures"]), "failing_tests": out["failures"]}
 
 
-def run_vitest(copy, env):
+def run_vitest(copy, env, mutant=True):
+    """The browser tests in the copy. A mutant runs the card's model with QG_MODEL_STOP (a mutant needs one failing
+    sequence) and QG_NC_MODEL_RUNS sequences (default 400); the baseline with the CI's 2 000. A test file that does
+    not even load makes the run INVALID (fifteenth review), never a detection nor a survival."""
+    run_env = {**env, **({"QG_MODEL_STOP": "1", "QG_MODEL_RUNS": os.environ.get("QG_NC_MODEL_RUNS", "400")} if mutant else {})}
     p = subprocess.run(["npx", "vitest", "run", *VITEST_TESTS, "--reporter=json", "--pool=threads"],
                        cwd=run_cwd("vitest", copy), capture_output=True, text=True, encoding="utf-8",
-                       errors="replace", env=env, timeout=900, shell=os.name == "nt")
+                       errors="replace", env=run_env, timeout=1800, shell=os.name == "nt")
     try:
         data = json.loads(p.stdout[p.stdout.index("{"):])
     except Exception:  # noqa: BLE001
         # thirteenth review: an unreadable run (e.g. no vitest set-up in the copy) is INVALID, never a detection
         return {"passed": 0, "failed": 0, "failing_tests": [], "error": "vitest output unreadable"}
     failed = [t["fullName"] for f in data.get("testResults", []) for t in f.get("assertionResults", []) if t["status"] == "failed"]
+    unloaded = [f.get("name") for f in data.get("testResults", [])
+                if f.get("status") == "failed" and not any(t["status"] == "failed" for t in f.get("assertionResults", []))]
+    if unloaded:
+        return {"passed": 0, "failed": 0, "failing_tests": [], "error": f"test files that did not load: {unloaded}"}
     return {"passed": data.get("numPassedTests", 0), "failed": len(failed), "failing_tests": failed}
 
 
@@ -888,9 +932,13 @@ def main():
         }
         res["retired"] = RETIRED
         res["labelling_only"] = LABELLING_ONLY
-        res["baseline"] = {"backend": run_backend(copy, env), "node": run_node(copy, env)}
+        res["github_actions_run"] = os.environ.get("QG_NC_RUN_URL")
+        res["only"] = ONLY
+        res["baseline"] = {} if ONLY == "vitest" else {"backend": run_backend(copy, env), "node": run_node(copy, env)}
+        if has_node_modules() and ONLY != "backend":
+            res["baseline"]["vitest"] = run_vitest(copy, env, mutant=False)
         print("baseline", json.dumps({k: (v["passed"], v["failed"]) for k, v in res["baseline"].items()}))
-        assert all(v["failed"] == 0 for v in res["baseline"].values()), "the unmutated copy does not pass"
+        assert all(v["failed"] == 0 and not v.get("error") for v in res["baseline"].values()), "the unmutated copy does not pass"
         res["mutations"] = {}
         for name, (edits, what, runner, controls) in M.items():
             entry = {"reintroduces": what, "runner": runner, "controls": controls,
@@ -899,6 +947,10 @@ def main():
                 entry.update({"status": "not_run", "reason": "not run (no node_modules): vitest runs in GitHub Actions"})
                 res["mutations"][name] = entry
                 print(f"{name:52s} NOT RUN (vitest)")
+                continue
+            if (ONLY == "backend" and runner == "vitest") or (ONLY == "vitest" and runner != "vitest"):
+                entry.update({"status": "not_run", "reason": f"run by the {'vitest' if runner == 'vitest' else 'backend'} job"})
+                res["mutations"][name] = entry
                 continue
             texts = {}
             for f, anchor, repl in edits:
@@ -927,17 +979,18 @@ def main():
                     assert open(os.path.join(copy, f), "rb").read() == raw[f], f"{name}: {f} not restored"
             res["mutations"][name] = entry
             print(f"{name:52s} {entry['status']:9s} {entry.get('result', {}).get('failed', '')}")
-        res["restored"] = {"backend": run_backend(copy, env), "node": run_node(copy, env)}
+        res["restored"] = {} if ONLY == "vitest" else {"backend": run_backend(copy, env), "node": run_node(copy, env)}
+        if has_node_modules() and ONLY != "backend":
+            res["restored"]["vitest"] = run_vitest(copy, env, mutant=False)
         statuses = [m["status"] for m in res["mutations"].values()]
         res["summary"] = {"mutations": len(statuses), "run": sum(s != "not_run" for s in statuses),
                           "detected": statuses.count("detected"), "survived": statuses.count("SURVIVED"),
                           "invalid": statuses.count("invalid"), "not_run": statuses.count("not_run"),
-                          "restored_backend": [res["restored"]["backend"]["passed"], res["restored"]["backend"]["failed"]],
-                          "restored_node": [res["restored"]["node"]["passed"], res["restored"]["node"]["failed"]]}
+                          "restored": {k: [v["passed"], v["failed"]] for k, v in res["restored"].items()}}
         print("summary", json.dumps(res["summary"]))
     finally:
         shutil.rmtree(copy, ignore_errors=True)
-    with open(OUT, "w", encoding="utf-8", newline="\n") as fh:
+    with open(os.environ.get("QG_NC_OUT") or OUT, "w", encoding="utf-8", newline="\n") as fh:
         json.dump(res, fh, indent=1, ensure_ascii=False)
         fh.write("\n")
     return 0 if res["summary"]["survived"] == 0 and res["summary"]["invalid"] == 0 else 1

@@ -542,11 +542,14 @@ class AuditWrite:
     integrity check, a build, stdout or durable error, a write that was not made, given up or is still retrying are
     all False. Durable writes are asynchronous (never block a request), so the answer is awaited, bounded."""
 
-    __slots__ = ("logged", "future")
+    __slots__ = ("logged", "future", "expected")
 
-    def __init__(self, logged: bool = False, future: Any = None):
+    def __init__(self, logged: bool = False, future: Any = None, expected: bool = True):
         self.logged = logged is True
         self.future = future
+        # S2 (fifteenth review): whether a durable write was MEANT to be made (a durable backend configured and the
+        # record not kept to the server log on purpose — the anonymous budget, a read deduplicated)
+        self.expected = expected is True
 
     def durable_now(self) -> bool:
         f = self.future
@@ -557,9 +560,15 @@ class AuditWrite:
             return False
 
     async def confirmed(self, timeout: float) -> bool:
-        """True iff the durable store holds the record, waiting at most ``timeout`` seconds (never raises)."""
+        """True iff the record exists as it was meant to: logged, and — when a durable write was made — held by the
+        durable store within ``timeout`` seconds (never raises). A record deliberately kept to the server log (no
+        durable backend, the anonymous budget) is the record, as on the base (fifteenth review, S2)."""
         f = self.future
-        if not self.logged or f is None:
+        if not self.logged:
+            return False
+        if not self.expected:
+            return True
+        if f is None:
             return False
         if not f.done() and timeout > 0:
             try:
@@ -570,6 +579,19 @@ class AuditWrite:
 
 
 NOT_WRITTEN = AuditWrite(False, None)
+
+
+def _attempt_failed(event) -> "AuditWrite":
+    """S2 (fifteenth review): an explicit record that could not be logged is still known to the request as an attempt,
+    so the middleware records the request itself — tagged as the route's record not being there."""
+    write = AuditWrite(False, None)
+    try:
+        ctx = _request_audit.get()
+        if ctx is not None and getattr(event, "source", None) == "explicit":
+            ctx.explicit_writes.append(write)
+    except Exception:  # noqa: BLE001
+        pass
+    return write
 
 
 # Per-request audit context (set by AuditMiddleware): the durable writes a request produced
@@ -726,7 +748,7 @@ class AuditLogger:
                         "event_type": event.event_type.value
                     }
                 )
-                return NOT_WRITTEN
+                return _attempt_failed(event)
 
             if event.request_id is None:
                 event.request_id = get_request_id()
@@ -744,11 +766,13 @@ class AuditLogger:
                 with open(self.audit_log_file, 'a', encoding='utf-8') as f:
                     f.write(json.dumps(record, default=str) + '\n')
 
-            future = None
+            future, expected = None, False
             if durable:
                 from app.core.logging.audit_sink import get_durable_audit_sink
-                future = get_durable_audit_sink().submit(record)
-            write = AuditWrite(True, future)
+                sink = get_durable_audit_sink()
+                expected = sink.backend != "off"
+                future = sink.submit(record)
+            write = AuditWrite(True, future, expected)
             ctx = _request_audit.get()
             if ctx is not None:
                 if future is not None:
@@ -771,7 +795,7 @@ class AuditLogger:
                 },
                 exc_info=True
             )
-            return NOT_WRITTEN
+            return _attempt_failed(event)
 
     @staticmethod
     def _write_stdout(record: Dict[str, Any], event: AuditEvent) -> None:

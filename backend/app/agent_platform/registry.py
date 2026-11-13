@@ -510,13 +510,6 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
         pass
 
 
-def _record_details(details: Any) -> Optional[Dict[str, Any]]:
-    """K9 (fourteenth review of PR #81): the structured details of an agent record through the ONE filter of the audit
-    record (audit._safe_details: allow-listed keys, codes, flags and short code lists) — never a second, looser one."""
-    if not isinstance(details, dict):
-        return None
-    from app.core.logging.audit import _safe_details
-    return _safe_details(details) or None
 
 
 _UNSET = object()
@@ -722,7 +715,8 @@ class AgentRegistry:
             "registry_version": self.version[:64],
             "reason": REASONS.get(code) if isinstance(code, RefusalCode) else None,
             # eighth review of PR #81 (G31): structured fields (codes, visit labels, booleans), never truncated
-            "details": _record_details(details),
+            # K9 / S6 (fifteenth review): passed through; the audit record's builder filters them ONCE
+            "details": dict(details) if isinstance(details, dict) else None,
         }
         record = {k: v for k, v in record.items() if v is not None}
         try:

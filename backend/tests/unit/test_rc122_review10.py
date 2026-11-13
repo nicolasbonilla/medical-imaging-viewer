@@ -76,8 +76,8 @@ def test_rc126_s1_every_consultation_is_evaluated_and_nothing_caches_an_answer(s
     client, _ = single
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     runs = []
-    original = qg.run_quality_gate
-    monkeypatch.setattr(qg, "run_quality_gate", lambda *a, **k: runs.append(1) or original(*a, **k))
+    original = qg.consult_quality_gate           # fifteenth review (S1): the evaluation, without its audit
+    monkeypatch.setattr(qg, "consult_quality_gate", lambda *a, **k: runs.append(1) or original(*a, **k))
     for _ in range(3):
         assert client.post(URL, json={"file_id": FILE}).status_code == 200
     assert len(runs) == 3, "S1: a consultation was answered from a cache"

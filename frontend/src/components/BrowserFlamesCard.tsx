@@ -68,8 +68,10 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   // PR #81 (G27): the SERVER decides; the card sends its inputs (the file, the physician's attestation, the worker's
   // skull outcome) and shows the server's answer as it is — before the run (skull still pending) and before the
   // result (with the skull outcome). Until the final answer for THIS run arrives, nothing of the result is shown.
-  // E1: ONE (debounced) consultation per file; the attestation is sent only on Run, and the server decides with it.
-  // S3 / G13: the attestation is its own control, offered only when the answer names the study as attestable,
+  // S4 (fifteenth review): ONE consultation for the CURRENT inputs — the file and the attestation in effect: ticking or
+  // unticking the attestation asks again (debounced), and every request, automatic retries included, carries the
+  // inputs in effect at send time; the panel shows only the decision for the current inputs.
+  // S3 / G13: the attestation is its own control, offered only when the server names the study as attestable,
   // unticked by default, reset on every file change, never implied by the run checkbox.
   const gateOn = FEATURES.QUALITY_GATE;
   const [attested, setAttested] = useState(false);
@@ -88,12 +90,13 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   const requests = useRef(0);
   const newest = useRef<Record<string, { seq: number; version: string }>>({});
   const [, setVersionsSeen] = useState(0);                   // re-render when a newer version is named
-  // M1: the decision of the Run consultation WITH the attestation, for this file; shown and used only while ticked
-  const [attestedDecision, setAttestedDecision] = useState<ServerGateResponse | null>(null);
+  // P5 / S4: whether the server named this file's study as attestable — from its last decision WITHOUT the attestation
+  // (an attested decision does not say it), so the box stays offered while the attested consultation is asked
+  const [attestable, setAttestable] = useState<{ file: string; yes: boolean } | null>(null);
   // K3 (fourteenth review, P7): a Run click that does not start a run says why — never a silent no-op
   const [runNotice, setRunNotice] = useState<{ kind: 'notStarted' | 'inputsChanged'; code: string | null;
     params?: GateParams | null } | null>(null);
-  useEffect(() => { setAttested(false); setAttestedDecision(null); setRunNotice(null); selection.current += 1; }, [flairFileId]);
+  useEffect(() => { setAttested(false); setRunNotice(null); selection.current += 1; }, [flairFileId]);
   /** Every consultation goes through here: the answer is stamped with the time it was ASKED (its run token was issued
    *  later, so its lifetime is counted from no later than its real start), and the version the server names is kept
    *  when the request is the newest for its file (a late answer never lowers it). */
@@ -118,28 +121,36 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     && (r.inputs?.visits?.[0]?.physician_confirmed_flair === true) === attestation
     && typeof r.run_token === 'string' && !usedTokens.current.has(r.run_token)
     && Date.now() < (r.asked_at ?? 0) + (r.run_token_ttl_s ?? 0) * 1000 - 60_000;
-  // E1: ONE (debounced) consultation per file before the run — without the attestation. U1 (tenth review): its
-  // automatic retries are state — one timer per rate-limited answer, none while in flight, at most 3 (G29).
+  // P5: the attestation is offered when the server says the file is attestable — also after an attested run
+  const canAttest = gateOn && attestable?.file === flairFileId && attestable.yes;
+  // P1 / P3: the ONE attestation in effect — ticked AND offered; it is what every request before the run sends (P8)
+  const attestationOn = canAttest && attested;
+  attestedNow.current = attestationOn;
+  // S4: the subject of the consultation is the inputs in effect; a new subject asks again, an answer is exposed only for
+  // the subject it was asked for. U1 (tenth review): its automatic retries are state — one timer per rate-limited
+  // answer, none while in flight, at most 3 (G29) — and re-ask with the SAME inputs.
+  const inputsNow = useMemo(() => (gateOn && flairFileId ? { file: flairFileId, attested: attestationOn } : null),
+    [gateOn, flairFileId, attestationOn]);
   const before = useGateConsultation<ServerGateResponse>(
-    gateOn && flairFileId ? flairFileId : null,
-    () => ask(flairFileId, false).then((r) => (r.subject?.file_id === currentFile.current ? r : null)),
+    inputsNow,
+    (subject) => {
+      const inputs = subject as { file: string; attested: boolean };
+      return ask(inputs.file, inputs.attested).then((r) => (r.subject?.file_id === currentFile.current ? r : null));
+    },
     retryAfterSeconds, 250);
   const preflight = before.answer;
   const preflightStuck = gateOn && preflight !== null && before.settled && askable(preflight);
-  // P5: the attestation is offered when the server says the file (unattested) is attestable — also after a run
-  const canAttest = gateOn && (preflight?.attestable_visits ?? []).includes('study');
-  // P1 / P3: the ONE attestation in effect — ticked AND offered; what the panel shows is what a Run would send
-  const attestationOn = canAttest && attested;
-  attestedNow.current = attestationOn;
-  // P3: the "before" panel shows the attested decision only while the attestation is in effect and only for the newest
-  // version the server named, else the unattested one (the attested decision is asked again on Run); an unattested
-  // decision for an older version is never shown either (it is asked again instead)
+  useEffect(() => {
+    const a = before.answer;
+    if (a && a.inputs && a.subject?.file_id === flairFileId && a.inputs.visits?.[0]?.physician_confirmed_flair !== true) {
+      setAttestable({ file: flairFileId, yes: (a.attestable_visits ?? []).includes('study') });
+    }
+  }, [before.answer, flairFileId]);
+  // P3 / P9: never a decision for an older version than the newest the server named (it is asked again instead)
   const newestVersion = newest.current[flairFileId]?.version;
-  const attestedShown = attestationOn && attestedDecision?.subject?.file_id === flairFileId
-    && attestedDecision.subject?.version === newestVersion ? attestedDecision : null;
   const preflightStale = !!preflight && typeof preflight.subject?.version === 'string' && newestVersion !== undefined
     && preflight.subject.version !== newestVersion;
-  const shownBefore = attestedShown ?? (preflightStale ? null : preflight);
+  const shownBefore = preflightStale ? null : preflight;
   const refresh = before.again;
   useEffect(() => { if (gateOn && preflightStale) refresh(); }, [gateOn, preflightStale, refresh]);
   // U3: the final decision belongs to the RUN (its result object), never to the file: a re-run of the same file never
@@ -160,8 +171,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     (f) => (f.retry ? retryAfterSeconds(f.gate) : null));
   const finalGate = final.answer ? final.answer.gate : null;
   const finalStuck = final.answer !== null && final.settled && final.answer.retry && askable(final.answer.gate);
-  const gateAllowsRun = !gateOn || (attestationOn ? attestedShown?.ai_may_run !== false
-    : preflight?.ai_may_run === true);
+  const gateAllowsRun = !gateOn || preflight?.ai_may_run === true;
   const gateAllowsOutput = !gateOn || (finalGate?.ai_output_allowed === true && doneResult?.fileId === flairFileId);
 
   const running = flames.status === 'running';
@@ -190,8 +200,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
       return;
     }
     if (busy) return;                                                // G18: one request per click
-    // The attestation reaches the backend (and its audit, with the clinician) only on Run, deliberately.
-    const attestation = attestationOn;
+    const attestation = attestationOn;                 // the inputs in effect at the click (S4)
     const fileAtClick = flairFileId;
     const selectionAtClick = selection.current;
     const start = (decision: ServerGateResponse) => {
@@ -204,7 +213,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     // I6 (eleventh review): the decision already held for EXACTLY these inputs, with an unused, unexpired run token,
     // starts the run — two consultations per run; anything else (a re-run, an expired or used token, a newer version,
     // a changed attestation) asks the server again (M1, thirteenth review)
-    const held = attestation ? attestedShown : preflight;
+    const held = preflight;
     if (startable(held, fileAtClick, attestation)) {
       start(held);
       return;
@@ -220,8 +229,7 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
         setRunNotice({ kind: 'inputsChanged', code: null });
         return;
       }
-      if (attestation && fresh.inputs) setAttestedDecision(fresh);
-      else before.show(fresh);         // O3: the "before" panel shows the decision the run follows
+      before.show(fresh);              // O3: the "before" panel shows the decision the run follows (same inputs)
       const answer: ServerGateResponse = fresh;      // (the type guard below narrows `fresh` only)
       if (startable(fresh, fileAtClick, attestation)) {
         start(fresh);
@@ -320,10 +328,8 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
           )}
           {gateOn && canAttest && (
             <label className="flex items-start gap-1 text-[9px] text-sky-100" data-testid="quality-gate-attest">
-              <input type="checkbox" checked={attested} onChange={(e) => {
-                setAttested(e.target.checked);
-                if (!e.target.checked) setAttestedDecision(null);       // P1: a rescinded attestation leaves nothing usable
-              }} />
+              {/* S4: a change of the attestation is a change of the inputs — the decision for the new inputs is asked */}
+              <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} />
               <span>{t('qualityGate.attest')}</span>
             </label>
           )}

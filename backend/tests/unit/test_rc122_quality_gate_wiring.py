@@ -621,7 +621,7 @@ def test_rc126_the_rate_limit_comes_first_and_the_gate_runs_off_the_loop(single,
     monkeypatch.setattr(qg, "_LIMITER", qg.new_rate_limiter())
     assert [client.post(URL, json={"file_id": FILE}).status_code for _ in range(4)] == [200, 200, 429, 429]
     where = []
-    original = qg.run_quality_gate
+    original = qg.consult_quality_gate           # fifteenth review (S1): the evaluation, no audit
 
     def _spy(*a, **k):
         try:
@@ -631,7 +631,7 @@ def test_rc126_the_rate_limit_comes_first_and_the_gate_runs_off_the_loop(single,
             where.append("worker")
         return original(*a, **k)
 
-    monkeypatch.setattr(qg, "run_quality_gate", _spy)
+    monkeypatch.setattr(qg, "consult_quality_gate", _spy)
     monkeypatch.setattr(qg, "_LIMITER", None)
     monkeypatch.setattr(qg, "_REGISTRY", _registry())
     client.post(URL, json={"file_id": FILE})
@@ -750,13 +750,13 @@ def test_rc123_f1_an_attestation_never_lifts_another_sequence_in_a_comparison(co
 # ----------------------------------------------------------------------------- fifth review of PR #81: F3, F4
 def _spy_runs(monkeypatch):
     runs = []
-    original = qg.run_quality_gate
+    original = qg.consult_quality_gate           # fifteenth review (S1): the evaluation, no audit
 
     def _spy(*a, **k):
         runs.append(a[0])
         return original(*a, **k)
 
-    monkeypatch.setattr(qg, "run_quality_gate", _spy)
+    monkeypatch.setattr(qg, "consult_quality_gate", _spy)
     return runs
 
 

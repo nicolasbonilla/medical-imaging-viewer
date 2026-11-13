@@ -155,7 +155,8 @@ def test_rc126_e1_the_stored_records_are_read_without_streaming_the_instances(mo
     service = type("S", (), {"db": type("D", (), {"collection": lambda self, name: _Coll(db.tree.get(name, {}), counter)})()})()
     acq, desc = qg.stored_records(file_id, study_service=service)
     assert acq == {"manufacturer": "SIEMENS", "n": 42} and desc == "AX T2 FLAIR"
-    assert counter["docs"] <= 3, f"{counter['docs']} documents read for one consultation"   # + the study (G34)
+    # fifteenth review (S3): E1's indexed query is withdrawn — RC-062's input is read as on the base, a scan of the
+    # series' instances (G26); fewer reads are a separate, future change (D-QG-27)
 
 
 def test_rc123_e2_the_comparison_reads_both_visits_concurrently(compare, monkeypatch):
