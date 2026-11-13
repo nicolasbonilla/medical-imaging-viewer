@@ -18,7 +18,13 @@
  *  P4  liveness: settled, the card shows a decision for the current file (never stuck on "checking"), and a fresh run
  *      the server allows is possible and released (at the first attempt unless a newer version was stored after the
  *      card's last consultation);
- *  P5  the attestation is offered whenever the server says the current file is attestable, also after an attested run.
+ *  P5  the attestation is offered whenever the server says the current file is attestable, also after an attested run;
+ *  P6  (fourteenth review, K2) a LOST answer — the server decided, the browser never received it — and its retries with
+ *      the same request: the clinician eventually receives the SAME decision as the first evaluation, never a more
+ *      permissive one (the fake server replays or refuses as the real one does: run_token in the fixture);
+ *  P7  (fourteenth review, K3) after any Run click, either the run starts or a visible, specific message says why not
+ *      (a stop for the inputs clicked, or the card's own notice) — never a silent no-op; also when the server cannot
+ *      establish the file's version.
  * Not observable in the browser, hence not claimed: a new version stored after the card's last consultation — the
  * server refuses to release that run (its run token names the old version).
  */
@@ -60,7 +66,9 @@ const TTL_S = 2 * 3600;
 const HOUR = 3600 * 1000;
 // the server of this commit withholds the output of a run it cannot confirm iff its rule says so
 const WITHHOLDS = FIXTURE.decisions['FLAIR|false|stripped|false'].ai_output_allowed === false;
-const PROPS = ['P1', 'P2', 'P3', 'P4', 'P5'] as const;
+// K2: the real server replays a final consultation presented again with the same token and the identical request
+const REPLAYS = FIXTURE.run_token?.replays_identical_request === true;
+const PROPS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7'] as const;
 type Prop = typeof PROPS[number];
 
 function mulberry32(seed: number) {
@@ -74,9 +82,10 @@ function mulberry32(seed: number) {
   };
 }
 
-interface Tok { file: string; version: string; attested: boolean; exp: number; spent: boolean; presentedBy: number | null }
+interface Tok { file: string; version: string | null; attested: boolean; exp: number; spent: boolean; presentedBy: number | null;
+  digest?: string; answer?: Json }
 interface Run { id: number; file: string; attested: boolean; knownVersion: number | null; checked: boolean; startedAt: number }
-interface Pending { resolve: (v: unknown) => void; answer: Json }
+interface Pending { id: number; resolve: (v: unknown) => void; answer: Json }
 
 const platformAnswer = (file: string, code: string, seconds?: number): Json => ({
   gate_version: 'quality-gate/1', policy_version: null, mode: null, decision: 'abstain', ai_may_run: false,
@@ -103,12 +112,17 @@ class World {
   n = 0;
   lastShown: number | null = null;
   lastUnseen = false;                                  // P4: the newest version was unknown to the card at the first attempt
+  unknownVersion: Record<string, boolean> = {};        // K3: the server cannot establish this file's version now
+  loseNext = false;                                    // K2: the next answer is lost after the server decided it
+  firstOf = new Map<number, boolean>();                // K2 / P6: a run's first evaluated release decision
+  click: { n: number; runs: number; file: string; attested: boolean } | null = null;   // P7: a Run click being answered
   violations: Partial<Record<Prop, string>> = {};
 
   violate(p: Prop, why: string) { if (!this.violations[p]) this.violations[p] = why; }
 
-  decide(file: string, attested: boolean, skull: string, confirmed?: boolean): Json {
-    const key = `${SEQ[file]}|${attested}|${skull}` + (skull === 'pending' ? '' : `|${WITHHOLDS ? confirmed === true : true}`);
+  decide(file: string, attested: boolean, skull: string, confirmed?: boolean, known = true): Json {
+    const key = `${SEQ[file]}|${attested}|${skull}` + (skull === 'pending' ? '' : `|${WITHHOLDS ? confirmed === true : true}`)
+      + (known ? '' : '|nover');
     return JSON.parse(JSON.stringify(FIXTURE.decisions[key]));
   }
 
@@ -126,7 +140,11 @@ class World {
       this.next429 -= 1;
       answer = platformAnswer(f, 'gate_rate_limited', 30);
     } else {
-      const version = `v${this.versions[f]}`;
+      const known = !this.unknownVersion[f];
+      const version = known ? `v${this.versions[f]}` : null;
+      const digest = `${f}|${version}|${attested}|${sk}`;    // K2: the request a run token's decision belongs to
+      let storeFor: Tok | null = null;
+      let replayed = false;
       if (final) {
         const run = this.doneRun;
         const tok = typeof token === 'string' ? this.tokens.get(token) : undefined;
@@ -148,15 +166,25 @@ class World {
           }
           if (tok.presentedBy === null) tok.presentedBy = run.id;
         }
+        const replay = REPLAYS && !!tok && tok.spent && tok.exp > Date.now() && tok.digest === digest && !!tok.answer;
         const valid = !!tok && !tok.spent && tok.exp > Date.now() && tok.file === f && tok.version === version
           && tok.attested === attested;
-        if (valid && tok) tok.spent = true;
-        answer = this.decide(f, attested, sk, valid);
-        if (valid && answer.ai_output_allowed === true && run) this.released.add(run.id);
-        answer.trace_id = `tr-${id}`;
-        this.answerRun.set(answer.trace_id, run ? run.id : null);
+        if (replay && tok) {
+          answer = JSON.parse(JSON.stringify(tok.answer));             // the stored decision, never re-evaluated
+          replayed = true;
+        } else {
+          answer = this.decide(f, attested, sk, valid, known);
+          if (valid && answer.ai_output_allowed === true && run) this.released.add(run.id);
+          answer.trace_id = `tr-${id}`;
+          this.answerRun.set(answer.trace_id, run ? run.id : null);
+          if (valid && tok) {
+            tok.spent = true;
+            storeFor = tok;
+            if (run && !this.firstOf.has(run.id)) this.firstOf.set(run.id, answer.ai_output_allowed === true);
+          }
+        }
       } else {
-        answer = this.decide(f, attested, 'pending');
+        answer = this.decide(f, attested, 'pending', undefined, known);
         if (answer.ai_may_run === true) {
           const t = `rt-${id}`;
           this.tokens.set(t, { file: f, version, attested, exp: Date.now() + TTL_S * 1000, spent: false, presentedBy: null });
@@ -165,11 +193,21 @@ class World {
         }
         answer.trace_id = `tr-${id}`;
       }
-      answer.subject = { file_id: f, version };
-      answer.inputs = { mode: 'single', visits: [{ sequence: SEQ[f], physician_confirmed_flair: attested, skull: sk }] };
-      answer.platform = { allowed: true, code: null };
+      if (!replayed) {
+        answer.subject = { file_id: f, version };
+        answer.inputs = { mode: 'single', visits: [{ sequence: SEQ[f], physician_confirmed_flair: attested, skull: sk }] };
+        answer.platform = { allowed: true, code: null };
+      }
+      if (storeFor) {                                  // what the server decided, kept with the request's digest
+        storeFor.answer = JSON.parse(JSON.stringify(answer));
+        storeFor.digest = digest;
+      }
     }
-    return new Promise((resolve) => this.pending.push({ resolve, answer }));
+    if (this.loseNext) {                           // K2: the server decided; the answer never reaches the browser
+      this.loseNext = false;
+      answer = platformAnswer(f, 'gate_unavailable');
+    }
+    return new Promise((resolve) => this.pending.push({ id, resolve, answer }));
   };
 
   startRun(fileId: string) {
@@ -195,10 +233,10 @@ const resultFor = (fileId: string) => ({
 });
 
 type Action = 'selectA' | 'selectB' | 'version' | 'attest' | 'run' | 'again' | 'r429' | 'finalOk' | 'finalFail'
-  | 'final429' | 'deliverOne' | 'deliverAll' | 'tick' | 'wait' | 'h2' | 'h24' | 'complete';
+  | 'final429' | 'deliverOne' | 'deliverAll' | 'tick' | 'wait' | 'h2' | 'h24' | 'complete' | 'lost' | 'versionLost';
 const WEIGHTS: [Action, number][] = [['selectA', 2], ['selectB', 2], ['version', 1], ['attest', 3], ['run', 4], ['again', 1],
   ['r429', 1], ['finalOk', 1], ['finalFail', 1], ['final429', 1], ['deliverOne', 4], ['deliverAll', 2], ['tick', 2],
-  ['wait', 1], ['h2', 1], ['h24', 0.5], ['complete', 2]];
+  ['wait', 1], ['h2', 1], ['h24', 0.5], ['complete', 2], ['lost', 1], ['versionLost', 0.5]];
 const TOTAL = WEIGHTS.reduce((s, [, w]) => s + w, 0);
 function pick(rng: () => number): Action {
   let x = rng() * TOTAL;
@@ -213,6 +251,9 @@ const CORPUS: Record<string, Action[]> = {
     'deliverAll', 'complete', 'deliverAll'],
   expiry: ['selectB', 'tick', 'deliverAll', 'h2', 'run', 'deliverAll', 'complete', 'deliverAll'],
   late: ['selectA', 'tick', 'deliverAll', 'attest', 'run', 'attest', 'deliverAll', 'complete', 'deliverAll'],
+  // fourteenth review: the final answer lost after the server released it (K2); a file whose version is unknown (K3)
+  lost: ['selectB', 'tick', 'deliverAll', 'run', 'deliverAll', 'complete', 'lost', 'deliverAll', 'again', 'deliverAll'],
+  noVersion: ['selectA', 'tick', 'deliverAll', 'versionLost', 'attest', 'run', 'deliverAll', 'tick', 'deliverAll'],
 };
 
 async function play(actions: Action[] | null, seed: number): Promise<Partial<Record<Prop, string>>> {
@@ -258,8 +299,9 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
         world.lastShown = Math.max(world.lastShown ?? 0, v);
       }
       const decided = !(before.codes ?? []).some((c: string) => c.startsWith('gate_'));
-      if (decided && world.file === A && h.flames.status !== 'running' && !attestBox()) {
-        world.violate('P5', 'file A is attestable, but the attestation is not offered');
+      const attestable = (before.attestable_visits ?? []).includes('study') && before.inputs?.visits?.[0]?.physician_confirmed_flair !== true;
+      if (decided && attestable && h.flames.status !== 'running' && !attestBox()) {
+        world.violate('P5', `file ${world.file === A ? 'A' : 'B'} is attestable, but the attestation is not offered`);
       }
     }
     const after = screen.queryByTestId('quality-gate-after') ? h.panels['quality-gate-after'] : null;
@@ -267,6 +309,24 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
       if (after.subject.file_id !== world.file) world.violate('P3', 'the "final" panel shows a decision for another file');
       const run = after.trace_id ? world.answerRun.get(after.trace_id) : undefined;
       if (run !== undefined && run !== (world.doneRun?.id ?? null)) world.violate('P3', `the "final" panel shows the decision of run ${run}`);
+    }
+    if (after && after.trace_id) {                        // P6: the decision a run's clinician receives
+      const run = world.answerRun.get(after.trace_id);
+      if (typeof run === 'number' && world.firstOf.has(run) && (after.ai_output_allowed === true) !== world.firstOf.get(run)) {
+        world.violate('P6', `run ${run}: the clinician is shown ${after.decision} (released ${after.ai_output_allowed === true}) `
+          + `though its first evaluation ${world.firstOf.get(run) ? 'released' : 'withheld'} the output`);
+      }
+    }
+    if (world.click && !world.pending.some((p) => p.id > world.click!.n)) {   // P7: the click is fully answered
+      const c = world.click;
+      world.click = null;
+      const started = world.runSeq > c.runs;
+      const stopShown = !!before && (before.ai_may_run !== true) && ((before.codes ?? []).some((x: string) => x.startsWith('gate_'))
+        || (before.inputs?.visits?.[0]?.physician_confirmed_flair === true) === c.attested);
+      const notice = !!screen.queryByTestId('quality-gate-run-not-started');
+      if (!started && world.file === c.file && !stopShown && !notice) {
+        world.violate('P7', `a Run click on ${c.file === A ? 'A' : 'B'} (attested ${c.attested}) neither started a run nor said why`);
+      }
     }
     if (screen.queryByText(/AI draft ready/) && !(world.doneRun && world.released.has(world.doneRun.id))) {
       world.violate('P2', `run ${world.doneRun?.id} shows a released output the server did not record as a run`);
@@ -276,6 +336,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
     for (let i = 0; i < 10; i += 1) {
       world.next429 = 0;
       world.nextFinal = 'ok';
+      world.loseNext = false;
       while (world.pending.length) await deliver(0);
       await sync(5 * 60 * 1000);
       await click(screen.queryByTestId('quality-gate-check-again'));
@@ -299,12 +360,17 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
           if (confirmBox() && !confirmBox()!.checked) await click(confirmBox());
           break;
         }
-        case 'version': world.versions[world.file] += 1; break;
+        case 'version': world.versions[world.file] += 1; world.unknownVersion[world.file] = false; break;
+        case 'versionLost': world.unknownVersion[world.file] = true; break;
+        case 'lost': world.loseNext = true; break;
         case 'attest': await click(attestBox()); break;
         case 'run': {
           if (confirmBox() && !confirmBox()!.checked) await click(confirmBox());
           const b = runButton();
-          if (b && !b.disabled) await click(b);
+          if (b && !b.disabled) {
+            world.click = { n: world.n, runs: world.runSeq, file: world.file, attested: attestBox()?.checked === true };
+            await click(b);
+          }
           break;
         }
         case 'again':
@@ -339,6 +405,9 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
     // a fresh run the server allows must reach a released output — at the latest on the second attempt: a version
     // stored after the card's last consultation is not observable before the next answer names it (the first run's
     // final consultation does, and the server refuses to release that run)
+    world.unknownVersion = {};                        // the file's version is readable again: a run is allowed again
+    await settle();
+    check();
     let released = false;
     for (let attempt = 0; attempt < 2 && !released; attempt += 1) {
       // the second attempt is allowed ONLY when the card could not know the newest version before the first
@@ -355,6 +424,7 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
         world.violate('P4', `settled, Run is disabled though the server allows a run of ${world.file === A ? 'A (attested)' : 'B'}`);
         break;
       }
+      world.click = { n: world.n, runs: world.runSeq, file: world.file, attested: attestBox()?.checked === true };
       await click(b);
       await settle();
       check();
@@ -373,12 +443,12 @@ async function play(actions: Action[] | null, seed: number): Promise<Partial<Rec
 }
 
 describe('M1: model-based test of the card and its consultations', () => {
-  it('rc126 rc122 rc127 P1-P5 hold over the seed corpus and the generated sequences', async () => {
+  it('rc126 rc122 rc127 P1-P7 hold over the seed corpus and the generated sequences', async () => {
     useViewerStore.setState({
       currentSeries: { id: 's', name: 'flair', format: 'nifti', file_id: A, total_slices: 4, metadata: { rows: 3, columns: 2 } },
     } as never);
     const runs = Number(process.env.QG_MODEL_RUNS ?? 2000);
-    const counts: Record<Prop, number> = { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0 };
+    const counts: Record<Prop, number> = { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0 };
     const examples: Partial<Record<Prop, string>> = {};
     const record = (name: string, v: Partial<Record<Prop, string>>) => {
       for (const p of PROPS) {
@@ -395,6 +465,6 @@ describe('M1: model-based test of the card and its consultations', () => {
     }
     // the counts per property, and the first example of each, are the test's report
     expect({ counts, examples, sequences: runs + Object.keys(CORPUS).length })
-      .toEqual({ counts: { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0 }, examples: {}, sequences: runs + Object.keys(CORPUS).length });
+      .toEqual({ counts: { P1: 0, P2: 0, P3: 0, P4: 0, P5: 0, P6: 0, P7: 0 }, examples: {}, sequences: runs + Object.keys(CORPUS).length });
   }, 1_800_000);
 });
