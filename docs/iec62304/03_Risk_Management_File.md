@@ -1307,6 +1307,27 @@ Negative controls: 202 controls after this round (6 retired with their reason �
 
 **HAZ-025 / HAZ-001:** a released output corresponds to exactly one stored decision of one confirmed run; RC-062's input is the base's again.
 
+### C.21 Sixteenth independent review of PR #81 (2026-11-13) — DRAFT, PENDING owner approval
+
+Nine findings. Each was reproduced failing first through the real lower layer, closed by an invariant or a matrix rather than a point fix, and, where possible, by deleting mechanism.
+
+| # | Finding | Control | Fix | Invariant (injected at) |
+|---|---|---|---|---|
+| R1 (5) | With the flag on and the agent refused, killed or unknown, a caller without access got the gate's 200 refusal and a gate record before CAPA-009 ran | RC-126, CAPA-009 | authorization first (D-QG-30) | flag × agent state × caller; the CAPA-009 everywhere test with the flag ON |
+| R2 (3) | A decision signed for patient A could certify a comparison in patient B's report | RC-127 | the token binds the patient and the studies; the report checks them against stored records; ONE account per report (D-QG-19, D-QG-31) | token patient × report patient × pair-file owner × user, through the real report route |
+| R3 (2) | Unticking the FLAIR confirmation while Run's consultation was in flight still started the run with `clinicianConfirmedFlair: true` | RC-122 | one start point checks every input in effect now; current flags | card model P10 (toggle while in flight) |
+| R4 (1) | The gate's sentences were not in RC-065's exemption: a patient named "Read", "Gate", "Skull"... had the report refused | RC-125 | the exemption derived from the reason registry | every code × gate state × language; names from every word |
+| R5 (9) | With the gate off the provider payload of an RC-062 abstention carried `abstained_by` | RC-127 | the tag deleted (D-QG-32) | the report path byte for byte against the base, provider payload included |
+| R6 (4) | The gate re-parsed vox_offset itself; a NaN or absurd one was read on up to 4 MiB | RC-122 | the one reader; unusable = unreadable at once | NaN, ±inf, negative, absurd (NIfTI-1 and -2) |
+| R7 (6) | Every consultation streamed the stored records again | RC-122 | per-version cache, bounded, 300 s, complete answers only (D-QG-32) | N consultations, a new version, the lifetime, an incomplete answer |
+| R8 (7, 8) | Two channels and two rules for the audit confirmation | RC-126 | one channel, one rule; side channel and `_durable_backend()` deleted (D-QG-20) | the fifteenth review's matrix; a 429 still recorded |
+
+Failing first (commit `4b1471b`, on the code of 0fa5ec5): `test_rc122_review16.py` **21 of 57 failed** (R1 6, R2 6, R4 2 — 84 words and 250 word pairs not exempt, 5 406 names refused — R6 5, R7 1, R8 1); the flags-off identity **18 of 162** report-path answers differed from the base (R5); the card model **P10 failed in 4 of 2 011 sequences** (P1–P9 0); the CAPA-009 everywhere test with the flag on **3 of 4 failed**. After the fixes: all pass; the card model holds P1–P10.
+
+Negative controls: NC16_PLACEHOLDER
+
+**HAZ-025 / HAZ-016 / HAZ-001:** no gate answer before authorization; a gate decision only ever certifies a comparison of its own patient; a run starts only on the inputs in effect; no report refused because the gate's own words resemble a patient's name.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*
