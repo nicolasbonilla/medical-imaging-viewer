@@ -234,9 +234,11 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "a consultation that lets the AI run leaves no audit record", "backend", "RC-126"),
     "Q22_trace_attribute_dropped": ([(TR, '    "mstool.gate.status": lambda v: v in ("pass", "warn", "pending", "abstain"),\n', '')],
         "the trace allow-list loses the check status", "backend", "RC-126"),
-    "Q23_registry_entry_approved": ([(AG, '        "status": "pending",\n        "ref": "feat/quality-gate (stacked on PR #79): entry to be approved by the owner (D-QG-1)"',
-        '        "status": "approved",\n        "ref": "feat/quality-gate (stacked on PR #79): entry to be approved by the owner (D-QG-1)"')],
-        "the repository records the owner's approval", "backend", "RC-126"),
+    # Re-anchored 2026-11-14 (research stage): the entry is one line, and the owner may approve it in his own sign-off,
+    # so the anchor is the line's start (once, before and after his sign-off) and the mutant is an approval NOT in his form.
+    "Q23_registry_entry_approved": ([(AG, '"approval": {"status": "',
+        '"approval": {"status": "approved", "ref": "self-approved by the agent"}, "approval_was": {"status": "')],
+        "the repository records an approval that is not the owner's", "backend", "RC-126"),
     "Q24_policy_changed_silently": ([(POL, '    "thin_limit_mm": 1.5,\n', '    "thin_limit_mm": 2.0,\n')],
         "the backend policy changes without the registry, the fixture or the browser copy", "backend", "RC-126, RC-127"),
     # ── input derivation (RC-122) ──
