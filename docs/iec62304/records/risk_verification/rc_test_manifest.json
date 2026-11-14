@@ -1269,7 +1269,7 @@
         "frontend/src/utils/aiInTesting.test.ts"
       ],
       "requirement": "REQ-SAFE-060",
-      "change": "PR #82, research stage (owner decision 2026-11-13) — DRAFT, PENDING owner approval",
+      "change": "PR #82, research stage (owner decision 2026-11-13) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #82)",
       "negative_control": "Executed 2026-11-13 by scripts/safety/rc130_negative_controls.py in Google Cloud Build on 2d86bfd (off the owner's PC; first run on 7a07158 gave the same 6/6): 6/6 mutations detected (N1 notice never shown; N2 notice on a draft no model wrote; N3 interface language instead of the report's; N4 viewer copies without the notice; N5 panel copies without the notice; N6 notice above the clinician entry); baseline 19 passed, restored 19 passed / 0 failed. Record: docs/iec62304/records/risk_verification/RC-130_negative_controls_2026-11-13.json."
     }
   },

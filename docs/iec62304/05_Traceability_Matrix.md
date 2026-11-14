@@ -480,7 +480,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 
 ---
 
-> **Addendum 2026-11-13 (research stage, owner decision of the same day, PR #82 - DRAFT, PENDING owner approval): REQ-SAFE-060 -> RC-130 (HAZ-003, HAZ-017).**
+> **Addendum 2026-11-13 (research stage, owner decision of the same day, PR #82 - N. G. Bonilla Vargas — approved 2026-11-14 (PR #82)): REQ-SAFE-060 -> RC-130 (HAZ-003, HAZ-017).**
 
 | Requirement | Risk control | Implementation | Test |
 |---|---|---|---|
