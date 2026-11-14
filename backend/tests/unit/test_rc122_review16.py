@@ -280,15 +280,24 @@ def _identifiers(given, family):
 def test_rc125_r4_no_patient_named_after_a_word_of_the_gate_is_refused_and_real_names_still_are():
     from app.services.brain_report_service import assert_prompt_carries_no_identifier
     from app.services.report_payload_guard import IdentifierInPrompt, words_of
+    def refuses(prompt, given, family):
+        try:
+            assert_prompt_carries_no_identifier(prompt, _identifiers(given, family))
+            return False
+        except IdentifierInPrompt:
+            return True
+
     refused = []
     for state, language, prompt in _prompts():
         tokens = sorted({w for w in words_of(prompt) if len(w) >= 4 and w.isalpha()})
-        for token in tokens:
-            for given, family in ((token, "Zarathustra"), ("Quenby", token)):
-                try:
-                    assert_prompt_carries_no_identifier(prompt, _identifiers(given, family))
-                except IdentifierInPrompt:
-                    refused.append((token, language, sorted(state)[:3]))
+        # every token at once as the given names (then as the family names) — the tripwire checks each name part on its
+        # own, so this is the per-token check in one pass (the long verified-report prompt is normalised once, not per
+        # token); only a refused prompt is re-checked token by token, to name the tokens
+        for role in ("given", "family"):
+            names = (" ".join(tokens), "Zarathustra") if role == "given" else ("Quenby", " ".join(tokens))
+            if refuses(prompt, *names):
+                refused += [(t, language, role, sorted(state)[:3]) for t in tokens
+                            if refuses(prompt, *((t, "Zarathustra") if role == "given" else ("Quenby", t)))]
     assert not refused, f"{len(refused)} names refused, e.g. {refused[:8]}"
     # the tripwire still catches the patient's own name (and given + family together) in the same prompts
     prompt = _prompts()[0][2]
