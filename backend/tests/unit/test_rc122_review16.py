@@ -50,8 +50,10 @@ def _platform(state, audit=R.default_audit_sink):
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
     if state == "unknown":
         del data["agents"]["quality-gate"]
-    elif state in ("approved", "killed"):
-        data["agents"]["quality-gate"]["approval"]["status"] = "approved"     # IN MEMORY, for the test only
+    else:
+        # IN MEMORY, for the test only - both ways, so the test never depends on the repository entry (the owner
+        # approved the gate in his PR #81 sign-off; "refused" must still mean an entry awaiting approval)
+        data["agents"]["quality-gate"]["approval"]["status"] = "approved" if state in ("approved", "killed") else "pending"
     return R.AgentRegistry(data, switches=R.InMemoryKillSwitches({"quality-gate": state != "killed"}), audit=audit)
 
 
