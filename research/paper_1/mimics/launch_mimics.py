@@ -310,8 +310,58 @@ def plans_in_bucket():
 
 
 def spent_usd():
-    """List-price spend of the addendum so far: cost records, plus VMs that left none (pre-empted or running),
-    estimated from their plan creation time to their last interruption marker (or now) at their list rate."""
+    """List-price spend of the addendum so far, from the project's audit log (2026-11-14 fix): each mimics VM counts
+    from its insert to its first pre-emption or deletion; a VM still running counts to now; a VM never seen running
+    (an insert that failed, e.g. mimics-fs-b on 2026-11-09) counts nothing. The earlier estimator charged every VM
+    without a cost record or interruption marker up to NOW, so gone VMs kept accruing (it read 50.9 USD when the real
+    figure was about 31) and the cap stopped the relaunches. Falls back to the old estimator if the log is unreadable."""
+    try:
+        return _spent_from_audit_log()
+    except (Exception, SystemExit) as e:  # noqa: BLE001 - a failed read must never read as zero spend
+        old, notes = _spent_usd_markers()
+        return old, notes + [f"audit-log estimate unavailable ({type(e).__name__}); marker estimate used"]
+
+
+def _spent_from_audit_log():
+    import datetime
+    q = ('resource.type="gce_instance" AND protoPayload.resourceName:"instances/mimics-" AND '
+         '(protoPayload.methodName:"insert" OR protoPayload.methodName:"preempted" OR protoPayload.methodName:"delete")')
+    import shutil
+    exe = shutil.which("gcloud") or shutil.which("gcloud.cmd") or "gcloud"
+    r = subprocess.run([exe, "logging", "read", q, f"--project={PROJECT}", "--freshness=30d", "--limit=2000",
+                        "--format=value(timestamp,protoPayload.methodName,protoPayload.resourceName)"],
+                       capture_output=True, text=True, timeout=300)
+    if r.returncode != 0:
+        raise RuntimeError(r.stderr[-300:])
+    out = r.stdout
+    start, stop = {}, {}
+    for line in out.splitlines():
+        parts = line.strip().split("\t")
+        if len(parts) < 3:
+            continue
+        t = datetime.datetime.fromisoformat(parts[0].replace("Z", "+00:00")).timestamp()
+        vm = parts[2].rsplit("/", 1)[-1]
+        if "insert" in parts[1]:
+            start[vm] = min(start.get(vm, t), t)
+        else:
+            stop[vm] = min(stop.get(vm, t), t)
+    if not start:
+        raise RuntimeError("no insert events")
+    live = set(running())
+    now = datetime.datetime.now(datetime.timezone.utc).timestamp()
+    total, notes = 0.0093 + 0.6, ["includes 0.60 USD reserved for the evaluation VM"]   # mirror job + evaluation
+    for vm, t0 in start.items():
+        key = vm.split("-")[1] if vm.split("-")[1] in RATE_VM else "pilot"
+        t1 = stop.get(vm) or (now if vm in live else t0)
+        total += max(0.0, t1 - t0) / 3600.0 * RATE_VM[key]
+        if vm not in stop and vm not in live:
+            notes.append(f"{vm}: insert without a running instance or a stop event - counted 0")
+    return round(total, 2), notes
+
+
+def _spent_usd_markers():
+    """The earlier estimator (kept as a fallback): cost records, plus VMs that left none, from their plan creation
+    time to their last interruption marker (or now) at their list rate."""
     import datetime
     total, notes = 0.0093, []                                     # the mirror job
     costs = {}

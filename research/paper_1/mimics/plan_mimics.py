@@ -25,7 +25,11 @@ import argparse
 import json
 import math
 
-CAP_USD = 45.0
+# Owner instruction 2026-11-14 ("necesito que acabes completamente todo ... no la apagues"): the guard cap rises
+# from 45 to 55 USD so the WORST case of the relaunched guards fits; the expected total stays about 37-38 USD.
+# The 45 cap had stopped the relaunches on 2026-11-13 23:42 through an estimator that kept charging VMs
+# that were gone (fixed in launch_mimics.spent_usd, audit-log based: 31.11 USD spent on 2026-11-14).
+CAP_USD = 55.0
 SAFETY = 1.25
 SETUP_H = 0.35                         # per VM: environment, weights, images (pilot measures it)
 RATE = {"nn": 0.09003, "fs_hm": 0.12248, "fs_std": 0.09346, "pilot": 0.13002}
