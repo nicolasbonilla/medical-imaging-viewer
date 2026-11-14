@@ -508,7 +508,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 
 ---
 
-## Addendum — Single quality gate (DRAFT, PENDING owner approval)
+## Addendum — Single quality gate (N. G. Bonilla Vargas — approved 2026-11-14 (PR #81))
 
 *Branch `feat/quality-gate` (stacked on draft PR #79), 2026-11-12. SRS and RMF Addendum C; design `docs/iec62304/agent_platform/Quality_Gate_Design.md`; negative controls `scripts/safety/quality_gate_negative_controls.py`.*
 

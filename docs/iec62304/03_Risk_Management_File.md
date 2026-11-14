@@ -1059,9 +1059,9 @@ No patient-data leak found (the exit rule for safety). Failing-first tests at `2
 
 Failing-first tests at `b5571ee` (CI run 43063117100 red: 5 of 5); fixes at `b6430d6` (CI run 43063554593 green: 621 platform tests, 2483 backend tests). Negative controls for T1: 4 of 4 detected (EE1–EE4), restored suite 618 passed / 0 failed.
 
-## Addendum C — Single quality gate (DRAFT, PENDING owner approval)
+## Addendum C — Single quality gate (N. G. Bonilla Vargas — approved 2026-11-14 (PR #81))
 
-*Proposed 2026-11-12 on branch `feat/quality-gate`, stacked on draft PR #79; not merged, not deployed. DRAFT, PENDING owner approval: severity, probability and acceptability are PROPOSALS; nothing is approved until N. G. Bonilla Vargas records it. RC-122..RC-127 follow the highest control in use on any branch (RC-121); HAZ-025 follows HAZ-024. Requirements: SRS Addendum C. Design and survey of the existing checks: `docs/iec62304/agent_platform/Quality_Gate_Design.md`.*
+*Proposed 2026-11-12 on branch `feat/quality-gate`, stacked on draft PR #79; not merged, not deployed. N. G. Bonilla Vargas — approved 2026-11-14 (PR #81): severity, probability and acceptability are PROPOSALS; nothing is approved until N. G. Bonilla Vargas records it. RC-122..RC-127 follow the highest control in use on any branch (RC-121); HAZ-025 follows HAZ-024. Requirements: SRS Addendum C. Design and survey of the existing checks: `docs/iec62304/agent_platform/Quality_Gate_Design.md`.*
 
 ### C.1 Hazard
 
@@ -1102,7 +1102,7 @@ All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/unit/test_quality_
 
 **Negative controls** (`scripts/safety/quality_gate_negative_controls.py`, record `QUALITY-GATE_negative_controls_2026-11-12.json`): 41 mutations, one at a time in a throwaway copy (never the worktree), every anchor exactly once, each mutant compiled and imported (or parsed / loaded under Node) before its kill counted: **38 of 38 run detected, 0 survived, 0 invalid**; 3 component mutations (V1–V3) need vitest and were not run locally (no `node_modules`; vitest runs in GitHub Actions). Per control: RC-122 12/12, RC-123 6/6, RC-124 4/4, RC-125 6/6, RC-126 10/10, RC-127 7/7. Baseline and restored copy: backend 48 passed / 0 failed, browser harness 10 / 0.
 
-### C.6 First independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.6 First independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1119,7 +1119,7 @@ Failing first (commit `3990365`): G12 55 of 123 descriptions misclassified, 46 n
 
 Negative controls, re-run with every test command inside the throwaway copy (S4): 62 mutations, **56 of 56 run detected, 0 survived, 0 invalid**; 6 component mutations (V1–V6) not run (no node_modules). Per control: RC-122 23/23, RC-123 10/10, RC-124 5/5, RC-125 6/6, RC-126 12/12, RC-127 11/11. Baseline and restored copy: backend 59 / 0, browser harness 12 / 0.
 
-### C.7 Second independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.7 Second independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1136,7 +1136,7 @@ Failing first (commit `e5e3f0f`, CI run 43158533290): G15 the inventory disagree
 
 After the fixes: matrix 29 of 29, wiring 38 of 38, CAPA-013 52 of 52, CAPA-009 53 of 53, inventory 28 of 28; GitHub Actions run on `84e432c`: all 8 jobs green. Negative controls (every test run inside the throwaway copy): 81 mutations, **71 of 71 run detected, 0 survived, 0 invalid**; 10 component mutations not run (no node_modules). Per control: RC-122 30/30, RC-123 11/11, RC-124 5/5, RC-125 6/6, RC-126 19/19, RC-127 11/11. Baseline and restored copy: backend 67 / 0, browser harness 14 / 0.
 
-### C.8 Third independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.8 Third independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1152,7 +1152,7 @@ Failing first (commit `50ec58f`, CI run 43163086468): **G19 4 of 71 pre-PR RC-04
 
 After the fixes: matrix 32 of 32, wiring 44 of 44, inventory 28 of 28, CAPA-013 52 of 52, CAPA-015 30 of 30, skull strip 14 of 14, longitudinal guards 22 of 22; GitHub Actions on `9586f80`: all 8 jobs green (a range-read test that left the next test without an event loop was fixed first). Negative controls (every test run inside the throwaway copy): 98 mutations, **85 of 85 run detected, 0 survived, 0 invalid**; 13 component mutations not run (no node_modules). Per control: RC-122 40/40, RC-123 13/13, RC-124 5/5, RC-125 6/6, RC-126 21/21, RC-127 11/11. Baseline and restored copy: backend 76 / 0, browser harness 15 / 0.
 
-### C.9 Fourth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.9 Fourth independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1167,7 +1167,7 @@ Negative controls (every test run inside the throwaway copy): 106 mutations, **9
 
 **HAZ-007 residual:** this PR leaves the residual risk of HAZ-007 for RC-062 UNCHANGED (RC-062 behaves exactly as on the base branch, gate on or off). D-QG-10 is no longer implemented: it is recorded as an owner decision about a possible FUTURE, separate change to RC-062, which would need its own risk assessment of the HAZ-007 residual.
 
-### C.10 Fifth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.10 Fifth independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1186,7 +1186,7 @@ Negative controls (every test run inside the throwaway copy; record `QUALITY-GAT
 
 **HAZ-007 residual:** unchanged (RC-062's rule is the base branch's; its predicate is only named and shared).
 
-### C.11 Sixth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.11 Sixth independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 Root cause of most findings: two implementations of the rule and the classifier (server and browser) kept drifting — the NIfTI descrip read by the browser but not by the server, ImageType never set in the browser, a local re-evaluation that hid output on drift. Per "don't repeat a failing approach", the ARCHITECTURE changed instead of chasing the drift.
 
@@ -1204,7 +1204,7 @@ Negative controls (every test run inside the throwaway copy; full run on `0a4b57
 
 **HAZ-007 residual:** unchanged.
 
-### C.12 Seventh independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.12 Seventh independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1220,7 +1220,7 @@ Negative controls (every test run inside the throwaway copy; full run on `ea9d15
 
 **HAZ-007 residual:** unchanged.
 
-### C.13 Eighth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.13 Eighth independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1237,7 +1237,7 @@ Negative controls (every test run inside the throwaway copy; full run on `1f6186
 
 **HAZ-007 residual:** unchanged.
 
-### C.14 Ninth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.14 Ninth independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 The main class is now the converse of the earlier ones: OVER-BLOCKING (a real FLAIR stopped with an unliftable 'other').
 
@@ -1255,7 +1255,7 @@ Negative controls: 152 mutations in a throwaway copy (baseline and restored copy
 
 **HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** the over-blocking of real FLAIRs is removed without letting a non-acquisition image through (S1 of the seventh review still holds: SECONDARY, MPR, projections, subtraction, localizers and screen saves stay 'other').
 
-### C.15 Tenth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.15 Tenth independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 No non-FLAIR image passes any more; the remaining findings were availability, an over-block case and audit truncation, several of them from extra moving parts. This round SIMPLIFIES.
 
@@ -1274,7 +1274,7 @@ Negative controls: 151 mutations in a throwaway copy (baseline and restored copy
 
 **HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a transient read error no longer blocks a study until the cache expires; an exam-level field no longer blocks a real FLAIR; the audit keeps every attested visit.
 
-### C.16 Eleventh independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.16 Eleventh independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1291,7 +1291,7 @@ Negative controls: 159 mutations in a throwaway copy (baseline and restored copy
 
 **HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a client can no longer make the report hide a gate warning or present a stopped pair as clean.
 
-### C.17 Twelfth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.17 Twelfth independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 | # | Finding | Control | Fix | Invariant |
 |---|---|---|---|---|
@@ -1307,7 +1307,7 @@ Negative controls: 168 mutations in a throwaway copy (baseline and restored copy
 
 **HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a report can no longer carry the gate decision of another pair, a refused access is always traced, and the audit no longer calls a consultation without a run an AI run.
 
-### C.18 Thirteenth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+### C.18 Thirteenth independent review of PR #81 (2026-11-12) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 The findings were state-flow bugs of the card around the run token and the attestation (re-run, rescind, retry, expiry, late responses); they were found and closed with a MODEL-BASED test of the flow rather than one at a time.
 
@@ -1324,7 +1324,7 @@ Negative controls: 180 mutations in a throwaway copy (baseline and restored copy
 
 **HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a released output now always corresponds to exactly one confirmed run of the current inputs.
 
-### C.19 Fourteenth independent review of PR #81 (2026-11-13) — DRAFT, PENDING owner approval
+### C.19 Fourteenth independent review of PR #81 (2026-11-13) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 Ten findings; two (K1, K7) were regressions of the thirteenth review's own fixes, whose failing-first tests mocked the function directly above the real failure. New rule: every failing-first test fails through the REAL lowest layer's failure modes, injected at each of them.
 
@@ -1347,7 +1347,7 @@ Negative controls: 195 controls after this round (2 retired with their reason �
 
 **HAZ-025 / HAZ-001:** a released output still corresponds to exactly one confirmed run of the current inputs, now also when its answer is lost; no audit trail gap from an unconfirmed record.
 
-### C.20 Fifteenth independent review of PR #81 (2026-11-13) — DRAFT, PENDING owner approval
+### C.20 Fifteenth independent review of PR #81 (2026-11-13) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 Ten findings, most in mechanisms the fourteenth review added (the confirmation wait, the claim/lease epochs, K10). The answer is LESS mechanism; every mechanism kept has a model-based test of its whole lifecycle with a failure at each external call.
 
@@ -1367,7 +1367,7 @@ Negative controls: 202 controls after this round (6 retired with their reason �
 
 **HAZ-025 / HAZ-001:** a released output corresponds to exactly one stored decision of one confirmed run; RC-062's input is the base's again.
 
-### C.21 Sixteenth independent review of PR #81 (2026-11-13) — DRAFT, PENDING owner approval
+### C.21 Sixteenth independent review of PR #81 (2026-11-13) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81)
 
 Nine findings. Each was reproduced failing first through the real lower layer, closed by an invariant or a matrix rather than a point fix, and, where possible, by deleting mechanism.
 
@@ -1388,7 +1388,7 @@ Negative controls (GitHub Actions run https://github.com/nicolasbonilla/medical-
 
 **HAZ-025 / HAZ-016 / HAZ-001:** no gate answer before authorization; a gate decision only ever certifies a comparison of its own patient; a run starts only on the inputs in effect; no report refused because the gate's own words resemble a patient's name.
 
-*Integration note (2026-11-14) — DRAFT, PENDING owner approval.* PR #81 is integrated with the verified report of PR #78 (research stage: the app is a research prototype used only by its owner). The gate's account is computed once by the report route (R2) and reaches the verified report through the RC-064 projection: when the gate stopped a pair, the measurement record the model receives says so with the gate's causes (`quality_gate_causes`, the code-written sentences of the reason table) and the draft's comparison line says the quality check stopped the comparison — never RC-062's "acquisition not established" wording; when it warned, the record carries `quality_gate_warnings`; the code-written change notice gives the same causes or warnings (G30). RC-065's exemption of the device's own words is derived from the reason registry inside the verified report's word list (`verified_report.synthetic_payloads`). With the gate off the report path is the verified report of main byte for byte (flags-off snapshot, report part recorded on 7358d29). No new review round.
+*Integration note (2026-11-14) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #81).* PR #81 is integrated with the verified report of PR #78 (research stage: the app is a research prototype used only by its owner). The gate's account is computed once by the report route (R2) and reaches the verified report through the RC-064 projection: when the gate stopped a pair, the measurement record the model receives says so with the gate's causes (`quality_gate_causes`, the code-written sentences of the reason table) and the draft's comparison line says the quality check stopped the comparison — never RC-062's "acquisition not established" wording; when it warned, the record carries `quality_gate_warnings`; the code-written change notice gives the same causes or warnings (G30). RC-065's exemption of the device's own words is derived from the reason registry inside the verified report's word list (`verified_report.synthetic_payloads`). With the gate off the report path is the verified report of main byte for byte (flags-off snapshot, report part recorded on 7358d29). No new review round.
 
 *End of Risk Management File*
 

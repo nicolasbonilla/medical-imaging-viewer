@@ -1,6 +1,6 @@
 # Single quality gate (`quality-gate`) — design
 
-**Status: DRAFT, PENDING owner approval.** Branch `feat/quality-gate`, stacked on PR #79 (`feat/agent-platform`). Nothing here is approved, merged or deployed until N. G. Bonilla Vargas records it. Function 2 of `reports/Plan de agentes de vanguardia.md`.
+**Status: N. G. Bonilla Vargas — approved 2026-11-14 (PR #81).** Branch `feat/quality-gate`, stacked on PR #79 (`feat/agent-platform`). Nothing here is approved, merged or deployed until N. G. Bonilla Vargas records it. Function 2 of `reports/Plan de agentes de vanguardia.md`.
 
 Requirements: SRS Addendum C (REQ-FUNC-117, REQ-FUNC-118, REQ-SAFE-052, REQ-SAFE-053, REQ-SAFE-054). Hazard and controls: RMF Addendum C (HAZ-025; RC-122..RC-127). Traceability: Traceability Matrix, addendum "Single quality gate".
 
