@@ -1,0 +1,42 @@
+{
+  "executed": "2026-11-11",
+  "purpose": "failing-first: the eighth independent review's invariants I9-I11 and the tests of findings 3, 5-8, on the reviewed head, before any correction",
+  "tree": "c56c67c (feat/report-agent-verified, head reviewed by the eighth independent review)",
+  "test_file": "backend/tests/unit/test_verified_report_scenario_matrix.py",
+  "test_sha256": "041848fccf0346ceab852722cf308d3bc2d2fde99eecef8b4bde31184d2afb69",
+  "summary": "13 of 32 tests failed",
+  "failed": [
+    "test_rc103_i9_the_code_written_draft_passes_the_devices_own_verifier[en]",
+    "test_rc103_i9_the_code_written_draft_passes_the_devices_own_verifier[es]",
+    "test_rc103_i9_the_code_written_draft_passes_the_devices_own_verifier[de]",
+    "test_rc103_i10_a_comment_that_obeys_each_rule_passes_the_check",
+    "test_rc102_i11_the_draft_follows_the_shared_longitudinal_rule[stable is missing (review case)]",
+    "test_rc065_every_draft_template_appears_in_the_synthetic_payloads",
+    "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[nothing_to_comment]",
+    "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[too_little_time]",
+    "test_rc102_no_empty_impression_heading",
+    "test_rc103_a_count_in_another_languages_words_fails[de-There are two lesions.]",
+    "test_rc103_a_count_in_another_languages_words_fails[es-Es gibt zwei L\\xe4sionen.]",
+    "test_rc103_a_count_in_another_languages_words_fails[en-Hay doce lesiones.]",
+    "test_rc106_thinking_off_is_sent_as_each_model_accepts_it"
+  ],
+  "violations": {
+    "I9_en": "576 of 1128 cases",
+    "I9_es": "576 of 1128 cases",
+    "I9_de": "576 of 1128 cases",
+    "I9_causes": [
+      "E2.longitudinal_not_candidate on the below-size line",
+      "E1.number on the change notice's measured false-candidate rate (not in the record)"
+    ],
+    "I10": [
+      "rule 1: 'Contrast-enhanced and T1-weighted images were not provided.' -> FMT.digits",
+      "rule 3: 'Dissemination in space was not evaluated.' -> RC070.dis_statement"
+    ],
+    "I11_backend": "1 of 8 fixture cases (status_counts without 'stable': draft 'not computed', screen '3 unconfirmed change candidates')"
+  },
+  "frontend": {
+    "test_file": "frontend/src/components/LongitudinalResultPanel.matrix.test.tsx",
+    "summary": "0 failed, 9 passed",
+    "note": "the screen already applied the one rule (new and enlarging known); the backend half fails"
+  }
+}

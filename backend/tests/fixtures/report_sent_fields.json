@@ -1,0 +1,36 @@
+{
+  "_about": "Eleventh independent review of PR #78, L1 (REQ-REG-011; DRAFT, PENDING owner approval): what the verified report sends to the AI service, block by block of the measurement record (verified_report.record_json), and the words each notice must use for it. backend/tests/unit/test_verified_report_review11.py checks that the record's blocks are exactly these and that both notices (report.deidentificationNote, reportViewer.aiDataNote) in en/es/de name every sent category and none of the never-sent items.",
+  "blocks": {
+    "lesions": "lesions",
+    "regions": "regions",
+    "dis": "dis",
+    "longitudinal": "changes",
+    "brain_volumetry": "volumes",
+    "segmentation": "confirmation",
+    "clinician_entry": "entry_flags",
+    "report_language": "meta",
+    "not_available": "meta",
+    "not_included": "meta"
+  },
+  "notice_keys": ["report.deidentificationNote", "reportViewer.aiDataNote"],
+  "phrases": {
+    "en": {"lesions": ["lesion count", "lesion volume", "size classes"], "regions": ["MAGNIMS region"],
+           "dis": ["dissemination in space"], "changes": ["change candidates"],
+           "volumes": ["brain", "intracranial volume"], "confirmation": ["confirmed the segmentation"],
+           "entry_flags": ["fields"]},
+    "es": {"lesions": ["recuento de lesiones", "volumen lesional", "clases de tamaño"], "regions": ["región MAGNIMS"],
+           "dis": ["diseminación en el espacio"], "changes": ["candidatos de cambio"],
+           "volumes": ["cerebral", "intracraneal"], "confirmation": ["confirmó la segmentación"],
+           "entry_flags": ["campos"]},
+    "de": {"lesions": ["Läsionsanzahl", "Gesamtläsionsvolumen", "Größenklassen"], "regions": ["MAGNIMS-Region"],
+           "dis": ["räumliche Dissemination"], "changes": ["Veränderungskandidaten"],
+           "volumes": ["Gesamthirn", "intrakranielle"], "confirmation": ["Segmentierung"],
+           "entry_flags": ["Felder"]}
+  },
+  "never_sent_fields": ["patient_sex", "patient_age", "clinical_indication", "technique", "additional_observations"],
+  "never_sent_words": {
+    "en": ["sex", "age", "age range", "age band"],
+    "es": ["sexo", "edad"],
+    "de": ["Geschlecht", "Alter", "Altersspanne"]
+  }
+}

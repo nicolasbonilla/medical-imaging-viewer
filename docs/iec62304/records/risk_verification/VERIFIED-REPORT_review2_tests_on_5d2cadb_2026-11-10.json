@@ -1,0 +1,120 @@
+{
+  "executed": "2026-11-10",
+  "purpose": "failing-first: the tests of the second independent review of PR #78 (items A-J) on the reviewed head, before any correction",
+  "tree": "5d2cadb (feat/report-agent-verified, head reviewed by the second independent review)",
+  "environment": "PRB-002 offline: missing credentials file, empty CLOUDSDK_CONFIG, GOOGLE_CLOUD_PROJECT=mstool-offline-tests, ANTHROPIC_API_KEY unset",
+  "test_file": "backend/tests/unit/test_verified_report_review2.py",
+  "test_sha256": "fce319618e1cd04d80242e8f33c108b147118f01b0fdff325661cf98df317715",
+  "summary": "51 failed, 9 passed",
+  "per_item_failed_passed": {
+    "A": {
+      "failed": 20,
+      "passed": 6
+    },
+    "A+B": {
+      "failed": 3,
+      "passed": 0
+    },
+    "B": {
+      "failed": 5,
+      "passed": 0
+    },
+    "C": {
+      "failed": 3,
+      "passed": 1
+    },
+    "D": {
+      "failed": 4,
+      "passed": 1
+    },
+    "E": {
+      "failed": 4,
+      "passed": 0
+    },
+    "F": {
+      "failed": 4,
+      "passed": 0
+    },
+    "G": {
+      "failed": 1,
+      "passed": 0
+    },
+    "H": {
+      "failed": 1,
+      "passed": 0
+    },
+    "I": {
+      "failed": 4,
+      "passed": 1
+    },
+    "J": {
+      "failed": 2,
+      "passed": 0
+    }
+  },
+  "note": "every item A-J has at least one failing test on the reviewed head; the passing tests are guards (what must stay allowed or refused after the correction).",
+  "failing_tests": [
+    "test_rc064_c_a_bad_value_in_a_field_the_report_does_not_render_never_blocks_it[llm_off]",
+    "test_rc064_c_a_bad_value_in_a_field_the_report_does_not_render_never_blocks_it[llm_on]",
+    "test_rc064_c_a_patient_number_in_a_field_never_sent_does_not_block_and_is_not_sent",
+    "test_rc064_h_the_api_description_says_what_is_sent",
+    "test_rc064_j_no_per_lesion_value_reaches_the_model_and_the_number_pool_shrinks",
+    "test_rc065_g_the_device_vocabulary_is_built_only_from_the_text_sent_now",
+    "test_rc065_j_the_first_message_is_built_once_and_is_exactly_what_was_checked",
+    "test_rc070_f_a_runtime_error_of_the_service_is_not_reported_as_a_missing_key",
+    "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[de]",
+    "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[en]",
+    "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[es]",
+    "test_rc102_d_a_request_with_nothing_the_verified_report_can_render_is_refused[anomalies]",
+    "test_rc102_d_a_request_with_nothing_the_verified_report_can_render_is_refused[segmentation_labels]",
+    "test_rc102_d_a_request_with_nothing_the_verified_report_can_render_is_refused[structures_only]",
+    "test_rc102_d_a_request_with_nothing_the_verified_report_can_render_is_refused[zone_stats]",
+    "test_rc102_e_a_region_not_computed_is_not_computed_alone",
+    "test_rc102_e_labels_outside_the_four_magnims_regions_never_hide_them[de]",
+    "test_rc102_e_labels_outside_the_four_magnims_regions_never_hide_them[en]",
+    "test_rc102_e_labels_outside_the_four_magnims_regions_never_hide_them[es]",
+    "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[de-Das Muster ist nicht vereinbar mit Multipler Sklerose.]",
+    "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-The pattern is not consistent with multiple sclerosis.]",
+    "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-There is no evidence of disease activity.]",
+    "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[es-El patr\\xf3n no es compatible con esclerosis m\\xfaltiple.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Dieser Entwurf ist keine Diagnose, aber das Muster ist vereinbar mit Multipler Sklerose.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Kein Radiologe hat die L\\xe4sionen gepr\\xfcft, aber eine Therapie sollte erwogen werden.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-If confirmed by a radiologist, the pattern is consistent with multiple sclerosis.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-No radiologist has reviewed the marking, but the lesions are typical of demyelination.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This draft is not a diagnosis, but the lesion pattern is consistent with multiple sclerosis.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This is not a final report and disease-modifying therapy may be considered.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-Este borrador no es un diagn\\xf3stico, pero el patr\\xf3n es compatible con esclerosis m\\xfaltiple.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-No hay datos cl\\xednicos; sin embargo, se debe valorar el tratamiento.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Dieser Entwurf ist keine Diagnose, aber das Muster ist vereinbar mit Multipler Sklerose.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Kein Radiologe hat die L\\xe4sionen gepr\\xfcft, aber eine Therapie sollte erwogen werden.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-If confirmed by a radiologist, the pattern is consistent with multiple sclerosis.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-No radiologist has reviewed the marking, but the lesions are typical of demyelination.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This draft is not a diagnosis, but the lesion pattern is consistent with multiple sclerosis.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This is not a final report and disease-modifying therapy may be considered.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-Este borrador no es un diagn\\xf3stico, pero el patr\\xf3n es compatible con esclerosis m\\xfaltiple.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-No hay datos cl\\xednicos; sin embargo, se debe valorar el tratamiento.]",
+    "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent with multiple sclerosis**]",
+    "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Lesion summary**]",
+    "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT WITH MULTIPLE SCLEROSIS]",
+    "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL OF DEMYELINATION:]",
+    "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment escalation__]",
+    "test_rc103_i_an_invalid_number_of_regenerations_is_refused_before_any_call[-1]",
+    "test_rc103_i_an_invalid_number_of_regenerations_is_refused_before_any_call[1.5]",
+    "test_rc103_i_an_invalid_number_of_regenerations_is_refused_before_any_call[3]",
+    "test_rc103_i_an_invalid_number_of_regenerations_is_refused_before_any_call[True]",
+    "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+    "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]",
+    "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_the_ported_corpus"
+  ],
+  "passing_guard_tests": [
+    "test_rc064_c_a_bad_value_in_a_rendered_field_still_refuses",
+    "test_rc102_d_brain_volumes_alone_are_renderable",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-The lesions are not confluent; treatment escalation should be discussed.]",
+    "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-The lesions are not confluent; treatment escalation should be discussed.]",
+    "test_rc103_a_the_exact_disclaimers_and_a_governed_negation_are_still_allowed[de-Dieser Entwurf ist keine Diagnose.]",
+    "test_rc103_a_the_exact_disclaimers_and_a_governed_negation_are_still_allowed[en-No treatment advice is given.]",
+    "test_rc103_a_the_exact_disclaimers_and_a_governed_negation_are_still_allowed[en-This draft is not a diagnosis.]",
+    "test_rc103_a_the_exact_disclaimers_and_a_governed_negation_are_still_allowed[es-Este borrador no es un diagn\\xf3stico.]",
+    "test_rc103_i_the_outcome_is_named_from_the_attempt_number"
+  ]
+}

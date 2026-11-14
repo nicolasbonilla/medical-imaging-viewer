@@ -1,0 +1,101 @@
+{
+ "control": "RC-130",
+ "requirement": "REQ-SAFE-060",
+ "hazards": [
+  "HAZ-003",
+  "HAZ-017"
+ ],
+ "pull_request": 82,
+ "code_commit": "2d86bfd",
+ "executed": "2026-11-13, Google Cloud Build in project brain-mri-476110 (node:22), off the owner's PC",
+ "script": "scripts/safety/rc130_negative_controls.py",
+ "method": "one mutation at a time on a pristine copy of one file, anchor asserted unique; the two RC-130 test files run with vitest's JSON reporter; file restored byte for byte; a test file that fails to load is 'invalid', never 'killed'",
+ "status": "DRAFT, PENDING owner approval",
+ "baseline": {
+  "exit": 0,
+  "loaded": true,
+  "failed": [],
+  "passed": 19
+ },
+ "mutations": [
+  {
+   "id": "N1 notice never shown",
+   "file": "frontend/src/utils/aiInTesting.ts",
+   "verdict": "killed",
+   "failed_tests": [
+    "rc130 shows the in-testing notice, naming the model, when its comments are in the draft (en)",
+    "rc130 puts the notice above the text the model wrote (en)",
+    "rc130 shows the in-testing notice, naming the model, when its comments are in the draft (es)",
+    "rc130 puts the notice above the text the model wrote (es)",
+    "rc130 shows the in-testing notice, naming the model, when its comments are in the draft (de)",
+    "rc130 puts the notice above the text the model wrote (de)",
+    "rc130 a legacy report a model wrote (no verification record) is labelled too",
+    "rc130 sits after the clinician entry and the code-written notes, right before the model text",
+    "rc130 words the notice in the report language, not the interface language",
+    "rc130 the viewer Copy button puts the notice first",
+    "rc130 textToCopy puts the notice first, in the report language (en)",
+    "rc130 textToCopy puts the notice first, in the report language (es)",
+    "rc130 textToCopy puts the notice first, in the report language (de)"
+   ],
+   "passed": 6
+  },
+  {
+   "id": "N2 notice on a draft no model wrote",
+   "file": "frontend/src/utils/aiInTesting.ts",
+   "verdict": "killed",
+   "failed_tests": [
+    "rc130 shows no in-testing notice for a draft no model wrote (en)",
+    "rc130 shows no in-testing notice for a draft no model wrote (es)",
+    "rc130 shows no in-testing notice for a draft no model wrote (de)",
+    "rc130 textToCopy is the content unchanged when no model wrote text"
+   ],
+   "passed": 15
+  },
+  {
+   "id": "N3 interface language instead of the report's",
+   "file": "frontend/src/utils/aiInTesting.ts",
+   "verdict": "killed",
+   "failed_tests": [
+    "rc130 words the notice in the report language, not the interface language",
+    "rc130 textToCopy puts the notice first, in the report language (es)",
+    "rc130 textToCopy puts the notice first, in the report language (de)"
+   ],
+   "passed": 16
+  },
+  {
+   "id": "N4 viewer copies without the notice",
+   "file": "frontend/src/components/ReportViewerModal.tsx",
+   "verdict": "killed",
+   "failed_tests": [
+    "rc130 the viewer Copy button puts the notice first",
+    "rc130 no Copy button of a report writes the raw content to the clipboard"
+   ],
+   "passed": 17
+  },
+  {
+   "id": "N5 panel copies without the notice",
+   "file": "frontend/src/components/AIReportPanel.tsx",
+   "verdict": "killed",
+   "failed_tests": [
+    "rc130 no Copy button of a report writes the raw content to the clipboard"
+   ],
+   "passed": 18
+  },
+  {
+   "id": "N6 notice above the clinician entry",
+   "file": "frontend/src/components/ReportViewerModal.tsx",
+   "verdict": "killed",
+   "failed_tests": [
+    "rc130 sits after the clinician entry and the code-written notes, right before the model text"
+   ],
+   "passed": 18
+  }
+ ],
+ "restored": {
+  "exit": 0,
+  "loaded": true,
+  "failed": [],
+  "passed": 19
+ },
+ "history": "First run on 7a07158 with an earlier version of the script (same six mutations, byte-identical anchors): 6/6 detected. Re-run on 2d86bfd after the script was put in the repository convention (test_negative_controls_validity): 6/6 detected."
+}

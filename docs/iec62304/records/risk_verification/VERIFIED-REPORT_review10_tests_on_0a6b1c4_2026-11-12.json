@@ -1,0 +1,33 @@
+{
+  "executed": "2026-11-12",
+  "purpose": "failing-first: the tenth independent review's invariants I16-I19 and the tests of findings 5, 7, 8, 9 on the reviewed head, before any correction",
+  "tree": "0a6b1c4 (feat/report-agent-verified, head reviewed by the tenth independent review)",
+  "status": "DRAFT, PENDING owner approval",
+  "backend": {
+    "test_file": "backend/tests/unit/test_verified_report_review10.py",
+    "summary": "34 of 37 failed",
+    "violations": {
+      "I16": "13 of 13 route errors without a code of their own (HTTP_400/404/409/422/500/503 only); the route names no code list; 6 of 6 implausible-measurement answers carried no field and asked to 'correct the input'",
+      "I17": "94 of 94 cases with the comments ON and 94 of 94 with them OFF recorded privacy_check=passed before the patient-number and identifier checks ran (OFF: they never run); a model call cancelled in flight left no verification record (0 of 1)",
+      "I18": "5 of 8 first-call durations: a retry sent with 4.5, 3.0 or 1.0 s left, or skipped and reported as 'timeout'; a retry cut by the time budget reported as 'timeout' (1 of 1)",
+      "I19": "{'longitudinal': {'reader_confirmed_activity': True}} answered 200 with only the limitations (1 of 1)",
+      "finding_5": "a projected number equal to a patient number raised IdentifierInPrompt (the route answers 503, no draft)",
+      "finding_7": "a transient read error of the evidence asset was cached: the rate stayed withheld until restart",
+      "finding_8": "the time left computed twice in generate_report",
+      "finding_9": "the patient-number rule written twice (_Projector.number and assert_no_patient_numbers)"
+    },
+    "passed_before_the_fix": [
+      "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[0.5]",
+      "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[5.0]",
+      "test_rc106_i18_no_request_with_less_than_the_minimum_budget_retries_included[10.0]"
+    ]
+  },
+  "frontend": {
+    "test_file": "frontend/src/components/AIReportPanel.errorCodes.test.tsx",
+    "shared_fixture": "backend/tests/fixtures/report_error_codes.json",
+    "summary": "17 of 19 failed",
+    "violations": {
+      "I16": "13 of 13 codes not shown with their own message (every 422 'No measurements are available', every other status the transport's text); es and de lack the messages; the implausible measurement is not named; the panel decides by message prefix and by status 422"
+    }
+  }
+}

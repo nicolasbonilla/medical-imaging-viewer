@@ -18,6 +18,7 @@ Provides comprehensive input validation to prevent:
 
 import re
 import os
+import posixpath
 import mimetypes
 import hashlib
 from typing import Optional, List, Dict, Any, Tuple
@@ -417,6 +418,10 @@ PATH_TRAVERSAL_PATTERNS = [
     r'\.\.%5c',
 ]
 
+# A Windows drive prefix ("C:\", "C:/" or drive-relative "C:name"). Refused by design on every host: a colon is
+# illegal in a Windows file name and no storage path of this system starts with "<letter>:" (PRB-032 A).
+_DRIVE_PREFIX = re.compile(r'^[A-Za-z]:')
+
 
 class PathTraversalValidator:
     """
@@ -444,6 +449,21 @@ class PathTraversalValidator:
         if not value:
             return value
 
+        # Absolute paths of BOTH path families, whatever the host OS (CAPA-003, REQ-SEC-016, PRB-032 A). The server
+        # runs on Linux, where os.path.isabs did not see a Windows drive, UNC or device path as absolute. A leading
+        # separator covers POSIX-absolute, UNC, device and backslash-rooted paths; the drive prefix covers the rest.
+        if value.startswith(('/', '\\')) or _DRIVE_PREFIX.match(value):
+            audit_logger.log_security_event(
+                event_type=AuditEventType.SECURITY_PATH_TRAVERSAL,
+                severity=AuditSeverity.HIGH,
+                description=f"Absolute path refused in field '{field_name}'",
+                metadata={'field': field_name, 'pattern': 'absolute'}  # no raw value: RMF open item (PRB-020)
+            )
+            raise PathTraversalDetected(
+                f"Path traversal attempt detected in field '{field_name}': "
+                f"Absolute paths not allowed"
+            )
+
         # Check for path traversal patterns
         for pattern in PATH_TRAVERSAL_PATTERNS:
             if re.search(pattern, value, re.IGNORECASE):
@@ -451,39 +471,20 @@ class PathTraversalValidator:
                     event_type=AuditEventType.SECURITY_PATH_TRAVERSAL,
                     severity=AuditSeverity.HIGH,
                     description=f"Path traversal attempt detected in field '{field_name}'",
-                    metadata={
-                        'field': field_name,
-                        'pattern': pattern,
-                        'value': value
-                    }
+                    # No raw value: a file name can carry patient identifiers (RMF open item, PRB-020; PRB-032).
+                    metadata={'field': field_name, 'pattern': pattern, 'value_length': len(value)}
                 )
                 raise PathTraversalDetected(
                     f"Path traversal attempt detected in field '{field_name}': "
                     f"Suspicious pattern found"
                 )
 
-        # Normalize path and check if it stays within bounds
-        try:
-            normalized = os.path.normpath(value)
-
-            # Check for absolute paths (should be relative)
-            if os.path.isabs(normalized):
-                raise PathTraversalDetected(
-                    f"Path traversal attempt detected in field '{field_name}': "
-                    f"Absolute paths not allowed"
-                )
-
-            # Check if normalized path goes outside current directory
-            if normalized.startswith('..'):
-                raise PathTraversalDetected(
-                    f"Path traversal attempt detected in field '{field_name}': "
-                    f"Path escapes base directory"
-                )
-
-        except Exception as e:
-            logger.error(f"Path validation error: {e}")
+        # Normalize with POSIX rules on every host, so the returned path does not depend on the host OS (PRB-032 A).
+        normalized = posixpath.normpath(value)
+        if normalized.startswith('..'):
             raise PathTraversalDetected(
-                f"Invalid path in field '{field_name}'"
+                f"Path traversal attempt detected in field '{field_name}': "
+                f"Path escapes base directory"
             )
 
         return normalized

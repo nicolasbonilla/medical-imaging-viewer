@@ -27,6 +27,7 @@ Risk controls (REQ-SAFE-037):
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import inspect
 import json
@@ -90,13 +91,12 @@ def load_false_candidate_evidence(path: Optional[Path] = None) -> Optional[Dict[
 
     None when the asset is missing, unreadable or incomplete, or when it was measured on another
     rule than the one in force — the view then says that no measured rate is available.
-    """
-    path = Path(path) if path is not None else EVIDENCE_ASSET
-    try:
-        asset = json.loads(path.read_text(encoding="utf-8"))
-    except Exception as e:  # noqa: BLE001
-        logger.warning(f"[RC-061] evidence asset unreadable: {e}")
+    Ninth review of PR #78, finding 7: the versioned file is read once per process (it changes only with a release);
+    the check against the rule in force runs on every call, never from the cache, and each caller gets its own copy."""
+    asset = _read_evidence_asset(str(Path(path) if path is not None else EVIDENCE_ASSET))
+    if asset is None:
         return None
+    asset = copy.deepcopy(asset)
     try:
         if asset.get("applies_to_rule") != current_rule_parameters():
             logger.warning("[RC-061] evidence asset measured on another rule; rate withheld")
@@ -135,6 +135,30 @@ def load_false_candidate_evidence(path: Optional[Path] = None) -> Optional[Dict[
         logger.warning("[RC-061] evidence asset has invalid figures; rate withheld")
         return None
     return out
+
+
+_EVIDENCE_FILES: Dict[str, Dict[str, Any]] = {}
+
+
+def _read_evidence_asset(path_str: str) -> Optional[Dict[str, Any]]:
+    """The parsed asset file, read once per path (ninth review of PR #78, finding 7); None when unreadable. Tenth
+    review, finding 7: only a successful read is kept — a transient read error is not remembered, so the next record
+    tries again instead of withholding the rate until the server restarts."""
+    kept = _EVIDENCE_FILES.get(path_str)
+    if kept is not None:
+        return kept
+    try:
+        asset = json.loads(Path(path_str).read_text(encoding="utf-8"))
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"[RC-061] evidence asset unreadable: {e}")
+        return None
+    if not isinstance(asset, dict):
+        return None
+    _EVIDENCE_FILES[path_str] = asset
+    return asset
+
+
+_read_evidence_asset.cache_clear = _EVIDENCE_FILES.clear     # (tests start from an empty store)
 
 
 def _fmt(x: float) -> str:

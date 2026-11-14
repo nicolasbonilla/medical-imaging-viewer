@@ -1,0 +1,81 @@
+{
+  "executed": "2026-11-12T02:30:04",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; the panel tests run with vitest (JSON reporter); detected only when a test fails (a load error is not a detection); original bytes restored after each mutation and checked at the end",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "frontend/src/components/AIReportPanel.tsx": "38c9a655fdf6a461190a3c35066bf26bf8f14a8239ba27f282ca95b438edc61a"
+  },
+  "test_sha256": {
+    "frontend/src/components/AIReportPanel.errorCodes.test.tsx": "79135840211aecd46df1a551ea38de0314f3ea2e166ec1d26905558d18bb5be2",
+    "frontend/src/components/AIReportPanel.release20261025.test.tsx": "363df84dc51764fb298f04bd09fbe9ef137c4f53d75abd17d90a7db061c6eb5c"
+  },
+  "tests": [
+    "frontend/src/components/AIReportPanel.errorCodes.test.tsx",
+    "frontend/src/components/AIReportPanel.release20261025.test.tsx"
+  ],
+  "baseline": {
+    "failed": 0,
+    "passed": 23,
+    "errors": 0,
+    "failing_tests": [],
+    "error_files": []
+  },
+  "mutations": {
+    "U1_panel_decides_by_status": {
+      "failed": 8,
+      "passed": 15,
+      "errors": 0,
+      "failing_tests": [
+        "i16 geometry_unreadable (422) shows its own message",
+        "i16 lesion_table_failed (422) shows its own message",
+        "i16 implausible_measurement (422) shows its own message",
+        "i16 an implausible measurement names it and says it comes from the segmentation analysis (every field)",
+        "i16 the panel never decides by a message prefix or by the status alone",
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (en)",
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (es)",
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (de)"
+      ],
+      "error_files": [],
+      "reintroduces": "I16: every 422 reads 'No measurements are available' (the reviewer's case)",
+      "detected": true,
+      "executed": "2026-11-12T02:30:16"
+    },
+    "U2_implausible_not_named": {
+      "failed": 2,
+      "passed": 21,
+      "errors": 0,
+      "failing_tests": [
+        "i16 implausible_measurement (422) shows its own message",
+        "i16 an implausible measurement names it and says it comes from the segmentation analysis (every field)"
+      ],
+      "error_files": [],
+      "reintroduces": "I16: the implausible measurement is not named",
+      "detected": true,
+      "executed": "2026-11-12T02:30:21"
+    },
+    "U3_code_without_its_message": {
+      "failed": 1,
+      "passed": 22,
+      "errors": 0,
+      "failing_tests": [
+        "i16 identifier_in_prompt (503) shows its own message"
+      ],
+      "error_files": [],
+      "reintroduces": "I16: a code the route returns has no message of its own (the transport's text instead)",
+      "detected": true,
+      "executed": "2026-11-12T02:30:25"
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 23,
+    "errors": 0,
+    "failing_tests": [],
+    "error_files": []
+  },
+  "summary": {
+    "mutations": 3,
+    "detected": 3,
+    "undetected": []
+  }
+}

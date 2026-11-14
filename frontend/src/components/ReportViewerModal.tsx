@@ -21,8 +21,9 @@ import { Printer, Copy, Check, X } from 'lucide-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ReportResponse } from '@/types';
-import type { ReportAppNote, ReportClinicianEntry } from '@/types/ai';
+import type { ReportAppNote, ReportClinicianEntry, ReportVerification } from '@/types/ai';
 import { formatDate as formatLocalizedDate } from '@/utils/formatDate';
+import { aiInTestingNotice, modelWroteText as wroteText, textToCopy } from '@/utils/aiInTesting';
 
 /** How the Markdown of a draft is shown (the AI text, the fixed disclaimer, and drafts without parts). */
 const MARKDOWN_COMPONENTS: Components = {
@@ -144,6 +145,33 @@ function AppNoteBox({ note }: { note: ReportAppNote }) {
   );
 }
 
+/** RC-130 (REQ-SAFE-060; HAZ-003, HAZ-017 — DRAFT, PENDING owner approval): research stage — the AI comments are in
+ *  testing. Placed right before the text the model wrote (after the clinician's entry and the notes the code wrote,
+ *  which the model did not write), in the report's language; never shown for a draft no model wrote. */
+function InTestingNotice({ text }: { text: string }) {
+  return (
+    <aside data-testid="report-ai-in-testing" role="note"
+           className="mb-4 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900 font-sans">
+      {text}
+    </aside>
+  );
+}
+
+/** The i18n key of the verification state (third review of PR #78, item 4): the checked comments are in the draft;
+ *  withheld by the check (or the privacy check of a regeneration); not obtained from the AI service after it was
+ *  asked; or measurements only, nothing asked. */
+function verificationStateKey(v: ReportVerification | null): string | null {
+  if (!v) return null;
+  if (v.interpretive_text === 'delivered') return 'reportViewer.verification.delivered';
+  if (v.interpretive_text === 'withheld') {
+    // fifth review of PR #78, V3: the check itself failing after the model answered is a withheld check too
+    return v.reason === 'failed_check' || v.reason === 'feedback_identifier_check' || v.reason === 'internal_check_error'
+      ? 'reportViewer.verification.withheldCheck'
+      : 'reportViewer.verification.withheldUnavailable';
+  }
+  return 'reportViewer.verification.notRequested';
+}
+
 interface ReportViewerModalProps {
   report: ReportResponse;
   isOpen: boolean;
@@ -173,6 +201,12 @@ export function ReportViewerModal({
   const [copied, setCopied] = useState(false);
   // CAPA-014: a draft with parts — the entry and the notes come as fields, only the AI text is Markdown.
   const structured = typeof report.ai_text === 'string';
+  // Verified report (REQ-FUNC-116; third review of PR #78, item 4): who wrote what, from the `verification` codes.
+  const verification = report.verification ?? null;
+  // RC-130 (REQ-SAFE-060, DRAFT): one rule (utils/aiInTesting) for the model name, the in-testing notice and Copy.
+  const modelWroteText = wroteText(report);
+  const inTestingNotice = aiInTestingNotice(report);
+  const verificationKey = verificationStateKey(verification);
 
   // Escape key handler
   useEffect(() => {
@@ -187,12 +221,12 @@ export function ReportViewerModal({
   // Copy to clipboard
   const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(report.content);
+      await navigator.clipboard.writeText(textToCopy(report));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       const textarea = document.createElement('textarea');
-      textarea.value = report.content;
+      textarea.value = textToCopy(report);
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand('copy');
@@ -200,7 +234,7 @@ export function ReportViewerModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [report.content]);
+  }, [report]);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -346,14 +380,18 @@ export function ReportViewerModal({
                       {(report.app_notes ?? []).map((note, i) => (
                         <AppNoteBox key={`${note.kind}-${i}`} note={note} />
                       ))}
+                      {inTestingNotice && <InTestingNotice text={inTestingNotice} />}
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
                         {report.ai_text ?? ''}
                       </ReactMarkdown>
                     </>
                   ) : (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
-                      {report.content}
-                    </ReactMarkdown>
+                    <>
+                      {inTestingNotice && <InTestingNotice text={inTestingNotice} />}
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                        {report.content}
+                      </ReactMarkdown>
+                    </>
                   )}
                 </div>
 
@@ -368,7 +406,14 @@ export function ReportViewerModal({
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-between text-[10px] text-gray-400 pt-3 border-t border-gray-300 font-sans gap-y-1">
-                    <span>{t('reportViewer.model')}: {report.model || 'Claude'}</span>
+                    {/* Third review of PR #78 (item 4, DRAFT): the model is named only when a model wrote text in the
+                        draft — never a default name for a measurements-only draft. */}
+                    {modelWroteText && (
+                      <span data-testid="report-model">{t('reportViewer.model')}: {report.model}</span>
+                    )}
+                    {verificationKey && (
+                      <span data-testid="report-verification-state">{t(verificationKey)}</span>
+                    )}
                     <span>{t('reportViewer.processingTime')}: {report.processing_time_ms}ms</span>
                     {report.tokens_used && (
                       <span>{t('reportViewer.tokens')}: {report.tokens_used.input} in / {report.tokens_used.output} out</span>

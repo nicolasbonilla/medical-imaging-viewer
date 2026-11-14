@@ -82,10 +82,13 @@ describe('CAPA-014 report draft panel', () => {
 
   it('rc066 the English note states measurements only and that the typed text stays here', () => {
     const text = note('en');
-    for (const words of ['Anthropic', 'only the measurements', 'sex', '5-year', 'no names', 'dates of birth',
+    // (amended with the eleventh review of PR #78, L1: the verified report sends no sex and no age band — the notice
+    // says exactly what is sent; backend test_verified_report_review11 checks it against the record's blocks)
+    for (const words of ['Anthropic', 'only the measurements', 'lesion count', 'no names', 'dates of birth',
       'record numbers', 'free text', 'added to the draft here', 'not sent']) {
       expect(text).toContain(words);
     }
+    expect(text).not.toMatch(/\bsex\b|\bage\b/);
     expect(text).not.toMatch(/removed first|Other names may not be recognised/);
   });
 
@@ -101,9 +104,11 @@ describe('CAPA-014 report draft panel', () => {
   });
 
   it('rc066 the English footer states measurements only', () => {
-    for (const words of ['measurements', 'sex', '5-year', 'No names', 'dates of birth', 'record numbers', 'free text']) {
+    // (amended with the eleventh review of PR #78, L1: no sex and no age band are sent)
+    for (const words of ['measurements', 'lesion count', 'No names', 'dates of birth', 'record numbers', 'free text']) {
       expect(footer('en')).toContain(words);
     }
+    expect(footer('en')).not.toMatch(/\bsex\b|\bage\b/);
   });
 
   it('rc066 the API client and the viewer source make no HIPAA claim', () => {

@@ -1,0 +1,94 @@
+{
+  "executed": "2026-11-11T00:42:15",
+  "purpose": "negative controls of the report viewer (third independent review of PR #78, item 4)",
+  "method": "one mutation at a time in the disposable agent worktree; the bound vitest file alone (--pool=threads), nothing else running; original bytes restored after each and checked",
+  "source": "frontend/src/components/ReportViewerModal.tsx",
+  "source_sha256": "b44a331fe34d41a0c81415c6df177e7f5b5514b69e91b43d2ea33dfd7a814c28",
+  "test": "frontend/src/components/ReportViewerModal.review3.test.tsx",
+  "baseline": {
+    "failed": 0,
+    "passed": 14,
+    "errors": 0,
+    "failing_tests": []
+  },
+  "mutations": {
+    "V1_default_model_name_back": {
+      "failed": 10,
+      "passed": 4,
+      "errors": 0,
+      "failing_tests": [
+        "names no model for a measurements-only draft (en)",
+        "says the interpretive text was withheld by the check, and names no model (en)",
+        "says the AI service gave no text when it failed after being asked (en)",
+        "names no model for a measurements-only draft (es)",
+        "says the interpretive text was withheld by the check, and names no model (es)",
+        "says the AI service gave no text when it failed after being asked (es)",
+        "names no model for a measurements-only draft (de)",
+        "says the interpretive text was withheld by the check, and names no model (de)",
+        "says the AI service gave no text when it failed after being asked (de)",
+        "never names a default model for a report without a model"
+      ],
+      "reintroduces": "the footer names a model (\"Claude\" by default) for a draft no model wrote",
+      "detected": true
+    },
+    "V2_model_named_when_withheld": {
+      "failed": 6,
+      "passed": 8,
+      "errors": 0,
+      "failing_tests": [
+        "says the interpretive text was withheld by the check, and names no model (en)",
+        "says the AI service gave no text when it failed after being asked (en)",
+        "says the interpretive text was withheld by the check, and names no model (es)",
+        "says the AI service gave no text when it failed after being asked (es)",
+        "says the interpretive text was withheld by the check, and names no model (de)",
+        "says the AI service gave no text when it failed after being asked (de)"
+      ],
+      "reintroduces": "the model is named although its text was withheld",
+      "detected": true
+    },
+    "V3_no_verification_state": {
+      "failed": 12,
+      "passed": 2,
+      "errors": 0,
+      "failing_tests": [
+        "names no model for a measurements-only draft (en)",
+        "says the interpretive text was withheld by the check, and names no model (en)",
+        "says the AI service gave no text when it failed after being asked (en)",
+        "names the model when its checked comments are in the draft (en)",
+        "names no model for a measurements-only draft (es)",
+        "says the interpretive text was withheld by the check, and names no model (es)",
+        "says the AI service gave no text when it failed after being asked (es)",
+        "names the model when its checked comments are in the draft (es)",
+        "names no model for a measurements-only draft (de)",
+        "says the interpretive text was withheld by the check, and names no model (de)",
+        "says the AI service gave no text when it failed after being asked (de)",
+        "names the model when its checked comments are in the draft (de)"
+      ],
+      "reintroduces": "the verification state is not shown",
+      "detected": true
+    },
+    "V4_withheld_by_check_read_as_unavailable": {
+      "failed": 3,
+      "passed": 11,
+      "errors": 0,
+      "failing_tests": [
+        "says the interpretive text was withheld by the check, and names no model (en)",
+        "says the interpretive text was withheld by the check, and names no model (es)",
+        "says the interpretive text was withheld by the check, and names no model (de)"
+      ],
+      "reintroduces": "a draft withheld by the check is shown as \"not available from the AI service\"",
+      "detected": true
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 14,
+    "errors": 0,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 4,
+    "detected": 4,
+    "undetected": []
+  }
+}

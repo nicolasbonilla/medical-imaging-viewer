@@ -298,16 +298,26 @@ def test_rc070_n3_the_not_evaluated_sentence_itself_is_kept_unchanged():
 
 
 @pytest.mark.unit
-def test_rc070_n3_the_draft_states_how_many_statements_were_replaced(e2e):
+def test_rc070_n3_the_draft_states_how_many_statements_were_replaced(e2e, monkeypatch):
+    """Amended for the verified report (REQ-FUNC-116, DRAFT): (1) through the real service such a text never reaches
+    the route — its comments fail the claim check and are withheld (RC-103); (2) the route's own backstop (RC-070)
+    still replaces and counts what any service would return, tested as a layer of its own with a stand-in service."""
+    import app.api.routes.ai_report as ai_report
+    from app.services.brain_report_service import REPORT_DISCLAIMERS
     client, svc, provider, _ = e2e
     _seed(svc)
-    provider.text = ("## FINDINGS\nTwo lesions; findings satisfy the criteria for dissemination in **space**.\n\n"
-                     "| Region | Present |\n|---|---|\n| Periventricular | ✓ Present |\n")
+    hostile = ("## FINDINGS\nTwo lesions; findings satisfy the criteria for dissemination in **space**.\n\n"
+               "| Region | Present |\n|---|---|\n| Periventricular | ✓ Present |\n")
+    provider.text = hostile
     r = _report(client)
     assert r.status_code == 200, r.text[:300]
     content = r.json()["content"]
     assert "**space**" not in content and "| Periventricular |" not in content
-    assert "2 statement(s)" in content
+    assert r.json()["verification"]["interpretive_text"] == "withheld" and len(provider.calls) == 3
+    # Fifth review of PR #78 (V8, DRAFT — amended): the route's own backstop (replace and count, for any service) was
+    # retired — the report service owns the DIS statement, and its check refuses such comments (above; RC070 and the
+    # stricter DIS rule, test_verified_report_review2_dis.py). The route re-checks no service text.
+    assert not hasattr(ai_report, "DIS_LINES_REPLACED") and REPORT_DISCLAIMERS["en"]
 
 
 # ───────────────────────────────────── N4: no per-region template section without an evaluated DIS
@@ -320,8 +330,13 @@ REGION_REQUESTS = ("### Periventricular", "### Cortical / Juxtacortical", "### I
 @pytest.mark.parametrize("template", ["general", "ms_activity", "ms_lesion_burden", "ms_comprehensive",
                                       "ms_longitudinal"])
 def test_rc070_n4_no_template_asks_for_regions_without_an_evaluated_dis(template):
-    from app.services.brain_report_service import REPORT_TEMPLATES, dis_not_evaluated_template
-    text = dis_not_evaluated_template(REPORT_TEMPLATES[template])
+    """Amended for the third review of PR #78 (T5, DRAFT): the retired templates were archived outside the shipped code; the control is checked on what the device uses now (one verified structure for every template id): the system prompt and the first request of a DIS that was not evaluated, for every template id."""
+    from app.services import verified_report as VR
+    from app.services.report_payload_guard import provider_payload
+    p = provider_payload({"lesion_analysis": {"total_count": 3, "regions": {"Periventricular": {"lesion_count": 3}}},
+                          "dis_assessment": {"evaluation_status": "not_evaluated"}}, None)
+    view = VR.build_view(p.findings, p.volumetry, "en")
+    text = VR.SYSTEM_PROMPT + "\n" + VR.first_user_message(view, "en")
     print(f"\n===== {template} (DIS not evaluated) =====\n{text}")
     left = [p for p in REGION_REQUESTS if p in text]
     assert not left, f"{template} still asks for regions: {left}"

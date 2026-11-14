@@ -1,0 +1,290 @@
+{
+  "executed": "2026-11-11T18:01:37",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/brain_report_service.py": "b5dd004c579547cfc98f1f08d9273a90bda88e53ff1353ac6b3de346e25808e9",
+    "backend/app/services/report_payload_guard.py": "a12240a4c000d46c9d2bcd3d3ab1c3989a81d736acf0bac7dd011d47781c7506",
+    "backend/app/services/verified_report.py": "1ef0124621a7d89ee2e03d72aba51c949e1100b26b7cd98ce83f295e047b3f1d"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "9ec149a3bd40b274bfec9aca5bf6199b7a8f16af3b7a70c73536d04d0f477214",
+    "tests/unit/test_rc103_verified_report_loop.py": "fbffbf9d30288f307c5935884cb622ed491df03f82143789b3eac90c89033956",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "fd42d0309ee427ed4dd3d5e1bf36b9b2d8ceb2fb242f2e37576c6d900a969aa2",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "9aed9d2dc841725a27ae9112ff1dc1036e12a797d55a8e0580d4f7d6b5ad233e",
+    "tests/unit/test_verified_report_review1.py": "6c78581d15bbe4a168158f109ceaef51ff31b407d89eda58e8717efdb6bbd93f",
+    "tests/unit/test_verified_report_review2.py": "48eda153eb18adafd910fd0608a50a5857d2544e198591490f81f5e7c5cc2ef3",
+    "tests/unit/test_verified_report_review2_dis.py": "7e4c81735d17344205384715200d593007e201260ad5494495b9f179396d17ef",
+    "tests/unit/test_verified_report_review3.py": "a913c9cdf9585d559a680d97ce84759bfbd1fedf37a72638c243d409de1fbaca",
+    "tests/unit/test_verified_report_review4.py": "48b448d42e25fd94dfa45382f0bda250a19ad78cac89f6aa905b2e9d2ebd5780",
+    "tests/unit/test_verified_report_review5.py": "2369ff12d676b9eb8d3cf58796ca030e212cdc42a228e7f0d50284f4dfd3c8a1",
+    "tests/unit/test_verified_report_review6.py": "51d21561a1b18a9b039ffcdadcbff7b7a86876bdc1e4ccf103bf7d28d70f4f5c"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py",
+    "tests/unit/test_verified_report_review5.py",
+    "tests/unit/test_verified_report_review6.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 661,
+    "errors": 0,
+    "skipped": 29,
+    "failing_tests": []
+  },
+  "mutations": {
+    "C29_number_words_allowed": {
+      "exit": 1,
+      "failed": 30,
+      "passed": 631,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_v1_fuzz_number_ordinal_and_count_words_fail_the_check_in_every_language",
+        "test_rc103_v1_the_reviewers_examples_fail[Ambas",
+        "test_rc103_v1_the_reviewers_examples_fail[Es",
+        "test_rc103_v1_the_reviewers_examples_fail[Lesions",
+        "test_rc103_v1_the_reviewers_examples_fail[Se",
+        "test_rc103_v1_the_reviewers_examples_fail[There",
+        "test_rc103_v1_the_reviewers_examples_fail[Twelve",
+        "test_rc103_v1_the_reviewers_examples_fail[Zwei",
+        "test_rc103_w3_a_count_in_words_fails[A",
+        "test_rc103_w3_a_count_in_words_fails[Ambas",
+        "test_rc103_w3_a_count_in_words_fails[Beide",
+        "test_rc103_w3_a_count_in_words_fails[Both",
+        "test_rc103_w3_a_count_in_words_fails[Die",
+        "test_rc103_w3_a_count_in_words_fails[El",
+        "test_rc103_w3_a_count_in_words_fails[Es",
+        "test_rc103_w3_a_count_in_words_fails[Hay",
+        "test_rc103_w3_a_count_in_words_fails[La",
+        "test_rc103_w3_a_count_in_words_fails[Lesions",
+        "test_rc103_w3_a_count_in_words_fails[Se",
+        "test_rc103_w3_a_count_in_words_fails[Slices",
+        "test_rc103_w3_a_count_in_words_fails[The",
+        "test_rc103_w3_a_count_in_words_fails[There",
+        "test_rc103_w3_a_count_in_words_fails[Two",
+        "test_rc103_w3_a_count_in_words_fails[Zero",
+        "test_rc103_w3_a_count_in_words_fails[Zwei"
+      ],
+      "reintroduces": "V1: a count written in words (\"Twelve lesions\") passes the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:05:52",
+      "detected": true
+    },
+    "C30_german_number_words_missed": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 658,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_v1_fuzz_number_ordinal_and_count_words_fail_the_check_in_every_language",
+        "test_rc103_v1_the_reviewers_examples_fail[Zwei",
+        "test_rc103_w3_a_count_in_words_fails[Zwei"
+      ],
+      "reintroduces": "V1: German number words (\"zwei neue Kandidaten\") pass the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:08:01",
+      "detected": true
+    },
+    "L6_null_count_notice_as_zero": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 658,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_w1_a_null_or_missing_count_is_not_computed_in_the_body_and_the_notice[new-missing]",
+        "test_rc102_w1_a_null_or_missing_count_is_not_computed_in_the_body_and_the_notice[new-null]",
+        "test_rc102_w1_a_null_or_missing_count_is_not_computed_in_the_body_and_the_notice[status-new-missing]"
+      ],
+      "reintroduces": "W1: a null or missing count is stated as 0 candidates in the notice",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:10:01",
+      "detected": true
+    },
+    "L7_notice_not_from_the_record": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 657,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_w1_a_null_or_missing_count_is_not_computed_in_the_body_and_the_notice[new-missing]",
+        "test_rc102_w1_a_null_or_missing_count_is_not_computed_in_the_body_and_the_notice[new-null]",
+        "test_rc102_w1_a_null_or_missing_count_is_not_computed_in_the_body_and_the_notice[status-new-missing]",
+        "test_rc102_w1_the_body_and_the_notice_state_the_same_numbers"
+      ],
+      "reintroduces": "W1: the draft has no change notice from its own record",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T18:11:43",
+      "detected": true
+    },
+    "F26_any_entry_names_the_indication": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 659,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_w2_technique_or_observations_only_keep_the_indication_not_available[additional_observations]",
+        "test_rc102_w2_technique_or_observations_only_keep_the_indication_not_available[technique]"
+      ],
+      "reintroduces": "W2: a typed technique or observation is called the clinician's indication",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:13:19",
+      "detected": true
+    },
+    "P8_one_flag_for_every_field": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 659,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_w2_technique_or_observations_only_keep_the_indication_not_available[additional_observations]",
+        "test_rc102_w2_technique_or_observations_only_keep_the_indication_not_available[technique]"
+      ],
+      "reintroduces": "W2: any typed field flags every field (the indication too)",
+      "files": [
+        "backend/app/services/report_payload_guard.py"
+      ],
+      "executed": "2026-11-11T18:14:52",
+      "detected": true
+    },
+    "C33_size_and_unit_counts_missed": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 657,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_w3_a_count_in_words_fails[Die",
+        "test_rc103_w3_a_count_in_words_fails[La",
+        "test_rc103_w3_a_count_in_words_fails[Slices",
+        "test_rc103_w3_a_count_in_words_fails[The"
+      ],
+      "reintroduces": "W3: \"four small, ten medium\" and \"seven point two millimeters\" pass the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:16:27",
+      "detected": true
+    },
+    "C34_count_heads_missed": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 657,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_w3_a_count_in_words_fails[El",
+        "test_rc103_w3_a_count_in_words_fails[The",
+        "test_rc103_w3_a_count_in_words_fails[There"
+      ],
+      "reintroduces": "W3: \"the total count of lesions is twenty-five\" passes the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:17:44",
+      "detected": true
+    },
+    "C35_every_number_word_fails": {
+      "exit": 1,
+      "failed": 8,
+      "passed": 653,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[A",
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[Beide",
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[Both",
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[Die",
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[Las",
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[Lesions",
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[The",
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[Una"
+      ],
+      "reintroduces": "W3: the over-broad rule again (\"both hemispheres\", \"a single FLAIR sequence\" fail)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:19:16",
+      "detected": true
+    },
+    "C36_quantifier_window_unbounded": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 660,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_w3_ordinals_and_non_count_uses_pass[Both"
+      ],
+      "reintroduces": "W3: \"both small and large lesions\" read as a count",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:20:47",
+      "detected": true
+    },
+    "C37_hyphenated_word_counted_twice": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 660,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_w3_a_count_in_words_fails[A"
+      ],
+      "reintroduces": "W3: \"a single medium-sized lesion\" passes the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T18:22:04",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 661,
+    "errors": 0,
+    "skipped": 29,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 11,
+    "detected": 11,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "52122e29b2b9ce990dff778e9ef8a2f3db975c8b",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}

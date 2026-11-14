@@ -262,6 +262,14 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
 }
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
+# Ninth review of PR #78, I15: these mutations targeted the report's retired prompt builder and template texts in
+# brain_report_service.py (removed by the verified report: T5, V8), so their anchors no longer exist; not run.
+# Replaced by: scripts/safety/verified_report_negative_controls.py — L5-L11 (the change candidates, the notice, the
+# small new lesions), C17-C22 and C29-C42 (activity words and counts in the comments), F1-F29 (the code-written draft).
+RETIRED_WITH_THE_VERIFIED_REPORT = {name: M.pop(name)[1] for name in (
+    "B10_report_template_activity_classification", "B11_report_prompt_activity_word",
+    "B16_report_states_a_reader_confirmation", "E9_template_list_offers_neda", "A11_report_states_load_when_abstained")}
+
 EXPECTED_UNDETECTED = {}
 
 

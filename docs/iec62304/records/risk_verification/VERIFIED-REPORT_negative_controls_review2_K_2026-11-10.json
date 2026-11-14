@@ -1,0 +1,333 @@
+{
+  "executed": "2026-11-10T23:27:43",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/report_claim_strict.py": "f3b8ccdf7db6256f4a040761dd3539761a40a8c740e4b43d6f71dd36452f0a4c",
+    "backend/app/services/verified_report.py": "cf81b8f507a7aade56fc639b55643976fb2e24c17ab2fee962105af911175ffb"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "268cdf5b86727544a8000dddbdcf2c6b28fb95cb7019de7a2603f1a62cfb1570",
+    "tests/unit/test_rc103_verified_report_loop.py": "fbffbf9d30288f307c5935884cb622ed491df03f82143789b3eac90c89033956",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "59de8ebc4499d276e07c2a437280133a9a9a3e76c07b9944a458c17bbae5b27c",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "6a706244fadc9b93406a7b5d33c17bafb2f26054b814861ce240146eb17de8d6",
+    "tests/unit/test_verified_report_review1.py": "051f3c702b8f997013ba964b567ba19f8288d71d190e912e550aad249ecaf240",
+    "tests/unit/test_verified_report_review2.py": "77c20d31c1185733971b49a8d2379b5488a76e3be26c2dba1ce53717388dcd36",
+    "tests/unit/test_verified_report_review2_dis.py": "7e4c81735d17344205384715200d593007e201260ad5494495b9f179396d17ef"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 500,
+    "errors": 0,
+    "skipped": 25,
+    "failing_tests": []
+  },
+  "mutations": {
+    "C1_claim_check_not_run": {
+      "exit": 1,
+      "failed": 16,
+      "passed": 484,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_candidates_must_be_called_candidates",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]",
+        "test_rc103_rule_ids_are_a_fixed_vocabulary",
+        "test_rc103_spanish_and_german[de-Die",
+        "test_rc103_spanish_and_german[es-La",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Dissemination",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Findings",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Most",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[No",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Starting",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Technique:",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[The",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[These",
+        "test_rc103_the_invented_technique_section_of_the_retired_template_is_refused",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency"
+      ],
+      "reintroduces": "the frozen claim check does not run on the answer",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T23:29:00",
+      "detected": true
+    },
+    "C3_headings_allowed": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 494,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Lesion",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[##"
+      ],
+      "reintroduces": "headings allowed in the comments (a section of the model's own)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T23:30:03",
+      "detected": true
+    },
+    "C5_rc070_backstop_not_in_the_loop": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 498,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Lesions",
+        "test_rc103_the_rc070_backstop_catches_what_the_frozen_rules_miss"
+      ],
+      "reintroduces": "a DIS statement the frozen rules miss passes the loop",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T23:31:05",
+      "detected": true
+    },
+    "C15_headings_only_hash": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 495,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Lesion",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment"
+      ],
+      "reintroduces": "B: a bold or capital comment line is read as a heading and checked for nothing",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T23:32:07",
+      "detected": true
+    },
+    "C16_strict_rules_not_run": {
+      "exit": 1,
+      "failed": 43,
+      "passed": 457,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[de-Das",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-The",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-There",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[es-El",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-If",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-If",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-No",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[de-Der",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[en-The",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Der",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Die",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[en-The",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Se",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]",
+        "test_rc103_the_rc070_backstop_catches_what_the_frozen_rules_miss"
+      ],
+      "reintroduces": "A: only the frozen v2 rules run on the answer",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-10T23:32:22",
+      "detected": true
+    },
+    "C17_negation_anywhere_before": {
+      "exit": 1,
+      "failed": 8,
+      "passed": 492,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-No",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]"
+      ],
+      "reintroduces": "A: a negation anywhere earlier in the sentence exempts a treatment phrase (v2's rule)",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-10T23:32:42",
+      "detected": true
+    },
+    "C18_negation_window_unbounded": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 496,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]"
+      ],
+      "reintroduces": "A: a negation anywhere earlier in the clause exempts a treatment phrase",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-10T23:33:08",
+      "detected": true
+    },
+    "C19_negated_diagnosis_exempt": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 498,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[de-Das",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-The"
+      ],
+      "reintroduces": "A: a denied diagnosis (\"not consistent with MS\") passes",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-10T23:34:11",
+      "detected": true
+    },
+    "C20_disclaimer_found_anywhere": {
+      "exit": 1,
+      "failed": 8,
+      "passed": 492,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-Este",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]"
+      ],
+      "reintroduces": "A: a sentence that only starts with the disclaimer is exempt (\"not a diagnosis, but ... MS\")",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-10T23:34:25",
+      "detected": true
+    },
+    "C21_negated_activity_exempt": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 499,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-There"
+      ],
+      "reintroduces": "A: a denied activity statement (\"no disease activity\") passes",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-10T23:35:27",
+      "detected": true
+    },
+    "C23_dis_statements_not_read": {
+      "exit": 1,
+      "failed": 16,
+      "passed": 484,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[de-Der",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[en-The",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Der",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Die",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[en-The",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Se"
+      ],
+      "reintroduces": "K: a present-tense, negated or hedged statement on DIS passes (\"the findings fulfil DIS\")",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-10T23:36:32",
+      "detected": true
+    },
+    "C24_negation_after_the_verb_ignored": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 499,
+      "errors": 0,
+      "skipped": 25,
+      "failing_tests": [
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[de-Der"
+      ],
+      "reintroduces": "K: a German denial after the verb (\"erfullt ... nicht\") read as an affirmation",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-10T23:37:37",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 500,
+    "errors": 0,
+    "skipped": 25,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 12,
+    "detected": 12,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "the current checkout (--here: an isolated, disposable worktree), clean before and after for every mutated file",
+    "commit": "fdf8a367dcab224b71b61f1ed46afc28df245a24",
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}

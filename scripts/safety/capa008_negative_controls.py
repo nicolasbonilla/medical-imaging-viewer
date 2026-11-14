@@ -23,6 +23,7 @@ PY = os.path.join(ROOT, "backend", "venv", "Scripts", "python.exe")
 if not os.path.exists(PY):
     PY = sys.executable
 OUT = "docs/iec62304/records/risk_verification/CAPA-008_negative_controls_2026-10-17.json"
+OUT = os.environ.get("NC_OUT", OUT)     # (a later run writes its own record; the earlier one is kept)
 TESTS = ["tests/unit/test_capa008_assistant_read_only.py", "tests/unit/test_longitudinal_clinical_rules.py"]
 
 BACKEND = "backend/app/mcp/_backend.py"
@@ -71,9 +72,11 @@ M = {  # name: (file, anchor, replacement, what it re-introduces)
                               "a server imports its own HTTP client"),
     "A9_unauthenticated_http_transport": (RUN_ALL, '    mcp.run(transport="stdio")\n', '    mcp.run(transport="sse")\n',
                                           "the SSE (HTTP) transport without authentication"),
-    "R1_report_without_measurements": (REPORT, "    if not any(request.findings.get(k) for k in MEASUREMENT_FINDING_KEYS) and not request.volumetry:\n",
+    # (eighth review of PR #78, finding 4: re-anchored — the route asks the verified report what it can write)
+    "R1_report_without_measurements": (REPORT, "    if not verified_report.renderable(request.findings, request.volumetry):\n",
                                        "    if False:\n", "a report is drafted with no measurement"),
-    "R2_ui_hides_the_reason": (PANEL, "(generateMutation.error as any)?.response?.status === 422", "(generateMutation.error as any)?.response?.status === 499",
+    # (re-anchored with the tenth review of PR #78, I16: the panel maps the server's code, nothing_to_report)
+    "R2_ui_hides_the_reason": (PANEL, "  nothing_to_report: ['report.noMeasurements', ", "  nothing_to_report_unmapped: ['report.noMeasurements', ",
                                "the report panel no longer explains the refusal"),
     "C1_client_chosen_reader": (ANALYSIS, '                "annotated_by": current_user.id,\n', '                "annotated_by": ann.get("annotated_by", "manual"),\n',
                                 "the stored reader is whatever the client claims"),
@@ -100,6 +103,14 @@ def run():
     return {"failed": int(f.group(1)) if f else 0, "passed": int(p.group(1)) if p else 0,
             "errors": int(e.group(1)) if e else 0,
             "failing_tests": re.findall(r"FAILED \S+::(\S+)", r.stdout)}
+
+
+# Tenth review of PR #78: re-run only the named controls (NC_ONLY=name,name) — e.g. the re-anchored ones — in a
+# throwaway copy; the full table runs when it is unset.
+if os.environ.get("NC_ONLY"):
+    _only = set(os.environ["NC_ONLY"].split(","))
+    M = {k: v for k, v in M.items() if k in _only}
+    assert set(M) == _only, f"unknown control(s): {sorted(_only - set(M))}"
 
 
 def main():

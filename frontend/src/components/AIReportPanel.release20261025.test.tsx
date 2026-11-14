@@ -35,9 +35,11 @@ import { AIReportPanel } from './AIReportPanel';
 const LOCALES = path.join(__dirname, '..', 'i18n', 'locales');
 const locale = (l: string) => JSON.parse(fs.readFileSync(path.join(LOCALES, `${l}.json`), 'utf-8'));
 
-function http422(message: string) {
+// (amended with the tenth review of PR #78, I16: the server's 422 carries its own code — the panel reads the code,
+// no longer the message prefix; AIReportPanel.errorCodes.test.tsx covers every code)
+function http422(message: string, code: string) {
   return Object.assign(new Error('Request failed with status code 422'), {
-    response: { status: 422, data: { error: { code: 'HTTP_422', message, details: {} } } },
+    response: { status: 422, data: { error: { code, message, details: {} } } },
   });
 }
 
@@ -71,7 +73,7 @@ describe('Release 2026-10-25: the report panel names an unreadable image geometr
   it.each(['en', 'es', 'de'])('rc070 release r6 a geometry 422 shows its own message, not "no measurements" (%s)',
     async (lng) => {
       await act(async () => { await i18n.changeLanguage(lng); });
-      generateReport.mockRejectedValue(http422(GEOMETRY));
+      generateReport.mockRejectedValue(http422(GEOMETRY, 'geometry_unreadable'));
       renderPanel();
       fireEvent.click(screen.getByTestId('report-generate-button'));
       const own: string = locale(lng).report?.geometryUnreadable ?? '';
@@ -82,7 +84,7 @@ describe('Release 2026-10-25: the report panel names an unreadable image geometr
     });
 
   it('rc070 release r6 a 422 without measurements still shows the CAPA-008 message', async () => {
-    generateReport.mockRejectedValue(http422(NO_MEASUREMENT));
+    generateReport.mockRejectedValue(http422(NO_MEASUREMENT, 'nothing_to_report'));
     renderPanel();
     fireEvent.click(screen.getByTestId('report-generate-button'));
     await waitFor(() => expect(screen.getByText(locale('en').report.noMeasurements)).toBeTruthy());

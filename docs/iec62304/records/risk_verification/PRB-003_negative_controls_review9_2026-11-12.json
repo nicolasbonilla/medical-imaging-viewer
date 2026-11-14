@@ -1,0 +1,72 @@
+{
+  "executed": "2026-11-12T01:26:39",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest with no cloud credential per PRB-002, frontend vitest JSON reporter); original bytes restored after each mutation and checked at the end",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/dis_review_gate.py": "00303be0689289ecdcd229b2c883a7c8b35ff08dac60c6685c8811673664a03d"
+  },
+  "test_sha256": {
+    "backend/tests/unit/test_prb003_dis_requires_confirmed_segmentation.py": "4b0ea38aaa3f041271f4a410e5280307028d81acf9a7e093de260484fc2712cd",
+    "backend/tests/unit/test_prb003_review1_findings.py": "72c63d778eb12d22142270cd5d6431efb7f1fd866bb0ed39975d14a5f63f45ef",
+    "backend/tests/unit/test_prb003_review2_findings.py": "a7f80379dc76013b6d0048bb5c6a85735255fc1fe2349e8683a23dafb0fccff9",
+    "backend/tests/unit/test_prb003_review3_findings.py": "88fc06a2dd880a0cf1699680095c2de7b2e42480fb44d1c431b8271afeaa91b3",
+    "frontend/src/components/LesionDashboard.prb003.test.tsx": "0a94b21334084c2fc11a718f3724350f1674f9be5f171663015d46a236640272",
+    "frontend/src/components/LesionDashboard.prb003.review1.test.tsx": "0faa08cf96b8eab015d60f9b85bf4bf699f9ea02d478c25fea0a6fcdac3d535c",
+    "frontend/src/components/LesionDashboard.prb003.review2.test.tsx": "d17466966c8ba6d158caf9470711476af0e19c25e93597fc65cbb2abd9ad6ea3",
+    "frontend/src/components/LesionDashboard.prb003.review3.test.tsx": "3738c4bc5cdc88fce4b28f36a374cc19eecaee26893bda10e7fdd1e8a9ee91ef",
+    "frontend/src/components/SegmentationPanel.prb003.test.tsx": "ef21e5c3a3a4feace893a7e1ded9fcce95de751abf340bf677ff5be0dd14620f"
+  },
+  "tests": [
+    "backend/tests/unit/test_prb003_dis_requires_confirmed_segmentation.py",
+    "backend/tests/unit/test_prb003_review1_findings.py",
+    "backend/tests/unit/test_prb003_review2_findings.py",
+    "backend/tests/unit/test_prb003_review3_findings.py",
+    "frontend/src/components/LesionDashboard.prb003.test.tsx",
+    "frontend/src/components/LesionDashboard.prb003.review1.test.tsx",
+    "frontend/src/components/LesionDashboard.prb003.review2.test.tsx",
+    "frontend/src/components/LesionDashboard.prb003.review3.test.tsx",
+    "frontend/src/components/SegmentationPanel.prb003.test.tsx"
+  ],
+  "mutations": {
+    "G2_confirmation_not_bound_to_the_mask": {
+      "suite": "backend",
+      "failed": 1,
+      "passed": 142,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_rc070_a_confirmation_given_for_another_mask_does_not_count[clinician]"
+      ],
+      "reintroduces": "a confirmation given for another mask counts",
+      "applied": true,
+      "executed": "2026-11-12T01:26:50"
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 143,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "failed": 0,
+      "passed": 36,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "expected_undetected": {},
+  "undetected": [],
+  "unexpected_undetected": [],
+  "summary": {
+    "mutations": 1,
+    "detected": 1,
+    "undetected": 0
+  }
+}

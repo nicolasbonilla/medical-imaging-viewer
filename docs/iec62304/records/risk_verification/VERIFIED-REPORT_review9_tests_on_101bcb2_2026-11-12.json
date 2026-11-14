@@ -1,0 +1,83 @@
+{
+  "executed": "2026-11-12",
+  "purpose": "failing-first: the ninth independent review's invariants I12-I15 and the tests of findings 1, 7, 8 on the reviewed head, before any correction",
+  "tree": "101bcb2 (feat/report-agent-verified, head reviewed by the ninth independent review)",
+  "scenario_matrix": {
+    "summary": "13 of 45 tests failed",
+    "failed": [
+      "test_rc102_i11_the_draft_follows_the_shared_longitudinal_rule[no candidate block: not computed (I13)]",
+      "test_rc102_i11_the_draft_follows_the_shared_longitudinal_rule[no candidate block, 7 new of which 4 below 3 mm (review case I13)]",
+      "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[en]",
+      "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[es]",
+      "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[de]",
+      "test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error[lesion_analysis.total_count]",
+      "test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error[lesion_analysis.total_burden_mm3]",
+      "test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error[lesion_analysis.total_burden_ml]",
+      "test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error[lesion_analysis.regions.Periventricular.lesion_count]",
+      "test_rc105_i14_the_provider_payload_runs_only_when_a_call_will_happen",
+      "test_rc106_a_slow_record_and_word_list_never_exceed_the_request_budget",
+      "test_rc102_the_false_candidate_evidence_is_read_once",
+      "test_rc070_the_format_character_rule_runs_once_in_the_route"
+    ],
+    "violations": {
+      "I12": "362 of 362 checks per language (counts 20-200: the exact count in the draft and in the record sent to the model)",
+      "I13": "2 of 9 fixture cases (no change_candidates: draft and screen relabel status_counts.new)",
+      "I14": "4 of 4 implausible measurements answered 503 'not sent to the AI service'; provider_payload ran with nothing to send",
+      "finding_1": "the model budget computed before the record and the word list",
+      "finding_7": "the evidence JSON read on every record",
+      "finding_8": "the format-character rule run twice in the route"
+    }
+  },
+  "negative_control_validity_I15": {
+    "summary": "6 of 18 tests failed",
+    "broken_anchors": {
+      "capa013": [
+        "B10",
+        "B11",
+        "B16",
+        "E9",
+        "A11"
+      ],
+      "prb003": [
+        "G2",
+        "F5",
+        "WF2"
+      ],
+      "prb004": [
+        "W11"
+      ],
+      "release_2026_10_25": [
+        "I30",
+        "I50",
+        "I53",
+        "I55"
+      ]
+    },
+    "invalid_mutants": {
+      "capa014": [
+        "T23_template_words_exempt (NameError: REPORT_TEMPLATES defined nowhere)"
+      ]
+    },
+    "retired_tables_without_a_stated_replacement": [
+      "verified_report"
+    ],
+    "log_excerpt": [
+      "tests/unit/test_negative_controls_validity.py::test_rc103_i15_every_negative_control_is_valid_evidence[capa013_negative_controls] FAILED [ 27%]",
+      "tests/unit/test_negative_controls_validity.py::test_rc103_i15_every_negative_control_is_valid_evidence[capa014_negative_controls] FAILED [ 33%]",
+      "tests/unit/test_negative_controls_validity.py::test_rc103_i15_every_negative_control_is_valid_evidence[prb003_negative_controls] FAILED [ 50%]",
+      "tests/unit/test_negative_controls_validity.py::test_rc103_i15_every_negative_control_is_valid_evidence[prb004_negative_controls] FAILED [ 55%]",
+      "tests/unit/test_negative_controls_validity.py::test_rc103_i15_every_negative_control_is_valid_evidence[release_2026_10_25_negative_controls] FAILED [ 83%]",
+      "tests/unit/test_negative_controls_validity.py::test_rc103_i15_every_negative_control_is_valid_evidence[verified_report_negative_controls] FAILED [ 94%]",
+      "FAILED tests/unit/test_negative_controls_validity.py::test_rc103_i15_every_negative_control_is_valid_evidence[capa013_negative_controls]",
+      "FAILED tests/unit/test_negative_controls_validity.py::test_rc103_i15_every_negative_control_is_valid_evidence[capa014_negative_controls]"
+    ]
+  },
+  "frontend": {
+    "test_file": "frontend/src/components/LongitudinalResultPanel.matrix.test.tsx",
+    "summary": "2 failed, 8 passed",
+    "failed": [
+      "no candidate block: not computed (I13)",
+      "no candidate block, 7 new of which 4 below 3 mm (review case I13)"
+    ]
+  }
+}
