@@ -1388,6 +1388,8 @@ Negative controls (GitHub Actions run https://github.com/nicolasbonilla/medical-
 
 **HAZ-025 / HAZ-016 / HAZ-001:** no gate answer before authorization; a gate decision only ever certifies a comparison of its own patient; a run starts only on the inputs in effect; no report refused because the gate's own words resemble a patient's name.
 
+*Integration note (2026-11-14) — DRAFT, PENDING owner approval.* PR #81 is integrated with the verified report of PR #78 (research stage: the app is a research prototype used only by its owner). The gate's account is computed once by the report route (R2) and reaches the verified report through the RC-064 projection: when the gate stopped a pair, the measurement record the model receives says so with the gate's causes (`quality_gate_causes`, the code-written sentences of the reason table) and the draft's comparison line says the quality check stopped the comparison — never RC-062's "acquisition not established" wording; when it warned, the record carries `quality_gate_warnings`; the code-written change notice gives the same causes or warnings (G30). RC-065's exemption of the device's own words is derived from the reason registry inside the verified report's word list (`verified_report.synthetic_payloads`). With the gate off the report path is the verified report of main byte for byte (flags-off snapshot, report part recorded on 7358d29). No new review round.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

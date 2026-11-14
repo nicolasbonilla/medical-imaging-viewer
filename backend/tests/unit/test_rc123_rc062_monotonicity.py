@@ -138,14 +138,13 @@ def test_rc123_r4_a_warned_comparison_says_so_in_the_caveat():
 
 
 def test_rc123_r4_the_report_draft_states_the_gate_warnings(monkeypatch):
-    from tests.unit.test_rc122_review11 import notice_for, paired, projected, served   # I1 / K2; R2: one account
-    from app.services.brain_report_service import BrainReportService
+    from tests.unit.test_rc122_review11 import notice_for, paired, projected, prompt_for, served   # I1 / K2; R2
     lng = paired(qg.apply_to_comparison(lcs.present_comparison(
         dict(RESULT), acquisition_check={"status": "same", "missing": [], "differing": []}, evidence=None,
         binding=None, stored_review=None, visit_check={"status": "ok"}), served(WARNED, monkeypatch)))
     guarded = projected(lng)
     assert guarded.get("quality_gate_warnings") == ["thickness_at_least"]
-    prompt = BrainReportService()._build_findings_prompt({"longitudinal": guarded}, language="en")
+    prompt = prompt_for(lng, "en")                     # PR #78: the model's record and the code-written report
     assert qg.CAVEAT_REASONS["thickness_at_least"] in prompt
     for lang, word in (("en", "Quality"), ("es", "calidad"), ("de", "Qualität")):
         notice = notice_for(lng, lang, TEST_USER)

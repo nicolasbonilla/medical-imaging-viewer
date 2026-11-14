@@ -316,6 +316,8 @@ T: Dict[str, Dict[str, str]] = {
                   "the change must be assessed visually.",
         "lng_nc": "No automatic change result: the change candidates were not computed; the change must be assessed "
                   "visually.",
+        "lng_gate": "No automatic change result: the quality check stopped the comparison of this pair; the change "
+                    "must be assessed visually.",
         "lng_below_size": "A further {k} new lesion(s) smaller than {d} mm were marked below the minimum size for "
                           "review and were not proposed as change candidates.",
         "lng_below_size_nd": "A further {k} new lesion(s) were marked below the minimum size for review and were not "
@@ -375,6 +377,8 @@ T: Dict[str, Dict[str, str]] = {
                              "propusieron como candidatos de cambio.",
         "lng_nc": "Sin resultado automático de cambio: los candidatos de cambio no se calcularon; el cambio debe "
                   "valorarse visualmente.",
+        "lng_gate": "Sin resultado automático de cambio: el control de calidad detuvo la comparación de esta pareja; "
+                    "el cambio debe valorarse visualmente.",
         "lim": "No disponibles para el análisis automático: {items}.",
         "lim_items": "indicación clínica|imágenes con contraste|imágenes ponderadas en T1|volumetría cerebral",
         "lim_cord": "Imágenes de médula espinal y de nervio óptico: no disponibles.",
@@ -429,6 +433,8 @@ T: Dict[str, Dict[str, str]] = {
                              "nicht als Veränderungskandidaten vorgeschlagen.",
         "lng_nc": "Kein automatisches Veränderungsergebnis: Die Veränderungskandidaten wurden nicht berechnet; die "
                   "Veränderung muss visuell beurteilt werden.",
+        "lng_gate": "Kein automatisches Veränderungsergebnis: Die Qualitätsprüfung hat den Vergleich dieses Paares "
+                    "angehalten; die Veränderung muss visuell beurteilt werden.",
         "lim": "Für die automatische Analyse nicht verfügbar: {items}.",
         "lim_items": "klinische Fragestellung|kontrastmittelgestützte Bildgebung|T1-gewichtete Bildgebung|Hirnvolumetrie",
         "lim_cord": "Bildgebung von Rückenmark und Sehnerv: nicht verfügbar.",
@@ -504,6 +510,17 @@ def _other_count_parts(cc: Dict[str, Any], lang: str) -> Dict[str, str]:
 
 
 # ─────────────────────────────────────────────────────────────── the measurement record (from the RC-064 payload)
+GATE_STOPPED = "stopped by the quality gate"
+
+
+def gate_sentences(codes: Any) -> List[str]:
+    """PR #81 (G30): the quality gate's reason codes as the code-written English sentences of its ONE reason table
+    (quality_gate_reasons.json); an unknown code gives nothing (the RC-064 projection passes registered codes only)."""
+    from app.services.quality_gate import CAVEAT_REASONS
+    return [CAVEAT_REASONS[c] for c in codes if isinstance(c, str) and c in CAVEAT_REASONS] \
+        if isinstance(codes, list) else []
+
+
 def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dict[str, Any]], language: str,
                review_source: Optional[str] = None, not_included: Optional[List[str]] = None) -> Dict[str, Any]:
     """The measurement record the model receives and the claim check reads (benchmark records.py, view).
@@ -598,6 +615,14 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
     lng = f.get("longitudinal") if isinstance(f.get("longitudinal"), dict) else None
     if lng is None:
         view["longitudinal"] = None
+    elif lng.get("abstained") is True and lng.get("abstained_by") == "quality_gate":
+        # PR #81 (G30), integrated with the verified report: the quality gate STOPPED the pair before anything was
+        # computed — the record states its causes as the code-written sentences of the one reason table (the notice
+        # gives the same causes), never RC-062's "not established" wording
+        view["longitudinal"] = {"abstained": True, "reason": GATE_STOPPED,
+                                "quality_gate_causes": gate_sentences(lng.get("causes")) or gate_sentences(["gate_unavailable"]),
+                                "framing": "No automatic change result for this pair; the change must be assessed "
+                                           "visually."}
     elif lng.get("abstained") is True:
         view["longitudinal"] = {"abstained": True, "reason": "acquisition or visit order not established",
                                 "framing": "No automatic change result for this pair; the change must be assessed "
@@ -646,6 +671,11 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
                 view["longitudinal"]["false_candidate_evidence"] = {
                     "patients": ev["patients"], "false_candidates_per_patient": ev["false_candidates_per_patient"],
                     "false_share_percent": false_share_percent(ev), "source": ev["source"]}
+    warned = gate_sentences(lng.get("quality_gate_warnings")) if lng is not None else []
+    if warned and view["longitudinal"].get("reason") != GATE_STOPPED:
+        # PR #81 (G30): a pair the gate let through WITH warnings is not a clean comparison, whether RC-062 then
+        # withheld it or not — the same warnings as the notice, code-written
+        view["longitudinal"]["quality_gate_warnings"] = warned
 
     vol = volumetry_payload if isinstance(volumetry_payload, dict) else None
     tbv = finite_number((vol or {}).get("total_brain_volume_ml"))
@@ -887,7 +917,8 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     lng = view.get("longitudinal")
     if lng is not None:
         if lng.get("abstained"):
-            comp = [t["lng_nc"] if lng.get("reason") == "change candidates not computed" else t["lng_ab"]]
+            comp = [t["lng_nc"] if lng.get("reason") == "change candidates not computed"
+                    else t["lng_gate"] if lng.get("reason") == GATE_STOPPED else t["lng_ab"]]
         else:
             cc = lng["candidates"]
             others = all(cc.get(k_) is not None for k_ in ("resolved", "shrunk", "stable"))
@@ -986,6 +1017,8 @@ def change_notice(view: Dict[str, Any], lang: str) -> Optional[str]:
     if not isinstance(lng, dict):
         return None
     texts = CHANGE_NOTICE.get(lang, CHANGE_NOTICE["en"])
+    if lng.get("reason") == GATE_STOPPED:
+        return None     # PR #81 (G30): the gate's own notice, with its causes, is written by the service instead
     if lng.get("abstained"):
         return texts["not_computed"] if lng.get("reason") == "change candidates not computed" else texts["abstained"]
     cc = lng["candidates"]
@@ -1534,6 +1567,18 @@ def synthetic_payloads() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, An
         yield p.findings, p.volumetry, source if source in ("ai_draft", "automatic_tool", "origin_not_recorded") else None
     below_nd = {k: x for k, x in _BRANCHES["longitudinal"]["small_new"].items() if k != "new_lesion_min_diameter_mm"}
     yield {"longitudinal": below_nd}, None, None
+    # PR #81 (sixteenth review, R4), integrated with the verified report: every shape the RC-064 projection gives the
+    # longitudinal block with the quality gate on, for EVERY reason code of the registry — one at a time and all
+    # together — DERIVED from the registry, so a new code can never be missed: stopped by the gate (also with no cause:
+    # its fallback sentence), withheld by RC-062 with the gate's warnings, let through with warnings
+    from app.services.quality_gate import CAVEAT_REASONS
+    codes = sorted(CAVEAT_REASONS)
+    through = _BRANCHES["longitudinal"]["complete"]
+    yield {"longitudinal": {"abstained": True, "abstained_by": "quality_gate", "causes": []}}, None, None
+    for group in [[c] for c in codes] + [codes]:
+        for gated in ({"abstained": True, "abstained_by": "quality_gate", "causes": group},
+                      {"abstained": True, "quality_gate_warnings": group}, {**through, "quality_gate_warnings": group}):
+            yield {"longitudinal": gated}, None, None
 
 
 # ── Eleventh review of PR #78, C4: the MINIMAL production enumeration of the record's branches — what the RC-065

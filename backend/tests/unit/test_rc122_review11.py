@@ -42,10 +42,28 @@ def account(lng, user=TEST_USER):
     return qg.report_account(lng, user, TEST_SUBJECT)
 
 
+def record_for(lng, language="en", user=TEST_USER):
+    """The verified report's measurement record of this longitudinal block (PR #78; PR #81 integrated): the service's
+    own steps — the rendered request, the RC-064 projection with the route's one account (R2), the record."""
+    from app.services import verified_report as vr
+    from app.services.report_payload_guard import project_measurements
+    findings, volumetry, _ = vr.rendered_request({"longitudinal": lng}, None)
+    payload = project_measurements(findings, volumetry, gate_account=account(lng, user))
+    return vr.build_view(payload.findings, payload.volumetry, vr.language_of(language))
+
+
+def prompt_for(lng, language="en", user=TEST_USER):
+    """What the model receives first: the record and the code-written report (verified_report.first_user_message)."""
+    from app.services import verified_report as vr
+    return vr.first_user_message(record_for(lng, language, user), vr.language_of(language))
+
+
 def notice_for(lng, language, user=TEST_USER):
-    """The report route's notice, from its one account (R2)."""
-    from app.api.routes.ai_report import longitudinal_notice
-    return longitudinal_notice(lng, language, account(lng, user))
+    """The draft's code-written change notice, as the report service writes it from its record and the route's one
+    account (R2, G30)."""
+    from app.services import verified_report as vr
+    from app.services.brain_report_service import report_change_notice
+    return report_change_notice(record_for(lng, language, user), vr.language_of(language), account(lng, user))
 
 
 def projected(lng, user=TEST_USER):

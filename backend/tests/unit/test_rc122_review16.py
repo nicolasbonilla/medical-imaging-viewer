@@ -131,7 +131,8 @@ WARNED = {"sequence": "FLAIR", "physician_confirmed_flair": False, "skull": "str
           "scanner": {"manufacturer": "SIEMENS", "manufacturer_model_name": "Prisma", "magnetic_field_strength_t": 3.0},
           "thickness": {"state": "not_determinable", "effective_mm": None}}            # thickness_unknown: a warning
 COUNTS = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.5, "total_lesions_tp1": 3, "total_lesions_tp2": 4,
-          "status_counts": {"new": 1, "enlarged": 0, "resolved": 0, "shrunk": 0, "stable": 3}}
+          "status_counts": {"new": 1, "enlarged": 0, "resolved": 0, "shrunk": 0, "stable": 3},
+          "change_candidates": {"new": 1, "enlarging": 0, "total": 1}}   # the reviewable ones (PR #78)
 
 
 def _file(patient, study, name):
@@ -183,12 +184,26 @@ def _report(monkeypatch, *, token_patient, report_patient, owner, user):
     monkeypatch.setattr(ra, "_care_team_service", lambda: _CareTeam())
     monkeypatch.setattr(ai_report, "_patient_service", lambda: _Patients())
     provider = _Provider()
+    # verified report (PR #78): a lesion analysis too, so a draft always has something for the model to comment on;
+    # the server's lesion table and DIS state of the report's segmentation, stubbed (the segmentation store is not
+    # reached, PRB-002) — the report's patient and the pair's owners stay the stored records' (R2)
+    from tests.unit.test_capa014_report_provider_payload import _measurements
+    table = _measurements()["lesion_analysis"]
+
+    async def _table(segmentation_id):
+        return json.loads(json.dumps(table))
+
+    async def _dis(segmentation_id, user):
+        from app.services import dis_review_gate as gate
+        return gate.not_evaluated(segmentation_id, None, reason=gate.REASON_NOT_CONFIRMED)
+    monkeypatch.setattr(ai_report, "server_lesion_table", _table)
+    monkeypatch.setattr(ai_report, "server_dis_assessment", _dis)
     monkeypatch.setattr(BrainReportService, "_get_client", lambda self: provider)
     app.dependency_overrides[get_current_active_user] = lambda: C9._user(uid=user)
     app.dependency_overrides[container.get_segmentation_service] = lambda: segs
     try:
         r = TestClient(app, raise_server_exceptions=False).post("/api/v1/ai/report/generate", json={
-            "segmentation_id": "seg-report", "language": "en", "findings": {"longitudinal": lng}})
+            "segmentation_id": "seg-report", "language": "en", "findings": {"lesion_analysis": table, "longitudinal": lng}})
     finally:
         app.dependency_overrides.pop(get_current_active_user, None)
         app.dependency_overrides.pop(container.get_segmentation_service, None)
@@ -211,11 +226,13 @@ def test_rc127_r2_a_decision_is_established_only_in_a_report_of_its_own_patient(
     where = (token_patient[:4], report_patient[:4], owner[:4], user)
     if established:
         assert warned in content and not_established not in content, where
-        assert "QUALITY-GATE WARNINGS" in prompt and "New-lesion candidates" in prompt, where
+        # the model's record (verified report, PR #78): the gate's warning, code-written, and the change candidates
+        assert warned in prompt and '"candidates":' in prompt, where
     else:   # "comparability not established by the gate", no change result (D-QG-19)
         assert not_established in content and warned not in content, where
-        assert "stopped the comparison" in prompt and "New-lesion candidates" not in prompt, where
-        assert "TP1 burden" not in prompt, where
+        from app.services import verified_report as vr
+        assert not_established in prompt and vr.GATE_STOPPED in prompt, where
+        assert '"candidates":' not in prompt and '"visit_1":' not in prompt, where
 
 
 # ============================================================================= R4: the gate's words are the device's
@@ -236,9 +253,9 @@ def _gate_states():
 
 
 def _prompts():
-    from app.services.brain_report_service import BrainReportService
-    builder = BrainReportService.__new__(BrainReportService)
-    return [(state, language, builder._build_findings_prompt({"longitudinal": state}, None, language))
+    """What the model receives (verified report, PR #78): the record and the code-written report of each gate state."""
+    from app.services import verified_report as vr
+    return [(state, language, vr.first_user_message(vr.build_view({"longitudinal": state}, None, language), language))
             for state in _gate_states() for language in ("en", "es", "de")]
 
 
@@ -248,7 +265,7 @@ def test_rc125_r4_every_word_the_gate_can_put_in_the_prompt_is_exempt():
     exempt, pairs = fixed_prompt_words(), fixed_prompt_pairs()
     missing, missing_pairs = set(), set()
     for _state, _language, prompt in _prompts():
-        words = list(words_of(prompt))
+        words = [w for w in words_of(prompt) if w.isalpha()]       # the words a name can be (never a number)
         missing |= {w for w in words if w not in exempt}
         missing_pairs |= {p for p in zip(words, words[1:]) if p not in pairs}
     assert not missing and not missing_pairs, (sorted(missing)[:40], sorted(missing_pairs)[:10])

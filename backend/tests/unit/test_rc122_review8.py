@@ -67,12 +67,15 @@ def test_rc127_g30_reviewer_case_thickness_thick_is_never_a_cause():
     assert qg.reason_sentence("thickness_thick") not in caveat.split("Warnings:")[0]
 
 
+# PR #78 (verified report): RC-062's own wording — in the model's record and in the code-written comparison line
+RC062_RECORD = "acquisition or visit order not established"
+
+
 @pytest.mark.parametrize("lang", ["en", "es", "de"])
 def test_rc127_g30_reviewer_case_the_report_model_and_the_notice_give_the_same_cause(lang, monkeypatch):
     """A gate stop reaches the report model as the gate's causes — never as 'acquisition not comparable'."""
-    from app.api.routes.ai_report import LONGITUDINAL_NOTICE
-    from app.services.brain_report_service import BrainReportService
-    from tests.unit.test_rc122_review11 import notice_for, projected   # R2 (sixteenth review): the route's one account
+    from app.services import verified_report as vr
+    from tests.unit.test_rc122_review11 import notice_for, projected, prompt_for   # R2: the route's one account
     gate = qg.evaluate({"mode": "comparison", "platform": PLATFORM_ON, "visits": [
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},
         {"sequence": "T1", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"}]})
@@ -80,17 +83,17 @@ def test_rc127_g30_reviewer_case_the_report_model_and_the_notice_give_the_same_c
     lng = paired(qg.abstained_comparison(served(gate, monkeypatch)))
     guarded = projected(lng)
     assert guarded.get("abstained_by") == "quality_gate" and guarded.get("causes") == ["sequence_not_flair"]
-    prompt = BrainReportService()._build_findings_prompt({"longitudinal": guarded}, language=lang)
-    assert "could not be established as comparable" not in prompt
+    prompt = prompt_for(lng, lang)                     # the model's record and the code-written report (PR #78)
+    assert RC062_RECORD not in prompt and vr.T[lang]["lng_ab"] not in prompt
     assert qg.reason_sentence("sequence_not_flair") in prompt
     notice = notice_for(lng, lang, TEST_USER)
-    assert LONGITUDINAL_NOTICE[lang]["abstained"] not in notice
+    assert vr.CHANGE_NOTICE[lang]["abstained"] not in notice
     assert qg.reason_sentence("sequence_not_flair", lang) in notice
     assert qg.reason_sentence("scanner_not_recorded", lang) not in notice.split(qg.reason_lead("warned", lang))[0]
 
 
 def test_rc127_g30_rc062_s_reason_only_when_rc062_withheld(monkeypatch):
-    from app.api.routes.ai_report import LONGITUDINAL_NOTICE
+    from app.services.verified_report import CHANGE_NOTICE as LONGITUDINAL_NOTICE      # PR #78: the service's notice
     from tests.unit.test_rc122_review11 import notice_for, paired, served   # I1 / K2; R2: the route's one account
     warned = qg.evaluate({"mode": "comparison", "platform": PLATFORM_ON, "visits": [
         {"sequence": "FLAIR", "physician_confirmed_flair": False, "thickness": None, "scanner": None, "skull": "unknown"},

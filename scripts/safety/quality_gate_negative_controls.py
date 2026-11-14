@@ -113,13 +113,15 @@ NH = "backend/app/services/nifti_header.py"
 RL = "backend/app/core/security/rate_limiter.py"
 SS = "backend/app/services/segmentation_service.py"
 AUD = "backend/app/core/logging/audit.py"
+VRS = "backend/app/services/verified_report.py"
 API = "frontend/src/services/qualityGate/api.ts"
 EN = "frontend/src/i18n/locales/en.json"
 CMP_ACTION = ("If you are sure this visit's image is a T2-FLAIR, tick its confirmation box below and compare again. "
               "Otherwise compare the images visually with the overlay.")
 
 # Tenth review of PR #81 (SIMPLIFY): controls RETIRED because the part they mutated no longer exists — kept here and in the
-# record with the reason, never silently dropped
+# record with the reason, never silently dropped; each reason names the control that replaced it or what is guarded
+# (covered) by the remaining controls now
 RETIRED = {
     "AH11_last_second_becomes_a_minute": "the gate's own rounding and clamp of Retry-After were deleted (fifteenth review, less mechanism): the limiter rounds up in ONE place and a blocked request always has 1..window seconds left, so the gate's clamp could never act (the full harness on GitHub Actions, run 43389227243, showed AH11 surviving); AH10 sabotages the limiter's rounding, AH13 the gate's use of it",
     "V8_stale_preflight_applies": "the consultation hook's sequence check was removed (fifteenth review, less mechanism): an older request's answer never reaches the reducer (its effect is cleaned up) and an answer for another subject is never exposed; the full harness on GitHub Actions showed the check could not fail",
@@ -278,7 +280,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         '    reasons = list(explain(gate)["causes"])\n')],
         "the caveat shows raw codes instead of plain reasons", "backend", "RC-123, RC-127"),
     "R11_pixels_decoded": ([(QG, '        ds = pydicom.dcmread(io.BytesIO(data), stop_before_pixels=True, force=True)\n',
-        '        imaging_service.load_dicom(data)\n        ds = pydicom.dcmread(io.BytesIO(data), force=True)\n')],
+        '        ds = pydicom.dcmread(io.BytesIO(data), force=True)          # the pixel data read too\n')],
         "the gate decodes the whole image instead of the header", "backend", "RC-122"),
     "R12_header_cache_off": ([(QG, '    if key and not fields.get("unreadable"):          # S1: a failed or unreadable read is NEVER remembered\n',
         '    if False:\n')],
@@ -371,13 +373,13 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "X6_warnings_not_in_the_caveat": ([(QG, '    if reasons:                                       # R4: a warned comparison says so (the assistant reads this)\n',
         '    if False:\n')],
         "a warned comparison looks clean to the assistant", "backend", "RC-127"),
-    "X7_warnings_dropped_from_the_report_payload": ([(RPG, '        if warnings:\n            o["quality_gate_warnings"] = warnings\n        return o\n',
-        '        if False:\n            o["quality_gate_warnings"] = warnings\n        return o\n')],
+    "X7_warnings_dropped_from_the_report_payload": ([(RPG, '        if warnings:\n            o["quality_gate_warnings"] = warnings\n        # fifth review of PR #78, V2',
+        '        if False:\n            o["quality_gate_warnings"] = warnings\n        # fifth review of PR #78, V2')],
         "the report never receives the gate's warnings", "backend", "RC-127"),
-    "X8_report_prompt_silent": ([(BRS, '            if gate_warnings:\n', '            if False:\n')],
+    "X8_report_prompt_silent": ([(VRS, '    if warned and view["longitudinal"].get("reason") != GATE_STOPPED:\n', '    if False:\n')],
         "the report draft presents a warned comparison as clean", "backend", "RC-127"),
-    "X9_report_notice_silent": ([(AIR, '    if reasons:\n        lines.append(qg.reason_lead("warned", language)',
-        '    if False:\n        lines.append(qg.reason_lead("warned", language)')],
+    "X9_report_notice_silent": ([(BRS, '    warned = [qg.reason_sentence(c, lang) for c in account.get("warnings") or []]\n',
+        '    warned = []\n')],
         "the code-written notice of the draft omits the gate's warnings", "backend", "RC-127"),
     # ── fifth review of PR #81: G26 flags-off identity, D-QG-12, F1-F5, cleanup ──
     "W1_rc049_gate_path_with_the_flag_off": ([(HE, "  return (options.qualityGate ?? FEATURES.QUALITY_GATE)\n", "  return (options.qualityGate ?? true)\n")],
@@ -435,8 +437,10 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
         "the browser is never told which visit the physician may attest (G27)", "backend", "RC-122"),
     "Y7_action_ignores_the_mode": ([(QG, '    return key if isinstance(key, str) else "action"\n', '    return "action"\n')],
         "a comparison is told to tick a box it does not show (G14 via the answer, G27)", "backend", "RC-127"),
-    "Y8_report_gives_rc062_reason_for_a_gate_stop": ([(AIR, '    if account and account["stopped"]:\n', '    if False:\n')],
+    "Y8_report_gives_rc062_reason_for_a_gate_stop": ([(BRS, '    if account.get("stopped"):\n', '    if False:\n')],
         "the report says the acquisition differs when the gate stopped the pair (A4)", "backend", "RC-127"),
+    "Y8b_record_gives_rc062_reason_for_a_gate_stop": ([(VRS, '    elif lng.get("abstained") is True and lng.get("abstained_by") == "quality_gate":\n', '    elif False:\n')],
+        "the model's record says the acquisition differs when the gate stopped the pair (G30, verified report)", "backend", "RC-127"),
     "Y9_caveat_drifts_from_the_report": ([(QG, 'CAVEAT_REASONS = {code: row["en"] for code, row in _REASONS["reasons"].items()}\n',
         'CAVEAT_REASONS = {code: row["en"].replace(" (only a lower bound is known)", "") for code, row in _REASONS["reasons"].items()}\n')],
         "the assistant's caveat and the report notice give two different sentences (A4)", "backend", "RC-127"),
@@ -574,7 +578,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces, runne
     "AI5_run_starts_without_the_flair_confirmation": ([(CARD, "        || attestedNow.current !== attestation || !confirmedNow.current) {\n",
         "        || attestedNow.current !== attestation) {\n")],
         "unticking the FLAIR confirmation while the Run's consultation is in flight still starts the run (R3, P10)", "vitest", "RC-122"),
-    "AI6_gate_words_not_exempt": ([(BRS, '    codes = sorted(CAVEAT_REASONS)\n    counts = {', '    codes = sorted(CAVEAT_REASONS)[:1]\n    counts = {')],
+    "AI6_gate_words_not_exempt": ([(VRS, '    codes = sorted(CAVEAT_REASONS)\n    through = ', '    codes = sorted(CAVEAT_REASONS)[:1]\n    through = ')],
         "the gate's sentences of every reason code but one are missing from RC-065's exemption (R4)", "backend", "RC-125"),
     "AI7_rc062_tag_with_the_gate_off": ([(RPG, '            o = {"abstained": True}\n', '            o = {"abstained": True, "abstained_by": "rc062"}\n')],
         "with the gate off the RC-064 provider payload differs from the base (R5)", "backend", "RC-127"),

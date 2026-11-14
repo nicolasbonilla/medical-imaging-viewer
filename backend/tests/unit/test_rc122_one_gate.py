@@ -224,7 +224,7 @@ def _stopped(code, monkeypatch):
 
 @pytest.mark.parametrize("lang", ["en", "es", "de"])
 def test_rc127_a4_the_report_notice_gives_the_gate_s_reason_when_the_gate_stops(lang, monkeypatch):
-    from app.api.routes.ai_report import LONGITUDINAL_NOTICE
+    from app.services.verified_report import CHANGE_NOTICE as LONGITUDINAL_NOTICE      # PR #78: the service's notice
     from tests.unit.test_rc122_review11 import notice_for          # R2 (sixteenth review): the route's one account
     notice = notice_for(_stopped("sequence_not_flair", monkeypatch), lang, TEST_USER)
     assert notice and LONGITUDINAL_NOTICE[lang]["abstained"] not in notice, "RC-062's reason for a gate stop"

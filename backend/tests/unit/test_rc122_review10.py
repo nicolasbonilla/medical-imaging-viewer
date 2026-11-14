@@ -239,14 +239,16 @@ def test_rc126_s4_every_reason_the_gate_writes_fits_the_audit_code_field():
 
 # ----------------------------------------------------------------------------- one place for each thing
 def test_rc127_one_gate_warnings_block_in_the_report_model_text():
-    from app.services import brain_report_service as brs
-    assert inspect.getsource(brs).count("QUALITY-GATE WARNINGS for this pair") == 1
+    # PR #78 (verified report): ONE place puts the gate's warnings into the model's record
+    from app.services import verified_report as vr
+    assert inspect.getsource(vr).count('view["longitudinal"]["quality_gate_warnings"] = ') == 1
 
 
 def test_rc127_one_warnings_story():
     assert not hasattr(qg, "warning_codes"), "warnings come from explain() only"
     assert 'reason_lead("warned"' in inspect.getsource(qg.apply_to_comparison)
-    src = inspect.getsource(air.longitudinal_notice)                 # eleventh review (I1): the server's record
+    from app.services import brain_report_service as brs
+    src = inspect.getsource(brs._with_gate_reasons)                 # eleventh review (I1): the server's record
     # R2 (sixteenth review): the notice reads the ONE account the route computed — computed once per report
     assert "report_account(" not in src and "explain(" not in src
     assert inspect.getsource(air.generate_report).count("report_account(") == 1

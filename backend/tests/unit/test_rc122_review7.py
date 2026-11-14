@@ -79,9 +79,10 @@ def test_rc122_g28_reviewer_cases():
 ])
 @pytest.mark.parametrize("abstained", [True, False])
 def test_rc127_r1_a_malformed_gate_in_the_report_body_never_breaks_the_notice(gate, abstained):
-    from app.api.routes.ai_report import longitudinal_notice
-    notice = longitudinal_notice({"abstained": abstained, "change_candidates": {"new": 1, "enlarging": 0},
-                                  "quality_gate": gate}, "es")
+    # (verified report, PR #78: the service's notice from its record and the route's one account)
+    from tests.unit.test_rc122_review11 import notice_for
+    notice = notice_for({"abstained": abstained, "change_candidates": {"new": 1, "enlarging": 0},
+                         "quality_gate": gate}, "es")
     assert isinstance(notice, str) and notice
 
 

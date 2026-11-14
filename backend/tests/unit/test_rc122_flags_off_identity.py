@@ -100,6 +100,8 @@ def test_rc122_g26_r5_the_report_path_is_the_base_with_the_gate_off():
     client-supplied gate block, client-injected gate keys, a pair, two languages)."""
     from tests.unit._flags_off_harness import report_snapshot
     snap = _snap()
+    # (PR #81 integrated with the verified report: the report path's base is main as merged, 7358d29 — PR #78's report)
+    assert snap["report_base_commit"].startswith("7358d29")
     got = report_snapshot()
     assert set(got) == set(snap["report"]) and len(got) >= 100
     bad = [(k, got[k], snap["report"][k]) for k in sorted(snap["report"]) if got[k] != snap["report"][k]]

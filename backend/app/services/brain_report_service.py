@@ -379,6 +379,12 @@ def _with_gate_reasons(notice: Optional[str], lang: str, account: Optional[Dict[
     return f"{notice} {line}" if notice else line
 
 
+def report_change_notice(view: Dict[str, Any], lang: str, gate_account: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The ONE code-written change notice of a draft: the verified report's (from its validated record, W1) with the
+    quality gate's reasons (the route's one account, G30; PR #81 integrated with #78)."""
+    return _with_gate_reasons(verified_report.change_notice(view, lang), lang, gate_account)
+
+
 class BrainReportService:
     """
     Generates the verified brain MRI report draft (REQ-FUNC-116, DRAFT): code writes every number and status, the
@@ -521,7 +527,7 @@ class BrainReportService:
             allowed, reason = self.interpretive_text_gate()
             ids = None
             payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)
-                                           gate_account=gate_account)            # the gate's account (PR #81, R2)
+                                           gate_account=gate_account)            # the gate account (PR #81, R2)
             # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
             view = verified_report.build_view(payload.findings, payload.volumetry, lang,
                                               review_source=_review_source(findings), not_included=not_included)
@@ -624,7 +630,7 @@ class BrainReportService:
                 from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
                 text = f"{text}\n\n> {AUTOMATIC_MARKING_NOTICE[lang]}"
             content = _apply_disclaimer(text, language)
-            change = _with_gate_reasons(verified_report.change_notice(view, lang), lang, gate_account)
+            change = report_change_notice(view, lang, gate_account)
         except BaseException as e:  # noqa: BLE001 — every exit is audited, then raised as before (the route answers
             # 503 / 500). Tenth review of PR #78, I17: BaseException — a request cancelled during a model call
             # (asyncio.CancelledError) still writes its verification record with the paid calls (RC-104)
