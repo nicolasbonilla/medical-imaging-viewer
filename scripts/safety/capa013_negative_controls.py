@@ -108,10 +108,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                         "the report prompt labels candidates as active disease"),
     "B13_report_notice_removed": ([(AIR, "        if notice:   # CAPA-013", "        if False:   # CAPA-013")],
                                   "a report draft with longitudinal data ends without the unconfirmed-candidate notice"),
-    "B14_assistant_receives_flags": ([(MCPB, "                if k not in UNCONFIRMED_ACTIVITY_KEYS}\n", "                if True}\n")],
+    "B14_assistant_receives_flags": ([(MCPB,  # re-anchored on PR #79 (one view: identifiers and activity flags)
+                                       '                if str(k).replace("_", "").lower() not in IDENTIFIER_KEYS and k not in UNCONFIRMED_ACTIVITY_KEYS}\n',
+                                       '                if str(k).replace("_", "").lower() not in IDENTIFIER_KEYS}\n')],
                                      "the assistant receives activity / DIT flags"),
-    "B15_assistant_may_record_decisions": ([(MCPB, '    "/ai/report/generate",\n})',
-                                             '    "/ai/report/generate",\n    "/segmentation/longitudinal/review",\n})')],
+    "B15_assistant_may_record_decisions": ([(MCPB, '    "/segmentation/longitudinal/compare",\n})',
+                                             '    "/segmentation/longitudinal/compare",\n    "/segmentation/longitudinal/review",\n})')],
                                            "the read-only assistant can record a radiologist decision"),
     # ── RC-061: measured false-candidate rate from the versioned asset ──
     "E1_rate_hard_coded": ([(LCS, '            "false_candidates_per_patient": float(m["false_candidates_per_patient"]),\n',

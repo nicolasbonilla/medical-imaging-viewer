@@ -164,10 +164,14 @@ def test_rc110_review3_100_runs_a_minute_lose_no_audit_record(monkeypatch, with_
 
 
 # ================================================================== 5. retirement check
-def test_rc117_review3_retirement_check_takes_an_injected_date():
+def test_rc117_review3_retirement_check_takes_an_injected_date(monkeypatch):
     assert not C.retirement_problems(today=date(2026, 11, 10))
+    # Reconciled 2026-11-14: the card model has no announced retirement; inject one to show the dated rule.
+    original = C.load_card
+    monkeypatch.setattr(C, "load_card", lambda a: {**original(a), "model": {**original(a)["model"],
+                                                   "retires_on": "2026-11-30"}} if a == "report-drafter" else original(a))
     problems = C.retirement_problems(today=date(2026, 11, 30))
-    assert problems and "claude-sonnet-4-5-20250929" in problems[0]
+    assert problems and "claude-sonnet-5-5" in problems[0]
 
 
 def test_rc117_review3_no_test_reads_the_wall_clock_for_retirement():

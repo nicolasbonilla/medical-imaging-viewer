@@ -411,6 +411,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                        "a correction of a small component is shown as a numbered lesion (m-1)"),
 }
 
+# PR #79 (seventh review, R2) removed the assistant's report tool generate_ms_report: reports are drafted only by
+# the verified-report agent in the app (PR #78). These mutations targeted that tool, so their anchors no longer
+# exist; not run. Replaced by: test_capa008_assistant_read_only.py::test_rc034_report_findings_are_measurement_keys_
+# the_service_consumes, which now asserts the tool is gone (covered), and verified_report_negative_controls.py.
+RETIRED_WITH_THE_ASSISTANT_REPORT_TOOL = {name: M.pop(name)[-1] for name in ('A4_assistant_report_without_its_segmentation',)}
+
 # Third independent review of PR #78 (T5, DRAFT, PENDING owner approval): these mutations targeted the retired report
 # templates and findings-prompt builder, archived outside the shipped code (docs/archive/retired_report_prompt.py).
 # They are kept by name, not run; the controls they exercised are verified on the verified report by

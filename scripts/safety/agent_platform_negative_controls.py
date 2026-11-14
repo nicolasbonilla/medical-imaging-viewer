@@ -139,7 +139,7 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                        "                    entry = reg.tool(call.name)\n", "RC-110",
                                        "the run continues after a refused (e.g. write) tool call"),
     "X3_no_argument_scope_in_run": (RUN, "                    d = check_tool_arguments(entry, call.arguments, scope)\n",
-                                    "                    d = Decision.ok()\n", "RC-114", "the run does not check tool arguments"),
+                                    "                    d = type('ArgumentsNotChecked', (), {'allowed': True, 'code': None})()\n", "RC-114", "the run does not check tool arguments"),
     "X4_identity_not_checked": (RUN, "                if response.model_id != model_id:\n", "                if False:\n", "RC-115",
                                 "an answer from another model is delivered"),
     "X5_overrides_honoured": (RUN, "        if overrides or unknown:\n", "        if False:\n", "RC-115",
@@ -193,9 +193,9 @@ M = {  # name: (file, anchor, replacement, control, what it re-introduces)
                                 "a new template goes unnoticed"),
     "C3_code_model_not_compared": (CRD, "            if default != mid:\n", "            if False:\n", "RC-117",
                                    "a change of the code's model goes unnoticed"),
-    "C4_variants_not_hashed": (CRD, '        out[f"brain_report_service.dis_not_evaluated_template(REPORT_TEMPLATES[{name}])"] = \\\n'
-                                    "            b.dis_not_evaluated_template(text)\n", "", "RC-117",
-                               "the DIS-not-evaluated variants are not bound"),
+    # Re-anchored 2026-11-14 (merge of main, PR #78): the report's variants are now its language lines.
+    "C4_variants_not_hashed": (CRD, '        out[f"verified_report.user_lang_line({lang})"] = v.user_lang_line(lang)\n',
+                               '        pass\n', "RC-117", "the report's language lines are not bound"),
     # ---------------------------------------------------------------- evals
     "E1_pass_at_1_instead_of_pass_hat_k": (EVL, "    return len(passes) > 0 and all(p is True for p in passes)\n",
                                            "    return any(p is True for p in passes)\n", "RC-118",

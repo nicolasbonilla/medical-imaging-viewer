@@ -26,7 +26,7 @@ CLIENT_MODEL = "recorded-client-model"
 # RC-121 (fifth review of PR #79): every run of the assistant carries the backend's study-scoped capability. The
 # offline evals reach a FAKE backend that does not check it; the real check is tested in test_review5.py.
 EVAL_CAPABILITY = "offline-eval-capability"
-REPORT_MODEL = "claude-sonnet-4-5-20250929"
+REPORT_MODEL = "claude-sonnet-5-5"
 
 
 def production_data():

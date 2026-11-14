@@ -109,6 +109,8 @@ def template_source(name: str) -> str:
     """The repository file that owns a template, from the template's name."""
     if name.startswith("brain_report_service."):
         return "backend/app/services/brain_report_service.py"
+    if name.startswith("verified_report."):
+        return "backend/app/services/verified_report.py"
     if name.startswith("mcp."):
         return f"backend/app/mcp/{name.split('.')[1]}.py"
     if name.startswith("agent_platform."):
@@ -117,14 +119,15 @@ def template_source(name: str) -> str:
 
 
 def report_drafter_templates() -> Dict[str, str]:
-    from app.services import brain_report_service as b
-    out = {}
-    for name, text in sorted(b.REPORT_TEMPLATES.items()):
-        out[f"brain_report_service.REPORT_TEMPLATES[{name}]"] = text
-        out[f"brain_report_service.dis_not_evaluated_template(REPORT_TEMPLATES[{name}])"] = \
-            b.dis_not_evaluated_template(text)
-    for const in ("DIS_NOT_EVALUATED_PROMPT", "CLINICIAN_TEXT_INSTRUCTION", "REGIONS_NOT_CONFIRMED_LINE"):
-        out[f"brain_report_service.{const}"] = getattr(b, const)
+    """The fixed texts the verified report (PR #78) sends to the model: the one system prompt, the language line of
+    each report language and every regeneration message. Reconciled 2026-11-14 when main was merged into PR #79 (the
+    templates of the former report builder no longer exist)."""
+    from app.services import verified_report as v
+    out = {"verified_report.SYSTEM_PROMPT": v.SYSTEM_PROMPT}
+    for lang in v.LANGUAGES:
+        out[f"verified_report.user_lang_line({lang})"] = v.user_lang_line(lang)
+    for const in sorted(n for n in dir(v) if n.endswith("_MESSAGE") and isinstance(getattr(v, n), str)):
+        out[f"verified_report.{const}"] = getattr(v, const)
     out.update(_platform_templates())
     return out
 
