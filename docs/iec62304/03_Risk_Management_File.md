@@ -839,6 +839,226 @@ empty-coefficient asset scored every lesion as a constant; non-integer powers we
 truncated) — both now fail closed with regression tests. The scorer is NOT wired to the guarantee
 and must not be until the above holds.
 
+## Addendum B — Agent platform core hazards (N. G. Bonilla Vargas — approved 2026-11-14 (PR #79))
+
+*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79), not merged, not deployed. N. G. Bonilla Vargas — approved 2026-11-14 (PR #79): severities, probabilities and acceptability below are PROPOSALS; nothing is approved until N. G. Bonilla Vargas records it. Ids HAZ-020..HAZ-024 and RC-110..RC-120 leave a gap after PR #78 (HAZ-017, RC-102..RC-106); if they are taken when this merges, they are renumbered. Requirements: SRS Addendum B (REQ-AGT-001..008). The controls exist as a tested library; they act on a live agent only after the integration steps (`docs/iec62304/agent_platform/Integration_Plan.md`).*
+
+**Threat sources used:** OWASP Top 10 for Agentic Applications (released 2025-12-09) and OWASP LLM Top 10 (2025), item by item in `backend/tests/agent_platform/owasp_map.json`; the agents-benchmark results (research/agents-benchmark @ f3c1976: without a check, Gemini and Gemma drafts carried unsupported content in 452/452; with the A3 check, 0/452 after the gate); `research_notes/Vanguardia de los agentes MSTool/ingenieria_regulacion_agentes.md` §Q6.
+
+### B.1 Hazards
+
+| HAZ ID | Hazard (module) | Hazardous situation | Cause | Harm | Severity (proposed) |
+|---|---|---|---|---|---|
+| HAZ-020 | An agent acts outside its approved scope (`agent_platform/registry.py`, `runtime.py`) | A draft from an unapproved, switched-off, retired or not re-validated model, or after a write tool changed a record, reaches the radiologist; or calls run without bound | No identity, approval or allow-list per agent; a model id read from the environment; a kill switch read once; no cost or step bound | Misleading draft signed, a clinical record changed by an AI, loss of service when the provider budget is exhausted → delayed or wrong diagnosis | S4 (Serious) |
+| HAZ-021 | Instructions injected through study data or tool outputs (`untrusted.py`, `runtime.py`, `backend/app/mcp/`) | The model follows text hidden in a DICOM tag, NIfTI description, file name, prior report or tool output: states criteria met, invents findings, calls a write tool or reads another patient | A model cannot reliably tell data from instructions; the read-only MCP tools read any record the clinician may read (the backend authorizes per clinician, not per study) | Misleading report (as HAZ-003), another patient's data disclosed to the provider | S5 (Catastrophic), as HAZ-003 |
+| HAZ-022 | Patient data in traces or telemetry (`tracing.py`) | Prompts, outputs, identifiers or exception text with identifiers stored in spans and sent to a tracing backend | Content capture on; free-text attributes; exporter on by default | Special-category data disclosed to a third party (as HAZ-016) | S3 (Moderate), as HAZ-016 |
+| HAZ-023 | Unrecorded change of model, prompt or platform (`cards.py`, `evals.py`) | A changed template, a model swap or retirement, an SDK or MCP protocol drift changes the drafts without any check | Templates and model ids not bound to a record; no eval in CI; unpinned transitive SDK (found: `mcp` resolved to 1.12.4, protocol 2025-06-18, not pinned) | Regression of a safety property (unsupported claims, missed abstention) reaches clinicians | S4 (Serious) |
+| HAZ-024 | AI-written text not told apart, unreviewed sign-off (`provenance.py`, `oversight.py`) | The radiologist signs model text as their own, or signs drafts unread; nobody notices the pattern | No per-sentence marking in the signed report; no measurement of acceptance without edits and time to sign | Automation bias: a model error signed into the record → delayed or wrong diagnosis | S4 (Serious) |
+
+### B.2 Risk estimation before control (proposed)
+
+| HAZ ID | Severity | Probability (pre-control) | Risk Level (pre-control) |
+|---|---|---|---|
+| HAZ-020 | S4 | P3 (Occasional) | UNACCEPTABLE *(proposed)* |
+| HAZ-021 | S5 | P4 (Probable) — NIST CAISI's agent-hijacking evaluations reportedly found at least one successful hijack against each of 13 frontier models (secondary source, research notes Q3), and the peer-reviewed medical injection studies cited there succeeded against the models they tested | UNACCEPTABLE *(proposed)* |
+| HAZ-022 | S3 | P4 (Probable) — vendor tracing captures content by default | UNACCEPTABLE *(proposed)* |
+| HAZ-023 | S4 | P4 (Probable) — the report model retires on 2026-11-30 | UNACCEPTABLE *(proposed)* |
+| HAZ-024 | S4 | P3 (Occasional) | UNACCEPTABLE *(proposed)* |
+
+### B.3 Risk control measures
+
+All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/agent_platform/` (CI job `agent-platform`, offline, no key) and the negative controls of `scripts/safety/agent_platform_negative_controls.py` (record `docs/iec62304/records/risk_verification/AGENT-PLATFORM_negative_controls_2026-11-10.json`).
+
+| HAZ ID | Risk control | Type | Requirement | Implementation | Verification |
+|---|---|---|---|---|---|
+| HAZ-020 | RC-110: fail-closed authorization — registered, owner-approved agents only; exact model ids with use status and retirement date; tools read or compute only (a registry that allows a write tool refuses everything); a required verifier must be present; any refusal, failure, exhausted budget or withholding verdict delivers nothing; every refusal audited with a fixed code and a pseudonymised study key | Inherent safety (design) + protective | REQ-AGT-001 | `registry.py`, `runtime.py`, `agents.json` (every entry pending) | `test_registry.py`, `test_runtime.py`, `test_redteam.py`; R1, R2, R5–R7, R12–R14, X2, X6, X7 |
+| HAZ-020 | RC-111: per-agent kill switch read again before every model call, tool call and delivery; unreadable = off; the environment switch must be exactly `on` | Protective | REQ-AGT-001 | `registry.py` (`check_agent`, `EnvKillSwitches`), `runtime.py` | `test_registry.py`, `test_runtime.py`, `test_redteam.py`; R3, R4, R11, X1 |
+| HAZ-020 | RC-112: bounds — worst-case cost (input estimate at 1 token / 2 bytes + the full output allowance) against the caps per study and per UTC day, charged after every call (impossible usage at the worst case); steps, tool calls, input and tool-result size limits; untrusted text capped | Protective | REQ-AGT-001 | `registry.py`, `runtime.py`, `untrusted.py` | R8, R9, U4, X8–X10 |
+| HAZ-021 | RC-113: untrusted content as data — file names, clinician text, unknown sources withheld; study text and tool output quoted, escaped, cleaned and capped; identifier DICOM tags never read; tool results plain bounded JSON without direct identifiers; the detector is an alarm only | Protective | REQ-AGT-008 | `untrusted.py`, `runtime.py` | `test_untrusted.py`, `test_redteam.py` (real pydicom / nibabel files); U1–U3, U8–U10, X11, X12 |
+| HAZ-021 | RC-114 *(since the fifth review of PR #79: the SECOND, defence-in-depth layer behind RC-121, driven by each tool's declared output schema)*: per-run study scope — every id argument (declared or `*_id`) and every id in a tool result must belong to the run's study, or the call / result is refused before the backend or the model | Protective | REQ-AGT-008 | `untrusted.py` (`RunScope`, `check_tool_arguments`, `validate_tool_result`), `runtime.py` | `test_redteam.py` (real MCP tools: the bare tool reads another patient; through the platform it is refused before the backend is asked); U5–U7, X3 |
+| HAZ-021 | **RC-121 (PRIMARY since the fifth review of PR #79)**: study scope enforced BY THE BACKEND — each tool declares a typed output schema; the backend issues per run, after its own CAPA-009 authorization of each listed study, a capability signed with a backend key (none set: nothing issued or accepted), bound to the clinician, one patient and the listed studies, ≤ 1 h; the tool layer sends it with every request; a guard verifies it and keeps agent requests on the assistant's object-authorized read routes (403 otherwise); the CAPA-009 chokepoints refuse with the same 404 any object of another patient or study, a request of another user and an administrator's archive-wide listing; the runtime refuses a run of a scope-bound agent without it *(sixth review of PR #79: every assistant request carries a fixed marker and the backend refuses it without a valid scope; the client refuses locally without a pass; the STDIO assistant obtains its pass with open_study_session / open_imaging_session, never shown to the model — since the seventh review the PHYSICIAN chooses and confirms the study through the client (MCP elicitation), the model supplies no id, a patient switch is audited; paid-model routes are not agent routes)* | Protective (at the source) | REQ-AGT-009 | `app/security/agent_scope.py`; `resource_access.py`, `patient_access_dependency.py` (CAPA-009 chokepoints); `app/api/routes/agent_scope.py`; `app/main.py`; `agent_platform/capability.py`, `runtime.py`, `agents.json` (`requires_backend_scope`, typed `output`); `app/mcp/_backend.py` | `test_review5.py` (`test_rc121_*`, incl. a buggy tool refused by the backend although the walk lets its result through); `test_capa009_*` (route classified); AA1–AA17 |
+| HAZ-020, HAZ-023 | RC-115: exact model identity and fixed settings — no alias, prefix or look-alike; the provider's answer must name the model requested; caller overrides refused; environment model variables ignored; registry entries immutable | Protective | REQ-AGT-001 | `registry.py`, `runtime.py` | R10, X4, X5, X14 |
+| HAZ-022 | RC-116: tracing allow-list after OTel GenAI v1.37.0; content only as SHA-256; exception class only; export off by default; request trace id adopted; sign-off linked with keyed hashes | Protective | REQ-AGT-002 | `tracing.py` | `test_tracing.py`, `test_redteam.py`; T1–T7 |
+| HAZ-023 | RC-117: model and prompt card per agent, bound in CI to every rendered template, model id, API version, parameters, SDK pins, resolved MCP SDK, and the retirement date | Protective (detection) | REQ-AGT-005 | `cards.py`, `cards/*.json` | `test_cards.py`; C1–C4 |
+| HAZ-023 | RC-118: offline eval and red-team gate in CI — pass^k (k = 3, replayed twice) at 100 % for regression and red team; frozen cases and grader; OWASP map checked both ways | Protective (detection) | REQ-AGT-003, REQ-AGT-004 | `evals.py`, `tests/agent_platform/eval_cases/`, `owasp_map.json`, CI job `agent-platform` | `test_agent_evals.py`, `test_owasp_map.py`; E1–E4 |
+| HAZ-024 | RC-119: per-unit AI provenance in the signed report and the UI | Information for safety | REQ-AGT-006 | `provenance.py`, `runtime.py` | `test_provenance_oversight.py`, `test_redteam.py`; P1–P5, X13 |
+| HAZ-024 | RC-120: oversight metrics per reader (unedited acceptance, edit size, time to sign; fast unedited sign-offs) without patient data | Protective (detection) | REQ-AGT-007 | `oversight.py` | `test_provenance_oversight.py`; O1–O3 |
+
+### B.4 Residual risk (proposed) and limits
+
+| HAZ ID | Proposed residual | Acceptable? | Limits that keep it open |
+|---|---|---|---|
+| HAZ-020 | S4 / P2 | ALARP *(proposed)* | cost ledger per instance only (P-5); approval and switches not yet wired to a live agent (P-1, P-3) |
+| HAZ-021 | S5 / P1 | ALARP *(proposed)* | *(fifth review of PR #79: the scope is enforced by the backend, RC-121; since the sixth review the STDIO assistant obtains its pass per study session and the backend refuses its requests without one (P-4 scope part closed); a clinician who deliberately runs modified assistant code with his own browser token reaches what his browser reaches, as without the assistant; documents are authorized per patient, not per study, and no assistant route reads them)* what a hijacked model still writes is caught only by the claim verifier (PR #78; the eval uses the benchmark verifier v3, which misses "fulfil dissemination in space" — capability case); the MCP servers do not yet route through the platform (P-4) |
+| HAZ-022 | S3 / P1 | ACCEPTABLE *(proposed)* | no network exporter in this release; any export destination needs the data-processing decision (P-6, CAPA-014 D-3) |
+| HAZ-023 | S4 / P2 | ALARP *(proposed)* | *(fifth review of PR #79: fastmcp 3.2.4 and mcp 1.30.0 pinned, 12 advisories closed; one moderate fastmcp advisory left, not applicable — its fix needs Starlette ≥ 1.0.1, D-AGT-8)*; report model retires 2026-11-30 (D-AGT-1) |
+| HAZ-024 | S4 / P2 | ALARP *(proposed)* | no UI shows the marks or the metrics yet (P-8); thresholds (MIN_REVIEW_SECONDS = 30 s) unvalidated |
+
+### B.5 Independent adversarial review of PR #79 (2026-11-10) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+Ten findings, each fixed with a failing-first test (`backend/tests/agent_platform/test_review1.py`, committed at `183479d` and red in CI before the fixes at `f4ddaa0`) and, where it is a risk control, a negative control (mutations V1–V12 and the re-anchored R8, R9, R11, U5–U7, X2, X5, X7, X8, O2):
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| 1 | Output cut at `max_tokens` was delivered; the per-template budget (16 384 for the comprehensive template) was never used | RC-110, RC-115 | only `end_turn` / `stop_sequence` (text) or `tool_use` (tool calls) are accepted; truncation → `output_truncated`, any other stop → `model_stop_unexpected`, nothing delivered, no tool of that answer runs; the budget is chosen by name among the registry's `max_tokens*` budgets |
+| 2 | The global switch failed OPEN on `OFF`, `false`, `0` or trailing whitespace | RC-111 | an agent is on only when the global AND its own switch read `on` (trimmed, any case); everything else is off |
+| 3 | Check-then-record race: N concurrent runs could pass a cap up to N times | RC-112 | worst case reserved atomically at authorization, settled after the call; 24 concurrent threads → exactly 11 calls fit a cap of 11. **Limit:** the ledger is per instance; the persistent ledger (P-5) must give a transactional reserve over both totals, reservation expiry and idempotent settle; until then N instances mean N × the cap |
+| 4 | Result scope looked only at fixed key names | RC-114 | every `id`, `ids`, `*_id`, `*_ids` at any depth and in any list; declared `result_exempt_keys` only |
+| 5 | Argument scope covered top-level declared or `*_id` keys only | RC-114 | per-tool argument schema in `agents.json` (bound to the real MCP signatures); undeclared or mistyped arguments refused; every id-like value anywhere, incl. `*path`/`*uri`/`*url`, scope-checked |
+| 6 | Tracer kept every span forever | RC-116 (availability) | bounded buffer of 1 000; the file exporter keeps nothing in memory |
+| 7 | A regenerated draft kept the old hash; its sign-off was a mismatch | RC-120 | the latest shown version counts; seconds from its showing |
+| 8 | Model and tool failures audited as denials | RC-110 | failures → `failure`, refusals → `denied`; a verifier that raises → `verifier_failed` |
+| 9 | A thread pool and an event loop per async tool call, blocking an async caller | (robustness) | `await arun(...)` awaits tools in the caller's loop; a sync model client runs in a worker thread; `run()` refuses inside a running loop |
+| 10 | Five SHA-256 helpers with different `None` rules; alarms could be dropped on an early return | RC-113, RC-116 | one helper (`hashing.py`: `None` hashes as empty text); alarms, executed tools and warnings set in the single `stop()` |
+
+### B.6 Second independent adversarial review of PR #79 (2026-11-10) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+Ten more findings, each with a failing-first test (`backend/tests/agent_platform/test_review2.py`, committed at `7f692d8`, red in CI run 42914972541) fixed at `65b6555` (CI run 42916263102 green), and a negative control per risk control (mutations W1–W14):
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| 1 | Activity flags from unconfirmed candidates (`activity_candidate`, `dit_candidate`, `enlarging_count`, `new_clinically_significant_count`) reached a model on the platform path | RC-113 (with CAPA-013 RC-060, HAZ-007) | one shared rule `app.mcp._backend.assistant_view` for the MCP client and the platform |
+| 2 | List markers ("1. ") and abbreviations ("e.g.", "approx.") split units; "[AI]" landed before the list number | RC-119 | marker kept on its item; defined English/Spanish/German abbreviation list does not split |
+| 3 | Result scope missed foreign ids used as dict keys, numeric ids, `*_path`/`*_uri`/`*_url` values and storage locations | RC-114 | id-shaped keys, numbers under id-like keys (unless declared lesion/label numbers, `result_numeric_keys`), location values and `gs://`/`s3://`/storage URLs anywhere refuse the whole result |
+| 4 | A malformed provider response raised and escaped `stop()` and the audit | RC-110 | shape validated first; `model_response_invalid`, settled, audited as failure |
+| 5 | Cancellation skipped the settlement and the audit | RC-112, RC-110 | reservation settled (worst case kept), audit record `run_cancelled` (outcome cancelled), cancellation re-raised |
+| 6 | In `arun`, sync tools and the verifier ran on the event loop | (robustness) | worker thread; loop responsiveness tested |
+| 7 | An edited model sentence lost its AI marker in the signed text | RC-119 (HAZ-024) | `[AI, edited]` in the text, `mstool-ai-edited` in HTML, legend line |
+| 8 | Empty output delivered as success when no verifier | RC-110 | `model_output_empty`, audited failure |
+| 9 | The assistant card hashed tool docstrings only | RC-117 | full tool definition (name, description, parameters with kind/annotation/default, signature); a new parameter or default fails the check |
+| 10 | Mutations were written into the real checkout (a hard kill could leave sabotaged code) | RC-118 | mutations run in a throwaway copy outside the repository; the script has no import side effect; a CI test fails if any mutation is present in the tracked sources |
+
+**Limit kept open:** `result_numeric_keys` of the MCP read tools (`id`, `label_id`, lesion ids) is set from the lesion-analysis service code; it is to be confirmed against real responses when the servers adopt the platform (Integration_Plan P-4). Until then a real response with another numeric id is refused (fail closed, availability cost only). *(Superseded by B.7: the third review found this key-name rule too strict; `result_numeric_keys` is removed.)*
+
+### B.7 Third independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+Main finding: the scope control (RC-114) had become **too strict** and refused legitimate results — a real region classification (`region_id`, `zone_id`) and a real lesion analysis (`total_burden_mm3`) were refused whole. An over-strict control is a hazard of its own (the assistant becomes unusable, and pressure grows to switch it off). Failing-first tests at `116588a` (CI run 42921874922 red: 37 of 52 new tests, and 11 existing eval and red-team tests failed once the offline backend returned the REAL output shapes); fixes at `03d8eab` (CI run 42922844815 green); mutations Y1–Y8 and the re-anchored ones.
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| 1 | `region_id` / `zone_id` refused; the evals' fake backend did not return real shapes | RC-114 | the real outputs of the services (lesion analysis, region classification, longitudinal comparison) and realistic imaging outputs drive contract tests for every tool and the evals' backend |
+| 2 | Ordinary keys (`total_burden_mm3`, `T2-FLAIR`) taken for foreign ids | RC-114 | a resource id is recognised by its VALUE (UUIDs, DICOM UIDs, prefixed test ids, in any string or key) or by a resource key (defaults plus the tool's `result_resource_keys` from its real schema); actor keys (`created_by`, …) are not scope-checked |
+| 3 | Pre-model refusals audited with model `invalid` | RC-110 | a missing model is absent from the record |
+| 4 | Agent audit records anonymous → budgeted (30 per 60 s per source) and lost under load | RC-110 | the run carries the authenticated actor (or a fixed system actor); 100 runs → nothing suppressed |
+| 5 | A wall-clock date check would turn every PR red from 2026-11-30 | RC-117 | date injected in the tests; daily scheduled job + warning step; the registry still refuses the retired model at call time |
+| 6 | Oversight and sign-off hashed the reader differently | RC-116, RC-120 | one `reader_key` |
+| 7 | `render_html` interpolated the author unescaped; `from_dict` did not validate | RC-119 | every value escaped; `from_dict` and `render_html` refuse an invalid record |
+| 8 | A Verdict of wrong field types raised unaudited | RC-110 | validated; `verifier_failed`, audited |
+| 9 | Alarm run twice, double serialisation | RC-113 (efficiency) | one walk, one serialisation; 200 KB < 2 s |
+| 10 | Two copies of the MCP stub loader | RC-117, RC-118 | the tests use the card's loader |
+
+**Limit kept open:** the resource-id patterns (UUID, DICOM UID, prefixed ids) and the resource keys are those of the code and the synthetic contract outputs; ids of another shape (for example a Firestore auto-id) under an ordinary key would not be recognised. The scope builder of the integration (P-4) must put every id of the study in the scope, and the contract tests must be re-run on recorded production responses before the assistant is switched on.
+
+**Correction of an earlier figure:** the first negative-control round of this addendum had **61** mutations (60 detected; 61 after the test added for P4), not 62 as first written in the PR description.
+
+**Open items (owner):** D-AGT-1 migrate the report model before 2026-11-30 through RVP-AGT-001; D-AGT-2 acceptance thresholds of RVP-AGT-001; D-AGT-3 cost caps and limits in `agents.json`; D-AGT-4 approve (or not) each agent entry; D-AGT-5 trace export destination; D-AGT-6 the fast-sign-off threshold.
+
+### B.8 Fourth independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+Two scope **BYPASSES** verified by the reviewer (findings 1 and 2): a DICOM UID of a vendor root (Siemens 1.3.12.2.1107…, Philips 1.3.46.670589…, GE 1.2.840.113619…, an enterprise root 1.3.6.1.4.1.…, the UUID root 2.25.…) passed in free text and as a dict key, because only the roots 1.2 and 2.25 were recognised; and another resource under an actor key (`{"reviewed_by": {"segmentation_id": <another>}}`) or named by a `*_by` key (`{"superseded_by": <another>}`) passed, because the actor exemption skipped the whole subtree. Failing-first tests at `e245a67` (CI run 42926675154 red: 45 of the 57 new tests); fixes at `7a7fa62`; negative controls: 11 mutations re-anchored to the new code, 4 next to changed lines and 12 new (Z1–Z12), run in a throwaway copy against a clean baseline (record `AGENT-PLATFORM_negative_controls_2026-11-10.json`, latest re-run).
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| 1 | BYPASS: DICOM UIDs of other roots not recognised | RC-114 | PS3.5 §9.1 grammar (`is_dicom_uid`); any maximal run of digits and dots is a candidate; ≥ 4 components in text and keys, or 2.25.<≥ 10 digits>; any value under a resource key |
+| 2 | BYPASS: the actor exemption hid a subtree; `superseded_by` / `replaced_by` treated as people | RC-114 | the exemption covers one string value only (an actor key only with an actor id: a UUID or `system:<name>`); dicts and lists are walked; seven `*_by` / `*_from` keys that name resources are resource keys |
+| 3 | `mcp` not pinned; the card said so | RC-117 | `mcp==1.12.4` in `requirements.txt`, in the card's `sdk_pins` (checked against the requirement on every PR); advisories recorded (below) |
+| 4 | An exception at the run boundary escaped unaudited; inputs not validated | RC-110 | inputs validated first (`run_input_invalid`); `Exception` → audited `run_internal_error`, no text; other `BaseException` → audited `run_aborted`, re-raised; an open reservation settled at worst case |
+| 5 | A model unit without a model id gave the legend "no part … written by an AI model" | RC-119 | a model part must name its model (compose and load); other authors carry no model metadata; the legend follows authorship |
+| 6 | Tool arguments named `fn` / `blocking` collided with the runner's parameters | (robustness) | arguments travel as one dict (`functools.partial`) |
+| 7 | Several audit records per run, event types undocumented | RC-110 | exactly one `agent.run` record per run (decisions inside a run are not recorded separately); `AUDIT_EVENT_TYPES` documented; server log reason `agent.run:<code>` |
+| 8 | The file exporter opened the file for every span under a lock | RC-116 (availability) | one writer thread, one handle, bounded queue, dropped counter, bounded `flush` / `close` |
+| 9 | The oversight edit size was a whole-text character diff (seconds on a long report) | RC-120 | sentences → words → characters in short runs; 15 000 characters in ~0.03 s, test bound 0.5 s |
+| 10 | `cards.py` duplicated the warning threshold, the date arithmetic and the list of agents | RC-117 | imports `RETIREMENT_WARNING_DAYS` and `retirement_state` from the registry; iterates `TEMPLATE_SOURCES` |
+
+**Trade-off kept (finding 1):** in free text and dict keys a UID needs at least four components (or the 2.25 root with a long integer): a run of two or three components cannot be told from a decimal ("3.1 mL"), a version ("1.2.3") or a date ("11.11.2026"). Under a resource key every value is checked whatever its shape. A UID of another root with three components in free text would not be recognised; real UIDs are longer (a root alone has four or more components).
+
+**SOUP (finding 3), read on OSV 2026-11-11:** fastmcp 2.3.0 has 8 advisories fixed in later releases — critical: SSRF and path traversal in the OpenAPI provider; high: OAuth proxy token reuse, confused deputy in the auth integration and in the OAuth proxy callback, MCP < 1.23 dependency; moderate: command injection in two installers, XSS in the client's OAuth callback page. mcp 1.12.4 has 4 advisories, all in the HTTP and WebSocket transports (DNS rebinding protection, session principal, session accumulation, Host/Origin validation). The MCP servers use the stdio transport only, no OpenAPI provider, no OAuth and no installer, and the deployed application does not import fastmcp, so none applies to the current use. Both versions are pinned exactly and recorded; an upgrade is a SOUP change for the owner (D-AGT-7; Integration_Plan P-7) and is re-verified by RVP-AGT-001.
+
+**Open item (owner), added:** D-AGT-7 — upgrade fastmcp and mcp to releases without these advisories (protocol 2025-11-25 or later) before an HTTP transport is used or the assistant is switched on.
+
+### B.9 Fifth independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+**Structural (altitude) finding, accepted:** four rounds enforced the run scope by spotting id-shaped strings (RC-114), and each round added special cases; ids of another shape (a Firestore auto-id, a hyphen-less UUID, a number under an undeclared key, a foreign UUID under `owner_id`) still passed, while harmless strings refused whole results. The scope is now enforced at the SOURCE: **RC-121 is the primary control of HAZ-021** (B.3). Each tool has a typed output schema. The backend issues a study-scoped capability after its own CAPA-009 authorization, and its CAPA-009 chokepoints refuse any object outside that capability. RC-114 stays as the second layer, driven by the declared schemas. **Proof:** a tool with a bug reads a foreign record (a Firestore-style id, a result with no id at all) that the walk lets through. Under the capability the backend answers 404 and nothing is delivered (`test_rc121_review5_a_buggy_tool_is_refused_by_the_backend_even_when_the_walk_misses_it`).
+
+Failing-first tests at `fa23d0f` (CI run 42933756281 red: 31 of the 32 new tests; the remaining one is a positive control); fixes at `42f5970` (CI run 42935697416). Negative controls in a throwaway copy against a clean baseline: 9 mutations re-anchored to the new code, 32 new (AA1–AA32), 6 next to changed lines (record, latest re-run).
+
+| # | Finding | Control amended | Fix |
+|---|---|---|---|
+| S | Scope by id-shaped strings only | RC-121 (new, primary), RC-114 (secondary) | typed output schema per tool; backend-issued capability (HMAC, bound to the clinician, one patient, listed studies, ≤ 1 h; `POST /api/v1/agent-scope`, classified in the CAPA-009 route table); `AgentScopeMiddleware` (innermost); scope checks in `authorize_resolved_patient`, `authorize_patient_access`, the study and segmentation resolvers, `authorize_storage_ref`, the list routes (no ADMIN bypass for an agent); runtime requires the capability (`requires_backend_scope`) and makes it current around every tool call; the walk reads declared actor fields only and enforces the output type |
+| 1 | `stop_reason` defaulted to `end_turn` (fail open) | RC-110 | default `None`: an unknown end is a non-delivery |
+| 2 | Tools ran on the last allowed step | RC-112 | step budget checked before a step's tool calls |
+| 3 | Look-alike brackets passed the escape | RC-113 | NFKC, then `& < >` escaped and every bracket-like character (planes 0–1, by name and NFKC) written as a numeric reference; fuzzed over every such character |
+| 4 | Reservation without the tool definitions; overrun unchecked | RC-112 | definitions in the request and the estimate (+256 tokens per tool); `settle` returns and counts an overrun, a warning is set, the caps refuse the next call |
+| 5 | A writer thread and file handle per `Tracer()` | RC-116 | one process-wide exporter, closed at exit |
+| 6 | Oversight pending entries grew forever | RC-120 | TTL (7 days), size bound (10 000), eviction on mismatch |
+| 7 | Missing required parameter passed; the tool's TypeError audited as a failure | RC-114, RC-110 | `optional_*` kinds bound to the real defaults; required ones checked; a call that does not bind is `tool_arguments_invalid` (denied) |
+| 8 | `from_dict` raised TypeError / KeyError | RC-119 | explicit field validation, ValueError only |
+| 9 | FAILURE_CODES unused; VERDICTS duplicated | RC-110 | outcome derived from the code; one `tracing.VERDICTS` |
+| 10 | D-AGT-7: fastmcp / mcp advisories | RC-117 | fastmcp 2.3.0 → 3.2.4, mcp 1.12.4 → 1.30.0 (protocol 2025-06-18 → 2025-11-25); card 2026-11-11.2 |
+
+**SOUP (finding 10), OSV read 2026-11-11:** the upgrade closes the 12 advisories recorded in B.8 (fastmcp: GHSA-vv7q-7jx5-f767 critical; GHSA-5h2m-4q8j-pqpj, -c2jp-c369-7pvx, -rww4-4w9c-7733, -rcfx-77hg-w2wv high; -m8x7-r2rg-vh5g, -rj5c-58rq-j5g5, -mxxr-jv3v-6pgc moderate; mcp: GHSA-9h52-p55h-vw2f, -jpw9-pfvf-9f58, -vj7q-gjh5-988w high; -84m7-p3x7-pcfv moderate). These releases need pydantic ≥ 2.11.7 and uvicorn ≥ 0.35 for the whole backend (pinned 2.11.7 and 0.35.0; verified by the full backend suite in CI). One moderate fastmcp advisory remains: **GHSA-7xgj-8392-5q4r** (component authorization with transforms skipped on direct calls; 3.0.0–3.4.9). The servers use no component authorization, transform or proxy template, so it does not apply. Its fix (3.4.10) needs Starlette ≥ 1.0.1, i.e. upgrading FastAPI 0.115 → 0.16x for the whole backend: owner decision **D-AGT-8**. Reading the 3.x interface also found that the servers passed `description=`, which 2.3.0 silently ignored (the text never reached the client) and 3.x refuses at start-up. The text is kept in the code as documentation and no longer passed, and the card no longer records it as sent text. The assistant stays OFF (approval pending, switch off). **Observation for the owner:** OSV also lists advisories for the backend's Starlette (≤ 0.38.x, held there by FastAPI 0.115.0) and python-multipart 0.0.12; these are outside this PR and belong with D-AGT-8.
+
+**Limits kept open:** (1) the capability is checked where CAPA-009 already authorizes objects, and the guard keeps agent requests on the assistant's read routes; a new assistant route must be added to `AGENT_ROUTES` and to the CAPA-009 route table; (2) clinical documents are authorized per patient, not per study (no assistant route reads them); (3) the capability is not yet issued for a real run: integration P-4 calls `POST /api/v1/agent-scope` with the studies the clinician selected and puts the token in `RunScope.capability`; (4) a token cannot be revoked before it expires (≤ 1 h, 15 min by default).
+
+**Open items (owner):** D-AGT-7 is closed by this change, pending the owner's approval of the SOUP change. D-AGT-8 is added: a FastAPI / Starlette upgrade of the backend (closes GHSA-7xgj via fastmcp ≥ 3.4.10, and the Starlette and python-multipart advisories).
+
+### B.10 Sixth independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+Two safety findings, fixed structurally. Failing-first tests at `866bd7a` (CI run 43041141190 red: 11 of 11 new tests); fixes at `6ccea55` (CI run 43042580368: success (agent platform 589 passed, 1 skipped; backend suite 2483 passed)); negative controls: 11 new (BB1–BB11), 4 re-anchored, 6 next to changed lines (record, latest re-run).
+
+| # | Finding | Control | Fix |
+|---|---|---|---|
+| S1 | RC-121 never applied on the real path: the STDIO MCP servers never set a capability, and the backend let their unscoped requests through | RC-121 | every assistant request carries a fixed marker (`X-MSTool-Client: mcp-assistant`); the backend refuses an assistant request without a valid scope (403), except `POST /agent-scope`; the client refuses locally without a pass (registry unreadable → required); `open_study_session` / `open_imaging_session` obtain the pass with the clinician's token (kept ≤ 1 h in the process, never returned to the model). Test: the real STDIO server module, without a session, is refused locally, and with the local check bypassed the backend refuses it (403) |
+| S2 | `POST /ai/report/generate` (a paid Claude call) reachable under an agent scope, outside the agent's cost ledger (caps 0.0 USD) | RC-112, RC-121 | paid-model routes excluded from the agent routes (deny by default), refused by the client, `generate_ms_report` removed from the assistant's allow-list; test: under a scope the route answers 403 and is never called |
+| C1 | A scope 404 inside `except Exception` became a 500 (audited as a tool failure) | RC-121, RC-110 | segmentation list / create re-raise HTTPException; an AST test over every route; a backend 403/404 under a scope is `ScopeRefused` → `out_of_scope_resource`, audited as a denial |
+| C2 | The issuance route re-implemented `issue_for_studies` | RC-121 | the route calls `issue_for_studies` (classified `call:issue_for_studies` in the CAPA-009 route table) |
+| C3 | Two hand-written route lists disagreed | RC-121 | `AGENT_ROUTES` is built from the client's `AGENT_GET_ROUTES` and `COMPUTE_ONLY_POST_PATHS` minus `PAID_MODEL_POST_PATHS`; a test checks every server call against it |
+| C4 | One patient in two spellings counted as two | RC-121 | canonical UUIDs compared |
+| E1–E4 | Serial undeduplicated authorization; bracket table computed on first use; `assistant_view` twice; full expiry scan | RC-121, RC-113, RC-120 | dedup + `asyncio.gather`; static table checked against the rule; one pass, applied once per path; expiry stops at the first valid entry |
+
+**P-4, scope part: closed** — the assistant cannot reach the backend without a study session. **Limit kept open:** the marker is sent by the assistant's own code (the model cannot change it); a clinician who deliberately runs modified assistant code with his own browser token reaches what his browser session reaches, exactly as without the assistant. The assistant stays OFF (approval pending, switch off). No new owner decision.
+
+### B.11 Seventh independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+One safety finding, fixed structurally. Failing-first tests at `7b74f7d` (CI run 43047890072 red: 17 of 17 new tests); fixes at `9c55e6c` (CI run 43050301741 green: 604 platform tests, 2483 backend tests); negative controls: 10 new (CC1–CC10), 4 re-anchored, 6 next to changed lines (record, latest re-run).
+
+| # | Finding | Control | Fix |
+|---|---|---|---|
+| R1 | The MODEL chose the study ids of the session: injected study text could open another patient's study | RC-121 | **MCP elicitation** (fastmcp 3.2.4 `ctx.elicit`, MCP 2025-06-18+): the session tools take no argument; the server asks the physician for the study id, has the backend authorize and describe it (`POST /agent-scope` with `preview`: pseudonymous patient reference, study date, series), and asks the physician to confirm a text the SERVER writes; only then is the pass issued (kept in the process, never returned to the model). No elicitation / decline / cancel → no session; every new request first closes the current one; the backend audits a patient switch (`agent.scope:patient_switch`) |
+| R2 | `generate_ms_report` published but always failing | RC-112 | removed from the server, its instructions and the workflow resources; reports: the verified-report agent in the app (PR #78) |
+| R3, R4, R9 | Inside a run the shared rule was skipped at the source; the platform viewed again; two implementations | RC-113 (RC-060, CAPA-008) | `assistant_view` (the one implementation) always applied at the source; `validate_tool_result` CHECKS the viewed result (an identifier key or unconfirmed flag refuses it), views nothing |
+| R5, R8 | `requires_backend_scope: false` a dead option; the registry parsed per call | RC-121 | the assistant always needs a scope; the registry refuses an agent with MCP tools without it; no per-call read |
+| R6 | `../` or encoded characters in a path parameter passed the route filter | RC-121 | strict path parameters (segmentation id; RC-027 storage path), clean normalised paths, on both sides |
+| R7 | A refused write audited as a tool failure | RC-110 | `AssistantWriteRefused` is a refusal (`tool_not_allowed_for_agent`, denied) |
+| R10 | Issuance: services per study, no stop at a refusal | RC-121 | services built once; one study after the other, stopping at the first refusal |
+
+**Design choice (R1): elicitation**, not the out-of-band web-app confirmation, because the pinned libraries support it, it needs no new UI, and the confirmation is written by the server, answered by the human, and never supplied by the model. **Limits kept open:** a client without elicitation cannot use the assistant (fail closed); whether a client shows the elicitation exchange to the model is the client's behaviour, so the confirmation names the patient only by a pseudonymous reference (the first 8 characters of the record id) — see D-AGT-9.
+
+**Open item (owner), added:** D-AGT-9 — how the physician recognises the patient in the confirmation: the web app shows the same reference next to the patient, or the confirmation may name the patient more explicitly, weighed against the client possibly passing it to the model.
+
+### B.12 Eighth (final) independent review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+No patient-data leak found (the exit rule for safety). Failing-first tests at `21b14ee` (CI run 43056441126 red: 12 failed); fixes at `1dfd120` (CI run 43058409712: success (agent platform 616 passed, 1 skipped; backend suite 2483 passed)); negative controls for F1 only: 10 of 10 detected (DD1-DD6 new, AA9-AA12 re-anchored), restored suite 613 passed / 0 failed.
+
+| # | Finding | Control | Fix |
+|---|---|---|---|
+| F1 | Scope refusals bypassed the access-audit trail | RC-121 (RC-026 trail) | one access-audit row `denied:agent_scope_denied` before every scope refusal (patient chokepoint, patient dependency, storage reference, study and segmentation resolvers, file-scope listing) |
+| F2 | report-drafter's only model retires on 2026-11-30 | RC-117 | registry entry and daily job say it is **unavailable from 2026-11-30** until the owner approves the successor through RVP-AGT-001 (D-AGT-1); `claude-sonnet-5-5` stays `candidate`; PR #78's verified report already uses `claude-sonnet-5-5` — the two are reconciled when D-AGT-1 is decided |
+| F3 | The card showed the request context as a model parameter | RC-117 | Context-annotated parameters hidden, as the real server does; checked against the real server in CI |
+| F4–F10 | Unclear session refusals, silent truncation, refusal classes, double authorization, duplicate path rule, dead report route and description, "one hour", substring ".." | RC-121, RC-110 | clear "no session was opened"; > 20 refused; `tool_not_allowed_for_agent`; preview ticket reused; `parse_patient_storage_ref`; removed; 15 minutes; segment rule and 255-character names |
+
+**Pre-existing, outside this PR:** on `main` (run 42366112064, `d5d4726`) the non-blocking risk-control step fails `tests/security/test_input_validation.py::TestPathTraversalProtection::test_detect_absolute_paths` and `::test_detect_path_traversal`.
+
+### B.13 Light verification of PR #79, round 9 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
+
+| # | Finding | Control | Fix |
+|---|---|---|---|
+| T1 | One confirmation could be redeemed for several passes for 5 minutes | RC-121 | the ticket carries a jti consumed atomically before the pass is signed — **Firestore create-if-absent** (atomic across Cloud Run instances, which an in-process lock is not; the record holds `expires_at`, removed by a Firestore TTL policy after expiry — deployment step); an unreachable store issues nothing; a second redemption → 409 and one `agent.scope:ticket_replay` audit row. In-process store (lock, expiry) only for the offline tests |
+| T2 | The preview's single `expires_in` (900 s) did not match the ticket (300 s) | RC-121 | `confirm_within_seconds` (300) and `session_seconds` (900); the physician reads both |
+| T3 | Request checks copied in two functions | RC-121 | one helper, `_requested_studies` |
+
+Failing-first tests at `b5571ee` (CI run 43063117100 red: 5 of 5); fixes at `b6430d6` (CI run 43063554593 green: 621 platform tests, 2483 backend tests). Negative controls for T1: 4 of 4 detected (EE1–EE4), restored suite 618 passed / 0 failed.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

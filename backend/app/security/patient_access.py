@@ -60,6 +60,8 @@ class AccessDecision(str, Enum):
     DENIED_NOT_ASSIGNED = "denied:no_care_team_assignment"
     DENIED_QUARANTINED = "denied:record_unattributed_pending_review"
     DENIED_NO_PATIENT = "denied:patient_not_found"
+    # PR #79 (eighth review, F1): refused by an AI agent's study-scoped capability (RC-121)
+    DENIED_AGENT_SCOPE = "denied:agent_scope_denied"
 
 
 @dataclass(frozen=True)

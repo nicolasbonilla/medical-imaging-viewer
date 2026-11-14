@@ -498,8 +498,12 @@ def test_rc060_report_draft_carries_the_unconfirmed_candidate_notice(env, report
 @pytest.mark.unit
 async def test_rc060_assistant_never_receives_an_activity_or_dit_flag(monkeypatch):
     # async test (pytest-asyncio auto mode): asyncio.run() would clear the session's event loop
+    import time
+
     import httpx
     from app.mcp import _backend
+    # Amended for PR #79, sixth review (S1): the assistant sends nothing without an open study session.
+    monkeypatch.setattr(_backend, "_SESSION", {"token": "test-session-pass", "expires_at": time.monotonic() + 60})
 
     legacy = {"status_counts": {"new": 2}, "activity_candidate": True, "dit_candidate": True,
               "nested": {"activity_candidate": True}}

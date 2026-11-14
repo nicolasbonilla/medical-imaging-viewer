@@ -1,0 +1,94 @@
+{
+ "schema": "mstool.agent-card/1",
+ "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-001)",
+ "agent_id": "report-drafter",
+ "card_version": "2026-11-14.1",
+ "model": {
+  "id": "claude-sonnet-5-5",
+  "provider": "anthropic",
+  "platform": "Anthropic API (api.anthropic.com), first party",
+  "api_version": "2023-06-01",
+  "retires_on": null,
+  "id_source": "backend/app/core/config.py Settings.CLAUDE_MODEL default (claude-sonnet-5-5); the report code calls only an id of brain_report_service.REPORT_MODELS (RC-106)",
+  "facts_read": "2026-11-14: claude-sonnet-5-5 is the current Sonnet, no retirement announced; claude-sonnet-4-5-20250929 retires 2026-11-30 and is no longer called",
+  "data_processing": "provider receives the measurement record only (RC-064 as amended by PR #78: no sex, no age band); data-processing agreement as before"
+ },
+ "sdk_pins": {
+  "anthropic": "0.44.0"
+ },
+ "parameters": {
+  "max_tokens": 4096,
+  "max_tokens_comprehensive": 16384,
+  "sampling": "provider defaults: temperature, top_p and top_k are not sent",
+  "thinking": "between_tools (no extended thinking), effort low, as pre-registered (REPORT_MODELS)",
+  "tools": "none",
+  "system_prompt": "verified_report.SYSTEM_PROMPT, one fixed text"
+ },
+ "mcp": null,
+ "prompt_templates": {
+  "agent_platform.untrusted.UNTRUSTED_DATA_RULE": {
+   "sha256": "b0655b49777c0a75962cc6c9fd63edcfa36e7a67d6884fc7f08ff34a0e025300",
+   "chars": 200,
+   "source": "backend/app/agent_platform/untrusted.py"
+  },
+  "verified_report.EMPTY_COMMENT_MESSAGE": {
+   "sha256": "bb8d9642f3e885fc45195f722f8a50efce5106ab685ab03635200b59fdee505b",
+   "chars": 66,
+   "source": "backend/app/services/verified_report.py"
+  },
+  "verified_report.NUMBER_WORDS_MESSAGE": {
+   "sha256": "a2dc334be490a9817706fdcfe2552108a534126fbc3f6bd6671c3426aad62c76",
+   "chars": 116,
+   "source": "backend/app/services/verified_report.py"
+  },
+  "verified_report.SYSTEM_PROMPT": {
+   "sha256": "213df5ff7bbc07e7cb51ed94892508f59c0ba584f821e2996d8831fe431e0de5",
+   "chars": 2339,
+   "source": "backend/app/services/verified_report.py"
+  },
+  "verified_report.TEMPLATE_TOKEN_MESSAGE": {
+   "sha256": "589d4c991eac094b6a90298cf0297ec90f5fd7828250e69d7749b60b4501e3fa",
+   "chars": 105,
+   "source": "backend/app/services/verified_report.py"
+  },
+  "verified_report.user_lang_line(de)": {
+   "sha256": "46795aca307b54b269a64b6a4c272ea52d7baf9c0f22cc61c71db63add96cb33",
+   "chars": 26,
+   "source": "backend/app/services/verified_report.py"
+  },
+  "verified_report.user_lang_line(en)": {
+   "sha256": "c407201e094c26f8880101784579f6277b728204d9fc253ee817f73c3cdf1149",
+   "chars": 27,
+   "source": "backend/app/services/verified_report.py"
+  },
+  "verified_report.user_lang_line(es)": {
+   "sha256": "9bc784c4ec9795e1aced34d6c7b1cf26cbe3b0247150d5c7b3c5df106194d571",
+   "chars": 27,
+   "source": "backend/app/services/verified_report.py"
+  }
+ },
+ "evals": {
+  "case_file": "backend/tests/agent_platform/eval_cases/report-drafter.json",
+  "harness": "backend/tests/agent_platform/test_agent_evals.py",
+  "result_at_card_version": "regression and red-team suites pass^3 = 100 % (offline, recorded outputs); capability suite: 1 measured verifier miss kept visible"
+ },
+ "revalidation": {
+  "protocol": "docs/iec62304/agent_platform/Agent_Revalidation_Protocol.md",
+  "last_run": null,
+  "note": "baseline card; the protocol has not yet been run for a change"
+ },
+ "changes": [
+  {
+   "date": "2026-11-10",
+   "card_version": "2026-11-10.1",
+   "what": "baseline card of the report path on main (brain_report_service.py at d5d4726)",
+   "approved_by": null
+  },
+  {
+   "date": "2026-11-14",
+   "card_version": "2026-11-14.1",
+   "what": "reconciled with PR #78's verified report when main was merged into PR #79: model claude-sonnet-5-5 (owner's research-stage decision of 2026-11-13), the verified report's fixed texts replace the former templates, max_tokens_comprehensive removed",
+   "approved_by": null
+  }
+ ]
+}

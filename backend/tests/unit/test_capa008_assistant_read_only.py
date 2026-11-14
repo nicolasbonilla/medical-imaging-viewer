@@ -40,10 +40,11 @@ FRONTEND = ROOT / "frontend" / "src"
 
 SERVER_MODULES = {"imaging_server", "ms_clinical_server"}
 EXPECTED_TOOLS = {
-    "imaging_server": {"get_image_metadata", "get_slice_image", "process_image",
+    # + the study-session tools (PR #79, sixth review, S1): they obtain the pass from /agent-scope, read nothing
+    "imaging_server": {"open_imaging_session", "get_image_metadata", "get_slice_image", "process_image",
                        "list_segmentations", "get_matplotlib_visualization"},
-    "ms_clinical_server": {"get_region_classification", "summarize_dis_items", "analyze_lesions",
-                           "compare_longitudinal", "generate_ms_report"},
+    "ms_clinical_server": {"open_study_session", "get_region_classification", "summarize_dis_items",
+                           "analyze_lesions", "compare_longitudinal"},   # generate_ms_report removed (PR #79 R2)
 }
 RETIRED_TOOLS = {"annotate_cvs_prl", "classify_lesions_magnims", "differential_diagnosis",
                  "detect_anomalies", "segment_brain_auto", "segment_interactive",
@@ -214,21 +215,13 @@ def test_rc034_request_fields_sent_by_the_assistant_are_accepted_by_the_route():
 
 
 @pytest.mark.unit
+    # Amended for PR #79, seventh review (R2): the assistant no longer has a report tool (a paid model outside the
+    # agent's cost ledger); reports are drafted by the verified-report agent in the app (PR #78). The risk this
+    # test controlled cannot arise from the assistant any more; the test now asserts the tool is gone.
 def test_rc034_report_findings_are_measurement_keys_the_service_consumes():
-    from app.api.routes.ai_report import MEASUREMENT_FINDING_KEYS
     tree = _tree(MCP_DIR / "ms_clinical_server.py")
-    keys = {n.slice.value for n in ast.walk(tree)
-            if isinstance(n, ast.Subscript) and isinstance(n.value, ast.Name) and n.value.id == "findings"
-            and isinstance(n.slice, ast.Constant)}
-    assert keys == {"lesion_analysis", "dis_assessment", "longitudinal"}
-    assert keys <= MEASUREMENT_FINDING_KEYS
-    # Amended for the third review of PR #78 (T5, DRAFT): the report service reads the findings through the verified
-    # report (the retired prompt builder that read them in brain_report_service.py is archived, not shipped).
-    from app.services import verified_report
-    service = _src(ROOT / "backend" / "app" / "services" / "verified_report.py")
-    for k in keys:
-        assert k in verified_report.RENDERED_FINDINGS, f"the report service never reads {k}"
-        assert f'f.get("{k}")' in service, f"the report service never reads {k}"
+    assert not [n for n in ast.walk(tree) if isinstance(n, ast.AsyncFunctionDef) and n.name == "generate_ms_report"]
+    assert "/ai/report/generate" not in _src(MCP_DIR / "ms_clinical_server.py")
 
 
 @pytest.mark.unit
@@ -283,7 +276,7 @@ def test_rc033_client_removes_direct_identifiers_at_any_depth():
            "modality": "MR", "pixel_spacing": [1, 1],
            "series": [{"InstitutionName": "H", "AccessionNumber": "A1", "rows": 256,
                        "extra_fields": {"PatientBirthDate": "1980"}}]}
-    clean = _backend.drop_direct_identifiers(raw)
+    clean = _backend.assistant_view(raw)        # PR #79 seventh review (R9): the ONE implementation production uses
     assert clean == {"modality": "MR", "pixel_spacing": [1, 1], "series": [{"rows": 256}]}
     assert raw["patient_name"] == "Doe^Jane"                    # input not mutated
 

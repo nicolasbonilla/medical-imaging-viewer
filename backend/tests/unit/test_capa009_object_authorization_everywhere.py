@@ -54,13 +54,16 @@ OTHER_FILE = f"patients/{OTHER}/studies/{STUDY}/series/{SERIES}/image.nii.gz"
 DEPS = ["require_segmentation_access", "require_study_access", "require_series_access",
         "require_instance_access", "require_document_access", "require_patient_access",
         "require_version_access", "require_study_list_scope", "require_document_list_scope"]
-CALLS = ["require_imaging_access", "authorize_file_scope", "authorize_mask_specs",
+CALLS = ["issue_for_studies", "require_imaging_access", "authorize_file_scope", "authorize_mask_specs",
          "authorize_patient_id", "authorize_study_id", "authorize_document_id", "authorize_segmentation_id",
          "_authorized_inputs", "_authorized_image_request"]
 
 # Every mounted route that references an object, with the mechanism that authorizes it.
 # A route added without an entry, or losing its mechanism, fails the build.
 ROUTE_AUTH = {
+    # Agent platform RC-121 (PR #79, fifth review; DRAFT, PENDING owner approval): issues a study-scoped
+    # capability after authorizing every listed study; stores nothing.
+    ("POST", "/agent-scope"): "call:issue_for_studies",     # authorizes each study with authorize_study_id
     ("POST", "/ai/anomaly/detect"): "call:_authorized_image_request",
     ("POST", "/ai/segment/auto"): "call:_authorized_image_request",
     ("POST", "/ai/segment/interactive"): "call:_authorized_image_request",

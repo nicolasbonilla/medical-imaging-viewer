@@ -43,7 +43,7 @@ WRITE_TOOL = (
     "    return await api_post_compute(f\"/segmentation/{segmentation_id}/lesion-annotations\", "
     "{\"annotations\": annotations})\n\n\n"
 )
-PROMPTS = "# =============================================================================\n# Workflow prompts (resources for the assistant)\n"
+PROMPTS = "# =============================================================================\n# Tools (read-only)\n"  # re-anchored on PR #79 (the section after the tools moved)
 CVS_MAJ = '        "cvs_majority": positive > negative,\n'
 SELECT6 = "                  Select 6: {cvsSummary.cvs_positive}/{cvsSummary.total_evaluated} CVS+\n"
 PRL_NOTE = '                {/* CAPA-008: neutral count — ">=1 PRL" is not, by itself, a criterion met. */}\n'
@@ -51,10 +51,10 @@ LONG_TOOL = ('        "/segmentation/longitudinal/compare",\n        {\n'
              '            "tp1": {"type": "segmentation", "id": baseline_id},\n')
 
 M = {  # name: (file, anchor, replacement, what it re-introduces)
-    "A1_allow_list_opens_an_unauthorized_route": (BACKEND, '    "/ai/report/generate",\n})', '    "/ai/report/generate",\n    "/ai/segment/auto",\n})',
+    "A1_allow_list_opens_an_unauthorized_route": (BACKEND, '    "/segmentation/longitudinal/compare",\n})', '    "/segmentation/longitudinal/compare",\n    "/ai/segment/auto",\n})',
                                                   "the assistant may POST to an AI route without object-level authorization"),
-    "A2_identifiers_reach_the_assistant": (BACKEND, '    """Return a copy of a JSON-like value without the IDENTIFIER_KEYS fields, at any depth."""\n',
-                                           '    """Return a copy of a JSON-like value without the IDENTIFIER_KEYS fields, at any depth."""\n    return value\n',
+    "A2_identifiers_reach_the_assistant": (BACKEND, '                if str(k).replace("_", "").lower() not in IDENTIFIER_KEYS and k not in UNCONFIRMED_ACTIVITY_KEYS}\n',
+                                           '                if k not in UNCONFIRMED_ACTIVITY_KEYS}\n',
                                            "patient identifiers are passed to the assistant's model provider"),
     "A3_write_tool_restored": (CLINICAL, PROMPTS, WRITE_TOOL + PROMPTS, "the assistant can write CVS/PRL readings again"),
     "A4_report_fields_silently_dropped": (CLINICAL, '            "findings": findings,\n', '            "additional_findings": findings,\n',
@@ -67,8 +67,8 @@ M = {  # name: (file, anchor, replacement, what it re-introduces)
                             "a tool reads a route without object-level authorization"),
     "A7_post_outside_allow_list": (CLINICAL, LONG_TOOL, LONG_TOOL.replace("/segmentation/longitudinal/compare", "/segmentation/longitudinal/sel"),
                                    "a tool posts to a route that is not on the compute-only list"),
-    "A8_direct_http_client": (IMAGING, "from fastmcp import FastMCP\nfrom app.mcp._backend import api_get\n",
-                              "import httpx\nfrom fastmcp import FastMCP\nfrom app.mcp._backend import api_get\n",
+    "A8_direct_http_client": (IMAGING, "from fastmcp import FastMCP\nfrom app.mcp._backend import api_get, open_session\n",
+                              "import httpx\nfrom fastmcp import FastMCP\nfrom app.mcp._backend import api_get, open_session\n",
                               "a server imports its own HTTP client"),
     "A9_unauthenticated_http_transport": (RUN_ALL, '    mcp.run(transport="stdio")\n', '    mcp.run(transport="sse")\n',
                                           "the SSE (HTTP) transport without authentication"),
@@ -91,6 +91,12 @@ M = {  # name: (file, anchor, replacement, what it re-introduces)
                               '        "activity_candidate": (new_significant + enlarging) >= 2,\n',
                               "a single new or enlarging candidate raises no activity signal"),
 }
+
+# PR #79 (seventh review, R2) removed the assistant's report tool generate_ms_report: reports are drafted only by
+# the verified-report agent in the app (PR #78). These mutations targeted that tool, so their anchors no longer
+# exist; not run. Replaced by: test_capa008_assistant_read_only.py::test_rc034_report_findings_are_measurement_keys_
+# the_service_consumes, which now asserts the tool is gone (covered), and verified_report_negative_controls.py.
+RETIRED_WITH_THE_ASSISTANT_REPORT_TOOL = {name: M.pop(name)[-1] for name in ('A4_report_fields_silently_dropped',)}
 
 
 def run():

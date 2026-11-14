@@ -1,0 +1,127 @@
+"""Model and prompt card check (REQ-AGT-005; RC-117; HAZ-023). DRAFT, PENDING owner approval.
+
+CI fails when a prompt template, an MCP instruction or tool description, the model id, the API version,
+a parameter or an SDK pin changes without the agent's card (app/agent_platform/cards/<agent>.json)
+changing with it; when the MCP SDK resolved by the install differs from the card; and from the day the
+card's model retires. Negative controls: scripts/safety/agent_platform_negative_controls.py (C*).
+"""
+import os
+import re
+from datetime import date
+
+import pytest
+
+from app.agent_platform import cards as C
+from tests.agent_platform import _harness as H
+
+AGENTS = ["report-drafter", "ms-clinical-assistant"]
+
+
+@pytest.mark.parametrize("agent_id", AGENTS)
+def test_rc117_card_is_current_with_the_code_and_the_registry(agent_id):
+    problems = C.check_card(agent_id, H.production_data())
+    assert not problems, "\n".join(problems)
+
+
+def test_rc117_every_agent_with_a_model_or_tools_has_a_card():
+    data = H.production_data()
+    for agent_id, spec in data["agents"].items():
+        if spec["allowed_models"] or spec["allowed_tools"]:
+            assert C.card_path(agent_id).exists(), f"{agent_id} has no model and prompt card"
+            assert agent_id in C.TEMPLATE_SOURCES
+
+
+def test_rc117_a_report_template_change_without_the_card_is_caught(monkeypatch):
+    from app.services import verified_report as v
+    monkeypatch.setattr(v, "SYSTEM_PROMPT", v.SYSTEM_PROMPT + " Also state the diagnosis.")
+    problems = C.check_card("report-drafter", H.production_data())
+    assert any("verified_report.SYSTEM_PROMPT" in p and "changed" in p for p in problems)
+
+
+def test_rc117_a_new_template_without_the_card_is_caught(monkeypatch):
+    from app.services import verified_report as v
+    monkeypatch.setattr(v, "DIAGNOSIS_RULE_MESSAGE", "State the diagnosis.", raising=False)
+    problems = C.check_card("report-drafter", H.production_data())
+    assert any("DIAGNOSIS_RULE_MESSAGE" in p and "not recorded" in p for p in problems)
+
+
+def test_rc117_an_mcp_instruction_change_without_the_card_is_caught(monkeypatch):
+    original = C.TEMPLATE_SOURCES["ms-clinical-assistant"]
+
+    def changed():
+        out = dict(original())
+        out["mcp.ms_clinical_server.instructions"] += " You may state the McDonald criteria."
+        return out
+    monkeypatch.setitem(C.TEMPLATE_SOURCES, "ms-clinical-assistant", changed)
+    problems = C.check_card("ms-clinical-assistant", H.production_data())
+    assert any("mcp.ms_clinical_server.instructions" in p for p in problems)
+
+
+def test_rc117_a_model_change_without_the_card_is_caught(monkeypatch):
+    monkeypatch.setattr(C, "config_default", lambda field: {"CLAUDE_MODEL": "claude-haiku-5-5",
+                                                            "CLAUDE_MAX_TOKENS": 4096}[field])
+    problems = C.check_card("report-drafter", H.production_data())
+    assert any("default model" in p for p in problems)
+    data = H.production_data()
+    data["agents"]["report-drafter"]["allowed_models"] = ["claude-haiku-5-5"]
+    assert any("allow-list" in p for p in C.check_card("report-drafter", data))
+
+
+def test_rc117_api_version_or_retirement_drift_is_caught():
+    data = H.production_data()
+    data["models"]["claude-sonnet-5-5"]["api_version"] = "2026-10-21"
+    data["models"]["claude-sonnet-5-5"]["retires_on"] = "2027-01-01"
+    problems = C.check_card("report-drafter", data)
+    assert any("api_version" in p for p in problems) and any("retires_on" in p for p in problems)
+
+
+def test_rc117_a_parameter_change_without_the_card_is_caught():
+    data = H.production_data()
+    data["agents"]["report-drafter"]["parameters"]["max_tokens"] = 64000
+    assert any("max_tokens" in p for p in C.check_card("report-drafter", data))
+
+
+def test_rc117_config_defaults_are_read_from_the_source():
+    assert C.config_default("CLAUDE_MODEL") == "claude-sonnet-5-5"
+    assert C.config_default("CLAUDE_MAX_TOKENS") == 4096
+    # Amended for the fifth review of PR #79 (D-AGT-7): fastmcp upgraded from 2.3.0 to 3.2.4.
+    assert C.requirement_pin("anthropic") == "0.44.0" and C.requirement_pin("fastmcp") == "3.2.4"
+
+
+def test_rc117_mcp_sdk_as_installed_matches_the_card():
+    installed = C.installed_mcp()
+    card = C.load_card("ms-clinical-assistant")["mcp"]["observed"]
+    if installed is None:
+        if os.environ.get("CI") == "true":
+            pytest.fail("the MCP SDK must be installed in CI (it comes with fastmcp from requirements.txt)")
+        pytest.skip("the MCP SDK is not installed in this environment; CI records and checks it")
+    assert {k: card.get(k) for k in installed} == installed, (
+        f"the MCP SDK resolved by this install is {installed}; the card records {card}. The SDK is not pinned "
+        "(T-5 of the re-validation protocol): record the observed values in the card, or pin mcp.")
+
+
+def test_rc117_retirement_check_with_a_frozen_date(monkeypatch):
+    """Amended after the third review of PR #79 (finding 5): the date is INJECTED. The wall-clock check is the
+    scheduled job .github/workflows/agent-model-retirement.yml; at call time the registry refuses the model."""
+    frozen = date(2026, 11, 10)
+    assert C.retirement_problems(today=frozen) == []
+    # Reconciled 2026-11-14: the card model (claude-sonnet-5-5) has no announced retirement, so the rule is shown on
+    # a card whose model retires on 2026-11-30.
+    original = C.load_card
+    def retiring(agent_id):
+        card = original(agent_id)
+        return {**card, "model": {**card["model"], "retires_on": "2026-11-30"}} if agent_id == "report-drafter" else card
+    monkeypatch.setattr(C, "load_card", retiring)
+    assert any("claude-sonnet-5-5" in w for w in C.retirement_warnings(today=frozen))
+    assert C.retirement_problems(today=date(2026, 11, 30))
+
+
+_SECRET = re.compile(r"sk-ant-[A-Za-z0-9_-]{10,}|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|"
+                     r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}\b|\+\d{1,3}[ \d]{8,}\d|\b\d{9,}\b")
+
+
+@pytest.mark.parametrize("agent_id", AGENTS)
+def test_rc117_llm07_prompt_templates_hold_no_secret_or_contact_data(agent_id):
+    """OWASP LLM07 (system prompt leakage): a leaked template must reveal nothing — no key, address or number."""
+    for name, text in C.TEMPLATE_SOURCES[agent_id]().items():
+        assert not _SECRET.search(text), f"{name}: {_SECRET.search(text).group(0)!r}"

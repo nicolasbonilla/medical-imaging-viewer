@@ -459,21 +459,11 @@ def test_rc070_r3_assistant_region_tools_carry_the_caveat(ms_server, monkeypatch
 
 
 @pytest.mark.unit
+# Amended for PR #79, seventh review (R2): the assistant no longer has a report tool (a paid model outside the
+# agent's cost ledger); reports are drafted by the verified-report agent in the app (PR #78). The risk this
+# test controlled cannot arise from the assistant any more; the test now asserts the tool is gone.
 def test_rc070_r2_the_assistant_report_names_its_segmentation(ms_server, monkeypatch):
-    posted = []
-
-    async def api_get(path, params=None):
-        return {"segmentation_id": "seg-1", "total_count": 1}
-
-    async def api_post_compute(path, body):
-        posted.append((path, body))
-        return {"report_id": "r", "content": "draft"}
-
-    monkeypatch.setattr(ms_server, "api_get", api_get)
-    monkeypatch.setattr(ms_server, "api_post_compute", api_post_compute)
-    _run(ms_server.generate_ms_report("seg-1"))
-    assert posted and posted[-1][0] == "/ai/report/generate"
-    assert posted[-1][1]["segmentation_id"] == "seg-1"
+    assert not hasattr(ms_server, "generate_ms_report")
 
 
 def _run(coro):

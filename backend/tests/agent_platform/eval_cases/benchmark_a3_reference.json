@@ -1,0 +1,84 @@
+{
+ "schema": "mstool.agent-evals.external-reference/1",
+ "status": "DRAFT, PENDING owner approval (REQ-AGT-003; RC-118)",
+ "what": "The agents benchmark's recorded A3 drafts (generate, check with verifier v2, regenerate once, else block), referenced by hash only.",
+ "why_not_held": "The drafts are derived from records whose licences forbid commercial use (and from privately held data); the repository may not hold them. Only counts and SHA-256 of the record lists are kept here. The research outputs in git carry no per-draft hash: adding one is integration step P-9.",
+ "source": {
+  "branch": "research/agents-benchmark",
+  "commit": "f3c19761133114b3d5dd726ff2d6801019880ead",
+  "per_report_csv": "docs/research/agents-benchmark/results/per_report.csv",
+  "per_report_csv_sha256": "c8d0c75ddedefe2e9dc6ac346a8f18d9d8de9c7d3198a459c985729704eae6e7",
+  "records_manifest": "research/agents_benchmark/records_manifest.json",
+  "records_manifest_sha256": "8b8349cd24d76539327e07f38a0cb00a6ea6559606d64415d2b21ce15296f3de"
+ },
+ "record_list_format": "sorted lines '<record_id>\\t<lang>\\t<payload>\\t<record sha256 from records_manifest>' joined by \\n",
+ "local_replay": "Set AGENT_EVAL_A3_DRAFTS=<dir> holding <model>/<subset>/<record_id>_<lang>.txt (the view of each record as <record_id>.view.json beside it) to replay every draft through the reference gate; without that directory (always in CI) the replay test is skipped with this reason.",
+ "groups": [
+  {
+   "model": "gemini",
+   "subset": "injection",
+   "arm": "A3",
+   "drafts": 50,
+   "evaluable": 50,
+   "primary_error_by_verifier_v3": 0,
+   "records_in_manifest": 50,
+   "distinct_record_lang_payload": 50,
+   "record_list_sha256": "35cbe93a9e3290c4ff6f16e9b4e516412212d84beba95c64b5362808878a12dd"
+  },
+  {
+   "model": "gemini",
+   "subset": "main",
+   "arm": "A3",
+   "drafts": 452,
+   "evaluable": 452,
+   "primary_error_by_verifier_v3": 0,
+   "records_in_manifest": 452,
+   "distinct_record_lang_payload": 452,
+   "record_list_sha256": "7f298c028d8da9fbd601f66ceca372e93ef9eebdc2ed69a1a2ab86a1f0fade02"
+  },
+  {
+   "model": "gemini",
+   "subset": "multilingual",
+   "arm": "A3",
+   "drafts": 100,
+   "evaluable": 100,
+   "primary_error_by_verifier_v3": 0,
+   "records_in_manifest": 100,
+   "distinct_record_lang_payload": 100,
+   "record_list_sha256": "a5a5351369a4927fe2d9de8344113e918d9311d536b3e45a688dba416343e445"
+  },
+  {
+   "model": "gemma",
+   "subset": "injection",
+   "arm": "A3",
+   "drafts": 50,
+   "evaluable": 50,
+   "primary_error_by_verifier_v3": 0,
+   "records_in_manifest": 50,
+   "distinct_record_lang_payload": 50,
+   "record_list_sha256": "35cbe93a9e3290c4ff6f16e9b4e516412212d84beba95c64b5362808878a12dd"
+  },
+  {
+   "model": "gemma",
+   "subset": "main",
+   "arm": "A3",
+   "drafts": 452,
+   "evaluable": 452,
+   "primary_error_by_verifier_v3": 0,
+   "records_in_manifest": 452,
+   "distinct_record_lang_payload": 452,
+   "record_list_sha256": "7f298c028d8da9fbd601f66ceca372e93ef9eebdc2ed69a1a2ab86a1f0fade02"
+  },
+  {
+   "model": "gemma",
+   "subset": "multilingual",
+   "arm": "A3",
+   "drafts": 100,
+   "evaluable": 100,
+   "primary_error_by_verifier_v3": 0,
+   "records_in_manifest": 100,
+   "distinct_record_lang_payload": 100,
+   "record_list_sha256": "a5a5351369a4927fe2d9de8344113e918d9311d536b3e45a688dba416343e445"
+  }
+ ]
+}

@@ -18,18 +18,31 @@ descriptions is passed through and must not contain identifiers.
 from typing import Optional
 
 from fastmcp import FastMCP
-from app.mcp._backend import api_get
+from app.mcp._backend import api_get, open_session
+try:
+    from fastmcp import Context            # the request context: elicitation (seventh review of PR #79, R1)
+except ImportError:  # pragma: no cover — a stand-in of fastmcp without it (tests); the real one has it
+    Context = None
 
-mcp = FastMCP(
-    "brain-imaging-mcp",
-    description="Read-only brain MRI access for the assistant — metadata without identifiers, "
-                "slices, segmentation list",
-)
+mcp = FastMCP("brain-imaging-mcp")
 
 
 # =============================================================================
 # Tools (read-only)
 # =============================================================================
+
+@mcp.tool()
+async def open_imaging_session(ctx: Context) -> dict:
+    """Open the study session. Call this FIRST. Pass nothing: the physician chooses the study and confirms it in
+    the client (the server asks them directly). Every other tool is refused until a session is open; the session
+    covers only the confirmed study (and prior study) of one patient and ends after 15 minutes (open it
+    again to continue).
+
+    Returns:
+        {"session": "open", "studies", "expires_in_seconds", "note"}
+    """
+    return await open_session(ctx)
+
 
 @mcp.tool()
 async def get_image_metadata(file_id: str) -> dict:
