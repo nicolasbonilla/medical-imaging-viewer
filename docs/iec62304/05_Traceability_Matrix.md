@@ -480,7 +480,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 
 ---
 
-## Addendum — Agent platform core (DRAFT, PENDING owner approval)
+## Addendum — Agent platform core (N. G. Bonilla Vargas — approved 2026-11-14 (PR #79))
 
 *Branch `feat/agent-platform` (draft PR #79), 2026-11-10. SRS and RMF Addendum B. Tests in `backend/tests/agent_platform/` (CI job `agent-platform`); negative controls `scripts/safety/agent_platform_negative_controls.py`.*
 
@@ -496,7 +496,7 @@ by `backend/tests/unit/test_risk_control_manifest.py`.
 | REQ-AGT-008 | HAZ-021 | RC-113, RC-114 | `untrusted.py`, `runtime.py` | `test_untrusted.py`, `test_redteam.py` |
 | REQ-AGT-009 | HAZ-021 | RC-121 (primary), RC-114 (secondary) | `app/security/agent_scope.py`, `resource_access.py`, `patient_access_dependency.py`, `app/api/routes/agent_scope.py`, `capability.py`, `runtime.py`, `agents.json` | `test_review5.py`, `test_capa009_object_authorization_everywhere.py` |
 
-*Amendments after the four independent reviews of PR #79 (RMF Addendum B.5–B.9; DRAFT, PENDING owner approval) are verified by `test_review1.py` … `test_review5.py` (failing first; each test named after its control, mapped per control in `rc_test_manifest.json`) and the contract tests on real output shapes (`_contract.py`).*
+*Amendments after the four independent reviews of PR #79 (RMF Addendum B.5–B.9; N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)) are verified by `test_review1.py` … `test_review5.py` (failing first; each test named after its control, mapped per control in `rc_test_manifest.json`) and the contract tests on real output shapes (`_contract.py`).*
 
 ---
 

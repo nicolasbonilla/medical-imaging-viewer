@@ -839,9 +839,9 @@ empty-coefficient asset scored every lesion as a constant; non-integer powers we
 truncated) — both now fail closed with regression tests. The scorer is NOT wired to the guarantee
 and must not be until the above holds.
 
-## Addendum B — Agent platform core hazards (DRAFT, PENDING owner approval)
+## Addendum B — Agent platform core hazards (N. G. Bonilla Vargas — approved 2026-11-14 (PR #79))
 
-*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79), not merged, not deployed. DRAFT, PENDING owner approval: severities, probabilities and acceptability below are PROPOSALS; nothing is approved until N. G. Bonilla Vargas records it. Ids HAZ-020..HAZ-024 and RC-110..RC-120 leave a gap after PR #78 (HAZ-017, RC-102..RC-106); if they are taken when this merges, they are renumbered. Requirements: SRS Addendum B (REQ-AGT-001..008). The controls exist as a tested library; they act on a live agent only after the integration steps (`docs/iec62304/agent_platform/Integration_Plan.md`).*
+*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79), not merged, not deployed. N. G. Bonilla Vargas — approved 2026-11-14 (PR #79): severities, probabilities and acceptability below are PROPOSALS; nothing is approved until N. G. Bonilla Vargas records it. Ids HAZ-020..HAZ-024 and RC-110..RC-120 leave a gap after PR #78 (HAZ-017, RC-102..RC-106); if they are taken when this merges, they are renumbered. Requirements: SRS Addendum B (REQ-AGT-001..008). The controls exist as a tested library; they act on a live agent only after the integration steps (`docs/iec62304/agent_platform/Integration_Plan.md`).*
 
 **Threat sources used:** OWASP Top 10 for Agentic Applications (released 2025-12-09) and OWASP LLM Top 10 (2025), item by item in `backend/tests/agent_platform/owasp_map.json`; the agents-benchmark results (research/agents-benchmark @ f3c1976: without a check, Gemini and Gemma drafts carried unsupported content in 452/452; with the A3 check, 0/452 after the gate); `research_notes/Vanguardia de los agentes MSTool/ingenieria_regulacion_agentes.md` §Q6.
 
@@ -894,7 +894,7 @@ All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/agent_platform/` (
 | HAZ-023 | S4 / P2 | ALARP *(proposed)* | *(fifth review of PR #79: fastmcp 3.2.4 and mcp 1.30.0 pinned, 12 advisories closed; one moderate fastmcp advisory left, not applicable — its fix needs Starlette ≥ 1.0.1, D-AGT-8)*; report model retires 2026-11-30 (D-AGT-1) |
 | HAZ-024 | S4 / P2 | ALARP *(proposed)* | no UI shows the marks or the metrics yet (P-8); thresholds (MIN_REVIEW_SECONDS = 30 s) unvalidated |
 
-### B.5 Independent adversarial review of PR #79 (2026-11-10) — DRAFT, PENDING owner approval
+### B.5 Independent adversarial review of PR #79 (2026-11-10) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 Ten findings, each fixed with a failing-first test (`backend/tests/agent_platform/test_review1.py`, committed at `183479d` and red in CI before the fixes at `f4ddaa0`) and, where it is a risk control, a negative control (mutations V1–V12 and the re-anchored R8, R9, R11, U5–U7, X2, X5, X7, X8, O2):
 
@@ -911,7 +911,7 @@ Ten findings, each fixed with a failing-first test (`backend/tests/agent_platfor
 | 9 | A thread pool and an event loop per async tool call, blocking an async caller | (robustness) | `await arun(...)` awaits tools in the caller's loop; a sync model client runs in a worker thread; `run()` refuses inside a running loop |
 | 10 | Five SHA-256 helpers with different `None` rules; alarms could be dropped on an early return | RC-113, RC-116 | one helper (`hashing.py`: `None` hashes as empty text); alarms, executed tools and warnings set in the single `stop()` |
 
-### B.6 Second independent adversarial review of PR #79 (2026-11-10) — DRAFT, PENDING owner approval
+### B.6 Second independent adversarial review of PR #79 (2026-11-10) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 Ten more findings, each with a failing-first test (`backend/tests/agent_platform/test_review2.py`, committed at `7f692d8`, red in CI run 42914972541) fixed at `65b6555` (CI run 42916263102 green), and a negative control per risk control (mutations W1–W14):
 
@@ -930,7 +930,7 @@ Ten more findings, each with a failing-first test (`backend/tests/agent_platform
 
 **Limit kept open:** `result_numeric_keys` of the MCP read tools (`id`, `label_id`, lesion ids) is set from the lesion-analysis service code; it is to be confirmed against real responses when the servers adopt the platform (Integration_Plan P-4). Until then a real response with another numeric id is refused (fail closed, availability cost only). *(Superseded by B.7: the third review found this key-name rule too strict; `result_numeric_keys` is removed.)*
 
-### B.7 Third independent adversarial review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+### B.7 Third independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 Main finding: the scope control (RC-114) had become **too strict** and refused legitimate results — a real region classification (`region_id`, `zone_id`) and a real lesion analysis (`total_burden_mm3`) were refused whole. An over-strict control is a hazard of its own (the assistant becomes unusable, and pressure grows to switch it off). Failing-first tests at `116588a` (CI run 42921874922 red: 37 of 52 new tests, and 11 existing eval and red-team tests failed once the offline backend returned the REAL output shapes); fixes at `03d8eab` (CI run 42922844815 green); mutations Y1–Y8 and the re-anchored ones.
 
@@ -953,7 +953,7 @@ Main finding: the scope control (RC-114) had become **too strict** and refused l
 
 **Open items (owner):** D-AGT-1 migrate the report model before 2026-11-30 through RVP-AGT-001; D-AGT-2 acceptance thresholds of RVP-AGT-001; D-AGT-3 cost caps and limits in `agents.json`; D-AGT-4 approve (or not) each agent entry; D-AGT-5 trace export destination; D-AGT-6 the fast-sign-off threshold.
 
-### B.8 Fourth independent adversarial review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+### B.8 Fourth independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 Two scope **BYPASSES** verified by the reviewer (findings 1 and 2): a DICOM UID of a vendor root (Siemens 1.3.12.2.1107…, Philips 1.3.46.670589…, GE 1.2.840.113619…, an enterprise root 1.3.6.1.4.1.…, the UUID root 2.25.…) passed in free text and as a dict key, because only the roots 1.2 and 2.25 were recognised; and another resource under an actor key (`{"reviewed_by": {"segmentation_id": <another>}}`) or named by a `*_by` key (`{"superseded_by": <another>}`) passed, because the actor exemption skipped the whole subtree. Failing-first tests at `e245a67` (CI run 42926675154 red: 45 of the 57 new tests); fixes at `7a7fa62`; negative controls: 11 mutations re-anchored to the new code, 4 next to changed lines and 12 new (Z1–Z12), run in a throwaway copy against a clean baseline (record `AGENT-PLATFORM_negative_controls_2026-11-10.json`, latest re-run).
 
@@ -976,7 +976,7 @@ Two scope **BYPASSES** verified by the reviewer (findings 1 and 2): a DICOM UID 
 
 **Open item (owner), added:** D-AGT-7 — upgrade fastmcp and mcp to releases without these advisories (protocol 2025-11-25 or later) before an HTTP transport is used or the assistant is switched on.
 
-### B.9 Fifth independent adversarial review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+### B.9 Fifth independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 **Structural (altitude) finding, accepted:** four rounds enforced the run scope by spotting id-shaped strings (RC-114), and each round added special cases; ids of another shape (a Firestore auto-id, a hyphen-less UUID, a number under an undeclared key, a foreign UUID under `owner_id`) still passed, while harmless strings refused whole results. The scope is now enforced at the SOURCE: **RC-121 is the primary control of HAZ-021** (B.3). Each tool has a typed output schema. The backend issues a study-scoped capability after its own CAPA-009 authorization, and its CAPA-009 chokepoints refuse any object outside that capability. RC-114 stays as the second layer, driven by the declared schemas. **Proof:** a tool with a bug reads a foreign record (a Firestore-style id, a result with no id at all) that the walk lets through. Under the capability the backend answers 404 and nothing is delivered (`test_rc121_review5_a_buggy_tool_is_refused_by_the_backend_even_when_the_walk_misses_it`).
 
@@ -1002,7 +1002,7 @@ Failing-first tests at `fa23d0f` (CI run 42933756281 red: 31 of the 32 new tests
 
 **Open items (owner):** D-AGT-7 is closed by this change, pending the owner's approval of the SOUP change. D-AGT-8 is added: a FastAPI / Starlette upgrade of the backend (closes GHSA-7xgj via fastmcp ≥ 3.4.10, and the Starlette and python-multipart advisories).
 
-### B.10 Sixth independent adversarial review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+### B.10 Sixth independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 Two safety findings, fixed structurally. Failing-first tests at `866bd7a` (CI run 43041141190 red: 11 of 11 new tests); fixes at `6ccea55` (CI run 43042580368: success (agent platform 589 passed, 1 skipped; backend suite 2483 passed)); negative controls: 11 new (BB1–BB11), 4 re-anchored, 6 next to changed lines (record, latest re-run).
 
@@ -1018,7 +1018,7 @@ Two safety findings, fixed structurally. Failing-first tests at `866bd7a` (CI ru
 
 **P-4, scope part: closed** — the assistant cannot reach the backend without a study session. **Limit kept open:** the marker is sent by the assistant's own code (the model cannot change it); a clinician who deliberately runs modified assistant code with his own browser token reaches what his browser session reaches, exactly as without the assistant. The assistant stays OFF (approval pending, switch off). No new owner decision.
 
-### B.11 Seventh independent adversarial review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+### B.11 Seventh independent adversarial review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 One safety finding, fixed structurally. Failing-first tests at `7b74f7d` (CI run 43047890072 red: 17 of 17 new tests); fixes at `9c55e6c` (CI run 43050301741 green: 604 platform tests, 2483 backend tests); negative controls: 10 new (CC1–CC10), 4 re-anchored, 6 next to changed lines (record, latest re-run).
 
@@ -1036,7 +1036,7 @@ One safety finding, fixed structurally. Failing-first tests at `7b74f7d` (CI run
 
 **Open item (owner), added:** D-AGT-9 — how the physician recognises the patient in the confirmation: the web app shows the same reference next to the patient, or the confirmation may name the patient more explicitly, weighed against the client possibly passing it to the model.
 
-### B.12 Eighth (final) independent review of PR #79 (2026-11-11) — DRAFT, PENDING owner approval
+### B.12 Eighth (final) independent review of PR #79 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 No patient-data leak found (the exit rule for safety). Failing-first tests at `21b14ee` (CI run 43056441126 red: 12 failed); fixes at `1dfd120` (CI run 43058409712: success (agent platform 616 passed, 1 skipped; backend suite 2483 passed)); negative controls for F1 only: 10 of 10 detected (DD1-DD6 new, AA9-AA12 re-anchored), restored suite 613 passed / 0 failed.
 
@@ -1049,7 +1049,7 @@ No patient-data leak found (the exit rule for safety). Failing-first tests at `2
 
 **Pre-existing, outside this PR:** on `main` (run 42366112064, `d5d4726`) the non-blocking risk-control step fails `tests/security/test_input_validation.py::TestPathTraversalProtection::test_detect_absolute_paths` and `::test_detect_path_traversal`.
 
-### B.13 Light verification of PR #79, round 9 (2026-11-11) — DRAFT, PENDING owner approval
+### B.13 Light verification of PR #79, round 9 (2026-11-11) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79)
 
 | # | Finding | Control | Fix |
 |---|---|---|---|

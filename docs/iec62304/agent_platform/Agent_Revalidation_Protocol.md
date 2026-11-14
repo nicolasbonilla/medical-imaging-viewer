@@ -1,7 +1,7 @@
 # Agent re-validation protocol (model, prompt and platform changes)
 
 **Document:** RVP-AGT-001 · **Version:** 0.1 · **Date:** 2026-11-10
-**Status:** DRAFT, PENDING owner approval. Nothing in this document is approved until N. G. Bonilla Vargas records his approval.
+**Status:** N. G. Bonilla Vargas — approved 2026-11-14 (PR #79). Nothing in this document is approved until N. G. Bonilla Vargas records his approval.
 **Requirement:** REQ-AGT-005 · **Risk controls:** RC-117, RC-118 · **Hazard:** HAZ-023
 **Written to serve later as:** the modification protocol of a Predetermined Change Control Plan (FDA PCCP guidance for AI-enabled device software functions) and the description of pre-determined changes in EU AI Act Annex IV, point 2(f).
 

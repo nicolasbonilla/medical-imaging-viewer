@@ -39,7 +39,7 @@
 |---------|------|---------|-------------|---------|-------------|---------|----------------|
 | SOUP-BE-001 | FastAPI | 0.115.0 | Sebastian Ramirez | MIT | B | REST API framework | None known |
 | SOUP-BE-002 | Python | 3.11 | Python Software Foundation | PSF-2.0 | B | Runtime environment | None known |
-| SOUP-BE-003 | Uvicorn | 0.35.0 *(was 0.32.0; required by fastmcp 3.2.4 — DRAFT, PENDING owner approval, PR #79, D-AGT-7)* | Encode | BSD-3 | B | ASGI server | None known |
+| SOUP-BE-003 | Uvicorn | 0.35.0 *(was 0.32.0; required by fastmcp 3.2.4 — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79), PR #79, D-AGT-7)* | Encode | BSD-3 | B | ASGI server | None known |
 | SOUP-BE-004 | nibabel | 5.3.0 | NiBabel Contributors | MIT | **C** | NIfTI file I/O | None known |
 | SOUP-BE-005 | pydicom | 2.4.4 | pydicom contributors | MIT | **C** | DICOM file parsing | None known |
 | SOUP-BE-006 | SimpleITK | 2.3.1 | Insight Software Consortium | Apache-2.0 | B | Medical image processing | None known |
@@ -50,9 +50,9 @@
 | SOUP-BE-011 | Anthropic SDK | 0.44.0 | Anthropic | MIT | **C** | Claude API (report generation) | None known *(2026-11-10, N. G. Bonilla Vargas — approved 2026-11-13 (PR #78): predates the `thinking` and `output_config` request fields — the verified report sends them as extra body fields; an unknown content block (a thinking block) is returned as an unvalidated text block, so the answer is read by block type (RC-106); verified offline against a fake transport. Upgrade proposed as its own change.)* |
 | SOUP-BE-012 | Google Cloud AI Platform | 1.136.0 | Google | Apache-2.0 | **C** | Vertex AI inference | None known |
 | SOUP-BE-013 | WebAuthn (py) | 2.7.1 | Duo Labs | BSD-3 | B | FIDO2 authentication | None known |
-| SOUP-BE-014 | FastMCP | 3.2.4 *(was 2.3.0 — DRAFT, PENDING owner approval, PR #79, D-AGT-7)* | FastMCP contributors | MIT | A | MCP server framework | the 8 advisories of 2.3.0 are closed; one moderate advisory remains, GHSA-7xgj-8392-5q4r (component authorization with transforms), not applicable: no component authorization, transform or proxy template is used; fix 3.4.10 needs Starlette ≥ 1.0.1 (D-AGT-8) |
+| SOUP-BE-014 | FastMCP | 3.2.4 *(was 2.3.0 — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79), PR #79, D-AGT-7)* | FastMCP contributors | MIT | A | MCP server framework | the 8 advisories of 2.3.0 are closed; one moderate advisory remains, GHSA-7xgj-8392-5q4r (component authorization with transforms), not applicable: no component authorization, transform or proxy template is used; fix 3.4.10 needs Starlette ≥ 1.0.1 (D-AGT-8) |
 | SOUP-BE-015 | Firebase Admin | 7.1.0 | Google | Apache-2.0 | B | Auth, Firestore, Storage | None known |
-| SOUP-BE-016 | Pydantic | 2.11.7 *(was 2.9.0; required by fastmcp 3.2.4 and mcp 1.30.0 — DRAFT, PENDING owner approval, PR #79, D-AGT-7; full backend suite in CI)* | Samuel Colvin | MIT | B | Data validation | None known |
+| SOUP-BE-016 | Pydantic | 2.11.7 *(was 2.9.0; required by fastmcp 3.2.4 and mcp 1.30.0 — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79), PR #79, D-AGT-7; full backend suite in CI)* | Samuel Colvin | MIT | B | Data validation | None known |
 | SOUP-BE-017 | python-jose | 3.3.0 | Michael Davis | MIT | B | JWT management | None known |
 | SOUP-BE-018 | Argon2-cffi | 23.1.0 | Hynek Schlawack | MIT | B | Password hashing | None known |
 | SOUP-BE-019 | httpx | 0.28.1 | Encode | BSD-3 | B | Async HTTP (DICOMweb) | None known |
@@ -84,14 +84,14 @@
 
 *SOUP anomalies are reviewed monthly using npm audit, pip-audit, and NVD database queries.*
 
-## 5b. Agent platform SOUP rows (DRAFT, PENDING owner approval)
+## 5b. Agent platform SOUP rows (N. G. Bonilla Vargas — approved 2026-11-14 (PR #79))
 
-*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79). DRAFT, PENDING owner approval. The agent platform (`backend/app/agent_platform/`) adds **no** third-party package: it uses the Python standard library only. The rows below record SOUP the agents already depend on, as observed on 2026-11-10, with their machine-readable cards in `backend/app/agent_platform/cards/`.*
+*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79). N. G. Bonilla Vargas — approved 2026-11-14 (PR #79). The agent platform (`backend/app/agent_platform/`) adds **no** third-party package: it uses the Python standard library only. The rows below record SOUP the agents already depend on, as observed on 2026-11-10, with their machine-readable cards in `backend/app/agent_platform/cards/`.*
 
 | SOUP ID | Name | Version | Manufacturer | License | Safety Class | Purpose | Known Anomalies |
 |---------|------|---------|-------------|---------|-------------|---------|----------------|
 | SOUP-AI-001 | Claude Sonnet 4.5 (remote model, `claude-sonnet-4-5-20250929`), Anthropic API, `anthropic-version: 2023-06-01`, via SOUP-BE-011 | snapshot 20250929 | Anthropic | Commercial terms of service (no licence to the weights) | **C** *(proposed)* | Drafts the report text from measurements only (RC-064); card `report-drafter.json` | **Deprecated; retires 2026-11-30** (Anthropic deprecations page, read 2026-11-10). Unsupported content without a check: 452/452 drafts in the agents benchmark for the models tested so far (Claude not yet measured). Retention / data-processing terms pending (CAPA-014 D-3) |
-| SOUP-AI-002 | MCP Python SDK (`mcp`), transitive dependency of SOUP-BE-014 FastMCP | **1.30.0, pinned exactly in `requirements.txt`** *(was 1.12.4 — fifth review of PR #79, D-AGT-7; fastmcp 3.2.4 accepts `mcp>=1.24.0,<2.0`)* | Model Context Protocol project | MIT | A *(as SOUP-BE-014)* | Protocol layer of the STDIO assistant servers; speaks MCP revision **2025-11-25** (`LATEST_PROTOCOL_VERSION`, read from the published 1.30.0 wheel; was 2025-06-18) | Pinned; the card's `sdk_pins` is checked against `requirements.txt` on every PR and the CI install against the card. OSV, read 2026-11-11: no advisory for 1.30.0; the 4 advisories of 1.12.4 (HTTP and WebSocket transports) are closed. DRAFT, PENDING owner approval |
+| SOUP-AI-002 | MCP Python SDK (`mcp`), transitive dependency of SOUP-BE-014 FastMCP | **1.30.0, pinned exactly in `requirements.txt`** *(was 1.12.4 — fifth review of PR #79, D-AGT-7; fastmcp 3.2.4 accepts `mcp>=1.24.0,<2.0`)* | Model Context Protocol project | MIT | A *(as SOUP-BE-014)* | Protocol layer of the STDIO assistant servers; speaks MCP revision **2025-11-25** (`LATEST_PROTOCOL_VERSION`, read from the published 1.30.0 wheel; was 2025-06-18) | Pinned; the card's `sdk_pins` is checked against `requirements.txt` on every PR and the CI install against the card. OSV, read 2026-11-11: no advisory for 1.30.0; the 4 advisories of 1.12.4 (HTTP and WebSocket transports) are closed. N. G. Bonilla Vargas — approved 2026-11-14 (PR #79) |
 | — (test tool, not SOUP) | agents-benchmark deterministic verifier v3 (`backend/tests/agent_platform/graders/report_verifier_v3/`) | research/agents-benchmark @ f3c1976, SHA-256 bound | in-house | — | — | Code-based grader of the offline eval harness only; never shipped in the application | One measured miss kept as a capability case ("fulfil dissemination in space" not flagged) |
 | — (standard, not SOUP) | OpenTelemetry GenAI semantic conventions | **v1.37.0** (pinned) | OpenTelemetry | Apache-2.0 (specification) | — | Names and kinds of the agent spans (`tracing.py`); no OpenTelemetry package is used | Development stability; later moved to the semantic-conventions-genai repository without a release |
 
