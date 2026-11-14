@@ -2,11 +2,12 @@
 
 ## Software of Unknown Provenance — Complete Inventory
 
-**Document ID**: SOUP-001 | **Version**: 1.2 DRAFT (2026-10-17, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)) — last approved: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
+**Document ID**: SOUP-001 | **Version**: 1.3 DRAFT (2026-11-10 — verified AI report: SOUP-BE-029, SOUP-BE-030 added, SOUP-BE-011 annotated; branch `feat/report-agent-verified` (draft PR; not merged, not deployed) — N. G. Bonilla Vargas — approved 2026-11-13 (PR #78)) — previous: 1.2 DRAFT (2026-10-17, approved by N. G. Bonilla Vargas 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63)) — last approved: 1.1 | **Date**: September 28, 2026 (v1.0: April 12, 2026)
 
 | Version | Date | Author | Change | Approved By |
 |---------|------|--------|--------|-------------|
 | 1.0 | 2026-04-12 | Development Team | Initial release | — |
+| 1.3 (draft) | 2026-11-10 | Development Team | Verified AI report (REQ-FUNC-116, REQ-SAFE-051, HAZ-017). SOUP-BE-029 (Claude Sonnet 5.5, the report model's new default) and SOUP-BE-030 (Claude Haiku 5.5, allowed alternative) added: the hosted model was not recorded as a SOUP item before; the previous default `claude-sonnet-4-5-20250929` retires on 2026-11-30 and is refused. SOUP-BE-011 annotated: the pinned SDK 0.44.0 predates `thinking` / `output_config` (sent as extra body fields) | **N. G. Bonilla Vargas — approved 2026-11-13 (PR #78)** |
 | 1.2 (draft) | 2026-10-17 | Development Team | CP-FLAMES-BROWSER-001. (a) SOUP-FE-008 ONNX Runtime Web corrected 1.21.0 → **1.24.1**: v1.0 recorded the declared minimum (`^1.21.0` in `package.json`), not the version actually built; `package-lock.json` resolved 1.24.1 (`npm ls`, 2026-10-17). `package.json` now pins `1.24.1` exactly (CMP-001 §5: no `^` for production SOUP). Known anomaly added. (b) SOUP-FE-014 added: FLAMeS model weights (data, Class C). (c) SOUP-FE-015 added: Neurodesk white-matter-lesions code ported to TypeScript (Apache-2.0). (d) SBOM: onnxruntime-web version and its SOUP id (was SOUP-FE-006, the NiiVue id) corrected | N. G. Bonilla Vargas — approved 2026-10-23 (PR #52/#51/#53/#59/#49/#62/#63) |
 | 1.1 | 2026-09-28 | Development Team | CAPA-006 (HAZ-005). (a) SOUP-BE-020 nilearn reclassified B → **C**. It resamples the MSMask atlas zone map for the Class C MAGNIMS region classifier. Purpose was "Brain atlas"; version was "0.10.0+". Recorded as not pinned (`>=0.10.0`), with open action CAPA-006 PA-6.5; `backend/requirements.txt` not changed. (b) SOUP-BE-025 added: the MSMask atlas data file, a Class C input that had no SOUP or provenance entry. (c) Summary recounted from the tables. v1.0 stated Class B 20 / Class A 10; the tables held 21 / 9. | N. G. Bonilla Vargas — approved 2026-10-17 (PR #43) |
 
@@ -38,7 +39,7 @@
 |---------|------|---------|-------------|---------|-------------|---------|----------------|
 | SOUP-BE-001 | FastAPI | 0.115.0 | Sebastian Ramirez | MIT | B | REST API framework | None known |
 | SOUP-BE-002 | Python | 3.11 | Python Software Foundation | PSF-2.0 | B | Runtime environment | None known |
-| SOUP-BE-003 | Uvicorn | 0.35.0 *(was 0.32.0; required by fastmcp 3.2.4 — DRAFT, PENDING owner approval, PR #79, D-AGT-7)* | Encode | BSD-3 | B | ASGI server | None known |
+| SOUP-BE-003 | Uvicorn | 0.35.0 *(was 0.32.0; required by fastmcp 3.2.4 — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79), PR #79, D-AGT-7)* | Encode | BSD-3 | B | ASGI server | None known |
 | SOUP-BE-004 | nibabel | 5.3.0 | NiBabel Contributors | MIT | **C** | NIfTI file I/O | None known |
 | SOUP-BE-005 | pydicom | 2.4.4 | pydicom contributors | MIT | **C** | DICOM file parsing | None known |
 | SOUP-BE-006 | SimpleITK | 2.3.1 | Insight Software Consortium | Apache-2.0 | B | Medical image processing | None known |
@@ -46,12 +47,12 @@
 | SOUP-BE-008 | SciPy | 1.13.1 | SciPy Developers | BSD-3 | **C** | EDT, connected components | None known |
 | SOUP-BE-009 | scikit-image | 0.24.0 | scikit-image contributors | BSD-3 | B | Image analysis | None known |
 | SOUP-BE-010 | OpenCV | 4.10.0 | OpenCV contributors | Apache-2.0 | B | Computer vision | None known |
-| SOUP-BE-011 | Anthropic SDK | 0.44.0 | Anthropic | MIT | **C** | Claude API (report generation) | None known |
+| SOUP-BE-011 | Anthropic SDK | 0.44.0 | Anthropic | MIT | **C** | Claude API (report generation) | None known *(2026-11-10, N. G. Bonilla Vargas — approved 2026-11-13 (PR #78): predates the `thinking` and `output_config` request fields — the verified report sends them as extra body fields; an unknown content block (a thinking block) is returned as an unvalidated text block, so the answer is read by block type (RC-106); verified offline against a fake transport. Upgrade proposed as its own change.)* |
 | SOUP-BE-012 | Google Cloud AI Platform | 1.136.0 | Google | Apache-2.0 | **C** | Vertex AI inference | None known |
 | SOUP-BE-013 | WebAuthn (py) | 2.7.1 | Duo Labs | BSD-3 | B | FIDO2 authentication | None known |
-| SOUP-BE-014 | FastMCP | 3.2.4 *(was 2.3.0 — DRAFT, PENDING owner approval, PR #79, D-AGT-7)* | FastMCP contributors | MIT | A | MCP server framework | the 8 advisories of 2.3.0 are closed; one moderate advisory remains, GHSA-7xgj-8392-5q4r (component authorization with transforms), not applicable: no component authorization, transform or proxy template is used; fix 3.4.10 needs Starlette ≥ 1.0.1 (D-AGT-8) |
+| SOUP-BE-014 | FastMCP | 3.2.4 *(was 2.3.0 — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79), PR #79, D-AGT-7)* | FastMCP contributors | MIT | A | MCP server framework | the 8 advisories of 2.3.0 are closed; one moderate advisory remains, GHSA-7xgj-8392-5q4r (component authorization with transforms), not applicable: no component authorization, transform or proxy template is used; fix 3.4.10 needs Starlette ≥ 1.0.1 (D-AGT-8) |
 | SOUP-BE-015 | Firebase Admin | 7.1.0 | Google | Apache-2.0 | B | Auth, Firestore, Storage | None known |
-| SOUP-BE-016 | Pydantic | 2.11.7 *(was 2.9.0; required by fastmcp 3.2.4 and mcp 1.30.0 — DRAFT, PENDING owner approval, PR #79, D-AGT-7; full backend suite in CI)* | Samuel Colvin | MIT | B | Data validation | None known |
+| SOUP-BE-016 | Pydantic | 2.11.7 *(was 2.9.0; required by fastmcp 3.2.4 and mcp 1.30.0 — N. G. Bonilla Vargas — approved 2026-11-14 (PR #79), PR #79, D-AGT-7; full backend suite in CI)* | Samuel Colvin | MIT | B | Data validation | None known |
 | SOUP-BE-017 | python-jose | 3.3.0 | Michael Davis | MIT | B | JWT management | None known |
 | SOUP-BE-018 | Argon2-cffi | 23.1.0 | Hynek Schlawack | MIT | B | Password hashing | None known |
 | SOUP-BE-019 | httpx | 0.28.1 | Encode | BSD-3 | B | Async HTTP (DICOMweb) | None known |
@@ -64,6 +65,8 @@
 | SOUP-BE-026 | SynthStrip model weights `synthstrip.1.pt` (sha256 37417f80…3e33), in `strip-worker` only *(DRAFT, N. G. Bonilla Vargas — approved 2026-11-07 (PR #77))* | 1 | Hoopes, Mora, Dalca, Fischl, Hoffmann (MGH) | MIT or CC BY 4.0, as stated on the FreeSurfer SynthStrip page; legal confirmation pending | C | Removes the skull before the in-browser AI (RC-101) | Not assessed |
 | SOUP-BE-027 | nipreps-synthstrip, in `strip-worker` only *(DRAFT)* | 0.0.1 | NiPreps | To confirm | C | Runs the SynthStrip model | Not assessed |
 | SOUP-BE-028 | PyTorch (CPU), in `strip-worker` only *(DRAFT)* | 2.15.0 | PyTorch Foundation | BSD-3-Clause | C | Runtime of the SynthStrip model | Not assessed |
+| SOUP-BE-029 | Claude Sonnet 5.5 (hosted model, Claude API), model id `claude-sonnet-5-5` *(N. G. Bonilla Vargas — approved 2026-11-13 (PR #78))* | `claude-sonnet-5-5` (no date suffix; called with thinking `between_tools` — no extended thinking — and effort `low`, as pre-registered for the agents benchmark) | Anthropic | Commercial terms of the Claude API (customer agreement; data-processing terms: owner decision, CAPA-014 D-3) | **C** | Writes the two interpretive comments of the verified AI report (REQ-FUNC-116); never the numbers or statuses; every answer checked (RC-103) | Language model: may write unsupported or diagnostic text (HAZ-003) — withheld by RC-103; declines in five categories (refusal → measurements-only draft); temperature / top_p / top_k with non-default values are rejected (none sent); retirement date not yet announced (check at each monthly SOUP review: RETIRED_OR_RETIRING_MODELS); NOT measured in the agents benchmark yet (the Claude arms are prepared, not run) |
+| SOUP-BE-030 | Claude Haiku 5.5 (hosted model, Claude API), model id `claude-haiku-5-5` *(N. G. Bonilla Vargas — approved 2026-11-13 (PR #78))* | `claude-haiku-5-5` (thinking `disabled`, effort `low`, as pre-registered) | Anthropic | As SOUP-BE-029 | **C** | Allowed alternative model of the two comments (`CLAUDE_MODEL`); not the default | As SOUP-BE-029; NOT measured in the agents benchmark yet |
 
 ## Summary
 
@@ -81,14 +84,14 @@
 
 *SOUP anomalies are reviewed monthly using npm audit, pip-audit, and NVD database queries.*
 
-## 5b. Agent platform SOUP rows (DRAFT, PENDING owner approval)
+## 5b. Agent platform SOUP rows (N. G. Bonilla Vargas — approved 2026-11-14 (PR #79))
 
-*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79). DRAFT, PENDING owner approval. The agent platform (`backend/app/agent_platform/`) adds **no** third-party package: it uses the Python standard library only. The rows below record SOUP the agents already depend on, as observed on 2026-11-10, with their machine-readable cards in `backend/app/agent_platform/cards/`.*
+*Proposed 2026-11-10 on branch `feat/agent-platform` (draft PR #79). N. G. Bonilla Vargas — approved 2026-11-14 (PR #79). The agent platform (`backend/app/agent_platform/`) adds **no** third-party package: it uses the Python standard library only. The rows below record SOUP the agents already depend on, as observed on 2026-11-10, with their machine-readable cards in `backend/app/agent_platform/cards/`.*
 
 | SOUP ID | Name | Version | Manufacturer | License | Safety Class | Purpose | Known Anomalies |
 |---------|------|---------|-------------|---------|-------------|---------|----------------|
 | SOUP-AI-001 | Claude Sonnet 4.5 (remote model, `claude-sonnet-4-5-20250929`), Anthropic API, `anthropic-version: 2023-06-01`, via SOUP-BE-011 | snapshot 20250929 | Anthropic | Commercial terms of service (no licence to the weights) | **C** *(proposed)* | Drafts the report text from measurements only (RC-064); card `report-drafter.json` | **Deprecated; retires 2026-11-30** (Anthropic deprecations page, read 2026-11-10). Unsupported content without a check: 452/452 drafts in the agents benchmark for the models tested so far (Claude not yet measured). Retention / data-processing terms pending (CAPA-014 D-3) |
-| SOUP-AI-002 | MCP Python SDK (`mcp`), transitive dependency of SOUP-BE-014 FastMCP | **1.30.0, pinned exactly in `requirements.txt`** *(was 1.12.4 — fifth review of PR #79, D-AGT-7; fastmcp 3.2.4 accepts `mcp>=1.24.0,<2.0`)* | Model Context Protocol project | MIT | A *(as SOUP-BE-014)* | Protocol layer of the STDIO assistant servers; speaks MCP revision **2025-11-25** (`LATEST_PROTOCOL_VERSION`, read from the published 1.30.0 wheel; was 2025-06-18) | Pinned; the card's `sdk_pins` is checked against `requirements.txt` on every PR and the CI install against the card. OSV, read 2026-11-11: no advisory for 1.30.0; the 4 advisories of 1.12.4 (HTTP and WebSocket transports) are closed. DRAFT, PENDING owner approval |
+| SOUP-AI-002 | MCP Python SDK (`mcp`), transitive dependency of SOUP-BE-014 FastMCP | **1.30.0, pinned exactly in `requirements.txt`** *(was 1.12.4 — fifth review of PR #79, D-AGT-7; fastmcp 3.2.4 accepts `mcp>=1.24.0,<2.0`)* | Model Context Protocol project | MIT | A *(as SOUP-BE-014)* | Protocol layer of the STDIO assistant servers; speaks MCP revision **2025-11-25** (`LATEST_PROTOCOL_VERSION`, read from the published 1.30.0 wheel; was 2025-06-18) | Pinned; the card's `sdk_pins` is checked against `requirements.txt` on every PR and the CI install against the card. OSV, read 2026-11-11: no advisory for 1.30.0; the 4 advisories of 1.12.4 (HTTP and WebSocket transports) are closed. N. G. Bonilla Vargas — approved 2026-11-14 (PR #79) |
 | — (test tool, not SOUP) | agents-benchmark deterministic verifier v3 (`backend/tests/agent_platform/graders/report_verifier_v3/`) | research/agents-benchmark @ f3c1976, SHA-256 bound | in-house | — | — | Code-based grader of the offline eval harness only; never shipped in the application | One measured miss kept as a capability case ("fulfil dissemination in space" not flagged) |
 | — (standard, not SOUP) | OpenTelemetry GenAI semantic conventions | **v1.37.0** (pinned) | OpenTelemetry | Apache-2.0 (specification) | — | Names and kinds of the agent spans (`tracing.py`); no OpenTelemetry package is used | Development stability; later moved to the semantic-conventions-genai repository without a release |
 

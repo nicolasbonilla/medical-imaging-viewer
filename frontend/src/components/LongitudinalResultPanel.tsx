@@ -137,6 +137,13 @@ export function LongitudinalResultPanel({
   // G21: one verdict. The gate allowed the pair but RC-062 abstains -> RC-062's reason governs, the gate panel steps aside.
   const rc062Governs = abstained && !gateStopped;
   const cc = result.change_candidates;
+  // CAPA-013 (sixth review of PR #78, W1; ninth review, I13): the reviewable candidates only — without the candidate
+  // block the change is "not computed", as in the draft; status_counts.new counts every new component (below the review
+  // size too) and is never shown as "new ≥ d mm"
+  const counts = (cc ?? {}) as Record<string, unknown>;
+  const newCount = cc ? counts.new : undefined;
+  const enlargingCount = cc ? counts.enlarging : undefined;
+  const countsComputed = Number.isInteger(newCount) && Number.isInteger(enlargingCount);
   const evidence = result.false_candidate_evidence;
   const confirmedBox = result.reader_confirmed_activity;
   // Share of all proposed candidates that were false in the source record (review of PR #63:
@@ -297,9 +304,14 @@ export function LongitudinalResultPanel({
             className="rounded border border-amber-500/50 bg-amber-500/10 px-2 py-1.5 text-[10px] leading-snug text-amber-800 dark:text-amber-200 space-y-1"
           >
             <p className="font-semibold">
-              {t('longitudinal.candidatesSummary', {
-                total: cc?.total ?? 0, n: cc?.new ?? 0, e: cc?.enlarging ?? 0, d: result.new_lesion_min_diameter_mm ?? 3,
-              })}
+              {/* Sixth review of PR #78, W1: the same source and the same "not computed" as the draft and its notice —
+                  a null or missing count is never shown as 0 */}
+              {countsComputed
+                ? t('longitudinal.candidatesSummary', {
+                    total: (newCount as number) + (enlargingCount as number), n: newCount, e: enlargingCount,
+                    d: result.new_lesion_min_diameter_mm ?? 3,
+                  })
+                : t('longitudinal.candidatesNotComputed')}
             </p>
             {cc?.decisions_unavailable ? (
               <p data-testid="longitudinal-decisions-unavailable" className="font-semibold text-red-600 dark:text-red-400">

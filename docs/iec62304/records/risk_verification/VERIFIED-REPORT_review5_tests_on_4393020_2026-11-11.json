@@ -1,0 +1,100 @@
+{
+  "executed": "2026-11-11",
+  "purpose": "failing-first: the tests of the fifth independent review of PR #78 (V1-V10) on the reviewed head, before any correction",
+  "tree": "4393020 (feat/report-agent-verified, head reviewed by the fifth independent review)",
+  "environment": "PRB-002 offline (missing credentials file, empty CLOUDSDK_CONFIG, GOOGLE_CLOUD_PROJECT=mstool-offline-tests, ANTHROPIC_API_KEY unset); project Python; one run",
+  "test_file": "backend/tests/unit/test_verified_report_review4.py",
+  "test_sha256": "4bcd57a4d2648c080f2eb4ff48c3f382f7e7770fb79c9c898bf8a48d3fefb8f9",
+  "summary": "26 failed, 7 passed",
+  "per_item_failed_passed": {
+    "V1": {
+      "failed": 9,
+      "passed": 5
+    },
+    "V10": {
+      "failed": 1,
+      "passed": 0
+    },
+    "V2": {
+      "failed": 4,
+      "passed": 0
+    },
+    "V3": {
+      "failed": 1,
+      "passed": 0
+    },
+    "V4": {
+      "failed": 1,
+      "passed": 0
+    },
+    "V5": {
+      "failed": 2,
+      "passed": 0
+    },
+    "V6": {
+      "failed": 3,
+      "passed": 1
+    },
+    "V7": {
+      "failed": 1,
+      "passed": 0
+    },
+    "V8": {
+      "failed": 2,
+      "passed": 0
+    },
+    "V9": {
+      "failed": 2,
+      "passed": 1
+    }
+  },
+  "failing_tests": [
+    "test_rc070_v8_an_evaluated_dis_has_no_not_evaluated_statement",
+    "test_rc070_v8_the_service_owns_the_dis_notice_and_returns_a_typed_field",
+    "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[de]",
+    "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[en]",
+    "test_rc102_v2_the_draft_and_the_notice_state_the_reviewable_candidates[es]",
+    "test_rc102_v2_without_the_candidate_block_both_count_what_the_rule_counts",
+    "test_rc102_v6_labels_drawn_on_contrast_and_t1_images_change_the_limitations[de]",
+    "test_rc102_v6_labels_drawn_on_contrast_and_t1_images_change_the_limitations[en]",
+    "test_rc102_v6_labels_drawn_on_contrast_and_t1_images_change_the_limitations[es]",
+    "test_rc102_v9_no_dis_line_without_lesion_findings[longitudinal]",
+    "test_rc102_v9_no_dis_line_without_lesion_findings[volumetry]",
+    "test_rc103_v10_a_criterion_word_near_two_dis_names_is_counted_once",
+    "test_rc103_v1_fuzz_number_ordinal_and_count_words_fail_the_check_in_every_language",
+    "test_rc103_v1_the_reviewers_examples_fail[Ambas regiones tienen lesiones.]",
+    "test_rc103_v1_the_reviewers_examples_fail[Es gibt einundzwanzig kleine L\\xe4sionen.]",
+    "test_rc103_v1_the_reviewers_examples_fail[Lesions are in all four regions.]",
+    "test_rc103_v1_the_reviewers_examples_fail[Lesions lie in three of the four regions.]",
+    "test_rc103_v1_the_reviewers_examples_fail[Se marcaron doce lesiones.]",
+    "test_rc103_v1_the_reviewers_examples_fail[There are twenty-one small lesions.]",
+    "test_rc103_v1_the_reviewers_examples_fail[Twelve lesions are marked.]",
+    "test_rc103_v1_the_reviewers_examples_fail[Zwei neue Kandidaten wurden markiert.]",
+    "test_rc103_v7_check_calls_the_one_verify_function",
+    "test_rc104_v3_an_exception_in_the_check_after_the_model_answered_is_withheld_and_audited",
+    "test_rc105_v5_kill_switch_off_needs_no_patient_record",
+    "test_rc105_v5_nothing_sent_keeps_the_measurement_checks_only",
+    "test_rc106_v4_one_cached_client_with_the_allowed_timeout_closed_on_shutdown"
+  ],
+  "passing_tests": [
+    "test_rc102_v6_without_those_labels_the_limitations_are_unchanged",
+    "test_rc102_v9_with_a_lesion_analysis_the_line_is_written_once",
+    "test_rc103_v1_articles_and_words_that_only_contain_a_number_are_allowed[de-Die Markierung wurde beobachtet; Hilfe beim Lesen.]",
+    "test_rc103_v1_articles_and_words_that_only_contain_a_number_are_allowed[de-Eine automatische Markierung, ein Entwurf zur Pr\\xfcfung.]",
+    "test_rc103_v1_articles_and_words_that_only_contain_a_number_are_allowed[en-A lesion pattern is marked; an automatic marking, to be reviewed.]",
+    "test_rc103_v1_articles_and_words_that_only_contain_a_number_are_allowed[en-Several small lesions; most lesions are small.]",
+    "test_rc103_v1_articles_and_words_that_only_contain_a_number_are_allowed[es-Una marcaci\\xf3n autom\\xe1tica, un borrador para revisar.]"
+  ],
+  "frontend": {
+    "test_file": "frontend/src/components/LongitudinalResultPanel.review5.test.tsx",
+    "test_sha256": "585313332c0d1beb57c1b08d5dc4f70dec2604971dbc211db0514e4d9ab800f5",
+    "summary": "0 failed, 3 passed",
+    "note": "guard: the review screen already states change_candidates (the reviewable candidates); the defect V2 was in the draft, whose backend tests fail",
+    "tests": [
+      "states 2 new and 1 enlarging candidates, as the draft and the notice (en)",
+      "states 2 new and 1 enlarging candidates, as the draft and the notice (es)",
+      "states 2 new and 1 enlarging candidates, as the draft and the notice (de)"
+    ]
+  },
+  "note": "every item V1-V10 has at least one failing backend test; the passing backend tests are guards (articles and words that only contain a number stay allowed; limitations unchanged without the labels; the DIS line once with a lesion analysis)"
+}

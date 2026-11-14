@@ -266,7 +266,11 @@ def test_rc112_llm10_oversized_untrusted_text_is_capped_and_oversized_input_refu
 def test_rc112_llm10_daily_cost_cap_holds_across_studies():
     registry = H.eval_registry("report-drafter")
     statuses = []
-    for i in range(200):
+    # Enough studies to cross the day cap at the CURRENT model's price (reconciled 2026-11-14: claude-sonnet-5-5 costs
+    # 0.10 USD per study here, so 25 USD needs 250 studies; the bound is derived, never a fixed 200).
+    runs = int(registry.agent("report-drafter").cost_cap_per_day_usd
+               / registry.estimate_cost_usd(H.REPORT_MODEL, 30_000, 4_000)) + 5
+    for i in range(runs):
         model = H.ScriptedModel([H.response("The automatic marking found 7 lesions with a total volume of 3.1 mL.",
                                             tin=30_000, tout=4_000)])
         rt = RT.AgentRuntime(registry, T.Tracer(T.NoopExporter()), verifier=H.reference_gate(VIEWS["base"]))
@@ -292,7 +296,7 @@ def test_rc115_asi04_llm03_answer_from_another_model_is_discarded():
 
 @pytest.mark.parametrize("model_id", ["claude-sonnet-4-5", "claude-sonnet-4-5-20250929 ", "Claude-Sonnet-4-5-20250929",
                                       "claude-sonnet-4-5-2025O929", "claude-sonnet-4-5-20250929-latest",
-                                      "claude-sonnet-5-5", "claude-opus-5-5"])
+                                      "claude-haiku-5-5", "claude-opus-5-5"])
 def test_rc115_asi10_lookalike_alias_or_unvalidated_model_is_refused(model_id):
     registry = H.eval_registry("report-drafter")
     d = registry.check_model("report-drafter", model_id)
@@ -300,7 +304,15 @@ def test_rc115_asi10_lookalike_alias_or_unvalidated_model_is_refused(model_id):
                                         RefusalCode.MODEL_NOT_IN_USE)
 
 
-def test_rc115_llm03_report_model_is_refused_from_its_retirement_date():
+def test_rc115_llm03_report_model_is_refused_from_its_retirement_date(monkeypatch):
+    # Reconciled 2026-11-14: the report model (claude-sonnet-5-5) has no announced retirement; the rule is shown with
+    # an injected retirement date.
+    production = H.production_data
+    def retiring():
+        data = production()
+        data["models"][H.REPORT_MODEL]["retires_on"] = "2026-11-30"
+        return data
+    monkeypatch.setattr(H, "production_data", retiring)
     assert H.eval_registry("report-drafter", as_of="2026-11-29").check_model("report-drafter", H.REPORT_MODEL).allowed
     d = H.eval_registry("report-drafter", as_of="2026-11-30").check_model("report-drafter", H.REPORT_MODEL)
     assert not d.allowed and d.code == RefusalCode.MODEL_RETIRED
@@ -334,7 +346,7 @@ def test_rc115_registry_entries_cannot_be_changed_while_running():
         spec.allowed_models = ("claude-opus-4-1-20250805",)
     with pytest.raises(Exception):
         spec.cost_cap_per_day_usd = 1e9
-    assert registry.agent("report-drafter").allowed_models == ("claude-sonnet-4-5-20250929",)
+    assert registry.agent("report-drafter").allowed_models == ("claude-sonnet-5-5",)
 
 
 # ================================================================== ASI10 — rogue agent, kill switch

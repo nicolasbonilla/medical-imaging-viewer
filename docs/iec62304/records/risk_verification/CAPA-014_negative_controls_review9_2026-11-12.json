@@ -1,0 +1,77 @@
+{
+  "executed": "2026-11-12T01:25:43",
+  "design": "redesign after the independent review of PR #67: structured payload only, typed text merged locally, detection-only tripwire (the scrubbing module of the first version was removed)",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once; the bound tests of the mutated side are run (backend pytest offline per PRB-002, frontend vitest JSON reporter)",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/services/brain_report_service.py": "ec9c15e04665241378a13db42f83dc9a83080326f227982742b20bee70cd77f0"
+  },
+  "test_sha256": {
+    "tests/unit/test_capa014_report_provider_payload.py": "efde387c20f84567f8aaff8801053e7989b2746b21a29eed8d06d1e1813152c8",
+    "tests/unit/test_capa009_object_authorization_everywhere.py": "d149a58de4e6a419fc1a2f88f95317cb143c2a237d0f11d322cf3d5c9fb334ad",
+    "tests/unit/test_capa008_assistant_read_only.py": "a5405f2d186ed304c15f0b6ba7aa41f77888ef1402e7a8277e0c0dd43b93588f",
+    "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx": "e07d353fd2721fa2b94c02bbf621bc374e588cd39448eb9332fb09b1e5dd579f"
+  },
+  "tests": [
+    "tests/unit/test_capa014_report_provider_payload.py",
+    "tests/unit/test_capa009_object_authorization_everywhere.py",
+    "tests/unit/test_capa008_assistant_read_only.py",
+    "tests/unit/test_brain_report_service.py",
+    "frontend/src/components/AIReportPanel.capa014.test.tsx"
+  ],
+  "mutations": {
+    "P1_payload_bypassed": {
+      "suite": "backend",
+      "failed": 12,
+      "passed": 352,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": [
+        "test_n4_an_implausible_value_in_a_field_never_sent_blocks_nothing[lesion_analysis.lesions.0.centroid.z=20250042]",
+        "test_n4_an_implausible_value_refuses_the_request[lesion_analysis.regions.Periventricular.lesion_count=-1]",
+        "test_n4_an_implausible_value_refuses_the_request[lesion_analysis.total_burden_mm3=19751109]",
+        "test_n4_an_implausible_value_refuses_the_request[lesion_analysis.total_count=20240304]",
+        "test_r2_the_patients_own_numbers_in_a_field_never_sent_never_reach_the_provider[dis_assessment.active_voxels=1234567]",
+        "test_r2_the_patients_own_numbers_in_a_field_never_sent_never_reach_the_provider[lesion_analysis.lesions.0.id=612345678]",
+        "test_r2_the_patients_own_numbers_in_a_field_never_sent_never_reach_the_provider[lesion_analysis.lesions.0.volume_mm3=1234567.0]",
+        "test_r2_the_patients_own_numbers_in_a_field_never_sent_never_reach_the_provider[zone_stats.total_brain_voxels=19751109]",
+        "test_r2_the_patients_own_numbers_in_a_field_never_sent_never_reach_the_provider[zone_stats.total_brain_voxels=9111975]",
+        "test_r2_the_patients_own_numbers_in_a_field_never_sent_never_reach_the_provider[zone_stats.zones.Periventricular.voxel_count=1234567]",
+        "test_rc066_logs_say_the_check_ran_with_counts_never_the_payload",
+        "test_rc066_the_model_is_told_the_entry_is_added_by_the_application"
+      ],
+      "reintroduces": "the request's findings go to the prompt builder as received",
+      "applied": true,
+      "executed": "2026-11-12T01:26:10",
+      "test_sha256": {
+        "tests/unit/test_capa014_report_provider_payload.py": "efde387c20f84567f8aaff8801053e7989b2746b21a29eed8d06d1e1813152c8",
+        "tests/unit/test_capa009_object_authorization_everywhere.py": "d149a58de4e6a419fc1a2f88f95317cb143c2a237d0f11d322cf3d5c9fb334ad",
+        "tests/unit/test_capa008_assistant_read_only.py": "a5405f2d186ed304c15f0b6ba7aa41f77888ef1402e7a8277e0c0dd43b93588f",
+        "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8"
+      }
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "failed": 0,
+      "passed": 364,
+      "errors": 0,
+      "skipped": 0,
+      "failing_tests": []
+    },
+    "frontend": {
+      "suite": "frontend",
+      "failed": 0,
+      "passed": 13,
+      "skipped": 0,
+      "errors": 0,
+      "failing_tests": [],
+      "error_files": []
+    }
+  },
+  "expected_undetected": {},
+  "undetected": [],
+  "unexpected_undetected": []
+}

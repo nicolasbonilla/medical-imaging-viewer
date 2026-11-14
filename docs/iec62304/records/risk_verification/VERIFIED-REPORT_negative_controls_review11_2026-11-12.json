@@ -1,0 +1,293 @@
+{
+  "executed": "2026-11-12T03:27:53",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/main.py": "907698d9ffe02b9e2c807b94e8cd7f8214c53ff891f37799120233589c84166e",
+    "backend/app/services/brain_report_service.py": "b30439d38a2e84a52bd24f989800928d9054f38dc506e47a4e52ef95dee51f2c",
+    "backend/app/services/verified_report.py": "6184c9cbeef1e6bf2e438c6d53a0a141f24d6e58b7261673758b3ed1126e16b4",
+    "frontend/src/components/AIReportPanel.tsx": "d6c78c2862e3cf4e31dec9d1471c58f49853c25bdb0083d41bf4727de567c245",
+    "frontend/src/i18n/locales/en.json": "6715aaac22071349129adb91c2e0051d0de0e38b1c01951883f69aac46af826a"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "4248d28de5bfe86813d666716478a08ad80b4b154c8449d611e1f10e3106b79c",
+    "tests/unit/test_rc103_verified_report_loop.py": "98e37933215b1a96512f14b5aec8f2b0dc8a629ff8bd11815d29fad191925170",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "fd42d0309ee427ed4dd3d5e1bf36b9b2d8ceb2fb242f2e37576c6d900a969aa2",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "d023b3187c5736c68d0211d584d37091aa4c261f325ca700a988eb8db80007c1",
+    "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8",
+    "tests/unit/test_verified_report_review1.py": "dbbf536b5796a23de40d633ff44521145bd845424d2f11dc2bc128aebda90b67",
+    "tests/unit/test_verified_report_review2.py": "364f8daf280113d7001cbee6ff4ff99169f06bae5264d27df94126b214a188cb",
+    "tests/unit/test_verified_report_review2_dis.py": "cac14a7e8dfe21d7c3c399199e5089a5020f9d08bbe9bbcfbb80cfd6ee957a1a",
+    "tests/unit/test_verified_report_review3.py": "8c15f86a9bab1be20438989b7c67daf415891a43335f7a7ed63e475017f4b46a",
+    "tests/unit/test_verified_report_review4.py": "66dc5c7568c6d1f3e2f7f8f1c5c57a08ed3dee470a5f9f166780cfb46a3bce43",
+    "tests/unit/test_verified_report_review5.py": "e1c36b6cd65e9be62f94058d01896222b1111473d400d260e49baf9190bca244",
+    "tests/unit/test_verified_report_review6.py": "2b65c7bf6a967e85cfc7fcbeebf71a93e63b6221c3c4bed7587a329a530d5fcf",
+    "tests/unit/test_verified_report_scenario_matrix.py": "340ff564f2da08f4bdcb2da7c5ae62a9cc307facaf51ff78793371761ea7ba41",
+    "tests/unit/test_verified_report_review10.py": "52eb24c9f20516f88498660468d1867b6f3c994238590f75c030098de73b90e8",
+    "tests/unit/test_verified_report_review11.py": "5c88abf5c5eccbb21ffbd87b777765dc07dec029fbbbc91bad8be3a930b27eeb"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py",
+    "tests/unit/test_verified_report_review5.py",
+    "tests/unit/test_verified_report_review6.py",
+    "tests/unit/test_verified_report_scenario_matrix.py",
+    "tests/unit/test_verified_report_review10.py",
+    "tests/unit/test_verified_report_review11.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 878,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "mutations": {
+    "P6_patient_numbers_checked_when_nothing_sent": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 873,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc065_finding5_a_measurement_equal_to_a_patient_number_gives_a_measurements_only_draft",
+        "test_rc065_v5_when_a_request_will_be_sent_the_identifiers_are_still_required",
+        "test_rc102_w4_the_record_is_projected_and_built_once",
+        "test_rc105_i14_the_provider_payload_runs_only_when_a_call_will_happen",
+        "test_rc105_v5_nothing_sent_keeps_the_measurement_checks_only"
+      ],
+      "reintroduces": "V5: provider-only refusals apply when nothing is sent",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T03:29:21",
+      "detected": true
+    },
+    "F29_synthetic_payloads_without_the_matrix": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 775,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc065_every_draft_template_appears_in_the_synthetic_payloads"
+      ],
+      "reintroduces": "finding 6: branches of the draft missing from the RC-065 device words",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T03:30:04",
+      "detected": true
+    },
+    "M27_cut_retry_as_timeout": {
+      "exit": 1,
+      "failed": 9,
+      "passed": 869,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[provider_after_an_attempt]",
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[timeout_after_an_attempt]",
+        "test_rc104_t2_the_audit_and_the_response_say_withheld_with_the_reason",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[connection_error]",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[model_unavailable_404]",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[overloaded_529]",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[provider_error_5xx]",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[timeout]",
+        "test_rc106_i18_a_retry_cut_by_the_time_budget_is_a_failed_check_not_a_timeout"
+      ],
+      "reintroduces": "I18: a retry cut by the time budget is reported as an AI-service timeout",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T03:30:48",
+      "detected": true
+    },
+    "P11_patient_number_as_503": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 876,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc065_finding5_a_measurement_equal_to_a_patient_number_gives_a_measurements_only_draft",
+        "test_rc065_v5_when_a_request_will_be_sent_the_identifiers_are_still_required"
+      ],
+      "reintroduces": "finding 5: a measurement equal to a patient number ends in a 503 without a draft",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T03:31:32",
+      "detected": true
+    },
+    "N1_notice_claims_sex_and_age": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 877,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_reg011_l1_each_notice_names_every_sent_category_and_nothing_that_is_not_sent[report.deidentificationNote-en]"
+      ],
+      "reintroduces": "L1: the panel notice says sex and an age band are sent again",
+      "files": [
+        "frontend/src/i18n/locales/en.json"
+      ],
+      "executed": "2026-11-12T03:32:15",
+      "detected": true
+    },
+    "F36_partial_bracket_dropped": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 874,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_i4_every_computed_count_of_the_input_appears_in_the_draft",
+        "test_rc102_l2_a_partial_comparison_writes_every_computed_count[de]",
+        "test_rc102_l2_a_partial_comparison_writes_every_computed_count[en]",
+        "test_rc102_l2_a_partial_comparison_writes_every_computed_count[es]"
+      ],
+      "reintroduces": "L2: a partial comparison drops every computed resolved / shrunk / stable count",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T03:32:59",
+      "detected": true
+    },
+    "P13_identifier_hit_as_503": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 875,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc065_c1_an_identifier_pattern_in_device_text_gives_a_measurements_only_draft",
+        "test_rc102_the_first_request_is_checked_for_identifiers",
+        "test_rc104_r7_a_request_refused_by_the_identifier_check_is_audited"
+      ],
+      "reintroduces": "C1: an identifier-pattern hit in device-written text ends in a 503 without a draft",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T03:33:43",
+      "detected": true
+    },
+    "A11_skipped_retry_counted": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 876,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_c2_a_retry_skipped_for_the_budget_is_not_an_attempt",
+        "test_rc106_all_calls_of_one_report_share_the_time_budget"
+      ],
+      "reintroduces": "C2: a retry the budget skipped is counted as an attempt (verification and audit)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T03:34:27",
+      "detected": true
+    },
+    "A12_asked_without_a_request": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 877,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_c7_without_any_request_sent_there_is_no_model_and_no_token_count"
+      ],
+      "reintroduces": "C7: a draft with no request sent names a model and a token count",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T03:35:13",
+      "detected": true
+    },
+    "M28_retry_provider_error_as_unavailable": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 872,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[provider_after_an_attempt]",
+        "test_rc104_t2_the_audit_and_the_response_say_withheld_with_the_reason",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[connection_error]",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[model_unavailable_404]",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[overloaded_529]",
+        "test_rc106_c3_any_failure_of_a_regeneration_after_a_failed_answer_is_a_failed_check[provider_error_5xx]"
+      ],
+      "reintroduces": "C3: a regeneration's provider error after a failed answer reads 'could not be obtained'",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T03:35:57",
+      "detected": true
+    },
+    "M29_word_list_built_in_the_first_request": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 877,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc106_c4_the_device_word_list_is_built_at_startup"
+      ],
+      "reintroduces": "C4: the device-word list is built inside the first request's budget",
+      "files": [
+        "backend/app/main.py"
+      ],
+      "executed": "2026-11-12T03:36:41",
+      "detected": true
+    },
+    "C49_label_for_a_field_never_checked": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 877,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc103_m1_the_panel_names_exactly_the_measurements_that_can_be_implausible"
+      ],
+      "reintroduces": "M1: the panel names a measurement that can never be refused as implausible",
+      "files": [
+        "frontend/src/components/AIReportPanel.tsx"
+      ],
+      "executed": "2026-11-12T03:37:26",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 878,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 12,
+    "detected": 12,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "c6302a94f42f598f0fea6a1ef4c08c39c74eb8d7",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}

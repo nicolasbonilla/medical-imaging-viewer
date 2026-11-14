@@ -1,0 +1,53 @@
+{
+  "executed": "2026-11-11",
+  "purpose": "failing-first: the tests of the third independent review of PR #78 (items T1-T6) on the reviewed head, before any correction",
+  "tree": "44195a8 (feat/report-agent-verified, head reviewed by the third independent review)",
+  "environment": "PRB-002 offline (missing credentials file, empty CLOUDSDK_CONFIG, GOOGLE_CLOUD_PROJECT=mstool-offline-tests, ANTHROPIC_API_KEY unset); backend with the pinned anthropic==0.44.0 on the path so the SDK-level test runs; vitest --pool=threads, alone; tests run one after the other",
+  "backend": {
+    "test_file": "backend/tests/unit/test_verified_report_review3.py",
+    "test_sha256": "aa1edea2f06d3d3d5f099d508d9a6b694d724f13a300a49bc245a959faa53c4d",
+    "summary": "13 failed, 2 passed",
+    "failing_tests": [
+      "test_rc065_t5_the_retired_templates_are_not_in_the_shipped_module",
+      "test_rc102_t1_a_volume_in_ml_only_is_written_and_only_then_offered_as_a_placeholder",
+      "test_rc102_t1_property_a_placeholder_is_available_exactly_when_its_line_states_the_value",
+      "test_rc102_t6_the_number_reader_is_public_and_imported_at_module_level",
+      "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[provider_after_an_attempt]",
+      "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[provider_first]",
+      "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[refusal_after_an_attempt]",
+      "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[refusal_first]",
+      "test_rc104_t2_a_draft_the_ai_was_asked_for_and_did_not_deliver_is_withheld[timeout_after_an_attempt]",
+      "test_rc104_t2_the_audit_and_the_response_say_withheld_with_the_reason",
+      "test_rc106_t3_the_provider_call_is_awaited_and_cancelled_at_the_deadline",
+      "test_rc106_t3_the_service_builds_the_async_client_without_retries",
+      "test_rc106_t3_with_the_pinned_sdk_the_http_request_itself_is_cancelled"
+    ],
+    "passing_guard_tests": [
+      "test_rc065_t5_the_device_vocabulary_comes_from_the_verified_report_only",
+      "test_rc104_t2_nothing_sent_is_still_not_requested"
+    ]
+  },
+  "frontend": {
+    "test_file": "frontend/src/components/ReportViewerModal.review3.test.tsx",
+    "test_sha256": "7b94265b05b95ea04101d6eeabf922247d6807580010551354d0e019e343af45",
+    "summary": "14 failed, 0 passed",
+    "failing_tests": [
+      "names no model for a measurements-only draft (en)",
+      "says the interpretive text was withheld by the check, and names no model (en)",
+      "says the AI service gave no text when it failed after being asked (en)",
+      "names the model when its checked comments are in the draft (en)",
+      "names no model for a measurements-only draft (es)",
+      "says the interpretive text was withheld by the check, and names no model (es)",
+      "says the AI service gave no text when it failed after being asked (es)",
+      "names the model when its checked comments are in the draft (es)",
+      "names no model for a measurements-only draft (de)",
+      "says the interpretive text was withheld by the check, and names no model (de)",
+      "says the AI service gave no text when it failed after being asked (de)",
+      "names the model when its checked comments are in the draft (de)",
+      "never names a default model for a report without a model",
+      "the Spanish wording is the one the owner reads"
+    ],
+    "passing_tests": []
+  },
+  "note": "every item T1-T6 has at least one failing test; the passing backend tests are guards (nothing sent stays not_requested; the RC-065 vocabulary already came only from the verified report since the second review)"
+}

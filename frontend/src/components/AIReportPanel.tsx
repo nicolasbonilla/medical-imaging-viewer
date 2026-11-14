@@ -14,6 +14,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { textToCopy } from '@/utils/aiInTesting'; // RC-130 (REQ-SAFE-060, DRAFT): the notice goes with the copied text
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { aiReportAPI } from '@/api/aiReport';
 import { segmentationAPI } from '@/api/segmentation';
@@ -35,17 +36,46 @@ interface AIReportPanelProps {
 // CAPA-014 (third review, R4): the server adds at most this many characters of each typed field to the draft
 // (`MAX_TYPED_CHARS` in backend/app/api/routes/ai_report.py); the fields stop there and show the count.
 const MAX_TYPED_CHARS = 5000;
-// Release 2026-10-25 (review of PR #69, item 6): the server's 422 for an unreadable image geometry starts with this
-// phrase (backend ai_report.GEOMETRY_UNREADABLE_PHRASE; a backend test checks that both say the same).
-const GEOMETRY_UNREADABLE_PHRASE = 'The image geometry could not be read; report not generated';
-// Review of PR #69, n1: any other failure of the server-side lesion table (backend ai_report.LESION_TABLE_FAILED_PHRASE).
-const LESION_TABLE_FAILED_PHRASE = 'The lesion measurements could not be computed on the server; report not generated';
+// Tenth independent review of PR #78, I16 (DRAFT, PENDING owner approval): every error of the report route carries a
+// machine-readable code (`error.code`, its parameters in `error.details`; backend ai_report.REPORT_ERROR_CODES). The
+// panel maps the CODE to its own message — never a message prefix, never the HTTP status alone. One shared fixture
+// (backend/tests/fixtures/report_error_codes.json) is read by the backend tests and by AIReportPanel.errorCodes.test.tsx.
+const REPORT_ERROR_MESSAGES: Record<string, [key: string, english: string]> = {
+  nothing_to_report: ['report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.'],
+  segmentation_required: ['report.errors.segmentationRequired', "Open a segmentation first: the report is written for one analysed segmentation, and the request is checked against its patient's record. Nothing was sent to the AI service."],
+  segmentation_not_found: ['report.errors.segmentationNotFound', 'The segmentation of this report was not found, or you may not open it. Nothing was sent to the AI service.'],
+  segmentation_conflict: ['report.errors.segmentationConflict', 'The measurements belong to another segmentation than the one open. Reload the segmentation and try again. Nothing was sent to the AI service.'],
+  request_invalid: ['report.errors.requestInvalid', 'The request for the report was not valid, so no draft was written. Nothing was sent to the AI service.'],
+  geometry_unreadable: ['report.geometryUnreadable', 'The image geometry could not be read, so the report was not generated. Nothing was sent to the AI service.'],
+  lesion_table_failed: ['report.lesionTableFailed', 'The lesion measurements could not be computed on the server, so the report was not generated. Nothing was sent to the AI service.'],
+  implausible_measurement: ['report.errors.implausibleMeasurement', 'The {{measurement}} computed by the segmentation analysis is outside its plausible range, so no draft was written. Re-run the analysis or check the segmentation. Nothing was sent to the AI service.'],
+  patient_record_unavailable: ['report.errors.patientRecordUnavailable', "The patient's record could not be read, so the request could not be checked and nothing was sent to the AI service. Try again later."],
+  label_in_record: ['report.errors.labelInRecord', 'A label typed in the application reached the measurement record, so nothing was sent to the AI service and no draft was written. Please report this error.'],
+  not_sent: ['report.errors.notSent', 'A safety check refused the request, so nothing was sent to the AI service and no draft was written.'],
+  report_failed: ['report.errors.reportFailed', 'The report could not be generated because of an internal error; no draft was written.'],
+};
+// The measurements an implausible-measurement error can name (`error.details.field`), as the physician reads them —
+// exactly the fields the server range-checks in what the report renders (eleventh review of PR #78, M1: a test derives
+// them from the projection).
+const MEASUREMENT_NAMES: Record<string, string> = {
+  total_count: 'lesion count', total_burden_mm3: 'total lesion volume', total_burden_ml: 'total lesion volume',
+  size_distribution: 'lesion size distribution', lesion_count: 'lesion count of a region',
+  regions_with_lesions: 'number of regions with lesions',
+  burden_tp1_ml: 'lesion volume of the previous visit', burden_tp2_ml: 'lesion volume of this visit',
+  total_lesions_tp1: 'lesion count of the previous visit', total_lesions_tp2: 'lesion count of this visit',
+  status_counts: 'change counts of the comparison', change_candidates: 'change candidates of the comparison',
+  new_lesion_min_diameter_mm: 'minimum size of a new lesion', total_brain_volume_ml: 'total brain volume',
+  intracranial_volume_ml: 'intracranial volume',
+};
 
-/** The server's error message ({"error": {"message"}} from the API, or FastAPI's {"detail"}), or ''. */
-function serverMessage(error: unknown): string {
-  const data = (error as any)?.response?.data;
-  const message = data?.error?.message ?? data?.detail;
-  return typeof message === 'string' ? message : '';
+/** The server's error code and its parameters ({"error": {"code", "details"}}), when the server sent them. */
+function serverError(error: unknown): { code?: string; details: Record<string, unknown> } {
+  const e = (error as any)?.response?.data?.error;
+  if (!e || typeof e !== 'object') return { details: {} };
+  return {
+    code: typeof e.code === 'string' ? e.code : undefined,
+    details: e.details && typeof e.details === 'object' ? e.details : {},
+  };
 }
 
 function TypedCount({ testId, length }: { testId: string; length: number }) {
@@ -128,13 +158,13 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   const handleCopy = async () => {
     if (!report) return;
     try {
-      await navigator.clipboard.writeText(report.content);
+      await navigator.clipboard.writeText(textToCopy(report));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
       const textarea = document.createElement('textarea');
-      textarea.value = report.content;
+      textarea.value = textToCopy(report);
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand('copy');
@@ -147,6 +177,22 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
   const handleReset = () => {
     setReport(null);
     generateMutation.reset();
+  };
+
+  // I16 (tenth review): the message of the server's error code; a code the panel does not know (or no server answer at
+  // all) keeps the transport's text or the generic message.
+  const errorMessage = (error: unknown): string => {
+    const { code, details } = serverError(error);
+    const entry = code ? REPORT_ERROR_MESSAGES[code] : undefined;
+    if (!entry) return (error as Error)?.message || t('report.generateError', 'Report generation failed');
+    if (code === 'implausible_measurement') {
+      const field = typeof details.field === 'string' ? details.field : '';
+      const measurement = field in MEASUREMENT_NAMES
+        ? t(`report.measurementNames.${field}`, MEASUREMENT_NAMES[field])
+        : t('report.measurementNames.unknown', 'measurement');
+      return t(entry[0], { defaultValue: entry[1], measurement });
+    }
+    return t(entry[0], entry[1]);
   };
 
   const templateIcons: Record<ReportTemplateType, string> = {
@@ -295,17 +341,10 @@ export const AIReportPanel: React.FC<AIReportPanelProps> = ({
 
               {/* Error */}
               {generateMutation.isError && (
-                <div className="p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
-                  {/* CAPA-008: a 422 means no measurement was available — say so instead of a generic error.
-                      Release 2026-10-25 (review of PR #69, item 6): unless the server says the image geometry could
-                      not be read (PRB-003: the lesion table is derived on the server) — then that, in its own words. */}
-                  {(generateMutation.error as any)?.response?.status === 422
-                    ? (serverMessage(generateMutation.error).startsWith(GEOMETRY_UNREADABLE_PHRASE)
-                      ? t('report.geometryUnreadable', 'The image geometry could not be read, so the report was not generated. Nothing was sent to the AI service.')
-                      : serverMessage(generateMutation.error).startsWith(LESION_TABLE_FAILED_PHRASE)
-                      ? t('report.lesionTableFailed', 'The lesion measurements could not be computed on the server, so the report was not generated. Nothing was sent to the AI service.')
-                      : t('report.noMeasurements', 'No measurements are available for this study. Open a segmentation and run its analysis first: a report without measurements would be invented.'))
-                    : (generateMutation.error as Error)?.message || t('report.generateError', 'Report generation failed')}
+                <div data-testid="report-error" className="p-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded text-xs text-red-700 dark:text-red-300">
+                  {/* CAPA-008 (nothing_to_report), release 2026-10-25 (geometry_unreadable, lesion_table_failed) and the
+                      tenth review of PR #78 (I16): the message of the server's error CODE, in the user's language */}
+                  {errorMessage(generateMutation.error)}
                 </div>
               )}
 

@@ -1,0 +1,31 @@
+{
+  "executed": "2026-11-12T02:35:11",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "frontend/src/components/AIReportPanel.tsx": "38c9a655fdf6a461190a3c35066bf26bf8f14a8239ba27f282ca95b438edc61a"
+  },
+  "tests": [
+    "tests/unit/test_capa008_assistant_read_only.py",
+    "tests/unit/test_longitudinal_clinical_rules.py"
+  ],
+  "mutations": {
+    "R2_ui_hides_the_reason": {
+      "failed": 1,
+      "passed": 45,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc034_report_panel_states_why_a_report_was_refused"
+      ],
+      "reintroduces": "the report panel no longer explains the refusal",
+      "applied": true
+    }
+  },
+  "restored": {
+    "failed": 0,
+    "passed": 46,
+    "errors": 0,
+    "failing_tests": []
+  },
+  "undetected": []
+}

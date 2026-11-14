@@ -91,6 +91,9 @@ class AuditEventType(str, Enum):
     CLINICAL_LESION_ANNOTATION = "clinical.lesion.annotation"
     CLINICAL_LONGITUDINAL_REVIEW = "clinical.longitudinal.review"
     CLINICAL_AI_REPORT_GENERATE = "clinical.ai_report.generate"
+    # RC-104 (REQ-SAFE-050; DRAFT, PENDING owner approval): each model attempt of the verified report and its outcome
+    CLINICAL_AI_REPORT_ATTEMPT = "clinical.ai_report.attempt"
+    CLINICAL_AI_REPORT_VERIFICATION = "clinical.ai_report.verification"
     CLINICAL_AI_RUN = "clinical.ai.run"
     # Fifth review of PR #81 (F4; DRAFT): a consultation of the single quality gate is not an AI run
     QUALITY_GATE_CONSULTATION = "clinical.quality_gate.consultation"
@@ -111,6 +114,12 @@ class AuditEventType(str, Enum):
     SECURITY_ENCRYPTION_FAILURE = "security.encryption.failure"
     SECURITY_DATA_INTEGRITY_VIOLATION = "security.data.integrity_violation"
     SECURITY_KEY_COMPROMISED = "security.key.compromised"
+    # PRB-032: the input validators referenced these four members, which never existed, so every detection raised
+    # AttributeError before its audit event and its *Detected exception (500 instead of 400, nothing audited).
+    SECURITY_INJECTION_ATTEMPT = "security.injection.attempt"
+    SECURITY_XSS_ATTEMPT = "security.xss.attempt"
+    SECURITY_PATH_TRAVERSAL = "security.path_traversal"
+    SECURITY_INVALID_INPUT = "security.invalid_input"
 
     # Administrative Events (A.12.4.3)
     ADMIN_USER_CREATED = "admin.user.created"
@@ -299,6 +308,12 @@ DETAIL_KEYS = frozenset({
     "skull_report",            # K4 (twelfth review): the skull outcome as the browser reported it, labelled as such
     "full_reason",             # A2 (thirteenth review): a reason longer than the code field, kept whole
     "route_record",            # K1 (fourteenth review): the middleware's record where the route's could not be confirmed
+    # RC-104 (verified AI report, DRAFT): codes, counts and the SHA-256 of the request — never its text
+    "flow", "attempt", "model_id", "model_answered", "prompt_sha256", "verdict", "rule_ids", "latency_ms",
+    "stop_reason", "input_tokens", "output_tokens", "error", "report_outcome", "interpretive_text", "attempts",
+    "llm_reason",
+    # (eleventh review of PR #78, C2: a regeneration the time budget no longer allowed — a flag, not an attempt)
+    "retry_skipped_budget",
 })
 
 # K7 (fourteenth review of PR #81): the CLOSED registry of audit reasons. A reason is persisted — in full, however long

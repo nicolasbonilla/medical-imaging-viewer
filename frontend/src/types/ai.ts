@@ -210,6 +210,19 @@ export interface ReportAppNote {
   lines: string[];
 }
 
+/** How the verified draft was obtained (REQ-FUNC-116, RC-103/RC-104; DRAFT): codes only, never text of the answer. */
+export interface ReportVerification {
+  flow: string;
+  /** passed_0 / passed_1 / passed_2 / blocked / withheld / not_requested */
+  outcome: string;
+  /** delivered: the checked AI comments are in the draft; withheld: asked, not delivered; not_requested: nothing sent */
+  interpretive_text: 'delivered' | 'withheld' | 'not_requested' | string;
+  reason?: string | null;
+  attempts: number;
+  rules_failed_last_attempt?: string[];
+  not_included?: string[];
+}
+
 export interface ReportResponse {
   report_id: string;
   /** The whole draft as one text, for copy and export (fixed headings; typed text and notes quoted). */
@@ -217,8 +230,10 @@ export interface ReportResponse {
   template_type: ReportTemplateType;
   language: string;
   processing_time_ms: number;
-  model?: string;
-  tokens_used?: { input: number; output: number };
+  /** The model that answered; null when no model was asked (a measurements-only draft). */
+  model?: string | null;
+  tokens_used?: { input: number; output: number } | null;
+  verification?: ReportVerification | null;
   /** CAPA-014: the parts of the draft. The viewer renders all but `ai_text` outside the Markdown renderer. */
   disclaimer?: string | null;
   clinician_entry?: ReportClinicianEntry | null;

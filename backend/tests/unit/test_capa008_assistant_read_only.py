@@ -439,6 +439,7 @@ def test_rc035_ui_shows_counts_not_a_withdrawn_rule():
 @pytest.mark.unit
 def test_rc034_report_panel_states_why_a_report_was_refused():
     panel = _src(FRONTEND / "components" / "AIReportPanel.tsx")
-    assert "status === 422" in panel and "report.noMeasurements" in panel
+    # (amended with the tenth review of PR #78, I16: the panel maps the server's code, not the status 422)
+    assert "nothing_to_report: ['report.noMeasurements'" in panel
     for lang in ("en", "es", "de"):
         assert json.loads(_src(FRONTEND / "i18n" / "locales" / f"{lang}.json"))["report"]["noMeasurements"]

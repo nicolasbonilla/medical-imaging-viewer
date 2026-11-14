@@ -108,10 +108,12 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                         "the report prompt labels candidates as active disease"),
     "B13_report_notice_removed": ([(AIR, "        if notice:   # CAPA-013", "        if False:   # CAPA-013")],
                                   "a report draft with longitudinal data ends without the unconfirmed-candidate notice"),
-    "B14_assistant_receives_flags": ([(MCPB, "                if k not in UNCONFIRMED_ACTIVITY_KEYS}\n", "                if True}\n")],
+    "B14_assistant_receives_flags": ([(MCPB,  # re-anchored on PR #79 (one view: identifiers and activity flags)
+                                       '                if str(k).replace("_", "").lower() not in IDENTIFIER_KEYS and k not in UNCONFIRMED_ACTIVITY_KEYS}\n',
+                                       '                if str(k).replace("_", "").lower() not in IDENTIFIER_KEYS}\n')],
                                      "the assistant receives activity / DIT flags"),
-    "B15_assistant_may_record_decisions": ([(MCPB, '    "/ai/report/generate",\n})',
-                                             '    "/ai/report/generate",\n    "/segmentation/longitudinal/review",\n})')],
+    "B15_assistant_may_record_decisions": ([(MCPB, '    "/segmentation/longitudinal/compare",\n})',
+                                             '    "/segmentation/longitudinal/compare",\n    "/segmentation/longitudinal/review",\n})')],
                                            "the read-only assistant can record a radiologist decision"),
     # ── RC-061: measured false-candidate rate from the versioned asset ──
     "E1_rate_hard_coded": ([(LCS, '            "false_candidates_per_patient": float(m["false_candidates_per_patient"]),\n',
@@ -262,6 +264,14 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
 }
 
 # Mutations that are NOT defects (equivalent code), stated rather than claimed as tested.
+# Ninth review of PR #78, I15: these mutations targeted the report's retired prompt builder and template texts in
+# brain_report_service.py (removed by the verified report: T5, V8), so their anchors no longer exist; not run.
+# Replaced by: scripts/safety/verified_report_negative_controls.py — L5-L11 (the change candidates, the notice, the
+# small new lesions), C17-C22 and C29-C42 (activity words and counts in the comments), F1-F29 (the code-written draft).
+RETIRED_WITH_THE_VERIFIED_REPORT = {name: M.pop(name)[1] for name in (
+    "B10_report_template_activity_classification", "B11_report_prompt_activity_word",
+    "B16_report_states_a_reader_confirmation", "E9_template_list_offers_neda", "A11_report_states_load_when_abstained")}
+
 EXPECTED_UNDETECTED = {}
 
 

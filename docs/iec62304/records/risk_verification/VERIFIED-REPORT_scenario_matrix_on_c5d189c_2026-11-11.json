@@ -1,0 +1,66 @@
+{
+  "executed": "2026-11-11",
+  "purpose": "failing-first: the seventh independent review's combinatorial invariant suite (I1-I8) on the reviewed head, before any correction",
+  "tree": "c5d189c (feat/report-agent-verified, head reviewed by the seventh independent review)",
+  "test_file": "backend/tests/unit/test_verified_report_scenario_matrix.py",
+  "test_sha256": "e9da28e428f043db4d233267a2f87fe529690658bfa751a14de03fb3b6f2e06f",
+  "matrix": {
+    "dimensions": {
+      "lesion_analysis": [
+        "absent",
+        "not_available",
+        "computed"
+      ],
+      "dis_assessment": [
+        "absent",
+        "not_evaluated",
+        "evaluated_met",
+        "evaluated_not_met"
+      ],
+      "longitudinal": [
+        "absent",
+        "complete",
+        "null_counts",
+        "small_new"
+      ],
+      "volumetry": [
+        "absent",
+        "present"
+      ],
+      "review_source": [
+        "automatic",
+        "manual",
+        "not_recorded"
+      ],
+      "clinician_entry": [
+        "none",
+        "indication",
+        "technique",
+        "observations"
+      ]
+    },
+    "cases": 1128,
+    "note": "combinations with nothing the report can write are excluded (the route refuses them, 422)",
+    "i7_cases": 94
+  },
+  "violating_cases_per_invariant": {
+    "I1": 360,
+    "I2": 276,
+    "I3": 0,
+    "I4": 1128,
+    "I5": 348,
+    "I6": 0
+  },
+  "cases_violating_at_least_one_of_I1_to_I6": 1128,
+  "tests_failed": [
+    "test_i1_every_requested_block_once_and_no_block_that_was_not_requested",
+    "test_i2_an_unevaluated_dis_is_stated_once_whatever_else_is_present",
+    "test_i4_small_new_lesions_are_never_dropped_silently",
+    "test_i5_the_automatic_marking_notice_only_for_an_automatic_review_source",
+    "test_i7_the_model_is_called_only_when_something_computable_is_there",
+    "test_i8_the_audit_counts_every_model_call_also_after_an_exception[change_notice]",
+    "test_i8_the_audit_counts_every_model_call_also_after_an_exception[_apply_disclaimer]",
+    "test_i8_the_audit_counts_every_model_call_also_after_an_exception[regeneration_message]"
+  ],
+  "summary": "8 of 11 tests failed; 1128 of 1128 cases violate I1-I6"
+}

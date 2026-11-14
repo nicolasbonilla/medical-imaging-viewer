@@ -1,6 +1,18 @@
 """
 Brain Report Generation Service using Claude API.
 
+VERIFIED REPORT (REQ-FUNC-116, REQ-SAFE-048..051; RC-102..RC-106; HAZ-003, HAZ-013, HAZ-016, HAZ-017 — DRAFT,
+PENDING owner approval). `generate_report` no longer asks the model to write the report. It runs the fixed flow of
+`verified_report` (benchmark arm A3, `research/agents-benchmark` @ f3c1976): code writes every number and status from
+the device's measurements; the model writes only two short comments; every answer passes the frozen claim check
+(`report_claim_verifier`) or is regenerated (at most twice) and finally withheld; every attempt goes to the audit log.
+The model is one of `REPORT_MODELS` (default `claude-sonnet-5-5`; the former `claude-sonnet-4-5-20250929` retires on
+2026-11-30 and is refused); `REPORT_LLM_ENABLED=false` switches the model off (measurements-only report).
+The former templates (`REPORT_TEMPLATES`, `_build_findings_prompt`, `dis_not_evaluated_template`, ...) were RETIRED
+from the report path and are no longer in this module (third independent review of PR #78, T5): they are archived,
+unchanged and NOT shipped, in docs/archive/retired_report_prompt.py, as the reference of the design the benchmark
+measured (arm A0). The template ids are still accepted (`TEMPLATE_IDS`, recorded).
+
 Generates structured radiology reports for brain MRI studies
 focused on Multiple Sclerosis evaluation following international standards:
 - MAGNIMS-CMSC-NAIMS 2021 consensus guidelines
@@ -8,14 +20,15 @@ focused on Multiple Sclerosis evaluation following international standards:
 - 2017 McDonald diagnostic criteria
 - ACR Practice Parameter for Communication
 
-Templates: general, ms_activity, ms_lesion_burden, ms_longitudinal.
+Template ids: general, ms_activity, ms_lesion_burden, ms_comprehensive, ms_longitudinal (recorded; one verified structure).
 
 Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
-- Measurements only. The prompt is built from a structured payload (`report_payload_guard`): the
-  device's measurements, labels from the device's fixed vocabulary (any other label as a numbered
-  placeholder), sex (M/F) and a 5-year age band. No free-text or user-typed field is sent; the
-  clinician's text is added to the draft by the route after the model returns. The system prompt is a
-  fixed template.
+- Measurements only (verified report, DRAFT). The model receives the measurement record that
+  `verified_report` builds from the part of the structured payload (`report_payload_guard`) the report writes —
+  counts, volumes, size classes, the four MAGNIMS regions and DIS only when a radiologist confirmed them, change
+  candidates, brain volumes; no sex, no age band, no per-lesion value, no label typed by a user — and the
+  code-written report. No free-text or user-typed field is sent; the clinician's text is added to the draft by the
+  route after the model returns. The system prompt is one fixed text, `verified_report.SYSTEM_PROMPT`.
 - Before the call, a detection-only check of the final prompt (the patient's own identifiers from
   the patient record, and generic identifier patterns) refuses to send on any finding; without the
   patient's record nothing is sent (fail closed).
@@ -24,26 +37,198 @@ Data sent to the model provider (CAPA-014; RC-064, RC-065, RC-066; HAZ-016):
 @module services.brain_report_service
 """
 
-import re
+import asyncio
+import copy
+import inspect
+import weakref
 import time
 import uuid
+from datetime import date
 from functools import lru_cache
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.services import verified_report
 from app.services.report_payload_guard import (
     UNLISTED,
+    IdentifierInPrompt,
+    ImplausibleMeasurement,
     PatientIdentifiers,
     PatientRecordUnavailable,
+    ProviderGuardError,
     assert_no_identifiers,
-    label_vocabulary,
-    percent_text,
-    provider_payload,
+    assert_no_patient_numbers,
+    project_measurements,
     words_of,
 )
+from app.services.report_payload_guard import _KNOWN_FIELDS
 
 logger = get_logger(__name__)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RC-106 (REQ-SAFE-051; HAZ-017, HAZ-013) — DRAFT, PENDING owner approval.
+# The models this version may call for the two comments, each with the request parameters it is called with
+# (the configurations pre-registered for the benchmark, PREREG.md §4: thinking off, effort low). "Thinking off" is sent
+# as each model accepts it (Claude API reference, 2026-11; eighth review of PR #78, finding 5): Claude Sonnet 5.5
+# rejects {"type": "disabled"} (400) — {"type": "between_tools"} is its documented way to turn thinking off (accepted
+# at effort high or below, no other field), and these requests carry no tools, so no thinking is produced:
+# max_tokens and the 25 s budget hold only the two comments. Claude Haiku 5.5 accepts {"type": "disabled"} at effort
+# high or below. The SDK pinned in
+# requirements.txt (anthropic 0.44.0) predates `thinking` and `output_config`, so they are sent as extra body fields.
+# Any other id — the retiring `claude-sonnet-4-5-20250929` (2026-11-30) included — is refused: the report is
+# delivered with the measurements only and the reason. Changing the model is a change of this table (change control,
+# SOUP-001), never only an environment variable.
+# ─────────────────────────────────────────────────────────────────────────────
+DEFAULT_REPORT_MODEL = "claude-sonnet-5-5"
+REPORT_MODELS: Dict[str, Dict[str, Any]] = {
+    "claude-sonnet-5-5": {"params": {"thinking": {"type": "between_tools"}, "output_config": {"effort": "low"}},
+                          "retires_on": None, "soup": "SOUP-BE-029"},
+    "claude-haiku-5-5": {"params": {"thinking": {"type": "disabled"}, "output_config": {"effort": "low"}},
+                         "retires_on": None, "soup": "SOUP-BE-030"},
+}
+# Ids known to be retired or retiring (Claude API dates). FOR THE LOG MESSAGE ONLY (review of PR #78, R9): what may be
+# called is decided by REPORT_MODELS and its `retires_on` alone — one mechanism.
+RETIRED_OR_RETIRING_MODELS: Dict[str, str] = {
+    "claude-sonnet-4-5-20250929": "2026-11-30", "claude-sonnet-4-5": "2026-11-30",
+    "claude-sonnet-4-20250514": "2026-06-15", "claude-3-7-sonnet-20250219": "2026-02-19",
+    "claude-3-5-sonnet-20241022": "2025-10-28", "claude-3-5-sonnet-20240620": "2025-10-28",
+}
+
+
+def report_model_allowed(model_id: Any, today: Optional[date] = None) -> bool:
+    """RC-106: True only for an id of REPORT_MODELS whose retirement date (if any) is still ahead."""
+    entry = REPORT_MODELS.get(model_id) if isinstance(model_id, str) else None
+    if entry is None:
+        return False
+    retires = entry.get("retires_on")
+    return retires is None or (today or date.today()) < date.fromisoformat(retires)
+
+
+class LabelInRecord(ProviderGuardError):
+    """Review of PR #78, R8: a numbered placeholder of an unlisted label reached the measurement record — the record
+    carries only code-chosen strings by design, so this cannot happen; if it does, nothing is sent (fail closed)."""
+
+
+def _refusal_code(exc: BaseException) -> str:
+    """RC-104: the audit-safe reason of a request refused before any model call (review of PR #78, R7)."""
+    for cls, code in ((PatientRecordUnavailable, "patient_record_unavailable"),
+                      (IdentifierInPrompt, "identifier_in_request"),
+                      (ImplausibleMeasurement, "implausible_measurement"),
+                      (LabelInRecord, "label_in_request")):
+        if isinstance(exc, cls):
+            return code
+    return "privacy_check_refused"
+
+
+class ProviderWiringFault(Exception):
+    """The provider client returned something that is not a model answer (a wiring fault of this server; fourth
+    review of PR #78, Q5): a provider-side failure, never read as an answer that failed the check."""
+
+
+def _failure_reason(exc: BaseException) -> str:
+    """RC-106: the audit-safe reason of a provider failure (404 = the model is no longer served)."""
+    name = type(exc).__name__
+    if isinstance(exc, ProviderWiringFault):
+        return verified_report.REASON_WIRING
+    if getattr(exc, "status_code", None) == 404 or name == "NotFoundError":
+        return verified_report.REASON_MODEL_UNAVAILABLE
+    if "Timeout" in name:
+        return verified_report.REASON_TIMEOUT
+    return verified_report.REASON_PROVIDER
+
+
+def _block_field(block: Any, name: str) -> Any:
+    return block.get(name) if isinstance(block, dict) else getattr(block, name, None)
+
+
+def reply_of(message: Any) -> "verified_report.ModelReply":
+    """The model's answer, read by block TYPE: only `text` blocks count (a thinking or other block — which the pinned
+    SDK returns as an unvalidated object — is never read as the answer, unlike `content[0].text`). Something that is
+    not a message (no list of content blocks) is a wiring fault, not an empty answer (fourth review of PR #78, Q5)."""
+    blocks = getattr(message, "content", None)
+    if not isinstance(blocks, (list, tuple)):
+        raise ProviderWiringFault(type(message).__name__)
+    text = "".join(_block_field(b, "text") or "" for b in blocks
+                   if _block_field(b, "type") == "text" and isinstance(_block_field(b, "text"), str))
+    usage = getattr(message, "usage", None)
+
+    def tokens(name):
+        value = getattr(usage, name, 0) if usage is not None else 0
+        return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+    stop = getattr(message, "stop_reason", None)
+    model = getattr(message, "model", None)
+    return verified_report.ModelReply(text=text, stop_reason=stop if isinstance(stop, str) else None,
+                                      model=model if isinstance(model, str) else None,
+                                      input_tokens=tokens("input_tokens"), output_tokens=tokens("output_tokens"))
+
+
+class _ReportAudit:
+    """RC-104 (REQ-SAFE-050): every attempt and the outcome of each report in the server audit log (stdout + the
+    durable store, CAPA-015) — codes, counts, the prompt's SHA-256; never the prompt, the record or the answer."""
+
+    def __init__(self, report_id: str, actor: Any, segmentation_id: Optional[str], template_type: str, language: str):
+        self.report_id, self.actor, self.segmentation_id = report_id, actor, segmentation_id
+        self.template_type, self.language = template_type, language
+        self.attempts_recorded = 0      # seventh review of PR #78, finding 3 (I8)
+
+    def _emit(self, event_type, outcome, details, severity):
+        from app.core.logging.audit import emit_audit
+        role = getattr(self.actor, "role", None)
+        emit_audit(event_type, outcome, user_id=getattr(self.actor, "id", None),
+                   username=getattr(self.actor, "username", None), role=role, resource_type="report",
+                   resource_ids={"report_id": self.report_id,
+                                 **({"segmentation_id": self.segmentation_id} if self.segmentation_id else {})},
+                   details={"template_type": self.template_type, "language": self.language,
+                            "flow": verified_report.FLOW_CODE, **details},
+                   severity=severity)
+
+    def attempt(self, record: Dict[str, Any]) -> None:
+        from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
+        self.attempts_recorded += 1
+        outcome = AuditOutcome.SUCCESS if record.get("verdict") == "pass" else AuditOutcome.FAILURE
+        details = {k: record.get(k) for k in ("attempt", "model_id", "model_answered", "prompt_sha256", "verdict",
+                                              "rule_ids", "latency_ms", "stop_reason", "input_tokens",
+                                              "output_tokens", "error") if record.get(k) is not None}
+        self._emit(AuditEventType.CLINICAL_AI_REPORT_ATTEMPT, outcome, details, AuditSeverity.LOW)
+
+    def outcome(self, result: "verified_report.FlowResult", model_id: Optional[str]) -> None:
+        from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
+        withheld = result.interpretive == "withheld" or (result.reason not in (None, verified_report.REASON_OFF,
+                                                                                verified_report.REASON_NOTHING_TO_COMMENT))
+        # eleventh review of PR #78, C2 (I17): `attempts` counts the requests sent; a regeneration the time budget no
+        # longer allowed is recorded apart
+        details = {"report_outcome": result.outcome, "interpretive_text": result.interpretive,
+                   "attempts": sum(1 for a in result.attempts if a.get("verdict") != "not_sent"), "model_id": model_id,
+                   "model_answered": result.model_answered, "llm_reason": result.reason,
+                   "retry_skipped_budget": True if getattr(result, "retry_skipped_budget", False) else None}
+        self._emit(AuditEventType.CLINICAL_AI_REPORT_VERIFICATION,
+                   AuditOutcome.PARTIAL if withheld else AuditOutcome.SUCCESS,
+                   {k: v for k, v in details.items() if v is not None},
+                   AuditSeverity.MEDIUM if withheld else AuditSeverity.LOW)
+
+    def not_sent(self, exc: BaseException) -> None:
+        """Review of PR #78, R7: a draft that ends before any model call — a privacy check refused it (denied) or it
+        failed (failure) — is audited too; the reason is a code, never the message."""
+        from app.core.logging.audit import AuditEventType, AuditOutcome, AuditSeverity
+        refused = isinstance(exc, ProviderGuardError)
+        called = self.attempts_recorded
+        if called:
+            # seventh review of PR #78, finding 3 (I8): an exception AFTER one or more model calls is an error with the
+            # attempts really made — never "not sent, 0 attempts" (tenth review, I17: a cancelled request too)
+            details = {"report_outcome": "cancelled" if isinstance(exc, asyncio.CancelledError) else "error",
+                       "interpretive_text": "withheld", "attempts": called,
+                       "llm_reason": _refusal_code(exc) if refused else None, "error": type(exc).__name__}
+        else:
+            details = {"report_outcome": "not_sent" if refused else "error", "interpretive_text": "not_sent",
+                       "attempts": 0, "llm_reason": _refusal_code(exc) if refused else None,
+                       "error": None if refused else type(exc).__name__}
+        refused = refused and not called
+        self._emit(AuditEventType.CLINICAL_AI_REPORT_VERIFICATION,
+                   AuditOutcome.DENIED if refused else AuditOutcome.FAILURE,
+                   {k: v for k, v in details.items() if v is not None}, AuditSeverity.MEDIUM)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # RC-006 — risk control for HAZ-003 (AI report hallucination, severity S5).
@@ -104,462 +289,108 @@ def _apply_disclaimer(content: str, language: str) -> str:
     return f"{disclaimer}\n\n{body}"
 
 
-# CAPA-014 (RC-064): the model never receives the clinician's text; the route adds it to the draft.
-CLINICIAN_TEXT_INSTRUCTION = (
-    "The clinical indication, the technique and the clinician's notes are not provided to you: they are "
-    "added to the draft by the application. Under CLINICAL INDICATION and TECHNIQUE write only: "
-    "\"See the clinician's entry at the top of this draft.\""
-)
+# The template ids the route still accepts (recorded only): every one gives the same verified structure. The
+# retired templates themselves are archived in docs/archive/retired_report_prompt.py (NOT shipped; third review
+# of PR #78, T5).
+TEMPLATE_IDS = ("general", "ms_activity", "ms_lesion_burden", "ms_comprehensive", "ms_longitudinal")
 
 
-# PRB-003 (RC-070; HAZ-008, HAZ-003): passed instead of a DIS result whenever DIS was not evaluated on a
-# segmentation a radiologist confirmed (paper A: the device's brain-DIS rule on raw automatic segmentations
-# returned "DIS met" in 19 of 100 healthy controls). It overrides the templates, which ask for a DIS table.
-DIS_NOT_EVALUATED_PROMPT = (
-    "\nDIS Assessment: NOT EVALUATED — requires clinician review of the segmentation (no radiologist has "
-    "confirmed the lesions and regions of this segmentation in its current version).\n"
-    "  SAFETY RULE (overrides the template and rule 4): Do NOT state or imply dissemination in space — "
-    "neither met nor not met, supported nor not supported, nor how many typical MS regions are involved — "
-    "from the lesion counts, the regions or any other value. In the DIS section write only: "
-    "'Dissemination in space: not evaluated (requires clinician review of the segmentation).' "
-    "Automatic marking also marks spots in most healthy brains; a marked spot is not evidence of "
-    "multiple sclerosis."
-)
+# The DIS state of a draft (fifth review of PR #78, V8): the view's status -> the response's typed field.
+DIS_EVALUATION = {"evaluated": "evaluated", "not evaluated": "not_evaluated",
+                  verified_report.DIS_NOT_IN_REPORT: "not_in_report"}
 
 
-# PRB-003 (review of PR #68, finding 4): when DIS was not evaluated, the template itself carries no DIS
-# instruction — its DIS sections are replaced, any other line asking for DIS is removed, and format rule 4 keeps
-# only its CMSC prohibition. The not-evaluated rule is no longer only in the user message.
-_DIS_SECTION = re.compile(r"^(#{2,3}) [^\n]*(?:Dissemination in Space|DIS ASSESSMENT)[^\n]*\n.*?(?=^#{2,3} |\Z)",
-                          re.MULTILINE | re.DOTALL)
-_DIS_INSTRUCTION = re.compile(r"\bDIS\b|dissemination in space|typical MS regions", re.IGNORECASE)
-DIS_NOT_EVALUATED_LINE = ("Write only: 'Dissemination in space: not evaluated (requires clinician review of the "
-                          "segmentation).'")
-DIS_NOT_EVALUATED_SYSTEM_RULE = (
-    "SAFETY RULE (overrides everything below): dissemination in space was NOT evaluated for this segmentation — "
-    "no radiologist has confirmed its lesions and their regions. Never state or imply dissemination in space, "
-    "a McDonald space item or a number of regions involved, in any section. " + DIS_NOT_EVALUATED_LINE + "\n\n"
-)
-_RULE4_NOT_EVALUATED = ("4. Per CMSC Task Force guidance, **never write** 'McDonald criteria are met' or 'McDonald "
-                        "criteria are not met' — this requires full clinical correlation. Dissemination in space "
-                        "was not evaluated: " + DIS_NOT_EVALUATED_LINE)
+# The review sources of an automatic marking (the automatic-marking notice is for these only; seventh review, finding 7)
+AUTOMATIC_REVIEW_SOURCES = ("ai_draft", "automatic_tool")
 
 
-# Release 2026-10-25 (integration review of PR #69, item 1): without an evaluated DIS the route withholds the
-# regions (PRB-003) and the RC-064 payload drops the region of every lesion row; the prompt says so in this fixed
-# line instead of a numbered placeholder ("[unlisted label 1] = not confirmed").
-REGIONS_NOT_CONFIRMED_LINE = ("  Lesion regions: not confirmed by a radiologist; not given. Do not assign, count or "
-                              "tabulate the lesions by region.")
+def _review_source(findings: Any) -> Optional[str]:
+    """The segmentation source code of the server's DIS state (`ai_draft`, `automatic_tool`, `origin_not_recorded`),
+    set by the report route from the stored segmentation; anything else: None (fixed "not confirmed" text)."""
+    block = findings.get("dis_assessment") if isinstance(findings, dict) else None
+    review = block.get("segmentation_review") if isinstance(block, dict) else None
+    source = review.get("source") if isinstance(review, dict) else None
+    return source if source in ("ai_draft", "automatic_tool", "origin_not_recorded") else None
 
 
-# Second review of PR #68, N4: without an evaluated DIS the regions are not confirmed and are not sent to the
-# model, so no template may ask for a per-region section, a region column or a regional distribution either.
-_REGION_SECTION = re.compile(r"^### (?:Periventricular|Cortical / Juxtacortical|Infratentorial|Deep White Matter|"
-                             r"Regional Distribution)[^\n]*\n.*?(?=^#{2,3} |\Z)", re.MULTILINE | re.DOTALL)
-REGIONS_NOT_CONFIRMED_SECTION = (
-    "### White Matter Lesions\n"
-    "- Lesion count, total volume and size distribution as measured. The lesions' anatomical regions were not "
-    "confirmed by a radiologist and are not given: do not assign, count or tabulate lesions by region.\n\n")
-_REGION_LINE_EDITS = (
-    (re.compile(r"^Detailed lesion inventory by anatomical region:\n", re.MULTILINE), ""),
-    (re.compile(r"^\| # \| Region \| ", re.MULTILINE), "| # | "),
-    (re.compile(r"^\|---\|--------\|", re.MULTILINE), "|---|"),
-    (re.compile(r"^\| Region \| Count \| Change vs\. Prior \|$", re.MULTILINE),
-     "| Measure | Value | Change vs. Prior |"),
-    (re.compile(r" \(region\) \|"), " |"),
-    (re.compile(r"^\d+\. \*\*Distribution pattern\*\*:[^\n]*\n", re.MULTILINE), ""),
-    (re.compile(r"extensive periventricular confluency"), "extensive confluency"),
-    (re.compile(r",? and (?:reference )?(?:the )?2017 McDonald(?: diagnostic)? criteria"), ""),
-)
+# RC-106 (fifth review of PR #78, V4; sixth review, W6): ONE provider client (and its connection pool) per API key
+# and per running event loop — an httpx pool belongs to the loop it was opened on, so a client of a closed loop is
+# never reused ("Event loop is closed") — configured with the allowed time budget, closed at shutdown (main.py).
+# Loops are weak keys, and closed loops are dropped on every look-up.
+_CLIENTS_BY_LOOP: "weakref.WeakKeyDictionary[Any, Dict[str, Any]]" = weakref.WeakKeyDictionary()
 
 
-def dis_not_evaluated_template(system_prompt: str) -> str:
-    """The template without any DIS instruction and without any per-region section, for a draft whose DIS was
-    not evaluated (RC-070; review of PR #68, finding 4; second review, N4)."""
-    text = _DIS_SECTION.sub(lambda m: f"{m.group(1)} Dissemination in Space (DIS) Assessment\n"
-                                      f"{DIS_NOT_EVALUATED_LINE}\n\n", system_prompt)
-    removed = []
+def _client_cache() -> Dict[str, Any]:
+    loop = asyncio.get_running_loop()       # the client is only ever used on the request's loop (seventh review, 9)
+    for old in [lp for lp in list(_CLIENTS_BY_LOOP.keys()) if lp.is_closed()]:
+        _CLIENTS_BY_LOOP.pop(old, None)
+    return _CLIENTS_BY_LOOP.setdefault(loop, {})
 
-    def _one_section(_match):          # the per-region sections become ONE section without regions
-        removed.append(_match)
-        return REGIONS_NOT_CONFIRMED_SECTION if len(removed) == 1 else ""
 
-    text = _REGION_SECTION.sub(_one_section, text)
-    for pattern, replacement in _REGION_LINE_EDITS:
-        text = pattern.sub(replacement, text)
-    kept = []
-    for line in text.split("\n"):
-        if _DIS_INSTRUCTION.search(line) and "not evaluated" not in line and not line.startswith("#"):
-            if line.startswith("4. Per CMSC Task Force guidance"):
-                kept.append(_RULE4_NOT_EVALUATED)
+def _shared_client(api_key: str):
+    cache = _client_cache()
+    client = cache.get(api_key)
+    if client is None:
+        import anthropic
+        # no SDK retry (review of PR #78, R2: a retry got a fresh full timeout); the async client (third review, T3);
+        # its default timeout is the whole budget of a draft (each request is also given the budget that is left)
+        client = anthropic.AsyncAnthropic(api_key=api_key, max_retries=0, timeout=verified_report.LLM_DEADLINE_S)
+        cache[api_key] = client
+    return client
+
+
+def _forget_report_clients() -> None:
+    """Drop every cached client without closing it (tests; a client of another loop cannot be closed from here)."""
+    _CLIENTS_BY_LOOP.clear()
+
+
+async def close_report_clients() -> None:
+    """Close the shared provider clients of the running loop (their connection pools); called at application
+    shutdown. Clients of other, closed loops are dropped."""
+    clients = list((_CLIENTS_BY_LOOP.get(asyncio.get_running_loop()) or {}).values())
+    _forget_report_clients()
+    for client in clients:
+        close = getattr(client, "close", None)
+        if close is None:
             continue
-        kept.append(line)
-    return DIS_NOT_EVALUATED_SYSTEM_RULE + "\n".join(kept)
+        try:
+            done = close()
+            if inspect.isawaitable(done):
+                await done
+        except Exception as e:  # noqa: BLE001 — shutdown goes on
+            logger.warning(f"[Report] Provider client close failed: {type(e).__name__}")
 
 
-# Shared formatting instructions for all templates
-_FORMAT_INSTRUCTIONS = (
-    "\n\n## OUTPUT FORMAT RULES (MANDATORY):\n"
-    "1. Use **Markdown** formatting: `##` for major section headings, `###` for subsections, "
-    "`**bold**` for emphasis, `- ` for bullet lists, and markdown tables where appropriate.\n"
-    "2. **DO NOT** include any patient demographics (name, DOB, MRN, medical record number, "
-    "date of birth, date of study, referring physician, study accession). These are displayed "
-    "separately in the viewer interface. Start directly with clinical content.\n"
-    "3. **DO NOT** use placeholder text like [Patient Name], [DOB], [Date], [MRN]. "
-    "Write the actual clinical report content only.\n"
-    "4. Per CMSC Task Force guidance, **never write** 'McDonald criteria are met' or "
-    "'McDonald criteria are not met' — this requires full clinical correlation. Instead use "
-    "phrasing like 'findings are typical of a demyelinating process such as MS' or "
-    "'lesions in X of 4 typical MS regions, consistent with dissemination in space'.\n"
-    "5. Use MAGNIMS consensus lesion counting: exact count if <20 T2 lesions; ranges "
-    "(20-50, 50-100, >100) for higher counts. Always give exact count for enhancing lesions.\n"
-    "6. Use standardized morphology descriptors: ovoid, round, Dawson's fingers, "
-    "curvilinear, confluent, tumefactive. Enhancement patterns: nodular, open-ring, closed-ring.\n"
-    "7. Grade T2 lesion burden as mild (<10 lesions), moderate (multiple, some confluent), "
-    "or severe (extensive confluent). Grade atrophy as none/mild/moderate/severe for age.\n"
-    "8. Write a professional, evidence-based report suitable for a board-certified "
-    "neuroradiologist. Avoid gratuitous hedging — be precise and direct. HOWEVER, a required "
-    "SAFETY qualification is NOT hedging and MUST be preserved: any measurement labelled a "
-    "'candidate' or 'registration unverified' (e.g. longitudinal new/enlarging counts without "
-    "verified spatial co-registration) MUST be presented as an unadjudicated candidate "
-    "requiring radiologist review, and MUST NOT be asserted as a confirmed finding nor used to "
-    "conclude dissemination in time or active disease. This safety rule overrides directness.\n"
-    "9. Report ONLY values present in the supplied measurements. Never estimate, "
-    "interpolate or invent a count, volume, percentage or measurement. If a value is "
-    "not supplied, write 'not assessed' — do not supply a plausible number.\n"
-    "10. Do NOT cite literature references. Any reference list must come from the "
-    "reporting system, not from you.\n"
-)
-
-# Report templates — system prompts for Claude (MS-focused, MAGNIMS/RSNA compliant)
-REPORT_TEMPLATES: Dict[str, str] = {
-    "general": (
-        "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
-        "demyelinating diseases, writing a structured brain MRI report for Multiple Sclerosis "
-        "evaluation. Follow the MAGNIMS-CMSC-NAIMS 2021 consensus guidelines, RSNA structured "
-        "reporting format, and reference the 2017 McDonald diagnostic criteria.\n\n"
-        "Generate the report with these exact sections:\n\n"
-        "## CLINICAL INDICATION\n"
-        "Restate the clinical indication from the provided data.\n\n"
-        "## TECHNIQUE\n"
-        "Describe the MRI technique based on provided data, or state standard MS protocol "
-        "(3D T2-FLAIR 1mm isotropic, axial T2, pre/post-contrast 3D T1, DWI/ADC). "
-        "Note field strength, contrast agent if provided.\n\n"
-        "## COMPARISON\n"
-        "Reference prior studies if mentioned, otherwise state 'No prior studies available "
-        "for comparison.'\n\n"
-        "## FINDINGS\n"
-        "Organize findings by the 4 DIS anatomical regions per MAGNIMS consensus:\n\n"
-        "### Periventricular White Matter\n"
-        "- Lesion count, morphology (ovoid, Dawson's fingers), direct ventricular contact\n"
-        "- Corpus callosum involvement (callososeptal interface lesions)\n\n"
-        "### Cortical / Juxtacortical\n"
-        "- Lesion count, U-fiber involvement, morphology\n\n"
-        "### Infratentorial\n"
-        "- Lesion count, specific locations (pons, cerebellar peduncles, cerebellum)\n\n"
-        "### Deep White Matter\n"
-        "- Additional non-periventricular deep white matter lesions\n\n"
-        "### Lesion Activity\n"
-        "- Gadolinium-enhancing lesions (exact count, enhancement pattern)\n"
-        "- New T2 lesions vs. prior (if comparison available)\n\n"
-        "### T1 Hypointensities\n"
-        "- Black holes: presence, burden (mild/moderate/severe)\n\n"
-        "### Brain Volume\n"
-        "- Global/regional atrophy assessment (none/mild/moderate/severe for age)\n"
-        "- Ventricular prominence\n\n"
-        "### Other Findings\n"
-        "- Leptomeningeal enhancement, incidental findings, red flags for alternative "
-        "diagnoses (NMOSD features, small vessel disease pattern, etc.)\n\n"
-        "If volumetry data is provided, incorporate quantitative measurements into the "
-        "relevant sections with percentile comparisons.\n\n"
-        "## IMPRESSION\n"
-        "Numbered summary:\n"
-        "1. Total lesion burden and distribution across DIS regions with qualitative grade\n"
-        "2. DIS assessment: lesions in X of 4 typical MS regions\n"
-        "3. DIT assessment (if data supports: concurrent enhancing + non-enhancing, or "
-        "new lesions vs. prior)\n"
-        "4. Disease activity status (active/not active based on enhancing lesions)\n"
-        "5. Brain volume assessment\n"
-        "6. Red flags or atypical features (if any)\n"
-        "7. Recommendations (follow-up timing per MAGNIMS: 3-6 months new baseline on DMT, "
-        "6-12 months for CIS, 1-2 years stable on DMT)\n"
-        + _FORMAT_INSTRUCTIONS
-    ),
-    "ms_activity": (
-        "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
-        "MS disease activity monitoring, writing a structured disease activity assessment "
-        "report. Follow the MAGNIMS-CMSC-NAIMS 2021 consensus, RSNA format, and 2017 "
-        "McDonald criteria for DIS/DIT assessment.\n\n"
-        "Generate the report with these exact sections:\n\n"
-        "## CLINICAL INDICATION\n"
-        "Restate indication, noting current DMT if provided.\n\n"
-        "## TECHNIQUE\n"
-        "MRI technique per MAGNIMS MS protocol recommendations.\n\n"
-        "## COMPARISON\n"
-        "Reference prior studies with emphasis on baseline for comparison.\n\n"
-        "## FINDINGS\n"
-        "Organize by DIS regions (periventricular, cortical/juxtacortical, infratentorial, "
-        "deep WM) with exact lesion counts per region. Emphasize:\n"
-        "- **New lesions** vs. prior study\n"
-        "- **Enlarging lesions** vs. prior study\n"
-        "- **Enhancing lesions** (exact count, pattern: nodular/open-ring/closed-ring)\n\n"
-        "### Dissemination in Space (DIS) Assessment\n"
-        "Tabulate lesion presence across 4 DIS regions per 2017 McDonald:\n"
-        "- Periventricular (>=1 lesion in direct ventricular contact)\n"
-        "- Cortical/juxtacortical (>=1 lesion)\n"
-        "- Infratentorial (>=1 lesion)\n"
-        "- Spinal cord (>=1 lesion, if imaged)\n"
-        "State: 'Lesions involve X of 4 typical MS regions.'\n\n"
-        "### Dissemination in Time (DIT) Assessment\n"
-        "Evaluate:\n"
-        "- Simultaneous enhancing + non-enhancing lesions (supports DIT on single study)\n"
-        "- New T2 lesions compared to prior (supports DIT across studies)\n"
-        "State findings using CMSC-approved phrasing.\n\n"
-        "## DISEASE ACTIVITY ASSESSMENT\n"
-        "- Activity classification: **Active** (new enhancing or new/enlarging T2 lesions) "
-        "vs. **Not active**\n"
-        "- Progression assessment: with or without progression (independent of relapses)\n"
-        "- Disease phenotype implications (RRMS, SPMS, PPMS) based on imaging pattern\n"
-        "- Treatment response assessment: expected vs. breakthrough activity\n\n"
-        "## IMPRESSION\n"
-        "Numbered summary:\n"
-        "1. Disease activity status with specific new/enhancing lesion counts\n"
-        "2. DIS summary (X of 4 regions involved)\n"
-        "3. DIT evidence\n"
-        "4. Activity classification and phenotype assessment\n"
-        "5. Treatment implications and monitoring recommendations\n"
-        "6. Recommended follow-up interval per MAGNIMS guidelines\n"
-        + _FORMAT_INSTRUCTIONS
-    ),
-    "ms_lesion_burden": (
-        "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
-        "quantitative MS neuroimaging, writing a comprehensive lesion burden analysis report. "
-        "Follow MAGNIMS-CMSC-NAIMS 2021 consensus and DIFUTURE structured reporting standards "
-        "for quantitative MS assessment.\n\n"
-        "Generate the report with these exact sections:\n\n"
-        "## CLINICAL INDICATION\n"
-        "Restate indication with focus on lesion burden assessment purpose.\n\n"
-        "## TECHNIQUE\n"
-        "MRI technique. Note sequences used for lesion quantification.\n\n"
-        "## COMPARISON\n"
-        "Reference all available prior studies for longitudinal comparison.\n\n"
-        "## FINDINGS\n"
-        "Detailed lesion inventory by anatomical region:\n\n"
-        "### Periventricular White Matter\n"
-        "- Exact count (or MAGNIMS range if >20), distribution pattern\n"
-        "- Confluency assessment, Dawson's fingers, corpus callosum lesions\n\n"
-        "### Cortical / Juxtacortical\n"
-        "- Count per lobe (frontal, parietal, temporal, occipital)\n"
-        "- U-fiber involvement pattern\n\n"
-        "### Infratentorial\n"
-        "- Brainstem vs. cerebellar peduncle vs. cerebellar count\n"
-        "- Peripheral vs. central location\n\n"
-        "### Deep White Matter\n"
-        "- Non-periventricular deep WM lesion count and distribution\n\n"
-        "### Total T2 Lesion Summary\n"
-        "Present as a markdown table:\n"
-        "| Region | Count | Change vs. Prior |\n\n"
-        "### T1 Hypointensities (Black Holes)\n"
-        "- Count, distribution, new black holes vs. prior\n"
-        "- Chronic tissue destruction burden grade\n\n"
-        "## LESION BURDEN ANALYSIS\n"
-        "- **Overall T2 burden grade**: mild / moderate / severe (per MAGNIMS scale)\n"
-        "- **Confluency**: none, focal, extensive periventricular confluency\n"
-        "- **T1 black hole burden**: ratio of T1 hypointense to T2 hyperintense lesions\n"
-        "- **Brain volume**: global and regional atrophy grade for stated age\n"
-        "- If volumetry data provided: incorporate quantitative volumes with normative "
-        "percentiles, flag structures below 5th or above 95th percentile\n\n"
-        "## LONGITUDINAL COMPARISON\n"
-        "- New T2 lesion count since prior\n"
-        "- Enlarging lesion count\n"
-        "- Resolved enhancing lesions\n"
-        "- Interval volume change (qualitative or quantitative if volumetry available)\n"
-        "- Annualized new lesion rate (if multiple prior studies)\n"
-        "- Evidence of PIRA (progression independent of relapse activity)\n\n"
-        "## IMPRESSION\n"
-        "Numbered summary:\n"
-        "1. Total lesion burden with quantitative summary and grade\n"
-        "2. Distribution across DIS regions\n"
-        "3. Longitudinal trajectory (stable, improving, worsening)\n"
-        "4. Evidence of disease progression or PIRA\n"
-        "5. Treatment efficacy assessment based on interval change\n"
-        "6. Recommendations with specific follow-up interval per MAGNIMS\n"
-        + _FORMAT_INSTRUCTIONS
-    ),
-    "ms_comprehensive": (
-        "You are a PhD-trained neuroradiologist and MS specialist with board certification "
-        "in neuroradiology, fellowship training in demyelinating diseases, and extensive "
-        "publication record in quantitative MS neuroimaging. You are writing a comprehensive, "
-        "publication-quality lesion burden analysis report.\n\n"
-        "Follow ALL of these standards:\n"
-        "- MAGNIMS-CMSC-NAIMS 2021 consensus guidelines for MRI in MS\n"
-        "- RSNA RadReport structured reporting format\n"
-        "- 2017 McDonald diagnostic criteria for DIS/DIT\n"
-        "- DIFUTURE quantitative reporting standards\n"
-        "- Filippi et al. (2019) MAGNIMS recommendations for MS MRI\n\n"
-        "This report MUST include detailed quantitative tables and structured data "
-        "that demonstrate rigorous, evidence-based analysis.\n\n"
-        "Generate the report with these EXACT sections:\n\n"
-        "## CLINICAL INDICATION\n"
-        "Restate the clinical indication with appropriate medical context for MS evaluation.\n\n"
-        "## TECHNIQUE\n"
-        "Describe imaging protocol. If sequences provided, detail each. If not, state standard "
-        "MAGNIMS MS protocol (3D T2-FLAIR 1mm isotropic, axial T2, pre/post-contrast 3D T1, DWI/ADC).\n\n"
-        "## COMPARISON\n"
-        "Reference prior studies if data provided, otherwise state 'No prior studies available.'\n\n"
-        "## FINDINGS\n\n"
-        "### White Matter Lesion Inventory\n"
-        "Present a detailed markdown table with ALL individual lesions:\n\n"
-        "| # | Region | Volume (mm³) | Volume (mL) | Size | Location (Slice) |\n"
-        "|---|--------|-------------|-------------|------|------------------|\n\n"
-        "Include EVERY lesion from the provided data. Sort by volume (largest first). "
-        "For the Location column, use the centroid z-coordinate as approximate slice reference.\n\n"
-        "### Regional Distribution\n"
-        "Present a summary table:\n\n"
-        "| MAGNIMS Region | Lesion Count | Total Volume (mL) | % of Total Burden |\n"
-        "|----------------|-------------|-------------------|-------------------|\n\n"
-        "For each region, provide clinical interpretation:\n"
-        "- **Periventricular**: Note ventricular contact, Dawson's fingers pattern, "
-        "callososeptal interface involvement\n"
-        "- **Juxtacortical/Cortical**: U-fiber involvement, lobar distribution\n"
-        "- **Infratentorial**: Brainstem vs. cerebellar involvement\n"
-        "- **Deep White Matter**: Non-periventricular deep WM pattern\n\n"
-        "### Size Distribution Analysis\n"
-        "Categorize lesions:\n"
-        "- Small (<100 mm³): count and clinical significance\n"
-        "- Medium (100-1000 mm³): count and significance\n"
-        "- Large (>1000 mm³ / >1 mL): count, individual description, concern for tumefactive\n\n"
-        "### Dissemination in Space (DIS) Assessment\n"
-        "Present a DIS checklist table:\n\n"
-        "| DIS Region | Status | Lesion Count | Evidence |\n"
-        "|------------|--------|-------------|----------|\n\n"
-        "State: 'Lesions involve X of 4 typical MS regions, [supporting/not supporting] "
-        "DIS per 2017 McDonald criteria.'\n\n"
-        "### Lesion Activity Assessment\n"
-        "- Enhancing lesions (if Gd+ data available)\n"
-        "- T1 black holes (if data available)\n"
-        "- DIT assessment if applicable\n\n"
-        "### Brain Volume Assessment\n"
-        "If volumetry data provided, include quantitative table with normative percentiles. "
-        "Grade atrophy as none/mild/moderate/severe for age.\n\n"
-        "## QUANTITATIVE SUMMARY\n"
-        "Present a consolidated metrics table:\n\n"
-        "| Metric | Value |\n"
-        "|--------|-------|\n"
-        "| Total lesion count | N |\n"
-        "| Total lesion burden | X.XX mL |\n"
-        "| Largest lesion | X.XX mL (region) |\n"
-        "| Smallest lesion | X.XX mm³ |\n"
-        "| Mean lesion volume | X.XX mL |\n"
-        "| DIS regions involved | X/4 |\n"
-        "| T2 burden grade | mild/moderate/severe |\n\n"
-        "## CLINICAL INTERPRETATION\n"
-        "Provide expert-level clinical interpretation:\n"
-        "1. **Lesion burden significance**: Contextualize the total burden for the patient's age/sex. "
-        "Reference normative data where applicable.\n"
-        "2. **Distribution pattern**: Discuss whether the lesion distribution pattern is typical "
-        "or atypical for MS. Reference MAGNIMS criteria.\n"
-        "3. **Red flags**: Identify any features atypical for MS (tumefactive lesions, "
-        "bilateral symmetric involvement, basal ganglia involvement, persistent ring enhancement) "
-        "that warrant differential diagnosis consideration.\n"
-        "4. **Differential diagnosis considerations**: If pattern is not classic MS, discuss "
-        "NMOSD, ADEM, small vessel disease, migraine, etc.\n\n"
-        "## IMPRESSION\n"
-        "Numbered summary (be precise and quantitative):\n"
-        "1. Total T2 lesion burden: N lesions totaling X.XX mL, burden grade\n"
-        "2. Regional distribution across MAGNIMS DIS regions (X/4)\n"
-        "3. Lesion size profile (predominance of small/medium/large)\n"
-        "4. DIS assessment with specific evidence\n"
-        "5. Disease activity status\n"
-        "6. Brain volume assessment (if data available)\n"
-        "7. Atypical features or red flags (if any)\n"
-        "8. Recommendations: follow-up interval per MAGNIMS guidelines, suggested sequences\n\n"
-        # CAPA-001: the previous instruction asked the model to "cite 3-5 relevant
-        # references (use real, published references)", which invites fabricated
-        # citations into a clinical document — a known LLM failure mode and a
-        # realisation of HAZ-003. References must come from a curated list held by
-        # the reporting system, never from the model.
-        "## REFERENCES\n"
-        "Do NOT generate a reference list. References are appended by the reporting "
-        "system from a curated, verified bibliography.\n"
-        + _FORMAT_INSTRUCTIONS
-    ),
-    "ms_longitudinal": (
-        "You are a fellowship-trained neuroradiologist with subspecialty expertise in "
-        "longitudinal MS disease monitoring, writing a structured interval change report. "
-        "Follow MAGNIMS-CMSC-NAIMS 2021 consensus, RSNA format, and 2017 McDonald criteria.\n\n"
-        "The user will provide quantitative data from automated lesion comparison between "
-        "two timepoints including: per-lesion volume changes, new/resolved/enlarged/stable "
-        "change candidates, total burden delta, and DIS assessment.\n\n"
-        "CRITICAL SAFETY CONSTRAINT (overrides any directness instruction; CAPA-013, HAZ-007): "
-        "the automated new/enlarging results are UNCONFIRMED CHANGE CANDIDATES. In a public test "
-        "with expert-marked change this rule proposed several false candidates per patient, and "
-        "the two timepoints are not verified as co-registered at lesion scale. You MUST (a) "
-        "list them only as 'unconfirmed change candidates awaiting radiologist review', never "
-        "as new or enlarging lesions; (b) NOT assert dissemination in time from them; (c) NOT "
-        "classify the disease course from them; (d) state no reader decision: the radiologist's "
-        "decisions on the candidates are recorded in the application, not in this draft; (e) when "
-        "the data say the change candidates were NOT computed (acquisition or visit order not "
-        "established as comparable), report no count and no lesion load and state that the "
-        "change must be assessed visually by the radiologist. The FLAIR subtraction is a "
-        "signal, never a confirmation.\n\n"
-        "Generate the report with these exact sections:\n\n"
-        "## CLINICAL INDICATION\n"
-        "Restate indication, noting longitudinal comparison purpose.\n\n"
-        "## TECHNIQUE\n"
-        "MRI technique per MAGNIMS MS protocol; note whether the acquisition of the two visits "
-        "was established as the same (as supplied in the data).\n\n"
-        "## COMPARISON\n"
-        "Reference the prior timepoint study with specific comparison data provided.\n\n"
-        "## INTERVAL CHANGES\n"
-        "### Change Candidates (unconfirmed)\n"
-        "- Number of unconfirmed new and enlarging change candidates awaiting radiologist review; "
-        "approximate locations if centroid data provided\n\n"
-        "### Radiologist Decisions\n"
-        "- Write: 'The radiologist's decisions on these candidates are recorded in the "
-        "application and are not part of this draft.'\n\n"
-        "### Resolved/Shrunk and Stable Candidates\n"
-        "- Counts, labelled as unconfirmed candidates\n\n"
-        "## LESION BURDEN TRAJECTORY\n"
-        "- Total T2 lesion load: prior vs. current (mL or mm³), only if supplied\n"
-        "- Percentage change in total burden (only if supplied)\n\n"
-        "## DIS ASSESSMENT\n"
-        "- Present DIS data from provided analysis\n"
-        "- Lesion presence across 4 MAGNIMS regions with checkmarks\n\n"
-        "## INTERVAL CHANGE STATUS\n"
-        "- Write: 'Not determined by the software — N unconfirmed change candidates for "
-        "radiologist review; the radiologist's decisions are recorded in the application.' Never "
-        "infer a conclusion from the candidates.\n\n"
-        "## IMPRESSION\n"
-        "Numbered summary:\n"
-        "1. Unconfirmed change candidates for radiologist review\n"
-        "2. Burden trajectory with quantitative delta (if supplied)\n"
-        "3. DIS status (X/4 regions)\n"
-        "4. Interval change status as above\n"
-        "5. Recommended follow-up interval per MAGNIMS guidelines\n"
-        + _FORMAT_INSTRUCTIONS
-    ),
-}
-
-
-def _lesions(count: Any) -> str:
-    """'1 lesion', '2 lesions' (release 2026-10-25, film capture: the prompt said "Deep White Matter: 1 lesions" and
-    the model copied it into the report). Text only; any value other than exactly one keeps the plural."""
-    return f"{count} lesion" if count == 1 and not isinstance(count, bool) else f"{count} lesions"
+def _with_gate_reasons(notice: Optional[str], lang: str, account: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The quality gate's reasons in the code-written change notice (PR #81 integrated with the verified report of
+    PR #78; sixteenth review, R2/G30: the ONE account the route computed). None account: the gate is off and the notice
+    is the verified report's own. A comparison the gate stopped gets the gate's reasons instead of the change figures; a
+    comparison it let through with warnings keeps the notice and adds the warnings, in the report's language."""
+    if not account:
+        return notice
+    from app.services import quality_gate as qg
+    if account.get("stopped"):
+        reasons = [qg.reason_sentence(c, lang) for c in account.get("causes") or []]
+        return qg.reason_lead("stopped", lang) + " " + "; ".join(reasons) + ". " + qg.reason_lead("stopped_tail", lang)
+    warned = [qg.reason_sentence(c, lang) for c in account.get("warnings") or []]
+    if not warned:
+        return notice
+    line = qg.reason_lead("warned", lang) + " " + "; ".join(warned) + "."
+    return f"{notice} {line}" if notice else line
 
 
 class BrainReportService:
     """
-    Generates structured brain MRI reports using Claude API.
+    Generates the verified brain MRI report draft (REQ-FUNC-116, DRAFT): code writes every number and status, the
+    Claude API writes two checked comments (see the module docstring and `verified_report`).
 
-    Features:
-    - Template-based report generation (general, ms_activity, ms_lesion_burden)
-    - Integrates volumetry data when available
+    - One verified structure for every template id (`TEMPLATE_IDS`, recorded)
+    - Total brain and intracranial volume when supplied
     - Multi-language support (en, es, de)
 
-    CAPA-014: the prompt is built from a structured payload only (measurements, fixed labels, sex,
-    age band) and checked against the patient's own identifiers before any call; without the
-    patient's record no request is sent (see the module docstring).
+    CAPA-014: the request is built from the part of the structured payload the report writes (measurements, the
+    device's region names; no sex, no age band, no typed text) and checked against the patient's own identifiers
+    before any call; without the patient's record no request is sent.
     """
 
     def __init__(self):
@@ -567,248 +398,63 @@ class BrainReportService:
         self._settings = get_settings()
 
     def _get_client(self):
-        """Lazy-load Anthropic client."""
-        if self._client is None:
-            api_key = self._settings.ANTHROPIC_API_KEY
-            if not api_key:
-                raise RuntimeError(
-                    "ANTHROPIC_API_KEY not configured. "
-                    "Set the environment variable to enable report generation."
-                )
-            import anthropic
-            self._client = anthropic.Anthropic(api_key=api_key)
-        return self._client
+        """The provider client: the process's one shared client (fifth review of PR #78, V4), unless one was given
+        to this instance (offline test doubles). RuntimeError without ANTHROPIC_API_KEY (nothing is sent).
 
-    def _build_findings_prompt(
-        self,
-        findings: Dict[str, Any],
-        volumetry: Optional[Dict[str, Any]] = None,
-        language: str = "en",
-    ) -> str:
-        """Build the user prompt from clinical findings and volumetry data."""
-        parts = []
+        RC-106: the flow's own regeneration and its 25 s budget for all calls of a draft are the only repetition.
+        Third review, T3: the ASYNC client — awaited on the event loop, so the end of the budget cancels the HTTP
+        request itself; no worker thread is left running."""
+        if self._client is not None:
+            return self._client
+        api_key = self._settings.ANTHROPIC_API_KEY
+        if not api_key:
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY not configured. "
+                "Set the environment variable to enable report generation."
+            )
+        return _shared_client(api_key)
 
-        # Language instruction
-        lang_map = {"en": "English", "es": "Spanish", "de": "German"}
-        lang_name = lang_map.get(language, "English")
-        parts.append(f"Generate the report in {lang_name}.")
-        # CAPA-014 (RC-064): no free text is sent; when the clinician typed some, the route adds it to the
-        # draft and the model is told so (only then).
-        if findings.get("clinician_entry") is True:
-            parts.append(CLINICIAN_TEXT_INSTRUCTION)
+    def interpretive_text_gate(self, view: Optional[Dict[str, Any]] = None) -> Tuple[bool, Optional[str]]:
+        """THE gate of the AI comments (sixth review of PR #78, W5): (allowed, reason). The route asks it without a
+        record (whether to read the patient record at all), the service with the record — one function, so they can
+        never disagree. RC-105: the kill switch; RC-106: the model allow-list and retirement; nothing measured:
+        nothing to comment on (only with a record); no key: not configured (nothing is sent)."""
+        if getattr(self._settings, "REPORT_LLM_ENABLED", True) is not True:
+            return False, verified_report.REASON_OFF
+        if not report_model_allowed(getattr(self._settings, "CLAUDE_MODEL", None)):
+            return False, verified_report.REASON_MODEL_NOT_ALLOWED
+        if view is not None and not verified_report.has_something_to_comment(view):
+            return False, verified_report.REASON_NOTHING_TO_COMMENT
+        if not getattr(self._settings, "ANTHROPIC_API_KEY", None):
+            try:
+                self._get_client()      # no key: RuntimeError (nothing is sent) — unless a client was given (doubles)
+            except RuntimeError:
+                return False, verified_report.REASON_NOT_CONFIGURED
+        return True, None               # (a configured key: no client is built just to decide)
 
-        if findings.get("patient_age"):
-            # CAPA-014 (RC-064): the 5-year band of the structured payload, never the exact age
-            parts.append(f"Patient age band: {findings['patient_age']} (years)")
+    def _model_call(self, model_id: str) -> "verified_report.Call":
+        """One provider call of the flow (RC-106): fixed parameters of the allow-list, the remaining time budget as
+        timeout; any failure becomes a ProviderFailure (audit-safe).
 
-        if findings.get("patient_sex") in ("M", "F"):
-            sex_label = "Male" if findings["patient_sex"] == "M" else "Female"
-            parts.append(f"Patient sex: {sex_label}")
+        Third review of PR #78, T3; seventh review, finding 8: ONE call path — the SDK's async client's request is
+        awaited under the remaining budget, so at the deadline the request itself is cancelled (no worker thread, no
+        request left running)."""
+        params = REPORT_MODELS[model_id]["params"]
+        max_tokens = int(self._settings.CLAUDE_MAX_TOKENS)
 
-        # Segmentation findings
-        if findings.get("segmentation_labels"):
-            labels = findings["segmentation_labels"]
-            parts.append(f"Segmented structures identified: {', '.join(labels)}")
+        async def call(system: str, messages: List[Dict[str, str]], timeout_s: float) -> verified_report.ModelReply:
+            try:
+                message = self._get_client().messages.create(
+                    model=model_id, max_tokens=max_tokens, system=system, messages=messages,
+                    extra_body=copy.deepcopy(params), timeout=max(1.0, float(timeout_s)))
+                if inspect.isawaitable(message):      # the request, bounded by the remaining budget (R2, T3)
+                    message = await asyncio.wait_for(message, timeout=float(timeout_s))
+                reply = reply_of(message)
+            except Exception as e:  # noqa: BLE001 — every failure: the comments are not delivered, the report is
+                raise verified_report.ProviderFailure(_failure_reason(e), type(e).__name__) from e
+            return reply
 
-        # Anomaly findings
-        if findings.get("anomalies"):
-            parts.append("Detected anomalies:")
-            for anomaly in findings["anomalies"]:
-                line = f"  - {anomaly.get('type', 'unknown')}"
-                if anomaly.get("location"):
-                    line += f" at {anomaly['location']}"
-                if anomaly.get("confidence"):
-                    line += f" (confidence: {anomaly['confidence']:.0%})"
-                if anomaly.get("volume_mm3"):
-                    line += f" ({anomaly['volume_mm3']:.1f} mm3)"
-                parts.append(line)
-
-        # Volumetry data
-        if volumetry:
-            parts.append("\nBrain volumetry measurements:")
-            if volumetry.get("total_brain_volume_ml"):
-                parts.append(
-                    f"  Total brain volume: {volumetry['total_brain_volume_ml']:.1f} mL"
-                )
-            if volumetry.get("intracranial_volume_ml"):
-                parts.append(
-                    f"  Intracranial volume: {volumetry['intracranial_volume_ml']:.1f} mL"
-                )
-
-            structures = volumetry.get("structures", [])
-            abnormal = [s for s in structures if s.get("is_abnormal")]
-            if abnormal:
-                parts.append("  Abnormal structure volumes:")
-                for s in abnormal:
-                    atype = s.get("abnormality_type", "")
-                    pct = s.get("normative_percentile")
-                    line = f"    - {s['structure_name']}: {s['volume_ml']:.1f} mL"
-                    if pct is not None:
-                        line += f" ({pct:.0f}th percentile)"
-                    if atype:
-                        line += f" [{atype}]"
-                    parts.append(line)
-
-            # Normal structures summary
-            normal = [s for s in structures if not s.get("is_abnormal") and s.get("volume_ml", 0) > 0.1]
-            if normal:
-                names = [s["structure_name"] for s in normal[:10]]
-                parts.append(f"  Normal structures: {', '.join(names)}")
-                if len(normal) > 10:
-                    parts.append(f"    ... and {len(normal) - 10} more")
-
-        # Lesion analysis data (from Phase 10)
-        if findings.get("lesion_analysis"):
-            la = findings["lesion_analysis"]
-            parts.append(f"\nLesion analysis:")
-            parts.append(f"  Total lesions: {la.get('total_count', 0)}")
-            parts.append(f"  Total burden: {la.get('total_burden_mm3', 0):.2f} mm³ "
-                         f"({la.get('total_burden_ml', 0):.4f} mL)")
-            regions_confirmed = la.get("regions_confirmed") is not False      # release 2026-10-25, item 1
-            if not regions_confirmed:
-                parts.append(REGIONS_NOT_CONFIRMED_LINE)
-            regions = la.get("regions", {}) if regions_confirmed else {}
-            if regions:
-                parts.append("  Regional summary:")
-                for name, info in regions.items():
-                    parts.append(f"    - {name}: {_lesions(info.get('lesion_count', 0))}, "
-                                 f"{info.get('total_volume_mm3', 0):.2f} mm³ "
-                                 f"({info.get('total_volume_ml', 0):.4f} mL)")
-            size_dist = la.get("size_distribution", {})
-            if size_dist:
-                parts.append(f"  Size distribution: "
-                             f"small(<100mm³)={size_dist.get('small', 0)}, "
-                             f"medium(100-1000mm³)={size_dist.get('medium', 0)}, "
-                             f"large(>1000mm³)={size_dist.get('large', 0)}")
-
-            # Per-lesion detail table (critical for comprehensive reports)
-            lesions = la.get("lesions", [])
-            if lesions:
-                parts.append(f"\n  Individual lesion data ({_lesions(len(lesions))}):")
-                if regions_confirmed:
-                    parts.append("  # | Region | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
-                    parts.append("  --|--------|-----------|----------|------|----------------")
-                else:   # no region column: the regions were not confirmed (release 2026-10-25, item 1)
-                    parts.append("  # | Volume_mm3 | Volume_mL | Size | Centroid(z,y,x)")
-                    parts.append("  --|-----------|----------|------|----------------")
-                for les in lesions:
-                    ctr = les.get("centroid", {})
-                    region = f"{les.get('region', 'Unknown')} | " if regions_confirmed else ""
-                    parts.append(
-                        f"  {les.get('id', '?')} | {region}"
-                        f"{les.get('volume_mm3', 0):.1f} | "
-                        f"{les.get('volume_ml', 0):.4f} | "
-                        f"{les.get('size_category', '?')} | "
-                        f"z={ctr.get('z', 0):.0f}, y={ctr.get('y', 0):.0f}, x={ctr.get('x', 0):.0f}"
-                    )
-
-        # DIS assessment data. PRB-003 (RC-070; HAZ-008, HAZ-003): a DIS result is passed only when the
-        # server evaluated it on a segmentation a radiologist confirmed ("evaluation_status": "evaluated",
-        # set by the report route from the stored segmentation). Anything else — not evaluated, or a block
-        # without that state — is NOT EVALUATED, never "NOT MET" (a missing flag used to print NOT MET),
-        # and the model is told not to derive DIS from the lesion counts or regions.
-        from app.services import dis_review_gate as gate   # the one "evaluated" rule (release 2026-10-25, item 3)
-        dis = findings.get("dis_assessment")
-        if not gate.is_evaluated(dis):
-            if dis or findings.get("lesion_analysis"):
-                parts.append(DIS_NOT_EVALUATED_PROMPT)
-        else:
-            met = "MET" if dis.get("dis_met") else "NOT MET"
-            parts.append(f"\nDIS Assessment: {met} "
-                         f"({dis.get('regions_with_lesions', 0)}/{dis.get('total_dis_regions', 4)} regions)")
-            for name, detail in dis.get("region_details", {}).items():
-                present = "PRESENT" if detail.get("present") else "absent"
-                parts.append(f"  - {name}: {present}")
-            if dis.get("has_active_lesions"):
-                parts.append(f"  Active (Gd+) lesions present: {dis.get('active_voxels', 0)} voxels")
-            if dis.get("has_black_holes"):
-                parts.append(f"  T1 black holes present: {dis.get('black_hole_voxels', 0)} voxels")
-
-        # Longitudinal comparison data (from Phase 11).
-        # CLASS C SAFETY (adversarial finding): the longitudinal comparison does NOT verify
-        # spatial registration — two timepoints with equal array dimensions need not be
-        # voxel-aligned, so an IoU diff can manufacture FALSE new/enlarging lesions from
-        # misregistration. These counts are therefore UNADJUDICATED CANDIDATES, never
-        # confirmed findings, and must NOT drive dissemination-in-time (DIT) or any
-        # diagnostic conclusion until a reader adjudicates them. We label them as such and
-        # instruct the report generator not to assert them as findings.
-        if findings.get("longitudinal"):
-            lng = findings["longitudinal"]
-            # No spatial registration is verified anywhere in the system, and `findings` can be
-            # supplied straight from the client (/ai/report/generate). So NEVER trust a
-            # caller-provided registration_verified=true (adversarial finding D4), and never
-            # pass an activity or DIT flag: the candidates are unconfirmed (CAPA-013, RC-060).
-            parts.append(f"\nLongitudinal comparison data:")
-            if lng.get("abstained") and lng.get("abstained_by") == "quality_gate":
-                # G30 (eighth review of PR #81): the quality gate stopped the pair before anything was computed —
-                # its causes, from the one table, never RC-062's "not comparable"
-                from app.services.quality_gate import CAVEAT_REASONS
-                causes = [CAVEAT_REASONS[c] for c in (lng.get("causes") or []) if isinstance(c, str) and c in CAVEAT_REASONS] \
-                    or [CAVEAT_REASONS["gate_unavailable"]]
-                parts.append(
-                    "  Automatic change candidates were NOT computed: the quality gate stopped the comparison "
-                    "before any image was loaded, because " + "; ".join(causes) + ". Report no new, enlarging or "
-                    "resolved figure and no lesion load of either visit; state that the change between the visits "
-                    "must be assessed visually by the radiologist."
-                )
-            elif lng.get("abstained"):
-                # RC-062: acquisition or visit order not established as comparable — no change
-                # result and no lesion load or count of either visit (review of PR #63, blocker 2).
-                parts.append(
-                    "  Automatic change candidates were NOT computed: the acquisition of the two "
-                    "visits, or their order, could not be established as comparable. Report no new, "
-                    "enlarging or resolved figure and no lesion load of either visit; state that the "
-                    "change between the visits must be assessed visually by the radiologist."
-                )
-            else:
-                parts.append(f"  TP1 burden: {lng.get('burden_tp1_ml') or 0:.3f} mL "
-                             f"({_lesions(lng.get('total_lesions_tp1') or 0)})")
-                parts.append(f"  TP2 burden: {lng.get('burden_tp2_ml') or 0:.3f} mL "
-                             f"({_lesions(lng.get('total_lesions_tp2') or 0)})")
-                if lng.get("burden_delta_percent") is not None:
-                    parts.append(f"  Burden delta: {percent_text(lng.get('burden_delta_percent'))}")
-                sc = lng.get("status_counts") or {}
-                parts.append(
-                    "  NOTE: the following are UNCONFIRMED CHANGE CANDIDATES produced automatically, "
-                    "without spatial registration verified at lesion scale. In a public test with "
-                    "expert-marked change this rule proposed several false candidates per patient. "
-                    "Do NOT report them as new or enlarging lesions, do NOT classify the disease "
-                    "course from them, do NOT use them for dissemination in time; list them only as "
-                    "unconfirmed candidates awaiting radiologist review."
-                )
-                parts.append(f"  New-lesion candidates (unconfirmed): {sc.get('new', 0)}")
-                parts.append(f"  Enlarging candidates (unconfirmed): {sc.get('enlarged', 0)}")
-                parts.append(f"  Resolved candidates (unconfirmed): {sc.get('resolved', 0)}")
-                parts.append(f"  Shrunk candidates (unconfirmed): {sc.get('shrunk', 0)}")
-                parts.append(f"  Stable candidates (unconfirmed): {sc.get('stable', 0)}")
-                # Review of PR #63, blocker 1: findings come from the request and a reader decision
-                # in them cannot be verified here, so none is ever passed to the model.
-                parts.append(
-                    "  Radiologist decisions on these candidates are recorded in the application and "
-                    "are not part of this draft: state none."
-                )
-            # Single quality gate (R4, fourth review of PR #81; G30; tenth review: ONE block): a pair the gate let
-            # through WITH warnings is not a clean comparison, whether RC-062 then withheld it or not. Fixed sentences
-            # from known codes only (never free text of the request).
-            from app.services.quality_gate import CAVEAT_REASONS
-            gate_warnings = [CAVEAT_REASONS[c] for c in (lng.get("quality_gate_warnings") or [])
-                             if isinstance(c, str) and c in CAVEAT_REASONS]
-            if gate_warnings:
-                parts.append("  QUALITY-GATE WARNINGS for this pair (state them in the report): "
-                             + "; ".join(gate_warnings) + ".")
-
-        # Zone map statistics (from MSMask atlas)
-        if findings.get("zone_stats"):
-            zs = findings["zone_stats"]
-            parts.append(f"\nMAGNIMS zone map statistics (MSMask atlas, Wiltgen et al. 2024):")
-            parts.append(f"  Total classified brain voxels: {zs.get('total_brain_voxels', 0)}")
-            for zone_name, info in zs.get("zones", {}).items():
-                parts.append(
-                    f"  - {zone_name}: {info.get('voxel_count', 0)} voxels "
-                    f"({percent_text(info.get('percentage', 0))})"
-                )
-
-        return "\n".join(parts)
+        return call
 
     async def generate_report(
         self,
@@ -818,239 +464,247 @@ class BrainReportService:
         language: str = "en",
         identifiers: Optional[PatientIdentifiers] = None,
         gate_account: Optional[Dict[str, Any]] = None,
+        audit_actor: Any = None,
+        segmentation_id: Optional[str] = None,
+        request_started: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
-        Generate a structured brain MRI report. ``gate_account``: the quality gate's account of the longitudinal block,
-        computed once by the route for this clinician and this patient (sixteenth review of PR #81, R2; None: the gate
-        is off, the base report).
+        Generate the verified draft of a brain MRI report (REQ-FUNC-116; DRAFT, PENDING owner approval).
+
+        Code writes every number and status from the structured payload (RC-064, RC-102); the model writes two
+        comments that pass the frozen claim check or are withheld (RC-103); every attempt is audited (RC-104).
 
         Args:
-            template_type: Report template (general, ms_activity, ms_lesion_burden)
-            findings: Clinical findings dict (only the structured payload is sent, CAPA-014)
-            volumetry: Volumetry results dict (optional)
+            template_type: kept for compatibility (recorded); every template gives the same verified structure
+            findings: Clinical findings dict (only the structured payload is used, CAPA-014)
+            volumetry: Volumetry results dict (optional; total brain and intracranial volume are reported)
             language: Report language (en, es, de)
-            identifiers: The patient's own identifiers, from the patient record (required, for the check)
+            identifiers: The patient's own identifiers, from the patient record (required when a request is sent)
+            audit_actor: the authenticated user, for the audit records (RC-104)
+            segmentation_id: the report's segmentation, for the audit records
 
         Returns:
-            Dict with report_id, content, template_type, language, processing_time_ms
+            Dict with report_id, content, template_type, language, processing_time_ms, model, tokens_used,
+            verification (flow, outcome, interpretive_text, reason, attempts, rules_failed_last_attempt)
 
         Raises:
-            ProviderGuardError: no identifiers, or the check found one in the prompt — nothing was sent
+            ProviderGuardError: no identifiers, or the check found one in the first request — nothing was sent
         """
         start_time = time.time()
+        # REQ-SAFE-019 (sixth review of PR #78, W7): the budget counts from the start of the request (the route's)
+        started = request_started if isinstance(request_started, (int, float)) else verified_report.now()
         report_id = str(uuid.uuid4())
 
         if findings is None:
             findings = {}
 
-        # Validate template
-        if template_type not in REPORT_TEMPLATES:
+        # Validate template (recorded only: the verified structure is the same for every template)
+        if template_type not in TEMPLATE_IDS:
             template_type = "general"
 
-        # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers there is nothing to check
-        # against, so no request is sent.
-        if not isinstance(identifiers, PatientIdentifiers):
-            raise PatientRecordUnavailable("the patient's identifiers were not supplied")
-
-        system_prompt = REPORT_TEMPLATES[template_type]      # fixed text: carries no patient data
-        # RC-064: structured payload only — measurements, fixed labels, sex, age band; no free text.
-        payload = provider_payload(findings, volumetry, identifiers, gate_account=gate_account)   # R2; M3; R2 (16th)
-        # PRB-003 (RC-070; review of PR #68, finding 4): no DIS instruction in the template unless DIS was
-        # evaluated on a classified, radiologist-confirmed segmentation (state set by the report route).
-        # Release 2026-10-25 integration (PR #67 + PR #68): the variant is chosen on the DIS block the model
-        # actually receives (the RC-064 payload), so the template and the findings prompt always agree; the
-        # system prompt is one of the fixed template variants (RC-064 amended, PENDING owner approval).
-        from app.services import dis_review_gate as gate   # the one "evaluated" rule (release 2026-10-25, item 3)
-        dis_block = payload.findings.get("dis_assessment")
-        if not gate.is_evaluated(dis_block):
-            system_prompt = dis_not_evaluated_template(system_prompt)
-        user_prompt = self._build_findings_prompt(payload.findings, payload.volumetry, language)
-        # RC-065: detection-only tripwire on the final prompt; refuses to send on any finding.
-        assert_prompt_carries_no_identifier(user_prompt, identifiers)
-        # RC-066: record that the check ran and what was withheld (counts) — never the payload.
-        logger.info(
-            "[Report] Structured payload checked before the model provider call",
-            extra={"report_id": report_id, "privacy_check": "passed", "withheld": payload.withheld},
-        )
-
-        logger.info(
-            f"[Report] Generating {template_type} report in {language}",
-            extra={"report_id": report_id},
-        )
-
+        lang = verified_report.language_of(language)
+        model_id = getattr(self._settings, "CLAUDE_MODEL", None)
+        # RC-104: every outcome is audited — also a request refused before any model call (review of PR #78, R7)
+        audit = _ReportAudit(report_id, audit_actor, segmentation_id, template_type, lang)
         try:
-            client = self._get_client()
-            # Use higher token limit for comprehensive reports with per-lesion data
-            max_tokens = self._settings.CLAUDE_MAX_TOKENS
-            if template_type == "ms_comprehensive":
-                max_tokens = min(max(max_tokens, 8192), 16384)
-            message = client.messages.create(
-                model=self._settings.CLAUDE_MODEL,
-                max_tokens=max_tokens,
-                system=system_prompt,
-                messages=[
-                    {"role": "user", "content": user_prompt},
-                ],
-            )
-
-            # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that
-            # no generated report can leave this service without it — regardless
-            # of what the model produced. See _apply_disclaimer.
-            content = _apply_disclaimer(message.content[0].text, language)
-            processing_time_ms = int((time.time() - start_time) * 1000)
-
-            logger.info(
-                f"[Report] Generated successfully in {processing_time_ms}ms",
-                extra={
-                    "report_id": report_id,
-                    "tokens_in": message.usage.input_tokens,
-                    "tokens_out": message.usage.output_tokens,
-                },
-            )
-
-            return {
-                "report_id": report_id,
-                "content": content,
-                "template_type": template_type,
-                "language": language,
-                "processing_time_ms": processing_time_ms,
-                "model": self._settings.CLAUDE_MODEL,
-                "tokens_used": {
-                    "input": message.usage.input_tokens,
-                    "output": message.usage.output_tokens,
-                },
-                # CAPA-014: placeholder -> label as written, for the clinician's draft only (never sent)
-                "unlisted_labels": payload.unlisted,
-            }
-
-        except Exception as e:
-            logger.error(f"[Report] Generation failed: {e}")
+            # RC-064: structured payload only — measurements, fixed labels; no free text. Second review of PR #78, C:
+            # projected (and its ranges checked) only for what the verified report renders or sends; what it does not
+            # use is named "supplied but not included" and blocks nothing.
+            rendered_findings, rendered_volumetry, not_included = verified_report.rendered_request(findings, volumetry)
+            # Sixth review of PR #78, W4/W5: decide once (the one gate, before the record), then build the record once.
+            # Fifth review, V5: the measurement checks (ranges) always run — they protect the code-written text; the
+            # patient's own numbers are checked only when a request can be sent.
+            # Eighth review of PR #78, finding 3: decide FIRST (the one gate with the record), then read the patient
+            # record only if a call may happen; the projection and the record are built once (W4). Tenth review,
+            # finding 8: the time budget is decided once, after the record and the word list (an unreadable record
+            # then matters only if a call would have happened).
+            allowed, reason = self.interpretive_text_gate()
+            ids = None
+            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)
+                                           gate_account=gate_account)            # the gate's account (PR #81, R2)
+            # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
+            view = verified_report.build_view(payload.findings, payload.volumetry, lang,
+                                              review_source=_review_source(findings), not_included=not_included)
+            if allowed:
+                allowed, reason = self.interpretive_text_gate(view)    # the record: is there something to comment?
+            # RC-066: what was withheld (counts) — never the payload. (second review, C: the fields the report does not
+            # render are counted here — they are not projected)
+            withheld = {**payload.withheld,
+                        "unknown_fields": sum(1 for k in (findings if isinstance(findings, dict) else {})
+                                              if k not in _KNOWN_FIELDS),
+                        "not_included_fields": len(not_included)}
+            # Tenth review of PR #78, I17: the privacy state the record states is the one that RAN — "not_run" until
+            # the patient-number check and the identifier tripwire have both passed
+            privacy = "not_run"
+            record_error: Optional[PatientRecordUnavailable] = None
+            if reason is None:
+                # a call may happen: the patient's record (the route's lazy reader; seventh review, finding 8)
+                try:
+                    ids = await identifiers() if callable(identifiers) else identifiers
+                    if not isinstance(ids, PatientIdentifiers):
+                        # CAPA-014 (RC-065, HAZ-016): without the patient's identifiers nothing can be checked
+                        raise PatientRecordUnavailable("the patient's identifiers were not supplied")
+                except PatientRecordUnavailable as e:
+                    # (tenth review, finding 8: the time left is known only after the record was read — an unreadable
+                    # record refuses the request below only if a call would have happened; eighth review, finding 3)
+                    record_error = e
+            if reason is None and record_error is None:
+                try:
+                    # the patient's own numbers in the projected payload (the projection's own rule, finding 9)
+                    assert_no_patient_numbers(payload, ids)
+                except IdentifierInPrompt:
+                    # tenth review, finding 5: a measurement equal to a patient number — nothing is sent; the
+                    # clinician still gets the measurements, with the privacy reason (as with the comments off)
+                    reason, privacy = verified_report.REASON_PRIVACY, "refused"
+                    logger.warning("[Report] A measurement equals one of the patient's own numbers; nothing sent, "
+                                   "measurements only", extra={"report_id": report_id, "privacy_check": "refused"})
+            if reason is None and record_error is None:
+                sent_text = verified_report.first_user_message(view, lang)
+                # R8: the record carries only code-chosen strings; a placeholder of a request label in it would
+                # mean a label of the request reached the model — nothing is sent (fail closed)
+                if UNLISTED.rstrip("]") in sent_text:
+                    raise LabelInRecord("a label of the request reached the measurement record")
+                # RC-065: detection-only tripwire on the first request; refuses to send on any finding (nothing sent).
+                try:
+                    assert_prompt_carries_no_identifier(sent_text, ids)
+                    privacy = "passed"
+                except IdentifierInPrompt:
+                    # eleventh review of PR #78, C1: the first message holds only device-written text (e.g. a volume
+                    # of 9.1175 mL read as the birth date 9.11.75) — nothing is sent and the clinician still gets the
+                    # measurements, with the privacy reason (as for a patient-number match, finding 5)
+                    reason, privacy = verified_report.REASON_PRIVACY, "refused"
+                    logger.warning("[Report] The identifier check matched the measurement record; nothing sent, "
+                                   "measurements only", extra={"report_id": report_id, "privacy_check": "refused"})
+            if reason is None:
+                # REQ-SAFE-019 (ninth review, finding 1; tenth review, finding 8 / I18): what is left of the request's
+                # 30 s, computed ONCE, here — after the record and the device-word list, just before the call; run_flow
+                # counts on the same clock before each request and sends none with less than MIN_LLM_BUDGET_S
+                left = (verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S
+                        - (verified_report.now() - started))
+                if left < verified_report.MIN_LLM_BUDGET_S:
+                    # nothing will be sent: an unreadable record does not matter (eighth review, finding 3)
+                    reason = verified_report.REASON_TIME_BUDGET
+                    logger.warning("[Report] Too little of the time budget left for the AI comments; measurements only",
+                                   extra={"report_id": report_id, "llm_budget_s": round(left, 2)})
+                elif record_error is not None:
+                    raise record_error   # a call would happen: without the patient's record nothing is sent
+            # RC-066 (tenth review, I17): written after the checks — "passed" only when both ran and passed
+            logger.info("[Report] Structured payload checked before the model provider call" if privacy == "passed"
+                        else "[Report] Measurements-only draft: nothing is sent to the model provider",
+                        extra={"report_id": report_id, "privacy_check": privacy, "withheld": withheld})
+            if reason is not None:
+                if reason == verified_report.REASON_MODEL_NOT_ALLOWED:
+                    retired = RETIRED_OR_RETIRING_MODELS.get(model_id) if isinstance(model_id, str) else None
+                    logger.error("[Report] The configured model is not allowed (" +
+                                 (f"retired or retiring on {retired}" if retired else "not validated or retired") +
+                                 "); measurements-only report",
+                                 extra={"report_id": report_id, "model": str(model_id)[:64]})
+                result = verified_report.measurements_only(view, lang, reason)
+            else:
+                budget = min(verified_report.LLM_DEADLINE_S, left)
+                result = await verified_report.run_flow(
+                    view, lang, self._model_call(model_id),
+                    request_meta={"model": model_id, "max_tokens": int(self._settings.CLAUDE_MAX_TOKENS),
+                                  "params": REPORT_MODELS[model_id]["params"]},
+                    # RC-065 on every regeneration request too: a finding stops the flow (comments withheld)
+                    tripwire=lambda text: assert_prompt_carries_no_identifier(text, ids),
+                    on_attempt=audit.attempt,
+                    deadline_s=budget,   # REQ-SAFE-019: what is left of the request's budget (sixth review, W7)
+                    clock=verified_report.now,   # (ninth review, finding 1: the request's clock)
+                    first_message=sent_text)   # second review, J: built once; what is sent is what was checked
+            # seventh review of PR #78, finding 3 (I8): the draft is finished INSIDE the audited block — an exception
+            # after the model calls is audited with the attempts really made
+            # RC-006 (HAZ-003): the disclaimer is applied here, in code, so that no generated report can leave this
+            # service without it — regardless of what the model produced. See _apply_disclaimer.
+            text = result.text
+            dis_evaluation = DIS_EVALUATION[view["dis"]["status"]]
+            if dis_evaluation == "not_evaluated" and _review_source(findings) in AUTOMATIC_REVIEW_SOURCES:
+                # PRB-003 (RC-072): the findings state "not evaluated" once (skeleton); the fixed notice on automatic
+                # marking follows — only for an automatic marking (seventh review, finding 7, I5)
+                from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
+                text = f"{text}\n\n> {AUTOMATIC_MARKING_NOTICE[lang]}"
+            content = _apply_disclaimer(text, language)
+            change = _with_gate_reasons(verified_report.change_notice(view, lang), lang, gate_account)
+        except BaseException as e:  # noqa: BLE001 — every exit is audited, then raised as before (the route answers
+            # 503 / 500). Tenth review of PR #78, I17: BaseException — a request cancelled during a model call
+            # (asyncio.CancelledError) still writes its verification record with the paid calls (RC-104)
+            audit.not_sent(e)
             raise
+        audit.outcome(result, model_id if reason is None else None)
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        logger.info(
+            f"[Report] Verified draft {result.outcome} in {processing_time_ms}ms",
+            extra={"report_id": report_id, "report_outcome": result.outcome, "attempts": len(result.attempts),
+                   "tokens_in": result.input_tokens, "tokens_out": result.output_tokens},
+        )
+        # eleventh review of PR #78, C7 (I17): asked only when a request was actually sent — otherwise no model and no
+        # token count
+        asked = any(a.get("verdict") != "not_sent" for a in result.attempts)
+        return {
+            "report_id": report_id,
+            "content": content,
+            "template_type": template_type,
+            "language": language,
+            "processing_time_ms": processing_time_ms,
+            "model": (result.model_answered or model_id) if asked else None,
+            "tokens_used": {"input": result.input_tokens, "output": result.output_tokens} if asked else None,
+            # R3: what the verified report does not include is named, never dropped silently
+            "verification": {**result.summary(), "not_included": list(view.get("not_included") or [])},
+            # fifth review of PR #78, V8/V9: the DIS state of this draft, typed — "evaluated", "not_evaluated" (the
+            # findings say so once, the notice follows) or "not_in_report" (no lesion findings: no DIS line)
+            "dis_evaluation": dis_evaluation,
+            # CAPA-013 (sixth review of PR #78, W1): the change notice, from the validated record (one source with the
+            # draft's comparison line; a null or missing count is "not computed")
+            "change_notice": change,
+            # CAPA-014: placeholder -> label as written, for the clinician's draft only. Verified report (review of
+            # PR #78, R8): the record never carries a placeholder (a request would be refused above), so there is no
+            # placeholder to name and no application note "sent as numbered placeholders".
+            "unlisted_labels": {},
+        }
 
     def list_templates(self) -> List[Dict[str, str]]:
-        """List available report templates."""
-        templates = [
-            {
-                "id": "general",
-                "name": "General MS Brain MRI",
-                "description": (
-                    "MAGNIMS-compliant structured brain MRI report for MS evaluation. "
-                    "Includes DIS/DIT assessment per 2017 McDonald criteria."
-                ),
-            },
-            {
-                "id": "ms_activity",
-                "name": "MS Disease Activity Assessment",
-                "description": (
-                    "Disease activity monitoring report with DIS/DIT evaluation, "
-                    "new/enhancing lesion analysis, and treatment response assessment."
-                ),
-            },
-            {
-                "id": "ms_comprehensive",
-                "name": "Comprehensive MS Analysis",
-                "description": (
-                    "Publication-quality comprehensive report with per-lesion tables, "
-                    "regional distribution, DIS assessment, size analysis, and clinical "
-                    "interpretation per MAGNIMS/DIFUTURE/McDonald standards."
-                ),
-            },
-            {
-                "id": "ms_lesion_burden",
-                "name": "Quantitative Lesion Burden Analysis",
-                "description": (
-                    "Comprehensive lesion burden quantification with longitudinal comparison, "
-                    "regional distribution, and PIRA assessment per MAGNIMS/DIFUTURE standards."
-                ),
-            },
-            {
-                "id": "ms_longitudinal",
-                "name": "MS Longitudinal Comparison",
-                "description": (
-                    "Interval change report: unconfirmed change candidates (new/enlarged/resolved) "
-                    "for radiologist review, burden trajectory and DIS assessment."
-                ),
-            },
-        ]
-        return templates
-
+        """The report the server writes (REQ-FUNC-116, DRAFT): one verified structure. The former templates' ids are
+        still accepted by the route (recorded); each gives this structure."""
+        return [{
+            "id": "general",
+            "name": "Verified measurement report",
+            "description": (
+                "Every number and status is written by the software from the measurements (MAGNIMS 2021 counting; "
+                "dissemination in space only when a radiologist confirmed the segmentation). The AI adds two short "
+                "comments that pass an automatic check against the measurements, or are withheld. Not a diagnosis."
+            ),
+        }]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CAPA-014 (RC-065): the device's own words — the tripwire never reports one of them on its own, so a
 # patient named White does not stop "Deep White Matter", nor two of them in the order the device's text has
-# them ("Deep White"). Derived only from what can appear in the user prompt — the prompt builder itself on
-# synthetic payloads covering every label and branch — not from the system templates, which are never
-# checked (second review, N5).
+# them ("Deep White"). Derived ONLY from the text the device sends now: the verified report's requests
+# (`verified_report.synthetic_payloads` x `verified_report.first_user_message`, every branch and language) and
+# the fixed parts of a regeneration request — never from the system prompt (second review, N5) nor from the
+# retired templates (second review of PR #78, G; archived outside the shipped code, third review, T5).
 # ─────────────────────────────────────────────────────────────────────────────
-def _synthetic_payloads():
-    labels = sorted(set(label_vocabulary().values()))
-    regions = {n: {"lesion_count": 1, "total_volume_mm3": 1.0, "total_volume_ml": 0.001} for n in labels}
-    lesions = [{"id": i + 1, "region": n, "volume_mm3": 1.0, "volume_ml": 0.001, "size_category": "small",
-                "centroid": {"z": 1, "y": 1, "x": 1}} for i, n in enumerate(labels)]
-    base = {
-        "clinician_entry": True,
-        "patient_age": "45-49", "patient_sex": "M", "segmentation_labels": labels + [UNLISTED],
-        "anomalies": [{"type": n, "location": n, "confidence": 0.5, "volume_mm3": 1.0} for n in labels],
-        "lesion_analysis": {"total_count": 1, "total_burden_mm3": 1.0, "total_burden_ml": 0.001, "regions": regions,
-                            "size_distribution": {"small": 1, "medium": 1, "large": 1}, "lesions": lesions},
-        # an evaluated DIS with present and absent regions (third review, M2: also printed once PR #68 is in)
-        "dis_assessment": {"evaluation_status": "evaluated", "dis_met": True, "regions_with_lesions": 1,
-                           "total_dis_regions": 5,
-                           "region_details": {n: {"present": i % 2 == 0} for i, n in enumerate(labels)},
-                           "has_active_lesions": True,
-                           "active_voxels": 1, "has_black_holes": True, "black_hole_voxels": 1},
-        "zone_stats": {"total_brain_voxels": 1, "zones": {n: {"voxel_count": 1, "percentage": 1.0} for n in labels}},
-    }
-    volumetry = {"total_brain_volume_ml": 1.0, "intracranial_volume_ml": 1.0, "structures":
-                 [{"structure_name": n, "volume_ml": 1.0, "is_abnormal": True, "normative_percentile": 1,
-                   "abnormality_type": "atrophy"} for n in labels]
-                 + [{"structure_name": n, "volume_ml": 1.0, "is_abnormal": False} for n in labels]}
-    for longitudinal in ({"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": 1, "total_lesions_tp2": 1,
-                          "burden_delta_percent": 1.0, "status_counts": {"new": 1}}, {"abstained": True}):
-        yield {**base, "longitudinal": longitudinal}, volumetry
-    # release 2026-10-25, film capture ("1 lesions"): a count of one is singular, any other plural - both forms of
-    # every counted noun, with and without the region column, are the device's own words and word pairs
-    for confirmed in (True, False):
-        for count in (1, 2):
-            yield {**base, "lesion_analysis": {**base["lesion_analysis"], "regions_confirmed": confirmed,
-                                               "regions": {n: {**r, "lesion_count": count} for n, r in regions.items()},
-                                               "lesions": lesions if count == 1 else lesions[:1]},
-                   "longitudinal": {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": count,
-                                    "total_lesions_tp2": count},
-                   **({} if confirmed else {"dis_assessment": {"evaluation_status": "not_evaluated"}})}, volumetry
-    yield {**base, "patient_sex": "F", "patient_age": "90 or older"}, volumetry
-    # regions not confirmed (release 2026-10-25, item 1): the fixed line and the table without a region column
-    yield {**base, "lesion_analysis": {**base["lesion_analysis"], "regions_confirmed": False},
-           "dis_assessment": {"evaluation_status": "not_evaluated"}}, volumetry
-    # R4 (sixteenth review of PR #81): every shape the RC-064 projector gives the longitudinal block with the quality
-    # gate on, for EVERY reason code of the registry, one at a time and all together — DERIVED from the registry, so a
-    # new code can never be missed: stopped by the gate (also with no cause: its fallback sentence), withheld by RC-062
-    # with the gate's warnings, let through with warnings (the "QUALITY-GATE WARNINGS" line)
-    from app.services.quality_gate import CAVEAT_REASONS
-    codes = sorted(CAVEAT_REASONS)
-    counts = {"burden_tp1_ml": 1.0, "burden_tp2_ml": 1.0, "total_lesions_tp1": 2, "total_lesions_tp2": 2,
-              "burden_delta_percent": 1.0, "status_counts": {"new": 1}}
-    yield {"longitudinal": {"abstained": True, "abstained_by": "quality_gate", "causes": []}}, None
-    for group in [[c] for c in codes] + [codes]:
-        for lng in ({"abstained": True, "abstained_by": "quality_gate", "causes": group},
-                    {"abstained": True, "quality_gate_warnings": group}, {**counts, "quality_gate_warnings": group}):
-            yield ({**base, "longitudinal": lng}, volumetry) if group is codes else ({"longitudinal": lng}, None)
-    # every value missing: what "not available" looks like in each block
-    sparse = provider_payload({"lesion_analysis": {"regions": {"Lesion": {}}, "size_distribution": {"small": None},
-                                                   "lesions": [{}]},
-                               "dis_assessment": {"has_active_lesions": True, "has_black_holes": True},
-                               "zone_stats": {"zones": {"Lesion": {}}}, "longitudinal": {"status_counts": {}}}, None)
-    yield sparse.findings, None
-
-
 @lru_cache(maxsize=1)
 def _fixed_prompt_word_lists() -> tuple:
-    builder = BrainReportService.__new__(BrainReportService)
-    texts = [UNLISTED, "Structure Label"]
-    for findings, volumetry in _synthetic_payloads():
-        for language in ("en", "es", "de"):
-            texts.append(builder._build_findings_prompt(findings, volumetry, language))
+    # Verified report (DRAFT, RC-065 extended): the device's own text of its user messages — the first message (the
+    # measurement record and the code-written report, in every branch and language) and the fixed parts of a
+    # regeneration request. The model's own words quoted in a regeneration request are NOT device words.
+    # Second review of PR #78, G: ONLY the text sent now — the retired templates' words (and their placeholder and
+    # structure labels) no longer widen the list: each word on it is a word the tripwire cannot report alone.
+    texts: List[str] = []
+    for findings, volumetry, source in verified_report.synthetic_payloads():
+        for language in verified_report.LANGUAGES:
+            view = verified_report.build_view(findings, volumetry, language, review_source=source)
+            texts.append(verified_report.first_user_message(view, language))
+    texts.append(verified_report.REGENERATION_PREFIX + verified_report.REGENERATION_SUFFIX)
+    texts.extend(verified_report.FIXED_FEEDBACK_TEXTS)
     return tuple(tuple(words_of(text)) for text in texts)
+
+
+def warm_report_word_lists() -> None:
+    """Eleventh review of PR #78, C4 (REQ-SAFE-019): build the device-word list once at startup (FastAPI lifespan),
+    so that the first report request does not spend its 30 s budget on it."""
+    fixed_prompt_words()
+    fixed_prompt_pairs()
 
 
 @lru_cache(maxsize=1)

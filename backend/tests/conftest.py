@@ -988,3 +988,16 @@ def assert_audit_log():
         assert logger is not None
 
     return _assert_log
+
+
+@pytest.fixture(autouse=True)
+def _fresh_report_provider_clients():
+    """Fifth review of PR #78, V4: the report service keeps ONE provider client per process; each test starts and
+    ends without one (a cached test double never reaches another test)."""
+    module = sys.modules.get("app.services.brain_report_service")
+    if module is not None:
+        module._forget_report_clients()   # sixth review, W6: per loop
+    yield
+    module = sys.modules.get("app.services.brain_report_service")
+    if module is not None:
+        module._forget_report_clients()   # sixth review, W6: per loop

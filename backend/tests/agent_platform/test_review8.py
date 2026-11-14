@@ -89,13 +89,16 @@ def test_rc121_review8_every_scope_chokepoint_audits_before_raising(scope_key, a
 
 # ================================================================== F2: report-drafter's model retires
 def test_rc117_review8_report_drafter_is_loudly_unavailable_after_its_model_retires():
-    alerts = C.availability_alerts(date(2026, 11, 11))
-    text = " ".join(alerts)
-    assert "report-drafter" in text and "2026-11-30" in text and "D-AGT-1" in text and "claude-sonnet-5-5" in text
-    assert "PR #78" in text
-    assert C.main(["--retirement"], today=date(2026, 11, 11)) == 1, "the daily job alerts"
+    # Reconciled 2026-11-14 (merge of main, PR #78): the report model is claude-sonnet-5-5, in use by the owner's
+    # research-stage decision, with no announced retirement, so the agent is NOT announced unavailable today ...
+    assert not any("report-drafter" in a for a in C.availability_alerts(date(2026, 11, 11)))
     note = json.dumps(H.production_data()["agents"]["report-drafter"])
-    assert "unavailable from 2026-11-30" in note and "D-AGT-1" in note
+    assert "D-AGT-1" in note and "claude-sonnet-5-5" in note and "2026-11-30" in note
+    # ... and the rule still says it loudly when the only in-use model retires.
+    data = H.production_data()
+    data["models"]["claude-sonnet-5-5"]["retires_on"] = "2026-11-30"
+    text = " ".join(C.availability_alerts(date(2026, 11, 11), data))
+    assert "report-drafter" in text and "2026-11-30" in text and "D-AGT-1" in text
 
 
 # ================================================================== F3: the card's schema is the advertised one

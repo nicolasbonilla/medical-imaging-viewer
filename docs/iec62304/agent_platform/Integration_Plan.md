@@ -1,7 +1,7 @@
 # Agent platform — integration plan
 
 **Document:** INT-AGT-001 · **Version:** 0.1 · **Date:** 2026-11-10 · **Branch:** `feat/agent-platform` (draft PR #79)
-**Status:** DRAFT, PENDING owner approval. This is a plan: none of these steps is done in PR #79, which builds the platform as a library and touches no file of PR #78 (`brain_report_service.py`, `verified_report.py`, `report_claim_verifier.py`, `api/routes/ai_report.py`) and no MCP server.
+**Status:** N. G. Bonilla Vargas — approved 2026-11-14 (PR #79). This is a plan: none of these steps is done in PR #79, which builds the platform as a library and touches no file of PR #78 (`brain_report_service.py`, `verified_report.py`, `report_claim_verifier.py`, `api/routes/ai_report.py`) and no MCP server.
 **Requirements / hazards:** REQ-AGT-001..008; HAZ-020..HAZ-024; RC-110..RC-120 (SRS and RMF Addendum B).
 
 ## 1. What exists after PR #79

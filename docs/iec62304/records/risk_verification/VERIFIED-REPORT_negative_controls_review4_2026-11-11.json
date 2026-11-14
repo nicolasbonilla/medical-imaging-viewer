@@ -1,0 +1,519 @@
+{
+  "executed": "2026-11-11T01:16:55",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "98cf6ef45846b94c1cfdb181ebb165f4ba224515e621b472f7308fa4ae44e076",
+    "backend/app/services/brain_report_service.py": "1079d74aba3ec1c7394837ecb9e98f6e232e3939e562761683efbfda23a81334",
+    "backend/app/services/report_payload_guard.py": "c75f7d52fcf9978241459bf535ab96b06b487f258ddbf376515864e67f3fdc05",
+    "backend/app/services/verified_report.py": "103398264014a39ed46920c8f0a75fc1542070c8aeb9d77d3e42b30819f993b0"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "9ec149a3bd40b274bfec9aca5bf6199b7a8f16af3b7a70c73536d04d0f477214",
+    "tests/unit/test_rc103_verified_report_loop.py": "fbffbf9d30288f307c5935884cb622ed491df03f82143789b3eac90c89033956",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "59de8ebc4499d276e07c2a437280133a9a9a3e76c07b9944a458c17bbae5b27c",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "9aed9d2dc841725a27ae9112ff1dc1036e12a797d55a8e0580d4f7d6b5ad233e",
+    "tests/unit/test_verified_report_review1.py": "6c78581d15bbe4a168158f109ceaef51ff31b407d89eda58e8717efdb6bbd93f",
+    "tests/unit/test_verified_report_review2.py": "ed50dece9bff0834dc1269d03523e5d9a745313832dbbe5a1d6288dd0d239c7a",
+    "tests/unit/test_verified_report_review2_dis.py": "7e4c81735d17344205384715200d593007e201260ad5494495b9f179396d17ef",
+    "tests/unit/test_verified_report_review3.py": "9a045fe388bd492ad9ab7b68f804978df07c76dccc649f081eaca5cfbda0558e",
+    "tests/unit/test_verified_report_review4.py": "d16d529cc4a8f7e330f4b9185f616bc18c4fb46cc90a78cc911faefde5fd0948"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 561,
+    "errors": 0,
+    "skipped": 29,
+    "failing_tests": []
+  },
+  "mutations": {
+    "F15_number_reader_accepts_inf": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 559,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_r10_an_infinite_value_is_not_computed",
+        "test_rc102_t6_the_number_reader_is_public_and_imported_at_module_level"
+      ],
+      "reintroduces": "R10: an infinite value is read as a number (and a count of it crashes)",
+      "files": [
+        "backend/app/services/report_payload_guard.py"
+      ],
+      "executed": "2026-11-11T01:19:12",
+      "detected": true
+    },
+    "C1_claim_check_not_run": {
+      "exit": 1,
+      "failed": 16,
+      "passed": 545,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_candidates_must_be_called_candidates",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]",
+        "test_rc103_rule_ids_are_a_fixed_vocabulary",
+        "test_rc103_spanish_and_german[de-Die",
+        "test_rc103_spanish_and_german[es-La",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Dissemination",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Findings",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Most",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[No",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Starting",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Technique:",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[The",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[These",
+        "test_rc103_the_invented_technique_section_of_the_retired_template_is_refused",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency"
+      ],
+      "reintroduces": "the frozen claim check does not run on the answer",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:19:29",
+      "detected": true
+    },
+    "C2_digits_allowed": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 555,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_a3_rejects_digits_and_bad_format",
+        "test_rc103_the_assembled_report_is_checked_not_only_the_comments",
+        "test_rc103_the_invented_technique_section_of_the_retired_template_is_refused",
+        "test_rc103_the_privacy_check_stops_a_regeneration_request",
+        "test_rc103_the_regeneration_request_lists_what_failed_in_the_benchmark_wording",
+        "test_rc104_every_attempt_is_audited_with_hash_model_verdict_rules_and_latency"
+      ],
+      "reintroduces": "digits allowed in the comments",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:20:35",
+      "detected": true
+    },
+    "C3_headings_allowed": {
+      "exit": 1,
+      "failed": 6,
+      "passed": 555,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Lesion",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[##"
+      ],
+      "reintroduces": "headings allowed in the comments (a section of the model's own)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:21:44",
+      "detected": true
+    },
+    "C4_unknown_placeholder_allowed": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 558,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_r6_the_report_never_contradicts_the_gate",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Small",
+        "test_rc103_the_check_refuses_unsupported_or_diagnostic_comments[Ten"
+      ],
+      "reintroduces": "a placeholder the record does not have is left in the report",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:22:54",
+      "detected": true
+    },
+    "C14_exact_count_placeholder": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 560,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_r5_the_total_count_placeholder_follows_magnims_from_20_lesions"
+      ],
+      "reintroduces": "R5: the {total_count} placeholder gives the exact count from 20 lesions (MAGNIMS 2021: the range)",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:24:02",
+      "detected": true
+    },
+    "C15_headings_only_hash": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 556,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Lesion",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment"
+      ],
+      "reintroduces": "B: a bold or capital comment line is read as a heading and checked for nothing",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:25:09",
+      "detected": true
+    },
+    "C16_strict_rules_not_run": {
+      "exit": 1,
+      "failed": 43,
+      "passed": 518,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[de-Das",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-The",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[en-There",
+        "test_rc103_a_a_diagnostic_or_activity_statement_is_a_finding_in_either_polarity[es-El",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-If",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_evaluated-es-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Dieser",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-de-Kein",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-If",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-No",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-en-This",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-Este",
+        "test_rc103_a_a_negation_elsewhere_in_the_sentence_no_longer_hides_a_forbidden_phrase[dis_not_evaluated-es-No",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[**Consistent",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[CONSISTENT",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[TYPICAL",
+        "test_rc103_b_a_bold_or_capital_line_in_a_comment_is_a_heading_failure_and_is_checked[__Treatment",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[de-Der",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[en-The",
+        "test_rc103_k_a_negated_dis_statement_contradicting_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Der",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[de-Die",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[en-The",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Los",
+        "test_rc103_k_an_affirmed_or_hedged_dis_statement_contradicting_not_met_is_refused[es-Se",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_evaluated]",
+        "test_rc103_product_check_is_strictly_stricter_than_frozen_v2_on_adversarial_comments[dis_not_evaluated]",
+        "test_rc103_the_rc070_backstop_catches_what_the_frozen_rules_miss"
+      ],
+      "reintroduces": "A: only the frozen v2 rules run on the answer",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:25:28",
+      "detected": true
+    },
+    "M11_wait_not_bounded": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 560,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_t3_the_provider_call_is_awaited_and_cancelled_at_the_deadline"
+      ],
+      "reintroduces": "R2: the wait for the provider is not bounded by the remaining budget",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T01:26:41",
+      "detected": true
+    },
+    "M13_sync_client_back": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 558,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_get_client_caches_instance",
+        "test_rc106_r2_the_client_makes_no_retry_of_its_own",
+        "test_rc106_t3_the_service_builds_the_async_client_without_retries"
+      ],
+      "reintroduces": "T3: the blocking client again (a request outlives the time budget in a worker thread)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T01:27:49",
+      "detected": true
+    },
+    "M14_request_not_cancelled": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 560,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_t3_the_provider_call_is_awaited_and_cancelled_at_the_deadline"
+      ],
+      "reintroduces": "T3: the deadline ends the wait but the request keeps running (not cancelled)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T01:28:55",
+      "detected": true
+    },
+    "C25_empty_comment_allowed": {
+      "exit": 1,
+      "failed": 14,
+      "passed": 547,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['()']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['*']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['**']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['-",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['-']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['.']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['...']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['\\\\u200b']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['\\u2014']",
+        "test_rc103_q1_an_empty_comment_is_never_checked_as_written['\\u2026']",
+        "test_rc103_q1_three_empty_answers_are_withheld_and_never_delivered"
+      ],
+      "reintroduces": "Q1: an empty or \".\" comment is checked as written and delivered",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:30:03",
+      "detected": true
+    },
+    "C26_template_tokens_allowed": {
+      "exit": 1,
+      "failed": 7,
+      "passed": 554,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_q2_a_raw_token_never_reaches_a_draft[[FINDINGS_COMMENT]]",
+        "test_rc103_q2_a_raw_token_never_reaches_a_draft[[PLACEHOLDER]]",
+        "test_rc103_q2_a_raw_token_never_reaches_a_draft[\\uff5btotal_count\\uff5d]",
+        "test_rc103_q2_a_raw_token_never_reaches_a_draft[{",
+        "test_rc103_q2_a_raw_token_never_reaches_a_draft[{Total_Count}]",
+        "test_rc103_q2_a_raw_token_never_reaches_a_draft[{{total_count}}]",
+        "test_rc103_q2_fuzz_every_other_brace_or_bracket_token_fails_the_check"
+      ],
+      "reintroduces": "Q2: a raw template token ({Total_Count}, [PLACEHOLDER]) reaches a draft",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:31:07",
+      "detected": true
+    },
+    "C27_format_characters_kept": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 558,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[consis\\u200dtent",
+        "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[the",
+        "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[trea\\xadtment"
+      ],
+      "reintroduces": "Q6: a zero-width joiner or a soft hyphen hides a phrase from the check",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:32:14",
+      "detected": true
+    },
+    "F22_indication_listed_not_available": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 558,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[de]",
+        "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[en]",
+        "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[es]"
+      ],
+      "reintroduces": "Q3: a typed indication is also listed as \"not available\"",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:33:19",
+      "detected": true
+    },
+    "M15_not_configured_said_failed": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 558,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_q4_no_provider_key_is_not_requested_in_the_note_and_the_state[de]",
+        "test_rc106_q4_no_provider_key_is_not_requested_in_the_note_and_the_state[en]",
+        "test_rc106_q4_no_provider_key_is_not_requested_in_the_note_and_the_state[es]"
+      ],
+      "reintroduces": "Q4: no provider key: the note says the AI service failed",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-11T01:34:25",
+      "detected": true
+    },
+    "M16_wrapped_async_not_awaited": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 560,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_q5_a_wrapped_async_create_is_awaited"
+      ],
+      "reintroduces": "Q5: an async create behind a plain wrapper is never awaited",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T01:35:33",
+      "detected": true
+    },
+    "M17_wiring_fault_read_as_answer": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 557,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failure[dict]",
+        "test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failure[int]",
+        "test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failure[none]",
+        "test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failure[str]"
+      ],
+      "reintroduces": "Q5: something that is not a message is read as an empty answer (a check failure)",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-11T01:36:39",
+      "detected": true
+    },
+    "D2_notice_by_substring": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 558,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[de]",
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[es]",
+        "test_rc070_q6_the_route_uses_the_service_fact"
+      ],
+      "reintroduces": "Q6: the route decides by a substring search over the processed text",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-11T01:37:45",
+      "detected": true
+    },
+    "P4_second_list_of_blocks": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 560,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_q7_the_route_takes_the_rendered_blocks_from_the_verified_report"
+      ],
+      "reintroduces": "Q7: a second literal list of the blocks the report writes",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-11T01:38:53",
+      "detected": true
+    },
+    "P2_unrenderable_request_accepted": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 557,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc102_d_a_request_with_nothing_the_verified_report_can_render_is_refused[anomalies]",
+        "test_rc102_d_a_request_with_nothing_the_verified_report_can_render_is_refused[segmentation_labels]",
+        "test_rc102_d_a_request_with_nothing_the_verified_report_can_render_is_refused[structures_only]",
+        "test_rc102_d_a_request_with_nothing_the_verified_report_can_render_is_refused[zone_stats]"
+      ],
+      "reintroduces": "D: a request with nothing the verified report can write gives an empty report",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-11T01:39:59",
+      "detected": true
+    },
+    "D1_notice_repeats_the_line": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 557,
+      "errors": 0,
+      "skipped": 29,
+      "failing_tests": [
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[de]",
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[en]",
+        "test_rc070_f_the_not_evaluated_statement_is_in_the_draft_exactly_once[es]",
+        "test_rc070_q6_the_notice_decides_on_an_explicit_fact_not_on_a_substring"
+      ],
+      "reintroduces": "F: the route's notice repeats the \"not evaluated\" statement the draft already has",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-11T01:41:05",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 561,
+    "errors": 0,
+    "skipped": 29,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 22,
+    "detected": 22,
+    "undetected": []
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "0783be2d99c27cf347184748a04246fac353209f",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}

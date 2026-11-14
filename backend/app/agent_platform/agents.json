@@ -24,23 +24,23 @@
       "provider": "anthropic",
       "api_version": "2023-06-01",
       "retires_on": "2026-11-30",
-      "use_status": "in_use",
+      "use_status": "withdrawn",
       "price_usd_per_mtok": {
         "input": 3.0,
         "output": 15.0
       },
-      "note": "the report model on main (config.py CLAUDE_MODEL default); deprecated, retires 2026-11-30"
+      "note": "the report model before PR #78; withdrawn: the verified report no longer calls it; retires 2026-11-30"
     },
     "claude-sonnet-5-5": {
       "provider": "anthropic",
       "api_version": "2023-06-01",
       "retires_on": null,
-      "use_status": "candidate",
+      "use_status": "in_use",
       "price_usd_per_mtok": {
         "input": 2.0,
         "output": 10.0
       },
-      "note": "current Sonnet; candidate successor, NOT re-validated: refused until the protocol is run and the owner signs"
+      "note": "the report model since PR #78 (config.py CLAUDE_MODEL default); in use for the research stage by the owner's decision of 2026-11-13 (DRAFT, PENDING owner approval); the registered re-validation is still owed before clinical use"
     }
   },
   "tools": {
@@ -293,9 +293,9 @@
       },
       "model_control": "server",
       "allowed_models": [
-        "claude-sonnet-4-5-20250929"
+        "claude-sonnet-5-5"
       ],
-      "availability": "unavailable from 2026-11-30: its only approved model claude-sonnet-4-5-20250929 retires then, and the successor claude-sonnet-5-5 is 'candidate' (not re-validated). Owner decision D-AGT-1 through RVP-AGT-001; the platform never switches models by itself. PR #78's verified report already uses claude-sonnet-5-5: reconcile both when D-AGT-1 is decided.",
+      "availability": "Research stage (owner decision 2026-11-13, D-AGT-1 for the research prototype; DRAFT, PENDING owner approval): the report's comments run with claude-sonnet-5-5, the default of PR #78's verified report, with the RC-130 in-testing notice; the registered measurement (RVP-AGT-001, the agents benchmark's Claude arms) is still owed before any clinical use. claude-sonnet-4-5-20250929 retires on 2026-11-30 and is no longer called. claude-haiku-5-5 is allowed by the report code (REPORT_MODELS) but not by this registry until it is measured.",
       "allowed_tools": [],
       "requires_verifier": true,
       "cost_cap_usd": {

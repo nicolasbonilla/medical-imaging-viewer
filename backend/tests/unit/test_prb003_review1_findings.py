@@ -22,6 +22,7 @@ Negative controls: scripts/safety/prb003_negative_controls.py (R1-R*, mutations 
 """
 from __future__ import annotations
 
+import json
 import logging
 import sys
 import types
@@ -478,13 +479,16 @@ def _run(coro):
 class _FakeAnthropic:
     """Stands in for the model provider only; records the prompts and answers with `text`."""
 
-    def __init__(self, text="## FINDINGS\nTwo lesions."):
+    def __init__(self, text="Two lesions were marked."):
+        # verified report (REQ-FUNC-116, DRAFT): `text` is the model's findings comment, answered in the fixed format
+        # as a typed text block (was: a whole report "## FINDINGS ..."); it reaches the draft only if it passes RC-103
         self.calls, self.text = [], text
         self.messages = self
 
     def create(self, **kw):
         self.calls.append(kw)
-        return types.SimpleNamespace(content=[types.SimpleNamespace(text=self.text)],
+        answer = f"[FINDINGS_COMMENT]\n{self.text}\n[IMPRESSION_COMMENT]\nDraft for radiologist review."
+        return types.SimpleNamespace(content=[types.SimpleNamespace(type="text", text=answer)], stop_reason="end_turn",
                                      usage=types.SimpleNamespace(input_tokens=1, output_tokens=1))
 
 
@@ -550,9 +554,12 @@ def test_rc070_r2_e2e_a_confirmed_dis_reaches_the_model_through_the_real_report_
     r = _report(client, template="ms_comprehensive")
     assert r.status_code == 200, r.text[:300]
     call = provider.calls[0]
-    assert "DIS Assessment: MET" in call["messages"][0]["content"]
-    assert "NOT EVALUATED" not in call["messages"][0]["content"]
-    assert "DIS checklist table" in call["system"]                 # the template's DIS section is kept
+    # verified report (REQ-FUNC-116, DRAFT): the evaluated DIS is in the record and in the code-written report
+    prompt = call["messages"][0]["content"]
+    record = json.loads(prompt.split("```json\n", 1)[1].split("\n```", 1)[0])
+    assert record["dis"]["status"] == "evaluated" and record["dis"]["dis_met_brain"] is True
+    assert "the brain criterion is met." in prompt and "not evaluated" not in prompt
+    assert "the brain criterion is met." in r.json()["content"]
 
 
 DIS_INSTRUCTIONS = ("DIS checklist table", "typical MS regions", "DIS regions involved", "Organize by DIS regions",
@@ -571,8 +578,11 @@ def test_rc070_r4_without_an_evaluated_dis_no_template_asks_for_dis(e2e, templat
     system = provider.calls[0]["system"]
     left = [p for p in DIS_INSTRUCTIONS if p in system]
     assert not left, f"{template}: the system prompt still asks for DIS: {left}"
-    assert "not evaluated (requires clinician review of the segmentation)" in system
-    assert "NOT EVALUATED" in provider.calls[0]["messages"][0]["content"]
+    # verified report (REQ-FUNC-116, DRAFT): one fixed system prompt; the not-evaluated state is in the record and the
+    # code-written report the model receives (was: in the template variant's system prompt)
+    prompt = provider.calls[0]["messages"][0]["content"]
+    assert "not evaluated (requires clinician review of the segmentation)" in prompt
+    assert '"dis":{"status":"not evaluated"' in prompt
 
 
 @pytest.mark.unit
@@ -597,11 +607,17 @@ def test_rc070_r4_a_dis_statement_written_by_the_model_is_replaced(e2e, lang, st
 
 @pytest.mark.unit
 def test_rc072_r4_the_notice_does_not_claim_the_draft_is_not_software_text(e2e):
+    """Amended for the second review of PR #78 (F, DRAFT): the verified draft states "not evaluated" once, in its
+    code-written findings line; the route's notice no longer repeats it (it still adds the automatic-marking note)."""
     client, svc, _provider, _ = e2e
     _seed(svc)
     content = _report(client).json()["content"]
     assert "comes from the software" not in content
-    assert "must not be read as a statement on dissemination in space" in content
+    assert content.count("Dissemination in space: not evaluated") == 1
+    from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
+    # (amended with the seventh review of PR #78, finding 7 / I5: the automatic-marking notice only for an automatic marking — this route test's
+    # segmentation has no automatic origin; the scenario matrix checks every source)
+    assert AUTOMATIC_MARKING_NOTICE["en"] not in content
 
 
 @pytest.mark.unit
@@ -652,4 +668,5 @@ def test_rc070_r3_without_an_evaluated_dis_the_report_receives_no_region_breakdo
     prompt = provider.calls[0]["messages"][0]["content"]
     for region in ("Periventricular", "Juxtacortical"):
         assert region not in prompt, f"{region} reached the model for an unconfirmed segmentation"
-    assert "Total lesions: 2" in prompt                              # measurements are kept
+    # measurements are kept (verified report, DRAFT: in the code-written report; was "Total lesions: 2")
+    assert "Lesions marked: 2 (MAGNIMS 2021: exact count below 20)." in prompt

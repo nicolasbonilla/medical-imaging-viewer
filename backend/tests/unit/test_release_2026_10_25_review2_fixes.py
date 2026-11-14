@@ -120,20 +120,22 @@ async def test_rc070_release2_n1_a_lesion_table_failure_names_its_real_reason(mo
         raise RuntimeError("mask buffer truncated")
 
     monkeypatch.setattr(analysis, "lesion_table", boom)
-    with pytest.raises(HTTPException) as other:
+    # (amended with the tenth review of PR #78, I16: the route's errors are coded — ReportError, error_code + message)
+    with pytest.raises(ai_report.ReportError) as other:
         await ai_report.server_lesion_table("seg-1")
-    assert other.value.status_code == 422
-    assert not other.value.detail.startswith(ai_report.GEOMETRY_UNREADABLE_PHRASE)
-    assert other.value.detail.startswith(ai_report.LESION_TABLE_FAILED_PHRASE)
-    assert "nothing was sent" in other.value.detail.lower()
+    assert other.value.status_code == 422 and other.value.error_code == "lesion_table_failed"
+    assert not other.value.message.startswith(ai_report.GEOMETRY_UNREADABLE_PHRASE)
+    assert other.value.message.startswith(ai_report.LESION_TABLE_FAILED_PHRASE)
+    assert "nothing was sent" in other.value.message.lower()
 
     async def geometry(*a, **k):
         raise VoxelSpacingUnavailableError("segmentation seg-1: could not read voxel geometry")
 
     monkeypatch.setattr(analysis, "lesion_table", geometry)
-    with pytest.raises(HTTPException) as geo:
+    with pytest.raises(ai_report.ReportError) as geo:
         await ai_report.server_lesion_table("seg-1")
-    assert geo.value.detail.startswith(ai_report.GEOMETRY_UNREADABLE_PHRASE)
+    assert geo.value.error_code == "geometry_unreadable"
+    assert geo.value.message.startswith(ai_report.GEOMETRY_UNREADABLE_PHRASE)
 
 
 # ─────────────────────────────────────────────── m4: the assistant applies the whole rule

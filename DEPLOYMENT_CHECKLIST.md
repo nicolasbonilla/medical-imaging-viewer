@@ -17,6 +17,17 @@ these. If any is missing after a deploy, re-set it manually.
 | `GCS_PROJECT_ID` | GCS project | Same pattern |
 | `ANTHROPIC_API_KEY` | Claude API for AI features | Same pattern |
 
+**Verified AI report (REQ-FUNC-116, REQ-SAFE-051 — DRAFT, PENDING owner approval; branch `feat/report-agent-verified`).**
+Two optional variables; neither is needed for the default behaviour, so the list above stays 9 names.
+
+| Variable | Purpose | Default when not set |
+|---|---|---|
+| `CLAUDE_MODEL` | Model of the report's two comments. Only an id of `brain_report_service.REPORT_MODELS` is called (`claude-sonnet-5-5`, `claude-haiku-5-5`); any other id — the retiring `claude-sonnet-4-5-20250929` included — gives a measurements-only report with the reason. **Do not set it to an old id.** | `claude-sonnet-5-5` |
+| `REPORT_LLM_ENABLED` | Kill switch of the AI comments: `false` calls no model; every report is the code-written measurements with the note "interpretive text not requested". | `true` |
+
+The previous default, `claude-sonnet-4-5-20250929`, retires on 2026-11-30: without this change the AI report stops
+working on 2026-12-01 (production does not set `CLAUDE_MODEL`).
+
 ## Verify after deploy
 
 ```bash

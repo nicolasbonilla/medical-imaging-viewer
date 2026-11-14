@@ -1,0 +1,86 @@
+{
+  "executed": "2026-11-11",
+  "purpose": "failing-first: the tests of the fourth independent review of PR #78 (Q1-Q8) on the reviewed head, before any correction",
+  "tree": "44f87cd (feat/report-agent-verified, head reviewed by the fourth independent review)",
+  "environment": "PRB-002 offline (missing credentials file, empty CLOUDSDK_CONFIG, GOOGLE_CLOUD_PROJECT=mstool-offline-tests, ANTHROPIC_API_KEY unset); project Python; one run",
+  "test_file": "backend/tests/unit/test_verified_report_review4.py",
+  "test_sha256": "84284b3b8c9e9e6cff7626e6ce5a0d7b2ab618396b92e18f255e416fefa89369",
+  "summary": "40 failed, 0 passed",
+  "per_item_failed_passed": {
+    "Q1": {
+      "failed": 14,
+      "passed": 0
+    },
+    "Q2": {
+      "failed": 7,
+      "passed": 0
+    },
+    "Q3": {
+      "failed": 4,
+      "passed": 0
+    },
+    "Q4": {
+      "failed": 3,
+      "passed": 0
+    },
+    "Q5": {
+      "failed": 5,
+      "passed": 0
+    },
+    "Q6": {
+      "failed": 5,
+      "passed": 0
+    },
+    "Q7": {
+      "failed": 1,
+      "passed": 0
+    },
+    "Q8": {
+      "failed": 1,
+      "passed": 0
+    }
+  },
+  "failing_tests": [
+    "test_rc070_q6_the_notice_decides_on_an_explicit_fact_not_on_a_substring",
+    "test_rc070_q6_the_route_uses_the_service_fact",
+    "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[de]",
+    "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[en]",
+    "test_rc102_q3_a_typed_indication_is_shown_separately_never_not_available[es]",
+    "test_rc102_q3_without_a_typed_indication_the_line_is_unchanged",
+    "test_rc102_q7_the_route_takes_the_rendered_blocks_from_the_verified_report",
+    "test_rc102_q8_no_pass_through_aliases",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['  .  ']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written[' ']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['()']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['*']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['**']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['- .']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['-']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['.']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['...']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['\\\\u200b']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['\\u2014']",
+    "test_rc103_q1_an_empty_comment_is_never_checked_as_written['\\u2026']",
+    "test_rc103_q1_three_empty_answers_are_withheld_and_never_delivered",
+    "test_rc103_q2_a_raw_token_never_reaches_a_draft[[FINDINGS_COMMENT]]",
+    "test_rc103_q2_a_raw_token_never_reaches_a_draft[[PLACEHOLDER]]",
+    "test_rc103_q2_a_raw_token_never_reaches_a_draft[\\uff5btotal_count\\uff5d]",
+    "test_rc103_q2_a_raw_token_never_reaches_a_draft[{ total_count }]",
+    "test_rc103_q2_a_raw_token_never_reaches_a_draft[{Total_Count}]",
+    "test_rc103_q2_a_raw_token_never_reaches_a_draft[{{total_count}}]",
+    "test_rc103_q2_fuzz_every_other_brace_or_bracket_token_fails_the_check",
+    "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[consis\\u200dtent with multi\\xadple sclerosis]",
+    "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[the pattern is typical of demye\\u200blination]",
+    "test_rc103_q6_format_characters_cannot_hide_a_phrase_from_the_check[trea\\xadtment escalation should be considered]",
+    "test_rc106_q4_no_provider_key_is_not_requested_in_the_note_and_the_state[de]",
+    "test_rc106_q4_no_provider_key_is_not_requested_in_the_note_and_the_state[en]",
+    "test_rc106_q4_no_provider_key_is_not_requested_in_the_note_and_the_state[es]",
+    "test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failure[dict]",
+    "test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failure[int]",
+    "test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failure[none]",
+    "test_rc106_q5_a_wiring_fault_is_a_provider_wiring_failure_not_a_check_failure[str]",
+    "test_rc106_q5_a_wrapped_async_create_is_awaited"
+  ],
+  "passing_tests": []
+}

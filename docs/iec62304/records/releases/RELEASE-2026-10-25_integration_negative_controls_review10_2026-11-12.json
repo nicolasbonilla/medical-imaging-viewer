@@ -1,0 +1,307 @@
+{
+  "executed": "2026-11-12T02:32:43",
+  "tree": "c5d4631fc8b1cfa13b9095d09088bb917f2b2618",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text); only the bound tests run (backend offline per PRB-002, with an outer environment asking for the Firestore backends and a 60-minute access token that conftest must override; frontend with vitest); bytes restored after each mutation and verified at the end",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "dd0a0afe200cce580e48b355d021218af105d37b57d1804fd424d233235735c2",
+    "frontend/src/components/AIReportPanel.tsx": "38c9a655fdf6a461190a3c35066bf26bf8f14a8239ba27f282ca95b438edc61a"
+  },
+  "test_sha256": {
+    "tests/unit/test_capa015_audit_and_session.py": "c2d117e9fddae634de5e46d9cc02f6572e783845a9488aae648d53e485e3479a",
+    "tests/unit/test_release_2026_10_25_capture_fixes.py": "a501509edf9048b0ae18917b810d578d88976f3bc1d7b8516da2db054e054a2f",
+    "tests/unit/test_release_2026_10_25_final_check.py": "4cedd9e4f096e030574367bf3f561dfb99d13847f7c4c9aec5ca658b21d6d0b8",
+    "tests/unit/test_release_2026_10_25_integration.py": "9086d8a027a266cc7b1b104cf47ead8d628556a586c1a05566f40e31248c12ee",
+    "tests/unit/test_release_2026_10_25_plural_counts.py": "6e13e1717ff5e3f2b47c32f06618da4766189acd03ef57c8f1a78e6da5a0a371",
+    "tests/unit/test_release_2026_10_25_review2_fixes.py": "7cdee374e37dbca38a949335b2a077d5094b241b0c54e5e870ed40a2824139c6",
+    "tests/unit/test_release_2026_10_25_review_fixes.py": "5190e524e0f24edb92475e5a0208a80a9f2e2addc9c745e4a34ab9b1caa4f989",
+    "tests/unit/test_release_2026_10_30_main_merge.py": "3d2ee53402efbd598ca7a3e405108c65de5d873bf39d16b7e52e01c695ed9645",
+    "tests/unit/test_release_2026_10_30_merge.py": "c14c5f9509674b31c376592500cc696bc4efe687e09a4c5b1544029839020756",
+    "frontend/src/ViewerApp.release20261028.test.tsx": "cedadf165f84b603236344050aa81cb66f03febca8f3dd0a95812b09b502456f",
+    "frontend/src/ViewerApp.release20261029.test.tsx": "b68656add9b17c5288f995a8b21fcceaac2c0af3b0c894ad4859a3ebceaae3a8",
+    "frontend/src/components/AIReportPanel.release20261025.test.tsx": "363df84dc51764fb298f04bd09fbe9ef137c4f53d75abd17d90a7db061c6eb5c",
+    "frontend/src/components/LesionDashboard.release20261028.test.tsx": "1a811a05144831e36053e1584084516a598fd37f2af0cefe6fa0c1f3a559cc0d",
+    "frontend/src/components/LesionDashboard.release20261028b.test.tsx": "ba3ae5457add30c827f976ae9399e7522afc0d6257b0cc8f9029f914ba6a8552",
+    "frontend/src/components/LesionDashboard.release20261028c.test.tsx": "967ad8efa481a2653c63f62666f2c33df6fbd7efdbf4e5c70fe13beae3e5e6fe",
+    "frontend/src/components/LesionDashboard.release20261028d.test.tsx": "9a8a40dfda2874f2dd527b7c35bff3ff1fd9ff86566da0909f086b5d67baeb03",
+    "frontend/src/components/LesionDashboard.release20261029.test.tsx": "5e4d729ca7356bd85952683552e04dac7b03ce2ec8ae1e33053d6ba49cf139f2",
+    "frontend/src/store/useSegmentationStore.release20261028.test.ts": "c4b641115cf753e048b4b7326bbd6e34bec61e11544e4b313136ccf2a4a6dfac",
+    "frontend/src/utils/drawnLabels.digest.test.ts": "92c961b6caf5665090cbe515ec5e6e65a072a7bc789b4663c84bb44b5ed2c327",
+    "frontend/src/utils/drawnLabels.fallback.test.ts": "43c4894ea43b4f6c3cf3e24b92ac35851927ca8c08ffb5105e3dd7aebe657ef5",
+    "frontend/src/utils/drawnLabels.test.ts": "d012d9d186bb2c8b9b4ca1e2fc473f384c1bba5c6293eea2842dc7aba59475d3",
+    "frontend/src/utils/fallbackColour.release20261030.test.ts": "f1a2aa65ed0f15d53b1e488f3dd6e0cb9fca783b6de7edf862cee0481158450e"
+  },
+  "baseline": {
+    "backend": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 83,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": [
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 9,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 5,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 7,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 9,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 6,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 6,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 3,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 18,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 2,
+        "errors": 0,
+        "failing_tests": []
+      }
+    ]
+  },
+  "mutations": {
+    "I11_panel_shows_no_measurements_for_a_geometry_422": {
+      "suite": "frontend",
+      "exit": 1,
+      "failed": 3,
+      "passed": 1,
+      "errors": 0,
+      "failing_tests": [
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (en)",
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (es)",
+        "rc070 release r6 a geometry 422 shows its own message, not \"no measurements\" (de)"
+      ],
+      "reintroduces": "the report panel shows 'no measurements' for an unreadable image geometry (review item 6)",
+      "tests": [
+        "frontend/src/components/AIReportPanel.release20261025.test.tsx"
+      ],
+      "executed": "2026-11-12T02:33:56",
+      "detected": true
+    },
+    "I12_geometry_422_without_its_phrase": {
+      "suite": "backend",
+      "exit": 1,
+      "failed": 1,
+      "passed": 0,
+      "errors": 0,
+      "failing_tests": [
+        "test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase"
+      ],
+      "reintroduces": "the server's geometry 422 no longer carries its own code (the panel would show another failure)",
+      "tests": [
+        "tests/unit/test_release_2026_10_25_review_fixes.py::test_rc070_release_r6_unreadable_geometry_names_itself_and_the_panel_knows_the_phrase"
+      ],
+      "executed": "2026-11-12T02:34:02",
+      "detected": true
+    }
+  },
+  "restored": {
+    "backend": {
+      "suite": "backend",
+      "exit": 0,
+      "failed": 0,
+      "passed": 83,
+      "errors": 0,
+      "failing_tests": []
+    },
+    "frontend": [
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 9,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 5,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 7,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 9,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 6,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 6,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 3,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 18,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 4,
+        "errors": 0,
+        "failing_tests": []
+      },
+      {
+        "suite": "frontend",
+        "exit": 0,
+        "failed": 0,
+        "passed": 2,
+        "errors": 0,
+        "failing_tests": []
+      }
+    ]
+  },
+  "summary": {
+    "mutations": 2,
+    "detected": 2,
+    "undetected": []
+  }
+}

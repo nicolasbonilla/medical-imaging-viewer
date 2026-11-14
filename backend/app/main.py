@@ -114,6 +114,14 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize default admin user: {e}", exc_info=True)
         # Don't fail startup - allow app to run even if user creation fails
 
+    # Eleventh review of PR #78, C4 (REQ-SAFE-019; DRAFT): the verified report's device-word list (RC-065) is built
+    # here, once, not inside the first report request's 30 s budget
+    try:
+        from app.services.brain_report_service import warm_report_word_lists
+        await asyncio.to_thread(warm_report_word_lists)
+    except Exception as e:  # noqa: BLE001 — the first request then builds it (the check never runs without it)
+        logger.error(f"Report word-list warm-up failed: {type(e).__name__}")
+
     yield
 
     # Shutdown: gracefully handle shutdown
@@ -127,6 +135,12 @@ async def lifespan(app: FastAPI):
             logger.error("AUDIT_SINK_SHUTDOWN_NOT_DRAINED", extra=get_durable_audit_sink().status())
     except Exception as e:  # noqa: BLE001
         logger.error(f"Audit sink flush at shutdown failed: {e}")
+    # RC-106 (fifth review of PR #78, V4): the report's one shared provider client and its connection pool
+    try:
+        from app.services.brain_report_service import close_report_clients
+        await close_report_clients()
+    except Exception as e:  # noqa: BLE001
+        logger.error(f"Report client close at shutdown failed: {type(e).__name__}")
     await asyncio.sleep(0.1)
     logger.info("Application shutdown complete")
 

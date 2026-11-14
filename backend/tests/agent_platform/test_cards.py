@@ -32,18 +32,17 @@ def test_rc117_every_agent_with_a_model_or_tools_has_a_card():
 
 
 def test_rc117_a_report_template_change_without_the_card_is_caught(monkeypatch):
-    from app.services import brain_report_service as b
-    monkeypatch.setitem(b.REPORT_TEMPLATES, "general", b.REPORT_TEMPLATES["general"] + " Also state the diagnosis.")
+    from app.services import verified_report as v
+    monkeypatch.setattr(v, "SYSTEM_PROMPT", v.SYSTEM_PROMPT + " Also state the diagnosis.")
     problems = C.check_card("report-drafter", H.production_data())
-    assert any("REPORT_TEMPLATES[general]" in p and "changed" in p for p in problems)
-    assert any("dis_not_evaluated_template(REPORT_TEMPLATES[general])" in p for p in problems)
+    assert any("verified_report.SYSTEM_PROMPT" in p and "changed" in p for p in problems)
 
 
 def test_rc117_a_new_template_without_the_card_is_caught(monkeypatch):
-    from app.services import brain_report_service as b
-    monkeypatch.setitem(b.REPORT_TEMPLATES, "ms_new", "You are a radiologist.")
+    from app.services import verified_report as v
+    monkeypatch.setattr(v, "DIAGNOSIS_RULE_MESSAGE", "State the diagnosis.", raising=False)
     problems = C.check_card("report-drafter", H.production_data())
-    assert any("ms_new" in p and "not recorded" in p for p in problems)
+    assert any("DIAGNOSIS_RULE_MESSAGE" in p and "not recorded" in p for p in problems)
 
 
 def test_rc117_an_mcp_instruction_change_without_the_card_is_caught(monkeypatch):
@@ -59,19 +58,19 @@ def test_rc117_an_mcp_instruction_change_without_the_card_is_caught(monkeypatch)
 
 
 def test_rc117_a_model_change_without_the_card_is_caught(monkeypatch):
-    monkeypatch.setattr(C, "config_default", lambda field: {"CLAUDE_MODEL": "claude-sonnet-5-5",
+    monkeypatch.setattr(C, "config_default", lambda field: {"CLAUDE_MODEL": "claude-haiku-5-5",
                                                             "CLAUDE_MAX_TOKENS": 4096}[field])
     problems = C.check_card("report-drafter", H.production_data())
     assert any("default model" in p for p in problems)
     data = H.production_data()
-    data["agents"]["report-drafter"]["allowed_models"] = ["claude-sonnet-5-5"]
+    data["agents"]["report-drafter"]["allowed_models"] = ["claude-haiku-5-5"]
     assert any("allow-list" in p for p in C.check_card("report-drafter", data))
 
 
 def test_rc117_api_version_or_retirement_drift_is_caught():
     data = H.production_data()
-    data["models"]["claude-sonnet-4-5-20250929"]["api_version"] = "2026-10-21"
-    data["models"]["claude-sonnet-4-5-20250929"]["retires_on"] = "2027-01-01"
+    data["models"]["claude-sonnet-5-5"]["api_version"] = "2026-10-21"
+    data["models"]["claude-sonnet-5-5"]["retires_on"] = "2027-01-01"
     problems = C.check_card("report-drafter", data)
     assert any("api_version" in p for p in problems) and any("retires_on" in p for p in problems)
 
@@ -83,7 +82,7 @@ def test_rc117_a_parameter_change_without_the_card_is_caught():
 
 
 def test_rc117_config_defaults_are_read_from_the_source():
-    assert C.config_default("CLAUDE_MODEL") == "claude-sonnet-4-5-20250929"
+    assert C.config_default("CLAUDE_MODEL") == "claude-sonnet-5-5"
     assert C.config_default("CLAUDE_MAX_TOKENS") == 4096
     # Amended for the fifth review of PR #79 (D-AGT-7): fastmcp upgraded from 2.3.0 to 3.2.4.
     assert C.requirement_pin("anthropic") == "0.44.0" and C.requirement_pin("fastmcp") == "3.2.4"
@@ -101,12 +100,19 @@ def test_rc117_mcp_sdk_as_installed_matches_the_card():
         "(T-5 of the re-validation protocol): record the observed values in the card, or pin mcp.")
 
 
-def test_rc117_retirement_check_with_a_frozen_date():
+def test_rc117_retirement_check_with_a_frozen_date(monkeypatch):
     """Amended after the third review of PR #79 (finding 5): the date is INJECTED. The wall-clock check is the
     scheduled job .github/workflows/agent-model-retirement.yml; at call time the registry refuses the model."""
     frozen = date(2026, 11, 10)
     assert C.retirement_problems(today=frozen) == []
-    assert any("claude-sonnet-4-5-20250929" in w for w in C.retirement_warnings(today=frozen))
+    # Reconciled 2026-11-14: the card model (claude-sonnet-5-5) has no announced retirement, so the rule is shown on
+    # a card whose model retires on 2026-11-30.
+    original = C.load_card
+    def retiring(agent_id):
+        card = original(agent_id)
+        return {**card, "model": {**card["model"], "retires_on": "2026-11-30"}} if agent_id == "report-drafter" else card
+    monkeypatch.setattr(C, "load_card", retiring)
+    assert any("claude-sonnet-5-5" in w for w in C.retirement_warnings(today=frozen))
     assert C.retirement_problems(today=date(2026, 11, 30))
 
 

@@ -1,0 +1,348 @@
+{
+  "executed": "2026-11-12T00:59:29",
+  "method": "one mutation at a time; each anchor asserted to occur exactly once (LF text, written back with the file's own line endings); the bound backend tests with no cloud credential (PRB-002), run one after the other, never in parallel; original bytes restored after each mutation, at exit and on a signal, and checked at the end; the baseline must pass first; a run cut by a crash resumes from the results already recorded for the same commit, sources and tests",
+  "hash_basis": "sha256 of the UTF-8 text with LF line endings",
+  "source_sha256": {
+    "backend/app/api/routes/ai_report.py": "c8e75bf00943196b6ee5ea994a754432e34dc14757723bff53cf96352d6c2670",
+    "backend/app/services/brain_report_service.py": "ec9c15e04665241378a13db42f83dc9a83080326f227982742b20bee70cd77f0",
+    "backend/app/services/longitudinal_candidate_safety.py": "8d5f180f9233940ffb46f138506cef4b71e7c4312e54a8349c64eb4b2cc39ea4",
+    "backend/app/services/report_claim_strict.py": "86c0ea46e3333646cdc6ef36ff010556ff70877066fd4a2a77f393663067ccb8",
+    "backend/app/services/verified_report.py": "6580a5516830e19e28c204253ad896deb9f52c825ad51fc12fbd24114e90afee"
+  },
+  "test_sha256": {
+    "tests/unit/test_rc102_verified_report_flow.py": "972dad4635c7a083fa2f54e1b4411693239b0a2b99e8cf4e430c0f35677281e4",
+    "tests/unit/test_rc103_verified_report_loop.py": "98e37933215b1a96512f14b5aec8f2b0dc8a629ff8bd11815d29fad191925170",
+    "tests/unit/test_rc103_report_claim_verifier.py": "551211e914f1ffc80e569df0c3b2a306468fef056ac079096b46c6bf83eca1a8",
+    "tests/unit/test_rc104_verified_report_audit.py": "fd42d0309ee427ed4dd3d5e1bf36b9b2d8ceb2fb242f2e37576c6d900a969aa2",
+    "tests/unit/test_rc105_rc106_report_model_controls.py": "630db84999c448ea9867a0641fd904213fc2e771cc87647342b72cc10f8fed32",
+    "tests/unit/test_brain_report_service.py": "4798d5d257255816aa3f9e7b2301c8eb94e970982fd5c897cbe40c07d853edb8",
+    "tests/unit/test_verified_report_review1.py": "21719a0f9de75dbf7c508d4c9d40708b6c72a2f6611c3352fbfffdff2398bdb8",
+    "tests/unit/test_verified_report_review2.py": "364f8daf280113d7001cbee6ff4ff99169f06bae5264d27df94126b214a188cb",
+    "tests/unit/test_verified_report_review2_dis.py": "cac14a7e8dfe21d7c3c399199e5089a5020f9d08bbe9bbcfbb80cfd6ee957a1a",
+    "tests/unit/test_verified_report_review3.py": "c8b2e9c9e6823ef8219d4ceea137666c41dcdf1f7297dbee188065a17535e3a0",
+    "tests/unit/test_verified_report_review4.py": "66dc5c7568c6d1f3e2f7f8f1c5c57a08ed3dee470a5f9f166780cfb46a3bce43",
+    "tests/unit/test_verified_report_review5.py": "c44f6b57913e310aee3499eafeed2ca13df0591a863c713de19a01ab61167155",
+    "tests/unit/test_verified_report_review6.py": "d488840a4f9a2ed435028e7b0a14208746b1b76fd7db4770fb25fb5f35d5a299",
+    "tests/unit/test_verified_report_scenario_matrix.py": "8af14c4f0f79ba83ba77fa7f19810778964f26d42e8d58b5c6560fada44eb44b"
+  },
+  "tests": [
+    "tests/unit/test_rc102_verified_report_flow.py",
+    "tests/unit/test_rc103_verified_report_loop.py",
+    "tests/unit/test_rc103_report_claim_verifier.py",
+    "tests/unit/test_rc104_verified_report_audit.py",
+    "tests/unit/test_rc105_rc106_report_model_controls.py",
+    "tests/unit/test_brain_report_service.py",
+    "tests/unit/test_verified_report_review1.py",
+    "tests/unit/test_verified_report_review2.py",
+    "tests/unit/test_verified_report_review2_dis.py",
+    "tests/unit/test_verified_report_review3.py",
+    "tests/unit/test_verified_report_review4.py",
+    "tests/unit/test_verified_report_review5.py",
+    "tests/unit/test_verified_report_review6.py",
+    "tests/unit/test_verified_report_scenario_matrix.py"
+  ],
+  "baseline": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 815,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "mutations": {
+    "F1_range_from_21": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 810,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[de]",
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[en]",
+        "test_rc102_i12_from_twenty_lesions_only_the_magnims_range_is_shown[es]",
+        "test_rc102_lesion_count_follows_magnims_2021[20-Lesions",
+        "test_rc103_i12_a_clean_comment_on_twenty_lesions_or_more_passes_the_claim_check[de]"
+      ],
+      "reintroduces": "20 lesions reported as an exact count, not as the MAGNIMS 2021 range",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T01:01:11",
+      "detected": true
+    },
+    "P1_unrendered_fields_validated": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 812,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc064_c_a_bad_value_in_a_field_the_report_does_not_render_never_blocks_it[llm_off]",
+        "test_rc064_c_a_bad_value_in_a_field_the_report_does_not_render_never_blocks_it[llm_on]",
+        "test_rc064_c_a_patient_number_in_a_field_never_sent_does_not_block_and_is_not_sent"
+      ],
+      "reintroduces": "C: a bad value in a field the report does not render refuses the whole report",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T01:01:59",
+      "detected": true
+    },
+    "P6_patient_numbers_checked_when_nothing_sent": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 813,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc105_i14_the_provider_payload_runs_only_when_a_call_will_happen",
+        "test_rc105_v5_nothing_sent_keeps_the_measurement_checks_only"
+      ],
+      "reintroduces": "V5: provider-only refusals apply when nothing is sent",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T01:02:48",
+      "detected": true
+    },
+    "M22_record_read_when_nothing_is_sent": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 813,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[nothing_to_comment]",
+        "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[too_little_time]"
+      ],
+      "reintroduces": "finding 8: the patient record is read (and its failure refuses) with nothing to send",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T01:03:32",
+      "detected": true
+    },
+    "M23_record_read_before_deciding": {
+      "exit": 1,
+      "failed": 2,
+      "passed": 813,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[nothing_to_comment]",
+        "test_rc105_an_unreadable_record_does_not_matter_when_nothing_will_be_sent[too_little_time]"
+      ],
+      "reintroduces": "finding 3: an unreadable record refuses a draft that would send nothing",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T01:04:19",
+      "detected": true
+    },
+    "F30_exact_count_from_twenty_in_the_record": {
+      "exit": 0,
+      "failed": 0,
+      "passed": 815,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [],
+      "reintroduces": "I12: from 20 lesions the exact count reaches the record sent to the model",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T01:05:02",
+      "detected": false
+    },
+    "F31_exact_visit_totals_in_the_record": {
+      "exit": 0,
+      "failed": 0,
+      "passed": 815,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [],
+      "reintroduces": "I12: an exact visit total from 20 lesions reaches the record",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T01:05:46",
+      "detected": false
+    },
+    "L12_status_counts_relabelled": {
+      "exit": 1,
+      "failed": 3,
+      "passed": 812,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_i11_the_draft_follows_the_shared_longitudinal_rule[no",
+        "test_rc102_v2_without_the_candidate_block_both_count_what_the_rule_counts"
+      ],
+      "reintroduces": "I13: without the candidate block every new component is stated as a reviewable candidate",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T01:07:23",
+      "detected": true
+    },
+    "P9_implausible_value_as_an_ai_error": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 811,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error[lesion_analysis.regions.Periventricular.lesion_count]",
+        "test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error[lesion_analysis.total_burden_ml]",
+        "test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error[lesion_analysis.total_burden_mm3]",
+        "test_rc105_i14_an_implausible_measurement_is_a_422_that_names_it_never_an_ai_error[lesion_analysis.total_count]"
+      ],
+      "reintroduces": "I14: an implausible measurement answers 'not sent to the AI service' (503)",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-12T01:08:26",
+      "detected": true
+    },
+    "P10_provider_payload_on_every_draft": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 814,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc105_i14_the_provider_payload_runs_only_when_a_call_will_happen"
+      ],
+      "reintroduces": "I14: the provider payload is built with nothing to send",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T01:09:25",
+      "detected": true
+    },
+    "M24_budget_from_the_first_decision": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 814,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc106_a_slow_record_and_word_list_never_exceed_the_request_budget"
+      ],
+      "reintroduces": "finding 1: the model gets the budget left before the record and the word list were read",
+      "files": [
+        "backend/app/services/brain_report_service.py"
+      ],
+      "executed": "2026-11-12T01:10:40",
+      "detected": true
+    },
+    "C43_evidence_read_on_every_record": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 814,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_the_false_candidate_evidence_is_read_once"
+      ],
+      "reintroduces": "finding 7: the evidence JSON is read from disk for every record",
+      "files": [
+        "backend/app/services/longitudinal_candidate_safety.py"
+      ],
+      "executed": "2026-11-12T01:11:43",
+      "detected": true
+    },
+    "C44_rule_check_served_from_the_cache": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 814,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_the_false_candidate_evidence_is_read_once"
+      ],
+      "reintroduces": "finding 7 done wrongly: the rate is served from a cache after the rule in force changed",
+      "files": [
+        "backend/app/services/longitudinal_candidate_safety.py"
+      ],
+      "executed": "2026-11-12T01:12:28",
+      "detected": true
+    },
+    "F33_frozen_check_without_the_range": {
+      "exit": 1,
+      "failed": 4,
+      "passed": 811,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_r5_the_total_count_placeholder_follows_magnims_from_20_lesions",
+        "test_rc103_i12_a_clean_comment_on_twenty_lesions_or_more_passes_the_claim_check[de]",
+        "test_rc103_i12_a_clean_comment_on_twenty_lesions_or_more_passes_the_claim_check[en]",
+        "test_rc103_i12_a_clean_comment_on_twenty_lesions_or_more_passes_the_claim_check[es]"
+      ],
+      "reintroduces": "I12 done wrongly: the frozen check reads a record without a count and refuses every comment from 20 lesions upward",
+      "files": [
+        "backend/app/services/report_claim_strict.py"
+      ],
+      "executed": "2026-11-12T01:13:13",
+      "detected": true
+    },
+    "F34_range_placeholder_dropped": {
+      "exit": 1,
+      "failed": 5,
+      "passed": 810,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc102_r5_the_total_count_placeholder_follows_magnims_from_20_lesions",
+        "test_rc102_t1_property_a_placeholder_is_available_exactly_when_its_line_states_the_value",
+        "test_rc103_i12_a_clean_comment_on_twenty_lesions_or_more_passes_the_claim_check[de]",
+        "test_rc103_i12_a_clean_comment_on_twenty_lesions_or_more_passes_the_claim_check[en]",
+        "test_rc103_i12_a_clean_comment_on_twenty_lesions_or_more_passes_the_claim_check[es]"
+      ],
+      "reintroduces": "I12 done wrongly: from 20 lesions the {total_count} placeholder is no longer available",
+      "files": [
+        "backend/app/services/verified_report.py"
+      ],
+      "executed": "2026-11-12T01:14:06",
+      "detected": true
+    },
+    "F32_format_rule_twice": {
+      "exit": 1,
+      "failed": 1,
+      "passed": 814,
+      "errors": 0,
+      "skipped": 47,
+      "failing_tests": [
+        "test_rc070_the_format_character_rule_runs_once_in_the_route"
+      ],
+      "reintroduces": "finding 8: the route runs the format-character rule a second time",
+      "files": [
+        "backend/app/api/routes/ai_report.py"
+      ],
+      "executed": "2026-11-12T01:14:59",
+      "detected": true
+    }
+  },
+  "restored": {
+    "exit": 0,
+    "failed": 0,
+    "passed": 815,
+    "errors": 0,
+    "skipped": 47,
+    "failing_tests": []
+  },
+  "summary": {
+    "mutations": 16,
+    "detected": 14,
+    "undetected": [
+      "F30_exact_count_from_twenty_in_the_record",
+      "F31_exact_visit_totals_in_the_record"
+    ]
+  },
+  "worktree": {
+    "run_in": "throwaway detached worktree of the commit, removed after the run",
+    "commit": "f07378d5331ddec5d512331bfe49df4beec3fe2f",
+    "stale_worktrees_removed_first": [],
+    "python": "C:/Users/Nicolas/medical-imaging-viewer\\backend\\venv\\Scripts\\python.exe"
+  }
+}
