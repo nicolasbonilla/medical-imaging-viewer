@@ -116,8 +116,14 @@ def test_rc110_production_registry_is_valid_and_every_agent_is_pending_the_owner
                           clock=lambda: FIXED_NOW)
     assert reg.valid, reg.errors
     assert data["agents"], "the production registry lists no agent"
+    # Research stage (2026-11-14): the owner may record an approval himself, in his own GitHub-verified sign-off commit,
+    # in his sign-off form; no other approval is ever written. Every other entry is still refused.
+    import re
+    owner_form = re.compile(r"N\. G\. Bonilla Vargas — approved \d{4}-\d{2}-\d{2} \(PR #\d+\)")
     for agent_id, spec in data["agents"].items():
-        assert spec["approval"]["status"] != "approved", f"{agent_id}: only the owner records an approval"
+        if spec["approval"]["status"] == "approved":
+            assert owner_form.fullmatch(spec["approval"].get("ref", "")), f"{agent_id}: only the owner records an approval"
+            continue
         assert not reg.check_agent(agent_id).allowed
     for tool, entry in data["tools"].items():
         if entry["access"] == "write":

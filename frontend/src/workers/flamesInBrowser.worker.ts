@@ -62,7 +62,8 @@ self.onmessage = async (event: MessageEvent<FlamesWorkerRequest>) => {
     // RC-043 / RC-049: refuse a non-skull-stripped or non-FLAIR image BEFORE the model download.
     // flair-gate/2: header evidence (never the file name) and image content can only refuse; acceptance also needs
     // positive evidence — the clinician's confirmation for this file, or a header with a FLAIR inversion time.
-    const headerEvidence = headerContrastEvidence(flair.headerText, flair.dicom, job.seriesDescription ?? null);
+    const headerEvidence = headerContrastEvidence(flair.headerText, flair.dicom, job.seriesDescription ?? null,
+      job.qualityGate === true ? { qualityGate: true, serverSequenceClass: job.gateSequenceClass ?? null } : {});
     const gate = checkInputGates(
       { data: flair.data, dims: flair.dims, spacing: flair.spacing },
       { headerEvidence, clinicianConfirmedFlair: job.clinicianConfirmedFlair === true, strippedByApp: job.strippedByApp === true },

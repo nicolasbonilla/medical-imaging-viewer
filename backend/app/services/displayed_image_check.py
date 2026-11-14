@@ -57,22 +57,40 @@ def _mask_text(mask_shape: Sequence[int]) -> str:
     return f"{mask_shape[2]} × {mask_shape[1]} × {mask_shape[0]}"
 
 
+async def read_header_prefix(storage_service: Any, bucket: str, file_id: str, inspect, *, first: int = HEADER_READ,
+                             largest: int = HEADER_READ_MAX, in_thread: bool = False):
+    """The ONE ranged header reader of the app (eighth review of PR #81, E1; used here and by the quality gate): the
+    first ``first`` bytes, then four times as many while ``inspect(prefix)`` says the header is not complete, up to
+    ``largest``; one full download from a storage without real ranges (the interface default would download the whole
+    file on every round). ``inspect(prefix) -> (complete, value)`` runs once per round (in a worker thread when
+    ``in_thread``); the value of the last round is returned."""
+    import asyncio
+    from app.core.interfaces.storage_interface import IStorageService
+
+    async def look(raw):
+        return await asyncio.to_thread(inspect, raw) if in_thread else inspect(raw)
+
+    ranged = getattr(storage_service, "download_file_range", None)
+    if ranged is None or getattr(type(storage_service), "download_file_range", None) is IStorageService.download_file_range:
+        return (await look(await storage_service.download_file(bucket, file_id)))[1]
+    size = first
+    while True:
+        raw = await ranged(bucket, file_id, 0, size - 1)
+        complete, value = await look(raw)
+        if complete or len(raw) < size or size >= largest:
+            return value
+        size *= 4
+
+
 async def _header_bytes(storage_service: Any, bucket: str, file_id: str) -> bytes:
     """The first bytes of the image, enough for its NIfTI header (1 KB once decompressed), or the whole file from a
     storage that cannot read a range."""
     import zlib
 
-    ranged = getattr(storage_service, "download_file_range", None)
-    if ranged is None:
-        return await storage_service.download_file(bucket, file_id)
-    size = HEADER_READ
-    while True:
-        raw = await ranged(bucket, file_id, 0, size - 1)
-        complete = (raw[:2] != b"\x1f\x8b"
-                    or len(zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)) >= 1024)
-        if complete or len(raw) < size or size >= HEADER_READ_MAX:
-            return raw
-        size *= 4
+    def inspect(raw):
+        return (raw[:2] != b"\x1f\x8b" or len(zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)) >= 1024), raw
+
+    return await read_header_prefix(storage_service, bucket, file_id, inspect)
 
 
 async def _header(storage_service: Any, bucket: str, file_id: str):

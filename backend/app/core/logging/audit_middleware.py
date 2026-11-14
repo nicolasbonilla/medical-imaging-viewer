@@ -87,6 +87,7 @@ ROUTE_ACTIONS: Dict[Tuple[str, str], Tuple[AuditEventType, str]] = {
     ("POST", "/api/v1/ai/anomaly/detect"): (E.CLINICAL_AI_RUN, "image"),
     ("POST", "/api/v1/clinical/flames/segment"): (E.CLINICAL_AI_RUN, "image"),
     ("POST", "/api/v1/clinical/skull-strip"): (E.CLINICAL_AI_RUN, "image"),   # REQ-FUNC-115: the image goes to the worker
+    ("POST", "/api/v1/clinical/quality-gate"): (E.QUALITY_GATE_CONSULTATION, "image"),  # G22, F4 (DRAFT): a consultation, not an AI run
     ("POST", "/api/v1/clinical/lst-ai/segment"): (E.CLINICAL_AI_RUN, "image"),
     ("POST", "/api/v1/clinical/synthseg/parcellate"): (E.CLINICAL_AI_RUN, "image"),
     ("GET", "/api/v1/segmentation/{segmentation_id}/export/dicom-seg"): (E.DATA_EXPORT, "segmentation"),
@@ -103,6 +104,12 @@ ROUTE_ACTIONS: Dict[Tuple[str, str], Tuple[AuditEventType, str]] = {
 STDOUT_ONLY_ROUTES = frozenset({("POST", "/api/v1/auth/captcha")})
 
 # Small JSON routes whose BODY names the objects acted on (read only up to 64 KiB, ids only).
+# Routes whose handler writes the one authoritative audit record of a request it evaluates (eleventh review of PR #81,
+# I5): the middleware adds none of its own when the handler's record EXISTS DURABLY (the request's explicit records,
+# RequestAuditContext.explicit_writes — one channel, sixteenth review R8 — confirmed by the store: fourteenth review K1);
+# every other request to them is recorded here as for any route.
+SELF_AUDITED_ROUTES = frozenset({("POST", "/api/v1/clinical/quality-gate")})
+
 BODY_ID_ROUTES = frozenset({
     "/api/v1/segmentation/longitudinal/review",
     "/api/v1/segmentation/longitudinal/compare",
@@ -112,6 +119,7 @@ BODY_ID_ROUTES = frozenset({
     "/api/v1/segmentation/create",
     "/api/v1/ai/report/generate",
     "/api/v1/clinical/skull-strip",
+    "/api/v1/clinical/quality-gate",   # G22 (DRAFT)
 })
 _BODY_LIMIT = 64 * 1024
 
@@ -126,7 +134,10 @@ _PATH_ID_KEYS = {
 _HASHED_PATH_KEYS = {"accession_number": "accession_hmac", "mrn": "mrn_hmac"}
 
 _READ_DEDUP_SECONDS = float(os.environ.get("AUDIT_READ_DEDUP_SECONDS", "300"))
+# ONE wait budget per request (fifteenth review, S2): the confirmation of a route's own record AND the flush of this
+# request's durable writes share it — the added latency is at most this, as the base's flush wait alone was
 _FLUSH_WAIT_S = float(os.environ.get("AUDIT_FLUSH_WAIT_MS", "500")) / 1000.0
+_WAIT_BUDGET_S = _FLUSH_WAIT_S
 _DEDUP_MAX = 20_000
 _dedup: "OrderedDict[Tuple, float]" = OrderedDict()
 _dedup_lock = threading.Lock()
@@ -270,8 +281,10 @@ class AuditMiddleware(BaseHTTPMiddleware):
             except Exception:
                 self._record(request, 500, actor, ctx, body_ids, body_details, start_time)
                 raise
-            self._record(request, status, actor, ctx, body_ids, body_details, start_time)
-            await self._wait_for_durable(ctx)
+            deadline = asyncio.get_running_loop().time() + _WAIT_BUDGET_S       # S2: ONE budget
+            covered, confirmed, expected = await self._route_record_state(request, ctx, status, deadline)
+            self._record(request, status, actor, ctx, body_ids, body_details, start_time, confirmed, covered, expected)
+            await self._wait_for_durable(ctx, deadline)
             response.headers["X-Request-Duration-Ms"] = f"{(time.time() - start_time) * 1000:.2f}"
             return response
         finally:
@@ -288,38 +301,76 @@ class AuditMiddleware(BaseHTTPMiddleware):
             return {}, {}
 
     @staticmethod
-    async def _wait_for_durable(ctx) -> None:
-        """Bounded wait for this request's durable writes while the sink is healthy (Cloud Run
-        throttles the CPU between requests). Never fails the request."""
-        if not ctx.futures or _FLUSH_WAIT_S <= 0:
-            return
+    async def _wait_for_durable(ctx, deadline: float) -> None:
+        """Bounded wait for this request's durable writes while the sink is healthy (Cloud Run throttles the CPU
+        between requests), within what is left of the request's ONE budget. Never fails the request."""
         try:
+            remaining = deadline - asyncio.get_running_loop().time()
+            if not ctx.futures or remaining <= 0:
+                return
             from app.core.logging.audit_sink import get_durable_audit_sink
             if not get_durable_audit_sink().is_healthy():
                 return
             waiters = [asyncio.wrap_future(f) for f in ctx.futures]
-            await asyncio.wait_for(asyncio.shield(asyncio.gather(*waiters, return_exceptions=True)), _FLUSH_WAIT_S)
+            await asyncio.wait_for(asyncio.shield(asyncio.gather(*waiters, return_exceptions=True)), remaining)
         except (asyncio.TimeoutError, Exception):
             return
 
-    def _record(self, request, status, actor, ctx, body_ids, body_details, start_time) -> None:
+    @staticmethod
+    async def _route_record_state(request, ctx, status: int, deadline: float) -> Tuple[bool, bool, bool]:
+        """(covered, confirmed, expected). ``covered``: a route whose OWN record silences the middleware (the
+        authentication routes and the self-audited quality gate) and that attempted one; ``confirmed``: that record
+        exists as it was meant to — logged, and held by the durable store within the request's budget when a durable
+        write was made (K1 / S2); ``expected``: a durable write was meant (AuditWrite.expected, the one rule — R8).
+        R8 (sixteenth review): ONE channel, the request's explicit records (RequestAuditContext.explicit_writes), as
+        for /auth; the gate writes its own record exactly when it answers 200, so any other answer of it (a 429 whose
+        record is the limiter's, a 404) is not covered and the middleware records it (K3). No durable backend
+        configured: the logged record is the record, exactly as on the base. Never raises."""
         try:
-            event, durable = self._build(request, status, actor, ctx, body_ids, body_details, start_time)
+            template = getattr(request.scope.get("route"), "path", None)
+            own = (request.url.path.startswith(AUTH_PREFIX)
+                   or ((request.method, template) in SELF_AUDITED_ROUTES and status == 200))
+            writes = list(ctx.explicit_writes) if own else []
+            if not writes:
+                return False, False, False
+            expected = any(w.expected for w in writes)
+            from app.core.logging.audit_sink import get_durable_audit_sink
+            sink = get_durable_audit_sink()
+            waiting = getattr(sink, "backend", None) == "memory" or sink.is_healthy()
+            for write in writes:
+                remaining = max(0.0, deadline - asyncio.get_running_loop().time()) if waiting else 0.0
+                if not await write.confirmed(remaining):
+                    return True, False, expected
+            return True, True, expected
+        except Exception:  # noqa: BLE001 — unknown: the middleware records the request
+            return False, False, False
+
+    def _record(self, request, status, actor, ctx, body_ids, body_details, start_time, confirmed: bool = False,
+                covered: bool = False, expected: bool = False) -> None:
+        try:
+            event, durable = self._build(request, status, actor, ctx, body_ids, body_details, start_time, confirmed,
+                                         covered, expected)
             if event is not None:
                 self.audit_logger.log_event(event, durable=durable)
         except Exception as e:  # noqa: BLE001 — auditing must never break the request
             logger.error(f"Audit middleware failed to record a request: {e}", exc_info=True)
 
-    def _build(self, request, status, actor, ctx, body_ids, body_details, start_time):
+    def _build(self, request, status, actor, ctx, body_ids, body_details, start_time, confirmed: bool = False,
+               covered: bool = False, expected: bool = False):
         method = request.method
         path = request.url.path
         route = request.scope.get("route")
         template = getattr(route, "path", None)
         user_id, username, role = actor
 
-        if path.startswith(AUTH_PREFIX) and ctx.explicit and status < 500:
+        if path.startswith(AUTH_PREFIX) and covered and confirmed and status < 500:
             # the route recorded its own, richer event (review M3: every OTHER /auth request — passkey
             # registration and deletion, user list and detail reads, any 5xx — is recorded below)
+            return None, False
+        if (method, template) in SELF_AUDITED_ROUTES and covered and confirmed and status < 500:
+            # I5 (eleventh review of PR #81): the route wrote the ONE authoritative record of this consultation (a
+            # releasing one as CLINICAL_AI_RUN). K3 (twelfth review): ONLY then — a request it did not record (a
+            # CAPA-009 denial answered 404, a 400, a 429, the gate not enabled) is recorded here, as for any route
             return None, False
 
         mapped = ROUTE_ACTIONS.get((method, template)) if template else None
@@ -362,7 +413,11 @@ class AuditMiddleware(BaseHTTPMiddleware):
             endpoint=template,
             status_code=status,
             details={**body_details, **({} if durable or event_type != E.DATA_ACCESS_READ
-                                        else {"deduplicated_window_s": int(_READ_DEDUP_SECONDS)})},
+                                        else {"deduplicated_window_s": int(_READ_DEDUP_SECONDS)}),
+                     # K1 / S2: EXACTLY when a covered route's own record is not there as it was meant to be —
+                     # never on routes the confirmation does not cover (``expected`` is only ever True for a covered
+                     # route's records), never when no durable write was meant (the base); R8: the one rule
+                     **({"route_record": "unconfirmed"} if expected and not confirmed else {})},
             trace_id=trace_id_of(request),
             source="middleware",
             iso27001_controls=["A.12.4.1"],

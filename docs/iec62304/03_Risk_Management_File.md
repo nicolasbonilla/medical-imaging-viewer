@@ -1059,6 +1059,337 @@ No patient-data leak found (the exit rule for safety). Failing-first tests at `2
 
 Failing-first tests at `b5571ee` (CI run 43063117100 red: 5 of 5); fixes at `b6430d6` (CI run 43063554593 green: 621 platform tests, 2483 backend tests). Negative controls for T1: 4 of 4 detected (EE1–EE4), restored suite 618 passed / 0 failed.
 
+## Addendum C — Single quality gate (DRAFT, PENDING owner approval)
+
+*Proposed 2026-11-12 on branch `feat/quality-gate`, stacked on draft PR #79; not merged, not deployed. DRAFT, PENDING owner approval: severity, probability and acceptability are PROPOSALS; nothing is approved until N. G. Bonilla Vargas records it. RC-122..RC-127 follow the highest control in use on any branch (RC-121); HAZ-025 follows HAZ-024. Requirements: SRS Addendum C. Design and survey of the existing checks: `docs/iec62304/agent_platform/Quality_Gate_Design.md`.*
+
+### C.1 Hazard
+
+| HAZ ID | Hazard (module) | Hazardous situation | Cause | Harm | Severity (proposed) |
+|---|---|---|---|---|---|
+| HAZ-025 | AI output from an input that fails a quality precondition, silently or inconsistently (`quality_gate.py`, `gate.ts`, the AI entry points) | Lesions are segmented on a T1/T2 or unlabelled image, on a thick-slice acquisition without a word, with the skull still on, or compared across a change of scanner; or one screen abstains while another shows the result | The preconditions are checked in five places (RC-049, RC-054, RC-062, RC-101, the reliability card) with different rules; unknown values handled differently; some checks only in the browser, some only on the server | Missed or false lesions, false activity between visits, taken as findings → delayed or wrong diagnosis or treatment change (as HAZ-001, HAZ-007, HAZ-015) | S4 (Serious) |
+
+### C.2 Risk estimation before control (proposed)
+
+| HAZ ID | Severity | Probability (pre-control) | Risk Level (pre-control) |
+|---|---|---|---|
+| HAZ-025 | S4 | P3 (Occasional) — without a gate, the matrix of `test_quality_gate_matrix.py` lets the AI run in every combination (baseline counts in C.5) | UNACCEPTABLE *(proposed)* |
+
+### C.3 Risk control measures
+
+All TEST-BOUND on branch, DRAFT. Verification: `backend/tests/unit/test_quality_gate_matrix.py` (3 200-case matrix, failing first), `backend/tests/unit/test_rc122_quality_gate_wiring.py`, `frontend/src/services/qualityGate/gate.test.ts`, `frontend/src/components/QualityGatePanel.test.tsx`, and the negative controls of `scripts/safety/quality_gate_negative_controls.py`.
+
+| HAZ ID | Risk control | Type | Requirement | Implementation | Verification |
+|---|---|---|---|---|---|
+| HAZ-025 | RC-122: one deterministic gate decides before every AI step and before its output is shown; FLAIR only (a confirmation never overrides a header naming another sequence; it lifts unknown/missing with a warning); unknown never passes; any abstention wins; the output is shown only on `proceed` / `proceed_with_warnings` | Inherent safety (design) + protective | REQ-FUNC-117, REQ-SAFE-052 | `backend/app/services/quality_gate.py`, `quality_gate_policy.json`; `frontend/src/services/qualityGate/gate.ts` | `test_quality_gate_matrix.py` (G1, G3, G9, G10) |
+| HAZ-025, HAZ-007 | RC-123: the gate only ADDS to RC-062 (CAPA-013), never removes an RC-062 abstention: a change of manufacturer, model or field strength between compared visits, or a one-sided or partial record, abstains; when nothing is recorded in either visit the gate only warns and RC-062 decides — it abstains, as on the base branch; the comparison answers through one function (`present_gated_comparison`), and compare and SEL share one comparability verdict (`comparison_withheld`) | Protective | REQ-SAFE-052 | `quality_gate.py` (`present_gated_comparison`, `comparison_withheld`, `apply_to_comparison`), `segmentation_analysis.py` (behind `QUALITY_GATE_ENFORCED`) | `test_rc123_rc062_monotonicity.py` (G24 exhaustive, G25), `test_rc122_quality_gate_wiring.py` |
+| HAZ-025, HAZ-015 | RC-124: data rule — the thickness check warns and explains and never abstains until a v3 evidence asset with a commercial licence (CC0-1.0, CC-BY-4.0) is set through the marked hook; the shipped policy has none and cites no non-commercial cohort | Information for safety | REQ-SAFE-053 | `quality_gate_policy.json` (`thickness.evidence_asset: null`), both implementations | `test_quality_gate_matrix.py` (G7) |
+| HAZ-025, HAZ-001 | RC-125: in a single study the image the AI reads must be skull-free (`as-uploaded` after the skull gates, or `skull-removed`); skull present or unknown abstains; not read yet = pending (the output is not shown). *Twelfth review of PR #81 (K4): the skull outcome is CLIENT-REPORTED by the in-browser pipeline and cannot be verified by the server; RC-043 (the worker's skull gates) and RC-049 are the real controls; RC-125 records the report, labelled as such.* | Protective | REQ-SAFE-052 | `quality_gate.py`, `gate.ts`, `BrowserFlamesCard.tsx` | `test_quality_gate_matrix.py`, `gate.test.ts` |
+| HAZ-025, HAZ-020 | RC-126: the gate is the registered agent `quality-gate` (no model, no tool): approval and both kill switches read at every consultation, fail closed (not approved / off / unreadable / unreachable → no AI step, reason shown); one trace per consultation with one child span per check that ran, one audit record; the registry records the policy's SHA-256 | Protective | REQ-SAFE-054 | `agents.json`, `tracing.py` (gate attributes), `quality_gate.py` (`run_quality_gate`) | `test_quality_gate_matrix.py` (G5, G6), `test_rc122_quality_gate_wiring.py` |
+| HAZ-025 | RC-127: one decision everywhere and the reason shown — backend and frontend identical on a shared fixture read by pytest and vitest; every code with a plain message and an action in en/es/de; the panel shows the result before any AI output, and no AI result is shown when the final decision does not allow it | Information for safety + protective | REQ-FUNC-118, REQ-SAFE-054 | `qualityGate.cases.v1.json`, `qualityGatePolicy.v1.json`, `QualityGatePanel.tsx`, i18n `qualityGate.*` | `test_quality_gate_matrix.py` (G2, G4), `gate.test.ts`, `QualityGatePanel.test.tsx` |
+
+### C.4 Residual risk (proposed) and limits
+
+| HAZ ID | Proposed residual | Acceptable? | Limits that keep it open |
+|---|---|---|---|
+| HAZ-025 | S4 / P2 | ALARP *(proposed)* | the sequence of an image without a descriptive header rests on the physician's confirmation (D-QG-3) and on RC-049's content check; thickness only warns until the v3 evidence (D-QG-4); the browser's final check trusts the worker's provenance; OFF until the owner enables it (D-QG-2) |
+
+### C.5 Verification record (draft PR #81)
+
+**Failing first** (commit `efad1cf`, the matrix against a baseline that models the app today — no single gate, every AI step proceeds): 18 tests failed, 5 passed. Cases failing per invariant, of 3 200: G1 2 560; G3 3 168 (+ 22 of 22 odd inputs); G5 3 200 (checks) and 3 200 (trace and audit); G6 3 200 for each of the 5 platform states, and 5 of 5 real-platform cases; G8 1 800; G11 200; G2 141 texts missing (per case vacuous); G4 fixture absent; G7 the v3 hook wrong for 2 of 6 licences (per case vacuous); G9 and G10 passed vacuously (constant output).
+
+**After the implementation**: matrix 23 of 23; wiring 25 of 25; CAPA-009 route table 53 of 53; agent platform registry 58, tracing 32, cards 13 (+1 skipped); risk-control manifest 692. Browser rule checked against the shared fixture under Node (scratch copy): 3 200 cases, same SHA-256, 79 of 79 samples. GitHub Actions run 43151797311 (head `d83eeef`, the code of `e650307` plus the CI trigger): all 8 jobs green (backend pytest, vitest, TypeScript, build, risk-control verification, agent platform, static analysis, SOUP scan).
+
+**Negative controls** (`scripts/safety/quality_gate_negative_controls.py`, record `QUALITY-GATE_negative_controls_2026-11-12.json`): 41 mutations, one at a time in a throwaway copy (never the worktree), every anchor exactly once, each mutant compiled and imported (or parsed / loaded under Node) before its kill counted: **38 of 38 run detected, 0 survived, 0 invalid**; 3 component mutations (V1–V3) need vitest and were not run locally (no `node_modules`; vitest runs in GitHub Actions). Per control: RC-122 12/12, RC-123 6/6, RC-124 4/4, RC-125 6/6, RC-126 10/10, RC-127 7/7. Baseline and restored copy: backend 48 passed / 0 failed, browser harness 10 / 0.
+
+### C.6 First independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| S1 | `\b` regexes treat `_` as a word character: AX_DWI_B1000, SAG_STIR, 3D_DIR, ep_tof read as "unknown", which a confirmation could lift | RC-122 | the description is split into tokens on every non-alphanumeric character (camelCase split, `*` = star, `+C` = post-contrast); vocabulary in the policy, one source for backend and browser | G12: shared corpus of 123 descriptions (Siemens, GE, Philips, Canon) |
+| S2 | FLAIR_T1_SAG, "FLAIR T1W" passed as FLAIR | RC-122 | a T1 weighting with a FLAIR name, or any non-FLAIR token, is "other" and always abstains | G12 |
+| S3 | The run checkbox sent the FLAIR attestation implicitly | RC-122, RC-126 | a separate control, shown only for unknown/missing, unticked, reset per file; sent only on Run and before the result; StrictBool on the route; recorded in the `agent.run` audit with the clinician | G13 |
+| S4 | The V-mutants were written to the copy but vitest ran in the real frontend | — | every test command runs inside the throwaway copy; the mutated file is asserted to lie under the run's directory; without node_modules the V-mutants are "not run" | — |
+| C1 | A comparison asked the physician to confirm a FLAIR it cannot take | RC-127 | the attestation exists only in a single study (`confirmation_modes`); comparisons show a mode-specific action | G14 |
+| C2 | The comparison gate ran after loading, registration and the atlas | RC-123 | the gate decides from the stored records before anything is loaded; early abstention (as SEL) | wiring |
+| C3 | The gate overwrote RC-062's caveat, with raw codes | RC-123 | plain reasons (`gate_caveat`) appended to RC-062's | wiring |
+| E1–E3 | Full decode on every consultation; second read of the acquisition records; deep copy of the policy per call | — | header only (pydicom `stop_before_pixels`, lazy NIfTI header) in a worker thread, cached per file version; one debounced consultation per file; records read once; thin limit a parameter | wiring |
+
+Failing first (commit `3990365`): G12 55 of 123 descriptions misclassified, 46 non-FLAIR names let the AI run after a confirmation; G13 480 of 3 200 cases; G14 480 of 3 200 cases; 7 wiring tests failed. After the fixes: matrix 28 of 28, wiring 31 of 31, CAPA-013 52 of 52; GitHub Actions run 43155668899 (head `e6296fc`): all 8 jobs green, the new vitest tests (G12 parity, S3 attestation, G14 panel) among them.
+
+Negative controls, re-run with every test command inside the throwaway copy (S4): 62 mutations, **56 of 56 run detected, 0 survived, 0 invalid**; 6 component mutations (V1–V6) not run (no node_modules). Per control: RC-122 23/23, RC-123 10/10, RC-124 5/5, RC-125 6/6, RC-126 12/12, RC-127 11/11. Baseline and restored copy: backend 59 / 0, browser harness 12 / 0.
+
+### C.7 Second independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| G15 | Three FLAIR classifiers disagreed (the gate, `dataset_inventory.detect_sequence`, RC-049 `headerEvidence.ts`): "t2_tirm_tra" abstained in the gate and passed RC-049 | RC-122 | ONE classifier: `quality_gate.classify_sequence` / `gate.ts sequenceFromHeader` from the policy vocabulary; the inventory and RC-049 route to it; TIRM is a FLAIR name; "TI=" / "TI:" in the text is an inversion time | corpus of 151 descriptions, every classifier the same class |
+| G16 | A comparison stopped by the gate showed RC-062's "change of scanner or protocol" box | RC-127 | the box only for genuine RC-062 abstentions; the gate panel gives the gate's reason | every abstaining code (vitest) |
+| G17 | The decision that released the output was computed only in the browser; the server audited "pending" | RC-126 | the browser reports the skull outcome; the server decides and audits it (`quality_gate.<decision>[.<deciding code>][.attested]`); the browser uses it only if the same rule reproduces it | shown vs withheld audit records |
+| G18 | A stale answer (file A) could set the panel or start a run after B was selected | RC-122 | every answer names its file and version; a mismatch is discarded; one request per click, Run disabled while in flight | vitest A→B |
+| 1 | The endpoint read files before checking the platform, outside the flag, without a limit | RC-126 | behind `QUALITY_GATE_ENFORCED`; approval and switches before any I/O; per-user rate limit | wiring |
+| 2 | Missing metadata gave a 404 | RC-123 | abstains with a reason (as load_mask, D5) | wiring |
+| 3 | "Header only" downloaded the whole file | — | bounded byte ranges, retried larger while the header runs longer | wiring |
+| 4–6 | Metadata read twice; duplicate type check; dead abstention branch; policy copied per call | — | read once and passed on; one check; one abstention path; cached policy | wiring |
+
+Failing first (commit `e5e3f0f`, CI run 43158533290): G15 the inventory disagreed with the corpus in 40 of 144 entries, RC-049 in 56 of 151 (no shared class in 151 of 151), the gate in 10 of 151 (+2 short-TI names lifted by a confirmation); G16 12 of 12 abstaining codes showed the RC-062 box; G17 the final consultation reported only "pending"; G18 a double click sent two requests; backend wiring 4 failed and 9 errors.
+
+After the fixes: matrix 29 of 29, wiring 38 of 38, CAPA-013 52 of 52, CAPA-009 53 of 53, inventory 28 of 28; GitHub Actions run on `84e432c`: all 8 jobs green. Negative controls (every test run inside the throwaway copy): 81 mutations, **71 of 71 run detected, 0 survived, 0 invalid**; 10 component mutations not run (no node_modules). Per control: RC-122 30/30, RC-123 11/11, RC-124 5/5, RC-125 6/6, RC-126 19/19, RC-127 11/11. Baseline and restored copy: backend 67 / 0, browser harness 14 / 0.
+
+### C.8 Third independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| G19 | REGRESSION of G15, live even with the gate off: RC-049 tokenised the DICOM SequenceName, so Siemens "*tir2d1rr18" / "*spcir_278" read "star" (T2*) → "contradicts": the in-browser AI rejected valid Siemens FLAIR | RC-122 | FIELD-AWARE classifier: description by tokens; SequenceName by a vendor-code table ('*' a Siemens prefix, an unlisted code says nothing); ImageType by its own list (reformatted/parametric = other, D-QG-7) | pre-PR snapshot: every FLAIR RC-049 or the inventory accepted before PR #81 is still accepted, except 20 documented changes |
+| G20 | The inventory classified file ids: UUID fragments ("ce41", "dce3") turned FLAIR into other/None | RC-122 | only the description and the file NAME without identifier tokens | property test with random UUID/hex ids |
+| G21 | "The gate allows" shown next to "no automatic candidates" | RC-127 | one verdict: when RC-062 abstains after the gate allows, RC-062's reason governs and the gate panel steps aside | shared UI-state fixture (vitest) |
+| G22 | POST /clinical/quality-gate not in the audit middleware | RC-126 | registered; a GENERIC test enumerates every POST route of the clinical and analysis routers | generic route test |
+| G23 | A → B → A left the card on "checking" for ever | RC-122 | the final decision is kept with its file; re-selection consults again | vitest |
+| F1 | Two uploaded NIfTIs were never comparable (sequence missing, no attestation; scanner_unknown) | RC-122 | per-visit attestation in the comparison panel (explicit, unticked, unknown/missing only, reset per pair, audited per visit); it lifts only the gate's own sequence check. *(The RC-062 relaxation first added here was REVERTED by the fourth review, R1 — see C.9.)* | wiring + vitest |
+| 1–4 | Format by file name on truncated data, on the loop; silent "missing"; rate limit after the platform; gate on the loop; repeated whole downloads | RC-122, RC-126 | magic bytes only, off the loop, explicit `header_unreadable`; limit first; gate in a worker thread; one full download at most without real ranges | wiring |
+
+Failing first (commit `50ec58f`, CI run 43163086468): **G19 4 of 71 pre-PR RC-049 FLAIR acceptances lost** (all Siemens FLAIR with "*tir…" / "*spcir…" SequenceName); G20 identifiers changed the inventory's class in 8 cases; G21 3 of 8 UI states showed two verdicts; G22 1 POST route not audited; G23 no second consultation after A → B → A; F1 two uploads never comparable; backend wiring 5 failed, matrix 5 failed.
+
+After the fixes: matrix 32 of 32, wiring 44 of 44, inventory 28 of 28, CAPA-013 52 of 52, CAPA-015 30 of 30, skull strip 14 of 14, longitudinal guards 22 of 22; GitHub Actions on `9586f80`: all 8 jobs green (a range-read test that left the next test without an event loop was fixed first). Negative controls (every test run inside the throwaway copy): 98 mutations, **85 of 85 run detected, 0 survived, 0 invalid**; 13 component mutations not run (no node_modules). Per control: RC-122 40/40, RC-123 13/13, RC-124 5/5, RC-125 6/6, RC-126 21/21, RC-127 11/11. Baseline and restored copy: backend 76 / 0, browser harness 15 / 0.
+
+### C.9 Fourth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| R1 | SAFETY REGRESSION: D-QG-10 (third review, F1) made RC-062 more permissive than the base branch for two uploads with no acquisition record — the false-activity control of HAZ-007 | RC-123, RC-062 | reverted completely: `longitudinal_candidate_safety.py` is byte-identical to the base branch; the gate only warns (`scanner_not_recorded`) and RC-062 abstains as before; the per-visit FLAIR attestation stays and lifts only the gate's sequence check | G24 |
+| R2 | G8 compared scanner fields only | RC-123 | G24: every combination of the six RC-062 acquisition facts (present-equal, present-different, missing in visit 1, in visit 2, in both) × visit order = 31 250 pairs; the comparison output with the gate ON is never more permissive than RC-062 alone | G24 |
+| R3 | compare and SEL decided comparability with two rules | RC-123 | one shared verdict (`comparison_withheld`, RC-062's own decision or the gate's abstention) | G25 |
+| R4 | A comparison let through WITH warnings looked clean to the report and the assistant | RC-127 | the caveat, the report payload (fixed codes), the prompt and the code-written notice (en/es/de) carry the warnings | wiring |
+
+Failing first (commit `4d226e0`, on the code of 638d089): **G24: the gate made RC-062 more permissive in 4 of 31 250 pairs** (no scanner record in either visit, voxel size equal, visit order known; slice thickness and 2D/3D equal or missing in both: candidates, lesion loads and reader-confirmed activity shown where RC-062 alone abstains); G25: compare and SEL disagreed on the same 4 pairs; R4: 2 of 2 failed. After the fixes: 6 of 6 (with a G25 test added when the negative control X4 survived the first run), matrix 31 of 31, wiring 44 of 44, brain report 37 of 37, CAPA-013 52 of 52, CAPA-014 248 of 248, CAPA-009 53 of 53, PRB-003 41 of 41, RC-029 12 of 12; GitHub Actions on `dc64a62`: all 8 jobs green.
+
+Negative controls (every test run inside the throwaway copy): 106 mutations, **93 of 93 run detected, 0 survived, 0 invalid**; 13 component mutations not run (no node_modules). Per control: RC-122 40/40, RC-123 17/17, RC-124 5/5, RC-125 6/6, RC-126 21/21, RC-127 15/15. Baseline and restored copy: backend 81 / 0, browser harness 15 / 0.
+
+**HAZ-007 residual:** this PR leaves the residual risk of HAZ-007 for RC-062 UNCHANGED (RC-062 behaves exactly as on the base branch, gate on or off). D-QG-10 is no longer implemented: it is recorded as an owner decision about a possible FUTURE, separate change to RC-062, which would need its own risk assessment of the HAZ-007 residual.
+
+### C.10 Fifth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| G26 | With both flags OFF the PR still changed production: RC-049's header evidence used the gate's classifier ('AX FLAIR CAL', 'FLAIR loc', 'sag_flair_dir-AP' were refused by the in-browser AI), `dataset_inventory` routed to it ('AX T2 FLAIR POST GD' → T2, 'FSE' → none), and a malformed `quality_gate_attestation` gave 400 | RC-049, RC-122, RC-123 | RC-049 keeps its base code path while `VITE_ENABLE_QUALITY_GATE` is off (the gate's classifier only when on); the inventory keeps its base patterns (one documented difference: the G20 hygiene of the arguments after the first); the attestation is read only when `QUALITY_GATE_ENFORCED` is on; the SEL input type is checked where the base checked it | G26 (generated corpus) |
+| G19x | With the gate ON, weak words alone turned a FLAIR into 'other' | RC-122 | D-QG-12: `cal`, `loc`, `dir`, `mag` are 'other' only without a FLAIR name; every other word decided and justified per word (design §3a) | G19 extension |
+| F1 | The refresh after a radiologist decision re-compared without the attestation | RC-122 | the attestation is kept for its pair until the pair or a file changes | vitest |
+| F2 | SEL never sent the attestation; the UI showed the gate's stop as the backend's English reason | RC-122, RC-127 | `detectSELs` sends it; SEL gate results shown with `QualityGatePanel` in en/es/de | vitest |
+| F3 | Every consultation counted; over the limit the physician read "unavailable" | RC-126, RC-127 | server cache per (file, version, attestation, skull, policy version); only real evaluations count; a release decision is never served from the cache; 429 with the seconds to wait (`gate_rate_limited`, "wait N s"); per-instance limit recorded as a known limitation | wiring + vitest |
+| F4 | A consultation was recorded as an AI run | RC-126 | `QUALITY_GATE_CONSULTATION` for the route and for gate decisions that release nothing (`agent.consultation`); only a releasing decision is `agent.run` / CLINICAL_AI_RUN | wiring (10 images → 0 CLINICAL_AI_RUN) |
+| F5 | A FLAIR description was reported as "names another sequence" because of a short inversion time | RC-127 | each text's reason from its words alone (`classifyText`); the inversion time has its own reason | node harness + vitest |
+| — | Cleanup | RC-123 | one RC-062 predicate `rc062_withholds` (used by `present_comparison` and SEL; same rule); `_classify_tokens` returns (class, T1, T2) and is reused; word sets and regexes built once per policy | G24, G25 |
+
+Failing first (commit `d005590`, on the code of f4f33b5), with both flags off: **(a) RC-049: 1 634 of 2 400 generated entries differed** (1 164 verdicts, 470 reasons only); **(b) inventory: 1 176 of 2 400 `detect_sequence` answers and 641 of 800 group answers differed**; **(c) routes: 192 of 288 answers differed** (216 of 384 after the route corpus was extended with the SEL input-type order); **G19 extension: 194 base FLAIR acceptances lost without a documented decision**. After the fixes: 0 / 0 / 0 and 0.
+
+Negative controls (every test run inside the throwaway copy; record `QUALITY-GATE_negative_controls_2026-11-12.json`, full run on `26c9e79`): 128 mutations (22 new for this review: G26 a/b/c, D-QG-12, F1-F5, the shared RC-062 predicate; 8 moved anchors), **110 run, 109 detected, 1 survived, 0 invalid**; 18 component mutations not run (no node_modules; vitest runs in GitHub Actions). The survivor, R12 (header cache off), was hidden from its test by the new consultation cache (F3); the test now makes the second consultation a real evaluation (commit `bcdd4e0`) and the re-run detected it: **0 survived after the follow-up**. Per control: RC-122 47/47, RC-123 19/19, RC-124 5/5, RC-125 6/6, RC-126 28/28, RC-127 17/17. Baseline and restored copy: backend 109 / 0, browser harness 18 / 0.
+
+**HAZ-007 residual:** unchanged (RC-062's rule is the base branch's; its predicate is only named and shared).
+
+### C.11 Sixth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+Root cause of most findings: two implementations of the rule and the classifier (server and browser) kept drifting — the NIfTI descrip read by the browser but not by the server, ImageType never set in the browser, a local re-evaluation that hid output on drift. Per "don't repeat a failing approach", the ARCHITECTURE changed instead of chasing the drift.
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| A1 | Two implementations drift | RC-122, RC-123, RC-127 | server-authoritative: the rule, the policy and the classifier exist only in `quality_gate.py`; the browser sends its inputs and shows the answer as it is (≈500 lines of browser rule code, the 103-line policy copy and the 2 468-line parity fixture removed); the answer names the attestable visits and the action of each code; RC-049 with the gate on takes the server's class (G26 kept); the server reads every header field the browser read; a comparison reads each visit's stored image header as a single study does | G27 |
+| A2 | A second clinician's attestation answered from the first one's cache | RC-126 | the clinician is part of the cache key whenever the physician attests | wiring |
+| A3 | A corrected series or acquisition record still served the old decision | RC-126 | the cache key carries a digest of the stored records (plus file version, attestation, skull outcome, policy version) | wiring |
+| A4 | The report gave RC-062's reason for a gate stop; two reason tables drifted | RC-127 | one table of reason sentences (`quality_gate_reasons.json`, en/es/de) for the caveat and the report; a gate stop gives the gate's reason | unit |
+| U1–U3 | Attestations replaced each other; a rate-limited answer disabled Run for good; a re-run showed the previous run's decision | RC-122, RC-126 | attestations for a pair add up; automatic retry after the server's wait with a countdown; the final decision keyed to the run | vitest |
+
+Failing first (commit `4b91754`, on the code of 0fa8a93): backend `test_rc122_one_gate.py` **15 of 16 failed** — G27 3, A1 6, A2 1, A3 1, A4 4; browser (GitHub Actions) **7 failed** — A1 card 1, U1 1, U2 2, U3 1, G27 panel action 1, G27 RC-049 server class 1. After the fixes: all pass.
+
+Negative controls (every test run inside the throwaway copy; full run on `0a4b575`): 121 mutations — 23 browser-rule mutants retired with the rule they sabotaged, 6 re-anchored, 16 new (A1–A4, G27, U1–U3) — **103 run, 102 detected, 1 survived, 0 invalid**; 18 component mutations not run (no node_modules; vitest runs in GitHub Actions). The survivor, W14 (cache key without the attestation), had become an EQUIVALENT mutant: after A2 the clinician in the key also tells an attested consultation apart. It was redefined to drop both (commit `4f06723`) and the re-run detected it: **0 survived after the follow-up**. Per control: RC-122 43/43, RC-123 18/18, RC-124 5/5, RC-125 4/4, RC-126 27/27, RC-127 12/12. Baseline and restored copy: backend 124 / 0, RC-049 browser harness 2 / 0.
+
+**HAZ-007 residual:** unchanged.
+
+### C.12 Seventh independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| S1 (safety) | A DICOM with ImageType DERIVED\SECONDARY was 'unknown', so a derived FLAIR passed (against D-QG-7 / D-QG-11) | RC-122 | `image_type_other` += derived, secondary, resampled, localizer, screen (justified per value, design §3a; D-QG-14); corpus +15 ImageType entries | G12, S1 |
+| G28 | A futile attestation was offered (and audited): unreadable header + missing, a scanner change | RC-122, RC-126 | offered only when every abstaining check is a sequence check the attestation lifts | G28 (matrix) |
+| G29 | Unbounded retries; 'unavailable' retried; the flag mismatch shown as unavailable | RC-126, RC-127 | only rate-limited answers retried, after the wait, backoff ×2, at most 3; unavailable and 404 (`gate_not_enabled`) shown, never retried; a "check again" button | G29 (fake timers, 10 min) |
+| R1, R2 | A malformed gate in a report body could break the draft; no record fallback for an undeterminable header thickness | RC-127, RC-124 | only a list of code strings is read; the record's thickness is used | unit |
+| E1, E2 | The instances collection streamed per consultation; the visits read one after the other | RC-126, RC-123 | one instance document by query (limit 1) through one file-id lookup; concurrent reads | unit, route |
+
+Failing first (commit `02c2adb`, on the code of 302e00d): backend `test_rc122_review7.py` **15 of 43 failed** — S1 7, G28 2 (a futile attestation offered in **880 of the 3 200 matrix cases** with the platform on, and in both reviewer cases), R1 2, R2 1, E1 1, E2 1, cleanup 1; browser (GitHub Actions) **5 failed** — G29 3 (card), G29 2 (request). After the fixes: all pass.
+
+Negative controls (every test run inside the throwaway copy; full run on `ea9d151`): 130 mutations (4 re-anchored, 9 new for S1, G28, G29, R1, R2, E1, E2), **109 run, 109 detected, 0 survived, 0 invalid**; 21 component mutations not run (no node_modules; vitest runs in GitHub Actions). Per control: RC-122 45/45, RC-123 19/19, RC-124 6/6, RC-125 4/4, RC-126 29/29, RC-127 13/13. Baseline and restored copy: backend 167 / 0, RC-049 browser harness 2 / 0.
+
+**HAZ-007 residual:** unchanged.
+
+### C.13 Eighth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| S1 (safety) | With the browser gate on, an RC-049 call without the server's class answered "none", so the header no longer refused a T1 / DWI; the written TI was dropped | RC-122 (RC-049) | fail closed: `no_server_decision`, refused by the contrast gate; the text TI kept on every path | vitest + Node harness |
+| G30 | Reasons mixed causes and warnings; the report model read "acquisition not comparable" for a gate stop; "index-aligned" claimed for a pair never loaded | RC-127 | one account (`explain`) for the caveat, the notice, the report payload and the model's text; no alignment line for a gate stop | G30 (matrix) |
+| G31 | A pair RC-062 withheld was recorded as an AI run; attested visits cut at 64 characters | RC-126 | outcome recorded where the user receives it (released / withheld_by); structured details | G31 |
+| G32 | An attestation offered when RC-062 would withhold anyway (no scanner recorded) | RC-122 | RC-062 predicted by the gate | G32 (matrix + both-missing) |
+| U1 | Every 404 read as "gate not enabled" | RC-126, RC-127 | explicit header code; other 404 / 403 = not found or no access | unit + vitest |
+| E1, E2 | Two header readers, two decompressions; sequential record reads | RC-122, RC-123 | one reader, one decompression per round; concurrent stored_records | unit |
+
+Failing first (commit `1ab0916`, on the code of da03c6a): backend `test_rc122_review8.py` **12 of 12 failed** — G30 6 (the caveat gave warnings as causes in **1 824 of the 2 280** matrix pairs the gate stops; the report model and the notice disagreed in en/es/de; RC-062's reason mixed with the gate's), G31 2, G32 1 (**1 200** futile end-to-end offers, both-missing scanners included), U1 1, E1 1, E2 1; browser (GitHub Actions) **5 failed** — S1 2, U1 2, G30 panel 1. After the fixes: all pass. This PR had also moved 6 anchors of the CAPA-013 negative controls (B2, A1, A7, F13, A11, A15); they are re-anchored to the same defects.
+
+Negative controls (every test run inside the throwaway copy; full run on `1f61865`): 141 mutations (11 re-anchored to the shared header reader, 1 retired — no file name reaches the reader any more —, 12 new for S1, G30, G31, G32, U1, E1, E2), **118 run, 117 detected, 1 survived, 0 invalid**; 23 component mutations not run (no node_modules; vitest runs in GitHub Actions). The survivor, AA7 (RC-062 not predicted), lived because in the matrix every pair RC-062 withholds is also stopped by the gate's scanner check; a G32 test now covers a pair the scanner check passes and RC-062 withholds on its own field (2D / 3D) (commit `519d5c7`), and the re-run detected it: **0 survived after the follow-up**. Per control: RC-122 48/48, RC-123 20/20, RC-124 6/6, RC-125 4/4, RC-126 32/32, RC-127 16/16. Baseline and restored copy: backend 179 / 0 (180 / 0 with the new test), RC-049 browser harness 4 / 0.
+
+**HAZ-007 residual:** unchanged.
+
+### C.14 Ninth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+The main class is now the converse of the earlier ones: OVER-BLOCKING (a real FLAIR stopped with an unliftable 'other').
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| G33 | Real FLAIRs dead-ended: DERIVED\PRIMARY with on-scanner corrections read as derived; 'da-fl' / 'dark-fl' read as T2 | RC-122 | only non-acquisition ImageType markers are 'other' (D-QG-14 updated, no warning for corrections); dark-fluid spellings are FLAIR; a labelled corpus of 770 real FLAIRs (D-QG-15) | G33 |
+| G34 | A study description copied into a series could stop a true FLAIR | RC-122 | image-level inputs only; a copied description (provenance or equality with the study's) is ignored | G34 |
+| G35 | With the gate on, an unknown mask type was answered by the gate; an instance pair was reported as an unreadable header | RC-123, RC-127 | validation first (keeps its 400), `source_image_missing` | G35 |
+| G30 ext. | An SEL failure shown as RC-062; a warned pair withheld by RC-062 lost its warnings in the model's text | RC-127 | `withheld_by`; the same warnings from `explain` | G30 |
+| O1–O4 | Reads before the request limit; a cached attestation not audited; visits read twice; dead code | RC-126, RC-123 | counter first; audit on every attestation; one visit check; cleanup | unit |
+
+Failing first (commit `bde1cd7`, on the code of 01ed30b): **510 of the 770 labelled real FLAIRs hit a dead end** (260 for a DERIVED\PRIMARY ImageType, 250 for da-fl / dark-fl names); backend `test_rc122_review9.py` **20 of 33 failed** — G33 10, G34 3, G35 2, G30 1, O1 1, O2 1, O3 1, O4 1; browser (GitHub Actions run 43218493334): **2 of the 4** G30-extended SEL cases failed (both "withheld by sel"; the two RC-062 cases already passed). After the fixes: 0 dead ends, all pass.
+
+Negative controls: 152 mutations in a throwaway copy (baseline and restored copy: backend 213 / 0, RC-049 browser harness 4 / 0): 128 run, 127 detected, 1 survived — Y4_cache_ignores_the_clinician, an equivalent mutant once O2 audits every cached attestation under its clinician; redefined as the full A2 defect (commit 667e994) and detected on re-run — so **0 survived**, 0 invalid; 24 component mutations not run locally (no node_modules; vitest runs in CI). Per control: RC-122 51 / 51, RC-123 23 / 23, RC-124 6 / 6, RC-125 4 / 4, RC-126 34 / 34, RC-127 18 / 18. Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (follow_up).
+
+**HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** the over-blocking of real FLAIRs is removed without letting a non-acquisition image through (S1 of the seventh review still holds: SECONDARY, MPR, projections, subtraction, localizers and screen saves stay 'other').
+
+### C.15 Tenth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+No non-FLAIR image passes any more; the remaining findings were availability, an over-block case and audit truncation, several of them from extra moving parts. This round SIMPLIFIES.
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| S1 | A transient storage error was remembered: the consultation cache kept the "unreadable" answer | RC-122, RC-126 | the consultation cache and its key are removed; every consultation is evaluated and audited; the header cache never keeps a failed read; one limit before any read | S1 |
+| S2 | A GE exam-level ProtocolName ("BRAIN W WO CONTRAST") stopped a FLAIR series with no way out | RC-122 | exam-level fields never veto (vendor table, D-QG-16) | S2 |
+| S3 | The RC-062 prediction used another spacing source than RC-062 (a DICOM source predicted comparable) | RC-123 | one helper `lcs.rc062_voxel_spacing`; undeterminable = "will withhold" (D-QG-18) | S3 |
+| S4 | The real audit record dropped the gate's details and cut the reason at 64 characters | RC-126 | short code by construction; structured details kept by the durable record | S4 |
+| U1 | Retry wait derived during render from a mutable ref: overlapping timers, "Check again" before the last answer | RC-126 | retries as state in one hook | U1 |
+| One place | duplicated warnings blocks, two warnings sources, two limiters and two 429s, duplicated gate set-up and source lookups | RC-123, RC-126, RC-127 | one of each | unit |
+
+Failing first (commit `ab58e25`, on the code of cb8ac63): backend `test_rc122_review10.py` **23 of 29 failed** — S1 2, S2 11, S3 3, S4 2, one place 5; the labelled corpus' 576 FLAIR series under an exam-level ProtocolName: **486 dead ends**; browser (GitHub Actions run 43232333704): **2 of 2** U1 cases failed — the final consultation for the defect itself (an extra request while the retry was in flight), the before-the-run case at a test step whose timing was then corrected (commit `ab51787`: React renders a retry when the step that fired its timer ends); the corrected step was not re-measured on the old code. After the fixes: 0 dead ends, all pass (GitHub Actions run 43235569996, 8 of 8 jobs). Product code: backend −102 lines net, browser card −49, one new hook +122.
+
+Negative controls: 151 mutations in a throwaway copy (baseline and restored copy: backend 241 / 0, RC-049 browser harness 4 / 0): 126 run, 125 detected, 1 survived — AC3_dicom_spacing_predicted (the bound DICOM/NIfTI pair differed once put in the mask's axis order, so the mutant also predicted 'withheld'); a DICOM and a NIfTI source of the same isotropic 1 mm voxel size were added (commit `1eaa5fa`) and the re-run detected it — so **0 survived**, 0 invalid; 25 component mutations not run locally (no node_modules; vitest runs in CI). **9 retired** with their reason, because the part they mutated was removed (the consultation cache and its key: W11-W14, Y4, Y5, AB8; the second limiter: AB7; the packed deciding code: S5); 17 re-anchored; 8 new (AC1 a transient read error remembered, AC2 an exam-level protocol vetoes, AC3 a DICOM spacing predicted, AC4 RC-062's 3-D check dropped, AC5 the durable record drops the details, AC6 the reason cut, AC7 the limit after the reads, V30 'Check again' while in flight). Per control: RC-122 52 / 52, RC-123 25 / 25, RC-124 6 / 6, RC-125 4 / 4, RC-126 28 / 28, RC-127 18 / 18. CAPA-013 A16 re-anchored (moved by the ninth review). Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (retired, follow_up).
+
+**HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a transient read error no longer blocks a study until the cache expires; an exam-level field no longer blocks a real FLAIR; the audit keeps every attested visit.
+
+### C.16 Eleventh independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| I1 | The report took who withheld a pair, its causes and its warnings from the CLIENT's copy of the gate (Class C integrity) | RC-127 | the server's record by trace id only; unknown = not established (D-QG-19) | I1 |
+| I2 | A list in place of a code made `explain` raise: the report route answered 500 | RC-127 | malformed entries ignored, never raises | I2 |
+| I3 | Flags off, the inventory read "AX_T2*.nii.gz" as T2 (SWI on the base): the G20 hygiene dropped '*' | RC-122 | only identifier tokens dropped | I3, G26 |
+| I4 | RC-062's line hid the gate's warnings in the comparison panel | RC-127 | the warnings listed next to it | I4 |
+| I5 | Two audit records per consultation, and a consultation record for a 404 | RC-126 | the route's record only (D-QG-20) | I5 |
+| I6 | Three consultations per run | RC-126 | the preflight answer used when nothing changed | I6 |
+
+Failing first (commit `cd07ab1`, on the code of 8cb55f2): backend `test_rc122_review11.py` **13 of 20 failed** — I1 6, I2 3, I3 2, I5 1, one place 1 (I4's server-side check of the shared fixture passed: it checks the fixture, not the code); the G26 file-name corpus: **15 of 100** differed from the base; browser (GitHub Actions run 43249481506): **I4 1 of 1, I6 1 of 1** failed. After the fixes: all pass.
+
+Negative controls: 159 mutations in a throwaway copy (baseline and restored copy: backend 262 / 0, RC-049 browser harness 4 / 0): 132 run, **132 detected, 0 survived, 0 invalid**; 27 component mutations not run locally (no node_modules; vitest runs in CI). 7 re-anchored (X7, AB10, Y8, AA4, Z3, AB5, AC4); 8 new (AD1 the report trusts the client block, AD2 an unverified gate treated as clean, AD3 decisions not recorded, AD4 explain not type-safe, AD5 file-name punctuation dropped, AD6 the middleware duplicates the record, V31 RC-062's line hides the warnings, V32 three consultations per run). Per control: RC-122 53 / 53, RC-123 25 / 25, RC-124 6 / 6, RC-125 4 / 4, RC-126 29 / 29, RC-127 22 / 22. Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json`.
+
+**HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a client can no longer make the report hide a gate warning or present a stopped pair as clean.
+
+### C.17 Twelfth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| K1 / K2 | The report's gate decision lived in one server instance's memory and was not bound to the pair | RC-127 | HMAC-SHA256-signed, pair-bound decision token verified by the report; the store retired (D-QG-19 narrowed, D-QG-21) | K1, K2 |
+| K3 | A CAPA-009 denial (404) on the quality-gate route left no audit trace | RC-126 | the middleware skips only when the route wrote its record (D-QG-20 changed) | K3 |
+| K4 | The skull check could never fail and was described as server-derived | RC-125 | stated and audited as client-reported; RC-043 / RC-049 named as the real controls; labelling-only controls not counted (D-QG-22) | K4 |
+| K5 | Any final consultation with skull 'stripped' was recorded as an AI run | RC-126 | a single-use run token from the consultation that allowed the run | K5 |
+| O1-O5 | 1 MiB header cap; G26 read of the acquisition record; stale "before" panel; unbounded, identity-keyed word-set cache; duplicated card state | RC-122, RC-126, RC-127 | fixed | unit, G26 |
+
+Failing first (commit `90532a2`, on the code of 1c5ff85): backend `test_rc122_review12.py` **12 of 12 failed** — K1 3, K2 2, K3 1, K4 1, K5 1, O1 1, O2 1, O4 1, O5 1; browser: O3 1 of 1 failed (GitHub Actions run 43274678411; its backend jobs were cancelled by the next push — the backend counts above are the local run). After the fixes: all pass (GitHub Actions run 43276204505 on `1dbb4ca`: 8 of 8 jobs).
+
+Negative controls: 168 mutations in a throwaway copy (baseline and restored copy: backend 274 / 0, RC-049 browser harness 4 / 0): 139 run, **139 detected, 0 survived, 0 invalid** — of which Q13_unknown_skull_passes is LABELLING ONLY (K4: it sabotages a value this app's worker never reports) and is not counted as evidence, so 138 count; 29 component mutations not run locally (no node_modules; vitest runs in CI). 3 retired with their reason (AD1-AD3: the in-memory decision store), 7 re-anchored (AD6, Q10, R8, U12, W5, Z5, V10), 12 new (AE1 signature not checked, AE2 expiry not checked, AE3 pair not compared, AE4 unverified gate treated as clean, AE5 refused access not audited, AE6 release without a run, AE7 run token reusable, AE8 NIfTI prefix capped at 1 MiB, AE9 indexed query with the flags off, AE10 word sets keyed by identity, V33 stale 'before' panel, V34 final without the run token). Per control (evidence): RC-122 56 / 56, RC-123 25 / 25, RC-124 6 / 6, RC-125 3 / 3 (+ 1 labelling only), RC-126 32 / 32, RC-127 23 / 23. Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (retired, labelling_only).
+
+**HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a report can no longer carry the gate decision of another pair, a refused access is always traced, and the audit no longer calls a consultation without a run an AI run.
+
+### C.18 Thirteenth independent review of PR #81 (2026-11-12) — DRAFT, PENDING owner approval
+
+The findings were state-flow bugs of the card around the run token and the attestation (re-run, rescind, retry, expiry, late responses); they were found and closed with a MODEL-BASED test of the flow rather than one at a time.
+
+| # | Finding | Control | Fix | Invariant |
+|---|---|---|---|---|
+| M1 | Re-runs reused a spent run token; a rescinded attestation still started runs; the attested decision replaced the unattested one and hid the attestation; an expired token was used; a re-run during the final consultation crashed the card | RC-122, RC-126, RC-127 | the unattested and attested decisions held apart, the attested one only while the attestation is in effect (ticked and offered) and for the newest version; a run token used once, its lifetime counted from the request; the final consultation asked for its own run; a newer answer supersedes a request in flight; the server withholds the output of an unconfirmed run (D-QG-23) | P1-P5 |
+| M2 | The spent-token set forgot unexpired tokens and lived in one instance's memory | RC-126 | the PR #79 single-use store (Firestore create), fail closed (D-QG-24) | M2 |
+| M3 | A colleague's report could use another clinician's gate decision | RC-127 | the decision token's clinician checked (D-QG-19) | M3 |
+| A1 / A2 | The audit marker was set before the record was written; reasons over 64 characters were dropped | RC-126 | marker after a written record; shortened reason + full_reason | A1, A2 |
+
+Failing first (commit `0668cba`, on the code of 3a1154a): M1 — of 2 004 sequences (2 000 seeded + 4 corpus), with the final, strengthened test: **P1 265, P2 405, P3 1 206, P4 397, P5 1 102 failed**; backend `test_rc122_review13.py` **8 of 11 failed** — M2 2, M3 1, A1 1, A2 1, one place 3. After the first fixes (`a134f42`) the model still found two P3 defects (seed 20262701: a late answer took the "before" panel back from v2 to v1; seed 20262847: a rate-limited preflight hid a ticked attestation while its decision was still shown and would have been sent), fixed in `95eb18f`. Now 2 004 of 2 004 sequences pass P1-P5; all backend tests pass.
+
+Negative controls: 180 mutations in a throwaway copy (baseline and restored copy: backend 285 / 0, RC-049 browser harness 4 / 0): 151 run, **150 detected, 0 survived, 0 invalid** — 144 by the backend and Node runs (Q13_unknown_skull_passes LABELLING ONLY, not counted), 6 of the 7 card controls V35-V41 by the model-based test in a throwaway copy of the frontend (node_modules through a junction removed as a link only); V38_final_asked_for_a_later_render is EQUIVALENT IN THE HARNESS — the window it opens (a timer firing between a React commit and its passive effects) exists in a browser but cannot be produced under act() in jsdom; the card keeps the defence, the control is not counted. V37 (expired run token) and V41 (attested decision of an older version) SURVIVED the first card run: the model was strengthened (P2 no run starts with a token already expired; P3 the 'before' panel shows the newest version the server named; P4 a second attempt only when the card could not know the newest version) and both were detected on re-run; the real code passes 2 004 of 2 004 with the strengthened test. 29 other component mutations not run locally (light load; their tests run in CI). 9 re-anchored (U8, X4, AE3, AE7, V9, V10, V32, V33, V34), 12 new (AF1 unconfirmed run released, AF2 full store releases, AF3 report ignores the clinician, AF4 marker before the record, AF5 long reason dropped, V35 used token reused, V36 rescinded attestation kept, V37 token lifetime ignored, V38 final asked for a later render, V39 attestation hidden after an attested run, V40 hidden attestation still in effect, V41 attested decision of an older version); the agent platform's Y4 re-anchored to the written-record marker. An unreadable vitest run is now INVALID, never a detection. Per control (evidence): RC-122 60 / 60, RC-123 25 / 25, RC-124 6 / 6, RC-125 3 / 3 (+ 1 labelling only), RC-126 38 / 38 (+ 1 equivalent in the harness), RC-127 24 / 24. Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (vitest_m1, equivalent_in_harness, labelling_only).
+
+**HAZ-007 residual:** unchanged. **HAZ-025 / HAZ-001:** a released output now always corresponds to exactly one confirmed run of the current inputs.
+
+### C.19 Fourteenth independent review of PR #81 (2026-11-13) — DRAFT, PENDING owner approval
+
+Ten findings; two (K1, K7) were regressions of the thirteenth review's own fixes, whose failing-first tests mocked the function directly above the real failure. New rule: every failing-first test fails through the REAL lowest layer's failure modes, injected at each of them.
+
+| # | Finding | Control | Fix | Invariant (injected at) |
+|---|---|---|---|---|
+| K1 | `emit_audit` returned True whenever `log_event` was called; `log_event` swallows its errors — the route's marker silenced the middleware and the consultation had no record; the same assumption on /auth | RC-126 | `AuditWrite`; the middleware silent only once the store confirms the route's record (D-QG-20 amended) | integrity False, build, stdout, durable raising, not made, given up, still retrying; /auth logout |
+| K2 | The single-use token was spent before the evaluation: a lost answer hid the run's result for good | RC-126 | idempotency key: claim + digest, replay of the stored decision, conflict, retryable claim, lease (D-QG-24 amended) | lost answer, withheld first answer, another request, failed evaluation, unavailable store; model P6 |
+| K3 | A run permission without a file version: Run silently never started | RC-126, RC-122 | `version_not_established` (D-QG-25); the card says why a click did not start | four storage shapes; model P7 |
+| K4 | A raw "{{band}}" in the comparison's warnings; empty slots elsewhere | RC-127 | one formatter with a defined fallback | every code × locale × display path × param shape; static |
+| K5 | Blocking Firestore create() on the event loop | RC-126 | off the loop | a store asserting its thread |
+| K6 | No outcome record on the post-gate error paths | RC-126 | `OutcomeRecord` on every path | each post-gate step of compare and SEL |
+| K7 | Non-code reason text kept (e-mail, file name) | RC-126 | closed registry of reasons (D-QG-26) | PII-like corpus, long valid compositions, literal reasons |
+| K8 | Header downloads and record reads not cancelled when the visit check refused the pair | RC-123 | visit check first | same-visit pair |
+| K9 | Two details filters with different limits | RC-126 | one filter | registry vs record |
+| K10 | RC-062's input read differently with the gate on and off | RC-122 | one read strategy (G26) | queryable and non-queryable store |
+
+Failing first (commit `a40acf3`, on the code of e8c5418): backend `test_rc122_review14.py` **44 of 53 failed** (K1 10, K2 3, K3 4, K5 1, K6 9, K7 13, K8 1, K9 1, K10 2; the others are guards); browser K4 **2 of 2 failed**; model test, of 2 006 sequences: **P6 2, P7 130 failed** (P1-P5 0; P7 125 with the final test). After the fixes: 2 006 of 2 006 sequences hold P1-P7 (with the final test — whose P7 also exempts a click followed by a change of file and back — the code of e8c5418 fails P6 2 and P7 125); all backend tests pass.
+
+Negative controls: 195 controls after this round (2 retired with their reason — AF4: the marker became the durable confirmation, AG1 / AG1b instead; AE9: no flag-dependent read strategy any more, AG10 instead — 12 re-anchored, 17 new). In throwaway copies, on 771b710: backend (baseline and restored copy 338 / 0, RC-049 browser harness 4 / 0) the 22 new and re-anchored backend controls AG1, AG1b, AG2, AG2b, AG3, AG3b, AG5, AG6, AG7, AG8, AG9, AG10, U12, W17, AF2, AF5, AE5, AE6, AE7, AD6, AB5, AA6 — **22 detected, 0 survived, 0 invalid**; the full run of every control was started and stopped after its first 19 (Q1-Q19, all detected) to keep the owner's computer lightly loaded (about 3 h); the untouched controls keep their thirteenth-review result (e8c5418). Browser (vitest, a throwaway copy of the frontend with node_modules through a junction removed as a link only): AG4, AG4b, V22, V9, V42, V43, V44 and again V35, V36, V37, V39, V40, V41 — **13 detected**; V22 first appeared to survive because two of its bound test files read the server's policy and could not load in the copy: the copy now includes it and a test file that fails to load makes a run INVALID, never a result (re-run: detected). V38 stays equivalent in the harness. Record: 195 controls, 168 run, **167 detected, 0 survived, 0 invalid**, 1 equivalent in the harness, 27 other component controls not run locally (their tests run in CI). Per control (evidence): RC-122 65 / 65, RC-123 26 / 26, RC-124 6 / 6, RC-125 3 / 3 (+ 1 labelling only), RC-126 46 / 46 (+ 1 equivalent in the harness), RC-127 27 / 27. Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (fourteenth_review, vitest_m1, retired).
+
+**HAZ-025 / HAZ-001:** a released output still corresponds to exactly one confirmed run of the current inputs, now also when its answer is lost; no audit trail gap from an unconfirmed record.
+
+### C.20 Fifteenth independent review of PR #81 (2026-11-13) — DRAFT, PENDING owner approval
+
+Ten findings, most in mechanisms the fourteenth review added (the confirmation wait, the claim/lease epochs, K10). The answer is LESS mechanism; every mechanism kept has a model-based test of its whole lifecycle with a failure at each external call.
+
+| # | Finding | Control | Fix | Invariant (injected at) |
+|---|---|---|---|---|
+| S1 (4, 5) | A decision audited as an AI run before it was stored: a failed settlement and its retry after the lease gave a second CLINICAL_AI_RUN; a released claim gave a false "in progress" for 30 s | RC-126 | one document per token, transactions only; evaluate → settle → audit → answer; fail closed, retryable at once (D-QG-24 amended) | model PS1-PS6: store read, write, ambiguous commit, audit write, evaluation fault and raise, lost response, lease expiry |
+| S2 (1, 2, 10) | "Unconfirmed" on durable records of routes not covered; logins waited 2 + 0.5 s; with no durable backend two records per login | RC-126 | exact tag, one 500 ms budget, base behaviour without a durable backend (D-QG-20 amended) | 5 route classes × 4 sink states × the record logged or not |
+| S3 (3) | K10 changed RC-062's input path with the gate OFF (G26) | RC-123, RC-122 | K10 and the indexed query withdrawn; the base read (D-QG-27) | the base read verbatim, the query raising, a missing index, a permission refused |
+| S4 (7) | An attested consultation answered 429 was retried WITHOUT the attestation | RC-122, RC-127 | one consultation for the current inputs (D-QG-28) | card model P8, P9 |
+| S5 (6) | Less than one second left became a 60-second wait; the limiter cut its time left | RC-126 | rounded up in ONE place, the limiter (a blocked request always has 1..60 s left); the gate's own rounding and clamp deleted (they could never act: AH11) | 0.05-59.95 s left |
+| S6 (8, 9) | Two details filters; two NIfTI header readers (one failed on extensions) | RC-126, RC-122 | one filter, one reader | NIfTI-1/-2, both byte orders, gzip and plain, extensions |
+| S7 | The full negative-control pass needed the owner's computer | — | a manual GitHub Actions workflow (D-QG-29) | — |
+
+Failing first (commit `e334022`, on the code of ebdff68): server model, of 2 000 sequences, **PS1 6, PS2 0, PS3 6, PS4 0, PS5 232, PS6 0 failed**; `test_rc122_review15.py` **44 of 79 failed** (S2 20, S3 6, S5 8, S6 10); card model, of 2 007 sequences, **P8 14, P9 747 failed** (P1-P7 0). After the fixes: server model 2 000 of 2 000 sequences hold PS1-PS6; card model 2 007 of 2 007 sequences hold P1-P9; all backend tests pass.
+
+Negative controls: 202 controls after this round (6 retired with their reason — Z5, AG10: the indexed query and the flag-dependent read are gone; V36, V41, V8: the attested-decision slot and the hook's sequence check are gone; AH11: the gate's own Retry-After clamp is gone — 2 more labelling only, V40 and V33, 12 re-anchored, 12 new: AH1–AH4, AH6–AH10, AH12, AH13, V45). For the first time EVERY control ran, off the owner's computer, on GitHub Actions (S7, `negative-controls.yml`; a push to a `negative-controls/**` branch because a workflow_dispatch needs the file on the default branch): run https://github.com/nicolasbonilla/medical-imaging-viewer/actions/runs/43394123516 on `95a2adf` — three backend jobs (a third of the backend and Node controls each; a mutant runs the run-token model with 200 sequences and stops at its first failing one, the baseline and the restored copy with the CI's 2 000; baseline backend 419 / 0, restored 419 / 0, RC-049 browser harness 4 / 0) and one browser job (vitest, the card's model 400 sequences per mutant; baseline and restored 74 / 0). Result: 202 controls, 202 run, **199 detected, 0 survived, 0 invalid**, 2 labelling only (run, not counted: their check cannot fail in this app), 1 equivalent in the harness (V38). Before it: run 43382072859 (browser job, on 2ddda9b) found 7 survivors — V27 (a weak test: strengthened with a measurable FLAIR phantom), V42 and V43 (missing corpus scenarios: added), V8 (a redundant check: DELETED, its control retired), V40 and V33 (their check can no longer fail with one consultation: labelling only), V38 (equivalent) — and the backend job could not finish in 300 minutes because every mutant ran the 2 000-sequence model (cancelled; run 43386072483, browser 36 / 39 with only V38, V40, V33 left, was cancelled for the same reason); run 43389227243 (on d5c3d29, the backend in three jobs) ran everything: backend and Node 162 of 163 detected, browser 36 of 39 (V38 equivalent, V40 and V33 labelling only) — the one survivor, AH11, showed the gate's own rounding and clamp of Retry-After could never act (the limiter already rounds up and a blocked request always has 1..60 s left): DELETED (commit 95a2adf), AH11 retired, AH13 sabotages the gate's use of the limiter's time; the final run above is on that code. Per control (evidence): RC-122 70 / 70 (+ 1 labelling only), RC-123 27 / 27, RC-124 6 / 6, RC-125 3 / 3 (+ 1 labelling only), RC-126 62 / 62 (+ 1 equivalent in the harness), RC-127 37 / 37 (+ 1 labelling only). Record: `docs/iec62304/records/risk_verification/QUALITY-GATE_negative_controls_2026-11-12.json` (merged from the run's four JSON artifacts).
+
+**HAZ-025 / HAZ-001:** a released output corresponds to exactly one stored decision of one confirmed run; RC-062's input is the base's again.
+
+### C.21 Sixteenth independent review of PR #81 (2026-11-13) — DRAFT, PENDING owner approval
+
+Nine findings. Each was reproduced failing first through the real lower layer, closed by an invariant or a matrix rather than a point fix, and, where possible, by deleting mechanism.
+
+| # | Finding | Control | Fix | Invariant (injected at) |
+|---|---|---|---|---|
+| R1 (5) | With the flag on and the agent refused, killed or unknown, a caller without access got the gate's 200 refusal and a gate record before CAPA-009 ran | RC-126, CAPA-009 | authorization first (D-QG-30) | flag × agent state × caller; the CAPA-009 everywhere test with the flag ON |
+| R2 (3) | A decision signed for patient A could certify a comparison in patient B's report | RC-127 | the token binds the patient and the studies; the report checks them against stored records; ONE account per report (D-QG-19, D-QG-31) | token patient × report patient × pair-file owner × user, through the real report route |
+| R3 (2) | Unticking the FLAIR confirmation while Run's consultation was in flight still started the run with `clinicianConfirmedFlair: true` | RC-122 | one start point checks every input in effect now; current flags | card model P10 (toggle while in flight) |
+| R4 (1) | The gate's sentences were not in RC-065's exemption: a patient named "Read", "Gate", "Skull"... had the report refused | RC-125 | the exemption derived from the reason registry | every code × gate state × language; names from every word |
+| R5 (9) | With the gate off the provider payload of an RC-062 abstention carried `abstained_by` | RC-127 | the tag deleted (D-QG-32) | the report path byte for byte against the base, provider payload included |
+| R6 (4) | The gate re-parsed vox_offset itself; a NaN or absurd one was read on up to 4 MiB | RC-122 | the one reader; unusable = unreadable at once | NaN, ±inf, negative, absurd (NIfTI-1 and -2) |
+| R7 (6) | Every consultation streamed the stored records again | RC-122 | per-version cache, bounded, 300 s, complete answers only (D-QG-32) | N consultations, a new version, the lifetime, an incomplete answer |
+| R8 (7, 8) | Two channels and two rules for the audit confirmation | RC-126 | one channel, one rule; side channel and `_durable_backend()` deleted (D-QG-20) | the fifteenth review's matrix; a 429 still recorded |
+
+Failing first (commit `4b1471b`, on the code of 0fa5ec5): `test_rc122_review16.py` **21 of 57 failed** (R1 6, R2 6, R4 2 — 84 words and 250 word pairs not exempt, 5 406 names refused — R6 5, R7 1, R8 1); the flags-off identity **18 of 162** report-path answers differed from the base (R5); the card model **P10 failed in 4 of 2 011 sequences** (P1–P9 0); the CAPA-009 everywhere test with the flag on **3 of 4 failed**. After the fixes: all pass; the card model holds P1–P10.
+
+Negative controls (GitHub Actions run https://github.com/nicolasbonilla/medical-imaging-viewer/actions/runs/43575617025, commit 1639e32, off the owner's PC): backend and Node 178 of 178 detected, 0 survived, 0 invalid (restored: 477 backend and 4 Node checks pass); browser 38 of 41 detected, the 3 that survive are the declared ones (V40 and V33 labelling only, V38 equivalent in the test environment; restored: 74 pass). Two earlier runs did not reach a verdict: the throwaway copy lacked test_capa009_object_authorization_everywhere.py, imported by the sixteenth review's tests (fixed in the harness, 1639e32).
+
+**HAZ-025 / HAZ-016 / HAZ-001:** no gate answer before authorization; a gate decision only ever certifies a comparison of its own patient; a run starts only on the inputs in effect; no report refused because the gate's own words resemble a patient's name.
+
+*Integration note (2026-11-14) — DRAFT, PENDING owner approval.* PR #81 is integrated with the verified report of PR #78 (research stage: the app is a research prototype used only by its owner). The gate's account is computed once by the report route (R2) and reaches the verified report through the RC-064 projection: when the gate stopped a pair, the measurement record the model receives says so with the gate's causes (`quality_gate_causes`, the code-written sentences of the reason table) and the draft's comparison line says the quality check stopped the comparison — never RC-062's "acquisition not established" wording; when it warned, the record carries `quality_gate_warnings`; the code-written change notice gives the same causes or warnings (G30). RC-065's exemption of the device's own words is derived from the reason registry inside the verified report's word list (`verified_report.synthetic_payloads`). With the gate off the report path is the verified report of main byte for byte (flags-off snapshot, report part recorded on 7358d29). No new review round.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

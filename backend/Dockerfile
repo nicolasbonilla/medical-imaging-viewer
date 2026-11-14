@@ -22,7 +22,9 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+# 2026-11-14: the base image's older pip backtracked for over an hour on fastmcp 3.2.4's dependencies (two Cloud Build
+# timeouts of 7358d29); CI upgrades pip first and resolves at once, so the image does the same.
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir --user -r requirements.txt
 
 # MSMask atlas (LST-AI) is included in data/msmask/ via COPY
 # No need to pre-download Harvard-Oxford atlas anymore

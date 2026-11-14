@@ -296,6 +296,31 @@ def _spacing(s) -> Optional[List[float]]:
     return vals if len(vals) == 3 and all(math.isfinite(x) and x > 0 for x in vals) else None
 
 
+def voxel_spacing(img) -> Optional[tuple]:
+    """The voxel spacing of a NIfTI image in the mask's internal axis order (k, a0, a1) = (zooms[2], zooms[0], zooms[1])
+    — the ONE place of that rule (eleventh review of PR #81): every route that turns zooms into a mask's spacing calls
+    it. None unless its first three zooms are positive."""
+    try:
+        zooms = img.header.get_zooms()[:3]
+        if len(zooms) < 3 or not all(float(z) > 0 for z in zooms):
+            return None
+        return (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+    except Exception:  # noqa: BLE001 — not established
+        return None
+
+
+def rc062_voxel_spacing(img) -> Optional[tuple]:
+    """RC-062's voxel spacing of a source image — the same helper at run time (the image the NIfTI loader returned,
+    _load_source_intensity) and for the quality gate's prediction (the NIfTI header alone; tenth review, S3): RC-062
+    loads 3-D sources only, so anything else is None (not established, so RC-062 withholds)."""
+    try:
+        if len(img.shape) != 3:
+            return None
+    except Exception:  # noqa: BLE001 — not established
+        return None
+    return voxel_spacing(img)
+
+
 def compare_acquisitions(acq_tp1: Optional[dict], acq_tp2: Optional[dict],
                          spacing_tp1, spacing_tp2) -> Dict[str, Any]:
     """Compare the acquisition of the two visits (RC-062).
@@ -392,21 +417,33 @@ async def read_source_visit(file_id, study_service=None) -> Optional[Dict[str, A
         return None
 
 
-def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
-    """The acquisition record stored with a source image (instance document), or None. Never raises."""
+def source_refs(file_id, study_service=None):
+    """(study, series) Firestore references of a source image (studies/{study}, .../series/{series}), or None — the ONE
+    lookup of a source file id (tenth review of PR #81), used by the acquisition record (RC-062) and by the stored
+    series description and its study (the gate, G34)."""
     m = _FILE_ID_RE.fullmatch(str(file_id or ""))
     if not m:
         return None
+    if study_service is None:
+        from app.core.container import get_study_service
+        study_service = get_study_service()
+    db = getattr(study_service, "db", None)
+    if db is None:
+        return None
+    study = db.collection("studies").document(m.group(1))
+    return study, study.collection("series").document(m.group(2))
+
+
+def read_source_acquisition(file_id, study_service=None) -> Optional[Dict[str, Any]]:
+    """The acquisition record stored with a source image (instance document), or None. Never raises. The BASE read
+    (a scan of the series' instances), with and without the quality gate: RC-062's input path is an approved risk
+    control's and is not changed by PR #81 (fifteenth review, S3: the seventh review's indexed query is withdrawn;
+    G26). The one lookup of the source references (tenth review) gives the same documents as the base's."""
     try:
-        if study_service is None:
-            from app.core.container import get_study_service
-            study_service = get_study_service()
-        db = getattr(study_service, "db", None)
-        if db is None:
+        refs = source_refs(file_id, study_service)
+        if refs is None:
             return None
-        instances = (db.collection("studies").document(m.group(1))
-                     .collection("series").document(m.group(2)).collection("instances"))
-        for doc in instances.stream():
+        for doc in refs[1].collection("instances").stream():
             data = doc.to_dict() or {}
             if data.get("gcs_object_name") == file_id:
                 acq = data.get("acquisition")
@@ -480,6 +517,14 @@ ABSTAINED_NULL_FIELDS = (
 )
 
 
+def rc062_withholds(acquisition_check: dict, visit_check: Optional[dict]) -> bool:
+    """RC-062 (CAPA-013, HAZ-007): a pair is withheld unless both visits share one acquisition and their order is
+    known. The ONE comparability predicate of compare_longitudinal (through present_comparison) and of the SEL search
+    (fifth review of PR #81, G25); the same rule as before, only named."""
+    visit_check = visit_check or {"status": "unknown"}
+    return acquisition_check.get("status") != "same" or visit_check.get("status") != "ok"
+
+
 def present_comparison(result: dict, *, acquisition_check: dict, evidence: Optional[dict],
                        binding: Optional[Dict[str, str]], stored_review: Optional[dict],
                        visit_check: Optional[dict] = None, review_read_failed: bool = False) -> dict:
@@ -490,7 +535,7 @@ def present_comparison(result: dict, *, acquisition_check: dict, evidence: Optio
     out["visit_check"] = visit_check
     out["false_candidate_evidence"] = evidence
 
-    if acquisition_check.get("status") != "same" or visit_check.get("status") != "ok":   # RC-062
+    if rc062_withholds(acquisition_check, visit_check):   # RC-062
         out.update({"abstained": True, "changes": []})
         out.update({k: None for k in ABSTAINED_NULL_FIELDS})
         out["caveat"] = _abstention_caveat(acquisition_check, visit_check)

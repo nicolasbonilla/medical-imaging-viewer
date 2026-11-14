@@ -206,7 +206,10 @@ class ProviderPayload:
 
 
 class _Projector:
-    def __init__(self, patient_numbers: FrozenSet[str] = frozenset()):
+    def __init__(self, patient_numbers: FrozenSet[str] = frozenset(), gate_account: Any = None):
+        # R2 (sixteenth review): the gate's account of the longitudinal block, computed ONCE by the report route
+        # (quality_gate.report_account, bound to the report's clinician and patient); None: the gate is off
+        self.gate_account = gate_account
         self.counts: Counter = Counter()
         self.unlisted: Dict[str, str] = {}      # label as written -> its placeholder
         self.patient_numbers = patient_numbers  # the patient's own numbers as whole numbers (never sent)
@@ -335,8 +338,20 @@ class _Projector:
         return o
 
     def longitudinal(self, lng: dict) -> dict:
+        # I1 (eleventh review): the gate's account comes from the SERVER's record of its decision (report_account), never
+        # from the client's copy; G30 / R2 (sixteenth review): the SAME account object as the code-written notice,
+        # computed once by the route — causes of a stop (or "not established"), warnings of a pair it let through;
+        # fixed codes only (R4)
+        account = self.gate_account
+        warnings = account["warnings"] if account else []
+        if account and account["stopped"]:
+            return {"abstained": True, "abstained_by": "quality_gate", "causes": account["causes"]}
         if lng.get("abstained") is True:
-            return {"abstained": True}
+            # R5 (sixteenth review): exactly the base's block ({"abstained": True}); the 'rc062' tag had no reader
+            o = {"abstained": True}
+            if warnings:
+                o["quality_gate_warnings"] = warnings
+            return o
         o: dict = {key: self.number(lng.get(key), key, 0, _LESION_ML_MAX) for key in ("burden_tp1_ml", "burden_tp2_ml")}
         for key in ("total_lesions_tp1", "total_lesions_tp2"):
             o[key] = self.count(lng.get(key), key)
@@ -346,6 +361,8 @@ class _Projector:
         sc = lng.get("status_counts") if isinstance(lng.get("status_counts"), dict) else {}
         o["status_counts"] = {k: self.count(sc.get(k), "status_counts")
                               for k in ("new", "enlarged", "resolved", "shrunk", "stable")}
+        if warnings:
+            o["quality_gate_warnings"] = warnings
         # fifth review of PR #78, V2: the reviewable change candidates (CAPA-013) — the figure the draft states, as the
         # route's notice and the review screen
         # seventh review of PR #78, finding 4: the minimum size the rule reviews (for the below-size line)
@@ -404,11 +421,12 @@ class _Projector:
         return o
 
 
-def project_measurements(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]]) -> "ProviderPayload":
+def project_measurements(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]],
+                         gate_account: Any = None) -> "ProviderPayload":
     """The measurement record's source (ninth review of PR #78, I14): the RC-064 projection of what the report renders,
     with every measurement's plausible range checked (ImplausibleMeasurement) — run for every draft, comments on or
     off. The patient's own numbers are checked apart (`assert_no_patient_numbers`), only when a call will happen."""
-    return provider_payload(findings, volumetry, None)
+    return provider_payload(findings, volumetry, None, gate_account=gate_account)   # PR #81 integrated with #78
 
 
 def assert_no_patient_numbers(payload: "ProviderPayload", identifiers: "PatientIdentifiers") -> None:
@@ -435,14 +453,14 @@ def assert_no_patient_numbers(payload: "ProviderPayload", identifiers: "PatientI
 
 
 def provider_payload(findings: Optional[Dict[str, Any]], volumetry: Optional[Dict[str, Any]],
-                     identifiers: Optional["PatientIdentifiers"] = None) -> ProviderPayload:
+                     identifiers: Optional["PatientIdentifiers"] = None, gate_account: Any = None) -> ProviderPayload:
     """RC-064: the structured payload the provider may receive. The inputs are not modified.
 
     Raises ImplausibleMeasurement when a number is outside the physical range of its field, and
     IdentifierInPrompt when a number field holds one of the patient's own numbers (`identifiers`).
     """
     f = findings if isinstance(findings, dict) else {}
-    p = _Projector(identifiers.number_forms() if identifiers is not None else frozenset())
+    p = _Projector(identifiers.number_forms() if identifiers is not None else frozenset(), gate_account=gate_account)
     p.counts["free_text_fields"] = sum(1 for k in FREE_TEXT_FIELDS if f.get(k))
     p.counts["unknown_fields"] = sum(1 for k in f if k not in _KNOWN_FIELDS)
     out: Dict[str, Any] = {}

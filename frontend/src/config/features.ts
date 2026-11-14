@@ -34,6 +34,11 @@ export interface FeatureFlags {
   // VITE_ENABLE_QUICK_SCREEN is 'true' or '1'; with it off the viewer neither shows it nor
   // requests the model.
   QUICK_SCREEN: boolean;
+
+  // Single quality gate (REQ-FUNC-117/118, RC-122..RC-127; DRAFT, PENDING owner approval). OFF unless
+  // VITE_ENABLE_QUALITY_GATE is 'true' or '1'. ON: the gate decides before the in-browser AI runs and before its
+  // result is shown, and fails closed (agent not approved / switched off / unreachable = no AI result).
+  QUALITY_GATE: boolean;
 }
 
 /**
@@ -73,6 +78,9 @@ export const FEATURES: FeatureFlags = {
 
   // PRB-009 — OFF: the screening model is not part of the app
   QUICK_SCREEN: getFeatureFlag('ENABLE_QUICK_SCREEN', false),
+
+  // Class C draft (RC-122..RC-127) — OFF until the owner approves the gate and switches it on (D-QG-2)
+  QUALITY_GATE: getFeatureFlag('ENABLE_QUALITY_GATE', false),
 };
 
 /**

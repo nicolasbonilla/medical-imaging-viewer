@@ -1512,5 +1512,176 @@
     "storing": "Storing result...",
     "completed": "Completed",
     "failed": "Failed"
+  },
+  "qualityGate": {
+    "title": "Quality check before the AI",
+    "draft": "Draft — pending approval",
+    "aiHidden": "The AI result is not shown, because the quality check does not allow it.",
+    "retrying": "Checking again by itself in {{seconds}} s.",
+    "checkAgain": "Check again",
+    "paramMissing": "not stated",
+    "runNotStarted": "The analysis did not start: the server's answer could not be used for this run. Press the button again.",
+    "inputsChanged": "The analysis did not start: the image or the confirmation changed while the server was checking. Press the button again.",
+    "checking": "Checking the image before the AI…",
+    "attest": "I confirm, on my own responsibility, that this image is a T2-FLAIR. Its header does not say so; my confirmation is recorded in the audit with my name.",
+    "decision": {
+      "abstain": "The AI does not run for this step",
+      "pending": "The AI may start; its result is shown only after the last check",
+      "proceed": "All checks passed",
+      "proceed_with_warnings": "The AI may run — please read the warnings"
+    },
+    "check": {
+      "input": "Information",
+      "platform": "Quality check",
+      "sequence": "Sequence",
+      "thickness": "Slice thickness",
+      "scanner": "Scanner",
+      "skull": "Skull",
+      "run": "Run",
+      "version": "Version"
+    },
+    "status": {
+      "pass": "OK",
+      "warn": "Warning",
+      "pending": "Not checked yet",
+      "abstain": "Stopped"
+    },
+    "visit": {
+      "tp1": "first visit",
+      "tp2": "second visit"
+    },
+    "band": {
+      "B1": "1.5 mm or less",
+      "B2": "1.5–4.5 mm",
+      "B3": "4.5–6.5 mm",
+      "B4": "more than 6.5 mm"
+    },
+    "field": {
+      "manufacturer": "manufacturer",
+      "manufacturer_model_name": "scanner model",
+      "magnetic_field_strength_t": "field strength"
+    },
+    "sequenceName": {
+      "T1": "T1-weighted",
+      "T2": "T2-weighted",
+      "other": "non-FLAIR",
+      "unknown": "unknown",
+      "missing": "unrecorded"
+    },
+    "codes": {
+      "gate_not_approved": {
+        "message": "The quality check has not yet been approved for use, so the AI does not run.",
+        "action": "Read the images yourself as usual. The AI can be used once the quality check is approved."
+      },
+      "gate_switched_off": {
+        "message": "The quality check is switched off, so the AI does not run.",
+        "action": "Read the images yourself as usual. Ask the administrator to switch the quality check on again."
+      },
+      "gate_unavailable": {
+        "message": "The quality check could not be completed, so the AI does not run.",
+        "action": "Try again in a few minutes. If it keeps happening, tell the administrator."
+      },
+      "gate_not_enabled": {
+        "message": "The quality check is not enabled on the server, so the AI does not run.",
+        "action": "Ask the administrator to enable the quality check on the server, or to switch it off in the app."
+      },
+      "gate_no_access": {
+        "message": "The image was not found, or you have no access to it, so the AI does not run.",
+        "action": "Check that the image is still in the study and that you may open it; then select it again."
+      },
+      "run_not_confirmed": {
+        "message": "The server could not confirm the run of this result (its run permission was missing, already used or expired), so the result is not shown.",
+        "action": "Run the analysis again.",
+        "action_comparison": "Run the analysis again."
+      },
+      "version_not_established": {
+        "message": "The server could not establish the version of this stored file, so it cannot give a run permission for it.",
+        "action": "Check again in a moment; if it persists, select the image again.",
+        "action_comparison": "Check again in a moment; if it persists, select the images again."
+      },
+      "gate_not_established": {
+        "message": "The quality check's decision for this pair could not be confirmed on the server, so no automatic change result is given.",
+        "action": "Compare the two visits again.",
+        "action_comparison": "Compare the two visits again."
+      },
+      "source_image_missing": {
+        "message": "A mask of this comparison has no source image, so its sequence and slice thickness cannot be checked and the AI does not compare it.",
+        "action": "Compare two segmentations made on stored images, or compare the images visually with the overlay.",
+        "action_comparison": "Compare two segmentations made on stored images, or compare the images visually with the overlay."
+      },
+      "gate_rate_limited": {
+        "message": "Too many quality checks in a short time, so the AI does not run yet. Wait {{seconds}} s.",
+        "action": "Wait {{seconds}} seconds and try again; the check is repeated automatically when you select the image again."
+      },
+      "gate_input_invalid": {
+        "message": "The information needed to check this image is incomplete, so the AI does not run.",
+        "action": "Open the study again and retry. If it keeps happening, tell the administrator."
+      },
+      "sequence_not_flair": {
+        "message": "The image header says this is a {{sequence}} image, not a FLAIR. The AI only works on FLAIR images.",
+        "action": "Select the FLAIR image of this study and start again."
+      },
+      "sequence_unknown": {
+        "message": "The image header does not say which sequence this is, so the app cannot tell whether it is a FLAIR.",
+        "action": "If you are sure it is a T2-FLAIR, tick the confirmation box. Otherwise select the FLAIR image.",
+        "action_comparison": "If you are sure this visit's image is a T2-FLAIR, tick its confirmation box below and compare again. Otherwise compare the images visually with the overlay."
+      },
+      "sequence_missing": {
+        "message": "The image carries no sequence information, so the app cannot tell whether it is a FLAIR.",
+        "action": "If you are sure it is a T2-FLAIR, tick the confirmation box. Otherwise select the FLAIR image.",
+        "action_comparison": "If you are sure this visit's image is a T2-FLAIR, tick its confirmation box below and compare again. Otherwise compare the images visually with the overlay."
+      },
+      "sequence_confirmed_by_physician": {
+        "message": "You confirmed that this image is a FLAIR; its header does not say so. Your confirmation is recorded with the result.",
+        "action": "Check the AI result against the image with extra care."
+      },
+      "thickness_thick": {
+        "message": "The slices of this acquisition are {{band}} thick. Small lesions can be missed between thick slices.",
+        "action": "Use the AI result as a draft only. To look for small lesions, a 3D FLAIR with slices of 1.5 mm or less is recommended."
+      },
+      "thickness_at_least": {
+        "message": "The slices of this acquisition are {{band}} thick or thicker (the file does not show the original thickness). Small lesions can be missed.",
+        "action": "Use the AI result as a draft only. To look for small lesions, a 3D FLAIR with slices of 1.5 mm or less is recommended."
+      },
+      "thickness_unknown": {
+        "message": "The slice thickness of the original acquisition cannot be read from this file. If the slices were thick, small lesions can be missed.",
+        "action": "Check the acquisition protocol. Treat the AI result as a draft and look for small lesions yourself."
+      },
+      "thickness_out_of_range": {
+        "message": "The slices of this acquisition ({{band}}) are thicker than the range in which the AI has been shown to work, so the AI does not run.",
+        "action": "Read the images yourself, or use an acquisition with thinner slices."
+      },
+      "scanner_changed": {
+        "message": "The two visits were acquired on different scanners ({{fields}} changed). Differences between scanners can look like new or vanished lesions.",
+        "action": "Compare the images yourself with the overlay. Automatic change results are not shown for this pair."
+      },
+      "scanner_unknown": {
+        "message": "The app cannot tell whether the two visits were acquired on the same scanner ({{fields}} not recorded).",
+        "action": "Compare the images yourself with the overlay. Automatic change results are not shown for this pair."
+      },
+      "skull_present": {
+        "message": "The image still has its skull and it could not be removed. The AI only works on images without the skull.",
+        "action": "Try again later. If it keeps happening, tell the administrator."
+      },
+      "skull_unknown": {
+        "message": "The app cannot confirm that the skull was removed from the image the AI read, so the result is not shown.",
+        "action": "Run the analysis again. If it keeps happening, tell the administrator."
+      },
+      "skull_pending": {
+        "message": "The skull is checked, and removed if needed, when the analysis starts. The result is shown only after this check.",
+        "action": "Start the analysis; this check runs by itself."
+      },
+      "scanner_not_recorded": {
+        "message": "The scanners of the two visits are not recorded (both images were uploaded as files).",
+        "action": "The acquisition check decides whether this pair can be compared automatically; without a record it cannot, so compare the images visually."
+      },
+      "header_unreadable": {
+        "message": "The header of this image could not be read, so the app cannot check the image.",
+        "action": "Open or upload the image again. If it keeps happening, tell the administrator."
+      }
+    },
+    "attestVisit": "I confirm, on my own responsibility, that the image of the {{visit}} is a T2-FLAIR. Its header does not say so; my confirmation is recorded in the audit with my name.",
+    "attestAgain": "Compare again with my confirmation",
+    "governedByRc062": "The quality check passed for this pair; the acquisition check below stops the automatic results, and its reason applies."
   }
 }

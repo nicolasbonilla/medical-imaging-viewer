@@ -1,0 +1,52 @@
+{
+  "$comment": [
+    "The ONE table of the single quality gate's reason sentences (sixth review of PR #81, A4; RC-127). DRAFT, PENDING owner approval.",
+    "Read by quality_gate.py (CAVEAT_REASONS = the 'en' column: the comparison caveat the assistant reads) and by ai_report.py (the code-written notice of a report draft, in the report language). A test requires one entry per policy code, translated, and the notice and the caveat to use these exact sentences.",
+    "The physician-facing panel texts (what happened and what to do) are the i18n files' qualityGate.codes.*; these are the short reasons a caveat or a report notice lists."
+  ],
+  "leads": {
+    "warned": {
+      "en": "**Quality-gate warnings for this pair:**",
+      "es": "**Avisos del control de calidad para esta pareja:**",
+      "de": "**Hinweise der Qualitätsprüfung für dieses Paar:**"
+    },
+    "stopped": {
+      "en": "**No automatic change candidates.** The quality check stopped the automatic comparison of this pair because",
+      "es": "**Sin candidatos automáticos de cambio.** El control de calidad detuvo la comparación automática de esta pareja porque",
+      "de": "**Keine automatischen Veränderungskandidaten.** Die Qualitätsprüfung hat den automatischen Vergleich dieses Paares angehalten, weil"
+    },
+    "stopped_tail": {
+      "en": "No lesion load or count comparison is given; compare the images visually.",
+      "es": "No se ofrece comparación de carga ni de número de lesiones; compare las imágenes visualmente.",
+      "de": "Es wird kein Vergleich von Läsionslast oder -anzahl angegeben; vergleichen Sie die Bilder visuell."
+    }
+  },
+  "reasons": {
+    "gate_not_approved": {"en": "the quality gate is not yet approved for use", "es": "el control de calidad aún no está aprobado para su uso", "de": "die Qualitätsprüfung ist noch nicht für den Einsatz freigegeben"},
+    "gate_switched_off": {"en": "the quality gate is switched off", "es": "el control de calidad está apagado", "de": "die Qualitätsprüfung ist ausgeschaltet"},
+    "gate_unavailable": {"en": "the quality gate could not be completed", "es": "no se pudo completar el control de calidad", "de": "die Qualitätsprüfung konnte nicht abgeschlossen werden"},
+    "gate_not_enabled": {"en": "the quality gate is not enabled on the server", "es": "el control de calidad no está activado en el servidor", "de": "die Qualitätsprüfung ist auf dem Server nicht aktiviert"},
+    "gate_no_access": {"en": "the image was not found, or there is no access to it", "es": "no se encontró la imagen, o no hay acceso a ella", "de": "das Bild wurde nicht gefunden, oder es besteht kein Zugriff darauf"},
+    "gate_rate_limited": {"en": "too many quality checks were asked for in a short time", "es": "se pidieron demasiados controles de calidad en poco tiempo", "de": "in kurzer Zeit wurden zu viele Qualitätsprüfungen angefordert"},
+    "gate_input_invalid": {"en": "the information needed to check the images is incomplete", "es": "la información necesaria para comprobar las imágenes está incompleta", "de": "die für die Prüfung der Bilder nötigen Angaben sind unvollständig"},
+    "sequence_not_flair": {"en": "an image is not a FLAIR (its header names another sequence)", "es": "una imagen no es una FLAIR (su cabecera indica otra secuencia)", "de": "ein Bild ist kein FLAIR (sein Bildkopf nennt eine andere Sequenz)"},
+    "sequence_unknown": {"en": "an image header does not say which sequence it is", "es": "la cabecera de una imagen no indica qué secuencia es", "de": "der Bildkopf eines Bildes sagt nicht, welche Sequenz es ist"},
+    "sequence_missing": {"en": "an image carries no sequence information", "es": "una imagen no lleva información de la secuencia", "de": "ein Bild enthält keine Angaben zur Sequenz"},
+    "sequence_confirmed_by_physician": {"en": "a physician confirmed as FLAIR an image whose header does not say so", "es": "un médico confirmó como FLAIR una imagen cuya cabecera no lo indica", "de": "ein Arzt hat ein Bild als FLAIR bestätigt, dessen Bildkopf das nicht sagt"},
+    "thickness_thick": {"en": "the slices are thick, so small lesions can be missed", "es": "los cortes son gruesos, así que pueden escaparse lesiones pequeñas", "de": "die Schichten sind dick, kleine Läsionen können übersehen werden"},
+    "thickness_at_least": {"en": "the slices are thicker than 1.5 mm (only a lower bound is known), so small lesions can be missed", "es": "los cortes miden más de 1,5 mm (solo se conoce un mínimo), así que pueden escaparse lesiones pequeñas", "de": "die Schichten sind dicker als 1,5 mm (nur eine Untergrenze ist bekannt), kleine Läsionen können übersehen werden"},
+    "thickness_unknown": {"en": "the original slice thickness cannot be read", "es": "no se puede leer el grosor de corte original", "de": "die ursprüngliche Schichtdicke lässt sich nicht lesen"},
+    "thickness_out_of_range": {"en": "the slices are thicker than the range in which the AI has been shown to work", "es": "los cortes son más gruesos que el rango en el que se ha demostrado que la IA funciona", "de": "die Schichten sind dicker als der Bereich, in dem die KI nachweislich funktioniert"},
+    "scanner_changed": {"en": "the two visits were acquired on different scanners", "es": "las dos visitas se adquirieron en equipos distintos", "de": "die beiden Untersuchungen wurden an verschiedenen Geräten aufgenommen"},
+    "scanner_unknown": {"en": "it cannot be established that the two visits were acquired on the same scanner", "es": "no se puede establecer que las dos visitas se adquirieran en el mismo equipo", "de": "es lässt sich nicht feststellen, dass beide Untersuchungen am selben Gerät aufgenommen wurden"},
+    "scanner_not_recorded": {"en": "the scanners of the two visits are not recorded", "es": "no constan los equipos de las dos visitas", "de": "die Geräte der beiden Untersuchungen sind nicht erfasst"},
+    "skull_present": {"en": "an image still has its skull", "es": "una imagen aún conserva el cráneo", "de": "ein Bild enthält noch den Schädel"},
+    "skull_unknown": {"en": "it cannot be confirmed that the skull was removed", "es": "no se puede confirmar que se haya retirado el cráneo", "de": "es lässt sich nicht bestätigen, dass der Schädel entfernt wurde"},
+    "skull_pending": {"en": "the skull has not been checked yet", "es": "el cráneo aún no se ha comprobado", "de": "der Schädel wurde noch nicht geprüft"},
+    "source_image_missing": {"en": "a mask has no source image to check", "es": "una máscara no tiene imagen de origen que comprobar", "de": "zu einer Maske gibt es kein Ursprungsbild, das sich prüfen ließe"},
+    "gate_not_established": {"en": "the quality gate's decision for this pair could not be confirmed on the server (compare the visits again)", "es": "no se pudo confirmar en el servidor la decisión del control de calidad para esta pareja (compare de nuevo las visitas)", "de": "die Entscheidung der Qualitätsprüfung für dieses Paar ließ sich auf dem Server nicht bestätigen (vergleichen Sie die Besuche erneut)"},
+    "run_not_confirmed": {"en": "the run of this result was not confirmed by the server (its run permission was missing, already used or expired)", "es": "el servidor no confirmó la ejecución de este resultado (su permiso de ejecución faltaba, ya se había usado o caducó)", "de": "der Lauf dieses Ergebnisses wurde vom Server nicht bestätigt (seine Laufberechtigung fehlte, war schon verwendet oder abgelaufen)"},
+    "version_not_established": {"en": "the version of the stored file could not be established, so the server cannot bind a run to it", "es": "no se pudo establecer la versión del archivo guardado, así que el servidor no puede vincular una ejecución a él", "de": "die Version der gespeicherten Datei konnte nicht festgestellt werden, daher kann der Server keinen Lauf an sie binden"},
+    "header_unreadable": {"en": "an image header could not be read", "es": "no se pudo leer la cabecera de una imagen", "de": "der Bildkopf eines Bildes konnte nicht gelesen werden"}
+  }
+}

@@ -1,0 +1,500 @@
+{
+ "$comment": [
+  "G21 (third review of PR #81): gate decision x RC-062 status -> the ONE verdict the comparison panel shows.",
+  "Read by frontend/src/components/LongitudinalResultPanel.qualityGate.test.tsx. DRAFT, PENDING owner approval.",
+  "Fourth review of PR #81 (R1): two uploads with no acquisition record abstain by RC-062 even when the gate only warns.",
+  "Eleventh review of PR #81 (I4): 'warnings' = the gate warnings the panel lists next to RC-062's line when RC-062 withholds a pair the gate let through - the same codes as the report notice (explain())."
+ ],
+ "states": [
+  {
+   "name": "gate_stops",
+   "result": {
+    "changes": [],
+    "abstained": true,
+    "total_lesions_tp1": null,
+    "total_lesions_tp2": null,
+    "burden_tp1_mm3": null,
+    "burden_tp2_mm3": null,
+    "burden_tp1_ml": null,
+    "burden_tp2_ml": null,
+    "burden_delta_mm3": null,
+    "burden_delta_percent": null,
+    "status_counts": null,
+    "change_candidates": null,
+    "registration_verified": false,
+    "adjudication_required": true,
+    "caveat": "x",
+    "quality_gate": {
+     "gate_version": "quality-gate/1",
+     "policy_version": "1.3.0-draft",
+     "mode": "comparison",
+     "decision": "abstain",
+     "ai_may_run": false,
+     "ai_output_allowed": false,
+     "codes": [
+      "scanner_changed"
+     ],
+     "checks": [
+      {
+       "check": "scanner",
+       "visit": null,
+       "status": "abstain",
+       "code": "scanner_changed",
+       "params": {
+        "fields": [
+         "manufacturer"
+        ]
+       }
+      }
+     ]
+    }
+   },
+   "expect": {
+    "gate_panel": true,
+    "rc062_box": false,
+    "governed": false,
+    "warnings": []
+   }
+  },
+  {
+   "name": "gate_allows_rc062_differs",
+   "result": {
+    "changes": [],
+    "abstained": true,
+    "total_lesions_tp1": null,
+    "total_lesions_tp2": null,
+    "burden_tp1_mm3": null,
+    "burden_tp2_mm3": null,
+    "burden_tp1_ml": null,
+    "burden_tp2_ml": null,
+    "burden_delta_mm3": null,
+    "burden_delta_percent": null,
+    "status_counts": null,
+    "change_candidates": null,
+    "registration_verified": false,
+    "adjudication_required": true,
+    "caveat": "x",
+    "quality_gate": {
+     "gate_version": "quality-gate/1",
+     "policy_version": "1.3.0-draft",
+     "mode": "comparison",
+     "decision": "proceed_with_warnings",
+     "ai_may_run": true,
+     "ai_output_allowed": true,
+     "codes": [
+      "thickness_unknown"
+     ],
+     "checks": [
+      {
+       "check": "thickness",
+       "visit": "tp1",
+       "status": "warn",
+       "code": "thickness_unknown",
+       "params": {}
+      }
+     ]
+    },
+    "acquisition_check": {
+     "status": "differs",
+     "comparable": false,
+     "required_fields": [],
+     "fields_compared": [],
+     "differing": [
+      {
+       "field": "manufacturer",
+       "tp1": "SIEMENS",
+       "tp2": "GE"
+      }
+     ],
+     "missing": [],
+     "tolerances": {},
+     "source": ""
+    },
+    "visit_check": {
+     "status": "ok"
+    }
+   },
+   "expect": {
+    "gate_panel": false,
+    "rc062_box": true,
+    "governed": true,
+    "warnings": [
+     "thickness_unknown"
+    ]
+   }
+  },
+  {
+   "name": "gate_allows_rc062_not_established",
+   "result": {
+    "changes": [],
+    "abstained": true,
+    "total_lesions_tp1": null,
+    "total_lesions_tp2": null,
+    "burden_tp1_mm3": null,
+    "burden_tp2_mm3": null,
+    "burden_tp1_ml": null,
+    "burden_tp2_ml": null,
+    "burden_delta_mm3": null,
+    "burden_delta_percent": null,
+    "status_counts": null,
+    "change_candidates": null,
+    "registration_verified": false,
+    "adjudication_required": true,
+    "caveat": "x",
+    "quality_gate": {
+     "gate_version": "quality-gate/1",
+     "policy_version": "1.3.0-draft",
+     "mode": "comparison",
+     "decision": "proceed_with_warnings",
+     "ai_may_run": true,
+     "ai_output_allowed": true,
+     "codes": [
+      "thickness_unknown"
+     ],
+     "checks": [
+      {
+       "check": "thickness",
+       "visit": "tp1",
+       "status": "warn",
+       "code": "thickness_unknown",
+       "params": {}
+      }
+     ]
+    },
+    "acquisition_check": {
+     "status": "not_established",
+     "comparable": false,
+     "required_fields": [],
+     "fields_compared": [],
+     "differing": [],
+     "missing": [
+      {
+       "field": "manufacturer",
+       "timepoints": [
+        "tp2"
+       ]
+      }
+     ],
+     "tolerances": {},
+     "source": ""
+    },
+    "visit_check": {
+     "status": "ok"
+    }
+   },
+   "expect": {
+    "gate_panel": false,
+    "rc062_box": true,
+    "governed": true,
+    "warnings": [
+     "thickness_unknown"
+    ]
+   }
+  },
+  {
+   "name": "gate_allows_visit_order_unknown",
+   "result": {
+    "changes": [],
+    "abstained": true,
+    "total_lesions_tp1": null,
+    "total_lesions_tp2": null,
+    "burden_tp1_mm3": null,
+    "burden_tp2_mm3": null,
+    "burden_tp1_ml": null,
+    "burden_tp2_ml": null,
+    "burden_delta_mm3": null,
+    "burden_delta_percent": null,
+    "status_counts": null,
+    "change_candidates": null,
+    "registration_verified": false,
+    "adjudication_required": true,
+    "caveat": "x",
+    "quality_gate": {
+     "gate_version": "quality-gate/1",
+     "policy_version": "1.3.0-draft",
+     "mode": "comparison",
+     "decision": "proceed_with_warnings",
+     "ai_may_run": true,
+     "ai_output_allowed": true,
+     "codes": [
+      "thickness_unknown"
+     ],
+     "checks": [
+      {
+       "check": "thickness",
+       "visit": "tp1",
+       "status": "warn",
+       "code": "thickness_unknown",
+       "params": {}
+      }
+     ]
+    },
+    "acquisition_check": {
+     "status": "same",
+     "comparable": true,
+     "required_fields": [],
+     "fields_compared": [],
+     "differing": [],
+     "missing": [],
+     "tolerances": {},
+     "source": ""
+    },
+    "visit_check": {
+     "status": "unknown"
+    }
+   },
+   "expect": {
+    "gate_panel": false,
+    "rc062_box": true,
+    "governed": true,
+    "warnings": [
+     "thickness_unknown"
+    ]
+   }
+  },
+  {
+   "name": "gate_allows_rc062_same",
+   "result": {
+    "changes": [],
+    "abstained": false,
+    "total_lesions_tp1": 1,
+    "total_lesions_tp2": 2,
+    "burden_tp1_mm3": 27,
+    "burden_tp2_mm3": 54,
+    "burden_tp1_ml": null,
+    "burden_tp2_ml": null,
+    "burden_delta_mm3": null,
+    "burden_delta_percent": null,
+    "status_counts": {
+     "new": 1,
+     "resolved": 0,
+     "enlarged": 0,
+     "shrunk": 0,
+     "stable": 0
+    },
+    "change_candidates": {
+     "new": 1,
+     "enlarging": 0,
+     "total": 1,
+     "confirmed": 0,
+     "rejected": 0,
+     "awaiting_review": 1,
+     "earlier_decisions_voided": false,
+     "decisions_unavailable": false,
+     "presentation": "p"
+    },
+    "registration_verified": false,
+    "adjudication_required": true,
+    "caveat": "x",
+    "visit_check": {
+     "status": "ok"
+    },
+    "quality_gate": {
+     "gate_version": "quality-gate/1",
+     "policy_version": "1.3.0-draft",
+     "mode": "comparison",
+     "decision": "proceed_with_warnings",
+     "ai_may_run": true,
+     "ai_output_allowed": true,
+     "codes": [
+      "thickness_unknown"
+     ],
+     "checks": [
+      {
+       "check": "thickness",
+       "visit": "tp1",
+       "status": "warn",
+       "code": "thickness_unknown",
+       "params": {}
+      }
+     ]
+    },
+    "acquisition_check": {
+     "status": "same",
+     "comparable": true,
+     "required_fields": [],
+     "fields_compared": [],
+     "differing": [],
+     "missing": [],
+     "tolerances": {},
+     "source": ""
+    }
+   },
+   "expect": {
+    "gate_panel": true,
+    "rc062_box": false,
+    "governed": false,
+    "warnings": []
+   }
+  },
+  {
+   "name": "gate_warns_scanners_unrecorded_rc062_abstains",
+   "result": {
+    "changes": [],
+    "abstained": true,
+    "total_lesions_tp1": null,
+    "total_lesions_tp2": null,
+    "burden_tp1_mm3": null,
+    "burden_tp2_mm3": null,
+    "burden_tp1_ml": null,
+    "burden_tp2_ml": null,
+    "burden_delta_mm3": null,
+    "burden_delta_percent": null,
+    "status_counts": null,
+    "change_candidates": null,
+    "registration_verified": false,
+    "adjudication_required": true,
+    "caveat": "x",
+    "visit_check": {
+     "status": "ok"
+    },
+    "quality_gate": {
+     "gate_version": "quality-gate/1",
+     "policy_version": "1.3.0-draft",
+     "mode": "comparison",
+     "decision": "proceed_with_warnings",
+     "ai_may_run": true,
+     "ai_output_allowed": true,
+     "codes": [
+      "scanner_not_recorded"
+     ],
+     "checks": [
+      {
+       "check": "scanner",
+       "visit": null,
+       "status": "warn",
+       "code": "scanner_not_recorded",
+       "params": {}
+      }
+     ]
+    },
+    "acquisition_check": {
+     "status": "not_established",
+     "comparable": false,
+     "required_fields": [],
+     "fields_compared": [],
+     "differing": [],
+     "missing": [
+      {
+       "field": "manufacturer",
+       "timepoints": [
+        "tp1",
+        "tp2"
+       ]
+      }
+     ],
+     "tolerances": {},
+     "source": ""
+    }
+   },
+   "expect": {
+    "gate_panel": false,
+    "rc062_box": true,
+    "governed": true,
+    "warnings": [
+     "scanner_not_recorded"
+    ]
+   }
+  },
+  {
+   "name": "no_gate_rc062_differs",
+   "result": {
+    "changes": [],
+    "abstained": true,
+    "total_lesions_tp1": null,
+    "total_lesions_tp2": null,
+    "burden_tp1_mm3": null,
+    "burden_tp2_mm3": null,
+    "burden_tp1_ml": null,
+    "burden_tp2_ml": null,
+    "burden_delta_mm3": null,
+    "burden_delta_percent": null,
+    "status_counts": null,
+    "change_candidates": null,
+    "registration_verified": false,
+    "adjudication_required": true,
+    "caveat": "x",
+    "acquisition_check": {
+     "status": "differs",
+     "comparable": false,
+     "required_fields": [],
+     "fields_compared": [],
+     "differing": [
+      {
+       "field": "manufacturer",
+       "tp1": "SIEMENS",
+       "tp2": "GE"
+      }
+     ],
+     "missing": [],
+     "tolerances": {},
+     "source": ""
+    },
+    "visit_check": {
+     "status": "ok"
+    }
+   },
+   "expect": {
+    "gate_panel": false,
+    "rc062_box": true,
+    "governed": false,
+    "warnings": []
+   }
+  },
+  {
+   "name": "no_gate_rc062_same",
+   "result": {
+    "changes": [],
+    "abstained": false,
+    "total_lesions_tp1": 1,
+    "total_lesions_tp2": 2,
+    "burden_tp1_mm3": 27,
+    "burden_tp2_mm3": 54,
+    "burden_tp1_ml": null,
+    "burden_tp2_ml": null,
+    "burden_delta_mm3": null,
+    "burden_delta_percent": null,
+    "status_counts": {
+     "new": 1,
+     "resolved": 0,
+     "enlarged": 0,
+     "shrunk": 0,
+     "stable": 0
+    },
+    "change_candidates": {
+     "new": 1,
+     "enlarging": 0,
+     "total": 1,
+     "confirmed": 0,
+     "rejected": 0,
+     "awaiting_review": 1,
+     "earlier_decisions_voided": false,
+     "decisions_unavailable": false,
+     "presentation": "p"
+    },
+    "registration_verified": false,
+    "adjudication_required": true,
+    "caveat": "x",
+    "visit_check": {
+     "status": "ok"
+    },
+    "acquisition_check": {
+     "status": "same",
+     "comparable": true,
+     "required_fields": [],
+     "fields_compared": [],
+     "differing": [],
+     "missing": [],
+     "tolerances": {},
+     "source": ""
+    }
+   },
+   "expect": {
+    "gate_panel": false,
+    "rc062_box": false,
+    "governed": false,
+    "warnings": []
+   }
+  }
+ ]
+}

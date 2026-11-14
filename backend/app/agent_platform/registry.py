@@ -160,7 +160,19 @@ FAILURE_CODES = frozenset({RefusalCode.MODEL_CALL_FAILED, RefusalCode.TOOL_FAILE
 #                         agent, model (when one was chosen), tool (when the run stopped at a tool call),
 #                         pseudonymised study, trace id, actor; the server log reason is "agent.run:<code>";
 # - agent.signoff_linked  the radiologist's sign-off linked to the run's trace.
-AUDIT_EVENT_TYPES = frozenset({"agent.decision", "agent.run", "agent.signoff_linked"})
+# "agent.consultation" (fifth review of PR #81, F4): a run of a code-only agent (the single quality gate) whose
+# decision releases no AI output; audited as a consultation, never as an AI run.
+AUDIT_EVENT_TYPES = frozenset({"agent.decision", "agent.run", "agent.signoff_linked", "agent.consultation"})
+
+
+def _register_audit_reasons() -> None:
+    """K7 (fourteenth review of PR #81): the platform's audit reasons ('<event type>:<code>') in the closed registry of
+    audit reasons — its event types, every refusal code and its success codes."""
+    from app.core.logging.audit import register_reason_codes
+    register_reason_codes([*AUDIT_EVENT_TYPES, *(c.value for c in RefusalCode), "ok", "unknown", "signoff_linked"])
+
+
+_register_audit_reasons()
 _IN_RUN: "contextvars.ContextVar[bool]" = contextvars.ContextVar("mstool_agent_in_run", default=False)
 
 
@@ -475,14 +487,23 @@ def default_audit_sink(event: Dict[str, Any]) -> None:
             event.get("outcome"), AuditOutcome.FAILURE)
         ids = {k: event[k] for k in ("agent_id", "model_id", "tool", "trace_id", "study_key") if event.get(k)}
         actor = current_actor()
-        emit_audit(AuditEventType.CLINICAL_AI_RUN, outcome, request=actor.request, user_id=actor.user_id,
+        etype = (AuditEventType.QUALITY_GATE_CONSULTATION if event.get("event") == "agent.consultation"
+                 else AuditEventType.CLINICAL_AI_RUN)
+        emit_audit(etype, outcome, request=actor.request, user_id=actor.user_id,
                    username=actor.username, role=actor.role,
+                   # G31 (eighth review of PR #81) / S4 (tenth): structured details, kept whole by the durable record
+                   details=event.get("details"),
                    # fourth review of PR #79, finding 7: the reason is "<event type>:<code>", so the server log
-                   # keeps which record of AUDIT_EVENT_TYPES this is (e.g. "agent.run:agent_not_approved")
-                   reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}"[:64],
+                   # keeps which record of AUDIT_EVENT_TYPES this is (e.g. "agent.run:agent_not_approved"); S4: never
+                   # cut — every code the platform writes is short by construction (test_rc122_review10.py)
+                   reason=f"{event.get('event', 'agent.decision')}:{event.get('code', 'unknown')}",
                    resource_type="agent_run", resource_ids=ids)
+        # R8 (sixteenth review): no side channel — the record's outcome reaches the middleware through the request's
+        # audit context (RequestAuditContext.explicit_writes), as every explicit record does
     except Exception:  # noqa: BLE001 — auditing never breaks the caller
         pass
+
+
 
 
 _UNSET = object()
@@ -676,7 +697,8 @@ class AgentRegistry:
 
     # -------------------------------------------------------------- audit
     def audit(self, outcome: str, code: str, *, agent_id: Any = _UNSET, model_id: Any = _UNSET, tool: Any = _UNSET,
-              study_key: Optional[str] = None, trace_id: Optional[str] = None, event: str = "agent.decision") -> None:
+              study_key: Optional[str] = None, trace_id: Optional[str] = None, event: str = "agent.decision",
+              details: Optional[Dict[str, Any]] = None) -> None:
         record = {
             "event": event, "outcome": outcome, "code": str(code),
             "agent_id": _safe_id(agent_id, _AGENT_ID),
@@ -686,6 +708,9 @@ class AgentRegistry:
             "trace_id": trace_id if isinstance(trace_id, str) and re.fullmatch(r"[0-9a-f]{32}", trace_id) else None,
             "registry_version": self.version[:64],
             "reason": REASONS.get(code) if isinstance(code, RefusalCode) else None,
+            # eighth review of PR #81 (G31): structured fields (codes, visit labels, booleans), never truncated
+            # K9 / S6 (fifteenth review): passed through; the audit record's builder filters them ONCE
+            "details": dict(details) if isinstance(details, dict) else None,
         }
         record = {k: v for k, v in record.items() if v is not None}
         try:

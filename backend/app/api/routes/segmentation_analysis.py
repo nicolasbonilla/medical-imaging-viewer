@@ -12,6 +12,7 @@ from fastapi.responses import Response
 from datetime import datetime
 from typing import Optional
 import inspect
+import sys
 import numpy as np
 
 import struct
@@ -37,6 +38,7 @@ from app.services.lesion_analysis_service import (
 )
 from app.services.longitudinal_tracking_service import compare_timepoints
 from app.services import longitudinal_candidate_safety as lcs
+from app.services import quality_gate as qg
 # PRB-003 (RC-070): DIS only on a segmentation a clinician confirmed for its current mask.
 from app.services import dis_review_gate as dis_gate
 from app.core.config import get_settings
@@ -73,11 +75,12 @@ async def _voxel_spacing_from_source_image(file_id, storage_service, context: st
         raise VoxelSpacingUnavailableError(
             f"{context}: could not read voxel geometry from source image {file_id}: {e}"
         )
-    if len(zooms) < 3 or not all(float(z) > 0 for z in zooms):
+    spacing = lcs.voxel_spacing(img)                 # the ONE rule (eleventh review of PR #81)
+    if spacing is None:
         raise VoxelSpacingUnavailableError(
             f"{context}: source image {file_id} has no usable voxel spacing (zooms={zooms})."
         )
-    return (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+    return spacing
 
 
 async def _load_source_intensity(file_id, storage_service, context: str):
@@ -100,10 +103,7 @@ async def _load_source_intensity(file_id, storage_service, context: str):
         if data.ndim != 3:
             return None, None, None
         intensity = np.transpose(data, (2, 0, 1))  # native (a0,a1,k) -> internal (k,a0,a1)
-        spacing = None
-        zooms = img.header.get_zooms()[:3]
-        if len(zooms) >= 3 and all(float(z) > 0 for z in zooms):
-            spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+        spacing = lcs.rc062_voxel_spacing(img)     # the ONE helper, shared with the quality gate's prediction (S3)
         return intensity, spacing, img  # img (with affine) enables MSMask atlas region mapping
     except Exception as e:  # noqa: BLE001 — advisory; never block the comparison
         logger.warning(f"[{context}] source intensity load failed; registration disabled: {e}")
@@ -116,6 +116,98 @@ def _source_acquisition(file_id):
     Read from the image's instance record (written from the DICOM header at PACS import).
     None — no record, no source image, unreadable — makes the comparison abstain."""
     return lcs.read_source_acquisition(file_id)
+
+
+def _memo_acquisition(file_id, memo):
+    """The acquisition record of a source image, read once per request (E2, first review of PR #81)."""
+    if not file_id:
+        return None
+    if file_id not in memo:
+        memo[file_id] = _source_acquisition(file_id)
+    return memo[file_id]
+
+
+def _attestation(body) -> tuple:
+    """F1 (third review of PR #81): the physician's per-visit FLAIR attestation of a comparison — validated by the ONE
+    pydantic model qg.PairAttestation (strict booleans, no other key; thirteenth review)."""
+    from pydantic import ValidationError
+    raw = body.get("quality_gate_attestation") if isinstance(body, dict) else None
+    if raw is None:
+        return (False, False)
+    try:
+        a = qg.PairAttestation.model_validate(raw)
+    except ValidationError:
+        raise HTTPException(status_code=400, detail="quality_gate_attestation must map tp1/tp2 to true or false")
+    return (a.tp1, a.tp2)
+
+
+async def _gate_setup(specs, body, segmentation_service, storage_service, current_user, request):
+    """The ONE gate set-up of the comparison and the SEL search (tenth review of PR #81): returns
+    (gate, metas, acq_memo, visit_check, pair). With QUALITY_GATE_ENFORCED off: (None, {}, {}, None, None) — nothing is
+    read and the routes run as on the base branch (G26). Twelfth review (K1/K2): the gate carries a signed token of its
+    decision bound to the pair (both segmentation ids, source files and versions) and the clinician; the answer carries
+    the pair, which the report checks against the token.
+
+    C2 (first review): the gate decides from the STORED records before any mask, image, registration or atlas is
+    loaded. Second review, findings 2 and 4: each segmentation's metadata is read ONCE here (``metas``, for the
+    loaders); missing or unreadable metadata is an unknown source, so the gate ABSTAINS with its reason — never a 404
+    or a 500. Fifth review (G26): the request's quality_gate_attestation is read only here, after the flag. Ninth
+    review (G35): an invalid request keeps its own 400, and the visit check runs before the gate; its result is
+    returned for the route (O3). E2: the independent reads run concurrently and each acquisition record is read once
+    (``acq_memo``, reused by RC-062)."""
+    if not settings.QUALITY_GATE_ENFORCED:
+        return None, {}, {}, None, None
+    attestation = _attestation(body)
+    import asyncio
+    for spec in specs:
+        if spec.get("type") not in ("segmentation", "instance"):
+            raise HTTPException(status_code=400, detail=f"Unknown mask type: {spec.get('type')}")
+    metas: dict = {}
+    acq_memo: dict = {}
+
+    async def _meta(spec):
+        if spec.get("type") != "segmentation":
+            return None                          # an instance mask has no source image: the gate abstains
+        try:
+            meta = await segmentation_service.get_metadata(spec.get("id"))
+        except Exception as e:  # noqa: BLE001 — unknown source: the gate abstains with its reason
+            logger.warning("Segmentation metadata unreadable for the quality gate", extra={"error": str(e)})
+            meta = None
+        metas[spec.get("id")] = meta
+        return meta
+
+    async def _header(source):
+        if not source:
+            return None, None
+        version = await qg.file_version(storage_service, settings.GCS_BUCKET_NAME, source)
+        return version, await qg.visit_header_fields(storage_service, settings.GCS_BUCKET_NAME, source, version_key=version)
+
+    async def _records(source):
+        if not source:
+            return None, None
+        acq, desc = await asyncio.to_thread(qg.stored_records, source)
+        acq_memo[source] = acq
+        return acq, desc
+
+    sources = [getattr(m, "file_id", None) for m in await asyncio.gather(*(_meta(s) for s in specs))]
+    # K8 (fourteenth review of PR #81): the cheap visit check FIRST (a 400 for the same mask, visit or a reversed order:
+    # G35) — a pair it refuses starts no header download and no record read; then the reads, concurrently
+    visit_check = await _visit_check(specs[0], specs[1], sources[0], sources[1])
+    records, read = await asyncio.gather(asyncio.gather(*(_records(s) for s in sources)),
+                                         asyncio.gather(*(_header(s) for s in sources)))
+    gate = await asyncio.to_thread(qg.comparison_gate, *sources, headers=[h for _, h in read], records=list(records),
+                                   attestation=attestation, visit_ok=visit_check.get("status") == "ok",
+                                   user=current_user, request=request)
+    pair = {label: {"id": spec.get("id"), "source": source, "version": qg.version_text(version)}
+            for label, spec, source, (version, _) in zip(("tp1", "tp2"), specs, sources, read)}
+    gate = {**gate, "token": qg.decision_token(gate, pair, getattr(current_user, "id", ""))}
+    return gate, metas, acq_memo, visit_check, pair
+
+
+def _sel_input_type_error():
+    raise HTTPException(status_code=400,
+                        detail="SEL detection requires segmentation-type inputs "
+                               "(needs the source FLAIR intensities).")
 
 
 def _source_visit(file_id):
@@ -277,14 +369,10 @@ async def compare_masks(
                     mask = np.transpose(mask, (2, 0, 1))  # RC-031: native (a0,a1,k) -> internal (k,a0,a1)
                 loaded_masks.append({"mask": mask, "label": label})
                 if resolved_spacing is None:
-                    zooms = img.header.get_zooms()[:3]
-                    if len(zooms) == 3 and all(float(z) > 0 for z in zooms):
-                        # Mask is transposed to internal (k,a0,a1) above, so spacing must be
-                        # (zk,za0,za1)=(zooms[2],zooms[0],zooms[1]) — NOT (zk,za1,za0). The
-                        # a0/a1 swap fed anisotropic in-plane spacing to distance_transform_edt
-                        # -> wrong Hausdorff/ASSD on non-square pixels (audit). Match the
-                        # canonical _voxel_spacing_from_source_image + the longitudinal branch.
-                        resolved_spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
+                    # Mask is transposed to internal (k,a0,a1) above, so spacing must be (zk,za0,za1) — NOT
+                    # (zk,za1,za0): the a0/a1 swap fed anisotropic in-plane spacing to distance_transform_edt ->
+                    # wrong Hausdorff/ASSD on non-square pixels (audit). The ONE rule: lcs.voxel_spacing.
+                    resolved_spacing = lcs.voxel_spacing(img)
             else:
                 raise HTTPException(status_code=400, detail=f"Unknown mask type: {mask_type}")
 
@@ -703,6 +791,7 @@ async def compare_longitudinal(
     Returns lesion-by-lesion changes (new, resolved, enlarged, shrunk, stable),
     total burden delta, and summary counts.
     """
+    outcome = qg.OutcomeRecord()                     # K6 (fourteenth review): one outcome record on every path
     try:
         body = await request.json()
         tp1_spec = body.get("tp1")
@@ -711,6 +800,11 @@ async def compare_longitudinal(
         if not tp1_spec or not tp2_spec:
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
+        gate, metas, acq_memo, gate_visit_check, pair = await _gate_setup(
+            [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
+        if gate is not None and gate.get("ai_output_allowed") is not True:
+            return {**qg.abstained_comparison(gate), "pair": pair}
+        outcome = qg.OutcomeRecord(gate, pair=pair, user=current_user, request=request)
 
         async def load_mask(spec):
             """Return (mask, voxel_spacing, source_intensity, nib_img, source_file_id) —
@@ -730,7 +824,7 @@ async def compare_longitudinal(
                 nib_img = None
                 file_id = None
                 try:
-                    meta = await segmentation_service.get_metadata(mask_id)
+                    meta = metas[mask_id] if mask_id in metas else await segmentation_service.get_metadata(mask_id)
                     file_id = getattr(meta, "file_id", None)
                     # One download resolves the spacing, the registration intensities,
                     # AND the nib image (for MSMask atlas region mapping); all best-effort.
@@ -753,14 +847,7 @@ async def compare_longitudinal(
                 mask = (data > 0).astype(np.uint8)
                 if mask.ndim == 3:
                     mask = np.transpose(mask, (2, 0, 1))  # RC-031: native (a0,a1,k) -> internal (k,a0,a1)
-                spacing = None
-                try:
-                    zooms = img.header.get_zooms()[:3]
-                    if len(zooms) >= 3 and all(float(z) > 0 for z in zooms):
-                        # native (za0, za1, zk) -> internal (k, a0, a1) spacing order
-                        spacing = (float(zooms[2]), float(zooms[0]), float(zooms[1]))
-                except Exception:  # noqa: BLE001 — spacing is best-effort
-                    spacing = None
+                spacing = lcs.voxel_spacing(img)     # native (za0, za1, zk) -> internal (k, a0, a1); best-effort
                 # Instance-type input IS a binary mask image (data>0), not an
                 # intensity MRI, so it carries no FLAIR to register — disable
                 # registration for this timepoint (index-aligned fallback). It has no
@@ -784,7 +871,7 @@ async def compare_longitudinal(
         # permutation (the old behavior) silently mis-aligned square/permuted
         # volumes — audit A-3. Fail loud on any grid mismatch instead.
         _require_comparable_grid(mask_tp1.shape, mask_tp2.shape)
-        visit_check = await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # review of PR #63
+        visit_check = gate_visit_check or await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # review of PR #63; O3
 
         # Binarize masks (labels > 0 → 1) for comparison
         mask_tp1_bin = (mask_tp1 > 0).astype(np.uint8)
@@ -883,8 +970,7 @@ async def compare_longitudinal(
         # flags are removed and reader decisions apply only to the masks they were given for.
         # RC-061: the measured false-candidate rate from the versioned asset.
         acquisition_check = lcs.compare_acquisitions(
-            _source_acquisition(source_tp1) if source_tp1 else None,
-            _source_acquisition(source_tp2) if source_tp2 else None,
+            _memo_acquisition(source_tp1, acq_memo), _memo_acquisition(source_tp2, acq_memo),   # E2: read once
             spacing_tp1, _spacing_tp2,
         )
         both_saved = tp1_spec.get("type") == "segmentation" and tp2_spec.get("type") == "segmentation"
@@ -897,12 +983,18 @@ async def compare_longitudinal(
                 logger.error("Stored longitudinal decisions could not be read", extra={"error": str(e)})
                 review_read_failed = True
         status_counts = result.get("status_counts") or {}
-        result = lcs.present_comparison(
+        # G24 / G25: RC-062 exactly as on the base branch, then the gate, which only adds (one function)
+        result = qg.present_gated_comparison(
             result, acquisition_check=acquisition_check,
             evidence=lcs.load_false_candidate_evidence(),
             binding=binding, stored_review=stored_review,
-            visit_check=visit_check, review_read_failed=review_read_failed,
+            visit_check=visit_check, review_read_failed=review_read_failed, gate=gate,
         )
+        if gate is not None:
+            result["pair"] = pair                     # K2: the pair the signed decision is bound to
+        # G31 (eighth review): what the user finally received — released only when the comparison is shown
+        outcome.record(released=result.get("abstained") is not True, withheld_by="rc062",
+                       study_key=qg.study_of(source_tp2) or "")
 
         logger.info("Longitudinal comparison completed (unconfirmed candidates, registration unverified)", extra={
             "new": status_counts.get("new"),
@@ -920,6 +1012,8 @@ async def compare_longitudinal(
     except Exception as e:
         logger.error("Longitudinal comparison failed", extra={"error": str(e)})
         raise HTTPException(status_code=500, detail=f"Longitudinal comparison failed: {str(e)}")
+    finally:
+        outcome.close(sys.exc_info()[1])             # K6: withheld with its error code when nothing was recorded
 
 
 @router.post("/longitudinal/review")
@@ -1033,6 +1127,7 @@ async def detect_slowly_expanding_lesions(
     closed (no SELs, never false ones); a reader must adjudicate. Requires
     segmentation-type inputs (SEL needs the source FLAIR intensities).
     """
+    outcome = qg.OutcomeRecord()                     # K6 (fourteenth review): one outcome record on every path
     try:
         body = await request.json()
         tp1_spec = body.get("tp1")
@@ -1040,16 +1135,21 @@ async def detect_slowly_expanding_lesions(
         if not tp1_spec or not tp2_spec:
             raise HTTPException(status_code=400, detail="Both tp1 and tp2 are required")
         await authorize_mask_specs([tp1_spec, tp2_spec], current_user)   # CAPA-007 RC-029
+        if settings.QUALITY_GATE_ENFORCED and any(s.get("type") != "segmentation" for s in (tp1_spec, tp2_spec)):
+            _sel_input_type_error()                  # gate on: before the gate (it needs each source image)
+        gate, metas, acq_memo, gate_visit_check, pair = await _gate_setup(
+            [tp1_spec, tp2_spec], body, segmentation_service, storage_service, current_user, request)
+        if gate is not None and gate.get("ai_output_allowed") is not True:
+            return qg.abstained_sel(gate, pair=pair)
+        outcome = qg.OutcomeRecord(gate, pair=pair, user=current_user, request=request)
 
         async def _load(spec):
-            if spec.get("type") != "segmentation":
-                raise HTTPException(status_code=400,
-                                    detail="SEL detection requires segmentation-type inputs "
-                                           "(needs the source FLAIR intensities).")
+            if spec.get("type") != "segmentation":   # gate off: where the base branch checked it (G26)
+                _sel_input_type_error()
             mask = segmentation_service.get_mask(spec["id"])
             if mask is None:
                 raise HTTPException(status_code=404, detail=f"Segmentation {spec['id']} not found")
-            meta = await segmentation_service.get_metadata(spec["id"])
+            meta = metas[spec["id"]] if spec["id"] in metas else await segmentation_service.get_metadata(spec["id"])
             file_id = getattr(meta, "file_id", None)
             intensity, spacing, _img = await _load_source_intensity(
                 file_id, storage_service, f"sel/{spec['id']}")
@@ -1061,20 +1161,16 @@ async def detect_slowly_expanding_lesions(
         _require_comparable_grid(mask_tp1.shape, mask_tp2.shape)
         # Review of PR #63: the SEL search is withheld exactly when the change candidates are
         # (different or unknown acquisition, unknown visit order; same visit / wrong order refused).
-        visit_check = await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)
+        visit_check = gate_visit_check or await _visit_check(tp1_spec, tp2_spec, source_tp1, source_tp2)   # O3
         acquisition_check = lcs.compare_acquisitions(
-            _source_acquisition(source_tp1) if source_tp1 else None,
-            _source_acquisition(source_tp2) if source_tp2 else None,
+            _memo_acquisition(source_tp1, acq_memo), _memo_acquisition(source_tp2, acq_memo),   # E2: read once
             spacing_tp1, _sp2,
         )
-        if acquisition_check["status"] != "same" or visit_check["status"] != "ok":
-            return {
-                "ok": False, "abstained": True,
-                "reason": lcs._abstention_caveat(acquisition_check, visit_check),
-                "sels": [], "n_existing": 0, "n_sel": 0,
-                "acquisition_check": acquisition_check, "visit_check": visit_check,
-                "registration_verified": False, "adjudication_required": True,
-            }
+        if lcs.rc062_withholds(acquisition_check, visit_check):   # G25: RC-062's one predicate (the gate stopped above)
+            outcome.record(released=False, withheld_by="rc062", study_key=qg.study_of(source_tp2) or "")   # G31
+            return qg.abstained_sel(gate, pair=pair, reason=lcs._abstention_caveat(acquisition_check, visit_check),
+                                    acquisition_check=acquisition_check, visit_check=visit_check,
+                                    **({"withheld_by": "rc062"} if gate is not None else {}))
         if intensity_tp1 is None or intensity_tp2 is None:
             raise HTTPException(status_code=422,
                                 detail="Source FLAIR intensities unavailable for one or both "
@@ -1090,6 +1186,7 @@ async def detect_slowly_expanding_lesions(
         logger.info("SEL detection completed", extra={
             "ok": sel.ok, "n_existing": sel.n_existing, "n_sel": sel.n_sel, "reason": sel.reason,
         })
+        outcome.record(released=sel.ok is True, withheld_by="sel", study_key=qg.study_of(source_tp2) or "")   # G31
         return {
             "ok": sel.ok,
             "reason": sel.reason,
@@ -1098,6 +1195,8 @@ async def detect_slowly_expanding_lesions(
             "n_sel": sel.n_sel,
             "background_expanding_fraction": sel.background_expanding_fraction,
             "voxel_expansion_floor": sel.voxel_expansion_floor,
+            **({"quality_gate": gate, "pair": pair} if gate is not None else {}),
+            **({"withheld_by": "sel"} if gate is not None and sel.ok is not True else {}),   # G30 extended (ninth review)
             # Class C candidate firewall.
             "registration_verified": False,
             "adjudication_required": True,
@@ -1121,6 +1220,8 @@ async def detect_slowly_expanding_lesions(
     except Exception as e:
         logger.error("SEL detection failed", extra={"error": str(e)})
         raise HTTPException(status_code=500, detail=f"SEL detection failed: {str(e)}")
+    finally:
+        outcome.close(sys.exc_info()[1])             # K6: withheld with its error code when nothing was recorded
 
 
 # =============================================================================
