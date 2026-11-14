@@ -1324,7 +1324,7 @@ Nine findings. Each was reproduced failing first through the real lower layer, c
 
 Failing first (commit `4b1471b`, on the code of 0fa5ec5): `test_rc122_review16.py` **21 of 57 failed** (R1 6, R2 6, R4 2 — 84 words and 250 word pairs not exempt, 5 406 names refused — R6 5, R7 1, R8 1); the flags-off identity **18 of 162** report-path answers differed from the base (R5); the card model **P10 failed in 4 of 2 011 sequences** (P1–P9 0); the CAPA-009 everywhere test with the flag on **3 of 4 failed**. After the fixes: all pass; the card model holds P1–P10.
 
-Negative controls: NC16_PLACEHOLDER
+Negative controls (GitHub Actions run https://github.com/nicolasbonilla/medical-imaging-viewer/actions/runs/43575617025, commit 1639e32, off the owner's PC): backend and Node 178 of 178 detected, 0 survived, 0 invalid (restored: 477 backend and 4 Node checks pass); browser 38 of 41 detected, the 3 that survive are the declared ones (V40 and V33 labelling only, V38 equivalent in the test environment; restored: 74 pass). Two earlier runs did not reach a verdict: the throwaway copy lacked test_capa009_object_authorization_everywhere.py, imported by the sixteenth review's tests (fixed in the harness, 1639e32).
 
 **HAZ-025 / HAZ-016 / HAZ-001:** no gate answer before authorization; a gate decision only ever certifies a comparison of its own patient; a run starts only on the inputs in effect; no report refused because the gate's own words resemble a patient's name.
 
