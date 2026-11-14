@@ -81,10 +81,12 @@ from app.core.security.validators import (
 # below still asserts that the validator raises the correct *Detected exception
 # for each adversarial payload.  (The broken audit-enum reference is reported
 # separately as a production finding.)
+#
+# PRB-032 (2026-11-11): the missing members were added to AuditEventType, so the real enum is used again; only the
+# logger is isolated. test_validators_audit_events.py pins every member the validators reference.
 @pytest.fixture(autouse=True)
 def _isolate_audit_side_effects(monkeypatch):
     monkeypatch.setattr(validators_module, "audit_logger", MagicMock())
-    monkeypatch.setattr(validators_module, "AuditEventType", MagicMock())
 
 
 # =============================================================================
@@ -248,10 +250,10 @@ class TestSQLInjectionProtection:
                 validator.validate(payload)
 
     @pytest.mark.xfail(
-        reason="Production gap: current SQLValidator matches SQL keywords/patterns "
+        reason="PRB-032 (open defect, tracked) - production gap: current SQLValidator matches SQL keywords/patterns "
         "only and has no NoSQL operator detection ($ne/$gt/||). Payloads kept as "
         "executable documentation; flips to XPASS when coverage is added.",
-        strict=False,
+        strict=True,
     )
     def test_detect_nosql_injection(self):
         """Test detection of NoSQL injection patterns."""
@@ -372,11 +374,11 @@ class TestXSSProtection:
                 validator.validate(payload)
 
     @pytest.mark.xfail(
-        reason="Production gap: current XSSValidator matches literal markup only and "
+        reason="PRB-032 (open defect, tracked) - production gap: current XSSValidator matches literal markup only and "
         "does not URL-decode or HTML-entity-decode input before matching. Encoded "
         "payloads kept as executable documentation; flips to XPASS when decoding "
         "is added.",
-        strict=False,
+        strict=True,
     )
     def test_detect_encoded_xss(self):
         """Test detection of encoded XSS payloads."""
@@ -639,11 +641,11 @@ class TestFileUploadValidation:
             _validate_upload(fake_image, "malware.exe", allowed_formats=[MedicalImageFormat.DICOM])
 
     @pytest.mark.xfail(
-        reason="Production gap: _detect_file_format falls back to the file extension "
+        reason="PRB-032 (open defect, tracked) - production gap: _detect_file_format falls back to the file extension "
         "when magic-number detection fails, so a PE executable renamed to .dcm is "
         "accepted as DICOM (no strict content/magic verification). Adversarial "
         "payload kept as executable documentation.",
-        strict=False,
+        strict=True,
     )
     def test_reject_executable_disguised_as_dicom(self):
         """A .exe disguised with a .dcm extension must be rejected."""
@@ -664,11 +666,11 @@ class TestFileUploadValidation:
                 _validate_upload(content, filename, allowed_formats=allowed)
 
     @pytest.mark.xfail(
-        reason="Production gap: _check_malicious_content scans for web-exploit "
+        reason="PRB-032 (open defect, tracked) - production gap: _check_malicious_content scans for web-exploit "
         "signatures (script/php/shell/eval) only — there is no antivirus engine or "
         "EICAR signature, so EICAR is rejected as an invalid format rather than "
         "flagged malicious. Assertion kept as executable documentation.",
-        strict=False,
+        strict=True,
     )
     def test_detect_eicar_test_file(self, malicious_file_payloads):
         """Test detection of EICAR antivirus test file."""
@@ -699,10 +701,10 @@ class TestFileUploadValidation:
             _validate_upload(polyglot_content, "polyglot.jpg", allowed_formats=[MedicalImageFormat.JPEG])
 
     @pytest.mark.xfail(
-        reason="Production gap: _check_malicious_content has no signature for "
+        reason="PRB-032 (open defect, tracked) - production gap: _check_malicious_content has no signature for "
         "embedded executables, so a valid JPEG carrying a PE ('MZ') payload is "
         "accepted. Adversarial polyglot kept as executable documentation.",
-        strict=False,
+        strict=True,
     )
     def test_detect_executable_polyglot(self, malicious_file_payloads):
         """A valid JPEG carrying an embedded PE executable must be rejected."""

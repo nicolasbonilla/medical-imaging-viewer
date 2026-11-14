@@ -173,16 +173,20 @@ jobs:
       # 63 failed / 43 errors / 9 passed — it was written against a codebase
       # shape that does not exist.
       #
-      # This step is deliberately NON-BLOCKING and deliberately loud. Making it
-      # blocking today would red-line every build; deleting it would destroy the
-      # evidence; and silently omitting it is what produced the problem. It stays
-      # visible until CAPA-003 repairs the suite, at which point continue-on-error
-      # MUST be removed. Do not read a green pipeline as "security tests pass".
-      - name: Run security test suite (CAPA-003 — known broken, non-blocking)
-        continue-on-error: true
-        run: |
-          echo "::warning::tests/security/ is known broken — see CAPA-003. This step does not gate the build."
-          python -m pytest tests/security/ -v --tb=short -k "not requires_gcs and not requires_firestore"
+      # The suite was repaired step by step; by 2026-11 only two tests still failed,
+      # and only on Linux (the path validator did not see Windows drive/UNC paths as
+      # absolute on a Linux host). With that fixed, CAPA-003 CA-3.3 removes
+      # continue-on-error: tests/security/ now GATES the build. Known production
+      # gaps stay as strict xfail tests tracked by PRB-032.
+      - name: Run security test suite (CAPA-003)
+        run: python -m pytest tests/security/ -v --tb=short --timeout=60 -k "not requires_gcs and not requires_firestore"
+
+      # CAPA-003 PA-3.1: tests/unit/test_ci_runs_every_test_directory.py fails when a
+      # backend test directory is run by no workflow pytest command. It found tests/services/.
+      # test_serialization_performance asserts a wall-clock time (< 100 ms) and would make this
+      # gate flaky on shared runners; it is deselected here, not deleted.
+      - name: Run service tests (CAPA-003 PA-3.1)
+        run: python -m pytest tests/services/ -v --tb=short --timeout=60 -k "not test_serialization_performance"
 
   security-audit:
     name: SOUP Vulnerability Scan (IEC 81001-5-1 Clause 5.3.12)
