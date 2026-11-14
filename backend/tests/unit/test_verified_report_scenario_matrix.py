@@ -599,7 +599,9 @@ def test_rc105_i14_the_provider_payload_runs_only_when_a_call_will_happen(monkey
     assert not hasattr(BRS, "provider_payload")
     import app.services.report_payload_guard as G
     real = G.provider_payload
-    monkeypatch.setattr(G, "provider_payload", lambda f, v, ids=None: refuse() if ids is not None else real(f, v, None))
+    # (PR #81 integrated: the projection also takes the quality gate's account — passed on, never the identifiers)
+    monkeypatch.setattr(G, "provider_payload",
+                        lambda f, v, ids=None, **kw: refuse() if ids is not None else real(f, v, None, **kw))
     c = {"lesion": "computed", "dis": "not_evaluated", "longitudinal": "complete", "volumetry": "present",
          "source": "automatic", "entry": "none"}
     result = _generate(_service(), c)

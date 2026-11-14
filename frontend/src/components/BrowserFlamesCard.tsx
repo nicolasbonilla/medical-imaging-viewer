@@ -11,7 +11,7 @@
  *    choice (REQ-SAFE-032); only an explicit Save persists it, with its AI provenance (REQ-SAFE-030);
  *  - licence and attribution notices are reachable here (FLAMeS CC BY 4.0, Neurodesk/nnU-Net Apache-2.0).
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBrowserFlames } from '@/hooks/useBrowserFlames';
 import { useViewerStore } from '@/store/useViewerStore';
@@ -28,6 +28,21 @@ import { FLAMES_FOLD0_MODEL } from '@/services/flames/plan';
 import { FLAMES_NOTICES } from '@/services/flames/notices';
 import { AutomaticMarkingNotice } from './AutomaticMarkingNotice';
 import { currentEnvironment, estimateDuration, formatElapsed } from '@/services/flames/runtimeEstimate';
+import { FEATURES } from '@/config/features';
+import { QualityGatePanel } from './QualityGatePanel';
+import { requestQualityGate } from '@/services/qualityGate/api';
+import {
+  gateUnavailable, isGateResult, retryAfterSeconds, serverSequenceClass, skullFromProvenance,
+  type GateParams, type GateResult, type ServerGateResponse,
+} from '@/services/qualityGate/gate';
+import { useGateConsultation } from '@/hooks/useGateConsultation';
+import { formatGateMessage } from '@/services/qualityGate/gateText';
+
+/** G29 / U1: an answer the physician may ask again for once no automatic retry is left (rate limited or unavailable;
+ *  K3, fourteenth review: or the file's version could not be established — a later check can establish it). */
+const askable = (r: GateResult): boolean =>
+  retryAfterSeconds(r) !== null || (r.codes.length === 1 && r.codes[0] === 'gate_unavailable')
+  || r.codes.includes('version_not_established');
 
 interface BrowserFlamesCardProps {
   flairFileId: string;
@@ -48,6 +63,122 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
   // RC-049: the clinician must confirm the sequence of THIS file before each run (positive evidence, recorded).
   const [sequenceConfirmed, setSequenceConfirmed] = useState(false);
   useEffect(() => setSequenceConfirmed(false), [flairFileId]);
+  // R3 (sixteenth review): what is in effect NOW (the last render) — the FLAIR confirmation and this file's series
+  // description — read when a run starts, never from the time of the request
+  const confirmedNow = useRef(false);
+  confirmedNow.current = sequenceConfirmed;
+  const seriesNow = useRef<string | null>(null);
+  seriesNow.current = currentSeries?.file_id === flairFileId ? currentSeries?.metadata?.series_description ?? null : null;
+
+  // Single quality gate (REQ-FUNC-117/118, RC-122..RC-127; DRAFT, behind VITE_ENABLE_QUALITY_GATE). Sixth review of
+  // PR #81 (G27): the SERVER decides; the card sends its inputs (the file, the physician's attestation, the worker's
+  // skull outcome) and shows the server's answer as it is — before the run (skull still pending) and before the
+  // result (with the skull outcome). Until the final answer for THIS run arrives, nothing of the result is shown.
+  // S4 (fifteenth review): ONE consultation for the CURRENT inputs — the file and the attestation in effect: ticking or
+  // unticking the attestation asks again (debounced), and every request, automatic retries included, carries the
+  // inputs in effect at send time; the panel shows only the decision for the current inputs.
+  // S3 / G13: the attestation is its own control, offered only when the server names the study as attestable,
+  // unticked by default, reset on every file change, never implied by the run checkbox.
+  const gateOn = FEATURES.QUALITY_GATE;
+  const [attested, setAttested] = useState(false);
+  const doneResult = flames.status === 'done' ? flames.result : null;
+  // G18: every answer and every run carries the file it was made for; an answer for a file that is no longer the
+  // selected one never acts. One request at a time: Run is disabled while it is in flight.
+  const currentFile = useRef(flairFileId);
+  currentFile.current = flairFileId;
+  const attestedNow = useRef(false);                          // the attestation in effect at the last render
+  const selection = useRef(0);                                // M1: bumped on every file change
+  const [busy, setBusy] = useState(false);                   // O5 (twelfth review): the one "request in flight" state
+  // M1 (thirteenth review): what a run follows is held per RUN — its attestation, the version and the run token of the
+  // decision that allowed it; a run token is used by ONE run only; the newest version the server named, per file
+  const runOf = useRef<{ attested: boolean; version: string | null; token: string | null }>({ attested: false, version: null, token: null });
+  const usedTokens = useRef(new Set<string>());
+  const requests = useRef(0);
+  const newest = useRef<Record<string, { seq: number; version: string }>>({});
+  const [, setVersionsSeen] = useState(0);                   // re-render when a newer version is named
+  // P5 / S4: whether the server named this file's study as attestable — from its last decision WITHOUT the attestation
+  // (an attested decision does not say it), so the box stays offered while the attested consultation is asked
+  const [attestable, setAttestable] = useState<{ file: string; yes: boolean } | null>(null);
+  // K3 (fourteenth review, P7): a Run click that does not start a run says why — never a silent no-op
+  const [runNotice, setRunNotice] = useState<{ kind: 'notStarted' | 'inputsChanged'; code: string | null;
+    params?: GateParams | null } | null>(null);
+  useEffect(() => { setAttested(false); setRunNotice(null); selection.current += 1; }, [flairFileId]);
+  /** Every consultation goes through here: the answer is stamped with the time it was ASKED (its run token was issued
+   *  later, so its lifetime is counted from no later than its real start), and the version the server names is kept
+   *  when the request is the newest for its file (a late answer never lowers it). */
+  const ask = (file: string, attestation: boolean, skull?: 'pending' | 'stripped' | 'unknown', token?: string | null) => {
+    const seq = (requests.current += 1);
+    const askedAt = Date.now();
+    return requestQualityGate(file, attestation, skull, token).then((r) => {
+      const f = r.subject?.file_id;
+      const v = r.subject?.version;
+      if (typeof f === 'string' && typeof v === 'string' && seq > (newest.current[f]?.seq ?? -1)) {
+        if (newest.current[f]?.version !== v) setVersionsSeen((n) => n + 1);
+        newest.current[f] = { seq, version: v };
+      }
+      return { ...r, asked_at: askedAt };
+    });
+  };
+  /** P1 / P2: a decision a run may start from — for this file, its newest version and this attestation, with a run token
+   *  no run has used and that has not expired (one minute of margin). */
+  const startable = (r: ServerGateResponse | null, file: string, attestation: boolean): r is ServerGateResponse =>
+    !!r && r.ai_may_run === true && r.subject?.file_id === file && typeof r.subject?.version === 'string'
+    && r.subject.version === newest.current[file]?.version
+    && (r.inputs?.visits?.[0]?.physician_confirmed_flair === true) === attestation
+    && typeof r.run_token === 'string' && !usedTokens.current.has(r.run_token)
+    && Date.now() < (r.asked_at ?? 0) + (r.run_token_ttl_s ?? 0) * 1000 - 60_000;
+  // P5: the attestation is offered when the server says the file is attestable — also after an attested run
+  const canAttest = gateOn && attestable?.file === flairFileId && attestable.yes;
+  // P1 / P3: the ONE attestation in effect — ticked AND offered; it is what every request before the run sends (P8)
+  const attestationOn = canAttest && attested;
+  attestedNow.current = attestationOn;
+  // S4: the subject of the consultation is the inputs in effect; a new subject asks again, an answer is exposed only for
+  // the subject it was asked for. U1 (tenth review): its automatic retries are state — one timer per rate-limited
+  // answer, none while in flight, at most 3 (G29) — and re-ask with the SAME inputs.
+  const inputsNow = useMemo(() => (gateOn && flairFileId ? { file: flairFileId, attested: attestationOn } : null),
+    [gateOn, flairFileId, attestationOn]);
+  const before = useGateConsultation<ServerGateResponse>(
+    inputsNow,
+    (subject) => {
+      const inputs = subject as { file: string; attested: boolean };
+      return ask(inputs.file, inputs.attested).then((r) => (r.subject?.file_id === currentFile.current ? r : null));
+    },
+    retryAfterSeconds, 250);
+  const preflight = before.answer;
+  const preflightStuck = gateOn && preflight !== null && before.settled && askable(preflight);
+  useEffect(() => {
+    const a = before.answer;
+    if (a && a.inputs && a.subject?.file_id === flairFileId && a.inputs.visits?.[0]?.physician_confirmed_flair !== true) {
+      setAttestable({ file: flairFileId, yes: (a.attestable_visits ?? []).includes('study') });
+    }
+  }, [before.answer, flairFileId]);
+  // P3 / P9: never a decision for an older version than the newest the server named (it is asked again instead)
+  const newestVersion = newest.current[flairFileId]?.version;
+  const preflightStale = !!preflight && typeof preflight.subject?.version === 'string' && newestVersion !== undefined
+    && preflight.subject.version !== newestVersion;
+  const shownBefore = preflightStale ? null : preflight;
+  const refresh = before.again;
+  useEffect(() => { if (gateOn && preflightStale) refresh(); }, [gateOn, preflightStale, refresh]);
+  // U3: the final decision belongs to the RUN (its result object), never to the file: a re-run of the same file never
+  // shows the previous run's decision, not even on its first render. G17: the server decides (and audits) the
+  // releasing decision with the skull outcome reported here. G27: the server's answer is shown as it is; no answer of
+  // the right shape, or a file changed since the run, is unavailable (and a changed file is not asked again).
+  const final = useGateConsultation<{ gate: GateResult; retry: boolean }>(
+    gateOn && doneResult && doneResult.fileId === flairFileId ? doneResult : null,
+    (subject) => {
+      const run = subject as NonNullable<typeof doneResult>;           // the run this request is for (M1)
+      const of = runOf.current;
+      return ask(run.fileId, of.attested, skullFromProvenance(run.provenance), of.token).then((r) => {
+        if (r.subject?.file_id !== run.fileId || run.fileId !== currentFile.current) return null;
+        const changed = of.version !== null && r.subject?.version != null && r.subject.version !== of.version;
+        return { gate: !changed && isGateResult(r) ? r : gateUnavailable(), retry: !changed };
+      });
+    },
+    (f) => (f.retry ? retryAfterSeconds(f.gate) : null));
+  const finalGate = final.answer ? final.answer.gate : null;
+  const finalStuck = final.answer !== null && final.settled && final.answer.retry && askable(final.answer.gate);
+  const gateAllowsRun = !gateOn || preflight?.ai_may_run === true;
+  const gateAllowsOutput = !gateOn || (finalGate?.ai_output_allowed === true && doneResult?.fileId === flairFileId);
 
   const running = flames.status === 'running';
   const estimate = useMemo(() => estimateDuration(currentEnvironment()), []);
@@ -65,11 +196,64 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
     setOpenError(null);
     setPendingDiscard(null);
     setEmptyAcknowledged(false);
+    setRunNotice(null);
     // Header evidence for the FLAIR gate: the series description the app holds for THIS file only.
     const seriesDescription =
       currentSeries?.file_id === flairFileId ? currentSeries?.metadata?.series_description ?? null : null;
-    if (!sequenceConfirmed) return;
-    void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
+    if (!sequenceConfirmed || !gateAllowsRun) return;
+    if (!gateOn) {
+      void flames.run(flairFileId, { seriesDescription, clinicianConfirmedFlair: true });
+      return;
+    }
+    if (busy) return;                                                // G18: one request per click
+    const attestation = attestationOn;                 // the inputs in effect at the click (S4)
+    const fileAtClick = flairFileId;
+    const selectionAtClick = selection.current;
+    const start = (decision: ServerGateResponse) => {
+      // R3 / P10 (sixteenth review): the ONE place a run starts — every input in effect NOW (file, selection,
+      // attestation, the FLAIR confirmation) must be the click's; a changed one is SAID (P7), never run on
+      if (currentFile.current !== fileAtClick || selection.current !== selectionAtClick
+        || attestedNow.current !== attestation || !confirmedNow.current) {
+        setRunNotice({ kind: 'inputsChanged', code: null });
+        return;
+      }
+      runOf.current = { attested: attestation, version: decision.subject?.version ?? null, token: decision.run_token ?? null };
+      if (decision.run_token) usedTokens.current.add(decision.run_token);       // P2: never used by a second run
+      // G27: RC-049 in the worker takes the sequence class the server derived for this file; the flags are the
+      // current ones (R3)
+      void flames.run(fileAtClick, { seriesDescription: seriesNow.current, clinicianConfirmedFlair: confirmedNow.current,
+        qualityGate: true, gateSequenceClass: serverSequenceClass(decision) });
+    };
+    // I6 (eleventh review): the decision already held for EXACTLY these inputs, with an unused, unexpired run token,
+    // starts the run — two consultations per run; anything else (a re-run, an expired or used token, a newer version,
+    // a changed attestation) asks the server again (M1, thirteenth review)
+    const held = preflight;
+    if (startable(held, fileAtClick, attestation)) {
+      start(held);
+      return;
+    }
+    setBusy(true);
+    void ask(fileAtClick, attestation).then((fresh) => {
+      setBusy(false);
+      // P1 / P3: an answer for inputs that are no longer the current ones never acts (file, selection, attestation);
+      // another file shows its own state, a changed attestation is SAID (P7)
+      if (selection.current !== selectionAtClick || currentFile.current !== fileAtClick
+        || fresh.subject?.file_id !== fileAtClick) return;
+      if (attestedNow.current !== attestation) {
+        setRunNotice({ kind: 'inputsChanged', code: null });
+        return;
+      }
+      before.show(fresh);              // O3: the "before" panel shows the decision the run follows (same inputs)
+      const answer: ServerGateResponse = fresh;      // (the type guard below narrows `fresh` only)
+      if (startable(fresh, fileAtClick, attestation)) {
+        start(fresh);
+        return;
+      }
+      // P7 (fourteenth review): not started — ALWAYS said, with the server's reason (the panel may show another
+      // consultation later, e.g. the automatic retry of a rate-limited one): never a silent no-op
+      const stop = (answer.checks ?? []).find((c) => c.status === 'abstain' && c.code);
+      setRunNotice({ kind: 'notStarted', code: stop?.code ?? null, params: stop?.params ?? null });
+    });
   };
 
   const openDraft = (discardUnsavedWork: boolean) => {
@@ -139,9 +323,33 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
               <span className="text-gray-400 break-all">{flairFileId ? `(${flairName ?? flairFileId.split('/').pop()})` : ''}</span>
             </span>
           </label>
+          {gateOn && (shownBefore ? <QualityGatePanel result={shownBefore} testId="quality-gate-before" />
+            : <p className="text-[9px] text-gray-400" data-testid="quality-gate-checking">{t('qualityGate.checking')}</p>)}
+          {gateOn && before.left !== null && (
+            <p className="text-[9px] text-sky-200" role="status" data-testid="quality-gate-retry">
+              {t('qualityGate.retrying', { seconds: before.left })}
+            </p>
+          )}
+          {preflightStuck && (
+            <button type="button" onClick={before.again} data-testid="quality-gate-check-again"
+              className="text-[9px] text-sky-200 underline hover:text-white">{t('qualityGate.checkAgain')}</button>
+          )}
+          {gateOn && runNotice && (
+            <p className="text-[9px] text-amber-200" role="alert" data-testid="quality-gate-run-not-started">
+              {t(runNotice.kind === 'inputsChanged' ? 'qualityGate.inputsChanged' : 'qualityGate.runNotStarted')}
+              {runNotice.code ? ` ${formatGateMessage(t, runNotice.code, 'message', runNotice.params)}` : ''}
+            </p>
+          )}
+          {gateOn && canAttest && (
+            <label className="flex items-start gap-1 text-[9px] text-sky-100" data-testid="quality-gate-attest">
+              {/* S4: a change of the attestation is a change of the inputs — the decision for the new inputs is asked */}
+              <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} />
+              <span>{t('qualityGate.attest')}</span>
+            </label>
+          )}
           <button
             onClick={handleRun}
-            disabled={!flairFileId || !sequenceConfirmed}
+            disabled={!flairFileId || !sequenceConfirmed || !gateAllowsRun || busy}
             className="w-full px-3 py-1.5 bg-amber-700 hover:bg-amber-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-[11px] font-medium transition-colors"
           >
             {t('clinical.browserFlames.run', 'Segment in this browser')}
@@ -173,7 +381,24 @@ export const BrowserFlamesCard: React.FC<BrowserFlamesCardProps> = ({ flairFileI
         </p>
       )}
 
-      {flames.status === 'done' && flames.result && (
+      {gateOn && flames.status === 'done' && flames.result && (
+        finalGate ? <QualityGatePanel result={finalGate} testId="quality-gate-after" />
+          : <p className="text-[9px] text-gray-400" data-testid="quality-gate-checking">{t('qualityGate.checking')}</p>
+      )}
+      {gateOn && flames.status === 'done' && flames.result && finalGate && !finalGate.ai_output_allowed && (
+        <p className="text-[10px] text-red-200" role="alert" data-testid="quality-gate-output-hidden">{t('qualityGate.aiHidden')}</p>
+      )}
+      {gateOn && flames.status === 'done' && flames.result && final.left !== null && (
+        <p className="text-[9px] text-sky-200" role="status" data-testid="quality-gate-retry">
+          {t('qualityGate.retrying', { seconds: final.left })}
+        </p>
+      )}
+      {gateOn && flames.status === 'done' && flames.result && finalStuck && (
+        <button type="button" onClick={final.again} data-testid="quality-gate-check-again-final"
+          className="text-[9px] text-sky-200 underline hover:text-white">{t('qualityGate.checkAgain')}</button>
+      )}
+
+      {flames.status === 'done' && flames.result && gateAllowsOutput && (
         <div className="space-y-1">
           {empty ? (
             <div className="text-[10px] text-red-200 bg-red-900/40 border border-red-500/50 rounded p-1.5" role="alert" data-testid="browser-flames-empty">

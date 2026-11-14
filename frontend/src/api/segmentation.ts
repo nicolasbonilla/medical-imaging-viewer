@@ -4,6 +4,7 @@
 
 import { apiClient } from '@/services/apiClient';
 import { drawnLabelsSha256 } from '@/utils/drawnLabels';
+import type { PairAttestation } from '@/services/qualityGate/gate';
 import type {
   AIProvenance,
   ClinicianReview,
@@ -239,10 +240,11 @@ export const segmentationAPI = {
   async compareLongitudinal(
     tp1: { type: 'segmentation' | 'instance'; id: string },
     tp2: { type: 'segmentation' | 'instance'; id: string },
+    qualityGateAttestation?: PairAttestation,
   ): Promise<LongitudinalResult> {
     const response = await apiClient.post<LongitudinalResult>(
       `${API_PREFIX}/segmentation/longitudinal/compare`,
-      { tp1, tp2 }
+      { tp1, tp2, ...(qualityGateAttestation ? { quality_gate_attestation: qualityGateAttestation } : {}) }
     );
     return response.data;
   },
@@ -273,10 +275,12 @@ export const segmentationAPI = {
   async detectSELs(
     tp1: { type: 'segmentation'; id: string },
     tp2: { type: 'segmentation'; id: string },
+    qualityGateAttestation?: PairAttestation,
   ): Promise<SELResult> {
     const response = await apiClient.post<SELResult>(
       `${API_PREFIX}/segmentation/longitudinal/sel`,
-      { tp1, tp2 }
+      // F2 (fifth review of PR #81): the pair's attestation, as for the comparison; the base body without one
+      { tp1, tp2, ...(qualityGateAttestation ? { quality_gate_attestation: qualityGateAttestation } : {}) }
     );
     return response.data;
   },

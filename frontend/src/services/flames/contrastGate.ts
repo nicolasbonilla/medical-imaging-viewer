@@ -419,6 +419,10 @@ export function decideFlairContrast(
       reason: `The image header indicates this is not a FLAIR (${header.reasons.join('; ')}). No segmentation was produced.`,
     };
   }
+  if (header.verdict === 'no_server_decision') {
+    // Eighth review of PR #81 (S1): the quality gate is on and its server decided nothing for this run — fail closed
+    return { ok: false, ...base, reason: 'The quality check of the server did not decide on this image. No segmentation was produced.' };
+  }
   const measurable =
     Number.isFinite(score) &&
     Number.isFinite(features.fracAbove1p6) &&

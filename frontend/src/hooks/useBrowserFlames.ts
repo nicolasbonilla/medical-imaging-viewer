@@ -25,7 +25,11 @@ export interface BrowserFlamesResult {
   provenance: FlamesProvenance;
 }
 
-type Options = { mirror?: boolean; webgpu?: boolean; seriesDescription?: string | null; clinicianConfirmedFlair?: boolean };
+type Options = {
+  mirror?: boolean; webgpu?: boolean; seriesDescription?: string | null; clinicianConfirmedFlair?: boolean;
+  /** G27: the gate is on, with the server's sequence class for this file */
+  qualityGate?: boolean; gateSequenceClass?: string | null;
+};
 type Prepared = { nifti: ArrayBuffer; strippedByApp: boolean; stripModel?: string };
 
 export const STRIP_UNAVAILABLE = 'Skull removal is not available on this server.';
@@ -138,6 +142,7 @@ export function useBrowserFlames() {
             clinicianConfirmedFlair: options.clinicianConfirmedFlair === true,
             strippedByApp: prepared.strippedByApp,
             stripModel: prepared.stripModel,
+            ...(options.qualityGate ? { qualityGate: true, gateSequenceClass: options.gateSequenceClass ?? null } : {}),
           },
           [prepared.nifti],
         );

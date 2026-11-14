@@ -1070,12 +1070,13 @@ class SegmentationService:
         not a readable NIfTI-1/-2 header. Shared by the 3D realignment below and, PRB-030 (RC-092), by the check that
         the image under the mask on screen lies on the mask's grid before a confirmation."""
         import io
-        import zlib
+        from app.services import nifti_header
 
-        head = (zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw, 1024)
-                if raw[:2] == b'\x1f\x8b' else raw[:1024])
-        size = int.from_bytes(head[:4], 'little') if len(head) >= 4 else 0
-        header_class = nib.Nifti2Header if size == 540 or int.from_bytes(head[:4], 'big') == 540 else nib.Nifti1Header
+        # fifteenth review of PR #81 (S6): the ONE NIfTI header reader of the app — the header with its extensions
+        # (a header read from its first 1024 bytes failed on any extension that runs past them)
+        head = nifti_header.header_prefix(raw)
+        size, _endian = nifti_header.sizeof_hdr(head)
+        header_class = nib.Nifti2Header if size == 540 else nib.Nifti1Header
         hdr = header_class.from_fileobj(io.BytesIO(head))
         return tuple(int(d) for d in hdr.get_data_shape()[:3]), hdr.get_best_affine(), hdr
 

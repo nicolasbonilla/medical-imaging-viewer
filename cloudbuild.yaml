@@ -73,7 +73,10 @@ steps:
       # report are ON (REQ-SAFE-051, with the RC-130 in-testing notice). CALM-MS stays OFF (V&V gate, test_calm_ms_enablement_gate).
       # Set here so every deploy matches the recorded configuration (RMF 1.22).
       - '--update-env-vars'
-      - 'GOOGLE_CLOUD_PROJECT=brain-mri-476110,REPORT_LLM_ENABLED=true'
+      # Research stage (owner decision 2026-11-14, PR #81 — DRAFT, PENDING owner approval): the quality gate is ON. It
+      # runs only when its registry entry is approved by the owner AND both agent switches read on; otherwise no AI step
+      # proceeds (G6). Other agents stay off: each needs its own approval and switch.
+      - 'GOOGLE_CLOUD_PROJECT=brain-mri-476110,REPORT_LLM_ENABLED=true,QUALITY_GATE_ENFORCED=true,MSTOOL_AGENTS_SWITCH=on,MSTOOL_AGENT_SWITCH__QUALITY_GATE=on'
 
   # Cost guardrail: prune old container images (keep 3 most recent)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'

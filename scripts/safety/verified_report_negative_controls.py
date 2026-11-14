@@ -301,7 +301,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                    "MEASUREMENT_FINDING_KEYS = frozenset({\"lesion_analysis\", \"dis_assessment\", \"longitudinal\"})")],
                                  "Q7: a second literal list of the blocks the report writes"),
     # ── RC-064: only what is rendered is sent and validated (second review, C, D, H) ──
-    "P1_unrendered_fields_validated": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            payload = project_measurements(findings, volumetry)\n")],
+    "P1_unrendered_fields_validated": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)\n                                           gate_account=gate_account)            # the gate account (PR #81, R2)\n", "            payload = project_measurements(findings, volumetry, gate_account=gate_account)\n")],
                                        "C: a bad value in a field the report does not render refuses the whole report"),
     "P2_unrenderable_request_accepted": ([(RT, "    if not verified_report.renderable(request.findings, request.volumetry):\n",
                                            "    if not (any(request.findings.get(k) for k in (\"lesion_analysis\", \"dis_assessment\", \"longitudinal\", "
@@ -350,7 +350,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                             "V5: kill switch off, the route still needs the patient record (503)"),
     # (rewritten with the eleventh review of PR #78, M2: the service no longer imports provider_payload — the mutant
     # reaches the guard's function itself, so it imports and runs; I15)
-    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            payload = __import__(\"app.services.report_payload_guard\", fromlist=[\"provider_payload\"]).provider_payload(rendered_findings, rendered_volumetry, identifiers if isinstance(identifiers, PatientIdentifiers) else None)\n")],
+    "P6_patient_numbers_checked_when_nothing_sent": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)\n                                           gate_account=gate_account)            # the gate account (PR #81, R2)\n", "            payload = __import__(\"app.services.report_payload_guard\", fromlist=[\"provider_payload\"]).provider_payload(rendered_findings, rendered_volumetry, identifiers if isinstance(identifiers, PatientIdentifiers) else None, gate_account=gate_account)\n")],
                                                      "V5: provider-only refusals apply when nothing is sent"),
     "P7_identifiers_not_required_when_sending": ([(BRS, "                if not isinstance(ids, PatientIdentifiers):\n", "                if False:\n")],
                                                  "V5: a request is sent without the patient's identifiers"),
@@ -372,7 +372,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "L6_null_count_notice_as_zero": ([(VR, '        return texts["not_computed"] if lng.get("reason") == "change candidates not computed" else texts["abstained"]\n',
                                        '        return texts["candidates"].format(total=0, new=0, enl=0) if lng.get("reason") == "change candidates not computed" else texts["abstained"]\n')],
                                      "W1: a null or missing count is stated as 0 candidates in the notice"),
-    "L7_notice_not_from_the_record": ([(BRS, "            change = verified_report.change_notice(view, lang)\n", "            change = None\n")],
+    "L7_notice_not_from_the_record": ([(BRS, "            change = report_change_notice(view, lang, gate_account)\n", "            change = None\n")],
                                       "W1: the draft has no change notice from its own record"),
     "F26_any_entry_names_the_indication": ([(VR, '    entry = (view.get("clinician_entry") or {}).get("clinical_indication") is True   # sixth review, W2\n',
                                              '    entry = bool(view.get("clinician_entry"))   # sixth review, W2\n')],
@@ -408,7 +408,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
     "D6_marking_notice_for_any_source": ([(BRS, "            if dis_evaluation == \"not_evaluated\" and _review_source(findings) in AUTOMATIC_REVIEW_SOURCES:\n",
                                            "            if dis_evaluation == \"not_evaluated\":\n")],
                                          "I5: the automatic-marking notice on a manual segmentation"),
-    "M22_record_read_when_nothing_is_sent": ([(BRS, "            ids = None\n            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            ids = (await identifiers() if callable(identifiers) else identifiers) if allowed else None\n            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n")],
+    "M22_record_read_when_nothing_is_sent": ([(BRS, "            ids = None\n            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)\n                                           gate_account=gate_account)            # the gate account (PR #81, R2)\n", "            ids = (await identifiers() if callable(identifiers) else identifiers) if allowed else None\n            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)\n                                           gate_account=gate_account)            # the gate account (PR #81, R2)\n")],
                                              "finding 8: the patient record is read (and its failure refuses) with nothing to send"),
     # ── eighth independent review of PR #78: the device never contradicts itself (I9-I11) ──
     "L9_below_size_line_split": ([(VR, '"lng_below_size": "A further {k} new lesion(s) smaller than {d} mm were marked below the minimum size for "',
@@ -424,7 +424,7 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                              "I10: \"T1-weighted images were not provided\" (rule 1) fails the digits rule"),
     "L11_stable_count_required": ([(VR, "        if new is None or enlarged is None:\n", "        if any(v is None for v in cands.values()):\n")],
                                   "I11: the draft says \"not computed\" where the review screen shows the candidates"),
-    "M23_record_read_before_deciding": ([(BRS, "            ids = None\n            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n", "            ids = (await identifiers() if callable(identifiers) else identifiers) if allowed else None\n            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n")],
+    "M23_record_read_before_deciding": ([(BRS, "            ids = None\n            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)\n                                           gate_account=gate_account)            # the gate account (PR #81, R2)\n", "            ids = (await identifiers() if callable(identifiers) else identifiers) if allowed else None\n            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)\n                                           gate_account=gate_account)            # the gate account (PR #81, R2)\n")],
                                         "finding 3: an unreadable record refuses a draft that would send nothing"),
     "F28_empty_impression_heading": ([(VR, "    if imp or impression_comment:\n", "    if True:\n")],
                                      "finding 7: an empty Impression heading on a volumetry-only draft"),
@@ -448,8 +448,8 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                      "I13: without the candidate block every new component is stated as a reviewable candidate"),
     "P9_implausible_value_as_an_ai_error": ([(RT, "    except ImplausibleMeasurement as e:\n", "    except ZeroDivisionError as e:\n")],
                                             "I14: an implausible measurement answers 'not sent to the AI service' (503)"),
-    "P10_provider_payload_on_every_draft": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)\n",
-                                              "            payload = provider_payload(rendered_findings, rendered_volumetry, None)   # (ninth review, I14)\n")],
+    "P10_provider_payload_on_every_draft": ([(BRS, "            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)\n                                           gate_account=gate_account)            # the gate account (PR #81, R2)\n",
+                                              "            payload = provider_payload(rendered_findings, rendered_volumetry, None, gate_account=gate_account)   # (ninth review, I14)\n")],
                                             "I14: the provider payload is built with nothing to send"),
     # (re-anchored with the tenth review of PR #78, finding 8: the time left is computed once, just before the call)
     "M24_budget_from_the_first_decision": ([(BRS, "                left = (verified_report.REQUEST_BUDGET_S - verified_report.RESPONSE_MARGIN_S\n"

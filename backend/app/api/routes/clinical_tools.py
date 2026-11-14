@@ -12,9 +12,9 @@ the tool version, academic citation, and regulatory status.
 
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from pydantic import BaseModel, Field, StrictBool
+from typing import List, Dict, Any, Literal, Optional
 
 from app.security import get_current_active_user
 from app.security.models import User
@@ -22,7 +22,7 @@ from app.security.patient_access_dependency import require_imaging_access
 from app.security.resource_access import authorize_patient_id, authorize_study_id
 from app.security.ownership import initiators
 from app.core.logging import get_logger
-from app.core.container import get_tool_runner_service
+from app.core.container import get_storage_service, get_tool_runner_service
 from app.core.interfaces.ai_interface import (
     LSTAISegmentRequest,
     SynthSegRequest,
@@ -83,6 +83,111 @@ async def skull_strip(
     return Response(content=brain, media_type="application/gzip", headers={
         "Cache-Control": "no-store", "X-Strip-Model": model if re.fullmatch(r"[0-9a-f]{12}", model or "") else "",
         "Access-Control-Expose-Headers": "X-Strip-Model"})
+
+
+class QualityGateRequest(BaseModel):
+    file_id: str = Field(..., min_length=1, max_length=500)
+    physician_confirmed_flair: StrictBool = False   # S3: a deliberate attestation, never coerced from "true"/1
+    # G17: 'pending' before the run; at the final consultation the outcome the browser REPORTS for the image the AI
+    # read (K4, twelfth review: client-reported — the server cannot verify it; RC-043 / RC-049 are the real controls).
+    skull: Literal["pending", "stripped", "unknown"] = "pending"
+    # K5 (twelfth review): the single-use token of the consultation that allowed the run; only a final consultation
+    # presenting it is recorded as the AI run (CLINICAL_AI_RUN)
+    run_token: Optional[str] = Field(default=None, max_length=4096)
+
+
+@router.post("/quality-gate")
+async def quality_gate(
+    body: QualityGateRequest,
+    request: Request,
+    storage_service=Depends(get_storage_service),
+    current_user: User = Depends(get_current_active_user),
+):
+    """The single quality gate before the in-browser AI (REQ-FUNC-117, REQ-SAFE-052/054; RC-122, RC-126).
+    Read only, nothing stored. The inputs are derived here from the stored file (never from the file name) — except
+    the skull outcome, which is client-reported: the in-browser pipeline reports it and the server cannot verify it
+    (twelfth review, K4; RC-043 / RC-049 in the browser are the real controls, the gate records the report and
+    withholds the output unless it says 'stripped'). The decision comes through the agent platform (approval, kill
+    switches: fail closed). K5: a consultation that allows a run returns a single-use run token; only the final
+    consultation presenting it is recorded as the AI run.
+    The response carries the derived inputs (the browser re-checks the decision with the same rule, gate.ts) and
+    its subject — the file id it was made for and the file's version (G18: a stale answer never acts).
+
+    Second review of PR #81, finding 1: behind QUALITY_GATE_ENFORCED; the approval and both kill switches are read
+    before any read of the study (a refusal downloads nothing and reads no stored record). Sixteenth review (R1): the
+    caller is authorized FIRST (CAPA-009), so a caller without access gets the same 404 as on every image route, in
+    every state of the agent — never a gate answer or record. Tenth review (S1): no consultation cache — every
+    consultation is evaluated and audited (an attestation included); ONE per-user rate limit comes before any
+    authorization, storage or Firestore read; over it, 429 with the seconds to wait (code gate_rate_limited)."""
+    from fastapi.responses import JSONResponse
+    from app.core.config import get_settings
+    from app.services import quality_gate as qg
+
+    if not get_settings().QUALITY_GATE_ENFORCED:
+        # U1 (eighth review of PR #81): the body is the app's ordinary 404 (as if the route did not exist, flags off =
+        # the base); an explicit machine code in a header tells the browser that the gate is not enabled here
+        return JSONResponse(status_code=404, content={"error": {"code": "HTTP_404", "message": "Not Found", "details": {}}},
+                            headers={"X-Quality-Gate-Code": "gate_not_enabled",
+                                     "Access-Control-Expose-Headers": "X-Quality-Gate-Code"})
+    import asyncio
+    actor = qg.actor_for(current_user, request)
+    wait = qg.rate_limit(str(getattr(current_user, "id", "")))
+    if wait is not None:
+        return qg.rate_limited_response(wait)
+    # R1 (sixteenth review, CAPA-009): the caller is authorized for the file BEFORE any answer, audit or record of the
+    # gate, in every state of the agent — an unauthorized caller gets CAPA-009's 404, never a refusal of the gate
+    paths = await _authorized_inputs([body.file_id], None, None, current_user)
+    if not qg.platform_allows():
+        refused = await asyncio.to_thread(qg.run_quality_gate, {"mode": "single", "visits": []}, actor=actor)
+        return {**refused, "subject": {"file_id": body.file_id, "version": None}}
+    inputs, version = await qg.single_study_inputs(paths[0], storage_service, bucket=get_settings().GCS_BUCKET_NAME,
+                                                   physician_confirmed_flair=body.physician_confirmed_flair,
+                                                   skull=body.skull)
+    user_id = str(getattr(current_user, "id", ""))
+    study_key = qg.study_of(paths[0]) or paths[0]
+    # K3 (fourteenth review): a stored file whose version cannot be established gets no run permission — the gate stops
+    # with its reason (version_not_established) instead of a permission the browser could never use
+    inputs["version_established"] = bool(version)
+    claim = None
+    if body.skull != "pending":
+        # K2 / K5 (fourteenth review): the run token CLAIMED in the ledger with the request's digest, off the event loop
+        claim = await asyncio.to_thread(qg.claim_final, body.run_token, file_id=paths[0], version=version,
+                                        user_id=user_id, attested=body.physician_confirmed_flair, skull=body.skull)
+        if claim.status == "replay":               # a lost answer: the stored decision, never re-evaluated
+            await asyncio.to_thread(qg.audit_replay, claim.answer, actor=actor, study_key=study_key)
+            return {**claim.answer, "replayed": True}
+        if claim.status == "in_progress":          # the same request is still being decided: wait, then ask again
+            return qg.rate_limited_response(claim.wait_s, code="gate_run_in_progress")
+        inputs["run_confirmed"] = claim.status == "fresh"   # M1 (thirteenth review, P2): no confirmed run, no output
+    ran = claim is not None and claim.status == "fresh"
+    # S1 (fifteenth review): evaluate (no audit) -> settle the decision in the token's document -> audit -> answer
+    try:
+        result, record = await asyncio.to_thread(qg.consult_quality_gate, inputs, study_key=study_key, actor=actor)
+    except Exception:
+        if ran:                                    # K2: a failed evaluation never burns the token
+            await asyncio.to_thread(qg.release_final, claim)
+        raise
+    subject = {"file_id": body.file_id, "version": version}
+    answer = {**result, "inputs": inputs, "subject": subject}
+    if body.skull == "pending" and result.get("ai_may_run") is True and version:
+        answer["run_token"] = qg.run_token(paths[0], version, user_id, body.physician_confirmed_flair)
+        answer["run_token_ttl_s"] = qg.RUN_TOKEN_TTL_S
+    if ran and (record.get("fault") or (result.get("platform") or {}).get("allowed") is not True):
+        await asyncio.to_thread(qg.release_final, claim)     # a platform fault or refusal is no decision to keep
+        ran = False
+    if ran:
+        stored = await asyncio.to_thread(qg.settle_final, claim, answer)
+        if stored is None:                         # not stored: FAIL CLOSED — no release, no AI-run record
+            await asyncio.to_thread(qg.release_final, claim)
+            failed = qg.unavailable_answer(subject, result.get("trace_id"))
+            await asyncio.to_thread(qg.audit_unavailable, failed, actor=actor, study_key=study_key)
+            return failed
+        if stored.get("trace_id") != answer.get("trace_id"):    # another attempt's decision was stored first
+            await asyncio.to_thread(qg.audit_replay, stored, actor=actor, study_key=study_key)
+            return {**stored, "replayed": True}
+    await asyncio.to_thread(qg.audit_quality_gate, result, record, study_key=study_key, actor=actor,
+                            releases_output=ran)
+    return answer
 
 
 @router.get("/tools", response_model=List[Dict[str, Any]])

@@ -361,6 +361,30 @@ async def close_report_clients() -> None:
             logger.warning(f"[Report] Provider client close failed: {type(e).__name__}")
 
 
+def _with_gate_reasons(notice: Optional[str], lang: str, account: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The quality gate's reasons in the code-written change notice (PR #81 integrated with the verified report of
+    PR #78; sixteenth review, R2/G30: the ONE account the route computed). None account: the gate is off and the notice
+    is the verified report's own. A comparison the gate stopped gets the gate's reasons instead of the change figures; a
+    comparison it let through with warnings keeps the notice and adds the warnings, in the report's language."""
+    if not account:
+        return notice
+    from app.services import quality_gate as qg
+    if account.get("stopped"):
+        reasons = [qg.reason_sentence(c, lang) for c in account.get("causes") or []]
+        return qg.reason_lead("stopped", lang) + " " + "; ".join(reasons) + ". " + qg.reason_lead("stopped_tail", lang)
+    warned = [qg.reason_sentence(c, lang) for c in account.get("warnings") or []]
+    if not warned:
+        return notice
+    line = qg.reason_lead("warned", lang) + " " + "; ".join(warned) + "."
+    return f"{notice} {line}" if notice else line
+
+
+def report_change_notice(view: Dict[str, Any], lang: str, gate_account: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The ONE code-written change notice of a draft: the verified report's (from its validated record, W1) with the
+    quality gate's reasons (the route's one account, G30; PR #81 integrated with #78)."""
+    return _with_gate_reasons(verified_report.change_notice(view, lang), lang, gate_account)
+
+
 class BrainReportService:
     """
     Generates the verified brain MRI report draft (REQ-FUNC-116, DRAFT): code writes every number and status, the
@@ -445,6 +469,7 @@ class BrainReportService:
         volumetry: Optional[Dict[str, Any]] = None,
         language: str = "en",
         identifiers: Optional[PatientIdentifiers] = None,
+        gate_account: Optional[Dict[str, Any]] = None,
         audit_actor: Any = None,
         segmentation_id: Optional[str] = None,
         request_started: Optional[float] = None,
@@ -501,7 +526,8 @@ class BrainReportService:
             # then matters only if a call would have happened).
             allowed, reason = self.interpretive_text_gate()
             ids = None
-            payload = project_measurements(rendered_findings, rendered_volumetry)   # (ninth review, I14)
+            payload = project_measurements(rendered_findings, rendered_volumetry,   # (ninth review, I14)
+                                           gate_account=gate_account)            # the gate account (PR #81, R2)
             # RC-102: the measurement record, built by code from the payload (the DIS state by the one gate rule)
             view = verified_report.build_view(payload.findings, payload.volumetry, lang,
                                               review_source=_review_source(findings), not_included=not_included)
@@ -604,7 +630,7 @@ class BrainReportService:
                 from app.services.dis_review_gate import AUTOMATIC_MARKING_NOTICE
                 text = f"{text}\n\n> {AUTOMATIC_MARKING_NOTICE[lang]}"
             content = _apply_disclaimer(text, language)
-            change = verified_report.change_notice(view, lang)
+            change = report_change_notice(view, lang, gate_account)
         except BaseException as e:  # noqa: BLE001 — every exit is audited, then raised as before (the route answers
             # 503 / 500). Tenth review of PR #78, I17: BaseException — a request cancelled during a model call
             # (asyncio.CancelledError) still writes its verification record with the paid calls (RC-104)

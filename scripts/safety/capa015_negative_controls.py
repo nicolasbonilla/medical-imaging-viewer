@@ -253,8 +253,9 @@ M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)
                                          "the client is not told when the refresh session ends (M1)"),
     "R3_template_60": ([(GEN, "JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15\n", "JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60\n")],
                        "the secret generator emits a 60-minute access token again (M1)"),
-    "R4_auth_route_skipped_unless_401_403": ([(MW, "        if path.startswith(AUTH_PREFIX) and ctx.explicit and status < 500:\n",
-                                               "        if path.startswith(AUTH_PREFIX) and (ctx.explicit or status not in (401, 403)) and status < 500:\n")],
+    # (re-anchored with PR #81's integration: the middleware's /auth silence follows the confirmed own record)
+    "R4_auth_route_skipped_unless_401_403": ([(MW, "        if path.startswith(AUTH_PREFIX) and covered and confirmed and status < 500:\n",
+                                               "        if path.startswith(AUTH_PREFIX) and (covered and confirmed or status not in (401, 403)) and status < 500:\n")],
                                              "/auth requests without their own event recorded only on 401/403 (M3, as found)"),
     "R5_passkey_register_unmapped": ([(MW, '    ("POST", "/api/v1/auth/webauthn/register/complete"): (E.AUTH_CREDENTIAL_REGISTER, "credential"),\n', "")],
                                      "a passkey registration recorded only as a generic modification (M3)"),

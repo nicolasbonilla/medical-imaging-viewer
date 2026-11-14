@@ -27,6 +27,9 @@ export interface FlamesSegmentRequest {
   strippedByApp: boolean;
   /** first 12 hex of the SHA-256 of the skull-removal model, as the server reported it */
   stripModel?: string;
+  /** G27 (sixth review of PR #81): the quality gate is on, and the sequence class its server derived for this file */
+  qualityGate?: boolean;
+  gateSequenceClass?: string | null;
 }
 
 export type FlamesWorkerRequest = FlamesSegmentRequest;

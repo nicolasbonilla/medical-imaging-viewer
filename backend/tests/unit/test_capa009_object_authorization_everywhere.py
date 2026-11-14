@@ -78,6 +78,7 @@ ROUTE_AUTH = {
     ("DELETE", "/auth/webauthn/credentials/{credential_id}"): "self",
     ("POST", "/clinical/flames/segment"): "call:_authorized_inputs",
     ("POST", "/clinical/skull-strip"): "call:_authorized_inputs",   # REQ-FUNC-115
+    ("POST", "/clinical/quality-gate"): "call:_authorized_inputs",  # REQ-FUNC-117 (DRAFT)
     ("POST", "/clinical/lst-ai/segment"): "call:_authorized_inputs",
     ("POST", "/clinical/synthseg/parcellate"): "call:_authorized_inputs",
     ("GET", "/clinical/task/{task_id}"): "initiator",
@@ -425,6 +426,7 @@ DENIED = [  # (method, path, json) -> 404 for a caller without access, before an
     ("get", "/ai/segment/t-1/status", None),
     ("post", "/clinical/flames/segment", {"flair_file_id": FILE}),
     ("post", "/clinical/skull-strip", {"file_id": FILE}),   # REQ-FUNC-115
+    ("post", "/clinical/quality-gate", {"file_id": FILE}),  # REQ-FUNC-117 (DRAFT)
     ("post", "/clinical/synthseg/parcellate", {"file_id": FILE}),
     ("get", "/clinical/task/t-1", None),
     ("get", "/clinical/task/t-1/result", None),
@@ -454,6 +456,30 @@ def _call(client, method, path, body):
 def test_rc036_a_caller_without_access_gets_404_before_any_data_is_touched(stranger, method, path, body):
     r = _call(stranger, method, path, body)
     assert r.status_code == 404, f"{method.upper()} {path}: {r.status_code} {r.text[:300]}"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("platform", ["approved", "not_approved", "switched_off", "unknown"])
+def test_rc036_the_quality_gate_route_with_its_flag_on_gives_the_same_404(stranger, monkeypatch, platform):
+    """REQ-FUNC-117 (DRAFT; sixteenth review of PR #81, R1): the DENIED entry above runs with the gate's flag off, where
+    the route answers 404 before anything. With the flag ON, in every state of the agent, a caller without access gets
+    the same 404 — authorization precedes any answer of the gate."""
+    import json as _json
+    from app.agent_platform import registry as R
+    from app.core.config import get_settings
+    from app.services import quality_gate as qg
+    monkeypatch.setattr(get_settings(), "QUALITY_GATE_ENFORCED", True)
+    data = _json.loads((Path(qg.__file__).resolve().parents[1] / "agent_platform" / "agents.json").read_text(encoding="utf-8"))
+    if platform == "unknown":
+        del data["agents"]["quality-gate"]
+    elif platform != "not_approved":
+        data["agents"]["quality-gate"]["approval"]["status"] = "approved"
+    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry(
+        data, switches=R.InMemoryKillSwitches({"quality-gate": platform != "switched_off"}), audit=lambda e: None))
+    monkeypatch.setattr(qg, "_LIMITER", None)
+    r = _call(stranger, "post", "/clinical/quality-gate", {"file_id": FILE})
+    assert r.status_code == 404 and "decision" not in r.text, (platform, r.status_code, r.text[:200])
+    assert r.json() == _call(stranger, "post", "/clinical/skull-strip", {"file_id": FILE}).json()
 
 
 @pytest.mark.unit

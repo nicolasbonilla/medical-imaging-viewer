@@ -123,7 +123,12 @@ ALLOWED_ATTRIBUTES: Dict[str, Callable[[Any], bool]] = {
     "gen_ai.tool.type": lambda v: v in ("function", "extension", "datastore"),
     "error.type": lambda v: isinstance(v, str) and _ERROR.fullmatch(v) is not None,
     # MSTool namespace
-    "mstool.operation.name": lambda v: v in ("verify", "signoff"),
+    "mstool.operation.name": lambda v: v in ("verify", "signoff", "gate_check"),
+    # the quality gate (RC-126): one child span per check that ran — names and fixed codes only
+    "mstool.gate.check": lambda v: v in ("input", "platform", "sequence", "thickness", "scanner", "skull"),
+    "mstool.gate.visit": lambda v: v in ("study", "tp1", "tp2", "none"),
+    "mstool.gate.status": lambda v: v in ("pass", "warn", "pending", "abstain"),
+    "mstool.gate.code": _is_code,
     "mstool.agent.registry_version": _is_id,
     "mstool.audit.request_id": _is_id,
     "mstool.study.key": _is_key,

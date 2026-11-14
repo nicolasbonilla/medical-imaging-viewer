@@ -398,6 +398,15 @@ class FirestoreTicketStore:
 _MEMORY_TICKETS = MemoryTicketStore()
 
 
+def _register_audit_reasons() -> None:
+    """K7 (fourteenth review of PR #81): the agent scope's audit reasons in the closed registry of audit reasons."""
+    from app.core.logging.audit import register_reason_codes
+    register_reason_codes(["agent.scope", "ticket_replay", "patient_switch"])
+
+
+_register_audit_reasons()
+
+
 def ticket_store():
     return _MEMORY_TICKETS if os.environ.get("AGENT_SCOPE_TICKET_STORE") == "memory" else FirestoreTicketStore()
 

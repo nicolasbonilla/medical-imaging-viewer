@@ -1505,5 +1505,176 @@
     "storing": "Ergebnis speichern...",
     "completed": "Abgeschlossen",
     "failed": "Fehlgeschlagen"
+  },
+  "qualityGate": {
+    "title": "Qualitätsprüfung vor der KI",
+    "draft": "Entwurf — Freigabe ausstehend",
+    "aiHidden": "Das KI-Ergebnis wird nicht angezeigt, weil die Qualitätsprüfung es nicht zulässt.",
+    "retrying": "Wird in {{seconds}} s automatisch erneut geprüft.",
+    "checkAgain": "Erneut prüfen",
+    "paramMissing": "nicht angegeben",
+    "runNotStarted": "Die Analyse wurde nicht gestartet: die Antwort des Servers ließ sich für diesen Lauf nicht verwenden. Drücken Sie die Schaltfläche erneut.",
+    "inputsChanged": "Die Analyse wurde nicht gestartet: das Bild oder die Bestätigung änderte sich, während der Server prüfte. Drücken Sie die Schaltfläche erneut.",
+    "checking": "Das Bild wird vor der KI geprüft …",
+    "attest": "Ich bestätige in eigener Verantwortung, dass dieses Bild ein T2-FLAIR ist. Der Bildkopf sagt das nicht; meine Bestätigung wird mit meinem Namen im Prüfprotokoll gespeichert.",
+    "decision": {
+      "abstain": "Die KI läuft für diesen Schritt nicht",
+      "pending": "Die KI darf starten; ihr Ergebnis erscheint erst nach der letzten Prüfung",
+      "proceed": "Alle Prüfungen bestanden",
+      "proceed_with_warnings": "Die KI darf laufen — bitte die Hinweise lesen"
+    },
+    "check": {
+      "input": "Angaben",
+      "platform": "Qualitätsprüfung",
+      "sequence": "Sequenz",
+      "thickness": "Schichtdicke",
+      "scanner": "Gerät",
+      "skull": "Schädel",
+      "run": "Lauf",
+      "version": "Version"
+    },
+    "status": {
+      "pass": "In Ordnung",
+      "warn": "Hinweis",
+      "pending": "Noch nicht geprüft",
+      "abstain": "Angehalten"
+    },
+    "visit": {
+      "tp1": "erste Untersuchung",
+      "tp2": "zweite Untersuchung"
+    },
+    "band": {
+      "B1": "1,5 mm oder weniger",
+      "B2": "1,5–4,5 mm",
+      "B3": "4,5–6,5 mm",
+      "B4": "über 6,5 mm"
+    },
+    "field": {
+      "manufacturer": "Hersteller",
+      "manufacturer_model_name": "Gerätemodell",
+      "magnetic_field_strength_t": "Feldstärke"
+    },
+    "sequenceName": {
+      "T1": "T1-gewichtete",
+      "T2": "T2-gewichtete",
+      "other": "Nicht-FLAIR-",
+      "unknown": "unbekannte",
+      "missing": "nicht erfasste"
+    },
+    "codes": {
+      "gate_not_approved": {
+        "message": "Die Qualitätsprüfung ist noch nicht für den Einsatz freigegeben, daher läuft die KI nicht.",
+        "action": "Befunden Sie die Bilder wie gewohnt selbst. Die KI kann genutzt werden, sobald die Qualitätsprüfung freigegeben ist."
+      },
+      "gate_switched_off": {
+        "message": "Die Qualitätsprüfung ist ausgeschaltet, daher läuft die KI nicht.",
+        "action": "Befunden Sie die Bilder wie gewohnt selbst. Bitten Sie die Administration, die Qualitätsprüfung wieder einzuschalten."
+      },
+      "gate_unavailable": {
+        "message": "Die Qualitätsprüfung konnte nicht abgeschlossen werden, daher läuft die KI nicht.",
+        "action": "Versuchen Sie es in einigen Minuten erneut. Wenn es weiter auftritt, informieren Sie die Administration."
+      },
+      "gate_not_enabled": {
+        "message": "Die Qualitätsprüfung ist auf dem Server nicht aktiviert, daher läuft die KI nicht.",
+        "action": "Bitten Sie die Administration, die Qualitätsprüfung auf dem Server zu aktivieren oder in der App auszuschalten."
+      },
+      "gate_no_access": {
+        "message": "Das Bild wurde nicht gefunden, oder Sie haben keinen Zugriff darauf, daher läuft die KI nicht.",
+        "action": "Prüfen Sie, ob das Bild noch in der Untersuchung ist und Sie es öffnen dürfen; wählen Sie es dann erneut."
+      },
+      "run_not_confirmed": {
+        "message": "Der Server konnte den Lauf dieses Ergebnisses nicht bestätigen (seine Laufberechtigung fehlte, war schon verwendet oder abgelaufen), daher wird das Ergebnis nicht angezeigt.",
+        "action": "Führen Sie die Analyse erneut aus.",
+        "action_comparison": "Führen Sie die Analyse erneut aus."
+      },
+      "version_not_established": {
+        "message": "Der Server konnte die Version dieser gespeicherten Datei nicht feststellen und kann daher keine Laufberechtigung dafür geben.",
+        "action": "Prüfen Sie gleich noch einmal; bleibt es so, wählen Sie das Bild erneut aus.",
+        "action_comparison": "Prüfen Sie gleich noch einmal; bleibt es so, wählen Sie die Bilder erneut aus."
+      },
+      "gate_not_established": {
+        "message": "Die Entscheidung der Qualitätsprüfung für dieses Paar ließ sich auf dem Server nicht bestätigen, daher wird kein automatisches Veränderungsergebnis angegeben.",
+        "action": "Vergleichen Sie die beiden Besuche erneut.",
+        "action_comparison": "Vergleichen Sie die beiden Besuche erneut."
+      },
+      "source_image_missing": {
+        "message": "Zu einer Maske dieses Vergleichs gibt es kein Ursprungsbild, daher lassen sich Sequenz und Schichtdicke nicht prüfen und die KI vergleicht sie nicht.",
+        "action": "Vergleichen Sie zwei Segmentierungen auf gespeicherten Bildern, oder vergleichen Sie die Bilder visuell mit der Überlagerung.",
+        "action_comparison": "Vergleichen Sie zwei Segmentierungen auf gespeicherten Bildern, oder vergleichen Sie die Bilder visuell mit der Überlagerung."
+      },
+      "gate_rate_limited": {
+        "message": "Zu viele Qualitätsprüfungen in kurzer Zeit, daher läuft die KI noch nicht. Warten Sie {{seconds}} s.",
+        "action": "Warten Sie {{seconds}} Sekunden und versuchen Sie es erneut; die Prüfung wird beim erneuten Auswählen des Bildes wiederholt."
+      },
+      "gate_input_invalid": {
+        "message": "Die Angaben zur Prüfung dieses Bildes sind unvollständig, daher läuft die KI nicht.",
+        "action": "Öffnen Sie die Untersuchung erneut und versuchen Sie es noch einmal. Wenn es weiter auftritt, informieren Sie die Administration."
+      },
+      "sequence_not_flair": {
+        "message": "Laut Bildkopf ist dies ein {{sequence}} Bild, kein FLAIR. Die KI arbeitet nur mit FLAIR-Bildern.",
+        "action": "Wählen Sie das FLAIR-Bild dieser Untersuchung und beginnen Sie neu."
+      },
+      "sequence_unknown": {
+        "message": "Der Bildkopf nennt keine Sequenz, daher kann die Anwendung nicht erkennen, ob es ein FLAIR ist.",
+        "action": "Wenn Sie sicher sind, dass es ein T2-FLAIR ist, setzen Sie das Bestätigungshäkchen. Sonst wählen Sie das FLAIR-Bild.",
+        "action_comparison": "Wenn Sie sicher sind, dass das Bild dieser Untersuchung ein T2-FLAIR ist, setzen Sie unten ihr Bestätigungshäkchen und vergleichen Sie erneut. Sonst vergleichen Sie die Bilder selbst mit der Überlagerung."
+      },
+      "sequence_missing": {
+        "message": "Das Bild enthält keine Angaben zur Sequenz, daher kann die Anwendung nicht erkennen, ob es ein FLAIR ist.",
+        "action": "Wenn Sie sicher sind, dass es ein T2-FLAIR ist, setzen Sie das Bestätigungshäkchen. Sonst wählen Sie das FLAIR-Bild.",
+        "action_comparison": "Wenn Sie sicher sind, dass das Bild dieser Untersuchung ein T2-FLAIR ist, setzen Sie unten ihr Bestätigungshäkchen und vergleichen Sie erneut. Sonst vergleichen Sie die Bilder selbst mit der Überlagerung."
+      },
+      "sequence_confirmed_by_physician": {
+        "message": "Sie haben bestätigt, dass dieses Bild ein FLAIR ist; der Bildkopf sagt das nicht. Ihre Bestätigung wird mit dem Ergebnis gespeichert.",
+        "action": "Prüfen Sie das KI-Ergebnis besonders sorgfältig am Bild."
+      },
+      "thickness_thick": {
+        "message": "Die Schichten dieser Aufnahme sind {{band}} dick. Zwischen dicken Schichten können kleine Läsionen übersehen werden.",
+        "action": "Nutzen Sie das KI-Ergebnis nur als Entwurf. Für die Suche nach kleinen Läsionen wird ein 3D-FLAIR mit Schichten von 1,5 mm oder weniger empfohlen."
+      },
+      "thickness_at_least": {
+        "message": "Die Schichten dieser Aufnahme sind {{band}} dick oder dicker (die Datei zeigt die ursprüngliche Dicke nicht). Kleine Läsionen können übersehen werden.",
+        "action": "Nutzen Sie das KI-Ergebnis nur als Entwurf. Für die Suche nach kleinen Läsionen wird ein 3D-FLAIR mit Schichten von 1,5 mm oder weniger empfohlen."
+      },
+      "thickness_unknown": {
+        "message": "Die Schichtdicke der ursprünglichen Aufnahme lässt sich aus dieser Datei nicht lesen. Bei dicken Schichten können kleine Läsionen übersehen werden.",
+        "action": "Prüfen Sie das Aufnahmeprotokoll. Behandeln Sie das KI-Ergebnis als Entwurf und suchen Sie kleine Läsionen selbst."
+      },
+      "thickness_out_of_range": {
+        "message": "Die Schichten dieser Aufnahme ({{band}}) sind dicker als der Bereich, in dem die KI nachweislich funktioniert, daher läuft die KI nicht.",
+        "action": "Befunden Sie die Bilder selbst oder verwenden Sie eine Aufnahme mit dünneren Schichten."
+      },
+      "scanner_changed": {
+        "message": "Die beiden Untersuchungen stammen von verschiedenen Geräten (geändert: {{fields}}). Unterschiede zwischen Geräten können wie neue oder verschwundene Läsionen aussehen.",
+        "action": "Vergleichen Sie die Bilder selbst mit der Überlagerung. Für dieses Paar werden keine automatischen Veränderungsergebnisse gezeigt."
+      },
+      "scanner_unknown": {
+        "message": "Die Anwendung kann nicht erkennen, ob beide Untersuchungen am selben Gerät aufgenommen wurden (nicht erfasst: {{fields}}).",
+        "action": "Vergleichen Sie die Bilder selbst mit der Überlagerung. Für dieses Paar werden keine automatischen Veränderungsergebnisse gezeigt."
+      },
+      "skull_present": {
+        "message": "Das Bild enthält noch den Schädel, und er konnte nicht entfernt werden. Die KI arbeitet nur mit Bildern ohne Schädel.",
+        "action": "Versuchen Sie es später erneut. Wenn es weiter auftritt, informieren Sie die Administration."
+      },
+      "skull_unknown": {
+        "message": "Die Anwendung kann nicht bestätigen, dass der Schädel aus dem Bild entfernt wurde, das die KI gelesen hat, daher wird das Ergebnis nicht angezeigt.",
+        "action": "Starten Sie die Analyse erneut. Wenn es weiter auftritt, informieren Sie die Administration."
+      },
+      "skull_pending": {
+        "message": "Der Schädel wird beim Start der Analyse geprüft und bei Bedarf entfernt. Das Ergebnis erscheint erst nach dieser Prüfung.",
+        "action": "Starten Sie die Analyse; diese Prüfung läuft von selbst."
+      },
+      "scanner_not_recorded": {
+        "message": "Die Geräte der beiden Untersuchungen sind nicht erfasst (beide Bilder wurden als Dateien hochgeladen).",
+        "action": "Die Aufnahmeprüfung entscheidet, ob dieses Paar automatisch verglichen werden kann; ohne Erfassung geht das nicht, vergleichen Sie die Bilder daher selbst."
+      },
+      "header_unreadable": {
+        "message": "Der Bildkopf dieses Bildes konnte nicht gelesen werden, daher kann die Anwendung das Bild nicht prüfen.",
+        "action": "Öffnen oder laden Sie das Bild erneut. Wenn es weiter auftritt, informieren Sie die Administration."
+      }
+    },
+    "attestVisit": "Ich bestätige in eigener Verantwortung, dass das Bild der {{visit}} ein T2-FLAIR ist. Der Bildkopf sagt das nicht; meine Bestätigung wird mit meinem Namen im Prüfprotokoll gespeichert.",
+    "attestAgain": "Mit meiner Bestätigung erneut vergleichen",
+    "governedByRc062": "Die Qualitätsprüfung hat dieses Paar zugelassen; die Aufnahmeprüfung unten hält die automatischen Ergebnisse an, und ihr Grund gilt."
   }
 }

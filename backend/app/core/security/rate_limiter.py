@@ -14,6 +14,7 @@ Uses Redis for distributed rate limiting across multiple instances.
 @module core.security.rate_limiter
 """
 
+import math
 import time
 import hashlib
 from typing import Optional, Dict, Any, Tuple
@@ -355,7 +356,8 @@ class RateLimiter:
         entry = self._memory_cache[key]
         entry['count'] += 1
 
-        retry_after = int(entry['expires_at'] - now) if entry['count'] > limit else 0
+        # fifteenth review of PR #81 (S5): rounded UP — never less than the real time left (int() cut it)
+        retry_after = math.ceil(entry['expires_at'] - now) if entry['count'] > limit else 0
 
         metadata = {
             'current_count': entry['count'],

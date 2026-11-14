@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    # 'feat/**': stacked pull requests (one feature branch on another) are verified too
+    branches: [main, 'feat/**']
 
 jobs:
   frontend-typecheck:
@@ -84,7 +85,8 @@ jobs:
   backend-tests:
     name: Backend Pytest (Class C Unit Verification)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # (PR #81 merged with main's verified report: ~4 400 unit tests take 8.5-10 min with coverage on a hosted runner)
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: backend
@@ -111,7 +113,7 @@ jobs:
       - name: Run unit tests with coverage (IEC 62304 Clause 5.5.5)
         run: |
           python -m pytest tests/unit/ -v --tb=short --cov=app --cov-report=xml --cov-report=term-missing --timeout=60
-        timeout-minutes: 10
+        timeout-minutes: 18
       - name: Run integration tests (IEC 62304 Clause 5.6)
         run: |
           python -m pytest tests/integration/ -v --tb=short -k "not requires_pacs and not requires_gcs and not requires_firestore" --timeout=60

@@ -9,7 +9,7 @@
  * @module components/LongitudinalCompare
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { TrendingUp, Loader2, AlertCircle } from 'lucide-react';
@@ -18,7 +18,13 @@ import { studyAPI } from '@/api/study';
 import { useViewerStore } from '@/store/useViewerStore';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { LongitudinalResult, StudySummary, SegmentationResponse, SELResult } from '@/types';
+import type { PairAttestation } from '@/services/qualityGate/gate';
 import { LongitudinalResultPanel } from './LongitudinalResultPanel';
+import { QualityGatePanel } from './QualityGatePanel';
+
+type Attestation = PairAttestation;
+const isAttestation = (a: unknown): a is Attestation => typeof a === 'object' && a !== null
+  && typeof (a as { tp1?: unknown }).tp1 === 'boolean' && typeof (a as { tp2?: unknown }).tp2 === 'boolean';
 
 /** Names that indicate non-lesion segmentations (excluded from dropdowns) */
 const EXCLUDED_DESCRIPTIONS = ['magnims zone map', 'brain extraction', 'brain mask', 'synthseg', 'parcellation'];
@@ -100,6 +106,20 @@ export function LongitudinalCompare({
   const [selResult, setSelResult] = useState<SELResult | null>(null);
   const [selLoading, setSelLoading] = useState(false);
 
+  // F1 (fifth review of PR #81): the physician's per-visit FLAIR attestation is kept for the pair it was given for —
+  // a refresh after a radiologist decision, the Compare button and the SEL search (F2) send it again — and dropped as
+  // soon as the pair or a file changes (invalidate). Only the result panel's own button sets it.
+  const attested = useRef<{ pair: string; value: Attestation } | null>(null);
+  const pairKey = `${tp1SegId}|${tp2SegId}`;
+  const attestationFor = useCallback((given?: unknown): Attestation | undefined => {
+    if (isAttestation(given)) {
+      // U1 (sixth review): a visit attested once stays attested for the pair; a new attestation adds, never replaces
+      const before = attested.current?.pair === pairKey ? attested.current.value : { tp1: false, tp2: false };
+      attested.current = { pair: pairKey, value: { tp1: before.tp1 || given.tp1, tp2: before.tp2 || given.tp2 } };
+    }
+    return attested.current?.pair === pairKey ? attested.current.value : undefined;
+  }, [pairKey]);
+
   const handleDetectSELs = useCallback(async () => {
     if (!tp1SegId || !tp2SegId) return;
     setSelLoading(true);
@@ -108,6 +128,7 @@ export function LongitudinalCompare({
       const r = await segmentationAPI.detectSELs(
         { type: 'segmentation', id: tp1SegId },
         { type: 'segmentation', id: tp2SegId },
+        attestationFor(),
       );
       setSelResult(r);
     } catch (err: any) {
@@ -116,13 +137,14 @@ export function LongitudinalCompare({
     } finally {
       setSelLoading(false);
     }
-  }, [tp1SegId, tp2SegId, t]);
+  }, [tp1SegId, tp2SegId, t, attestationFor]);
 
   // Invalidate a stale result: clearing the selection must also drop the on-canvas
   // overlays (fused masks + subtraction heatmap), so a heatmap can never outlive the
   // comparison it came from or persist after its toggle button disappears (Class C —
   // no stale/misleading overlay over a now-different selection).
   const invalidate = useCallback(() => {
+    attested.current = null;
     setResult(null);
     setSelResult(null);
     useSegmentationStore.getState().clearLongitudinalOverlay();
@@ -147,7 +169,10 @@ export function LongitudinalCompare({
   }, [tp1StudyId, tp2StudyId, sortedStudies]);
   const canCompare = Boolean(tp1SegId && tp2SegId && !visitOrderProblem);
 
-  const handleCompare = useCallback(async () => {
+  const handleCompare = useCallback(async (attestation?: unknown) => {
+    // F1: a new attestation comes only from the result panel's own button (never a click event); otherwise the one
+    // kept for this pair, if any
+    const att = attestationFor(attestation);
     if (!canCompare) return;
     setIsLoading(true);
     setError(null);
@@ -159,6 +184,7 @@ export function LongitudinalCompare({
         segmentationAPI.compareLongitudinal(
           { type: 'segmentation', id: tp1SegId },
           { type: 'segmentation', id: tp2SegId },
+          att,
         ),
       ]);
 
@@ -192,7 +218,7 @@ export function LongitudinalCompare({
     } finally {
       setIsLoading(false);
     }
-  }, [tp1SegId, tp2SegId, canCompare]);
+  }, [tp1SegId, tp2SegId, canCompare, attestationFor]);
 
   if (sortedStudies.length < 2) {
     return null;
@@ -317,6 +343,7 @@ export function LongitudinalCompare({
             tp2SegId={tp2SegId}
             onNavigateToSlice={onNavigateToSlice}
             onReviewed={handleCompare}
+            onAttest={(a) => void handleCompare(a)}
           />
 
           {/* SEL (slowly-expanding lesion) detection — vanguard smoldering-disease
@@ -339,7 +366,19 @@ export function LongitudinalCompare({
             </div>
             {selResult && (
               <div className="mt-1 text-[10px] leading-snug">
-                {!selResult.ok ? (
+                {/* F2 (fifth review of PR #81): the gate's own result, in the reader's language (never the backend's
+                    English reason); when the gate allows and RC-062 withholds, RC-062's reason governs as before */}
+                {selResult.quality_gate && selResult.quality_gate.ai_output_allowed === true && selResult.ok && (
+                  <QualityGatePanel result={selResult.quality_gate} testId="sel-quality-gate" />
+                )}
+                {/* G30 extended (ninth review): the RC-062 note only when RC-062 withheld it; an SEL failure states its own reason */}
+                {selResult.quality_gate && selResult.quality_gate.ai_output_allowed === true && !selResult.ok
+                  && selResult.abstained === true && (
+                  <p className="text-[9px] text-gray-400" data-testid="sel-quality-gate-governed">{t('qualityGate.governedByRc062')}</p>
+                )}
+                {selResult.quality_gate && selResult.quality_gate.ai_output_allowed !== true ? (
+                  <QualityGatePanel result={selResult.quality_gate} testId="sel-quality-gate" />
+                ) : !selResult.ok ? (
                   <span className="text-gray-500 dark:text-gray-400">
                     {t('longitudinal.selUnavailable', { r: selResult.reason })}
                   </span>
