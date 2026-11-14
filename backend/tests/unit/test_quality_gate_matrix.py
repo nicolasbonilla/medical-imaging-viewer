@@ -387,10 +387,13 @@ def test_rc126_g6_the_real_registry_and_switches_fail_closed():
         def is_on(self, agent_id):
             raise OSError("switch store down")
 
-    production = R.AgentRegistry.load(REGISTRY, switches=R.InMemoryKillSwitches({"quality-gate": True}),
-                                      audit=lambda e: None)
+    # not approved, switched on - in memory, whatever the repository entry says (the owner approves it himself)
+    pending = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    pending["agents"]["quality-gate"]["approval"]["status"] = "pending"
+    production = R.AgentRegistry(pending, switches=R.InMemoryKillSwitches({"quality-gate": True}),
+                                 audit=lambda e: None)
     cases = {
-        "gate_not_approved": production,                                           # the repository entry: pending
+        "gate_not_approved": production,                                           # an entry awaiting the owner
         "gate_switched_off": _approved_registry(switches=R.InMemoryKillSwitches({"quality-gate": False})),
         "gate_unavailable": _approved_registry(switches=Unreadable()),
     }
@@ -412,7 +415,11 @@ def test_rc126_g6_the_real_registry_and_switches_fail_closed():
 
 def test_rc126_g6_the_registry_entry_is_code_only_and_not_approved():
     entry = json.loads(REGISTRY.read_text(encoding="utf-8"))["agents"]["quality-gate"]
-    assert entry["approval"]["status"] == "pending", "registered, awaiting the owner (never 'approved' here)"
+    # Research stage (2026-11-14): the owner may approve the entry himself, in his own GitHub-verified sign-off
+    # commit; never anyone else. Approved therefore means: approved in the owner's sign-off form.
+    status, ref = entry["approval"]["status"], entry["approval"]["ref"]
+    assert status == "pending" or (status == "approved" and re.fullmatch(
+        r"N\. G\. Bonilla Vargas \u2014 approved \d{4}-\d{2}-\d{2} \(PR #\d+\)", ref)), (status, ref)
     assert entry["model_control"] == "none" and entry["allowed_models"] == [] and entry["allowed_tools"] == []
     assert entry["cost_cap_usd"] == {"per_study": 0.0, "per_day": 0.0}
 

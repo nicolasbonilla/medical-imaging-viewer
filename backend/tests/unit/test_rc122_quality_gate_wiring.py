@@ -46,8 +46,9 @@ def _user():
 
 def _registry(approved=True, on=True):
     data = json.loads(REGISTRY.read_text(encoding="utf-8"))
-    if approved:
-        data["agents"]["quality-gate"]["approval"]["status"] = "approved"     # IN MEMORY, for the test only
+    # IN MEMORY, for the test only - both ways, so a test never depends on the repository entry (the owner approves
+    # the agent in his sign-off commit; research stage, 2026-11-14)
+    data["agents"]["quality-gate"]["approval"]["status"] = "approved" if approved else "pending"
     return R.AgentRegistry(data, switches=R.InMemoryKillSwitches({"quality-gate": on}), audit=lambda e: None)
 
 
@@ -146,7 +147,7 @@ def single(monkeypatch):
 
 def test_rc126_the_single_study_route_is_refused_while_the_agent_is_not_approved(single, monkeypatch):
     client, state = single
-    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry.load(REGISTRY, audit=lambda e: None))
+    monkeypatch.setattr(qg, "_REGISTRY", _registry(approved=False, on=False))
     r = client.post("/api/v1/clinical/quality-gate", json={"file_id": "anything"})
     assert r.status_code == 200, r.text
     body = r.json()
@@ -270,7 +271,7 @@ def test_rc123_flag_off_the_comparison_is_unchanged(compare, monkeypatch):
 def test_rc126_flag_on_and_the_agent_not_approved_means_no_candidates(compare, monkeypatch):
     client, *_ = compare
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
-    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry.load(REGISTRY, audit=lambda e: None))
+    monkeypatch.setattr(qg, "_REGISTRY", _registry(approved=False, on=False))
     res = _post(client)
     assert res["quality_gate"]["codes"] == ["gate_not_approved"]
     assert res["abstained"] is True and res["change_candidates"] is None and res["changes"] == []
@@ -325,7 +326,7 @@ def test_rc123_c2_the_gate_decides_before_any_mask_or_image_is_loaded(compare, m
     masks = []
     monkeypatch.setattr(seg, "get_mask", lambda sid: masks.append(sid))
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
-    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry.load(REGISTRY, audit=lambda e: None))
+    monkeypatch.setattr(qg, "_REGISTRY", _registry(approved=False, on=False))
     res = _post(client)
     assert res["abstained"] is True and res["quality_gate"]["codes"] == ["gate_not_approved"]
     assert loads == [] and masks == [], "nothing is loaded, registered or mapped before the gate allows it"
@@ -501,7 +502,7 @@ def test_rc126_behind_the_flag_and_refused_before_any_io(single, monkeypatch):
     monkeypatch.setattr(sa.settings, "QUALITY_GATE_ENFORCED", True)
     storage = _CountingStorage(b"x")
     app.dependency_overrides[get_storage_service] = (lambda st: (lambda: st))(storage)
-    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry.load(REGISTRY, audit=lambda e: None))      # pending
+    monkeypatch.setattr(qg, "_REGISTRY", _registry(approved=False, on=False))      # pending
     state["paths"].clear()
     body = client.post(URL, json={"file_id": FILE}).json()
     assert body["codes"] == ["gate_not_approved"] and body["subject"]["file_id"] == FILE
@@ -622,7 +623,7 @@ def test_rc126_g22_every_clinical_and_analysis_post_route_is_audited():
 def test_rc126_the_rate_limit_comes_first_and_the_gate_runs_off_the_loop(single, monkeypatch):
     import asyncio
     client, _ = single
-    monkeypatch.setattr(qg, "_REGISTRY", R.AgentRegistry.load(REGISTRY, audit=lambda e: None))    # refused
+    monkeypatch.setattr(qg, "_REGISTRY", _registry(approved=False, on=False))    # refused
     monkeypatch.setattr(qg, "RATE_LIMIT_PER_MINUTE", 2)
     monkeypatch.setattr(qg, "_LIMITER", qg.new_rate_limiter())
     assert [client.post(URL, json={"file_id": FILE}).status_code for _ in range(4)] == [200, 200, 429, 429]
