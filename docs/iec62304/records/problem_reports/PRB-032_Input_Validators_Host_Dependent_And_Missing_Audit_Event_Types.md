@@ -8,11 +8,11 @@ raised — owner action.*
 run, in the non-blocking step); branch `fix/capa-003-security-gate`, PR #80 (draft)
 **Date**: 2026-11-11
 **Version**: `main` @ `d5d4726` (pre-existing)
-**Severity**: **Minor** (DRAFT, PENDING owner approval). No effect on the deployed system today: the input-validation middleware bypasses
+**Severity**: **Minor** (N. G. Bonilla Vargas — approved 2026-11-14 (PR #80)). No effect on the deployed system today: the input-validation middleware bypasses
 every path (recorded RMF open item, PRB-020 known issue) and no route calls the validators directly. Findings A and B
 would have surfaced the moment the middleware was re-enabled or a validator was wired into a route.
 **Status**: OPEN — A and B fixed by PR #80; C open (C1–C5 must be fixed before the input-validation middleware is
-switched on); D unchanged (recorded elsewhere). *DRAFT, PENDING owner approval.*
+switched on); D unchanged (recorded elsewhere). *N. G. Bonilla Vargas — approved 2026-11-14 (PR #80).*
 
 ## 1. What happened
 
