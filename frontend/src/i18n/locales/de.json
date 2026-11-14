@@ -1116,6 +1116,7 @@
     "institutionLabel": "Institution",
     "aiDisclaimer": "KI-generierter Bericht — Hinweis",
     "aiDisclaimerText": "Dieser Bericht wurde von einem künstlichen Intelligenzsystem erstellt und dient ausschließlich zu Informationszwecken. Er stellt keine medizinische Diagnose dar. Alle Befunde müssen von einem zertifizierten Radiologen überprüft und bestätigt werden. Das KI-Modell kann ungenaue oder unvollständige Informationen erzeugen.",
+    "aiInTesting": "In Erprobung: Die folgenden KI-Kommentare schrieb {{model}}, ein Modell, das MSTool-AI in seiner registrierten Studie noch nicht validiert hat. Forschungsprototyp – nicht für den klinischen Einsatz.",
     "aiDataNote": "KI-Entwurf des Modells von Anthropic, nur aus den Messwerten der Software: die Läsionsanzahl, das Gesamtläsionsvolumen und die Größenklassen; die Läsionen je MAGNIMS-Region und die räumliche Dissemination, wenn eine Radiologin oder ein Radiologe die Segmentierung bestätigt hat; die Veränderungskandidaten zwischen zwei Untersuchungen, mit dem Läsionsvolumen jeder Untersuchung; das Gesamthirnvolumen und das intrakranielle Volumen; sowie ob die Ärztin oder der Arzt die Felder der Anfrage ausgefüllt hat. Es wurden keine Namen, Geburtsdaten, Patientennummern oder Freitexte gesendet. Die Angaben der Ärztin / des Arztes wurden in der Anwendung ergänzt.",
     "model": "Modell",
     "processingTime": "Verarbeitungszeit",

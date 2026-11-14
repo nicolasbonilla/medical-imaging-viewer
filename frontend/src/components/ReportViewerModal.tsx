@@ -23,6 +23,7 @@ import remarkGfm from 'remark-gfm';
 import type { ReportResponse } from '@/types';
 import type { ReportAppNote, ReportClinicianEntry, ReportVerification } from '@/types/ai';
 import { formatDate as formatLocalizedDate } from '@/utils/formatDate';
+import { aiInTestingNotice, modelWroteText as wroteText, textToCopy } from '@/utils/aiInTesting';
 
 /** How the Markdown of a draft is shown (the AI text, the fixed disclaimer, and drafts without parts). */
 const MARKDOWN_COMPONENTS: Components = {
@@ -144,6 +145,18 @@ function AppNoteBox({ note }: { note: ReportAppNote }) {
   );
 }
 
+/** RC-130 (REQ-SAFE-060; HAZ-003, HAZ-017 — DRAFT, PENDING owner approval): research stage — the AI comments are in
+ *  testing. Placed right before the text the model wrote (after the clinician's entry and the notes the code wrote,
+ *  which the model did not write), in the report's language; never shown for a draft no model wrote. */
+function InTestingNotice({ text }: { text: string }) {
+  return (
+    <aside data-testid="report-ai-in-testing" role="note"
+           className="mb-4 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-[13px] leading-relaxed text-amber-900 font-sans">
+      {text}
+    </aside>
+  );
+}
+
 /** The i18n key of the verification state (third review of PR #78, item 4): the checked comments are in the draft;
  *  withheld by the check (or the privacy check of a regeneration); not obtained from the AI service after it was
  *  asked; or measurements only, nothing asked. */
@@ -190,7 +203,9 @@ export function ReportViewerModal({
   const structured = typeof report.ai_text === 'string';
   // Verified report (REQ-FUNC-116; third review of PR #78, item 4): who wrote what, from the `verification` codes.
   const verification = report.verification ?? null;
-  const modelWroteText = Boolean(report.model) && (verification ? verification.interpretive_text === 'delivered' : true);
+  // RC-130 (REQ-SAFE-060, DRAFT): one rule (utils/aiInTesting) for the model name, the in-testing notice and Copy.
+  const modelWroteText = wroteText(report);
+  const inTestingNotice = aiInTestingNotice(report);
   const verificationKey = verificationStateKey(verification);
 
   // Escape key handler
@@ -206,12 +221,12 @@ export function ReportViewerModal({
   // Copy to clipboard
   const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(report.content);
+      await navigator.clipboard.writeText(textToCopy(report));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       const textarea = document.createElement('textarea');
-      textarea.value = report.content;
+      textarea.value = textToCopy(report);
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand('copy');
@@ -219,7 +234,7 @@ export function ReportViewerModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [report.content]);
+  }, [report]);
 
   const handlePrint = useCallback(() => {
     window.print();
@@ -365,14 +380,18 @@ export function ReportViewerModal({
                       {(report.app_notes ?? []).map((note, i) => (
                         <AppNoteBox key={`${note.kind}-${i}`} note={note} />
                       ))}
+                      {inTestingNotice && <InTestingNotice text={inTestingNotice} />}
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
                         {report.ai_text ?? ''}
                       </ReactMarkdown>
                     </>
                   ) : (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
-                      {report.content}
-                    </ReactMarkdown>
+                    <>
+                      {inTestingNotice && <InTestingNotice text={inTestingNotice} />}
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+                        {report.content}
+                      </ReactMarkdown>
+                    </>
                   )}
                 </div>
 

@@ -69,8 +69,11 @@ steps:
       - '--port=8080'
       - '--cpu-boost'
       - '--cpu-throttling'
+      # Research stage (owner decision 2026-11-13, PR #82 — DRAFT, PENDING owner approval): the AI comments of the
+      # report are ON (REQ-SAFE-051, with the RC-130 in-testing notice). CALM-MS stays OFF (V&V gate, test_calm_ms_enablement_gate).
+      # Set here so every deploy matches the recorded configuration (RMF 1.22).
       - '--update-env-vars'
-      - 'GOOGLE_CLOUD_PROJECT=brain-mri-476110'
+      - 'GOOGLE_CLOUD_PROJECT=brain-mri-476110,REPORT_LLM_ENABLED=true'
 
   # Cost guardrail: prune old container images (keep 3 most recent)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
