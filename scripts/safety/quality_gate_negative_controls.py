@@ -873,7 +873,8 @@ def run_backend(copy, env, mutant=True):
             elif case.find("skipped") is None:
                 passed += 1
         os.remove(xml_path)
-    return {"passed": passed, "failed": len(failed), "failing_tests": sorted(failed), "returncode": p.returncode}
+    return {"passed": passed, "failed": len(failed), "failing_tests": sorted(failed), "returncode": p.returncode,
+            "output_tail": (p.stdout + p.stderr)[-3000:] if failed or p.returncode not in (0,) else ""}
 
 
 def node_files(copy):
@@ -998,6 +999,10 @@ def main():
         if has_node_modules() and ONLY != "backend":
             res["baseline"]["vitest"] = run_vitest(copy, env, mutant=False)
         print("baseline", json.dumps({k: (v["passed"], v["failed"]) for k, v in res["baseline"].items()}))
+        for k, v in res["baseline"].items():   # a failing baseline must say which test and why (2026-11-14)
+            if v.get("failed") or v.get("error"):
+                print(f"baseline {k} failing: {v.get('failing_tests')} {v.get('error') or ''}")
+                print(v.get("output_tail", "")[-3000:])
         assert all(v["failed"] == 0 and not v.get("error") for v in res["baseline"].values()), "the unmutated copy does not pass"
         res["mutations"] = {}
         for name, (edits, what, runner, controls) in M.items():
