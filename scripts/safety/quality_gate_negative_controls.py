@@ -66,7 +66,7 @@ COPY_FILES = ["backend/pytest.ini", "backend/tests/__init__.py", "backend/tests/
               "backend/tests/fixtures/quality_gate/sequences.v1.json", "backend/tests/fixtures/quality_gate/pre_pr_snapshot.v1.json",
               "backend/tests/fixtures/quality_gate/real_flair.v1.json",
               # eleventh review: the report route's fixture (I1, I2) and the shared UI states (I4)
-              "backend/tests/unit/test_capa014_report_provider_payload.py", "frontend/src/config/qualityGate.ui_states.v1.json",
+              "backend/tests/unit/test_capa014_report_provider_payload.py", "backend/tests/unit/test_capa009_object_authorization_everywhere.py", "frontend/src/config/qualityGate.ui_states.v1.json",
               # thirteenth review: the card model's server decisions and their generator (M1)
               "frontend/src/config/qualityGate.card_model.v1.json", "scripts/safety/quality_gate_card_model_fixture.py",
               # twelfth review: the manifest (K4 checks RC-125's statement)
