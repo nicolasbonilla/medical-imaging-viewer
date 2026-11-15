@@ -182,6 +182,8 @@ def main():
                 cmd += ["--fs-license", a.fs_license]
             if a.wmh_model:
                 cmd += ["--wmh-model", a.wmh_model]
+            if step.get("wmh_crop"):        # PREREG-mimics §10: an out-of-memory WMH-SynthSeg stop is re-run with --crop
+                cmd += ["--wmh-crop", "1"]  # (flagged by the driver in the output's metadata, "crop": true)
             run(cmd)
         for i in ids:                                   # keep the disk small: inputs of finished steps go
             for suf in ("_FLAIR.nii.gz", "_T1.nii.gz"):
