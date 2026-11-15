@@ -54,7 +54,8 @@ apt-get update -qq && apt-get install -y -qq python3-pip python3-venv 2>&1 | tai
 stage env_start
 python3 -m venv /opt/eval && /opt/eval/bin/pip install -q --upgrade pip && \
 /opt/eval/bin/pip install -q numpy==1.26.4 scipy==1.13.1 nibabel==5.3.0 fastapi==0.115.0 starlette==0.38.6 anyio==4.11.0 \
-  pydantic==2.9.0 pydantic-settings==2.5.0 python-dotenv==1.0.1 python-json-logger==2.0.7 \n  Pillow==10.4.0 pydicom==2.4.4 || exit 1   # app.utils imports PIL (image_utils); pins = backend/requirements.txt
+  pydantic==2.9.0 pydantic-settings==2.5.0 python-dotenv==1.0.1 python-json-logger==2.0.7 \
+  Pillow==10.4.0 pydicom==2.4.4 || exit 1   # app.utils imports PIL (image_utils); pins = backend/requirements.txt
 python3 -m venv /opt/greedy && /opt/greedy/bin/pip install -q --upgrade pip && /opt/greedy/bin/pip install -q picsl_greedy==1.4.0.3 || exit 1
 /opt/greedy/bin/python -c "from picsl_greedy import Greedy3D; print('greedy ok')" || exit 1
 log
