@@ -418,3 +418,4 @@ half-width of about 10 points.
 | Date | Entry | Reason | Seen before the change |
 |---|---|---|---|
 | 2026-11-14 | Before the first push: an independent review led to the rewrite. The primary moved from code-written D3 to model-written D1/D2/D2i, which made H1 a gatekeeper with H2/H3 under Holm. It also added the "unqualified" endpoint and D2i, made D5 primary FLAMeS-ens ∩ LST-AI with a fixed order, gave §5.1(c) a closed form, and added the pilot freeze and the stop rule. | The first draft's primary results were fixed by paper 1's outputs. | No data of this study; the same disclosures as §10 |
+| 2026-11-15 | **Implementation step (no rule changed): G2 committed.** The classifier and its 44 tests (commit 0ac2fa6) were committed before any draft exists. They include the `compute_dis_criteria` equivalence on synthetic masks. Three planted faults were each caught. | — | No draft and no paper-2 record; paper 1's WMH 2017 and DLBS results not yet read |
