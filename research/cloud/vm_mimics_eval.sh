@@ -105,6 +105,8 @@ CLOUDSDK_CONFIG=/nonexistent /opt/eval/bin/python research/paper_1/mimics/check_
   --pf $D/pf --mimics $D/mimics --out $W/results/independent_check.json
 cp $W/work/registration.json $W/results/registration.json
 cp $W/work/records.json $W/results/records.json || exit 1   # per-unit records (size bins; card v3), kept with the results
+# the affine transforms to the atlas (A, B), kept apart from the results: paper 2's consensus warps with paper 1's transform
+gcloud storage cp -r --quiet $W/work/registration "$BK/$PFX/registration/$NAME/" || exit 1
 gcloud storage cp -r --quiet $W/results/* "$BK/$PFX/results/$NAME/"
 echo "done $COMMIT" | gcloud storage cp - "$BK/$PFX/results/$NAME/DONE" --quiet
 stage eval_end
