@@ -55,7 +55,12 @@ stage env_start
 python3 -m venv /opt/eval && /opt/eval/bin/pip install -q --upgrade pip && \
 /opt/eval/bin/pip install -q numpy==1.26.4 scipy==1.13.1 nibabel==5.3.0 fastapi==0.115.0 starlette==0.38.6 anyio==4.11.0 \
   pydantic==2.9.0 pydantic-settings==2.5.0 python-dotenv==1.0.1 python-json-logger==2.0.7 \
-  Pillow==10.4.0 pydicom==2.4.4 || exit 1   # app.utils imports PIL (image_utils); pins = backend/requirements.txt
+  Pillow==10.4.0 pydicom==2.4.4 nilearn==0.14.1 scikit-image==0.24.0 scikit-learn==1.7.2 || exit 1
+# The app's region and DIS code imports: PIL (app.utils.image_utils), nilearn and skimage
+# (ms_region_classifier), plus pydicom. Pins are the healthy arm's environment (backend venv: nilearn 0.14.1,
+# skimage 0.24.0, Pillow 10.4.0, pydicom 2.4.4). scikit-learn 1.9.1 has no Python 3.10 wheel, so it uses 1.7.2,
+# the newest for 3.10; it is only a nilearn dependency, not used by resample_to_img. Resolution was checked with
+# pip --dry-run for cp310 manylinux before launch.
 python3 -m venv /opt/greedy && /opt/greedy/bin/pip install -q --upgrade pip && /opt/greedy/bin/pip install -q picsl_greedy==1.4.0.3 || exit 1
 /opt/greedy/bin/python -c "from picsl_greedy import Greedy3D; print('greedy ok')" || exit 1
 log
