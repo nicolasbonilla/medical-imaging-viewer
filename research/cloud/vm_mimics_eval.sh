@@ -104,6 +104,7 @@ echo "=== G2: independent recount ==="
 CLOUDSDK_CONFIG=/nonexistent /opt/eval/bin/python research/paper_1/mimics/check_counts_mimics.py --records $W/work/records.json \
   --pf $D/pf --mimics $D/mimics --out $W/results/independent_check.json
 cp $W/work/registration.json $W/results/registration.json
+cp $W/work/records.json $W/results/records.json || exit 1   # per-unit records (size bins; card v3), kept with the results
 gcloud storage cp -r --quiet $W/results/* "$BK/$PFX/results/$NAME/"
 echo "done $COMMIT" | gcloud storage cp - "$BK/$PFX/results/$NAME/DONE" --quiet
 stage eval_end
