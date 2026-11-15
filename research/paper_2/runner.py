@@ -6,7 +6,7 @@ and its own caps:
 - Anthropic: hard stop 10 USD; the projection must be at most 7 USD.
 Spend is counted over this study's ledgers only.
 
-    python -m research.paper_2.runner records --results <paper-1 results dir> --sets <analysis_sets.json> [--geometry]
+    python -m research.paper_2.runner records --results <paper-1 results dir> --sets <analysis_sets.json> [--geometry <json>]
     python -m research.paper_2.runner pilot   --model gemini
     python -m research.paper_2.runner project --model gemini
     python -m research.paper_2.runner full    --model gemini
@@ -188,12 +188,16 @@ def main(argv=None):
     ap.add_argument("--model", default="gemini", choices=sorted(PLAN))
     ap.add_argument("--results")
     ap.add_argument("--sets")
+    ap.add_argument("--geometry", default=str(RUNS / "geometry.json"), help="acquisition blocks (geometry.py)")
     a = ap.parse_args(argv)
+    if a.cmd == "records" and a.geometry and not Path(a.geometry).exists():
+        raise SystemExit(f"{a.geometry} is missing: run research.paper_2.geometry first")
     if a.cmd == "records":
         from research.paper_2 import records as R
         sets = json.load(open(a.sets, encoding="utf-8"))
         units, les = R.load(str(Path(a.results) / "per_unit.csv"), str(Path(a.results) / "lesions.csv"), sets)
-        recs = R.build(units, les)
+        geo = json.loads(Path(a.geometry).read_text(encoding="utf-8")) if a.geometry else {}
+        recs = R.build(units, les, (lambda uid: geo.get(uid)) if geo else None)
         RECORDS.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in recs) + "\n", encoding="utf-8")
         g1 = R.gate_g1(recs, units)
         print(json.dumps({"records": len(recs), "by_set": Counter(r["set"] for r in recs),
