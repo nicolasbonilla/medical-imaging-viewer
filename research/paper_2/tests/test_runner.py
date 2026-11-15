@@ -35,7 +35,8 @@ def test_plan_and_pilot_exclusion(recs):
     full = RN.planned(recs, "gemini")
     assert not any((r["scan"], r["arm"]) in pilot for r, _ in full)          # pilot records never analysed
     designs = {d for _, d in full}
-    assert {"D1", "D2", "D3", "D4", "D5"} <= designs or not full
+    assert {"D1", "D2", "D3", "D4"} <= designs or not full
+    assert "D5" not in designs                                                # no consensus view in this fixture
     assert all(r["arm"] == "flames_ens" and r["set"] in ("dlbs", "wmh2017", "ms") for r, d in full if d == "D2i")
     assert all(r["arm"] == "flames_ens" for r, _ in RN.planned(recs, "sonnet"))
 

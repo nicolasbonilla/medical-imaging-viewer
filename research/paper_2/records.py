@@ -204,6 +204,58 @@ def build(units, les, geometry: Optional[Callable[[str], Dict[str, Any]]] = None
     return out
 
 
+D5_TOOL = "FLAMeS, mean of 5 models; lesions kept only where LST-AI also marks them"
+D5_K_TOOL = "FLAMeS, mean of 5 models; lesions kept only where at least {m} of 4 other tools also mark them"
+
+
+def load_consensus(per_unit_csv: str, lesions_csv: str):
+    """consensus_eval.py's outputs: {(scan, variant): unit row}, {(scan, variant): [(volume, region)]}."""
+    cu = {}
+    with open(per_unit_csv, newline="") as fh:
+        for r in csv.DictReader(fh):
+            cu[(r["id"], r["arm"])] = r
+    cl = defaultdict(list)
+    with open(lesions_csv, newline="") as fh:
+        for r in csv.DictReader(fh):
+            cl[(r["id"], r["arm"])].append((float(r["vol_mm3"]), r["region"]))
+    return cu, cl
+
+
+def attach_d5(records: List[Dict[str, Any]], cu, cl) -> Dict[str, int]:
+    """Add the D5 views to the FLAMeS-ens records (PREREG §3): `d5` (primary, FLAMeS-ens with LST-AI), and the
+    sensitivity views `d5_k2`, `d5_k3` (k of 5 arms) where they exist. A record without LST-AI gets no `d5` view and is
+    counted as excluded. Regions and DIS follow `_dis_and_regions` on the agreed lesions, exactly as the base view."""
+    n = {"d5": 0, "excluded_no_lstai": 0, "d5_k2": 0, "d5_k3": 0, "recount_mismatch": 0}
+    for rec in records:
+        if rec["arm"] != "flames_ens":
+            continue
+        uid = rec["scan"]
+        for variant, view_name, tool in (("d5_primary", "d5", D5_TOOL), ("d5_k2", "d5_k2", D5_K_TOOL.format(m=1)),
+                                         ("d5_k3", "d5_k3", D5_K_TOOL.format(m=2))):
+            u = cu.get((uid, variant))
+            if u is None or u["available"] != "1":
+                if variant == "d5_primary":
+                    n["excluded_no_lstai"] += 1
+                continue
+            L = cl[(uid, variant)]
+            regions, dis, mismatch = _dis_and_regions(u, L)
+            v = copy_view(rec["views"]["base"], rid(uid, "flames_ens", view_name))
+            v["segmentation"] = dict(v["segmentation"], tool=tool,
+                                     source=f"automatic AI lesion marking ({tool}), not reviewed")
+            v["lesions"] = _lesions_view(L)
+            v["regions"] = regions
+            v["dis"] = dis
+            # no count when DIS could not be computed (GR failure): the candidate line is then left out
+            v["single_tool_candidates"] = int(u["n_single"]) if u.get("n_single") not in ("", None) else None
+            rec["views"][view_name] = v
+            n[view_name] += 1
+            if variant == "d5_primary":
+                n["recount_mismatch"] += int(mismatch)
+                rec["meta"].update({"d5_dis_met": dis.get("dis_met_brain"), "d5_recount_mismatch": mismatch,
+                                    "d5_single": v["single_tool_candidates"]})
+    return n
+
+
 def copy_view(view, new_id):
     v = json.loads(json.dumps(view), object_pairs_hook=OrderedDict)
     v["record_id"] = new_id

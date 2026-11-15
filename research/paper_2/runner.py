@@ -69,7 +69,8 @@ def planned(records, alias, pilot_ids=None):
             continue                                  # pilot records are excluded from every analysis (PREREG §8)
         if p["arms"] is None or rec["arm"] in p["arms"]:
             for d in p["designs"]:
-                out.append((rec, d))
+                if VIEW_OF[d] in rec["views"]:        # D5 exists only where its consensus view was built
+                    out.append((rec, d))
         for d, rule in p["extra"].items():
             if rec["arm"] in rule["arms"] and rec["set"] in rule["sets"]:
                 out.append((rec, d))
@@ -189,6 +190,7 @@ def main(argv=None):
     ap.add_argument("--results")
     ap.add_argument("--sets")
     ap.add_argument("--geometry", default=str(RUNS / "geometry.json"), help="acquisition blocks (geometry.py)")
+    ap.add_argument("--consensus", help="consensus_eval.py's output folder (D5 views)")
     a = ap.parse_args(argv)
     if a.cmd == "records" and a.geometry and not Path(a.geometry).exists():
         raise SystemExit(f"{a.geometry} is missing: run research.paper_2.geometry first")
@@ -198,10 +200,16 @@ def main(argv=None):
         units, les = R.load(str(Path(a.results) / "per_unit.csv"), str(Path(a.results) / "lesions.csv"), sets)
         geo = json.loads(Path(a.geometry).read_text(encoding="utf-8")) if a.geometry else {}
         recs = R.build(units, les, (lambda uid: geo.get(uid)) if geo else None)
+        d5 = None
+        if a.consensus:                               # consensus_eval.py's outputs (design D5)
+            cu, cl = R.load_consensus(str(Path(a.consensus) / "consensus_per_unit.csv"),
+                                      str(Path(a.consensus) / "consensus_lesions.csv"))
+            d5 = R.attach_d5(recs, cu, cl)
         RECORDS.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in recs) + "\n", encoding="utf-8")
         g1 = R.gate_g1(recs, units)
         print(json.dumps({"records": len(recs), "by_set": Counter(r["set"] for r in recs),
-                          "recount_mismatch": sum(r["meta"]["recount_mismatch"] for r in recs), "G1": g1}, indent=1))
+                          "recount_mismatch": sum(r["meta"]["recount_mismatch"] for r in recs), "G1": g1, "D5": d5},
+                         indent=1))
         return 0 if g1["passed"] else 1
     recs = load_records()
     if a.cmd == "plan":
