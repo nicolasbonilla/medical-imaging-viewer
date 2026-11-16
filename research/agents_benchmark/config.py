@@ -42,6 +42,9 @@ PRICES = {
     "claude-sonnet-5-5": {"input": 2.00, "output": 10.00, "batch_factor": 0.5, "cache_write": 1.25, "cache_read": 0.10},
     "gemini-3.1-flash-lite": {"input": 0.25, "output": 1.50, "cached_input": 0.025},
     "gemini-3.5-flash-lite": {"input": 0.30, "output": 2.50, "cached_input": 0.03},
+    # paper 2 amendment (2026-11-16): Cloud Billing Catalog, Vertex AI global online text, SKUs C47F-BE66-1A4E,
+    # 1B77-85A0-B300, C3FF-AD89-C218
+    "gemini-4-carbon": {"input": 4.00, "output": 20.00, "cached_input": 0.20},
     "gemma-4-e4b-it": {"input": 0.0, "output": 0.0},
 }
 

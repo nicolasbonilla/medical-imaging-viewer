@@ -32,9 +32,11 @@ HERE = Path(__file__).resolve().parent
 RUNS = HERE / "runs"
 RECORDS = HERE / "records.jsonl"
 SEED = 20261114
-# Anthropic raised by the owner on 2026-11-16 (PREREG §12) from 10 / 7 USD, for the Claude re-run with room for reasoning
-CAP = {"gemini": 30.0, "anthropic": 25.0}
-PROJECTION_LIMIT = {"gemini": 25.0, "anthropic": 20.0}
+# Raised by the owner on 2026-11-16 (PREREG §12): Anthropic from 10 / 7 USD for the Claude re-run; Gemini from 30 / 25
+# USD (free Google credit) for the Gemini 4 Carbon arm
+CAP = {"gemini": 70.0, "anthropic": 25.0}
+PROJECTION_LIMIT = {"gemini": 60.0, "anthropic": 20.0}
+MODELS = {**V1.MODELS, "gemini4": "gemini-4-carbon"}   # secondary arm added by amendment (PREREG §12, 2026-11-16)
 SETTING_P = ("dlbs", "wmh2017")
 
 # PREREG §4: which designs each model runs, on which records
@@ -43,6 +45,7 @@ PLAN = {
                                                                                         "sets": SETTING_P + ("ms",)}}},
     "sonnet": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
     "gemma": {"designs": ("D1",), "arms": ("flames_ens",), "extra": {}},
+    "gemini4": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
 }
 VIEW_OF = {"D1": "base", "D2": "d2", "D2i": "d2", "D3": "base", "D4": "d4", "D5": "d5"}
 
@@ -159,8 +162,9 @@ def done_keys(path):
     return out
 
 
-def run_online(provider, model, jobs, out_path, info, workers=None):
-    """Each job runs to the end in its own worker. Before every request, spend + its worst case must stay under the cap."""
+def run_online(provider, model, jobs, out_path, info, workers=None, max_tokens=None):
+    """Each job runs to the end in its own worker. Before every request, spend + its worst case must stay under the cap.
+    `max_tokens` overrides the designs' output limit for every call (logged arms, PREREG §12)."""
     prov = provider_of(model)
     state = {"spent": spent(prov), "calls": 0, "done": 0, "stop": None}
     lock = threading.Lock()
@@ -171,6 +175,8 @@ def run_online(provider, model, jobs, out_path, info, workers=None):
             req = job.next_request()
             if req is None:
                 break
+            if max_tokens:
+                req = dict(req, max_tokens=max_tokens)
             with lock:
                 if state["spent"] + estimate_request_usd(model, req, batch=False) > CAP[prov]:
                     state["stop"] = f"{prov}: spent {state['spent']:.4f} USD + next request > cap {CAP[prov]} USD"
@@ -235,7 +241,7 @@ def run_batch(provider, model, jobs, out_path, info, max_tokens=None):
 
 
 def run(alias, phase, records, provider=None, workers=None, tag=None, max_tokens=None):
-    model = V1.MODELS[alias]
+    model = MODELS[alias]
     rd = RUNS / (f"{alias}-{phase}-{tag}" if tag else f"{alias}-{phase}")
     rd.mkdir(parents=True, exist_ok=True)
     out = rd / "results.jsonl"
@@ -255,9 +261,7 @@ def run(alias, phase, records, provider=None, workers=None, tag=None, max_tokens
     if getattr(provider, "batch", False):
         info = run_batch(provider, model, jobs, out, info, max_tokens)
     else:
-        if max_tokens:
-            raise SystemExit("--max-tokens is implemented for batch providers only")
-        info = run_online(provider, model, jobs, out, info, workers)
+        info = run_online(provider, model, jobs, out, info, workers, max_tokens)
     (rd / f"run_info_{int(info['started'])}.json").write_text(json.dumps(info, indent=1))
     print(f"[paper2] done {info['done']}/{info['jobs']}; stopped: {info['stopped']}", flush=True)
     return info
@@ -289,7 +293,7 @@ def qa(rows):
 
 def project(alias, records, tag=None):
     """Pilot mean cost per job, per design, times the planned full jobs; the full run needs ≤ the projection limit."""
-    model = V1.MODELS[alias]
+    model = MODELS[alias]
     pilot_dir = RUNS / (f"{alias}-pilot-{tag}" if tag else f"{alias}-pilot")
     rows = [json.loads(x) for x in (pilot_dir / "results.jsonl").read_text(encoding="utf-8").splitlines()]
     per = {}

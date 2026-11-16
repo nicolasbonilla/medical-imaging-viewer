@@ -106,6 +106,21 @@ def test_rerun_with_a_tag_and_an_output_limit(recs):
     assert not (RN.RUNS / "sonnet-pilot" / "results.jsonl").exists()          # the first run is never overwritten
 
 
+def test_gemini4_arm_online_with_an_output_limit(recs):
+    seen = []
+
+    class Spy(FakeProvider):
+        def one(self, model, key, req):
+            seen.append((model, req["max_tokens"]))
+            return super().one(model, key, req)
+
+    assert {d for _, d in RN.planned(recs, "gemini4")} <= {"D1", "D2"}
+    assert all(r["arm"] == "flames_ens" for r, _ in RN.planned(recs, "gemini4"))
+    info = RN.run("gemini4", "pilot", recs, provider=Spy(), workers=2, tag="long", max_tokens=2500)
+    assert info["done"] == info["jobs"] > 0 and set(seen) == {("gemini-4-carbon", 2500)}
+    assert (RN.RUNS / "gemini4-pilot-long" / "results.jsonl").exists()
+
+
 def test_qa_flags_cut_and_empty_reports():
     def ok(i):
         return {"key": f"a{i}", "arm": "D1", "calls": [{"stop_reason": "end_turn"}],
