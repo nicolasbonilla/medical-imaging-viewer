@@ -37,8 +37,8 @@ SEED = 20261114
 CAP = {"gemini": 70.0, "anthropic": 25.0, "maas": 15.0}
 PROJECTION_LIMIT = {"gemini": 60.0, "anthropic": 20.0, "maas": 12.0}
 # secondary arms added by amendment (PREREG §12, 2026-11-16); "maas" = open models on Vertex AI, free Google credit
-MODELS = {**V1.MODELS, "gemini4": "gemini-4-carbon", "gptoss": "openai/gpt-oss-120b-maas",
-          "deepseek": "deepseek-ai/deepseek-v4.1-flash-maas"}
+MODELS = {**V1.MODELS, "gemini4": "gemini-4-carbon", "gemini4argon": "gemini-4-argon",
+          "gptoss": "openai/gpt-oss-120b-maas", "deepseek": "deepseek-ai/deepseek-v4.1-flash-maas"}
 SETTING_P = ("dlbs", "wmh2017")
 
 # PREREG §4: which designs each model runs, on which records
@@ -48,6 +48,7 @@ PLAN = {
     "sonnet": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
     "gemma": {"designs": ("D1",), "arms": ("flames_ens",), "extra": {}},
     "gemini4": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
+    "gemini4argon": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
     "gptoss": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
     "deepseek": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
 }

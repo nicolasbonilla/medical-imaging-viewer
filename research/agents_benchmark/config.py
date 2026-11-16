@@ -45,6 +45,8 @@ PRICES = {
     # paper 2 amendment (2026-11-16): Cloud Billing Catalog, Vertex AI global online text, SKUs C47F-BE66-1A4E,
     # 1B77-85A0-B300, C3FF-AD89-C218
     "gemini-4-carbon": {"input": 4.00, "output": 20.00, "cached_input": 0.20},
+    # SKUs 3BAE-62B7-C9B9, 1E84-F91D-8B95, 3B3E-7322-E883 (catalog read 2026-11-16)
+    "gemini-4-argon": {"input": 4.00, "output": 20.00, "cached_input": 0.20},
     # open models on Vertex AI (Model Garden MaaS), catalog read 2026-11-16: SKUs 8DFC-88DE-E809 / D74B-8F9A-24C9 and
     # B38B-182F-01D0 / E6F9-CAC0-1DA9 / D2BA-12C7-3CDC
     "openai/gpt-oss-120b-maas": {"input": 0.09, "output": 0.36},
