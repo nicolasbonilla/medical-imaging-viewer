@@ -62,6 +62,36 @@ def test_cap_stops_before_sending(recs, monkeypatch):
     assert info["stopped"] and info["calls"] == 0
 
 
+class FakeBatch(FakeProvider):
+    """Claude's path: one submit per round; Anthropic-style usage fields."""
+    batch = True
+
+    def __init__(self):
+        self.rounds = []
+
+    def submit(self, model, items):
+        self.rounds.append(len(items))
+        out = {}
+        for k, req in items:
+            r = self.one(model, k, req)
+            r["usage"] = {"input_tokens": 1000, "output_tokens": 100}
+            out[k] = r
+        return out
+
+
+def test_sonnet_runs_in_batch_rounds_and_respects_the_cap(recs, monkeypatch):
+    fb = FakeBatch()
+    info = RN.run("sonnet", "pilot", recs, provider=fb)
+    assert info["done"] == info["jobs"] and not info["stopped"] and len(fb.rounds) >= 2   # D2: tool call, then report
+    rows = [json.loads(x) for x in (RN.RUNS / "sonnet-pilot" / "results.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert {r["arm"] for r in rows} == {"D1", "D2"} and all(r["result"]["status"] == "ok" for r in rows)
+    monkeypatch.setattr(RN, "CAP", {"gemini": 30.0, "anthropic": 0.0})
+    (RN.RUNS / "sonnet-pilot" / "results.jsonl").unlink()
+    fb2 = FakeBatch()
+    stopped = RN.run("sonnet", "pilot", recs, provider=fb2)
+    assert stopped["stopped"] and stopped["calls"] == 0 and fb2.rounds == []          # nothing sent over the cap
+
+
 def test_frozen_files_are_unchanged():
     """PREREG §8: the classifier, verifier, lexicon, designs and arms are those frozen after the pilot."""
     assert RN.frozen_check()["passed"], RN.frozen_check()["changed"]

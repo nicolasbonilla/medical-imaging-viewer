@@ -25,10 +25,7 @@ class AnthropicBatch:
 
     def __init__(self, run_dir, poll_s=30):
         import anthropic
-        if not ANTHROPIC_KEY_FILE.exists():
-            raise RuntimeError(f"Anthropic research key not found at {ANTHROPIC_KEY_FILE}")
-        key = ANTHROPIC_KEY_FILE.read_text(encoding="utf-8").strip()
-        self.client = anthropic.Anthropic(api_key=key, max_retries=3)
+        self.client = anthropic.Anthropic(api_key=_anthropic_key(), max_retries=3)
         self.ledger = Ledger(run_dir)
         self.run_dir = Path(run_dir)
         self.poll_s = poll_s
@@ -86,6 +83,18 @@ class AnthropicBatch:
         for key in ids.values():
             out.setdefault(key, {"error": "missing_result"})
         return out
+
+
+def _anthropic_key():
+    """The research key file if it exists. Otherwise, only when AB_ANTHROPIC_KEY_FROM_ENV=1 is set explicitly, the key in
+    this computer's environment: the owner allowed it on 2026-11-16 (paper 2 PREREG §12), because no separate research
+    workspace exists. The spend cap is then enforced by the program only. The key is never printed or written."""
+    if ANTHROPIC_KEY_FILE.exists():
+        return ANTHROPIC_KEY_FILE.read_text(encoding="utf-8").strip()
+    if os.environ.get("AB_ANTHROPIC_KEY_FROM_ENV") == "1" and os.environ.get("ANTHROPIC_API_KEY"):
+        return os.environ["ANTHROPIC_API_KEY"]
+    raise RuntimeError(f"Anthropic research key not found at {ANTHROPIC_KEY_FILE} "
+                       "(set AB_ANTHROPIC_KEY_FROM_ENV=1 to use the environment key, with the owner's permission)")
 
 
 def _strip_private(m):

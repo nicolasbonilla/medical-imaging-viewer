@@ -192,6 +192,43 @@ def run_online(provider, model, jobs, out_path, info, workers=None):
     return info
 
 
+def run_batch(provider, model, jobs, out_path, info):
+    """Batch providers (Claude, Message Batches, PREREG §4): one batch per round of next requests, as in v1. Before
+    every batch, this study's spend + the batch's worst case must stay under the cap; otherwise nothing is sent."""
+    prov = provider_of(model)
+    calls, rnd, active, stop = 0, 0, list(jobs), None
+    while active:
+        rnd += 1
+        items, owners = [], {}
+        for job in active:
+            req = job.next_request()
+            if req is None:
+                continue
+            k = f"{job.key}#{rnd}"
+            items.append((k, req))
+            owners[k] = job
+        if not items:
+            break
+        worst = sum(estimate_request_usd(model, r, batch=True) for _, r in items)
+        already = spent(prov)
+        if already + worst > CAP[prov]:
+            stop = f"{prov}: spent {already:.4f} USD + worst case {worst:.4f} USD > cap {CAP[prov]} USD; nothing sent"
+            break
+        resps = provider.submit(model, items)
+        calls += len(items)
+        with open(out_path, "a", encoding="utf-8") as fh:
+            for k, _ in items:
+                job = owners[k]
+                job.consume(resps.get(k) or {"error": "no_response"})
+                if job.done:
+                    fh.write(json.dumps(job_line(job, model), ensure_ascii=False) + "\n")
+        active = [j for j in active if not j.done]
+        print(f"[paper2] round {rnd}: {len(items)} calls, {len(active)} jobs still open", flush=True)
+    info.update({"ended": time.time(), "calls": calls, "rounds": rnd, "done": len(jobs) - len(active),
+                 "unfinished": len(active), "stopped": stop})
+    return info
+
+
 def run(alias, phase, records, provider=None, workers=None):
     model = V1.MODELS[alias]
     rd = RUNS / f"{alias}-{phase}"
@@ -209,7 +246,10 @@ def run(alias, phase, records, provider=None, workers=None):
     info = {"model": model, "phase": phase, "jobs": len(jobs), "already_done": len(finished), "started": time.time(),
             "frozen": frozen_check()}
     print(f"[paper2] {alias}/{phase}: {len(jobs)} jobs ({len(finished)} already done)", flush=True)
-    info = run_online(provider, model, jobs, out, info, workers)
+    if getattr(provider, "batch", False):
+        info = run_batch(provider, model, jobs, out, info)
+    else:
+        info = run_online(provider, model, jobs, out, info, workers)
     (rd / f"run_info_{int(info['started'])}.json").write_text(json.dumps(info, indent=1))
     print(f"[paper2] done {info['done']}/{info['jobs']}; stopped: {info['stopped']}", flush=True)
     return info
