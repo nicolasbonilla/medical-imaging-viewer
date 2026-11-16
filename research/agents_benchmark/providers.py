@@ -348,6 +348,15 @@ class VertexOpenAI:
             return out
         return {"error": last}
 
+    def submit(self, model, items):
+        if not items:
+            return {}
+        if not getattr(self, "study_cap_checked", False):
+            check_budget(model, [r for _, r in items], batch=False)
+        with ThreadPoolExecutor(self.workers) as ex:
+            futs = {key: ex.submit(self.one, model, key, req) for key, req in items}
+        return {k: f.result() for k, f in futs.items()}
+
 
 def provider_for(model, run_dir):
     if model.startswith("claude"):
