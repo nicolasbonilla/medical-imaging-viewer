@@ -25,7 +25,10 @@ class AnthropicBatch:
 
     def __init__(self, run_dir, poll_s=30):
         import anthropic
-        self.client = anthropic.Anthropic(api_key=_anthropic_key(), max_retries=3)
+        # gzip only: the brotli/zstd decoder found in this environment rejects httpx2's keyword argument, which surfaced
+        # as "Connection error" on every compressed response (2026-11-16)
+        self.client = anthropic.Anthropic(api_key=_anthropic_key(), max_retries=3,
+                                          default_headers={"Accept-Encoding": "gzip, deflate"})
         self.ledger = Ledger(run_dir)
         self.run_dir = Path(run_dir)
         self.poll_s = poll_s
