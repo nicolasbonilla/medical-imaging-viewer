@@ -169,7 +169,10 @@ class GeminiVertex:
         kw = {"system_instruction": req["system"], "max_output_tokens": int(req["max_tokens"]),
               "automatic_function_calling": types.AutomaticFunctionCallingConfig(disable=True)}
         if thinking:
-            kw["thinking_config"] = types.ThinkingConfig(thinking_level="minimal")
+            # "minimal" as registered; a model that rejects it (Gemini 4 Carbon) runs at its lowest level, set and logged
+            # by the caller (paper 2 PREREG §12, 2026-11-16)
+            kw["thinking_config"] = types.ThinkingConfig(
+                thinking_level=os.environ.get("AB_GEMINI_THINKING_LEVEL", "minimal"))
         if req.get("tools"):
             decls = [types.FunctionDeclaration(name=t["name"], description=t["description"],
                                                parameters_json_schema=t["input_schema"]) for t in req["tools"]]
