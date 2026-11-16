@@ -14,11 +14,17 @@ Size bins: paper F's lesion rule (26-connected components >= 14.137 mm3) and bin
 validator (frontend/src/utils/sliceThicknessReliability.ts, which requires exactly 5 bins today) must take the bin
 count from the asset. That UI change is a separate, reviewed change (RC-057); this script only writes the candidate.
 
+Which run: records.json exists only for the reproduction run (mimics-eval-da93797); the reported run
+(mimics-eval-3aa6d9f) did not upload it. The two runs differ in blocks A and B (multithreaded affine registration)
+but not in C1. The script refuses unless every C1 row of per_unit.csv and lesions.csv is identical between the two
+runs, and records the check in the asset (PREREG-mimics-thickness.md section 14, 2026-11-16).
+
 Usage (after `launch_mimics.py evaluate`):
-    python research/paper_1/mimics/build_thickness_card_v3.py [--arm flames_f0] [--boot 10000]
+    python research/paper_1/mimics/build_thickness_card_v3.py [--arm flames_f0] [--boot 10000] [--reported <dir>]
 Writes results/sliceThicknessReliability.v3.candidate.json. Nothing is copied into the app.
 """
 import argparse
+import csv
 import hashlib
 import json
 import math
@@ -74,11 +80,31 @@ def cluster_ci(by_patient, n_boot, rng):
     return out
 
 
+def c1_rows(folder, name):
+    with open(os.path.join(folder, name), newline="", encoding="utf-8") as fh:
+        return [r for r in csv.DictReader(fh) if r["block"] == "C1"]
+
+
+def c1_identity(reported):
+    """Every C1 row of per_unit.csv and lesions.csv equal between the reported run and the one holding records.json."""
+    out = {}
+    for name in ("per_unit.csv", "lesions.csv"):
+        a, b = c1_rows(reported, name), c1_rows(RESULTS, name)
+        if a != b:
+            raise SystemExit(f"C1 rows of {name} differ between {reported} and {RESULTS}: records.json not usable")
+        out[name] = len(a)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--arm", default="flames_f0", help="segmenter configuration the app runs (default: fold 0)")
     ap.add_argument("--boot", type=int, default=10000)
+    ap.add_argument("--reported", default=os.path.join(HERE, "results_run1"),
+                    help="the reported run's results (mimics-eval-3aa6d9f)")
     a = ap.parse_args()
+    identity = c1_identity(a.reported)
+    run = json.load(open(os.path.join(RESULTS, "summary.json"), encoding="utf-8"))["run_info"]["code_commit"]
     path = os.path.join(RESULTS, "records.json")
     raw = open(path, "rb").read()
     recs = json.loads(raw)
@@ -109,7 +135,9 @@ def main():
             "paper": "Paper 1 addendum, block C1 (controlled section thickness, same examinations at 1/3/5/7 mm)",
             "prereg": "docs/research/paper-1/PREREG-mimics-thickness.md (sections 2.3, 6.3) + amendment d0fdee6",
             "records": {"path": "research/paper_1/mimics/results/records.json",
-                        "sha256": hashlib.sha256(raw).hexdigest()},
+                        "sha256": hashlib.sha256(raw).hexdigest(),
+                        "run": f"mimics-eval-{run[:7]} (reproduction; the reported run is mimics-eval-3aa6d9f)",
+                        "c1_rows_identical_to_reported_run": identity},
             "segmenter_arm": a.arm,
             "data_licences": "MSLesSeg CC BY 4.0; Ljubljana open_ms_data CC BY (commercial use permitted)",
             "detection_definition": ("Share of expert lesions (26-connected, >= 14.137 mm3) overlapped by the "

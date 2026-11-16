@@ -1,16 +1,16 @@
 # Registro de cómputo de la investigación MSTool-AI
 
-Generado el 2026-11-09 19:39 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1193 USD (tipo de referencia del BCE del 2026-11-09). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
+Generado el 2026-11-16 03:37 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1052 USD (tipo de referencia del BCE del 2026-11-13). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
 
 ## Resumen
 
 | Concepto | Valor |
 |---|---|
-| Corridas en la nube con tiempo medido | 41 en mstool-research · 9 en agosto (brain-mri-476110) |
-| Horas de máquina, proyecto de investigación | 169.90 h |
-| Coste a precio de lista, proyecto de investigación | 33.13 USD ≈ 29.60 EUR |
-| Almacenamiento en el cubo (hoy) | 21.51 GB ≈ 0.430 USD/mes |
-| Crédito gratuito usado (estimado) | 29.98 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 210.02 EUR |
+| Corridas en la nube con tiempo medido | 55 en mstool-research · 9 en agosto (brain-mri-476110) |
+| Horas de máquina, proyecto de investigación | 380.45 h |
+| Coste a precio de lista, proyecto de investigación | 56.47 USD ≈ 51.09 EUR |
+| Almacenamiento en el cubo (hoy) | 23.12 GB ≈ 0.462 USD/mes |
+| Crédito gratuito usado (estimado) | 51.51 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 188.49 EUR |
 | Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.68 USD (pagado por la cuenta de la app, no por el crédito) |
 
 ## Máquinas usadas
@@ -28,6 +28,7 @@ Generado el 2026-11-09 19:39 UTC con `research/cloud/build_ledger.py`. Precios: 
 | c2d-highmem-4 | AMD Milan — AMD EPYC 7B13 | 4 | 32.0 | — | Spot (interrumpible) | 0.13002 |
 | c2d-standard-4 | AMD Milan | 4 | 16.0 | — | Spot (interrumpible) | 0.09209 |
 | e2-standard-2 | Intel Broadwell — Intel(R) Xeon(R) CPU @ 2.20GHz | 2 | 8.0 | — | estándar | 0.07112 |
+| c2d-standard-8 | AMD Milan | 8 | 32.0 | — | Spot (interrumpible) | 0.17459 |
 
 ## Todas las corridas
 
@@ -106,9 +107,33 @@ Generado el 2026-11-09 19:39 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-11-09 | mimics-nn-m | Artículo 1, anexo: primer reparto (MindGlide), detenida por cuota | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | borrada (cuota de procesadores) |
 | 2026-11-09 | mimics-pilot | Artículo 1, anexo: piloto (interrumpible) — todas las imágenes de cortes engrosados y las seis herramientas en un estudio de cada tipo | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 2:26:22 | 0:17:27 / 2:08:54 | — / — | — | 0.3172 | 0.3172 | correcta |
 | 2026-11-09 | mimics-v1 | Artículo 1, anexo, corrida completa (interrumpible): quitar cráneo a WMH 2017, LST-AI en todo y parte de FLAMeS | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-09 | mimics-v1-r1 | Paper 1 addendum: relaunch 1 of mimics-v1 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | 72:00:00 | 0:07:51 / — | — / — | — | 6.6305 | 6.6305 | correcta |
 | 2026-11-09 | mimics-v2 | Artículo 1, anexo, corrida completa (interrumpible): WMH-SynthSeg y MindGlide en todo, parte de SAMSEG y de FLAMeS | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-09 | mimics-v2-r1 | Paper 1 addendum: relaunch 1 of mimics-v2 after a pre-emption (same plan; finished outputs are skipped) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 72:00:00 | 0:13:01 / — | — / — | — | 9.0158 | 9.0158 | correcta |
 | 2026-11-09 | mimics-v3 | Artículo 1, anexo, corrida completa (interrumpible): quitar cráneo a DLBS, parte de SAMSEG y de FLAMeS | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-09 | mimics-v3-r1 | Paper 1 addendum: relaunch 1 of mimics-v3 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
 | 2026-11-09 | mirror-wmh-dlbs | Artículo 1, anexo: copia de WMH 2017 (DataverseNL) y DLBS (OpenNeuro) al cubo, con huellas | e2-standard-2 | Intel Broadwell | estándar | 0:07:49 | — / — | — / — | — | 0.0093 | 0.0093 | correcta |
+| 2026-11-11 | mimics-v3-r2 | Paper 1 addendum: relaunch 2 of mimics-v3 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-12 | mimics-v1-r2 | Paper 1 addendum: relaunch 2 of mimics-v1 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-12 | mimics-v2-r2 | Paper 1 addendum: relaunch 2 of mimics-v2 after a pre-emption (same plan; finished outputs are skipped) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 20:54:41 | 0:12:54 / 20:41:46 | — / — | — | 2.6185 | 2.6185 | correcta |
+| 2026-11-12 | mimics-v3-r3 | Paper 1 addendum: relaunch 3 of mimics-v3 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-12 | mimics-v3-r4 | Paper 1 addendum: relaunch 4 of mimics-v3 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-13 | mimics-v1-r3 | Paper 1 addendum: relaunch 3 of mimics-v1 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-13 | mimics-v2-r3 | Paper 1 addendum: relaunch 3 of mimics-v2 after a pre-emption (same plan; finished outputs are skipped) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 0:53:58 | 0:10:45 / 0:43:09 | — / — | — | 0.1126 | 0.1126 | correcta |
+| 2026-11-13 | mimics-v3-r5 | Paper 1 addendum: relaunch 5 of mimics-v3 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-14 | mimics-h1 | Paper 1 addendum: helper taking the last LST-AI items of mimics-v1 and the last SAMSEG items of mimics-v3 (same tools and inputs; owner request 2026-11-14) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | 9:19:31 | 0:08:23 / 9:11:07 | — / — | — | 0.9137 | 0.9137 | correcta |
+| 2026-11-14 | mimics-v1-r4 | Paper 1 addendum: relaunch 4 of mimics-v1 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | 15:48:14 | 0:05:49 / 15:42:24 | — / — | — | 1.4554 | 1.4554 | correcta |
+| 2026-11-14 | mimics-v2-r4 | Paper 1 addendum: relaunch 4 of mimics-v2 after a pre-emption (same plan; finished outputs are skipped) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-14 | mimics-v3-r6 | Paper 1 addendum: relaunch 6 of mimics-v3 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-14 | mimics-v3-r7 | Paper 1 addendum: relaunch 7 of mimics-v3 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | 8:44:14 | 0:07:10 / 8:37:03 | — / — | — | 0.8166 | 0.8166 | correcta |
+| 2026-11-15 | mimics-c1 | Paper 1 addendum: pre-registered --crop re-run of the 10 WMH-SynthSeg out-of-memory stops (PREREG section 10) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 0:59:02 | 0:10:25 / 0:48:35 | — / — | — | 0.1232 | 0.1232 | correcta |
+| 2026-11-15 | mimics-eval-3aa6d9f | Paper 1 addendum: frozen final evaluation (GR, G3, run once, G2) | c2d-standard-8 | AMD Milan | Spot (interrumpible) | 3:40:53 | — / — | — / — | — | 0.6427 | 0.6427 | correcta |
+| 2026-11-15 | mimics-eval-a395e48 | Paper 1 addendum: frozen final evaluation (GR, G3, run once, G2) | c2d-standard-8 | AMD Milan | Spot (interrumpible) | 0:30:49 | — / — | — / — | — | 0.0897 | 0.0897 | correcta |
+| 2026-11-15 | mimics-eval-da93797 | Paper 1 addendum: frozen final evaluation (GR, G3, run once, G2) | c2d-standard-8 | AMD Milan | Spot (interrumpible) | 3:37:56 | — / — | — / — | — | 0.6341 | 0.6341 | correcta |
+| 2026-11-15 | mimics-eval-f7f31ee | Paper 1 addendum: frozen final evaluation (GR, G3, run once, G2) | c2d-standard-8 | AMD Milan | Spot (interrumpible) | 0:35:48 | — / — | — / — | — | 0.1042 | 0.1042 | correcta |
+| 2026-11-15 | mimics-v2-r5 | Paper 1 addendum: relaunch 5 of mimics-v2 after a pre-emption (same plan; finished outputs are skipped) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 0:54:38 | 0:11:23 / 0:43:11 | — / — | — | 0.1140 | 0.1140 | correcta |
+| 2026-11-15 | mimics-v2-r6 | Paper 1 addendum: relaunch 6 of mimics-v2 after a pre-emption (same plan; finished outputs are skipped) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 0:33:51 | 0:10:24 / 0:23:24 | — / — | — | 0.0706 | 0.0706 | correcta |
+| 2026-11-16 | p2-consensus-82bb327 | Paper 2 design D5: two-tool consensus on paper 1's masks | c2d-standard-8 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
 
 ## Rendimiento medido (FLAMeS, un modelo, un caso, sin TTA)
 

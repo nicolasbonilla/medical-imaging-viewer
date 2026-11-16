@@ -1,0 +1,4 @@
+# Derived results include non-commercial sources (WMH 2017, SibBMS, DLBS): kept in the private bucket only.
+# The card candidate (C1 only: MSLesSeg CC BY 4.0, Ljubljana CC BY) is force-added.
+results/
+results_run1/

@@ -1,0 +1,204 @@
+{
+ "asset_id": "slice-thickness-reliability",
+ "asset_version": "3.0.0-candidate",
+ "status": "CANDIDATE - not in the app. Needs: independent review, the RC-057 validator change (bin count from the asset; lesions < 14.1 mm3 shown as 'not measured'), owner approval of HAZ-015 residual.",
+ "source": {
+  "paper": "Paper 1 addendum, block C1 (controlled section thickness, same examinations at 1/3/5/7 mm)",
+  "prereg": "docs/research/paper-1/PREREG-mimics-thickness.md (sections 2.3, 6.3) + amendment d0fdee6",
+  "records": {
+   "path": "research/paper_1/mimics/results/records.json",
+   "sha256": "2b63f6ca3a15edbf8743b1d567cacd8353b2d520418109d4c6d00a6f7029ba07",
+   "run": "mimics-eval-da93797 (reproduction; the reported run is mimics-eval-3aa6d9f)",
+   "c1_rows_identical_to_reported_run": {
+    "per_unit.csv": 2936,
+    "lesions.csv": 75099
+   }
+  },
+  "segmenter_arm": "flames_f0",
+  "data_licences": "MSLesSeg CC BY 4.0; Ljubljana open_ms_data CC BY (commercial use permitted)",
+  "detection_definition": "Share of expert lesions (26-connected, >= 14.137 mm3) overlapped by the segmenter's lesions, pooled over examinations; CI: percentile bootstrap resampling patients. Thickness is simulated by slab averaging of 1 mm scans."
+ },
+ "size_bins": [
+  {
+   "label": "14-50",
+   "min_mm3": 14.137,
+   "max_mm3": 50.0,
+   "min_diameter_mm": 3.0,
+   "max_diameter_mm": 4.57
+  },
+  {
+   "label": "50-200",
+   "min_mm3": 50.0,
+   "max_mm3": 200.0,
+   "min_diameter_mm": 4.57,
+   "max_diameter_mm": 7.26
+  },
+  {
+   "label": "200-1000",
+   "min_mm3": 200.0,
+   "max_mm3": 1000.0,
+   "min_diameter_mm": 7.26,
+   "max_diameter_mm": 12.41
+  },
+  {
+   "label": ">=1000",
+   "min_mm3": 1000.0,
+   "max_mm3": null,
+   "min_diameter_mm": 12.41,
+   "max_diameter_mm": null
+  }
+ ],
+ "not_measured_below_mm3": 14.137,
+ "evidence_rows": {
+  "B1_grid": {
+   "thickness_mm_simulated": 1.0,
+   "scans": 125,
+   "patients": 85,
+   "lesions": [
+    1209,
+    1519,
+    555,
+    180
+   ],
+   "detection": [
+    0.5658,
+    0.8328,
+    0.955,
+    0.9889
+   ],
+   "detection_ci95_cluster_bootstrap": [
+    [
+     0.5131,
+     0.6125
+    ],
+    [
+     0.8016,
+     0.8627
+    ],
+    [
+     0.9333,
+     0.9736
+    ],
+    [
+     0.9686,
+     1.0
+    ]
+   ],
+   "post_hoc": false
+  },
+  "B2": {
+   "thickness_mm_simulated": 3.0,
+   "scans": 125,
+   "patients": 85,
+   "lesions": [
+    1209,
+    1519,
+    555,
+    180
+   ],
+   "detection": [
+    0.4169,
+    0.788,
+    0.9441,
+    0.9889
+   ],
+   "detection_ci95_cluster_bootstrap": [
+    [
+     0.3655,
+     0.4666
+    ],
+    [
+     0.7576,
+     0.8177
+    ],
+    [
+     0.921,
+     0.9638
+    ],
+    [
+     0.9686,
+     1.0
+    ]
+   ],
+   "post_hoc": false
+  },
+  "B3": {
+   "thickness_mm_simulated": 5.0,
+   "scans": 125,
+   "patients": 85,
+   "lesions": [
+    1209,
+    1519,
+    555,
+    180
+   ],
+   "detection": [
+    0.2622,
+    0.6794,
+    0.9279,
+    0.9889
+   ],
+   "detection_ci95_cluster_bootstrap": [
+    [
+     0.2187,
+     0.3069
+    ],
+    [
+     0.6426,
+     0.7145
+    ],
+    [
+     0.9022,
+     0.9503
+    ],
+    [
+     0.9688,
+     1.0
+    ]
+   ],
+   "post_hoc": false
+  },
+  "B4": {
+   "thickness_mm_simulated": 7.0,
+   "scans": 125,
+   "patients": 85,
+   "lesions": [
+    1209,
+    1519,
+    555,
+    180
+   ],
+   "detection": [
+    0.1902,
+    0.5227,
+    0.8937,
+    0.9944
+   ],
+   "detection_ci95_cluster_bootstrap": [
+    [
+     0.1542,
+     0.2276
+    ],
+    [
+     0.4867,
+     0.5575
+    ],
+    [
+     0.8638,
+     0.9199
+    ],
+    [
+     0.9796,
+     1.0
+    ]
+   ],
+   "post_hoc": false
+  }
+ },
+ "band_mapping": {
+  "B1": "1 mm",
+  "B2": "3 mm",
+  "B3": "5 mm",
+  "B4": "7 mm"
+ }
+}
