@@ -17,8 +17,8 @@ the lesion rule (18-connected components >= 3 mm^3), then the app's DIS rule (`h
 is kept, for D5's code-written line.
 
 **Gate GD5 (identity):** FLAMeS-ens agreed with itself must reproduce, on every scan, paper 1's DIS, its lesion count,
-its region flags and its lesion list (`per_unit.csv`, `lesions.csv`). A failure stops the job, and nothing is
-written as a result.
+its region flags and its lesion list (`per_unit.csv`, `lesions.csv`) — those of the paper-1 run whose transforms it
+uses, i.e. the reproduction run (PREREG §12, 2026-11-16). A failure stops the job, and nothing is written as a result.
 
 **Outputs** (in --out): `consensus_per_unit.csv` and `consensus_lesions.csv` (paper 1's columns, plus `n_single`),
 and `consensus_gate.json`.

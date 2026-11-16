@@ -5,6 +5,9 @@ evaluation code at the evaluated commit, and the atlas transforms kept by paper 
 done, it downloads the outputs to research/paper_2/runs/consensus/ (ignored by git; non-commercial sources).
 
     python -m research.paper_2.launch_consensus --p1 <paper-1 worktree> --p1-commit <sha of the reproduction run>
+
+Paper 1's first run kept no transforms and its affine registration is not bit-reproducible, so the reference is the
+reproduction run for everything: transforms, per_unit.csv, lesions.csv, registration.json (PREREG §12, 2026-11-16).
 """
 import argparse
 import os
@@ -17,7 +20,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 PROJECT, BK = "mstool-research", "gs://mstool-research-data"
 ENV = dict(os.environ, CLOUDSDK_CONFIG="C:/Users/Nicolas/.gcloud-mstool")
-FIRST_RUN = "mimics-eval-3aa6d9f"          # paper 1's reported evaluation (per_unit, lesions, registration.json)
 
 
 def sh(cmd, cwd=None):
@@ -39,6 +41,7 @@ def main(argv=None):
     sh(f'gcloud storage ls "{BK}/mimics/evalcode/{a.p1_commit}.tar.gz" --project={PROJECT}')
     regsrc = f"{BK}/mimics/registration/{rep}/registration"
     sh(f'gcloud storage ls "{regsrc}/" --project={PROJECT}')
+    sh(f'gcloud storage ls "{BK}/mimics/results/{rep}/DONE" --project={PROJECT}')
     tar = os.path.join(tempfile.mkdtemp(), f"{commit}.tar.gz")
     sh(f'git archive --format=tar.gz -o "{tar}" {commit} research/paper_2', cwd=ROOT)
     sh(f'gcloud storage cp "{tar}" "{BK}/paper2/code/{commit}.tar.gz" --quiet --project={PROJECT}')
@@ -47,7 +50,7 @@ def main(argv=None):
            "c2d-standard-8", "--disk-gb", "60", "--spot", "--startup", os.path.join(HERE, "cloud", "vm_consensus.sh"),
            "--paper", "2", "--max-hours", "4", "--purpose", "Paper 2 design D5: two-tool consensus on paper 1's masks",
            "--meta", f"p1code=mimics/evalcode/{a.p1_commit}.tar.gz", f"p2code=paper2/code/{commit}.tar.gz",
-           f"regsrc={regsrc}", f"p1results={BK}/mimics/results/{FIRST_RUN}", f"commit={commit}", "workers=8"]
+           f"regsrc={regsrc}", f"p1results={BK}/mimics/results/{rep}", f"commit={commit}", "workers=8"]
     r = subprocess.run(cmd, capture_output=True, text=True, env=ENV, cwd=a.p1)
     print(r.stdout[-1500:])
     if r.returncode != 0:

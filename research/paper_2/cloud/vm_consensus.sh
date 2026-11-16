@@ -66,7 +66,7 @@ ARGS="--pf $D/pf --mimics $D/mimics --wmh $D/wmh --manifests $D/manifests --atla
 echo "=== paper 1's registration step with its kept transforms (no new affine; GR recomputed) ==="
 CLOUDSDK_CONFIG=/nonexistent /opt/eval/bin/python research/paper_1/mimics/evaluate_mimics.py register $ARGS --threads $(nproc) \
   | tee $W/out/gr_registration.txt || exit 1
-# the transforms must be paper 1's: every SHA-256 equal to the one its registration.json records
+# the transforms must be the reference run's (paper 1's reproduction run): every SHA-256 equal to its registration.json
 /opt/eval/bin/python - $W/p1/registration.json $W/work/registration.json <<'PY' | tee $W/out/transform_check.txt || exit 1
 import json, sys
 a = json.load(open(sys.argv[1]))["records"]; b = json.load(open(sys.argv[2]))["records"]
