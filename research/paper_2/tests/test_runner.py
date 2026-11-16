@@ -92,6 +92,35 @@ def test_sonnet_runs_in_batch_rounds_and_respects_the_cap(recs, monkeypatch):
     assert stopped["stopped"] and stopped["calls"] == 0 and fb2.rounds == []          # nothing sent over the cap
 
 
+def test_rerun_with_a_tag_and_an_output_limit(recs):
+    seen = []
+
+    class Spy(FakeBatch):
+        def submit(self, model, items):
+            seen.extend(req["max_tokens"] for _, req in items)
+            return super().submit(model, items)
+
+    info = RN.run("sonnet", "pilot", recs, provider=Spy(), tag="long", max_tokens=2000)
+    assert info["done"] == info["jobs"] > 0 and set(seen) == {2000}
+    assert (RN.RUNS / "sonnet-pilot-long" / "results.jsonl").exists()
+    assert not (RN.RUNS / "sonnet-pilot" / "results.jsonl").exists()          # the first run is never overwritten
+
+
+def test_qa_flags_cut_and_empty_reports():
+    def ok(i):
+        return {"key": f"a{i}", "arm": "D1", "calls": [{"stop_reason": "end_turn"}],
+                "result": {"status": "ok", "delivered": "## Impression\nFor review."}}
+
+    def cut(i):
+        return {"key": f"b{i}", "arm": "D2", "calls": [{"stop_reason": "tool_use"}, {"stop_reason": "max_tokens"}],
+                "result": {"status": "ok", "delivered": "The"}}
+    failed = {"key": "a0", "arm": "D1", "calls": [], "result": {"status": "error", "delivered": ""}}
+    res = RN.qa([failed] + [ok(i) for i in range(20)] + [cut(i) for i in range(20)])
+    assert res["D1"]["n"] == 20 and res["D1"]["without_impression"] == 0          # failed attempts are not drafts
+    assert res["D2"]["cut_at_limit"] == 20 and res["D2"]["without_impression"] == 20
+    assert not res["passed"] and RN.qa([ok(i) for i in range(20)])["passed"]
+
+
 def test_frozen_files_are_unchanged():
     """PREREG §8: the classifier, verifier, lexicon, designs and arms are those frozen after the pilot."""
     assert RN.frozen_check()["passed"], RN.frozen_check()["changed"]

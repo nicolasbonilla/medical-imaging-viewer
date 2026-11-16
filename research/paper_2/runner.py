@@ -32,8 +32,9 @@ HERE = Path(__file__).resolve().parent
 RUNS = HERE / "runs"
 RECORDS = HERE / "records.jsonl"
 SEED = 20261114
-CAP = {"gemini": 30.0, "anthropic": 10.0}
-PROJECTION_LIMIT = {"gemini": 25.0, "anthropic": 7.0}
+# Anthropic raised by the owner on 2026-11-16 (PREREG §12) from 10 / 7 USD, for the Claude re-run with room for reasoning
+CAP = {"gemini": 30.0, "anthropic": 25.0}
+PROJECTION_LIMIT = {"gemini": 25.0, "anthropic": 20.0}
 SETTING_P = ("dlbs", "wmh2017")
 
 # PREREG §4: which designs each model runs, on which records
@@ -192,9 +193,10 @@ def run_online(provider, model, jobs, out_path, info, workers=None):
     return info
 
 
-def run_batch(provider, model, jobs, out_path, info):
+def run_batch(provider, model, jobs, out_path, info, max_tokens=None):
     """Batch providers (Claude, Message Batches, PREREG §4): one batch per round of next requests, as in v1. Before
-    every batch, this study's spend + the batch's worst case must stay under the cap; otherwise nothing is sent."""
+    every batch, this study's spend + the batch's worst case must stay under the cap; otherwise nothing is sent.
+    `max_tokens` overrides the designs' output limit for every call (the Claude re-run, PREREG §12, 2026-11-16)."""
     prov = provider_of(model)
     calls, rnd, active, stop = 0, 0, list(jobs), None
     while active:
@@ -204,6 +206,8 @@ def run_batch(provider, model, jobs, out_path, info):
             req = job.next_request()
             if req is None:
                 continue
+            if max_tokens:
+                req = dict(req, max_tokens=max_tokens)
             k = f"{job.key}#{rnd}"
             items.append((k, req))
             owners[k] = job
@@ -229,9 +233,9 @@ def run_batch(provider, model, jobs, out_path, info):
     return info
 
 
-def run(alias, phase, records, provider=None, workers=None):
+def run(alias, phase, records, provider=None, workers=None, tag=None, max_tokens=None):
     model = V1.MODELS[alias]
-    rd = RUNS / f"{alias}-{phase}"
+    rd = RUNS / (f"{alias}-{phase}-{tag}" if tag else f"{alias}-{phase}")
     rd.mkdir(parents=True, exist_ok=True)
     out = rd / "results.jsonl"
     finished = done_keys(out)
@@ -243,22 +247,50 @@ def run(alias, phase, records, provider=None, workers=None):
     if provider is None:
         from research.agents_benchmark.providers import provider_for
         provider = provider_for(model, rd)
-    info = {"model": model, "phase": phase, "jobs": len(jobs), "already_done": len(finished), "started": time.time(),
-            "frozen": frozen_check()}
-    print(f"[paper2] {alias}/{phase}: {len(jobs)} jobs ({len(finished)} already done)", flush=True)
+    info = {"model": model, "phase": phase, "tag": tag, "max_tokens_override": max_tokens, "jobs": len(jobs),
+            "already_done": len(finished), "started": time.time(), "frozen": frozen_check()}
+    print(f"[paper2] {alias}/{phase}{'/' + tag if tag else ''}: {len(jobs)} jobs ({len(finished)} already done)",
+          flush=True)
     if getattr(provider, "batch", False):
-        info = run_batch(provider, model, jobs, out, info)
+        info = run_batch(provider, model, jobs, out, info, max_tokens)
     else:
+        if max_tokens:
+            raise SystemExit("--max-tokens is implemented for batch providers only")
         info = run_online(provider, model, jobs, out, info, workers)
     (rd / f"run_info_{int(info['started'])}.json").write_text(json.dumps(info, indent=1))
     print(f"[paper2] done {info['done']}/{info['jobs']}; stopped: {info['stopped']}", flush=True)
     return info
 
 
-def project(alias, records):
+def qa(rows):
+    """Lesson of 2026-11-16: a delivered draft is not necessarily a report. Per design: final calls stopped at the
+    output limit, drafts without an Impression section, median delivered length. `passed` needs both shares ≤ 5 %."""
+    import re
+    import statistics
+    last = {}
+    for r in rows:                                    # as the analysis: the last delivered ('ok') line of each key
+        if (r.get("result") or {}).get("status") == "ok":
+            last[r["key"]] = r
+    rows = list(last.values())
+    out = {}
+    for d in sorted({r["arm"] for r in rows}):
+        rr = [r for r in rows if r["arm"] == d]
+        finals = [([c for c in (r.get("calls") or []) if isinstance(c, dict)] or [{}])[-1] for r in rr]
+        cut = sum(1 for c in finals if "max_tokens" in str(c.get("stop_reason")).lower())   # Gemini: FinishReason.*
+        texts = [(r["result"].get("delivered") or "") for r in rr]
+        no_imp = sum(1 for t in texts if not re.search(r"impression", t, re.I))
+        out[d] = {"n": len(rr), "cut_at_limit": cut, "without_impression": no_imp,
+                  "median_chars": statistics.median([len(t) for t in texts]) if texts else 0}
+    out["passed"] = all(v["cut_at_limit"] <= 0.05 * v["n"] and v["without_impression"] <= 0.05 * v["n"]
+                        for k, v in out.items() if k != "passed")
+    return out
+
+
+def project(alias, records, tag=None):
     """Pilot mean cost per job, per design, times the planned full jobs; the full run needs ≤ the projection limit."""
     model = V1.MODELS[alias]
-    rows = [json.loads(x) for x in (RUNS / f"{alias}-pilot" / "results.jsonl").read_text(encoding="utf-8").splitlines()]
+    pilot_dir = RUNS / (f"{alias}-pilot-{tag}" if tag else f"{alias}-pilot")
+    rows = [json.loads(x) for x in (pilot_dir / "results.jsonl").read_text(encoding="utf-8").splitlines()]
     per = {}
     for d in set(r["arm"] for r in rows):
         us = [r["usd"] for r in rows if r["arm"] == d]
@@ -273,12 +305,15 @@ def project(alias, records):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["records", "pilot", "project", "full", "repeat", "plan"])
+    ap.add_argument("cmd", choices=["records", "pilot", "project", "full", "repeat", "plan", "qa"])
+    ap.add_argument("--phase", default="pilot", help="qa: which run folder to check (pilot or full)")
     ap.add_argument("--model", default="gemini", choices=sorted(PLAN))
     ap.add_argument("--results")
     ap.add_argument("--sets")
     ap.add_argument("--geometry", default=str(RUNS / "geometry.json"), help="acquisition blocks (geometry.py)")
     ap.add_argument("--consensus", help="consensus_eval.py's output folder (D5 views)")
+    ap.add_argument("--tag", help="suffix of the run folders, for a logged re-run (e.g. 'long')")
+    ap.add_argument("--max-tokens", type=int, help="output limit for every call of a logged re-run (batch only)")
     a = ap.parse_args(argv)
     if a.cmd == "records" and a.geometry and not Path(a.geometry).exists():
         raise SystemExit(f"{a.geometry} is missing: run research.paper_2.geometry first")
@@ -306,17 +341,22 @@ def main(argv=None):
                           "full_jobs": Counter(d for _, d in planned(recs, a.model))}, indent=1))
         return 0
     if a.cmd == "project":
-        print(json.dumps(project(a.model, recs), indent=1))
+        print(json.dumps(project(a.model, recs, a.tag), indent=1))
         return 0
+    if a.cmd == "qa":
+        rd = RUNS / (f"{a.model}-{a.phase}-{a.tag}" if a.tag else f"{a.model}-{a.phase}")
+        res = qa([json.loads(x) for x in (rd / "results.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()])
+        print(json.dumps(res, indent=1))
+        return 0 if res["passed"] else 1
     if a.cmd in ("full", "repeat"):
         fz = frozen_check()
         if not fz["passed"]:
             raise SystemExit(f"frozen files changed after the pilot: {fz['changed']} (PREREG §8): log a deviation first")
-        pj = project(a.model, recs)
+        pj = project(a.model, recs, a.tag)
         if not pj["fits"]:
             print(json.dumps(pj, indent=1))
             raise SystemExit("projection above the limit: apply the registered reductions (PREREG §8) first")
-    run(a.model, a.cmd, recs)
+    run(a.model, a.cmd, recs, tag=a.tag, max_tokens=a.max_tokens)
     return 0
 
 
