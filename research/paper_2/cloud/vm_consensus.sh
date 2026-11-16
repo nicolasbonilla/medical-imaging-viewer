@@ -55,6 +55,8 @@ for p in mslesseg_ openms_ sub-; do
 done
 for t in mindglide wmhsynthseg; do for p in mslesseg_ openms_; do $G "$BK/toolbench/cohort/${p}*_${t}_seg.nii.gz" $D/pf/toolbench/ || exit 1; done; done
 $G "$BK/toolbench/cohort/sub-*_seg.nii.gz" $D/pf/toolbench/ || exit 1
+# WMH 2017 labels: the lesion-level supplement's reference on A (as paper 1's evaluation downloads them)
+gcloud storage cp -r --quiet "$BK/wmh2017/test" "$BK/wmh2017/training" "$BK/wmh2017/additional_annotations" $D/wmh/ || exit 1
 $G "$BK/inputs/lstai_atlas/sub-mni152_space-mni_t1.nii.gz" $D/atlas/ || exit 1
 du -sh $D/*; log
 

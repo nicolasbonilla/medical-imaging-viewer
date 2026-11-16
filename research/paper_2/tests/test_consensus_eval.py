@@ -101,3 +101,53 @@ def test_planned_counts_d5_only_where_its_view_exists(tmp_path):
     d5 = [(r["scan"], r["arm"]) for r, d in RN.planned(recs, "gemini") if d == "D5"]
     assert ("wmh_x_1", "flames_ens") in d5 and all(arm == "flames_ens" for _, arm in d5)
     assert ("sub-1", "flames_ens") not in d5                                    # no LST-AI: no D5 job
+
+
+class _SpyPF:
+    """Records the prediction it is given; the real metrics module (paper F) is used on the VM."""
+    def __init__(self):
+        self.pred = None
+
+    def lesion_metrics(self, pred, ref, zooms):
+        self.pred = pred.copy()
+        return {"n_ref": 2, "n_pred": int(pred.sum()), "tp_ref": 1, "tp_pred": 1, "false_lesions": 0, "f1": 0.5,
+                "dice": 0.1}
+
+    def components(self, pred, zooms):
+        self.pred = pred.copy()
+        return None, int(pred.sum()), None
+
+
+def test_accuracy_uses_paper1_threshold_and_leaves_label_2_out():
+    import numpy as np
+    kept = np.array([1, 1, 1, 0, 1], bool)                  # the variant's components (map >= 0.5)
+    strict = np.array([1, 0, 1, 1, 1], bool)                # FLAMeS-ens map > 0.5
+    ref = np.array([1, 0, 0, 0, 1], bool)
+    other = np.array([0, 0, 1, 0, 0], bool)                 # WMH 2017 label 2
+    pf = _SpyPF()
+    out = CE.accuracy(kept, strict, ref, other, (1, 1, 1), pf)
+    assert pf.pred.tolist() == [True, False, False, False, True] and set(out) == set(CE.ACC_KEYS)
+    out = CE.accuracy(kept, strict, None, None, (1, 1, 1), pf)               # B and C2: the count only
+    assert out == {"n_pred": 3} and pf.pred.tolist() == [True, False, True, False, True]
+
+
+def test_gate_accuracy_compares_with_paper1():
+    pu = {"s1": {"n_ref": "4", "false_lesions": "3", "f1": "0.6667"}, "b1": {}}
+    ok = {"id": "s1", "rows": {"identity": {"acc": {"n_ref": 4, "false_lesions": 3, "f1": 2 / 3}}}}
+    healthy = {"id": "b1", "rows": {"identity": {"acc": {"n_pred": 5}}}}             # no reference: not compared
+    g = CE.gate_accuracy([ok, healthy], pu)
+    assert g["passed"] and g["compared"] == 1
+    off = json.loads(json.dumps(ok))
+    off["rows"]["identity"]["acc"]["false_lesions"] = 2
+    assert not CE.gate_accuracy([off], pu)["passed"]
+    assert not CE.gate_accuracy([healthy], pu)["passed"]                         # nothing compared is not a pass
+
+
+def test_accuracy_writer(tmp_path):
+    rec = {"id": "s1", "block": "C1", "rows": {
+        "identity": {"acc": {"n_ref": 4, "n_pred": 5, "tp_ref": 3, "tp_pred": 3, "false_lesions": 2, "f1": 2 / 3}},
+        "d5_primary": {"acc": {"n_ref": 4, "n_pred": 3, "tp_ref": 3, "tp_pred": 3, "false_lesions": 0, "f1": 6 / 7}}}}
+    CE.write_accuracy([rec], str(tmp_path))
+    rows = list(csv.DictReader(open(tmp_path / "consensus_accuracy.csv", newline="")))
+    assert [r["arm"] for r in rows] == ["flames_ens", "d5_primary"]
+    assert rows[0]["f1"] == "0.6667" and rows[1]["false_lesions"] == "0"

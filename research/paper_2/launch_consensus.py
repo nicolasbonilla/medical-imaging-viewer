@@ -2,7 +2,7 @@
 
 It uses paper 1's VM launcher (the same safety layers: self-deleting, wall-clock guard, project fixed), paper 1's
 evaluation code at the evaluated commit, and the atlas transforms kept by paper 1's reproduction run. When the VM is
-done, it downloads the outputs to research/paper_2/runs/consensus/ (ignored by git; non-commercial sources).
+done, it downloads the outputs to research/paper_2/runs/<VM name>/ (ignored by git; non-commercial sources).
 
     python -m research.paper_2.launch_consensus --p1 <paper-1 worktree> --p1-commit <sha of the reproduction run>
 
@@ -67,7 +67,7 @@ def main(argv=None):
                                f"--format=value(name)", shell=True, capture_output=True, text=True, env=ENV).stdout
         if name not in alive:
             raise SystemExit(f"{name} ended without DONE: read {BK}/paper2/logs/{name}.log")
-    dst = os.path.join(HERE, "runs", "consensus")
+    dst = os.path.join(HERE, "runs", name)            # never over an earlier run's outputs (compare them instead)
     os.makedirs(dst, exist_ok=True)
     sh(f'gcloud storage cp -r "{out_uri}/*" "{dst}" --quiet --project={PROJECT}')
     print(open(os.path.join(dst, "consensus_gate.json")).read()[:1500])

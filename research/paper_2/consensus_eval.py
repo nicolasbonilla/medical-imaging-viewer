@@ -20,8 +20,15 @@ is kept, for D5's code-written line.
 its region flags and its lesion list (`per_unit.csv`, `lesions.csv`) — those of the paper-1 run whose transforms it
 uses, i.e. the reproduction run (PREREG §12, 2026-11-16). A failure stops the job, and nothing is written as a result.
 
+**Lesion-level supplement (PREREG §5.2 item 6):** each variant's kept lesions matched as paper 1 matches an arm
+(`evaluate_mimics.one_unit`): the FLAMeS-ens map > 0.5, restricted to the kept components, on the native grid,
+`metrics.lesion_metrics` (26-connected, >= 14.137 mm^3) against WMH 2017 label 1 with label 2 left out of the
+prediction (A) or the expert mask (C1). B (no MS, no lesion reference) and C2 (no reference in paper 1) get the
+lesion count only. **Gate GD5-acc:** the identity variant must equal paper 1's FLAMeS-ens n_ref, false_lesions and F1
+on every A and C1 scan.
+
 **Outputs** (in --out): `consensus_per_unit.csv` and `consensus_lesions.csv` (paper 1's columns, plus `n_single`),
-and `consensus_gate.json`.
+`consensus_accuracy.csv` (the supplement, identity included as FLAMeS-ens) and `consensus_gate.json`.
 
     python research/paper_2/consensus_eval.py --p1-results <paper 1 results> --pf ... --mimics ... --wmh ... \
         --manifests ... --atlas-t1 ... --work <paper 1 work dir with registration/> --out <dir> --workers 8
@@ -85,6 +92,31 @@ def _warp(mask, u, img, d, tag):
     return m
 
 
+ACC_KEYS = ("n_ref", "n_pred", "tp_ref", "tp_pred", "false_lesions", "f1")
+
+
+def reference(u, d, img):
+    """Paper 1's accuracy reference (`evaluate_mimics.one_unit`): (reference mask, mask left out of the prediction)."""
+    if u["block"] == "A":
+        lab = np.rint(np.asarray(nib.load(os.path.join(d["wmh"], u["wmh"])).dataobj)).astype(np.int16)
+        return lab == 1, lab == 2
+    if u["block"] == "C1":
+        return np.asarray(img.get_fdata(dtype=np.float32)) > 0.5, None
+    return None, None
+
+
+def accuracy(kept, strict, ref, other, zooms, pf):
+    """One variant's lesion-level counts, matched as paper 1 matches an arm: `kept` (the variant's components) within
+    `strict` (the FLAMeS-ens map > 0.5), label 2 left out (A), `pf.lesion_metrics` against the reference."""
+    pred = np.asarray(kept, bool) & np.asarray(strict, bool)
+    if other is not None:
+        pred = pred & ~other
+    if ref is None:
+        return {"n_pred": int(pf.components(pred, zooms)[1])}
+    lm = pf.lesion_metrics(pred, ref, zooms)
+    return {k: lm[k] for k in ACC_KEYS}
+
+
 def one(args):
     u, d = args
     t0 = time.time()
@@ -95,12 +127,16 @@ def one(args):
     else:
         gr, dis_img = True, img
     app = EM.app_for(dis_img)
-    bins = {}
+    bins, strict = {}, None
     for a in ("flames_ens",) + PARTNERS:
         if a in u["arms"]:
             m = EM.arm_map(u, a, d, img)
             if m is not None:
                 bins[a] = m >= 0.5
+                if a == "flames_ens":
+                    strict = m > 0.5                  # paper 1's accuracy threshold
+    zooms = img.header.get_zooms()[:3]
+    ref, other = reference(u, d, img)
     rec = {"id": u["id"], "block": u["block"], "base": u["base"], "T": u["T"], "gr_pass": gr, "rows": {}}
     if "flames_ens" not in bins:
         rec["flames_missing"] = True
@@ -114,7 +150,8 @@ def one(args):
         plan["d5_k3"] = ([bins[p] for p in PARTNERS], 3)
     for name, (partners, k) in plan.items():
         agreed, single, n_a, n_s = C.split(fl, partners, k)
-        row = {"available": True, "n_native_agreed": n_a, "n_native_single": n_s}
+        row = {"available": True, "n_native_agreed": n_a, "n_native_single": n_s,
+               "acc": accuracy(agreed, strict, ref, other, zooms, EM.PF)}
         if gr:
             blk, les = EM.dis_block(_warp(agreed, u, img, d, name), dis_img, app)
             row.update(blk)
@@ -155,6 +192,34 @@ def gate_identity(recs, pu, les):
         if mine != theirs or not same_les:
             bad.append({"id": r["id"], "mine": mine, "paper1": theirs, "lesions_equal": same_les})
     return {"compared": n, "equal": n - len(bad), "passed": not bad and n > 0, "mismatches": bad[:20]}
+
+
+def gate_accuracy(recs, pu):
+    """GD5-acc: the identity variant's lesion-level counts equal paper 1's FLAMeS-ens accuracy on every A and C1 scan."""
+    bad, n = [], 0
+    for r in recs:
+        acc = (r["rows"].get("identity") or {}).get("acc") or {}
+        if "n_ref" not in acc:
+            continue
+        n += 1
+        ref = pu.get(r["id"]) or {}
+        mine = {"n_ref": str(acc["n_ref"]), "false_lesions": str(acc["false_lesions"]), "f1": str(rnd(acc["f1"], 4))}
+        theirs = {k: ref.get(k) for k in mine}
+        if mine != theirs:
+            bad.append({"id": r["id"], "mine": mine, "paper1": theirs})
+    return {"compared": n, "equal": n - len(bad), "passed": not bad and n > 0, "mismatches": bad[:20]}
+
+
+def write_accuracy(recs, out):
+    with open(os.path.join(out, "consensus_accuracy.csv"), "w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["id", "block", "arm"] + list(ACC_KEYS))
+        for r in recs:
+            for v in ("identity",) + VARIANTS:
+                acc = (r["rows"].get(v) or {}).get("acc")
+                if acc is not None:
+                    w.writerow([r["id"], r["block"], "flames_ens" if v == "identity" else v]
+                               + [rnd(acc[k], 4) if k == "f1" else acc.get(k, "") for k in ACC_KEYS])
 
 
 def write(recs, out):
@@ -198,6 +263,8 @@ def main(argv=None):
         recs = pool.map(one, [(u, d) for u in us], chunksize=1)
     pu, les = paper1_reference(a.p1_results)
     gate = gate_identity(recs, pu, les)
+    gate["accuracy"] = gate_accuracy(recs, pu)
+    gate["passed"] = gate["passed"] and gate["accuracy"]["passed"]
     gate.update({"scans": len(recs), "flames_missing": sum(1 for r in recs if r.get("flames_missing")),
                  "excluded_no_lstai": sum(1 for r in recs if r["rows"] and "d5_primary" not in r["rows"]),
                  "five_arm_scans": sum(1 for r in recs if "d5_k2" in r["rows"]),
@@ -206,10 +273,12 @@ def main(argv=None):
     os.makedirs(a.out, exist_ok=True)
     json.dump(gate, open(os.path.join(a.out, "consensus_gate.json"), "w"), indent=1)
     print("GD5:", json.dumps({k: gate[k] for k in ("compared", "equal", "passed")}), flush=True)
+    print("GD5-acc:", json.dumps({k: gate["accuracy"][k] for k in ("compared", "equal", "passed")}), flush=True)
     if not gate["passed"]:
-        print(json.dumps(gate["mismatches"][:5], indent=1), flush=True)
+        print(json.dumps(gate["mismatches"][:5] + gate["accuracy"]["mismatches"][:5], indent=1), flush=True)
         return 1
     write(recs, a.out)
+    write_accuracy(recs, a.out)
     print(json.dumps({k: v for k, v in gate.items() if k != "mismatches"}), flush=True)
     return 0
 

@@ -197,6 +197,13 @@ class GeminiVertex:
                             b["type"] == "tool_use" for b in blocks) else fr.lower())}
             except Exception as e:  # noqa: BLE001 - retried, then reported as a missing draft
                 last = f"{type(e).__name__}: {str(e)[:300]}"
+                if "UNAUTHENTICATED" in last or "401" in last:
+                    # gcloud hands back its cached token, which can expire before the 40-min refresh: fetch a new one
+                    # (paper 2 full run, 2026-11-16: 2406 drafts lost to 401 before this).
+                    with _CLIENT_LOCK:
+                        self._token_at = 0
+                    time.sleep(2)
+                    continue
                 if "RESOURCE_EXHAUSTED" in last or "429" in last or "503" in last or "500" in last:
                     import random
                     time.sleep(min(120, 5 * 2 ** attempt) + random.uniform(0, 5))   # back off with jitter
