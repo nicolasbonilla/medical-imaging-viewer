@@ -238,9 +238,122 @@ class GeminiVertex:
         return {k: f.result() for k, f in futs.items()}
 
 
+# ===================================================================================== Open models on Vertex AI (MaaS)
+class VertexOpenAI:
+    """Open models served by Vertex AI Model Garden as a service (gpt-oss-120b, DeepSeek V4.1 Flash), through the
+    OpenAI-compatible chat-completions endpoint, global location, project mstool-research only (paper 2 PREREG §12,
+    2026-11-16). Standard library HTTP only; the response is not compressed."""
+    batch = False
+    URL = "https://aiplatform.googleapis.com/v1/projects/{p}/locations/global/endpoints/openapi/chat/completions"
+
+    def __init__(self, run_dir, workers=None):
+        self.ledger = Ledger(run_dir)
+        self.workers = workers or int(os.environ.get("AB_MAAS_WORKERS", "8"))
+        self._tok, self._tok_at = None, 0.0
+
+    def token(self, force=False):
+        with _CLIENT_LOCK:
+            if force or self._tok is None or time.time() - self._tok_at > 40 * 60:
+                self._tok = GeminiVertex._gcloud_token(None)
+                self._tok_at = time.time()
+            return self._tok
+
+    @staticmethod
+    def messages(req):
+        out = [{"role": "system", "content": req["system"]}]
+        for m in req["messages"]:
+            c = m["content"]
+            if isinstance(c, str):
+                out.append({"role": m["role"], "content": c})
+                continue
+            if m["role"] == "assistant":
+                text = "".join(b.get("text", "") for b in c if b.get("type") == "text")
+                calls = [{"id": b["id"], "type": "function",
+                          "function": {"name": b["name"], "arguments": json.dumps(b.get("input") or {})}}
+                         for b in c if b.get("type") == "tool_use"]
+                msg = {"role": "assistant", "content": text or None}
+                if calls:
+                    msg["tool_calls"] = calls
+                out.append(msg)
+                continue
+            for b in c:
+                if b.get("type") == "tool_result":
+                    content = b["content"] if isinstance(b["content"], str) else json.dumps(b["content"])
+                    out.append({"role": "tool", "tool_call_id": b["tool_use_id"], "content": content})
+            texts = [b["text"] for b in c if b.get("type") == "text"]
+            if texts:
+                out.append({"role": "user", "content": "\n".join(texts)})
+        return out
+
+    @classmethod
+    def body(cls, model, req):
+        body = {"model": model, "messages": cls.messages(req), "max_tokens": int(req["max_tokens"])}
+        if os.environ.get("AB_MAAS_REASONING_EFFORT"):
+            body["reasoning_effort"] = os.environ["AB_MAAS_REASONING_EFFORT"]
+        if req.get("tools"):
+            body["tools"] = [{"type": "function", "function": {"name": t["name"], "description": t["description"],
+                                                               "parameters": t["input_schema"]}} for t in req["tools"]]
+            body["tool_choice"] = "none" if req.get("tool_choice") == "none" else "auto"
+        return body
+
+    @staticmethod
+    def parse(d):
+        ch = (d.get("choices") or [{}])[0]
+        msg = ch.get("message") or {}
+        blocks = []
+        if msg.get("content"):
+            blocks.append({"type": "text", "text": msg["content"]})
+        for tc in msg.get("tool_calls") or []:
+            try:
+                args = json.loads(tc["function"].get("arguments") or "{}")
+            except ValueError:
+                args = {}
+            blocks.append({"type": "tool_use", "id": tc["id"], "name": tc["function"]["name"], "input": args})
+        fr = ch.get("finish_reason") or ""
+        stop = "max_tokens" if fr == "length" else ("tool_use" if any(b["type"] == "tool_use" for b in blocks)
+                                                    else fr or "stop")
+        return {"text": msg.get("content") or "", "content": blocks, "usage": d.get("usage") or {}, "stop_reason": stop}
+
+    def one(self, model, key, req):
+        import random
+        import urllib.error
+        import urllib.request
+        last = None
+        data = json.dumps(self.body(model, req)).encode("utf-8")
+        for attempt in range(int(os.environ.get("AB_MAAS_ATTEMPTS", "6"))):
+            r = urllib.request.Request(self.URL.format(p=config.GCP_PROJECT), data=data, method="POST", headers={
+                "Authorization": f"Bearer {self.token()}", "x-goog-user-project": config.GCP_PROJECT,
+                "Content-Type": "application/json"})
+            t0 = time.time()
+            try:
+                with urllib.request.urlopen(r, timeout=180) as resp:
+                    d = json.load(resp)
+            except urllib.error.HTTPError as e:
+                last = f"HTTP {e.code}: {e.read()[:300]!r}"
+                if e.code == 401:
+                    self.token(force=True)
+                    continue
+                if e.code in (429, 500, 502, 503, 504):
+                    time.sleep(min(120, 5 * 2 ** attempt) + random.uniform(0, 5))
+                    continue
+                return {"error": last}
+            except Exception as e:  # noqa: BLE001 - network errors are retried, then reported as a missing draft
+                last = f"{type(e).__name__}: {str(e)[:300]}"
+                time.sleep(min(60, 3 * 2 ** attempt))
+                continue
+            out = self.parse(d)
+            out["latency_s"] = time.time() - t0
+            out["model_returned"] = d.get("model")
+            self.ledger.add(model, key, out["usage"], batch=False)
+            return out
+        return {"error": last}
+
+
 def provider_for(model, run_dir):
     if model.startswith("claude"):
         return AnthropicBatch(run_dir)
     if model.startswith("gemini"):
         return GeminiVertex(run_dir)
+    if model.endswith("-maas"):
+        return VertexOpenAI(run_dir)
     raise ValueError(f"no online provider for {model} (Gemma runs on Kaggle: research/agents_benchmark/kaggle)")

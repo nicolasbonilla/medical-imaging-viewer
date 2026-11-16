@@ -14,7 +14,21 @@ _LOCK = threading.Lock()
 
 
 def provider_of(model):
-    return "anthropic" if model.startswith("claude") else "gemini" if model.startswith("gemini") else "local"
+    if model.startswith("claude"):
+        return "anthropic"
+    if model.startswith("gemini"):
+        return "gemini"
+    if model.endswith("-maas"):                       # open models on Vertex AI (paper 2, 2026-11-16)
+        return "maas"
+    return "local"
+
+
+def cost_maas(model, usage):
+    p = config.PRICES[model]
+    prompt = usage.get("prompt_tokens", 0) or 0
+    cached = ((usage.get("prompt_tokens_details") or {}).get("cached_tokens", 0) or 0)
+    out = usage.get("completion_tokens", 0) or 0
+    return ((prompt - cached) * p["input"] + cached * p.get("cached_input", p["input"]) + out * p["output"]) / 1e6
 
 
 def cost_anthropic(model, usage, batch=True):
@@ -43,6 +57,8 @@ def cost(model, usage, batch=True):
         return cost_anthropic(model, usage, batch)
     if prov == "gemini":
         return cost_gemini(model, usage)
+    if prov == "maas":
+        return cost_maas(model, usage)
     return 0.0
 
 
@@ -84,6 +100,8 @@ def estimate_request_usd(model, request, batch=True):
         return cost_anthropic(model, {"input_tokens": tin, "output_tokens": tout}, batch)
     if provider_of(model) == "gemini":
         return cost_gemini(model, {"prompt_token_count": tin, "candidates_token_count": tout})
+    if provider_of(model) == "maas":
+        return cost_maas(model, {"prompt_tokens": tin, "completion_tokens": tout})
     return 0.0
 
 

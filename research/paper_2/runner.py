@@ -34,9 +34,11 @@ RECORDS = HERE / "records.jsonl"
 SEED = 20261114
 # Raised by the owner on 2026-11-16 (PREREG §12): Anthropic from 10 / 7 USD for the Claude re-run; Gemini from 30 / 25
 # USD (free Google credit) for the Gemini 4 Carbon arm
-CAP = {"gemini": 70.0, "anthropic": 25.0}
-PROJECTION_LIMIT = {"gemini": 60.0, "anthropic": 20.0}
-MODELS = {**V1.MODELS, "gemini4": "gemini-4-carbon"}   # secondary arm added by amendment (PREREG §12, 2026-11-16)
+CAP = {"gemini": 70.0, "anthropic": 25.0, "maas": 15.0}
+PROJECTION_LIMIT = {"gemini": 60.0, "anthropic": 20.0, "maas": 12.0}
+# secondary arms added by amendment (PREREG §12, 2026-11-16); "maas" = open models on Vertex AI, free Google credit
+MODELS = {**V1.MODELS, "gemini4": "gemini-4-carbon", "gptoss": "openai/gpt-oss-120b-maas",
+          "deepseek": "deepseek-ai/deepseek-v4.1-flash-maas"}
 SETTING_P = ("dlbs", "wmh2017")
 
 # PREREG §4: which designs each model runs, on which records
@@ -46,6 +48,8 @@ PLAN = {
     "sonnet": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
     "gemma": {"designs": ("D1",), "arms": ("flames_ens",), "extra": {}},
     "gemini4": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
+    "gptoss": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
+    "deepseek": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
 }
 VIEW_OF = {"D1": "base", "D2": "d2", "D2i": "d2", "D3": "base", "D4": "d4", "D5": "d5"}
 
