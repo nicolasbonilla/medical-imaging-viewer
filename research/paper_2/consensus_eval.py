@@ -219,7 +219,7 @@ def write_accuracy(recs, out):
                 acc = (r["rows"].get(v) or {}).get("acc")
                 if acc is not None:
                     w.writerow([r["id"], r["block"], "flames_ens" if v == "identity" else v]
-                               + [rnd(acc[k], 4) if k == "f1" else acc.get(k, "") for k in ACC_KEYS])
+                               + [rnd(acc.get(k), 4) if k == "f1" else acc.get(k, "") for k in ACC_KEYS])
 
 
 def write(recs, out):

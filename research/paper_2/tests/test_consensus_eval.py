@@ -147,7 +147,9 @@ def test_accuracy_writer(tmp_path):
     rec = {"id": "s1", "block": "C1", "rows": {
         "identity": {"acc": {"n_ref": 4, "n_pred": 5, "tp_ref": 3, "tp_pred": 3, "false_lesions": 2, "f1": 2 / 3}},
         "d5_primary": {"acc": {"n_ref": 4, "n_pred": 3, "tp_ref": 3, "tp_pred": 3, "false_lesions": 0, "f1": 6 / 7}}}}
-    CE.write_accuracy([rec], str(tmp_path))
+    healthy = {"id": "b1", "block": "B", "rows": {"identity": {"acc": {"n_pred": 5}}, "d5_primary": {"acc": {"n_pred": 2}}}}
+    CE.write_accuracy([rec, healthy], str(tmp_path))                  # count-only rows (B, C2) have no F1
     rows = list(csv.DictReader(open(tmp_path / "consensus_accuracy.csv", newline="")))
-    assert [r["arm"] for r in rows] == ["flames_ens", "d5_primary"]
+    assert [r["arm"] for r in rows] == ["flames_ens", "d5_primary"] * 2
     assert rows[0]["f1"] == "0.6667" and rows[1]["false_lesions"] == "0"
+    assert rows[3]["n_pred"] == "2" and rows[3]["f1"] == "" and rows[3]["n_ref"] == ""
