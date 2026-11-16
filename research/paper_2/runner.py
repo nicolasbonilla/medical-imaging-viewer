@@ -105,6 +105,32 @@ def pilot_set(records):
     return out
 
 
+REPEAT_N, REPEAT_DESIGNS, REPEAT_DRAFTS = 50, ("D1", "D2"), (2, 3)
+
+
+def repeat_set(records):
+    """PREREG §4: a seeded subset of 50 setting-P records (FLAMeS-ens; DLBS and WMH 2017) for drafts 2 and 3."""
+    rng = random.Random(f"{SEED}-repeat")
+    keys = sorted((r["scan"], r["arm"]) for r in records if r["set"] in SETTING_P and r["arm"] == "flames_ens")
+    return set(rng.sample(keys, min(REPEAT_N, len(keys))))
+
+
+def make_repeat_job(rec, design, k):
+    """The same job, keyed as draft k (2 or 3): one more independent call with the same prompt."""
+    job = make_job(rec, design)
+    if job is None:
+        return None
+    cls = type(job)
+    job.__class__ = type(cls.__name__, (cls,), {"key": property(lambda s, _b=cls.key: f"{_b.fget(s)}|draft{k}")})
+    return job
+
+
+def repeat_jobs(records):
+    keep = repeat_set(records)
+    return [j for j in (make_repeat_job(r, d, k) for r in records if (r["scan"], r["arm"]) in keep
+                        for d in REPEAT_DESIGNS for k in REPEAT_DRAFTS) if j is not None]
+
+
 def spent(prov):
     tot = 0.0
     for p in RUNS.glob("*/ledger.jsonl"):
@@ -172,8 +198,11 @@ def run(alias, phase, records, provider=None, workers=None):
     rd.mkdir(parents=True, exist_ok=True)
     out = rd / "results.jsonl"
     finished = done_keys(out)
-    pairs = planned(records, alias, pilot_set(records) if phase == "pilot" else None)
-    jobs = [j for j in (make_job(r, d) for r, d in pairs) if j is not None and j.key not in finished]
+    if phase == "repeat":
+        jobs = [j for j in repeat_jobs(records) if j.key not in finished]
+    else:
+        pairs = planned(records, alias, pilot_set(records) if phase == "pilot" else None)
+        jobs = [j for j in (make_job(r, d) for r, d in pairs) if j is not None and j.key not in finished]
     if provider is None:
         from research.agents_benchmark.providers import provider_for
         provider = provider_for(model, rd)
@@ -204,7 +233,7 @@ def project(alias, records):
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["records", "pilot", "project", "full", "plan"])
+    ap.add_argument("cmd", choices=["records", "pilot", "project", "full", "repeat", "plan"])
     ap.add_argument("--model", default="gemini", choices=sorted(PLAN))
     ap.add_argument("--results")
     ap.add_argument("--sets")
@@ -239,7 +268,7 @@ def main(argv=None):
     if a.cmd == "project":
         print(json.dumps(project(a.model, recs), indent=1))
         return 0
-    if a.cmd == "full":
+    if a.cmd in ("full", "repeat"):
         fz = frozen_check()
         if not fz["passed"]:
             raise SystemExit(f"frozen files changed after the pilot: {fz['changed']} (PREREG §8): log a deviation first")
