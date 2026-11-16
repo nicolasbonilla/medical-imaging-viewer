@@ -34,6 +34,19 @@ def test_parse_text_tool_call_and_cut_reports():
     assert cut["stop_reason"] == "max_tokens" and cut["text"] == "## Find"
 
 
+def test_mistral_adds_the_function_name_and_vertex_does_not(tmp_path):
+    from research.agents_benchmark.providers import MistralAPI
+    req = {"system": "S", "max_tokens": 10, "messages": [
+        {"role": "user", "content": "r"},
+        {"role": "assistant", "content": [{"type": "tool_use", "id": "abc123XYZ", "name": "get_regions", "input": {}}]},
+        {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "abc123XYZ", "content": "{}"}]}]}
+    assert MistralAPI.body("mistral-large-4-0", req)["messages"][3]["name"] == "get_regions"
+    assert "name" not in VertexOpenAI.body("openai/gpt-oss-120b-maas", req)["messages"][3]
+    assert isinstance(provider_for("mistral-large-4-0", tmp_path), MistralAPI)
+    assert L.provider_of("mistral-large-4-0") == "mistral"
+    assert abs(L.cost("mistral-large-4-0", {"prompt_tokens": 1_000_000, "completion_tokens": 1_000_000}) - 2.8) < 1e-9
+
+
 def test_pricing_and_routing(tmp_path):
     assert L.provider_of("openai/gpt-oss-120b-maas") == "maas"
     usd = L.cost("openai/gpt-oss-120b-maas", {"prompt_tokens": 1_000_000, "completion_tokens": 1_000_000})

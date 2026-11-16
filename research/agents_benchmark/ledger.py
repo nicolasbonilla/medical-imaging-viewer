@@ -20,6 +20,8 @@ def provider_of(model):
         return "gemini"
     if model.endswith("-maas"):                       # open models on Vertex AI (paper 2, 2026-11-16)
         return "maas"
+    if model.startswith("mistral"):                   # Mistral's own API (paper 2, 2026-11-17)
+        return "mistral"
     return "local"
 
 
@@ -57,7 +59,7 @@ def cost(model, usage, batch=True):
         return cost_anthropic(model, usage, batch)
     if prov == "gemini":
         return cost_gemini(model, usage)
-    if prov == "maas":
+    if prov in ("maas", "mistral"):                   # same usage fields (OpenAI-compatible)
         return cost_maas(model, usage)
     return 0.0
 
@@ -100,7 +102,7 @@ def estimate_request_usd(model, request, batch=True):
         return cost_anthropic(model, {"input_tokens": tin, "output_tokens": tout}, batch)
     if provider_of(model) == "gemini":
         return cost_gemini(model, {"prompt_token_count": tin, "candidates_token_count": tout})
-    if provider_of(model) == "maas":
+    if provider_of(model) in ("maas", "mistral"):
         return cost_maas(model, {"prompt_tokens": tin, "completion_tokens": tout})
     return 0.0
 

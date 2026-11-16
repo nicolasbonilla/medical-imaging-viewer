@@ -258,9 +258,19 @@ class VertexOpenAI:
                 self._tok_at = time.time()
             return self._tok
 
-    @staticmethod
-    def messages(req):
+    TOOL_NAME_IN_RESULT = False   # Mistral wants the function name on tool messages; Vertex keeps the plain format
+
+    def url(self):
+        return self.URL.format(p=config.GCP_PROJECT)
+
+    def headers(self):
+        return {"Authorization": f"Bearer {self.token()}", "x-goog-user-project": config.GCP_PROJECT,
+                "Content-Type": "application/json"}
+
+    @classmethod
+    def messages(cls, req):
         out = [{"role": "system", "content": req["system"]}]
+        names = {}
         for m in req["messages"]:
             c = m["content"]
             if isinstance(c, str):
@@ -271,6 +281,7 @@ class VertexOpenAI:
                 calls = [{"id": b["id"], "type": "function",
                           "function": {"name": b["name"], "arguments": json.dumps(b.get("input") or {})}}
                          for b in c if b.get("type") == "tool_use"]
+                names.update({b["id"]: b["name"] for b in c if b.get("type") == "tool_use"})
                 msg = {"role": "assistant", "content": text or None}
                 if calls:
                     msg["tool_calls"] = calls
@@ -279,7 +290,10 @@ class VertexOpenAI:
             for b in c:
                 if b.get("type") == "tool_result":
                     content = b["content"] if isinstance(b["content"], str) else json.dumps(b["content"])
-                    out.append({"role": "tool", "tool_call_id": b["tool_use_id"], "content": content})
+                    tm = {"role": "tool", "tool_call_id": b["tool_use_id"], "content": content}
+                    if cls.TOOL_NAME_IN_RESULT and b["tool_use_id"] in names:
+                        tm["name"] = names[b["tool_use_id"]]
+                    out.append(tm)
             texts = [b["text"] for b in c if b.get("type") == "text"]
             if texts:
                 out.append({"role": "user", "content": "\n".join(texts)})
@@ -321,9 +335,7 @@ class VertexOpenAI:
         last = None
         data = json.dumps(self.body(model, req)).encode("utf-8")
         for attempt in range(int(os.environ.get("AB_MAAS_ATTEMPTS", "6"))):
-            r = urllib.request.Request(self.URL.format(p=config.GCP_PROJECT), data=data, method="POST", headers={
-                "Authorization": f"Bearer {self.token()}", "x-goog-user-project": config.GCP_PROJECT,
-                "Content-Type": "application/json"})
+            r = urllib.request.Request(self.url(), data=data, method="POST", headers=self.headers())
             t0 = time.time()
             try:
                 with urllib.request.urlopen(r, timeout=180) as resp:
@@ -358,6 +370,24 @@ class VertexOpenAI:
         return {k: f.result() for k, f in futs.items()}
 
 
+# ===================================================================================== Mistral (its own API)
+class MistralAPI(VertexOpenAI):
+    """Mistral's own chat-completions API (OpenAI-compatible) with the owner's key, read from a file and never printed
+    (paper 2 PREREG §12, 2026-11-17)."""
+    URL = "https://api.mistral.ai/v1/chat/completions"
+    KEY_FILE = Path("C:/Users/Nicolas/.mistral/api_key.txt")
+    TOOL_NAME_IN_RESULT = True
+
+    def url(self):
+        return self.URL
+
+    def token(self, force=False):
+        return self.KEY_FILE.read_text(encoding="utf-8").strip()
+
+    def headers(self):
+        return {"Authorization": f"Bearer {self.token()}", "Content-Type": "application/json"}
+
+
 def provider_for(model, run_dir):
     if model.startswith("claude"):
         return AnthropicBatch(run_dir)
@@ -365,4 +395,6 @@ def provider_for(model, run_dir):
         return GeminiVertex(run_dir)
     if model.endswith("-maas"):
         return VertexOpenAI(run_dir)
+    if model.startswith("mistral"):
+        return MistralAPI(run_dir)
     raise ValueError(f"no online provider for {model} (Gemma runs on Kaggle: research/agents_benchmark/kaggle)")

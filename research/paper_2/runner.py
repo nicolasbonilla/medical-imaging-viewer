@@ -34,11 +34,12 @@ RECORDS = HERE / "records.jsonl"
 SEED = 20261114
 # Raised by the owner on 2026-11-16 (PREREG §12): Anthropic from 10 / 7 USD for the Claude re-run; Gemini from 30 / 25
 # USD (free Google credit) for the Gemini 4 Carbon arm
-CAP = {"gemini": 70.0, "anthropic": 25.0, "maas": 15.0}
-PROJECTION_LIMIT = {"gemini": 60.0, "anthropic": 20.0, "maas": 12.0}
+CAP = {"gemini": 70.0, "anthropic": 25.0, "maas": 15.0, "mistral": 4.0}
+PROJECTION_LIMIT = {"gemini": 60.0, "anthropic": 20.0, "maas": 12.0, "mistral": 3.5}
 # secondary arms added by amendment (PREREG §12, 2026-11-16); "maas" = open models on Vertex AI, free Google credit
 MODELS = {**V1.MODELS, "gemini4": "gemini-4-carbon", "gemini4argon": "gemini-4-argon",
-          "gptoss": "openai/gpt-oss-120b-maas", "deepseek": "deepseek-ai/deepseek-v4.1-flash-maas"}
+          "gptoss": "openai/gpt-oss-120b-maas", "deepseek": "deepseek-ai/deepseek-v4.1-flash-maas",
+          "mistral": "mistral-large-4-0"}
 SETTING_P = ("dlbs", "wmh2017")
 
 # PREREG §4: which designs each model runs, on which records
@@ -51,6 +52,8 @@ PLAN = {
     "gemini4argon": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
     "gptoss": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
     "deepseek": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "extra": {}},
+    # the owner's monthly Mistral allowance is shared with other projects: setting P and the MS set only (no SibBMS)
+    "mistral": {"designs": ("D1", "D2"), "arms": ("flames_ens",), "sets": ("dlbs", "wmh2017", "ms"), "extra": {}},
 }
 VIEW_OF = {"D1": "base", "D2": "d2", "D2i": "d2", "D3": "base", "D4": "d4", "D5": "d5"}
 
@@ -94,6 +97,8 @@ def planned(records, alias, pilot_ids=None):
             continue
         if pilot_ids is None and key in pilot_set(records):
             continue                                  # pilot records are excluded from every analysis (PREREG §8)
+        if p.get("sets") and rec["set"] not in p["sets"]:
+            continue
         if p["arms"] is None or rec["arm"] in p["arms"]:
             for d in p["designs"]:
                 if VIEW_OF[d] in rec["views"]:        # D5 exists only where its consensus view was built
