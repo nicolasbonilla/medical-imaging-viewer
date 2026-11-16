@@ -218,6 +218,7 @@ def run_batch(provider, model, jobs, out_path, info, max_tokens=None):
         if already + worst > CAP[prov]:
             stop = f"{prov}: spent {already:.4f} USD + worst case {worst:.4f} USD > cap {CAP[prov]} USD; nothing sent"
             break
+        provider.study_cap_checked = True   # this study's cap, checked just above, replaces v1's own (other runs dir)
         resps = provider.submit(model, items)
         calls += len(items)
         with open(out_path, "a", encoding="utf-8") as fh:

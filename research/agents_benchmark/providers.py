@@ -50,7 +50,8 @@ class AnthropicBatch:
         if not items:
             return {}
         reqs = [r for _, r in items]
-        check_budget(model, reqs, batch=True)
+        if not getattr(self, "study_cap_checked", False):   # paper 2 checks its own cap over its own ledgers first
+            check_budget(model, reqs, batch=True)
         ids = {f"r{i:05d}": key for i, (key, _) in enumerate(items)}
         batch = self.client.messages.batches.create(requests=[
             Request(custom_id=cid, params=self.params(model, req)) for cid, (key, req) in zip(ids, items)])
