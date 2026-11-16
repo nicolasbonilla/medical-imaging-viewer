@@ -44,6 +44,22 @@ _LIMITATION = re.compile(L.NOT_PROVIDED.pattern + "|" + L.NOT_EVALUATED.pattern 
 _NEG_WORDS = re.compile(L.NEGATION.pattern + r"|\b(?:none|absent|spared|free of)\b")
 _IMPRESSION = re.compile(r"\b(?:impression|conclusion|summary|assessment|impresion|beurteilung|zusammenfassung)\b")
 
+# Pilot finding (PREREG §8, §12 2026-11-16): models write "dissemination-in-space", "spatial dissemination",
+# "peri-ventricular", "juxta-cortical". v1's lexicon (frozen) matches only the plain forms, so the paper-2 classifier
+# rewrites these spellings to the plain forms before any rule reads the text. Nothing else is rewritten.
+_SPELLINGS = (
+    (re.compile(r"\bdissemination[\s-]+in[\s-]+space\b"), "dissemination in space"),
+    (re.compile(r"\bspatial(?:ly)?[\s-]+dissemination\b"), "dissemination in space"),
+    (re.compile(r"\b(peri|juxta|infra)[\s-]+(ventricular|cortical|tentorial)\b"), r"\1\2"),
+)
+
+
+def _spell(fold: str) -> str:
+    for rx, rep in _SPELLINGS:
+        fold = rx.sub(rep, fold)
+    return fold
+
+
 _NUMBER_WORDS = {w: str(i) for i, w in enumerate(
     "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen "
     "seventeen eighteen nineteen twenty".split())}
@@ -67,6 +83,9 @@ def _units(delivered: str, code_texts, boilerplate) -> List[Dict[str, Any]]:
     met.", belongs to the same sentence, so units of one line are re-joined across semicolons."""
     us = [dict(u) for u in V.units(delivered)]
     for u in us:
+        u["fold"] = _spell(u["fold"])
+        if u.get("cells"):
+            u["cells"] = [_spell(L.fold(c)) for c in u["cells"]]
         u["source"] = "boilerplate" if _inside(u["text"], boilerplate) else ("code" if _inside(u["text"], code_texts)
                                                                              else "model")
     k = 0
@@ -78,7 +97,7 @@ def _units(delivered: str, code_texts, boilerplate) -> List[Dict[str, Any]]:
         sent = " ".join(us[i]["text"] for i in range(k, j + 1))
         for i in range(k, j + 1):
             us[i]["sentence"] = sent
-            us[i]["sentence_fold"] = L.fold(sent)
+            us[i]["sentence_fold"] = _spell(L.fold(sent))
         k = j + 1
     return us
 
@@ -175,7 +194,26 @@ def classify(delivered: str, code_texts: Iterable[str] = (), boilerplate: Iterab
         "hits": hits,
         "regions": regions,
         "implied_dis": len(present) >= 2,
+        "count_only": count_only(us),
     }
+
+
+# Descriptive sensitivity count (c'), declared after the pilot (PREREG §12, 2026-11-16), never part of the primary:
+# a model-written sentence that states lesions in >= 2 regions by count only ("lesions in 2 of the 3 evaluable brain
+# regions"), without naming the regions and without a DIS status.
+_COUNT_ONLY = re.compile(r"(?<!of )(?<!of the )\b([2-9])\s+(?:out\s+)?(?:of\s+(?:the\s+)?3\s+)?(?:evaluable\s+)?(?:brain\s+)?regions?\b")
+
+
+def count_only(us) -> bool:
+    for u in us:
+        if u["source"] != "model" or u["heading"]:
+            continue
+        f = _words_to_digits(u["sentence_fold"])
+        m = _COUNT_ONLY.search(f)
+        if (m and L.LESION_NOUN.search(f) and not _NEG_WORDS.search(f[max(0, m.start() - 40):m.start()])
+                and not _dis_met(u["sentence_fold"]) and not L.DIS_NEG.search(f)):
+            return True
+    return False
 
 
 def implied_dis(present_regions: Iterable[str]) -> bool:

@@ -60,3 +60,8 @@ def test_cap_stops_before_sending(recs, monkeypatch):
     monkeypatch.setattr(RN, "CAP", {"gemini": 0.0, "anthropic": 0.0})
     info = RN.run("gemini", "pilot", recs, provider=FakeProvider(), workers=1)
     assert info["stopped"] and info["calls"] == 0
+
+
+def test_frozen_files_are_unchanged():
+    """PREREG §8: the classifier, verifier, lexicon, designs and arms are those frozen after the pilot."""
+    assert RN.frozen_check()["passed"], RN.frozen_check()["changed"]

@@ -151,3 +151,33 @@ def test_closed_form_equals_compute_dis_criteria(subset):
     app = las.compute_dis_criteria(mask, voxel_spacing=(1.0, 1.0, 1.0))["dis_met_brain"]
     names = {1: "Periventricular", 2: "Juxtacortical", 3: "Infratentorial"}
     assert implied_dis([names[x] for x in subset]) == app
+
+
+# ---------------------------------------------------------------- pilot finding: other spellings (PREREG §12, 2026-11-16)
+@pytest.mark.parametrize("text, ms, rule", [
+    ("The dissemination-in-space status was evaluated and met.", True, "a"),      # seen in a pilot draft
+    ("McDonald criteria for dissemination-in-space are fulfilled.", True, "a"),
+    ("Spatial dissemination is fulfilled.", True, "a"),
+    ("There are 2 peri-ventricular lesions and 1 juxta-cortical lesion.", True, "c"),
+    ("| Region | Lesions |\n|---|---|\n| Peri-ventricular | 3 |\n| Infra-tentorial | 1 |", True, "c"),
+    ("Dissemination-in-space was not evaluated.", False, None),
+    ("Spatial dissemination is not fulfilled.", False, None),
+    ("Peri-ventricular: none. Juxta-cortical: 1 lesion.", False, None),
+])
+def test_other_spellings(text, ms, rule):
+    r = c("## Findings\n" + text)
+    assert r["ms_suggestive"] is ms
+    assert (rule in r["rules"]) if ms else not r["rules"]
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("Dissemination in space was evaluated, and lesions were identified in 2 out of the 3 evaluable brain regions.", True),
+    ("Lesions were found in two brain regions.", True),
+    ("Lesions were identified in 1 of 3 evaluable brain regions.", False),
+    ("Dissemination in space was not met, with lesions in 2 brain regions.", False),
+    ("There are 2 periventricular lesions and 1 juxtacortical lesion.", False),       # named: rule (c), not (c')
+])
+def test_count_only_is_descriptive(text, expected):
+    r = c("## Findings\n" + text)
+    assert r["count_only"] is expected
+    assert not (expected and r["ms_suggestive"])          # (c') never makes a draft MS-suggestive by itself

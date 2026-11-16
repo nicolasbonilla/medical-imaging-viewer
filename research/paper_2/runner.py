@@ -45,6 +45,24 @@ PLAN = {
 }
 VIEW_OF = {"D1": "base", "D2": "d2", "D2i": "d2", "D3": "base", "D4": "d4", "D5": "d5"}
 
+# PREREG §8: the classifier and the verifier are frozen after the pilot (§12, 2026-11-16), with the designs and the
+# v1 arms the pilot ran. SHA-256 of the files with LF line ends; `full` refuses to start if any differs.
+FROZEN = {
+    "research/paper_2/classifier.py": "8835fc31cc7eea5435acb8b3f913a71ae6d680c237c624edf0d5573e93bba503",
+    "research/agents_benchmark/verifier.py": "f6f6b2178afaa331a71f5e5bd17eb2c5c8b2d03e41f69335a52b7029e5a0f24b",
+    "research/agents_benchmark/lexicon.py": "d071751f7ecd41b4ac80ea1c94646c66d45250f92f6ac2b65f8952a8b71710aa",
+    "research/paper_2/designs.py": "99a376f8ff6802f4dd1b5eec116b2962bf8b8803f93e7ec8785a50bbf7376991",
+    "research/agents_benchmark/arms.py": "05e1aa40299d15742a67f44f4bbc0ad30da78bcb3c96ea660e809c299f3127b8",
+}
+
+
+def frozen_check():
+    import hashlib
+    root = HERE.parent.parent
+    bad = {p: h for p, h in FROZEN.items()
+           if hashlib.sha256((root / p).read_bytes().replace(b"\r\n", b"\n")).hexdigest() != h}
+    return {"files": len(FROZEN), "changed": sorted(bad), "passed": not bad}
+
 
 def load_records(path=RECORDS):
     return [json.loads(x) for x in Path(path).read_text(encoding="utf-8").splitlines() if x.strip()]
@@ -159,7 +177,8 @@ def run(alias, phase, records, provider=None, workers=None):
     if provider is None:
         from research.agents_benchmark.providers import provider_for
         provider = provider_for(model, rd)
-    info = {"model": model, "phase": phase, "jobs": len(jobs), "already_done": len(finished), "started": time.time()}
+    info = {"model": model, "phase": phase, "jobs": len(jobs), "already_done": len(finished), "started": time.time(),
+            "frozen": frozen_check()}
     print(f"[paper2] {alias}/{phase}: {len(jobs)} jobs ({len(finished)} already done)", flush=True)
     info = run_online(provider, model, jobs, out, info, workers)
     (rd / f"run_info_{int(info['started'])}.json").write_text(json.dumps(info, indent=1))
@@ -221,6 +240,9 @@ def main(argv=None):
         print(json.dumps(project(a.model, recs), indent=1))
         return 0
     if a.cmd == "full":
+        fz = frozen_check()
+        if not fz["passed"]:
+            raise SystemExit(f"frozen files changed after the pilot: {fz['changed']} (PREREG §8): log a deviation first")
         pj = project(a.model, recs)
         if not pj["fits"]:
             print(json.dumps(pj, indent=1))
