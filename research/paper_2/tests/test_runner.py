@@ -149,6 +149,14 @@ def test_an_empty_delivery_is_sent_once_more(tmp_path):
     assert RN.done_keys(p) == {"a", "c", "d"}
 
 
+def test_gemma_runs_d1_on_flames_ens_and_its_kernel_is_filled(recs):
+    from pathlib import Path
+    pairs = RN.planned(recs, "gemma")
+    assert pairs and {d for _, d in pairs} == {"D1"} and all(r["arm"] == "flames_ens" for r, _ in pairs)
+    src = (Path(RN.__file__).parent / "gemma_kernel_p2.py").read_text(encoding="utf-8")
+    assert "__MAX_TOKENS__" in src and "__SOFT_HOURS__" in src and "do_sample=False" in src
+
+
 def test_frozen_files_are_unchanged():
     """PREREG §8: the classifier, verifier, lexicon, designs and arms are those frozen after the pilot."""
     assert RN.frozen_check()["passed"], RN.frozen_check()["changed"]
