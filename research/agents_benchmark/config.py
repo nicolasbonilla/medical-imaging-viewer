@@ -53,6 +53,9 @@ PRICES = {
     "deepseek-ai/deepseek-v4.1-flash-maas": {"input": 0.30, "output": 1.20, "cached_input": 0.03},
     # Mistral's own API, docs.mistral.ai/inference/pricing read 2026-11-17 ("Mistral Large 4 | $0.7 | $0.07 | $2.1")
     "mistral-large-4-0": {"input": 0.70, "output": 2.10, "cached_input": 0.07},
+    # Mistral Large 3 (non-reasoning) is not in that table on 2026-11-17: Large 4's price is used as an upper bound for
+    # the cap; the owner's console shows the amount actually charged
+    "mistral-large-2512": {"input": 0.70, "output": 2.10, "cached_input": 0.07},
     "gemma-4-e4b-it": {"input": 0.0, "output": 0.0},
 }
 

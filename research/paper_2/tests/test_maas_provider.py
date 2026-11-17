@@ -54,6 +54,8 @@ def test_mistral_adds_the_function_name_and_vertex_does_not(tmp_path):
     assert isinstance(provider_for("mistral-large-4-0", tmp_path), MistralAPI)
     assert L.provider_of("mistral-large-4-0") == "mistral"
     assert abs(L.cost("mistral-large-4-0", {"prompt_tokens": 1_000_000, "completion_tokens": 1_000_000}) - 2.8) < 1e-9
+    assert L.provider_of("mistral-large-2512") == "mistral" and isinstance(provider_for("mistral-large-2512", tmp_path),
+                                                                           MistralAPI)
 
 
 def test_pricing_and_routing(tmp_path):
