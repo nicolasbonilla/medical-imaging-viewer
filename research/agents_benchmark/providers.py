@@ -314,6 +314,10 @@ class VertexOpenAI:
     def parse(d):
         ch = (d.get("choices") or [{}])[0]
         msg = ch.get("message") or {}
+        c = msg.get("content")
+        if isinstance(c, list):                       # Mistral reasoning models: [thinking chunk, text chunk]; keep text
+            c = "".join(b.get("text", "") for b in c if isinstance(b, dict) and b.get("type") == "text")
+        msg = dict(msg, content=c)
         blocks = []
         if msg.get("content"):
             blocks.append({"type": "text", "text": msg["content"]})

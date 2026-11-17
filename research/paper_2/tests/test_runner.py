@@ -136,6 +136,19 @@ def test_qa_flags_cut_and_empty_reports():
     assert not res["passed"] and RN.qa([ok(i) for i in range(20)])["passed"]
 
 
+def test_an_empty_delivery_is_sent_once_more(tmp_path):
+    """PREREG §12, 2026-11-17: an 'ok' line with no authored text is a failed delivery; a later report closes it."""
+    p = tmp_path / "results.jsonl"
+
+    def line(key, arm, authored):
+        return json.dumps({"key": key, "arm": arm, "result": {"status": "ok", "authored": authored}})
+    raw = "<|start|>assistant<|channel|>commentary to=functions.get_regions<|message|>{}<|call|>"
+    p.write_text("\n".join([line("a", "D2", "## Impression\nFor review."), line("b", "D2", "  "),
+                            line("c", "D3", ""), line("d", "D1", ""), line("d", "D1", "## Impression\nx"),
+                            line("e", "D2", raw)]) + "\n", encoding="utf-8")
+    assert RN.done_keys(p) == {"a", "c", "d"}
+
+
 def test_frozen_files_are_unchanged():
     """PREREG §8: the classifier, verifier, lexicon, designs and arms are those frozen after the pilot."""
     assert RN.frozen_check()["passed"], RN.frozen_check()["changed"]

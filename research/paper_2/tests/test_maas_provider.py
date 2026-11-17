@@ -34,6 +34,15 @@ def test_parse_text_tool_call_and_cut_reports():
     assert cut["stop_reason"] == "max_tokens" and cut["text"] == "## Find"
 
 
+def test_mistral_reasoning_chunks_keep_only_the_text():
+    d = {"choices": [{"finish_reason": "stop", "message": {"content": [
+        {"type": "thinking", "thinking": [{"type": "text", "text": "private reasoning"}]},
+        {"type": "text", "text": "## Impression\nFor review."}]}}]}
+    r = VertexOpenAI.parse(d)
+    assert r["text"] == "## Impression\nFor review." and r["content"] == [{"type": "text", "text": r["text"]}]
+    assert "private reasoning" not in json.dumps(r)
+
+
 def test_mistral_adds_the_function_name_and_vertex_does_not(tmp_path):
     from research.agents_benchmark.providers import MistralAPI
     req = {"system": "S", "max_tokens": 10, "messages": [

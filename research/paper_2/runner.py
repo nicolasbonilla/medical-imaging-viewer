@@ -158,7 +158,21 @@ def spent(prov):
     return tot
 
 
+RAW_TEMPLATE = ("<|channel|>", "<|message|>", "<|call|>", "<|constrain|>")
+
+
+def failed_delivery(row):
+    """PREREG §12, 2026-11-17: a model-written 'ok' line is a failed delivery when the provider returned no text at all
+    or the model's raw chat-template tokens (gpt-oss on Vertex: a tool call the server did not parse)."""
+    if row.get("arm") in ("D3", "D4", "D5"):
+        return False
+    t = (row.get("result") or {}).get("authored") or ""
+    return not t.strip() or any(tok in t for tok in RAW_TEMPLATE)
+
+
 def done_keys(path):
+    """Keys whose last delivered line holds a report. A failed delivery (`failed_delivery`) is like a network error:
+    the next run sends it once more; the analysis reads the last 'ok' line of each key."""
     if not path.exists():
         return set()
     out = set()
@@ -167,8 +181,12 @@ def done_keys(path):
             d = json.loads(line)
         except ValueError:
             continue
-        if (d.get("result") or {}).get("status") == "ok":
-            out.add(d["key"])
+        res = d.get("result") or {}
+        if res.get("status") == "ok":
+            if failed_delivery(d):
+                out.discard(d["key"])
+            else:
+                out.add(d["key"])
     return out
 
 
