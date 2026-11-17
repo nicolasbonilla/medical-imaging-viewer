@@ -148,7 +148,14 @@ def analyse():
                     continue
                 b = sum(x and not y for x, y in pairs)
                 c = sum(y and not x for x, y in pairs)
+                import numpy as np
+                dd = np.array([int(y) - int(x) for x, y in pairs])
+                rng = np.random.default_rng(AN.BOOT_SEED)
+                bs = [dd[rng.integers(0, len(dd), len(dd))].mean() for _ in range(AN.BOOT)]
                 out[f"vs_{ref}"] = {"n": len(pairs), f"{ref}_only": b, f"{design}_only": c,
+                                    "difference": round(float(dd.mean()), 4),
+                                    "ci95": [round(float(np.percentile(bs, 2.5)), 4),
+                                             round(float(np.percentile(bs, 97.5)), 4)],
                                     "p_exact_two_sided": float(binomtest(min(b, c), b + c, 0.5).pvalue) if b + c else 1.0}
             res["runs"][f"{alias}/{design}"] = out
             print(f"[posthoc] {alias}/{design}: unq {out['unqualified']['x']}/{len(P)}, clinical caveat "
