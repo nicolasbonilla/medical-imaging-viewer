@@ -170,7 +170,7 @@ In this order, all with `--project=brain-mri-476110` written out (the machine's 
 
 Without step 1 or 2 the app still works: an image with a skull is refused by the input gates, with a message that skull removal is not available.
 
-## Reader study: reading before the AI draft (REQ-FUNC-120, RC-132 — DRAFT, PENDING owner approval)
+## Reader study: reading before the AI draft (REQ-FUNC-120, RC-132 — DRAFT, N. G. Bonilla Vargas — approved 2026-11-18 (PR #84))
 
 Optional; OFF unless both are set on the backend service (never in the repository):
 

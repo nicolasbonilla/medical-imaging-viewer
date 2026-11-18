@@ -1634,7 +1634,7 @@
       ],
       "requirement": "REQ-FUNC-119",
       "change": "branch feat/lesion-review-record (2026-11-18)",
-      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. PENDING owner approval."
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. N. G. Bonilla Vargas — approved 2026-11-18 (PR #84)."
     },
     "RC-132": {
       "description": "Reader-study set read without the AI draft first (keyed hash of the image id, 0 = off): the in-browser AI is offered only after the radiologist's own saved reading is recorded (write-once); at the confirmation each final lesion is related to the reading recorded before the draft",
@@ -1647,7 +1647,7 @@
       ],
       "requirement": "REQ-FUNC-120",
       "change": "branch feat/lesion-review-record (2026-11-18)",
-      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. PENDING owner approval."
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. N. G. Bonilla Vargas — approved 2026-11-18 (PR #84)."
     }
   },
   "unverified_controls_note": [
