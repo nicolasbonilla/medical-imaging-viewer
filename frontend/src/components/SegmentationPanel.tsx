@@ -21,6 +21,7 @@ import { segmentationAPI } from '@/api/segmentation';
 import { ClinicalToolsPanel } from './ClinicalToolsPanel';
 import { ConformalPanel } from './ConformalPanel';
 import { AiDraftBanner, aiStatusText } from './AiDraftBanner';
+import { UnaidedReadingCard } from './LesionReviewRecord';
 import { AutomaticMarkingNotice, isLesionDetectionSource } from './AutomaticMarkingNotice';
 import { recordedAuthor, authorLabel } from '@/utils/segmentationAuthor';
 import type { AIProvenance, LabelInfo, Segmentation, SegmentationResponse } from '@/types';
@@ -304,6 +305,7 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
   // tool that produced it — the notice is for lesion-detection tools, not structure parcellations.
   const openSegmentationType = useSegmentationStore((s) => s.currentSegmentation?.metadata?.segmentation_type);
   const openValidationSource = useSegmentationStore((s) => s.currentSegmentation?.metadata?.validation_source);
+  const openFileId = useSegmentationStore((s) => s.currentSegmentation?.file_id);   // RC-132
 
   // Fetch segmentations list for ALL images in the study (same cache key as ViewerApp)
   const { data: segmentationsList, isLoading: isLoadingList } = useQuery({
@@ -631,6 +633,16 @@ export const SegmentationPanel: React.FC<SegmentationPanelProps> = ({
                         segmentationId={activeSegmentation.id}
                         hasUnsavedChanges={hasUnsavedMaskChanges}
                         onConfirmed={handleAiReviewConfirmed}
+                      />
+                    )}
+                    {/* RC-132: on an image of the reader-study set, the reader's own saved reading is recorded here
+                        before the AI draft is offered. */}
+                    {!activeSegmentation.ai_provenance && openFileId && (
+                      <UnaidedReadingCard
+                        fileId={openFileId}
+                        segmentationId={activeSegmentation.id}
+                        recordable={!activeSegmentation.id.startsWith('local-') && !hasUnsavedMaskChanges
+                          && openSegmentationType !== 'automatic'}
                       />
                     )}
                   </div>

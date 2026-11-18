@@ -1683,5 +1683,18 @@
     "attestVisit": "I confirm, on my own responsibility, that the image of the {{visit}} is a T2-FLAIR. Its header does not say so; my confirmation is recorded in the audit with my name.",
     "attestAgain": "Compare again with my confirmation",
     "governedByRc062": "The quality check passed for this pair; the acquisition check below stops the automatic results, and its reason applies."
+  },
+  "readerRecord": {
+    "notAvailable": "No lesion-by-lesion record: the original AI draft was not kept for this draft.",
+    "summary": "Review of the AI draft (lesions as in the lesion table): of its {{draft}} lesions, {{kept}} kept, {{corrected}} corrected, {{removed}} removed; {{added}} added by the reviewer.",
+    "unaided": "Against the reviewer's reading before the draft: {{both}} found by the reviewer and the AI, {{readerOnly}} by the reviewer only, {{adopted}} taken from the draft, {{later}} added later, {{dropped}} of the reviewer's dropped.",
+    "unaidedFirstTitle": "Reader study: read this image without the AI first",
+    "unaidedFirstBody": "This image is in the set read without the AI draft first. Draw your own reading, save it, then record it in the segmentation panel. The AI draft is offered after that.",
+    "recordButton": "Record as my reading before the AI (cannot be changed)",
+    "recordQuestion": "Record this saved segmentation as your own reading of the image before the AI draft? It is kept as it is now and cannot be changed or replaced.",
+    "recorded": "Recorded as your reading before the AI draft.",
+    "recordFailed": "Not recorded: {{reason}}",
+    "unknown": "Whether this image is read without the AI first could not be checked.",
+    "retry": "Check again"
   }
 }

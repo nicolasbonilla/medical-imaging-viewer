@@ -51,6 +51,7 @@ SCOPED_ROUTES = {
     ("POST", "/api/v1/segmentation/longitudinal/compare"): "authorize_mask_specs",
     ("POST", "/api/v1/segmentation/longitudinal/sel"): "authorize_mask_specs",
     ("POST", "/api/v1/segmentation/longitudinal/review"): "authorize_mask_specs",   # CAPA-013 RC-060
+    ("GET", "/api/v1/segmentation/reader-study/assignment"): "authorize_file_scope",  # RC-132
 }
 
 

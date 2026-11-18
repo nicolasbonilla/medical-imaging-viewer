@@ -49,6 +49,12 @@ export function useSegmentationData({
   // Flag to skip loadMask when transitioning from local-ID to server-ID after save
   const skipNextLoadRef = useRef(false);
 
+  // RC-131 (REQ-FUNC-119): the AI draft exactly as the model produced it, for the local draft `tempId`, stored on the
+  // server once at the first save (before the clinician's version) so the confirmation can compare lesion by lesion.
+  const aiDraftOriginalRef = useRef<{
+    tempId: string; mask: Uint8Array; dims: { depth: number; height: number; width: number };
+  } | null>(null);
+
   // Release 2026-10-25 (review of PR #69, B1): the distinct values of the mask as loaded from the server, so the
   // overlay controls can warn about a value the label table does not name (drawn in the fallback colour).
   const publishMaskValues = useCallback((loaded: boolean) => {
@@ -258,6 +264,10 @@ export function useSegmentationData({
         segmentationMask.clearMask();
         return { ok: false, reason: 'grid-mismatch' };
       }
+      // RC-131: a copy of the draft exactly as the model produced it, kept until the first save stores it.
+      aiDraftOriginalRef.current = {
+        tempId, mask: mask.slice(), dims: { depth: imageShape.slices, height: imageShape.rows, width: imageShape.columns },
+      };
       return { ok: true };
     },
     [setCurrentSegmentation, segmentationMask],
@@ -374,6 +384,18 @@ export function useSegmentationData({
           throw new Error('The server did not record the AI provenance; the AI draft was NOT saved.');
         }
 
+        // RC-131: the draft as the model produced it, stored once BEFORE the clinician's version. Evidence only: if it
+        // cannot be stored, the save goes on and the confirmation will say there is no lesion-by-lesion record.
+        const original = aiDraftOriginalRef.current;
+        if (aiProvenance && original && original.tempId === currentSegmentation.segmentation_id) {
+          try {
+            await segmentationAPI.storeAiDraftOriginal(serverSeg.segmentation_id, original.mask, original.dims);
+          } catch (e: unknown) {
+            console.warn('[SegmentationData] The original AI draft was not kept; no lesion-by-lesion record:', e);
+          }
+          // kept until the whole save succeeds: a retry creates a new record and sends it again for that one
+        }
+
         // Update mask hook with the real server ID (ref only — no React state change yet)
         segmentationMask.updateSegmentationId(serverSeg.segmentation_id);
         // DON'T call setCurrentSegmentation here — that would trigger loadMask
@@ -390,6 +412,7 @@ export function useSegmentationData({
     const success = await segmentationMask.saveMask();
 
     if (success) {
+      if (serverSeg) aiDraftOriginalRef.current = null;   // RC-131: stored with the record the save created
       // NOW it's safe to update Zustand with the server response.
       // Set skip flag so the useEffect doesn't reload the mask we just saved.
       if (serverSeg) {

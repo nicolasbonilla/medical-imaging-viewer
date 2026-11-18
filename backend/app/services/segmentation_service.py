@@ -167,7 +167,7 @@ class SegmentationService:
         if ai_provenance is not None:
             provenance = ai_provenance.model_copy(update={
                 "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None,
-                "reviewed_mask_sha256": None,
+                "reviewed_mask_sha256": None, "review_record_summary": None,   # RC-131: server-set only
                 # RC-049: who confirmed the sequence is the authenticated user, never a client claim.
                 "sequence_confirmed_by": created_by if ai_provenance.sequence_evidence == "clinician" else None,
             })
@@ -402,8 +402,10 @@ class SegmentationService:
             return False
         metadata.ai_provenance = provenance.model_copy(update={
             "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None,
-            "reviewed_mask_sha256": None,
+            "reviewed_mask_sha256": None, "review_record_summary": None,   # RC-131: the counts go with the review
         })
+        if hasattr(metadata, "ai_review_record"):
+            metadata.ai_review_record = None    # RC-131: the record of that confirmation stays only as its object
         logger.warning("AI review reset: the mask changed after the review was confirmed",
                        extra={"previous_reviewer": provenance.reviewed_by})
         return True
@@ -1880,6 +1882,10 @@ class SegmentationService:
                     success = True
         except Exception as e:
             logger.error("Failed to delete from GCS", extra={"segmentation_id": segmentation_id, "error": str(e)})
+        # RC-131 / RC-132: the AI draft as produced, the reader's own reading and the review records go with
+        # their segmentation.
+        from app.services import lesion_review_record
+        lesion_review_record.delete_all(self, segmentation_id)
 
         # Also try local disk cleanup (fallback storage)
         metadata_path = self.storage_path / f"{segmentation_id}.json"

@@ -135,6 +135,10 @@ ROUTE_AUTH = {
     ("GET", "/segmentation/{segmentation_id}"): "dep:require_segmentation_access",
     # CP-FLAMES-BROWSER-001 (RC-047): confirm the review of an AI draft
     ("POST", "/segmentation/{segmentation_id}/ai-review/confirm"): "dep:require_segmentation_access",
+    # RC-131 / RC-132 (REQ-FUNC-119/120): the AI draft as produced; a reader's reading before the draft; the study set
+    ("PUT", "/segmentation/{segmentation_id}/ai-draft/original"): "dep:require_segmentation_access",
+    ("POST", "/segmentation/{segmentation_id}/unaided-read"): "dep:require_segmentation_access",
+    ("GET", "/segmentation/reader-study/assignment"): "call:authorize_file_scope",
     # PRB-003 (RC-071): a radiologist confirms a segmentation without AI provenance
     ("POST", "/ai/report/generate"): "call:authorize_mask_specs",   # PRB-003: the report's own segmentation
     ("POST", "/segmentation/{segmentation_id}/review/confirm"): "dep:require_segmentation_access",
@@ -434,6 +438,9 @@ DENIED = [  # (method, path, json) -> 404 for a caller without access, before an
                                   "patient_id": PATIENT}),
     ("get", "/dicomweb/import/j-1", None),
     ("post", f"/segmentation/{OBJ}/ai-review/confirm", None),  # CP-FLAMES-BROWSER-001 (RC-047)
+    ("put", f"/segmentation/{OBJ}/ai-draft/original", None),   # RC-131
+    ("post", f"/segmentation/{OBJ}/unaided-read", {"mask_sha256": "0" * 64}),   # RC-132
+    ("get", f"/segmentation/reader-study/assignment?file_id={FILE}", None),      # RC-132
     ("post", f"/segmentation/{OBJ}/review/confirm", {"mask_sha256": "0" * 64}),  # PRB-003 (RC-071)
     ("post", "/ai/report/generate", {"segmentation_id": OBJ,                     # PRB-003 (review of PR #68)
                                      "findings": {"lesion_analysis": {"total_count": 1}}}),

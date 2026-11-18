@@ -32,9 +32,11 @@ vi.mock('@/services/apiClient', () => ({
 const createSegmentation = vi.fn();
 const deleteSegmentation = vi.fn();
 const getSegmentation = vi.fn();
+const storeAiDraftOriginal = vi.fn();   // RC-131
 vi.mock('@/api/segmentation', () => ({
   segmentationAPI: {
     createSegmentation: (...a: unknown[]) => createSegmentation(...a),
+    storeAiDraftOriginal: (...a: unknown[]) => storeAiDraftOriginal(...a),
     deleteSegmentation: (...a: unknown[]) => deleteSegmentation(...a),
     getSegmentation: (...a: unknown[]) => getSegmentation(...a),
     listSegmentationsByFileIds: vi.fn().mockResolvedValue([]),
@@ -124,6 +126,8 @@ describe('FLAMeS AI draft hand-off (REQ-SAFE-030, REQ-SAFE-032)', () => {
     createSegmentation.mockReset();
     deleteSegmentation.mockReset();
     getSegmentation.mockReset();
+    storeAiDraftOriginal.mockReset();
+    storeAiDraftOriginal.mockResolvedValue(undefined);
     deleteSegmentation.mockResolvedValue(undefined);
     apiPut.mockResolvedValue({ data: { durable: true, generation: 1 } });
     useSegmentationStore.getState().reset?.();
@@ -216,6 +220,67 @@ describe('FLAMeS AI draft hand-off (REQ-SAFE-030, REQ-SAFE-032)', () => {
     expect(useSegmentationStore.getState().currentSegmentation?.metadata.ai_provenance?.model_sha256).toBe(
       PROVENANCE.model_sha256,
     );
+  });
+
+  it('rc131 the first save keeps the draft exactly as produced, before the corrected version is uploaded', async () => {
+    createSegmentation.mockImplementation(serverEcho(true));
+    const order: string[] = [];
+    storeAiDraftOriginal.mockImplementation(async () => { order.push('original'); });
+    apiPut.mockImplementation(async () => { order.push('mask'); return { data: { durable: true, generation: 1 } }; });
+    const { result } = renderHook(() => useSegmentationData({}), { wrapper });
+    act(() => {
+      importDraft();
+    });
+    act(() => {   // the clinician corrects the draft before the first save
+      result.current.segmentationMask.paintStroke({ x: 0, y: 0, sliceIndex: 0, brushSize: 1, labelId: 1, erase: false });
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    expect(order).toEqual(['original', 'mask']);
+    const [segId, mask, dims] = storeAiDraftOriginal.mock.calls[0];
+    expect(segId).toBe('server-1');
+    expect(Array.from(mask as Uint8Array)).toEqual(Array.from(draftMask()));   // the draft, not the corrected mask
+    expect(dims).toEqual({ depth: SHAPE.slices, height: SHAPE.rows, width: SHAPE.columns });
+    act(() => {
+      result.current.segmentationMask.paintStroke({ x: 1, y: 0, sliceIndex: 0, brushSize: 1, labelId: 1, erase: false });
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    expect(storeAiDraftOriginal).toHaveBeenCalledTimes(1);                    // later saves never send it again
+  });
+
+  it('rc131 if the original cannot be kept, the clinician\'s save still goes through', async () => {
+    createSegmentation.mockImplementation(serverEcho(true));
+    storeAiDraftOriginal.mockRejectedValue(new Error('503'));
+    const { result } = renderHook(() => useSegmentationData({}), { wrapper });
+    act(() => {
+      importDraft();
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    expect(apiPut).toHaveBeenCalledTimes(1);
+    expect(result.current.saveStatus).not.toBe('error');
+  });
+
+  it('rc131 when the first save fails, the retry sends the draft as produced again for its new record', async () => {
+    let n = 0;
+    createSegmentation.mockImplementation((req: Parameters<ReturnType<typeof serverEcho>>[0]) =>
+      serverEcho(true)(req).then((r) => ({ ...r, segmentation_id: `server-${++n}` })));
+    apiPut.mockRejectedValueOnce(new Error('upload failed'));
+    const { result } = renderHook(() => useSegmentationData({}), { wrapper });
+    act(() => {
+      importDraft();
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    expect(storeAiDraftOriginal.mock.calls.map((c) => c[0])).toEqual(['server-1', 'server-2']);
   });
 
   it('rc047 a server that does not record the provenance gets no draft (orphan removed, mask not uploaded)', async () => {
