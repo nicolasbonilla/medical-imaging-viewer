@@ -230,6 +230,10 @@ class AIProvenance(BaseModel):
     # RC-101: what the model read — the file as uploaded, or the image after the app removed its skull (model hash, 12 hex).
     input_preparation: Optional[str] = Field(None, pattern=r"^(as_uploaded|skull_removed:([0-9a-f]{12}|unknown))$")
     sequence_confirmed_by: Optional[str] = None
+    # RC-131 (REQ-FUNC-119): the counts the banner shows after a confirmation — what the reviewer did with each lesion of
+    # the draft and which lesions were added (services/lesion_review_record.py). Set only by the confirm-review route,
+    # dropped at creation and reset with the review.
+    review_record_summary: Optional[Dict[str, Any]] = None
 
 
 class ClinicianReview(BaseModel):
@@ -307,6 +311,13 @@ class SegmentationMetadata(BaseModel):
     ai_provenance: Optional[AIProvenance] = Field(
         None,
         description="AI draft provenance (REQ-SAFE-030). Absent on manual segmentations.",
+    )
+    ai_review_record: Optional[Dict[str, Any]] = Field(
+        None,
+        description=("RC-131 / RC-132 (REQ-FUNC-119, REQ-FUNC-120): the lesion-by-lesion record of the latest "
+                     "confirmation of the AI review — the draft as the model produced it against the confirmed mask "
+                     "and, when the reviewer recorded a reading before the draft, against that reading. Set only by "
+                     "the confirm-review route; every record is also kept as a write-once object."),
     )
     clinician_review: Optional[ClinicianReview] = Field(
         None,

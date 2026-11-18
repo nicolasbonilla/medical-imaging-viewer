@@ -1694,5 +1694,16 @@
     "attestVisit": "Confirmo, bajo mi responsabilidad, que la imagen de la {{visit}} es una FLAIR potenciada en T2. Su cabecera no lo indica; mi confirmación queda registrada en la auditoría con mi nombre.",
     "attestAgain": "Comparar de nuevo con mi confirmación",
     "governedByRc062": "El control de calidad dio por buena esta pareja; la comprobación de la adquisición de abajo detiene los resultados automáticos, y su motivo es el que vale."
+  },
+  "readerRecord": {
+    "notAvailable": "Sin registro lesión por lesión: no se conservó el borrador original de la IA de este borrador.",
+    "summary": "Lo que hizo con el borrador de la IA: de sus {{draft}} lesiones, {{kept}} mantenidas, {{corrected}} corregidas, {{removed}} quitadas; {{added}} añadidas por usted.",
+    "unaided": "Frente a su lectura antes del borrador: {{both}} encontradas por usted y por la IA, {{readerOnly}} solo por usted, {{adopted}} tomadas del borrador, {{later}} añadidas después, {{dropped}} suyas quitadas.",
+    "unaidedFirstTitle": "Estudio de lectores: lea esta imagen primero sin la IA",
+    "unaidedFirstBody": "Esta imagen está en el grupo que se lee primero sin el borrador de la IA. Dibuje su propia lectura, guárdela y regístrela en el panel de segmentación. Después se ofrece el borrador de la IA.",
+    "recordButton": "Registrar como mi lectura antes de la IA (no se puede cambiar)",
+    "recordQuestion": "¿Registrar esta segmentación guardada como su propia lectura de la imagen antes del borrador de la IA? Se conserva tal como está ahora y no se puede cambiar ni sustituir.",
+    "recorded": "Registrada como su lectura antes del borrador de la IA.",
+    "recordFailed": "No registrada: {{reason}}"
   }
 }

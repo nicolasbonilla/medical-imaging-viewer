@@ -171,6 +171,35 @@ async def list_segmentations(
         )
 
 
+@router.get("/reader-study/assignment")
+async def reader_study_assignment(
+    file_id: str = Query(..., min_length=1),
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
+):
+    """RC-132 (REQ-FUNC-120): whether this image is in the reader-study set read WITHOUT the AI draft first, and
+    whether the caller has recorded a reading of it. The set is a fixed share of images chosen by a keyed hash of
+    the image id (READER_STUDY_UNAIDED_FRACTION, 0 = off), so the answer never depends on the reader."""
+    from app.services import lesion_review_record as lrr
+    import app.security.resource_access as access
+
+    await authorize_file_scope(            # CAPA-002 CA-2.1 RC-029: the image is the caller's to open
+        file_ids=[file_id], user=current_user,
+        patient_service=access._patient_service(), care_team_service=access._care_team_service(),
+    )
+    s = get_settings()
+    fraction = float(s.READER_STUDY_UNAIDED_FRACTION or 0.0)
+    unaided_first = lrr.in_unaided_first_set(file_id, fraction, s.READER_STUDY_KEY)
+    readings, own_draft = [], False
+    if unaided_first:
+        same_image = segmentation_service.list_segmentations(file_id=file_id)
+        readings = lrr.own_readings(segmentation_service, same_image, current_user)
+        own_draft = any(getattr(x.metadata, "ai_provenance", None) is not None
+                        and getattr(x.metadata, "created_by", None) == current_user.username for x in same_image)
+    return {"study_on": fraction > 0, "unaided_first": unaided_first, "reading_recorded": bool(readings),
+            "reading_segmentation_ids": [r[0].segmentation_id for r in readings], "own_draft_saved": own_draft}
+
+
 @router.get("/{segmentation_id}", response_model=SegmentationResponse)
 async def get_segmentation(
     segmentation_id: str,
@@ -694,17 +723,160 @@ async def confirm_ai_review(
     if problem:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=problem)
     if provenance.review_status != "confirmed" or provenance.reviewed_mask_sha256 != current:
+        # RC-131 / RC-132 (REQ-FUNC-119/120): what the reviewer did with each lesion of the draft, which lesions were
+        # added, and — when the reviewer recorded a reading before the draft — how the result relates to it. Evidence
+        # only: computed here, never a condition of the confirmation (what cannot be computed is stated in it).
+        from app.services import lesion_review_record as lrr
+        record = lrr.build(segmentation_service, segmentation_id, metadata, entry["masks_3d"], current_user,
+                           lambda: segmentation_service.list_segmentations(file_id=metadata.file_id))
+        record["reviewed_by_role"] = "radiologist"
+        lrr.store_record(segmentation_service, segmentation_id, record)
+        metadata.ai_review_record = record
+        logger.info("Lesion review record", extra={"segmentation_id": segmentation_id,
+                                                   "record_summary": lrr.banner_summary(record)})
         metadata.ai_provenance = provenance.model_copy(update={
             "review_status": "confirmed",
             "reviewed_by": current_user.username,
             "reviewed_at": datetime.utcnow().isoformat() + "Z",
             "reviewed_mask_sha256": current,
+            "review_record_summary": lrr.banner_summary(record),
         })
         metadata.modified_at = datetime.utcnow()
         segmentation_service.persist(segmentation_id)
         if getattr(segmentation_service, "cache", None):
             await segmentation_service.cache.delete(f"seg:metadata:{segmentation_id}")
-    return {"success": True, "ai_provenance": metadata.ai_provenance.model_dump()}
+    return {"success": True, "ai_provenance": metadata.ai_provenance.model_dump(),
+            "ai_review_record": getattr(metadata, "ai_review_record", None)}
+
+
+def _binary_mask(body: bytes) -> np.ndarray:
+    """The mask upload's binary format: [depth][height][width] (uint32, little endian) then D*H*W bytes."""
+    if len(body) < 12:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid binary data: too short for header")
+    depth, height, width = struct.unpack('<III', body[:12])
+    if len(body) - 12 != depth * height * width:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid mask size: expected {depth * height * width}, got {len(body) - 12}")
+    return np.frombuffer(body[12:], dtype=np.uint8).reshape((depth, height, width)).copy()
+
+
+@router.put("/{segmentation_id}/ai-draft/original")
+async def store_ai_draft_original(
+    segmentation_id: str,
+    request: Request,
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
+):
+    """RC-131 (REQ-FUNC-119): keep the AI draft exactly as the model produced it, once, before any correction is saved.
+
+    Same binary format as the mask upload. Write-once: a second call is refused (409) and never replaces the stored
+    draft. Refused: on a segmentation without AI provenance (409), by anyone but who saved the draft (403), once its
+    review was confirmed (409), on another grid (400), and when its marked voxels differ from the draft's own record
+    (`annotated_voxels`, written when the model produced it): that is not the draft the model produced (409). Stored
+    durably or refused (503). The object carries who stored it, when (server time) and its digest."""
+    from app.services import lesion_review_record as lrr
+
+    mask = _binary_mask(await request.body())
+    entry = segmentation_service.get_loaded(segmentation_id)
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
+    metadata = entry["metadata"]
+    provenance = getattr(metadata, "ai_provenance", None)
+    if provenance is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="This segmentation has no AI provenance: there is no AI draft to record.")
+    if getattr(metadata, "created_by", None) and metadata.created_by != current_user.username:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Only who saved this AI draft can record it as the model produced it.")
+    if provenance.review_status == "confirmed":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="The review of this draft is already confirmed: the draft can no longer be recorded.")
+    known = entry.get("masks_3d")
+    if known is not None and tuple(mask.shape) != tuple(known.shape):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Draft shape {tuple(mask.shape)} != segmentation shape {tuple(known.shape)}.")
+    marked = int((mask > 0).sum())
+    if marked != provenance.annotated_voxels:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=(f"This is not the draft the model produced: it marks {marked} voxels, the draft's "
+                                    f"record {provenance.annotated_voxels}."))
+    meta = {"kind": lrr.ORIGINAL, "segmentation_id": segmentation_id, "file_id": metadata.file_id,
+            "stored_by": current_user.username, "stored_by_id": current_user.id,
+            "at": datetime.utcnow().isoformat() + "Z", "mask_sha256": lrr.mask_sha256(mask),
+            "annotated_voxels": marked, "model_sha256": provenance.model_sha256,
+            "generated_at": provenance.generated_at}
+    try:
+        stored = lrr.store_once(segmentation_service, segmentation_id, lrr.ORIGINAL, mask, meta)
+    except Exception as e:  # noqa: BLE001
+        logger.error("AI draft original not stored", extra={"segmentation_id": segmentation_id, "error": str(e)})
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail="The draft could not be stored durably. Save again.")
+    if not stored:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="The draft of this segmentation is already recorded; it is never replaced.")
+    logger.info("AI draft original stored", extra={"segmentation_id": segmentation_id, "annotated_voxels": marked})
+    return {"success": True, "mask_sha256": meta["mask_sha256"], "at": meta["at"]}
+
+
+@router.post("/{segmentation_id}/unaided-read")
+async def record_unaided_read(
+    segmentation_id: str,
+    body: dict = Body(..., description='{"mask_sha256": "<SHA-256 of the saved mask you record as your reading>"}'),
+    segmentation_service: SegmentationService = Depends(get_segmentation_service),
+    current_user: User = Depends(get_current_active_user),
+    # CAPA-002 CA-2.1 RC-029 - object-level authorization.
+    _authorized=Depends(require_segmentation_access),
+):
+    """RC-132 (REQ-FUNC-120): record a radiologist's own reading of an image BEFORE the AI draft.
+
+    A write-once copy of this segmentation's saved mask, with who and when (server time), compared at the confirmation
+    of the AI review of the same image with the draft and the final mask. Radiologists only (403), on their own
+    segmentation (403) drawn without AI (409), bound to the saved mask they state (`mask_sha256`; 409 otherwise), and
+    refused (409) once they saved an AI draft of the same image: the reading would no longer be before the draft.
+    Each segmentation is recorded once (409 on a repeat)."""
+    from app.services import lesion_review_record as lrr
+
+    if not _radiologist(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Only a radiologist can record a reading for a reader study.")
+    entry = segmentation_service.get_loaded(segmentation_id)
+    if entry is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segmentation not found")
+    metadata = entry["metadata"]
+    if getattr(metadata, "ai_provenance", None) is not None or getattr(metadata, "segmentation_type", None) == "automatic":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="Only a segmentation you drew without the AI can be recorded as your reading.")
+    if getattr(metadata, "created_by", None) != current_user.username:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Only the radiologist who drew this segmentation can record it as their reading.")
+    current = segmentation_service.mask_sha256(entry["masks_3d"])
+    if str((body or {}).get("mask_sha256", "")).strip().lower() != current:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=("The stored mask is not the one you are recording (unsaved changes, or it changed "
+                                    "since you opened it). Save or reload, then record it."))
+    same_image = segmentation_service.list_segmentations(file_id=metadata.file_id)
+    if any(getattr(s.metadata, "ai_provenance", None) is not None
+           and getattr(s.metadata, "created_by", None) == current_user.username for s in same_image):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=("You already saved an AI draft of this image: this reading would no longer be "
+                                    "your reading before the draft."))
+    mask = entry["masks_3d"]
+    meta = {"kind": lrr.UNAIDED, "segmentation_id": segmentation_id, "file_id": metadata.file_id,
+            "by": current_user.username, "by_id": current_user.id, "at": datetime.utcnow().isoformat() + "Z",
+            "mask_sha256": current, "voxels": int((mask > 0).sum())}
+    try:
+        stored = lrr.store_once(segmentation_service, segmentation_id, lrr.UNAIDED, mask, meta)
+    except Exception as e:  # noqa: BLE001
+        logger.error("Reading not stored", extra={"segmentation_id": segmentation_id, "error": str(e)})
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail="The reading could not be stored durably. Try again.")
+    if not stored:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail="This segmentation is already recorded as your reading; it is never replaced.")
+    logger.info("Reading before the AI draft recorded", extra={"segmentation_id": segmentation_id})
+    return {"success": True, "unaided_read": {k: meta[k] for k in ("segmentation_id", "at", "mask_sha256", "voxels")}}
 
 
 def _radiologist(user) -> bool:

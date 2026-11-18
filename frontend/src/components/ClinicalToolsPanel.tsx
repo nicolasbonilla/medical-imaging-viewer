@@ -20,6 +20,7 @@ import { isPreprocessedInstance, isSegmentationDerivative } from '@/utils/instan
 import type { ClinicalToolInfo, ToolTaskResult, ToolTaskStatus } from '@/types';
 import { FEATURES } from '@/config/features';
 import { AutomaticMarkingNotice, isLesionDetectionSource } from './AutomaticMarkingNotice';
+import { ReaderStudyGate } from './LesionReviewRecord';
 
 // Prototype, code-split: with the flag OFF this chunk (and ONNX Runtime WebGPU) is never downloaded.
 const BrowserFlamesCard = React.lazy(() => import('./BrowserFlamesCard'));
@@ -301,7 +302,10 @@ export const ClinicalToolsPanel: React.FC<ClinicalToolsPanelProps> = ({ fileId }
         {/* PROTOTYPE: in-browser FLAMeS (no GPU server). Hidden unless VITE_ENABLE_BROWSER_FLAMES=true. */}
         {FEATURES.BROWSER_FLAMES && (
           <React.Suspense fallback={null}>
-            <BrowserFlamesCard flairFileId={flairFileId} flairName={fileNames[flairFileId]} />
+            {/* RC-132: on an image of the reader-study set, offered only after the reader's own reading. */}
+            <ReaderStudyGate fileId={flairFileId}>
+              <BrowserFlamesCard flairFileId={flairFileId} flairName={fileNames[flairFileId]} />
+            </ReaderStudyGate>
           </React.Suspense>
         )}
       </div>

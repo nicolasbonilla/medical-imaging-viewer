@@ -77,6 +77,9 @@ ROUTE_ACTIONS: Dict[Tuple[str, str], Tuple[AuditEventType, str]] = {
     ("POST", "/api/v1/segmentation/{segmentation_id}/classify-regions"): (E.CLINICAL_SEGMENTATION_MODIFY, "segmentation"),
     ("DELETE", "/api/v1/segmentation/{segmentation_id}"): (E.CLINICAL_SEGMENTATION_DELETE, "segmentation"),
     ("POST", "/api/v1/segmentation/{segmentation_id}/ai-review/confirm"): (E.CLINICAL_SEGMENTATION_CONFIRM, "segmentation"),
+    # RC-131 / RC-132 (REQ-FUNC-119/120): the AI draft as produced, and a reader's own reading before the draft.
+    ("PUT", "/api/v1/segmentation/{segmentation_id}/ai-draft/original"): (E.CLINICAL_SEGMENTATION_SAVE, "segmentation"),
+    ("POST", "/api/v1/segmentation/{segmentation_id}/unaided-read"): (E.CLINICAL_SEGMENTATION_SAVE, "segmentation"),
     # Release 2026-10-25 integration (#65 + #68): the radiologist's DIS confirmation (PRB-003, RC-071).
     ("POST", "/api/v1/segmentation/{segmentation_id}/review/confirm"): (E.CLINICAL_SEGMENTATION_CONFIRM, "segmentation"),
     ("POST", "/api/v1/segmentation/{segmentation_id}/lesion-annotations"): (E.CLINICAL_LESION_ANNOTATION, "segmentation"),

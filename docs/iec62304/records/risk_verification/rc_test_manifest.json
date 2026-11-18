@@ -1621,6 +1621,33 @@
       "requirement": "REQ-SAFE-060",
       "change": "PR #82, research stage (owner decision 2026-11-13) — N. G. Bonilla Vargas — approved 2026-11-14 (PR #82)",
       "negative_control": "Executed 2026-11-13 by scripts/safety/rc130_negative_controls.py in Google Cloud Build on 2d86bfd (off the owner's PC; first run on 7a07158 gave the same 6/6): 6/6 mutations detected (N1 notice never shown; N2 notice on a draft no model wrote; N3 interface language instead of the report's; N4 viewer copies without the notice; N5 panel copies without the notice; N6 notice above the clinician entry); baseline 19 passed, restored 19 passed / 0 failed. Record: docs/iec62304/records/risk_verification/RC-130_negative_controls_2026-11-13.json."
+    },
+    "RC-131": {
+      "description": "The in-browser AI draft is kept exactly as produced (write-once, at the first save) and, at each confirmation of the AI review, compared lesion by lesion with the confirmed mask: kept, corrected, removed, added by the reviewer; counts in the banner, reset with the review; never a condition of the confirmation",
+      "hazard": "HAZ-001",
+      "status": "unverified",
+      "implementation": "backend/app/services/lesion_review_record.py; backend/app/api/routes/segmentation.py; frontend/src/hooks/useSegmentationData.ts; frontend/src/components/AiDraftBanner.tsx; frontend/src/components/LesionReviewRecord.tsx",
+      "tests": [
+        "tests/unit/test_rc131_rc132_lesion_review_record.py",
+        "frontend/src/components/LesionReviewRecord.test.tsx",
+        "frontend/src/hooks/useSegmentationData.flamesDraft.test.tsx"
+      ],
+      "requirement": "REQ-FUNC-119",
+      "change": "branch feat/lesion-review-record (2026-11-18)",
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. PENDING owner approval."
+    },
+    "RC-132": {
+      "description": "Reader-study set read without the AI draft first (keyed hash of the image id, 0 = off): the in-browser AI is offered only after the radiologist's own saved reading is recorded (write-once); at the confirmation each final lesion is related to the reading recorded before the draft",
+      "hazard": "HAZ-001",
+      "status": "unverified",
+      "implementation": "backend/app/services/lesion_review_record.py; backend/app/api/routes/segmentation.py; frontend/src/components/LesionReviewRecord.tsx; frontend/src/components/ClinicalToolsPanel.tsx; frontend/src/components/SegmentationPanel.tsx",
+      "tests": [
+        "tests/unit/test_rc131_rc132_lesion_review_record.py",
+        "frontend/src/components/LesionReviewRecord.test.tsx"
+      ],
+      "requirement": "REQ-FUNC-120",
+      "change": "branch feat/lesion-review-record (2026-11-18)",
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. PENDING owner approval."
     }
   },
   "unverified_controls_note": [

@@ -62,6 +62,40 @@ export interface AIProvenance {
   input_preparation?: string | null;
   /** server-set: the authenticated user who confirmed the sequence */
   sequence_confirmed_by?: string | null;
+  /** RC-131 (server-set at the confirmation, reset with the review): what the reviewer did with the draft's lesions */
+  review_record_summary?: ReviewRecordSummary | null;
+}
+
+/**
+ * RC-131 / RC-132 (REQ-FUNC-119/120): the counts of the lesion-by-lesion record of a confirmed AI review. `unaided`
+ * is present when the reviewer recorded a reading of the image before the draft.
+ */
+export interface ReviewRecordSummary {
+  available: boolean;
+  reason?: string | null;
+  draft_lesions?: number;
+  final_lesions?: number;
+  kept?: number;
+  corrected?: number;
+  removed?: number;
+  added?: number;
+  unaided?: {
+    reader_lesions: number;
+    reader_and_draft: number;
+    reader_only: number;
+    adopted_from_draft: number;
+    added_later: number;
+    dropped_after_draft: number;
+  };
+}
+
+/** RC-132: whether an image is in the reader-study set read without the AI draft first. */
+export interface ReaderStudyAssignment {
+  study_on: boolean;
+  unaided_first: boolean;
+  reading_recorded: boolean;
+  reading_segmentation_ids: string[];
+  own_draft_saved: boolean;
 }
 
 /**

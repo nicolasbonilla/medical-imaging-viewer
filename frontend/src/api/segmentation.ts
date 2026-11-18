@@ -7,6 +7,7 @@ import { drawnLabelsSha256 } from '@/utils/drawnLabels';
 import type { PairAttestation } from '@/services/qualityGate/gate';
 import type {
   AIProvenance,
+  ReaderStudyAssignment,
   ClinicianReview,
   CreateSegmentationRequest,
   SegmentationResponse,
@@ -58,6 +59,43 @@ export const segmentationAPI = {
         displayed_image_file_id: onScreen.displayedImageFileId },
     );
     return response.data.ai_provenance;
+  },
+
+  /**
+   * RC-131 (REQ-FUNC-119): keep the AI draft exactly as the model produced it, once, right after the draft's record
+   * is created and before the clinician's version is saved. Same binary format as the mask upload. Write-once on the
+   * server (409 on a repeat; 409 when the voxels are not the produced draft's).
+   */
+  async storeAiDraftOriginal(
+    segmentationId: string,
+    mask: Uint8Array,
+    dims: { depth: number; height: number; width: number },
+  ): Promise<void> {
+    const buffer = new ArrayBuffer(12 + mask.length);
+    const view = new DataView(buffer);
+    view.setUint32(0, dims.depth, true);
+    view.setUint32(4, dims.height, true);
+    view.setUint32(8, dims.width, true);
+    new Uint8Array(buffer, 12).set(mask);
+    await apiClient.put(`${API_PREFIX}/segmentation/${segmentationId}/ai-draft/original`, buffer,
+      { headers: { 'Content-Type': 'application/octet-stream' } });
+  },
+
+  /**
+   * RC-132 (REQ-FUNC-120): record the caller's saved segmentation as their own reading of the image BEFORE the AI
+   * draft (radiologists, own segmentation drawn without AI, the saved mask `maskSha256`; write-once).
+   */
+  async recordUnaidedReading(segmentationId: string, maskSha256: string): Promise<{ segmentation_id: string; at: string }> {
+    const response = await apiClient.post<{ success: boolean; unaided_read: { segmentation_id: string; at: string } }>(
+      `${API_PREFIX}/segmentation/${segmentationId}/unaided-read`, { mask_sha256: maskSha256 });
+    return response.data.unaided_read;
+  },
+
+  /** RC-132: is this image in the reader-study set read without the AI draft first, and has the caller read it? */
+  async readerStudyAssignment(fileId: string): Promise<ReaderStudyAssignment> {
+    const response = await apiClient.get<ReaderStudyAssignment>(`${API_PREFIX}/segmentation/reader-study/assignment`,
+      { params: { file_id: fileId } });
+    return response.data;
   },
 
   /**

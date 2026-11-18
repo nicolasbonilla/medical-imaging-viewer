@@ -1676,5 +1676,16 @@
     "attestVisit": "Ich bestätige in eigener Verantwortung, dass das Bild der {{visit}} ein T2-FLAIR ist. Der Bildkopf sagt das nicht; meine Bestätigung wird mit meinem Namen im Prüfprotokoll gespeichert.",
     "attestAgain": "Mit meiner Bestätigung erneut vergleichen",
     "governedByRc062": "Die Qualitätsprüfung hat dieses Paar zugelassen; die Aufnahmeprüfung unten hält die automatischen Ergebnisse an, und ihr Grund gilt."
+  },
+  "readerRecord": {
+    "notAvailable": "Kein Protokoll pro Läsion: Der ursprüngliche KI-Entwurf wurde für diesen Entwurf nicht aufbewahrt.",
+    "summary": "Was Sie mit dem KI-Entwurf gemacht haben: von seinen {{draft}} Läsionen {{kept}} beibehalten, {{corrected}} korrigiert, {{removed}} entfernt; {{added}} von Ihnen hinzugefügt.",
+    "unaided": "Im Vergleich zu Ihrer Befundung vor dem Entwurf: {{both}} von Ihnen und der KI gefunden, {{readerOnly}} nur von Ihnen, {{adopted}} aus dem Entwurf übernommen, {{later}} später hinzugefügt, {{dropped}} Ihrer eigenen entfernt.",
+    "unaidedFirstTitle": "Leserstudie: Dieses Bild zuerst ohne KI befunden",
+    "unaidedFirstBody": "Dieses Bild gehört zu der Gruppe, die zuerst ohne den KI-Entwurf befundet wird. Zeichnen Sie Ihre eigene Befundung, speichern Sie sie und erfassen Sie sie im Segmentierungsbereich. Danach wird der KI-Entwurf angeboten.",
+    "recordButton": "Als meine Befundung vor der KI erfassen (nicht änderbar)",
+    "recordQuestion": "Diese gespeicherte Segmentierung als Ihre eigene Befundung des Bildes vor dem KI-Entwurf erfassen? Sie wird so aufbewahrt, wie sie jetzt ist, und kann nicht geändert oder ersetzt werden.",
+    "recorded": "Als Ihre Befundung vor dem KI-Entwurf erfasst.",
+    "recordFailed": "Nicht erfasst: {{reason}}"
   }
 }

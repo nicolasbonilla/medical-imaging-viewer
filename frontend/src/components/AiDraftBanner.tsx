@@ -22,6 +22,7 @@ import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { confirmDrawCheck, undrawnText } from '@/utils/confirmDrawCheck';
 import { withRegionColors } from '@/utils/regionColors';
 import { AutomaticMarkingNotice } from './AutomaticMarkingNotice';
+import { ReviewRecordLines } from './LesionReviewRecord';
 
 interface AiDraftBannerProps {
   provenance: AIProvenance;
@@ -110,6 +111,10 @@ export const AiDraftBanner: React.FC<AiDraftBannerProps> = ({ provenance, segmen
           {t('segmentation.aiDraft.boundTo', 'Confirmed for the saved mask')} {provenance.reviewed_mask_sha256.slice(0, 12)}
           {hasUnsavedChanges ? ` — ${t('segmentation.aiDraft.willReset', 'saving your changes will cancel this confirmation')}` : ''}
         </p>
+      )}
+      {/* RC-131 / RC-132: what the reviewer did with each lesion of the draft (server counts at the confirmation). */}
+      {!unreviewed && provenance.review_record_summary && (
+        <ReviewRecordLines summary={provenance.review_record_summary} />
       )}
       {isLocal ? (
         <p>

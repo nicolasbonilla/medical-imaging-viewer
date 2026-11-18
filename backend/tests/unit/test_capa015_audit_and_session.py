@@ -263,6 +263,8 @@ CLINICAL = [
     ("POST", f"/api/v1/segmentation/{SEG}/save", None, "clinical.segmentation.save"),
     ("PUT", f"/api/v1/segmentation/{SEG}/mask/binary", None, "clinical.segmentation.save"),
     ("POST", f"/api/v1/segmentation/{SEG}/ai-review/confirm", None, "clinical.segmentation.confirm"),
+    ("PUT", f"/api/v1/segmentation/{SEG}/ai-draft/original", None, "clinical.segmentation.save"),    # RC-131
+    ("POST", f"/api/v1/segmentation/{SEG}/unaided-read", None, "clinical.segmentation.save"),        # RC-132
     ("DELETE", f"/api/v1/segmentation/{SEG}", None, "clinical.segmentation.delete"),
     ("POST", "/api/v1/segmentation/longitudinal/review",
      {"tp1": {"type": "segmentation", "id": SEG}, "tp2": {"type": "segmentation", "id": SEG2},
