@@ -872,7 +872,8 @@ async def record_unaided_read(
     would no longer be independent of a draft. Each segmentation is recorded once (409 on a repeat)."""
     from app.services import lesion_review_record as lrr
 
-    if not _radiologist(current_user):
+    is_reader = _radiologist(current_user)      # (distinct text: the PRB-003 negative control anchors the DIS route)
+    if not is_reader:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Only a radiologist can record a reading for a reader study.")
     entry = segmentation_service.get_loaded(segmentation_id)

@@ -140,8 +140,8 @@ M = {  # name: ([(file, anchor, replacement), ...], frontend tests (None: the ba
     # ── PRB-030 (RC-092): the image under the mask on the mask's grid — server ──
     "R1_ai_review_image_not_checked": (
         [(ROUTE, "        problem = await _displayed_image_problem(body, metadata, entry[\"masks_3d\"], storage_service,\n"
-                 "                                                 current_user)                   # PRB-030 (RC-092)\n",
-          "        pass\n")], None,
+                 "                                                 current_user, own_grid)         # PRB-030 (RC-092)\n",
+          "        pass\n")], None,   # anchor updated for PR #84 (RC-131 reads the own image's affine from this check)
         "the AI-draft review accepted over an image of another grid (the defect as found)"),
     "R2_dis_confirmation_image_not_checked": (
         [(ROUTE, "        problem = await _displayed_image_problem(body, metadata, entry[\"masks_3d\"], storage_service, current_user)\n",
