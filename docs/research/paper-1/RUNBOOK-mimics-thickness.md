@@ -87,3 +87,18 @@ outputs, same names as block B), `mimics/anat/synthseg/{key}_synthseg.nii.gz` + 
 `mimics/anat/qc_png/` (pilot overlays), `mimics/registration/detreg-{a,b}/registration/{id}.mat` + manifests,
 `mimics/registration/pilot-regtest/`, `mimics/plans/{mimics-xp,mimics-x1..x3,xvariant}.json`, `mimics/xcode/<commit>/`,
 `mimics/results/mimics-xe-<commit7>/`. Logs: `mimics/logs/<vm>.log`.
+
+### 4.1 Launch record (addendum 2)
+
+- **Pilot** `mimics-xp` 2026-11-18 18:48–21:49 UTC, c2d-highmem-4 Spot, 0.38 USD: HD-BET + six configurations on `sub-615`,
+  `sub-587` (G3 18/18 PASS), SynthSeg on 11 scans (0 errors, overlays checked), registration pre-check NOT reproducible
+  without a seed → amendment 1 (`-seed 20261118`). **Linux re-check** `mimics-xt` (c2d-standard-2 Spot, < 0.01 USD): 3/3
+  byte-identical.
+- **Full run** launched 2026-11-18 ≈ 22:05 UTC from 88a080e (`launch_x.py full`): `mimics-x1` c2d-standard-4 70 GB (guard
+  46 h), `mimics-x2` c2d-highmem-4 90 GB (62 h), `mimics-x3` c2d-standard-4 85 GB (62 h). Projection 11.7 USD central /
+  14.1 USD high (incl. 1.5 USD for the evaluation); worst case under the guards 19.8 USD (cap 25). Projected hours
+  23.9 / 33.1 / 33.1 + set-up: expected end ≈ **2026-11-20 09:00 UTC** (high ≈ 17:00 UTC); guards at the latest
+  2026-11-21 ≈ 12:00 UTC.
+- **To resume / finish:** run `python research/paper_1/mimics/launch_x.py tick` every few hours (relaunches a pre-empted
+  VM; when everything is in the bucket it starts the evaluation; when that is done it downloads the results). Then
+  commit `research/paper_1/mimics/results_addendum/SUMMARY.md` and run `python research/cloud/build_ledger.py`.

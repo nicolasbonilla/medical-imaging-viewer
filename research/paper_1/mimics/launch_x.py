@@ -247,9 +247,8 @@ def rate_of(vm, cache={}):
     return cache[vm]
 
 
-def spent_usd():
-    """List-price spend of addendum 2 from the project's audit log: every mimics-x* VM from its insert to its first
-    pre-emption or deletion (a VM still running counts to now)."""
+def audit():
+    """(start, stop, preempted) per mimics-x* VM from the project's audit log."""
     q = ('resource.type="gce_instance" AND protoPayload.resourceName:"instances/mimics-x" AND '
          '(protoPayload.methodName:"insert" OR protoPayload.methodName:"preempted" OR protoPayload.methodName:"delete")')
     exe = shutil.which("gcloud") or shutil.which("gcloud.cmd") or "gcloud"
@@ -258,7 +257,7 @@ def spent_usd():
                        capture_output=True, text=True, timeout=300)
     if r.returncode != 0:
         raise SystemExit(f"audit log unreadable: {r.stderr[-300:]} (a failed read never counts as zero spend)")
-    start, stop = {}, {}
+    start, stop, pre = {}, {}, set()
     for line in r.stdout.splitlines():
         p = line.strip().split("\t")
         if len(p) < 3:
@@ -269,6 +268,15 @@ def spent_usd():
             start[vm] = min(start.get(vm, t), t)
         else:
             stop[vm] = min(stop.get(vm, t), t)
+            if "preempted" in p[1]:
+                pre.add(vm)
+    return start, stop, pre
+
+
+def spent_usd():
+    """List-price spend of addendum 2 from the project's audit log: every mimics-x* VM from its insert to its first
+    pre-emption or deletion (a VM still running counts to now)."""
+    start, stop, _ = audit()
     live = set(running())
     now = datetime.datetime.now(datetime.timezone.utc).timestamp()
     total, per = 0.0, {}
@@ -481,20 +489,43 @@ def eval_name(commit):
     return f"mimics-xe-{commit[:7]}"
 
 
+def xeval():
+    """The evaluation record (mimics/plans/xeval.json): which commit is evaluated, under which VM name, how often it
+    was launched. The evaluation is tied to this record, never to whatever HEAD is later."""
+    try:
+        return json.loads(gs(f"cat {BK}/mimics/plans/xeval.json"))
+    except SystemExit:
+        return None
+
+
 def cmd_evaluate(a):
     if cmd_complete(a) != 0:
         raise SystemExit("not complete: see above")
-    commit = head_commit()
-    name = eval_name(commit)
-    if name in running():
-        raise SystemExit(f"{name} is running")
+    rec = xeval()
+    if rec:
+        name, commit = rec["name"], rec["commit"]
+        if ls(f"mimics/results/{name}/DONE"):
+            raise SystemExit(f"{name} already finished: run fetch (the evaluation runs once)")
+        if name in running():
+            raise SystemExit(f"{name} is running")
+        if rec["launches"] >= 2:
+            raise SystemExit(f"{name} was launched {rec['launches']} times without results: read mimics/logs/{name}.log "
+                             "(stop and report; a code fix is a logged deviation)")
+    else:
+        commit = head_commit()
+        name = eval_name(commit)
+        d = tempfile.mkdtemp()
+        tar = os.path.join(d, f"{commit}.tar.gz")
+        sh(f'git archive --format=tar.gz -o "{tar}" {commit} backend/app backend/data/msmask research/paper_1 research/paper_f')
+        gs(f'cp "{tar}" {BK}/mimics/evalcode/{commit}.tar.gz --quiet')
+        rec = {"name": name, "commit": commit, "launches": 0}
     spent, _ = spent_usd()
     if spent + EVAL_H * EVAL_RATE > CAP_USD:
         raise SystemExit(f"cap: spent {spent} USD + evaluation guard {EVAL_H * EVAL_RATE:.2f} > {CAP_USD}")
+    rec["launches"] += 1
     d = tempfile.mkdtemp()
-    tar = os.path.join(d, f"{commit}.tar.gz")
-    sh(f'git archive --format=tar.gz -o "{tar}" {commit} backend/app backend/data/msmask research/paper_1 research/paper_f')
-    gs(f'cp "{tar}" {BK}/mimics/evalcode/{commit}.tar.gz --quiet')
+    json.dump(rec, open(os.path.join(d, "xeval.json"), "w"), indent=1)
+    gs(f'cp "{os.path.join(d, "xeval.json")}" {BK}/mimics/plans/xeval.json --quiet')
     launch(name, (EVAL_MACHINE, EVAL_DISK, 0, "", EVAL_RATE), None, None, EVAL_H,
            "Paper 1 addendum 2: the single evaluation (DG, run 3, Dallas 21-49, GS, faithful rule, summary)",
            startup="vm_mimics_eval_x.sh", meta=(f"evalcode=mimics/evalcode/{commit}.tar.gz", f"commit={commit}", "workers=8"))
@@ -502,38 +533,42 @@ def cmd_evaluate(a):
 
 
 def cmd_fetch(a):
-    commit = sh("git rev-parse HEAD").strip() if not a.commit else a.commit
-    name = eval_name(commit)
-    if not ls(f"mimics/results/{name}/DONE"):
-        raise SystemExit(f"no results yet for {name}")
+    rec = xeval()
+    if not rec or not ls(f"mimics/results/{rec['name']}/DONE"):
+        raise SystemExit(f"no results yet ({rec and rec['name']})")
     out = os.path.join(HERE, "results_addendum")
     os.makedirs(out, exist_ok=True)
-    gs(f'cp -r "{BK}/mimics/results/{name}/*" "{out}" --quiet')
+    gs(f'cp -r "{BK}/mimics/results/{rec["name"]}/*" "{out}" --quiet')
     print(open(os.path.join(out, "SUMMARY.md"), encoding="utf-8").read()[:3000])
-    print(f"results in {out}")
+    print(f"results of {rec['name']} (code {rec['commit'][:7]}) in {out}")
 
 
 def cmd_tick(a):
-    """One idempotent step: relaunch pre-empted work VMs (within the cap), evaluate when complete, fetch when done."""
+    """One idempotent step: relaunch work VMs whose last instance was PRE-EMPTED (within the cap), evaluate when
+    everything is in the bucket, fetch when the evaluation is done. A VM that ended without a pre-emption and left
+    work missing is reported, never relaunched automatically (a failing item would loop)."""
     run = running()
-    try:
-        commit = head_commit()
-    except SystemExit as e:
-        print(e)
-        commit = None
-    if commit and ls(f"mimics/results/{eval_name(commit)}/DONE"):
-        a.commit = commit
+    rec = xeval()
+    if rec and ls(f"mimics/results/{rec['name']}/DONE"):
         return cmd_fetch(a)
-    if commit and eval_name(commit) in run:
-        print(f"evaluation {eval_name(commit)} running")
+    if rec and rec["name"] in run:
+        print(f"evaluation {rec['name']} running")
         return
     miss = missing_by_vm()
     spent, _ = spent_usd()
+    start, _, pre = audit()
     print(json.dumps({"running": run, "spent_usd": spent, "missing": {k: len(v) for k, v in miss.items()}}, indent=1))
     for vm, m in miss.items():
-        if m and not any(r == vm or r.startswith(vm + "-r") for r in run):
+        if not m or any(r == vm or r.startswith(vm + "-r") for r in run):
+            continue
+        tries = [x for x in start if x == vm or x.startswith(vm + "-r")]
+        last = max(tries, key=lambda x: start[x]) if tries else None
+        if last in pre:
             spent += relaunch(vm, spent, run)
-    if not any(miss.values()) and not run and commit:
+        else:
+            print(f"{vm}: {len(m)} outputs missing and its last instance {last} was not pre-empted: read "
+                  f"mimics/logs/{last}.log; one re-run of a failed item is allowed: launch_x.py relaunch {vm}")
+    if not any(miss.values()) and not run:
         cmd_evaluate(a)
 
 
@@ -550,14 +585,11 @@ def main():
     f.add_argument("--dry-run", action="store_true")
     for c in ("status", "spent", "complete", "evaluate", "tick", "regtest"):
         sub.add_parser(c)
-    fe = sub.add_parser("fetch")
-    fe.add_argument("--commit", default="")
+    sub.add_parser("fetch")
     r = sub.add_parser("relaunch")
     r.add_argument("vms", nargs="+")
     r.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
-    if not hasattr(a, "commit"):
-        a.commit = ""
     sys.exit({"pilot": cmd_pilot, "timings": cmd_timings, "full": cmd_full, "status": cmd_status, "spent": cmd_spent,
               "complete": cmd_complete, "relaunch": cmd_relaunch, "evaluate": cmd_evaluate, "fetch": cmd_fetch,
               "tick": cmd_tick, "regtest": cmd_regtest}[a.cmd](a) or 0)
