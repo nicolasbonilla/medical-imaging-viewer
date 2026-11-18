@@ -1,5 +1,5 @@
 /**
- * RC-131 (REQ-FUNC-119) and RC-132 (REQ-FUNC-120), HAZ-001 cause (h): the reader goes along with the AI draft.
+ * RC-131 (REQ-FUNC-119) and RC-132 (REQ-FUNC-120), HAZ-001 cause (m): the reader goes along with the AI draft.
  *
  *  - after a confirmed review, the banner says what the reviewer did with the draft's lesions and how many lesions the
  *    reviewer added (the model's misses); a record that could not be made is said, never left out;
@@ -72,7 +72,7 @@ describe('RC-131 lesion-by-lesion record of the AI review', () => {
                                                        corrected: 1, removed: 1, added: 1 } };
     render(<AiDraftBanner provenance={p} segmentationId="seg-1" />);
     expect(screen.getByTestId('review-record').textContent).toContain(
-      'of its 3 lesions, 1 kept, 1 corrected, 1 removed; 1 added by you');
+      'of its 3 lesions, 1 kept, 1 corrected, 1 removed; 1 added by the reviewer');
     expect(screen.queryByTestId('review-record-unaided')).toBeNull();
   });
 
@@ -83,8 +83,8 @@ describe('RC-131 lesion-by-lesion record of the AI review', () => {
       unaided: { reader_lesions: 2, reader_and_draft: 1, reader_only: 1, adopted_from_draft: 1, added_later: 1,
                  dropped_after_draft: 0 } } };
     render(<AiDraftBanner provenance={p} segmentationId="seg-1" />);
-    expect(screen.getByTestId('review-record').textContent).toContain('2 añadidas por usted');
-    expect(screen.getByTestId('review-record-unaided').textContent).toContain('1 solo por usted');
+    expect(screen.getByTestId('review-record').textContent).toContain('2 añadidas por quien revisó');
+    expect(screen.getByTestId('review-record-unaided').textContent).toContain('1 solo por quien revisó');
   });
 
   it('rc131 a record that could not be made is said, never left out', () => {
@@ -126,6 +126,17 @@ describe('RC-132 reading before the AI draft (reader study)', () => {
     first.unmount();
     readerStudyAssignment.mockResolvedValue(assignment({ study_on: false, unaided_first: false }));
     withQuery(<ReaderStudyGate fileId="f-2"><p>AI card</p></ReaderStudyGate>);
+    expect(await screen.findByText('AI card')).toBeInTheDocument();
+  });
+
+  it('rc132 if the study state cannot be read, the AI is held back with a retry', async () => {
+    readerStudyAssignment.mockRejectedValueOnce(new Error('network'));
+    readerStudyAssignment.mockRejectedValueOnce(new Error('network'));          // the one automatic retry too
+    readerStudyAssignment.mockResolvedValueOnce(assignment({ study_on: false, unaided_first: false }));
+    withQuery(<ReaderStudyGate fileId="f-1"><p>AI card</p></ReaderStudyGate>);
+    expect(await screen.findByTestId('reader-study-unknown', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.queryByText('AI card')).toBeNull();
+    fireEvent.click(screen.getByRole('button'));
     expect(await screen.findByText('AI card')).toBeInTheDocument();
   });
 

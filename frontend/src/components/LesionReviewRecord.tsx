@@ -1,6 +1,6 @@
 /**
  * LesionReviewRecord — the lesion-by-lesion record of an AI review, and the reader-study reading before the draft
- * (REQ-FUNC-119, REQ-FUNC-120; RC-131, RC-132; HAZ-001 cause (h): the reader goes along with the draft).
+ * (REQ-FUNC-119, REQ-FUNC-120; RC-131, RC-132; HAZ-001 cause (m): the reader goes along with the draft).
  *
  * - `ReviewRecordLines`: after a confirmed review, what the reviewer did with the draft's lesions (kept, corrected,
  *   removed) and how many lesions the reviewer added that the model never drafted; with a reading recorded before the
@@ -11,7 +11,7 @@
  * - `UnaidedReadingCard`: on such an image, records the open saved segmentation the reader drew without the AI as
  *   their reading before the draft (write-once on the server, bound to the saved mask).
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ReviewRecordSummary } from '@/types';
@@ -34,14 +34,14 @@ export const ReviewRecordLines: React.FC<{ summary: ReviewRecordSummary }> = ({ 
     <div data-testid="review-record">
       <p>
         {t('readerRecord.summary',
-          'What you did with the AI draft: of its {{draft}} lesions, {{kept}} kept, {{corrected}} corrected, {{removed}} removed; {{added}} added by you.',
+          'Review of the AI draft (lesions as in the lesion table): of its {{draft}} lesions, {{kept}} kept, {{corrected}} corrected, {{removed}} removed; {{added}} added by the reviewer.',
           { draft: summary.draft_lesions ?? 0, kept: summary.kept ?? 0, corrected: summary.corrected ?? 0,
             removed: summary.removed ?? 0, added: summary.added ?? 0 })}
       </p>
       {u && (
         <p data-testid="review-record-unaided">
           {t('readerRecord.unaided',
-            'Against your reading before the draft: {{both}} found by you and the AI, {{readerOnly}} by you only, {{adopted}} taken from the draft, {{later}} added later, {{dropped}} of yours dropped.',
+            "Against the reviewer's reading before the draft: {{both}} found by the reviewer and the AI, {{readerOnly}} by the reviewer only, {{adopted}} taken from the draft, {{later}} added later, {{dropped}} of the reviewer's dropped.",
             { both: u.reader_and_draft, readerOnly: u.reader_only, adopted: u.adopted_from_draft,
               later: u.added_later, dropped: u.dropped_after_draft })}
         </p>
@@ -55,21 +55,41 @@ function useAssignment(fileId: string | null | undefined) {
     queryKey: readerStudyKey(fileId ?? ''),
     queryFn: () => segmentationAPI.readerStudyAssignment(fileId as string),
     enabled: Boolean(fileId),
-    staleTime: 30_000,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 }
 
 /**
- * Renders `children` (the in-browser AI) unless the image is in the set read without the draft first and the reader
- * has not recorded their reading yet. While the server's answer is pending nothing is shown; if it cannot be read,
- * the AI is offered as before (the study's record then counts only a reading recorded before the draft was saved).
+ * Renders `children` (the in-browser AI) unless the image is in the set read without the draft first and the
+ * radiologist has not recorded their reading yet (other roles are never held back: the server says so). While the
+ * answer is pending nothing is shown; if it cannot be read, the AI is held back with a retry (the AI run itself needs
+ * the server too). Once shown for an image, the AI stays (a later answer never removes a run in progress).
  */
 export const ReaderStudyGate: React.FC<{ fileId: string; children: React.ReactNode }> = ({ fileId, children }) => {
   const { t } = useTranslation();
-  const { data, isLoading } = useAssignment(fileId);
+  const { data, isLoading, isError, refetch } = useAssignment(fileId);
+  const [released, setReleased] = useState<string | null>(null);
+  const blocked = Boolean(data?.unaided_first && !data.reading_recorded && !data.own_draft_saved);
+  const open = released === fileId || (!isLoading && !isError && data !== undefined && !blocked);
+  useEffect(() => {
+    if (open && released !== fileId) setReleased(fileId);
+  }, [open, released, fileId]);
+  if (open) return <>{children}</>;
   if (isLoading) return null;
-  if (data?.unaided_first && !data.reading_recorded && !data.own_draft_saved) {
+  if (isError) {
+    return (
+      <div className="mt-2 rounded border border-violet-500/50 bg-violet-950/30 p-2 text-[10px] leading-snug text-violet-100"
+           role="status" data-testid="reader-study-unknown">
+        <p>{t('readerRecord.unknown', 'Whether this image is read without the AI first could not be checked.')}</p>
+        <button onClick={() => void refetch()} className="mt-1 px-2 py-0.5 rounded bg-violet-700 hover:bg-violet-600 text-white">
+          {t('readerRecord.retry', 'Check again')}
+        </button>
+      </div>
+    );
+  }
+  if (blocked) {
     return (
       <div className="mt-2 rounded border border-violet-500/50 bg-violet-950/30 p-2 text-[10px] leading-snug text-violet-100"
            role="status" data-testid="reader-study-gate">

@@ -260,9 +260,10 @@ class Settings(BaseSettings):
 
     # REQ-FUNC-120 / RC-132 (DRAFT): the reader-study set read WITHOUT the AI draft first — the share of images, chosen
     # by a keyed hash of the image id (services/lesion_review_record.py). 0 (the default) switches the set off; a study
-    # sets it (e.g. 0.2) and its own key, so readers cannot predict or choose the images.
+    # sets it (e.g. 0.2) AND its own secret key — without a key the set stays off, so no reader can predict it from
+    # the source code.
     READER_STUDY_UNAIDED_FRACTION: float = Field(default=0.0, ge=0.0, le=1.0)
-    READER_STUDY_KEY: str = Field(default="mstool-reader-study-1")
+    READER_STUDY_KEY: str = Field(default="")
 
     # WebAuthn / Passkeys Configuration
     WEBAUTHN_RP_ID: str = Field(default="brain-mri-476110.web.app", description="Relying Party ID (domain)")

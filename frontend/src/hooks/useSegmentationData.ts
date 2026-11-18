@@ -393,7 +393,7 @@ export function useSegmentationData({
           } catch (e: unknown) {
             console.warn('[SegmentationData] The original AI draft was not kept; no lesion-by-lesion record:', e);
           }
-          aiDraftOriginalRef.current = null;
+          // kept until the whole save succeeds: a retry creates a new record and sends it again for that one
         }
 
         // Update mask hook with the real server ID (ref only — no React state change yet)
@@ -412,6 +412,7 @@ export function useSegmentationData({
     const success = await segmentationMask.saveMask();
 
     if (success) {
+      if (serverSeg) aiDraftOriginalRef.current = null;   // RC-131: stored with the record the save created
       // NOW it's safe to update Zustand with the server response.
       // Set skip flag so the useEffect doesn't reload the mask we just saved.
       if (serverSeg) {

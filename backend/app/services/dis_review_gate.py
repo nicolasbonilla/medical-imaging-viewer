@@ -586,6 +586,15 @@ def metadata_for_viewer(metadata: Any, user: Any) -> Tuple[Any, Optional[int]]:
     history = list(getattr(metadata, "clinician_review_history", None) or [])
     review = getattr(metadata, "clinician_review", None)
     update: Dict[str, Any] = {"clinician_review_history": []}
+    # RC-131 / RC-132: a reviewer's lesion-by-lesion record (and their reading before the draft) is reader-performance
+    # data: radiologists and administrators only; other roles see the lesion counts of the review, not the reading.
+    if getattr(metadata, "ai_review_record", None) is not None:
+        update["ai_review_record"] = None
+    provenance = getattr(metadata, "ai_provenance", None)
+    summary = getattr(provenance, "review_record_summary", None) if provenance is not None else None
+    if isinstance(summary, dict) and "unaided" in summary:
+        update["ai_provenance"] = provenance.model_copy(update={
+            "review_record_summary": {k: v for k, v in summary.items() if k != "unaided"}})
     if review is not None:
         update["clinician_review"] = review.model_copy(update={
             "reviewed_by": None, "reviewed_by_id": None,

@@ -92,6 +92,8 @@ export interface ReviewRecordSummary {
 /** RC-132: whether an image is in the reader-study set read without the AI draft first. */
 export interface ReaderStudyAssignment {
   study_on: boolean;
+  /** the image is in the set; `unaided_first` is true only for a radiologist (the only role that reads for it) */
+  in_set?: boolean;
   unaided_first: boolean;
   reading_recorded: boolean;
   reading_segmentation_ids: string[];

@@ -1697,13 +1697,15 @@
   },
   "readerRecord": {
     "notAvailable": "Sin registro lesión por lesión: no se conservó el borrador original de la IA de este borrador.",
-    "summary": "Lo que hizo con el borrador de la IA: de sus {{draft}} lesiones, {{kept}} mantenidas, {{corrected}} corregidas, {{removed}} quitadas; {{added}} añadidas por usted.",
-    "unaided": "Frente a su lectura antes del borrador: {{both}} encontradas por usted y por la IA, {{readerOnly}} solo por usted, {{adopted}} tomadas del borrador, {{later}} añadidas después, {{dropped}} suyas quitadas.",
+    "summary": "Revisión del borrador de la IA (lesiones como en la tabla de lesiones): de sus {{draft}} lesiones, {{kept}} mantenidas, {{corrected}} corregidas, {{removed}} quitadas; {{added}} añadidas por quien revisó.",
+    "unaided": "Frente a la lectura de quien revisó antes del borrador: {{both}} encontradas por quien revisó y por la IA, {{readerOnly}} solo por quien revisó, {{adopted}} tomadas del borrador, {{later}} añadidas después, {{dropped}} de quien revisó quitadas.",
     "unaidedFirstTitle": "Estudio de lectores: lea esta imagen primero sin la IA",
     "unaidedFirstBody": "Esta imagen está en el grupo que se lee primero sin el borrador de la IA. Dibuje su propia lectura, guárdela y regístrela en el panel de segmentación. Después se ofrece el borrador de la IA.",
     "recordButton": "Registrar como mi lectura antes de la IA (no se puede cambiar)",
     "recordQuestion": "¿Registrar esta segmentación guardada como su propia lectura de la imagen antes del borrador de la IA? Se conserva tal como está ahora y no se puede cambiar ni sustituir.",
     "recorded": "Registrada como su lectura antes del borrador de la IA.",
-    "recordFailed": "No registrada: {{reason}}"
+    "recordFailed": "No registrada: {{reason}}",
+    "unknown": "No se pudo comprobar si esta imagen se lee primero sin la IA.",
+    "retry": "Comprobar de nuevo"
   }
 }

@@ -404,6 +404,8 @@ class SegmentationService:
             "review_status": "unreviewed", "reviewed_by": None, "reviewed_at": None,
             "reviewed_mask_sha256": None, "review_record_summary": None,   # RC-131: the counts go with the review
         })
+        if hasattr(metadata, "ai_review_record"):
+            metadata.ai_review_record = None    # RC-131: the record of that confirmation stays only as its object
         logger.warning("AI review reset: the mask changed after the review was confirmed",
                        extra={"previous_reviewer": provenance.reviewed_by})
         return True

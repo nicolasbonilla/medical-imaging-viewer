@@ -170,6 +170,17 @@ In this order, all with `--project=brain-mri-476110` written out (the machine's 
 
 Without step 1 or 2 the app still works: an image with a skull is refused by the input gates, with a message that skull removal is not available.
 
+## Reader study: reading before the AI draft (REQ-FUNC-120, RC-132 — DRAFT, PENDING owner approval)
+
+Optional; OFF unless both are set on the backend service (never in the repository):
+
+| Variable | Value | Effect |
+|---|---|---|
+| `READER_STUDY_UNAIDED_FRACTION` | `0` (default) to `1` | Share of images read without the AI draft first |
+| `READER_STUDY_KEY` | a secret string per study (default empty = OFF) | Chooses the images; readers must not know it |
+
+Changing either changes which images are in the set: set them once, before the study starts, and record them in the study protocol.
+
 ## Common failures
 
 | Symptom | Cause | Fix |

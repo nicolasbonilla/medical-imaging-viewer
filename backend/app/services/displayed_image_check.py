@@ -101,11 +101,13 @@ async def _header(storage_service: Any, bucket: str, file_id: str):
 
 
 async def displayed_image_problem(displayed_file_id: Any, own_file_id: Optional[str], mask_shape: Sequence[int],
-                                  storage_service: Any, bucket: str) -> Optional[str]:
+                                  storage_service: Any, bucket: str,
+                                  own_grid_out: Optional[dict] = None) -> Optional[str]:
     """Why the confirmation must be refused because of the image under the mask, or None when it lies on its grid.
 
     The caller authorizes the user for `displayed_file_id` (when it is not the segmentation's own image) BEFORE this
-    reads it."""
+    reads it. RC-131: `own_grid_out`, when given, receives the affine of the segmentation's own image read here
+    (`own_affine`), so the caller needs no second read of it."""
     displayed = str(displayed_file_id or "").strip()
     own = str(own_file_id or "").strip()
     if not displayed:
@@ -125,6 +127,8 @@ async def displayed_image_problem(displayed_file_id: Any, own_file_id: Optional[
         own_grid = None if same_file else await _header(storage_service, bucket, own)
     except Exception:  # noqa: BLE001 — anything unreadable is refused (fail closed)
         return UNREADABLE
+    if own_grid_out is not None:
+        own_grid_out["own_affine"] = affine if same_file else own_grid[1]
     internal = (shape[2], shape[0], shape[1])
     if tuple(int(v) for v in mask_shape) != internal:
         return (f"The image under the segmentation on screen is on another grid than the mask (image "

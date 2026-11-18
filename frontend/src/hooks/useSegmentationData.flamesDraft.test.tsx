@@ -265,6 +265,24 @@ describe('FLAMeS AI draft hand-off (REQ-SAFE-030, REQ-SAFE-032)', () => {
     expect(result.current.saveStatus).not.toBe('error');
   });
 
+  it('rc131 when the first save fails, the retry sends the draft as produced again for its new record', async () => {
+    let n = 0;
+    createSegmentation.mockImplementation((req: Parameters<ReturnType<typeof serverEcho>>[0]) =>
+      serverEcho(true)(req).then((r) => ({ ...r, segmentation_id: `server-${++n}` })));
+    apiPut.mockRejectedValueOnce(new Error('upload failed'));
+    const { result } = renderHook(() => useSegmentationData({}), { wrapper });
+    act(() => {
+      importDraft();
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    await act(async () => {
+      await result.current.saveSegmentation();
+    });
+    expect(storeAiDraftOriginal.mock.calls.map((c) => c[0])).toEqual(['server-1', 'server-2']);
+  });
+
   it('rc047 a server that does not record the provenance gets no draft (orphan removed, mask not uploaded)', async () => {
     createSegmentation.mockImplementation(serverEcho(false));
     const { result } = renderHook(() => useSegmentationData({}), { wrapper });
