@@ -72,10 +72,11 @@ Dallas samples are stratified by decade); any product, labelling or marketing us
 - **Command:** exactly section 4.1 of the first addendum with one thread:
   `greedy -d 3 -a -dof 12 -m NMI -ia-image-centers -n 100x50x10 -i <atlas T1 brain> <subject FLAIR brain> -o <id>.mat -threads 1`
   (`evaluate_mimics.GREEDY_AFFINE` with t = 1), process environment `ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1`,
-  `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`. The command uses none of greedy's randomised
-  options (no `-search`), and its initialisation (`-ia-image-centers`) is deterministic, so there is no seed to fix;
-  the remaining source of run-to-run differences is the order of floating-point sums in multithreaded metric
-  evaluation, which one thread removes (to be confirmed by gate DG).
+  `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`. **Amendment 1 (section 10): `-seed 20261118` is
+  appended.** Version 1.0 said the command used no randomised option; that was wrong — greedy's affine mode jitters its
+  sample points at random by default (`-jitter 0.5`) with an unfixed seed, and the pilot pre-check showed one thread
+  alone is not reproducible. The jitter is kept (it is part of the registered method) and its seed fixed. The
+  initialisation (`-ia-image-centers`) is deterministic; `-search` is not used.
 - **Environment pinned for both runs and the evaluation:** greedy venv `picsl_greedy==1.4.0.3 numpy==1.26.4
   SimpleITK==2.5.3 typing_extensions==4.12.2` (earlier runs left the greedy dependencies unpinned); the fixed image
   (atlas T1 × MSMask > 0) is built by the same lines as `evaluate_mimics.cmd_register` in a venv with the evaluation
@@ -267,7 +268,7 @@ output present and structurally valid (G3), pre-check identical, GS(i) passed. T
 
 Spend = list price of every `mimics-x*` VM from the project's audit log (insert to first pre-emption or deletion;
 running VMs to now). After the pilot, `launch_x.py full` replaces assumed timings by the pilot's means and computes
-the projection (central = measured hours; high = 1.25 × hours + 0.5 h set-up per VM; + spent + 1.5 USD reserved for the
+the projection (central = measured hours; high = 1.25 × hours + 1.0 h set-up per VM (amendment 1); + spent + 1.5 USD reserved for the
 evaluation VM). **The full runs are launched only if the high projection ≤ 25 USD and per-VM guards exist whose worst
 case (every VM running to its guard) also stays ≤ 25 USD.** Otherwise: stop and report (owner decision). Before any VM
 that imports app code (the evaluation VM), the static import closure is listed and the pins are resolved with
@@ -318,10 +319,11 @@ labelling or marketing.
 
 ## 10. Deviations log
 
-*(empty at commit)*
+*(empty at commit 22ba245)*
 
 | Date | Entry | Rule changed? | Seen before? |
 |---|---|---|---|
+| 2026-11-18 | **Amendment 1 — registration seed (before the full launch; pre-outcome).** The pilot pre-check (`mimics-xp`) registered `wmh_utrecht_1`, `wmh_singapore_50` and `sub-178` twice in a row with one thread: all three pairs differed (matrix entries by up to about 3e-3, translations by up to 0.06 mm). Cause: greedy's default sampling jitter (`-jitter 0.5`, documented in the greedy reference: "the sample locations where metric is calculated are randomly displaced from voxel centers") draws from an unfixed seed; the source (`GreedyParameters.cxx`) offers `-seed`. A local check with the same greedy 1.4.0.3 (Windows build, `sub-178`, one thread) gave byte-identical transforms twice with `-seed 1` and twice with `-jitter 0`. **Change:** the registration command gets `-seed 20261118` (jitter kept, as registered; section 3.1). Stop rule 2 applied: a Linux re-check (`mimics-xt`, c2d-standard-2, same three subjects twice) must give identical transforms before the full launch. Also: the set-up allowance of the budget rule is raised from 0.5 to 1.0 h per VM (the pilot's set-up took 55 min); more conservative, no other effect. | yes (section 3.1; budget computation) | the pilot's six pre-check transforms (registration output, no outcome); the pilot log (timings, memory) |
 
 ## References
 

@@ -35,6 +35,16 @@ sys.path.insert(0, HERE)
 PFX = "mimics"
 ATLAS_T1_SHA = "d4104bbda56ad46c898135c805b394856993aea239b942f3a705136cd2b4476b"
 ATLAS_T1_BLOB = "inputs/lstai_atlas/sub-mni152_space-mni_t1.nii.gz"
+# Amendment 1 (PREREG addendum 2, section 10): greedy's affine mode jitters its sample points at random (-jitter 0.5,
+# the default) with an unfixed seed, so one thread alone is not reproducible (pilot pre-check 2026-11-18). The jitter is
+# kept and its seed fixed with greedy's -seed option.
+DET_SEED = 20261118
+
+
+def det_cmd(EM, fixed, moving, mat):
+    return EM.GREEDY_AFFINE.format(fixed=fixed, moving=moving, mat=mat, t=1) + f" -seed {DET_SEED}"
+
+
 ONE_THREAD = {"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
               "OPENBLAS_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"}
 
@@ -259,7 +269,7 @@ def run_register(bucket, spec, a):
     regd = os.path.join(a.work, "reg_out", run)
     os.makedirs(flat, exist_ok=True)
     os.makedirs(regd, exist_ok=True)
-    man = {"run": run, "vm": a.run_id, "started_utc": now(), "fixed": finfo, "command": EM.GREEDY_AFFINE,
+    man = {"run": run, "vm": a.run_id, "started_utc": now(), "fixed": finfo, "command": EM.GREEDY_AFFINE + f" -seed {DET_SEED}",
            "threads": 1, "env": ONE_THREAD, "workers": spec.get("workers", 4), "greedy_venv": pip_freeze(a.greedy_python),
            "fixed_venv": pip_freeze(a.fixed_python), "cpu": open("/proc/cpuinfo").read().split("model name")[1].split("\n")[0]
            if os.path.exists("/proc/cpuinfo") else None, "records": {}, "errors": [],
@@ -287,7 +297,7 @@ def run_register(bucket, spec, a):
                 continue
             mat = os.path.join(regd, f"{i}.mat")
             part.append((i, fl, mat))
-            jobs.append((a.greedy_python, EM.GREEDY_AFFINE.format(fixed=fixed, moving=fl, mat=mat, t=1)))
+            jobs.append((a.greedy_python, det_cmd(EM, fixed, fl, mat)))
         with Pool(spec.get("workers", 4)) as pool:
             res = pool.map(_greedy_one, jobs, chunksize=1)
         for (i, fl, mat), (rc, sec, err) in zip(part, res):
@@ -308,7 +318,7 @@ def run_regtest(bucket, spec, a):
     import mimics_prep as MP
     fixed, finfo = fixed_image(a)
     recs = MP.merged_records(bucket)
-    out = {"vm": a.run_id, "fixed": finfo, "command": EM.GREEDY_AFFINE, "env": ONE_THREAD,
+    out = {"vm": a.run_id, "fixed": finfo, "command": EM.GREEDY_AFFINE + f" -seed {DET_SEED}", "env": ONE_THREAD,
            "greedy_venv": pip_freeze(a.greedy_python), "records": {}}
     for i in spec["ids"]:
         fl = os.path.join(a.work, f"rt_{i}_FLAIR.nii.gz")
@@ -316,10 +326,10 @@ def run_regtest(bucket, spec, a):
         rec = {}
         for rep in (1, 2):
             mat = os.path.join(a.work, f"rt_{i}_rep{rep}.mat")
-            rc, sec, err = _greedy_one((a.greedy_python, EM.GREEDY_AFFINE.format(fixed=fixed, moving=fl, mat=mat, t=1)))
+            rc, sec, err = _greedy_one((a.greedy_python, det_cmd(EM, fixed, fl, mat)))
             rec[f"rep{rep}"] = {"rc": rc, "seconds": sec, "sha256": sha256(mat) if os.path.exists(mat) else None}
             if os.path.exists(mat):
-                bucket.blob(f"{PFX}/registration/pilot-regtest/rep{rep}/{i}.mat").upload_from_filename(mat)
+                bucket.blob(f"{PFX}/registration/pilot-regtest/{a.run_id}/rep{rep}/{i}.mat").upload_from_filename(mat)
         rec["identical"] = rec["rep1"]["sha256"] is not None and rec["rep1"]["sha256"] == rec["rep2"]["sha256"]
         out["records"][i] = rec
         print(f"[regtest] {i}: identical={rec['identical']} ({rec['rep1']['seconds']} s, {rec['rep2']['seconds']} s)", flush=True)

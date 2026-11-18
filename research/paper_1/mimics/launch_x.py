@@ -29,7 +29,7 @@ PROJECT = "mstool-research"
 BK = "gs://mstool-research-data"
 CAP_USD = 25.0
 EVAL_RESERVE_USD = 1.5                # the evaluation VM (c2d-standard-8 Spot, <= 10 h guard) and its possible rerun
-SAFETY, SETUP_H = 1.25, 0.5
+SAFETY, SETUP_H = 1.25, 1.0       # set-up per VM: the pilot measured 55 min (envs, 84 GB of images, archives)
 SETS = json.load(open(os.path.join(HERE, "analysis_sets.json")))
 X2 = json.load(open(os.path.join(HERE, "analysis_sets_addendum2.json")))
 TOOLS = ["flames", "lstai", "mindglide", "wmhsynthseg", "samseg"]
@@ -46,6 +46,7 @@ SHUTDOWN = ('#!/bin/bash\nMD=http://metadata/computeMetadata/v1/instance\n'
 # name: (machine type, disk GB, swap GB, needs, Spot list USD/h incl. disk - used only before runs/<vm>/plan.json exists)
 # Global quota 12 vCPUs (three 4-vCPU VMs); regional SSD quota 250 GB: 70 + 90 + 85 = 245 GB.
 VM = {"mimics-xp": ("c2d-highmem-4", 130, 16, "hdbet flames lstai mindglide fs cdata greedy", 0.1300),
+      "mimics-xt": ("c2d-standard-2", 30, 2, "greedy", 0.0500),   # amendment 1: Linux re-check of the seeded registration
       "mimics-x1": ("c2d-standard-4", 70, 8, "hdbet flames lstai greedy", 0.0928),
       "mimics-x2": ("c2d-highmem-4", 90, 16, "hdbet flames mindglide fs", 0.1245),
       "mimics-x3": ("c2d-standard-4", 85, 8, "hdbet flames fs cdata greedy", 0.0950)}
@@ -335,6 +336,15 @@ def cmd_pilot(a):
            "data type + atlas; single-thread registration twice on 3 subjects; SynthSeg overlays", dry=False)
 
 
+def cmd_regtest(a):
+    """Amendment 1: the registration pre-check again, on Linux, with the fixed seed (no other work)."""
+    commit = head_commit()
+    code = upload_code(commit)
+    launch("mimics-xt", VM["mimics-xt"], upload_plan("mimics-xt", {"prep": [], "steps": [],
+                                                                  "regtest": {"ids": X2["pilot"]["regtest"]}}), code, 2,
+           "Paper 1 addendum 2, amendment 1: single-thread seeded registration twice on 3 subjects (pre-check)")
+
+
 def cmd_timings(a):
     acc = {}
 
@@ -538,7 +548,7 @@ def main():
     f = sub.add_parser("full")
     f.add_argument("--pilot-json", required=True)
     f.add_argument("--dry-run", action="store_true")
-    for c in ("status", "spent", "complete", "evaluate", "tick"):
+    for c in ("status", "spent", "complete", "evaluate", "tick", "regtest"):
         sub.add_parser(c)
     fe = sub.add_parser("fetch")
     fe.add_argument("--commit", default="")
@@ -550,7 +560,7 @@ def main():
         a.commit = ""
     sys.exit({"pilot": cmd_pilot, "timings": cmd_timings, "full": cmd_full, "status": cmd_status, "spent": cmd_spent,
               "complete": cmd_complete, "relaunch": cmd_relaunch, "evaluate": cmd_evaluate, "fetch": cmd_fetch,
-              "tick": cmd_tick}[a.cmd](a) or 0)
+              "tick": cmd_tick, "regtest": cmd_regtest}[a.cmd](a) or 0)
 
 
 if __name__ == "__main__":
