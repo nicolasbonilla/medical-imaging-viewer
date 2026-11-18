@@ -1,0 +1,77 @@
+archive: https://zenodo.org/api/records/17955359/files/Dataset004_WML.zip/content
+  size 2351319537 bytes
+  35 members:
+               0  Dataset004_WML/
+               0  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/
+               0  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_1/
+       249223778  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_1/checkpoint_best.pth
+         2608901  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_1/training_log_2024_11_21_10_39_41.txt
+         1005632  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_1/progress.png
+           13196  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_1/debug.json
+       249224766  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_1/checkpoint_final.pth
+          109486  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/dataset_fingerprint.json
+               0  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_2/
+         2606805  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_2/training_log_2024_11_21_10_39_47.txt
+       249222946  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_2/checkpoint_best.pth
+          950382  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_2/progress.png
+           13196  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_2/debug.json
+       249225598  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_2/checkpoint_final.pth
+               0  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_3/
+         2610582  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_3/training_log_2024_11_21_10_40_15.txt
+       249213090  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_3/checkpoint_best.pth
+          793334  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_3/progress.png
+           13196  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_3/debug.json
+       249222462  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_3/checkpoint_final.pth
+             227  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/dataset.json
+               0  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/
+       249212962  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/checkpoint_best.pth
+          958189  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/progress.png
+         2609014  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/training_log_2024_11_21_10_39_24.txt
+           13196  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/debug.json
+       249223422  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth
+           10544  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/plans.json
+               0  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_4/
+       249197474  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_4/checkpoint_best.pth
+         2609868  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_4/training_log_2024_11_21_10_40_22.txt
+          766085  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_4/progress.png
+           13196  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_4/debug.json
+       249220606  Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_4/checkpoint_final.pth
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_1/training_log_2024_11_21_10_39_41.txt (2608901 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_1/debug.json (13196 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/dataset_fingerprint.json (109486 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_2/training_log_2024_11_21_10_39_47.txt (2606805 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_2/debug.json (13196 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_3/training_log_2024_11_21_10_40_15.txt (2610582 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_3/debug.json (13196 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/dataset.json (227 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/training_log_2024_11_21_10_39_24.txt (2609014 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_0/debug.json (13196 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/plans.json (10544 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_4/training_log_2024_11_21_10_40_22.txt (2609868 bytes)
+  fetched Dataset004_WML/nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres/fold_4/debug.json (13196 bytes)
+total bytes transferred: 2954622
+2024-11-21 10:39:24.184099: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-21 10:39:24.197354: This split has 534 training and 134 validation cases. 
+2024-11-23 05:46:29.122181: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-23 05:46:29.137824: This split has 534 training and 134 validation cases. 
+2024-11-23 05:48:49.484503: Mean Validation Dice:  0.793141733058811 
+2024-11-21 10:39:41.634357: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-21 10:39:41.635289: This split has 534 training and 134 validation cases. 
+2024-11-23 06:21:10.590244: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-23 06:21:10.599598: This split has 534 training and 134 validation cases. 
+2024-11-23 06:23:39.990201: Mean Validation Dice:  0.7813705943269879 
+2024-11-21 10:39:47.873523: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-21 10:39:47.874451: This split has 534 training and 134 validation cases. 
+2024-11-23 06:23:16.382894: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-23 06:23:16.383837: This split has 534 training and 134 validation cases. 
+2024-11-23 06:25:21.354332: Mean Validation Dice:  0.7701944745885502 
+2024-11-21 10:40:15.757275: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-21 10:40:15.758152: This split has 535 training and 133 validation cases. 
+2024-11-23 07:06:29.263925: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-23 07:06:29.264936: This split has 535 training and 133 validation cases. 
+2024-11-23 07:08:27.286149: Mean Validation Dice:  0.8026924964103578 
+2024-11-21 10:40:22.565481: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-21 10:40:22.566428: This split has 535 training and 133 validation cases. 
+2024-11-23 06:59:38.207134: Using splits from existing split file: /sc/arion/projects/becklab/Francesco/Models/nnUNet_v2/nnUNet_preprocessed/Dataset004_WML/splits_final.json 
+2024-11-23 06:59:38.223254: This split has 535 training and 133 validation cases. 
+2024-11-23 07:01:52.825863: Mean Validation Dice:  0.7939505654800686 

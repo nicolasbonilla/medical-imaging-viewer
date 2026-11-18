@@ -1,0 +1,33 @@
+fold 0: 134 validation cases (log Dataset004_WML__nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres__fold_0__training_log_2024_11_21_10_39_24.txt)
+fold 1: 134 validation cases (log Dataset004_WML__nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres__fold_1__training_log_2024_11_21_10_39_41.txt)
+fold 2: 134 validation cases (log Dataset004_WML__nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres__fold_2__training_log_2024_11_21_10_39_47.txt)
+fold 3: 133 validation cases (log Dataset004_WML__nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres__fold_3__training_log_2024_11_21_10_40_15.txt)
+fold 4: 133 validation cases (log Dataset004_WML__nnUNetTrainer_8000epochs__nnUNetPlans__3d_fullres__fold_4__training_log_2024_11_21_10_40_22.txt)
+union of validation ids: 668 (min FLAIR_001, max FLAIR_668); fingerprint entries: 668
+pairwise overlap between fold validation sets: 0
+identifier-order check (predicted vs logged resampled shape, tol 1 voxel): ok 668, mismatch 0
+  patient01 = FLAIR_085: validation fold [1]
+  patient02 = FLAIR_086: validation fold [1]
+  patient03 = FLAIR_087: validation fold [4]
+  patient04 = FLAIR_088: validation fold [0]
+  patient05 = FLAIR_089: validation fold [2]
+  patient06 = FLAIR_090: validation fold [1]
+  patient07 = FLAIR_091: validation fold [0]
+  patient08 = FLAIR_092: validation fold [4]
+  patient09 = FLAIR_093: validation fold [3]
+  patient10 = FLAIR_094: validation fold [2]
+  patient11 = FLAIR_095: validation fold [4]
+  patient12 = FLAIR_096: validation fold [2]
+  patient13 = FLAIR_097: validation fold [4]
+  patient14 = FLAIR_098: validation fold [1]
+  patient15 = FLAIR_099: validation fold [3]
+  patient21 = FLAIR_100: validation fold [1]
+  patient22 = FLAIR_101: validation fold [1]
+  patient23 = FLAIR_102: validation fold [1]
+  patient24 = FLAIR_103: validation fold [3]
+  patient25 = FLAIR_104: validation fold [2]
+
+Ljubljana training scans in FOLD-0 validation (not trained on by the fold-0 weights): ['patient04', 'patient07']
+never trained on by any fold: ['patient16', 'patient17', 'patient18', 'patient19', 'patient20', 'patient26', 'patient27', 'patient28', 'patient29', 'patient30']
+=> clean w.r.t. the fold-0 weights that produced our maps: 12 scans ['patient04', 'patient07', 'patient16', 'patient17', 'patient18', 'patient19', 'patient20', 'patient26', 'patient27', 'patient28', 'patient29', 'patient30']
+wrote docs/research/records/2026-10-17_flames_fold_membership.json

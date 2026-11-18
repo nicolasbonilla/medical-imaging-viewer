@@ -1,0 +1,1498 @@
+{
+ "patients": {
+  "patient01": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    160,
+    363,
+    270
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    270,
+    363,
+    160
+   ]
+  },
+  "patient02": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    173,
+    353,
+    271
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    271,
+    353,
+    173
+   ]
+  },
+  "patient03": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    167,
+    328,
+    268
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    268,
+    328,
+    167
+   ]
+  },
+  "patient04": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    176,
+    376,
+    278
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    278,
+    376,
+    176
+   ]
+  },
+  "patient05": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    163,
+    359,
+    264
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    264,
+    359,
+    163
+   ]
+  },
+  "patient06": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    178,
+    361,
+    270
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    270,
+    361,
+    178
+   ]
+  },
+  "patient07": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    158,
+    324,
+    271
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    271,
+    324,
+    158
+   ]
+  },
+  "patient08": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    172,
+    344,
+    256
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    256,
+    344,
+    172
+   ]
+  },
+  "patient09": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    164,
+    327,
+    262
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    262,
+    327,
+    164
+   ]
+  },
+  "patient10": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    165,
+    322,
+    296
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    296,
+    322,
+    165
+   ]
+  },
+  "patient11": {
+   "flair_dims_nifti": [
+    176,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.9,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    176,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    152,
+    351,
+    285
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.9
+   ],
+   "brain_bbox_sitk_order": [
+    285,
+    351,
+    152
+   ]
+  },
+  "patient12": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    157,
+    368,
+    284
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    284,
+    368,
+    157
+   ]
+  },
+  "patient13": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    166,
+    347,
+    270
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    270,
+    347,
+    166
+   ]
+  },
+  "patient14": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    168,
+    356,
+    272
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    272,
+    356,
+    168
+   ]
+  },
+  "patient15": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    171,
+    344,
+    254
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    254,
+    344,
+    171
+   ]
+  },
+  "patient16": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    172,
+    338,
+    244
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    244,
+    338,
+    172
+   ]
+  },
+  "patient17": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    151,
+    355,
+    265
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    265,
+    355,
+    151
+   ]
+  },
+  "patient18": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.9,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    150,
+    327,
+    271
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.9
+   ],
+   "brain_bbox_sitk_order": [
+    271,
+    327,
+    150
+   ]
+  },
+  "patient19": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    162,
+    313,
+    272
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    272,
+    313,
+    162
+   ]
+  },
+  "patient20": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    164,
+    343,
+    258
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    258,
+    343,
+    164
+   ]
+  },
+  "patient21": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    157,
+    377,
+    276
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    276,
+    377,
+    157
+   ]
+  },
+  "patient22": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    169,
+    348,
+    273
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    273,
+    348,
+    169
+   ]
+  },
+  "patient23": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    164,
+    376,
+    251
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    251,
+    376,
+    164
+   ]
+  },
+  "patient24": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    177,
+    350,
+    307
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    307,
+    350,
+    177
+   ]
+  },
+  "patient25": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    150,
+    366,
+    266
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    266,
+    366,
+    150
+   ]
+  },
+  "patient26": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    154,
+    339,
+    249
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    249,
+    339,
+    154
+   ]
+  },
+  "patient27": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    178,
+    339,
+    273
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    273,
+    339,
+    178
+   ]
+  },
+  "patient28": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    168,
+    369,
+    265
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    265,
+    369,
+    168
+   ]
+  },
+  "patient29": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    177,
+    362,
+    258
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    258,
+    362,
+    177
+   ]
+  },
+  "patient30": {
+   "flair_dims_nifti": [
+    192,
+    512,
+    512
+   ],
+   "flair_pixdim_nifti": [
+    0.8,
+    0.46875,
+    0.46875
+   ],
+   "brainmask_grid": [
+    192,
+    512,
+    512
+   ],
+   "brain_bbox_nifti": [
+    169,
+    335,
+    259
+   ],
+   "spacing_sitk_order": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "brain_bbox_sitk_order": [
+    259,
+    335,
+    169
+   ]
+  }
+ },
+ "candidate_indices": [
+  84,
+  85,
+  86,
+  87,
+  88,
+  89,
+  90,
+  91,
+  92,
+  93,
+  94,
+  95,
+  96,
+  97,
+  98,
+  99,
+  100,
+  101,
+  102,
+  103,
+  137,
+  138
+ ],
+ "assignment": [
+  {
+   "fingerprint_index": 84,
+   "anonymised_id_guess": "FLAIR_085",
+   "fingerprint_bbox_sitk": [
+    270,
+    363,
+    160
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient01",
+   "l1_voxels": 0.0,
+   "best": "patient01",
+   "best_l1": 0.0,
+   "second": "patient05",
+   "second_l1": 13.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 85,
+   "anonymised_id_guess": "FLAIR_086",
+   "fingerprint_bbox_sitk": [
+    271,
+    353,
+    173
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient02",
+   "l1_voxels": 0.0,
+   "best": "patient02",
+   "best_l1": 0.0,
+   "second": "patient14",
+   "second_l1": 9.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 86,
+   "anonymised_id_guess": "FLAIR_087",
+   "fingerprint_bbox_sitk": [
+    268,
+    328,
+    167
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient03",
+   "l1_voxels": 0.0,
+   "best": "patient03",
+   "best_l1": 0.0,
+   "second": "patient09",
+   "second_l1": 10.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 87,
+   "anonymised_id_guess": "FLAIR_088",
+   "fingerprint_bbox_sitk": [
+    278,
+    376,
+    176
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient04",
+   "l1_voxels": 0.0,
+   "best": "patient04",
+   "best_l1": 0.0,
+   "second": "patient21",
+   "second_l1": 22.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 88,
+   "anonymised_id_guess": "FLAIR_089",
+   "fingerprint_bbox_sitk": [
+    264,
+    359,
+    163
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient05",
+   "l1_voxels": 0.0,
+   "best": "patient05",
+   "best_l1": 0.0,
+   "second": "patient01",
+   "second_l1": 13.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 89,
+   "anonymised_id_guess": "FLAIR_090",
+   "fingerprint_bbox_sitk": [
+    270,
+    361,
+    178
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient06",
+   "l1_voxels": 0.0,
+   "best": "patient06",
+   "best_l1": 0.0,
+   "second": "patient02",
+   "second_l1": 14.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 90,
+   "anonymised_id_guess": "FLAIR_091",
+   "fingerprint_bbox_sitk": [
+    271,
+    324,
+    158
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient07",
+   "l1_voxels": 0.0,
+   "best": "patient07",
+   "best_l1": 0.0,
+   "second": "patient03",
+   "second_l1": 16.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 91,
+   "anonymised_id_guess": "FLAIR_092",
+   "fingerprint_bbox_sitk": [
+    256,
+    344,
+    172
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient08",
+   "l1_voxels": 0.0,
+   "best": "patient08",
+   "best_l1": 0.0,
+   "second": "patient15",
+   "second_l1": 3.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 92,
+   "anonymised_id_guess": "FLAIR_093",
+   "fingerprint_bbox_sitk": [
+    262,
+    327,
+    164
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient09",
+   "l1_voxels": 0.0,
+   "best": "patient09",
+   "best_l1": 0.0,
+   "second": "patient03",
+   "second_l1": 10.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 93,
+   "anonymised_id_guess": "FLAIR_094",
+   "fingerprint_bbox_sitk": [
+    296,
+    322,
+    165
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient10",
+   "l1_voxels": 0.0,
+   "best": "patient10",
+   "best_l1": 0.0,
+   "second": "patient07",
+   "second_l1": 34.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 94,
+   "anonymised_id_guess": "FLAIR_095",
+   "fingerprint_bbox_sitk": [
+    285,
+    351,
+    152
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.9
+   ],
+   "matched_patient": "patient11",
+   "l1_voxels": 0.0,
+   "best": "patient11",
+   "best_l1": 0.0,
+   "second": "patient18",
+   "second_l1": 40.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 95,
+   "anonymised_id_guess": "FLAIR_096",
+   "fingerprint_bbox_sitk": [
+    284,
+    368,
+    157
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient12",
+   "l1_voxels": 0.0,
+   "best": "patient12",
+   "best_l1": 0.0,
+   "second": "patient21",
+   "second_l1": 17.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 96,
+   "anonymised_id_guess": "FLAIR_097",
+   "fingerprint_bbox_sitk": [
+    270,
+    347,
+    166
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient13",
+   "l1_voxels": 0.0,
+   "best": "patient13",
+   "best_l1": 0.0,
+   "second": "patient22",
+   "second_l1": 7.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 97,
+   "anonymised_id_guess": "FLAIR_098",
+   "fingerprint_bbox_sitk": [
+    272,
+    356,
+    168
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient14",
+   "l1_voxels": 0.0,
+   "best": "patient14",
+   "best_l1": 0.0,
+   "second": "patient02",
+   "second_l1": 9.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 98,
+   "anonymised_id_guess": "FLAIR_099",
+   "fingerprint_bbox_sitk": [
+    254,
+    344,
+    171
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient15",
+   "l1_voxels": 0.0,
+   "best": "patient15",
+   "best_l1": 0.0,
+   "second": "patient08",
+   "second_l1": 3.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 99,
+   "anonymised_id_guess": "FLAIR_100",
+   "fingerprint_bbox_sitk": [
+    276,
+    377,
+    157
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient21",
+   "l1_voxels": 0.0,
+   "best": "patient21",
+   "best_l1": 0.0,
+   "second": "patient12",
+   "second_l1": 17.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 100,
+   "anonymised_id_guess": "FLAIR_101",
+   "fingerprint_bbox_sitk": [
+    273,
+    348,
+    169
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient22",
+   "l1_voxels": 0.0,
+   "best": "patient22",
+   "best_l1": 0.0,
+   "second": "patient13",
+   "second_l1": 7.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 101,
+   "anonymised_id_guess": "FLAIR_102",
+   "fingerprint_bbox_sitk": [
+    251,
+    376,
+    164
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient23",
+   "l1_voxels": 0.0,
+   "best": "patient23",
+   "best_l1": 0.0,
+   "second": "patient28",
+   "second_l1": 25.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 102,
+   "anonymised_id_guess": "FLAIR_103",
+   "fingerprint_bbox_sitk": [
+    307,
+    350,
+    177
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient24",
+   "l1_voxels": 0.0,
+   "best": "patient24",
+   "best_l1": 0.0,
+   "second": "patient02",
+   "second_l1": 43.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 103,
+   "anonymised_id_guess": "FLAIR_104",
+   "fingerprint_bbox_sitk": [
+    266,
+    366,
+    150
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.8
+   ],
+   "matched_patient": "patient25",
+   "l1_voxels": 0.0,
+   "best": "patient25",
+   "best_l1": 0.0,
+   "second": "patient17",
+   "second_l1": 13.0,
+   "exact": true
+  },
+  {
+   "fingerprint_index": 137,
+   "anonymised_id_guess": "FLAIR_138",
+   "fingerprint_bbox_sitk": [
+    284,
+    349,
+    144
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.9
+   ],
+   "matched_patient": "patient18",
+   "l1_voxels": 41.0,
+   "best": "patient11",
+   "best_l1": 11.0,
+   "second": "patient18",
+   "second_l1": 41.0,
+   "exact": false
+  },
+  {
+   "fingerprint_index": 138,
+   "anonymised_id_guess": "FLAIR_139",
+   "fingerprint_bbox_sitk": [
+    296,
+    339,
+    155
+   ],
+   "spacing": [
+    0.4688,
+    0.4688,
+    0.9
+   ],
+   "matched_patient": "patient16",
+   "l1_voxels": 1000000.0,
+   "best": "patient11",
+   "best_l1": 26.0,
+   "second": "patient18",
+   "second_l1": 42.0,
+   "exact": false
+  }
+ ],
+ "matched_trained": [
+  "patient01",
+  "patient02",
+  "patient03",
+  "patient04",
+  "patient05",
+  "patient06",
+  "patient07",
+  "patient08",
+  "patient09",
+  "patient10",
+  "patient11",
+  "patient12",
+  "patient13",
+  "patient14",
+  "patient15",
+  "patient21",
+  "patient22",
+  "patient23",
+  "patient24",
+  "patient25"
+ ],
+ "held_out": [
+  "patient16",
+  "patient17",
+  "patient18",
+  "patient19",
+  "patient20",
+  "patient26",
+  "patient27",
+  "patient28",
+  "patient29",
+  "patient30"
+ ],
+ "monotone_in_anonymised_id": true,
+ "n_exact_matches": 20,
+ "min_second_best_l1_among_exact": 3.0,
+ "between_patient_box_l1": {
+  "min": 3.0,
+  "median": 43.0,
+  "n_pairs_exactly_equal": 0
+ },
+ "not_ljubljana_entries_sharing_spacing": [
+  137,
+  138
+ ]
+}

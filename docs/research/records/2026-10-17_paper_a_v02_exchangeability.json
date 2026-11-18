@@ -1,0 +1,59 @@
+{
+ "inputs": [
+  {
+   "file": ".multisite_adv_cache.npz",
+   "sha256": "35965e99a8766c07a220d3ea5bacc172b4510ede2fa094c76dcb9d75f1935c23"
+  }
+ ],
+ "n_perm": 2000,
+ "pairs": {
+  "openms_all|mslesseg": {
+   "scans": [
+    30,
+    115
+   ],
+   "false_candidates": [
+    461,
+    1348
+   ],
+   "ks_D": 0.0478,
+   "perm_p": 0.6922
+  },
+  "heldout10|mslesseg": {
+   "scans": [
+    10,
+    115
+   ],
+   "false_candidates": [
+    94,
+    1348
+   ],
+   "ks_D": 0.0952,
+   "perm_p": 0.5617
+  },
+  "trained20|mslesseg": {
+   "scans": [
+    20,
+    115
+   ],
+   "false_candidates": [
+    367,
+    1348
+   ],
+   "ks_D": 0.0432,
+   "perm_p": 0.8911
+  },
+  "trained20|heldout10": {
+   "scans": [
+    20,
+    10
+   ],
+   "false_candidates": [
+    367,
+    94
+   ],
+   "ks_D": 0.0883,
+   "perm_p": 0.5372
+  }
+ }
+}

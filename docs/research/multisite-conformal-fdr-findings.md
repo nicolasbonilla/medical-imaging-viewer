@@ -1,5 +1,15 @@
 # Multi-site conformal lesion-FDR under real MS shift — honest characterization
 
+> **CORRECTION 2026-10-17 (read first).** The `openms` cohort is largely FLAMeS TRAINING data:
+> FLAMeS trained on Ljubljana patients 01–15 and 21–25 (identified exactly from the released
+> nnU-Net fingerprint; `docs/research/records/2026-10-17_flames_ljubljana_split.json`), and the
+> fold-0 weights that produced our maps trained on 18 of the 30. Every `openms` number below is
+> therefore **in-distribution (training-contaminated)**, not cross-site evidence, and every
+> "pooled" patient null below includes those in-sample scores. The "openms ↔ mslesseg transport"
+> of Finding 1 is withdrawn as external evidence; the clean re-analysis (10 never-trained openms
+> scans, MSLesSeg-only nulls, distinct-scan intervals) is in
+> `docs/research/paper/manuscript-draft.md` v0.2 and `research/paper_a/`.
+
 **Status:** research finding, reproducible on in-hand public data (CPU-only).
 **Script:** [`scripts/calm-ms/multisite_conformal_fdr.py`](../../scripts/calm-ms/multisite_conformal_fdr.py)
 **Record:** [`backend/app/services/assets/multisite_conformal_record.json`](../../backend/app/services/assets/multisite_conformal_record.json)

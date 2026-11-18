@@ -1,0 +1,2 @@
+PAC mslesseg: draws 220 distinct 92 | v0.1-style {'curve_violated': 3, 'fdp_gt_gamma': 0, 'false_certified_dis': 0, 'draws': 220} | curve-violated distinct 3 | certified on GT-DIS {'gt_dis_distinct_scans': 86, 'distinct_ever_certified': 1, 'draws_gt_dis': 195, 'draws_certified': 1} | power 0.0027 abstain 0.9909
+wrote C:\Users\Nicolas\medical-imaging-viewer\.claude\worktrees\agent-a326eb09a5f433bb1\docs\research\records\2026-10-17_paper_a_v02_pac_distinct_scans.json

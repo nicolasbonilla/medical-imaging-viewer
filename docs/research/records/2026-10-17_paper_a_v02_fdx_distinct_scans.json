@@ -1,0 +1,2901 @@
+{
+ "inputs": [
+  {
+   "file": ".region_cache.npz",
+   "sha256": "37b8c8024052bdf3520a1d7f121fd836a1c827786e893cdfd74e293f6d053f50"
+  }
+ ],
+ "gamma": 0.2,
+ "delta": 0.1,
+ "template": "hc (pre-registered primary)",
+ "flames_split": {
+  "heldout10": [
+   16,
+   17,
+   18,
+   19,
+   20,
+   26,
+   27,
+   28,
+   29,
+   30
+  ],
+  "clean12": [
+   4,
+   7,
+   16,
+   17,
+   18,
+   19,
+   20,
+   26,
+   27,
+   28,
+   29,
+   30
+  ],
+  "trained20": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   21,
+   22,
+   23,
+   24,
+   25
+  ],
+  "trained18": [
+   1,
+   2,
+   3,
+   5,
+   6,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   21,
+   22,
+   23,
+   24,
+   25
+  ]
+ },
+ "runs": {
+  "A_preregistered_layer2|openms": {
+   "draws": 200,
+   "distinct_scans": 30,
+   "appearances_per_scan": {
+    "min": 3,
+    "max": 11,
+    "mean": 6.67
+   },
+   "curve_violated": {
+    "draws_with_event": 15,
+    "draw_rate": 0.075,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.1977
+    ],
+    "distinct_scans_ever": 2,
+    "distinct_rate": 0.0667,
+    "distinct_ci95_exact": [
+     0.0082,
+     0.2207
+    ],
+    "distinct_upper95_one_sided": 0.1953
+   },
+   "fdp_gt_gamma": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "false_certified_dis": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "certified_area_wrong": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "raw_seg_false_dis": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "bh_selection_false_dis": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "bh_at_gamma_fdp_gt_gamma": {
+    "draws_with_event": 9,
+    "draw_rate": 0.045,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.1378
+    ],
+    "distinct_scans_ever": 1,
+    "distinct_rate": 0.0333,
+    "distinct_ci95_exact": [
+     0.0008,
+     0.1722
+    ],
+    "distinct_upper95_one_sided": 0.1486
+   },
+   "certified_on_gt_dis": {
+    "gt_dis_distinct_scans": 30,
+    "distinct_ever_certified": 3,
+    "draws_gt_dis": 200,
+    "draws_certified": 13
+   },
+   "at_risk_scans": {
+    "n": 30,
+    "ever_false_certified": 0,
+    "ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "upper95_one_sided": 0.095
+   },
+   "power_per_draw": 0.0108,
+   "abstain_draw_rate": 0.815,
+   "v01_style_counts": {
+    "curve_violated": 15,
+    "fdp_gt_gamma": 0,
+    "false_certified_dis": 0,
+    "draws": 200
+   },
+   "theta_hat_per_split": [
+    0,
+    0,
+    1,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    1,
+    1
+   ]
+  },
+  "A_preregistered_layer2|mslesseg": {
+   "draws": 220,
+   "distinct_scans": 92,
+   "appearances_per_scan": {
+    "min": 1,
+    "max": 7,
+    "mean": 2.39
+   },
+   "curve_violated": {
+    "draws_with_event": 9,
+    "draw_rate": 0.0409,
+    "draw_rate_ci95_scan_cluster": [
+     0.0133,
+     0.0756
+    ],
+    "distinct_scans_ever": 7,
+    "distinct_rate": 0.0761,
+    "distinct_ci95_exact": [
+     0.0311,
+     0.1505
+    ],
+    "distinct_upper95_one_sided": 0.1382
+   },
+   "fdp_gt_gamma": {
+    "draws_with_event": 1,
+    "draw_rate": 0.0045,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0147
+    ],
+    "distinct_scans_ever": 1,
+    "distinct_rate": 0.0109,
+    "distinct_ci95_exact": [
+     0.0003,
+     0.0591
+    ],
+    "distinct_upper95_one_sided": 0.0505
+   },
+   "false_certified_dis": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.0393
+    ],
+    "distinct_upper95_one_sided": 0.032
+   },
+   "certified_area_wrong": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.0393
+    ],
+    "distinct_upper95_one_sided": 0.032
+   },
+   "raw_seg_false_dis": {
+    "draws_with_event": 8,
+    "draw_rate": 0.0364,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0848
+    ],
+    "distinct_scans_ever": 3,
+    "distinct_rate": 0.0326,
+    "distinct_ci95_exact": [
+     0.0068,
+     0.0923
+    ],
+    "distinct_upper95_one_sided": 0.0821
+   },
+   "bh_selection_false_dis": {
+    "draws_with_event": 1,
+    "draw_rate": 0.0045,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0154
+    ],
+    "distinct_scans_ever": 1,
+    "distinct_rate": 0.0109,
+    "distinct_ci95_exact": [
+     0.0003,
+     0.0591
+    ],
+    "distinct_upper95_one_sided": 0.0505
+   },
+   "bh_at_gamma_fdp_gt_gamma": {
+    "draws_with_event": 42,
+    "draw_rate": 0.1909,
+    "draw_rate_ci95_scan_cluster": [
+     0.1096,
+     0.2818
+    ],
+    "distinct_scans_ever": 21,
+    "distinct_rate": 0.2283,
+    "distinct_ci95_exact": [
+     0.1472,
+     0.3275
+    ],
+    "distinct_upper95_one_sided": 0.3118
+   },
+   "certified_on_gt_dis": {
+    "gt_dis_distinct_scans": 86,
+    "distinct_ever_certified": 8,
+    "draws_gt_dis": 195,
+    "draws_certified": 11
+   },
+   "at_risk_scans": {
+    "n": 88,
+    "ever_false_certified": 0,
+    "ci95_exact": [
+     0.0,
+     0.0411
+    ],
+    "upper95_one_sided": 0.0335
+   },
+   "power_per_draw": 0.0224,
+   "abstain_draw_rate": 0.9182,
+   "v01_style_counts": {
+    "curve_violated": 9,
+    "fdp_gt_gamma": 1,
+    "false_certified_dis": 0,
+    "draws": 220
+   },
+   "theta_hat_per_split": [
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    2,
+    0,
+    1
+   ]
+  },
+  "A_preregistered_layer2|sibbms": {
+   "draws": 200,
+   "distinct_scans": 30,
+   "appearances_per_scan": {
+    "min": 3,
+    "max": 11,
+    "mean": 6.67
+   },
+   "curve_violated": {
+    "draws_with_event": 6,
+    "draw_rate": 0.03,
+    "draw_rate_ci95_scan_cluster": [
+     0.0052,
+     0.0599
+    ],
+    "distinct_scans_ever": 4,
+    "distinct_rate": 0.1333,
+    "distinct_ci95_exact": [
+     0.0376,
+     0.3072
+    ],
+    "distinct_upper95_one_sided": 0.2796
+   },
+   "fdp_gt_gamma": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "false_certified_dis": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "certified_area_wrong": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "raw_seg_false_dis": {
+    "draws_with_event": 40,
+    "draw_rate": 0.2,
+    "draw_rate_ci95_scan_cluster": [
+     0.0555,
+     0.3709
+    ],
+    "distinct_scans_ever": 5,
+    "distinct_rate": 0.1667,
+    "distinct_ci95_exact": [
+     0.0564,
+     0.3472
+    ],
+    "distinct_upper95_one_sided": 0.319
+   },
+   "bh_selection_false_dis": {
+    "draws_with_event": 17,
+    "draw_rate": 0.085,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.202
+    ],
+    "distinct_scans_ever": 2,
+    "distinct_rate": 0.0667,
+    "distinct_ci95_exact": [
+     0.0082,
+     0.2207
+    ],
+    "distinct_upper95_one_sided": 0.1953
+   },
+   "bh_at_gamma_fdp_gt_gamma": {
+    "draws_with_event": 151,
+    "draw_rate": 0.755,
+    "draw_rate_ci95_scan_cluster": [
+     0.5932,
+     0.898
+    ],
+    "distinct_scans_ever": 22,
+    "distinct_rate": 0.7333,
+    "distinct_ci95_exact": [
+     0.5411,
+     0.8772
+    ],
+    "distinct_upper95_one_sided": 0.8598
+   },
+   "certified_on_gt_dis": {
+    "gt_dis_distinct_scans": 0,
+    "distinct_ever_certified": 0,
+    "draws_gt_dis": 0,
+    "draws_certified": 0
+   },
+   "at_risk_scans": {
+    "n": 5,
+    "ever_false_certified": 0,
+    "ci95_exact": [
+     0.0,
+     0.5218
+    ],
+    "upper95_one_sided": 0.4507
+   },
+   "power_per_draw": null,
+   "abstain_draw_rate": 1.0,
+   "v01_style_counts": {
+    "curve_violated": 6,
+    "fdp_gt_gamma": 0,
+    "false_certified_dis": 0,
+    "draws": 200
+   },
+   "theta_hat_per_split": [
+    2,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ]
+  },
+  "B_layer1_controls_mslesseg_null": {
+   "summary": {
+    "scans": 30,
+    "calm_fdx": {
+     "scans_fdp_gt_gamma": 18,
+     "rate": 0.6,
+     "ci95": [
+      0.406,
+      0.773
+     ],
+     "power": null,
+     "abstain_rate": 0.4
+    },
+    "curve_fail": {
+     "scans": 18,
+     "ci95": [
+      0.406,
+      0.773
+     ]
+    },
+    "bh_gamma": {
+     "scans_fdp_gt_gamma": 22,
+     "rate": 0.733,
+     "power": null
+    },
+    "bh_gamma_delta": {
+     "scans_fdp_gt_gamma": 8,
+     "rate": 0.267,
+     "power": null
+    },
+    "dis": {
+     "gt_dis_scans": 0,
+     "certified_on_gt_dis": 0,
+     "certified_false": 1,
+     "certified_false_rate": 0.033,
+     "certified_false_ci95": [
+      0.001,
+      0.172
+     ],
+     "certified_area_wrong": 16,
+     "raw_dis_false": 5,
+     "raw_dis_false_rate": 0.167,
+     "bh_dis_false": 2,
+     "bh_dis_false_rate": 0.067
+    }
+   },
+   "distinct": {
+    "draws": 30,
+    "distinct_scans": 30,
+    "appearances_per_scan": {
+     "min": 1,
+     "max": 1,
+     "mean": 1.0
+    },
+    "curve_violated": {
+     "draws_with_event": 18,
+     "draw_rate": 0.6,
+     "draw_rate_ci95_scan_cluster": [
+      0.4333,
+      0.7667
+     ],
+     "distinct_scans_ever": 18,
+     "distinct_rate": 0.6,
+     "distinct_ci95_exact": [
+      0.406,
+      0.7734
+     ],
+     "distinct_upper95_one_sided": 0.7505
+    },
+    "fdp_gt_gamma": {
+     "draws_with_event": 18,
+     "draw_rate": 0.6,
+     "draw_rate_ci95_scan_cluster": [
+      0.4333,
+      0.7667
+     ],
+     "distinct_scans_ever": 18,
+     "distinct_rate": 0.6,
+     "distinct_ci95_exact": [
+      0.406,
+      0.7734
+     ],
+     "distinct_upper95_one_sided": 0.7505
+    },
+    "false_certified_dis": {
+     "draws_with_event": 1,
+     "draw_rate": 0.0333,
+     "draw_rate_ci95_scan_cluster": [
+      0.0,
+      0.1
+     ],
+     "distinct_scans_ever": 1,
+     "distinct_rate": 0.0333,
+     "distinct_ci95_exact": [
+      0.0008,
+      0.1722
+     ],
+     "distinct_upper95_one_sided": 0.1486
+    },
+    "certified_area_wrong": {
+     "draws_with_event": 16,
+     "draw_rate": 0.5333,
+     "draw_rate_ci95_scan_cluster": [
+      0.3667,
+      0.7
+     ],
+     "distinct_scans_ever": 16,
+     "distinct_rate": 0.5333,
+     "distinct_ci95_exact": [
+      0.3433,
+      0.7166
+     ],
+     "distinct_upper95_one_sided": 0.6915
+    },
+    "raw_seg_false_dis": {
+     "draws_with_event": 5,
+     "draw_rate": 0.1667,
+     "draw_rate_ci95_scan_cluster": [
+      0.0333,
+      0.3
+     ],
+     "distinct_scans_ever": 5,
+     "distinct_rate": 0.1667,
+     "distinct_ci95_exact": [
+      0.0564,
+      0.3472
+     ],
+     "distinct_upper95_one_sided": 0.319
+    },
+    "bh_selection_false_dis": {
+     "draws_with_event": 2,
+     "draw_rate": 0.0667,
+     "draw_rate_ci95_scan_cluster": [
+      0.0,
+      0.1667
+     ],
+     "distinct_scans_ever": 2,
+     "distinct_rate": 0.0667,
+     "distinct_ci95_exact": [
+      0.0082,
+      0.2207
+     ],
+     "distinct_upper95_one_sided": 0.1953
+    },
+    "bh_at_gamma_fdp_gt_gamma": {
+     "draws_with_event": 22,
+     "draw_rate": 0.7333,
+     "draw_rate_ci95_scan_cluster": [
+      0.5667,
+      0.9
+     ],
+     "distinct_scans_ever": 22,
+     "distinct_rate": 0.7333,
+     "distinct_ci95_exact": [
+      0.5411,
+      0.8772
+     ],
+     "distinct_upper95_one_sided": 0.8598
+    },
+    "certified_on_gt_dis": {
+     "gt_dis_distinct_scans": 0,
+     "distinct_ever_certified": 0,
+     "draws_gt_dis": 0,
+     "draws_certified": 0
+    },
+    "at_risk_scans": {
+     "n": 5,
+     "ever_false_certified": 1,
+     "ci95_exact": [
+      0.0051,
+      0.7164
+     ],
+     "upper95_one_sided": 0.6574
+    },
+    "power_per_draw": null,
+    "abstain_draw_rate": 0.4
+   }
+  },
+  "B_layer2_controls_mslesseg_pool": {
+   "draws": 200,
+   "distinct_scans": 30,
+   "appearances_per_scan": {
+    "min": 3,
+    "max": 11,
+    "mean": 6.67
+   },
+   "curve_violated": {
+    "draws_with_event": 10,
+    "draw_rate": 0.05,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.1204
+    ],
+    "distinct_scans_ever": 3,
+    "distinct_rate": 0.1,
+    "distinct_ci95_exact": [
+     0.0211,
+     0.2653
+    ],
+    "distinct_upper95_one_sided": 0.2386
+   },
+   "fdp_gt_gamma": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "false_certified_dis": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "certified_area_wrong": {
+    "draws_with_event": 0,
+    "draw_rate": 0.0,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.0
+    ],
+    "distinct_scans_ever": 0,
+    "distinct_rate": 0.0,
+    "distinct_ci95_exact": [
+     0.0,
+     0.1157
+    ],
+    "distinct_upper95_one_sided": 0.095
+   },
+   "raw_seg_false_dis": {
+    "draws_with_event": 40,
+    "draw_rate": 0.2,
+    "draw_rate_ci95_scan_cluster": [
+     0.0484,
+     0.3655
+    ],
+    "distinct_scans_ever": 5,
+    "distinct_rate": 0.1667,
+    "distinct_ci95_exact": [
+     0.0564,
+     0.3472
+    ],
+    "distinct_upper95_one_sided": 0.319
+   },
+   "bh_selection_false_dis": {
+    "draws_with_event": 17,
+    "draw_rate": 0.085,
+    "draw_rate_ci95_scan_cluster": [
+     0.0,
+     0.2081
+    ],
+    "distinct_scans_ever": 2,
+    "distinct_rate": 0.0667,
+    "distinct_ci95_exact": [
+     0.0082,
+     0.2207
+    ],
+    "distinct_upper95_one_sided": 0.1953
+   },
+   "bh_at_gamma_fdp_gt_gamma": {
+    "draws_with_event": 151,
+    "draw_rate": 0.755,
+    "draw_rate_ci95_scan_cluster": [
+     0.6023,
+     0.8971
+    ],
+    "distinct_scans_ever": 22,
+    "distinct_rate": 0.7333,
+    "distinct_ci95_exact": [
+     0.5411,
+     0.8772
+    ],
+    "distinct_upper95_one_sided": 0.8598
+   },
+   "certified_on_gt_dis": {
+    "gt_dis_distinct_scans": 0,
+    "distinct_ever_certified": 0,
+    "draws_gt_dis": 0,
+    "draws_certified": 0
+   },
+   "at_risk_scans": {
+    "n": 5,
+    "ever_false_certified": 0,
+    "ci95_exact": [
+     0.0,
+     0.5218
+    ],
+    "upper95_one_sided": 0.4507
+   },
+   "power_per_draw": null,
+   "abstain_draw_rate": 1.0,
+   "theta_hat_per_split": [
+    2,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    1,
+    2,
+    2,
+    2,
+    1,
+    2,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ]
+  },
+  "C_openms_heldout10": {
+   "layer1_mslesseg_pool": {
+    "distinct": {
+     "draws": 10,
+     "distinct_scans": 10,
+     "appearances_per_scan": {
+      "min": 1,
+      "max": 1,
+      "mean": 1.0
+     },
+     "curve_violated": {
+      "draws_with_event": 2,
+      "draw_rate": 0.2,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.5
+      ],
+      "distinct_scans_ever": 2,
+      "distinct_rate": 0.2,
+      "distinct_ci95_exact": [
+       0.0252,
+       0.5561
+      ],
+      "distinct_upper95_one_sided": 0.5069
+     },
+     "fdp_gt_gamma": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "false_certified_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "certified_area_wrong": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "raw_seg_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "bh_selection_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "bh_at_gamma_fdp_gt_gamma": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "certified_on_gt_dis": {
+      "gt_dis_distinct_scans": 10,
+      "distinct_ever_certified": 2,
+      "draws_gt_dis": 10,
+      "draws_certified": 2
+     },
+     "at_risk_scans": {
+      "n": 10,
+      "ever_false_certified": 0,
+      "ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "upper95_one_sided": 0.2589
+     },
+     "power_per_draw": 0.0364,
+     "abstain_draw_rate": 0.5
+    },
+    "per_scan": [
+     {
+      "case": "openms_patient16",
+      "m": 87,
+      "n_true": 63,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient17",
+      "m": 19,
+      "n_true": 12,
+      "sel": 3,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient18",
+      "m": 12,
+      "n_true": 11,
+      "sel": 5,
+      "fp": 1,
+      "curve_violated": true,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": true,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient19",
+      "m": 74,
+      "n_true": 59,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient20",
+      "m": 160,
+      "n_true": 138,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient26",
+      "m": 13,
+      "n_true": 10,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient27",
+      "m": 38,
+      "n_true": 29,
+      "sel": 7,
+      "fp": 1,
+      "curve_violated": true,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient28",
+      "m": 109,
+      "n_true": 101,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient29",
+      "m": 12,
+      "n_true": 7,
+      "sel": 2,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": true,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient30",
+      "m": 10,
+      "n_true": 10,
+      "sel": 1,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     }
+    ]
+   },
+   "layer2_rotation": {
+    "distinct": {
+     "draws": 10,
+     "distinct_scans": 10,
+     "appearances_per_scan": {
+      "min": 1,
+      "max": 1,
+      "mean": 1.0
+     },
+     "curve_violated": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "fdp_gt_gamma": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "false_certified_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "certified_area_wrong": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "raw_seg_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "bh_selection_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "bh_at_gamma_fdp_gt_gamma": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "distinct_upper95_one_sided": 0.2589
+     },
+     "certified_on_gt_dis": {
+      "gt_dis_distinct_scans": 10,
+      "distinct_ever_certified": 0,
+      "draws_gt_dis": 10,
+      "draws_certified": 0
+     },
+     "at_risk_scans": {
+      "n": 10,
+      "ever_false_certified": 0,
+      "ci95_exact": [
+       0.0,
+       0.3085
+      ],
+      "upper95_one_sided": 0.2589
+     },
+     "power_per_draw": 0.0,
+     "abstain_draw_rate": 1.0
+    },
+    "per_scan": [
+     {
+      "case": "openms_patient16",
+      "m": 87,
+      "n_true": 63,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient17",
+      "m": 19,
+      "n_true": 12,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient18",
+      "m": 12,
+      "n_true": 11,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient19",
+      "m": 74,
+      "n_true": 59,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient20",
+      "m": 160,
+      "n_true": 138,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient26",
+      "m": 13,
+      "n_true": 10,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient27",
+      "m": 38,
+      "n_true": 29,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient28",
+      "m": 109,
+      "n_true": 101,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient29",
+      "m": 12,
+      "n_true": 7,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient30",
+      "m": 10,
+      "n_true": 10,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     }
+    ],
+    "safe_values": {
+     "openms_patient16": 0,
+     "openms_patient17": 0,
+     "openms_patient18": 1,
+     "openms_patient19": 0,
+     "openms_patient20": 0,
+     "openms_patient26": 0,
+     "openms_patient27": 1,
+     "openms_patient28": 0,
+     "openms_patient29": 0,
+     "openms_patient30": 0
+    },
+    "theta_per_test_scan": {
+     "openms_patient16": 1,
+     "openms_patient17": 1,
+     "openms_patient18": 1,
+     "openms_patient19": 1,
+     "openms_patient20": 1,
+     "openms_patient26": 1,
+     "openms_patient27": 1,
+     "openms_patient28": 1,
+     "openms_patient29": 1,
+     "openms_patient30": 1
+    }
+   }
+  },
+  "C_openms_clean12": {
+   "layer1_mslesseg_pool": {
+    "distinct": {
+     "draws": 12,
+     "distinct_scans": 12,
+     "appearances_per_scan": {
+      "min": 1,
+      "max": 1,
+      "mean": 1.0
+     },
+     "curve_violated": {
+      "draws_with_event": 2,
+      "draw_rate": 0.1667,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.4167
+      ],
+      "distinct_scans_ever": 2,
+      "distinct_rate": 0.1667,
+      "distinct_ci95_exact": [
+       0.0209,
+       0.4841
+      ],
+      "distinct_upper95_one_sided": 0.4381
+     },
+     "fdp_gt_gamma": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "false_certified_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "certified_area_wrong": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "raw_seg_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "bh_selection_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "bh_at_gamma_fdp_gt_gamma": {
+      "draws_with_event": 1,
+      "draw_rate": 0.0833,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.25
+      ],
+      "distinct_scans_ever": 1,
+      "distinct_rate": 0.0833,
+      "distinct_ci95_exact": [
+       0.0021,
+       0.3848
+      ],
+      "distinct_upper95_one_sided": 0.3387
+     },
+     "certified_on_gt_dis": {
+      "gt_dis_distinct_scans": 12,
+      "distinct_ever_certified": 3,
+      "draws_gt_dis": 12,
+      "draws_certified": 3
+     },
+     "at_risk_scans": {
+      "n": 12,
+      "ever_false_certified": 0,
+      "ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "upper95_one_sided": 0.2209
+     },
+     "power_per_draw": 0.0425,
+     "abstain_draw_rate": 0.5
+    },
+    "per_scan": [
+     {
+      "case": "openms_patient04",
+      "m": 108,
+      "n_true": 80,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient07",
+      "m": 30,
+      "n_true": 21,
+      "sel": 7,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": true,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient16",
+      "m": 87,
+      "n_true": 63,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient17",
+      "m": 19,
+      "n_true": 12,
+      "sel": 3,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient18",
+      "m": 12,
+      "n_true": 11,
+      "sel": 5,
+      "fp": 1,
+      "curve_violated": true,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": true,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient19",
+      "m": 74,
+      "n_true": 59,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient20",
+      "m": 160,
+      "n_true": 138,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient26",
+      "m": 13,
+      "n_true": 10,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient27",
+      "m": 38,
+      "n_true": 29,
+      "sel": 7,
+      "fp": 1,
+      "curve_violated": true,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient28",
+      "m": 109,
+      "n_true": 101,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient29",
+      "m": 12,
+      "n_true": 7,
+      "sel": 2,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": true,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient30",
+      "m": 10,
+      "n_true": 10,
+      "sel": 1,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     }
+    ]
+   },
+   "layer2_rotation": {
+    "distinct": {
+     "draws": 12,
+     "distinct_scans": 12,
+     "appearances_per_scan": {
+      "min": 1,
+      "max": 1,
+      "mean": 1.0
+     },
+     "curve_violated": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "fdp_gt_gamma": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "false_certified_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "certified_area_wrong": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "raw_seg_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "bh_selection_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "distinct_upper95_one_sided": 0.2209
+     },
+     "bh_at_gamma_fdp_gt_gamma": {
+      "draws_with_event": 1,
+      "draw_rate": 0.0833,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.25
+      ],
+      "distinct_scans_ever": 1,
+      "distinct_rate": 0.0833,
+      "distinct_ci95_exact": [
+       0.0021,
+       0.3848
+      ],
+      "distinct_upper95_one_sided": 0.3387
+     },
+     "certified_on_gt_dis": {
+      "gt_dis_distinct_scans": 12,
+      "distinct_ever_certified": 0,
+      "draws_gt_dis": 12,
+      "draws_certified": 0
+     },
+     "at_risk_scans": {
+      "n": 12,
+      "ever_false_certified": 0,
+      "ci95_exact": [
+       0.0,
+       0.2646
+      ],
+      "upper95_one_sided": 0.2209
+     },
+     "power_per_draw": 0.0,
+     "abstain_draw_rate": 1.0
+    },
+    "per_scan": [
+     {
+      "case": "openms_patient04",
+      "m": 108,
+      "n_true": 80,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient07",
+      "m": 30,
+      "n_true": 21,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient16",
+      "m": 87,
+      "n_true": 63,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient17",
+      "m": 19,
+      "n_true": 12,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient18",
+      "m": 12,
+      "n_true": 11,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient19",
+      "m": 74,
+      "n_true": 59,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient20",
+      "m": 160,
+      "n_true": 138,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient26",
+      "m": 13,
+      "n_true": 10,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient27",
+      "m": 38,
+      "n_true": 29,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient28",
+      "m": 109,
+      "n_true": 101,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient29",
+      "m": 12,
+      "n_true": 7,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient30",
+      "m": 10,
+      "n_true": 10,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     }
+    ],
+    "safe_values": {
+     "openms_patient04": 0,
+     "openms_patient07": 0,
+     "openms_patient16": 0,
+     "openms_patient17": 0,
+     "openms_patient18": 1,
+     "openms_patient19": 0,
+     "openms_patient20": 0,
+     "openms_patient26": 0,
+     "openms_patient27": 1,
+     "openms_patient28": 0,
+     "openms_patient29": 0,
+     "openms_patient30": 0
+    },
+    "theta_per_test_scan": {
+     "openms_patient04": 1,
+     "openms_patient07": 1,
+     "openms_patient16": 1,
+     "openms_patient17": 1,
+     "openms_patient18": 1,
+     "openms_patient19": 1,
+     "openms_patient20": 1,
+     "openms_patient26": 1,
+     "openms_patient27": 1,
+     "openms_patient28": 1,
+     "openms_patient29": 1,
+     "openms_patient30": 1
+    }
+   }
+  },
+  "C_openms_trained20": {
+   "layer1_mslesseg_pool": {
+    "distinct": {
+     "draws": 20,
+     "distinct_scans": 20,
+     "appearances_per_scan": {
+      "min": 1,
+      "max": 1,
+      "mean": 1.0
+     },
+     "curve_violated": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "fdp_gt_gamma": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "false_certified_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "certified_area_wrong": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "raw_seg_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "bh_selection_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "bh_at_gamma_fdp_gt_gamma": {
+      "draws_with_event": 1,
+      "draw_rate": 0.05,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.15
+      ],
+      "distinct_scans_ever": 1,
+      "distinct_rate": 0.05,
+      "distinct_ci95_exact": [
+       0.0013,
+       0.2487
+      ],
+      "distinct_upper95_one_sided": 0.2161
+     },
+     "certified_on_gt_dis": {
+      "gt_dis_distinct_scans": 20,
+      "distinct_ever_certified": 1,
+      "draws_gt_dis": 20,
+      "draws_certified": 1
+     },
+     "at_risk_scans": {
+      "n": 20,
+      "ever_false_certified": 0,
+      "ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "upper95_one_sided": 0.1391
+     },
+     "power_per_draw": 0.0124,
+     "abstain_draw_rate": 0.8
+    },
+    "per_scan": [
+     {
+      "case": "openms_patient01",
+      "m": 202,
+      "n_true": 170,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient02",
+      "m": 25,
+      "n_true": 14,
+      "sel": 5,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient03",
+      "m": 12,
+      "n_true": 10,
+      "sel": 5,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient04",
+      "m": 108,
+      "n_true": 80,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient05",
+      "m": 60,
+      "n_true": 46,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient06",
+      "m": 236,
+      "n_true": 202,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient07",
+      "m": 30,
+      "n_true": 21,
+      "sel": 7,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": true,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient08",
+      "m": 39,
+      "n_true": 32,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient09",
+      "m": 60,
+      "n_true": 44,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient10",
+      "m": 56,
+      "n_true": 46,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient11",
+      "m": 80,
+      "n_true": 67,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient12",
+      "m": 97,
+      "n_true": 69,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient13",
+      "m": 33,
+      "n_true": 14,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient14",
+      "m": 42,
+      "n_true": 35,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient15",
+      "m": 28,
+      "n_true": 20,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient21",
+      "m": 145,
+      "n_true": 121,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient22",
+      "m": 149,
+      "n_true": 122,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient23",
+      "m": 287,
+      "n_true": 244,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient24",
+      "m": 40,
+      "n_true": 26,
+      "sel": 1,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient25",
+      "m": 95,
+      "n_true": 74,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     }
+    ]
+   },
+   "layer2_rotation": {
+    "distinct": {
+     "draws": 20,
+     "distinct_scans": 20,
+     "appearances_per_scan": {
+      "min": 1,
+      "max": 1,
+      "mean": 1.0
+     },
+     "curve_violated": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "fdp_gt_gamma": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "false_certified_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "certified_area_wrong": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "raw_seg_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "bh_selection_false_dis": {
+      "draws_with_event": 0,
+      "draw_rate": 0.0,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.0
+      ],
+      "distinct_scans_ever": 0,
+      "distinct_rate": 0.0,
+      "distinct_ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "distinct_upper95_one_sided": 0.1391
+     },
+     "bh_at_gamma_fdp_gt_gamma": {
+      "draws_with_event": 1,
+      "draw_rate": 0.05,
+      "draw_rate_ci95_scan_cluster": [
+       0.0,
+       0.15
+      ],
+      "distinct_scans_ever": 1,
+      "distinct_rate": 0.05,
+      "distinct_ci95_exact": [
+       0.0013,
+       0.2487
+      ],
+      "distinct_upper95_one_sided": 0.2161
+     },
+     "certified_on_gt_dis": {
+      "gt_dis_distinct_scans": 20,
+      "distinct_ever_certified": 1,
+      "draws_gt_dis": 20,
+      "draws_certified": 1
+     },
+     "at_risk_scans": {
+      "n": 20,
+      "ever_false_certified": 0,
+      "ci95_exact": [
+       0.0,
+       0.1684
+      ],
+      "upper95_one_sided": 0.1391
+     },
+     "power_per_draw": 0.0124,
+     "abstain_draw_rate": 0.8
+    },
+    "per_scan": [
+     {
+      "case": "openms_patient01",
+      "m": 202,
+      "n_true": 170,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient02",
+      "m": 25,
+      "n_true": 14,
+      "sel": 5,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient03",
+      "m": 12,
+      "n_true": 10,
+      "sel": 5,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient04",
+      "m": 108,
+      "n_true": 80,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient05",
+      "m": 60,
+      "n_true": 46,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient06",
+      "m": 236,
+      "n_true": 202,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient07",
+      "m": 30,
+      "n_true": 21,
+      "sel": 7,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": true,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient08",
+      "m": 39,
+      "n_true": 32,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient09",
+      "m": 60,
+      "n_true": 44,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient10",
+      "m": 56,
+      "n_true": 46,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient11",
+      "m": 80,
+      "n_true": 67,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient12",
+      "m": 97,
+      "n_true": 69,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient13",
+      "m": 33,
+      "n_true": 14,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient14",
+      "m": 42,
+      "n_true": 35,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient15",
+      "m": 28,
+      "n_true": 20,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient21",
+      "m": 145,
+      "n_true": 121,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient22",
+      "m": 149,
+      "n_true": 122,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient23",
+      "m": 287,
+      "n_true": 244,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient24",
+      "m": 40,
+      "n_true": 26,
+      "sel": 1,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     },
+     {
+      "case": "openms_patient25",
+      "m": 95,
+      "n_true": 74,
+      "sel": 0,
+      "fp": 0,
+      "curve_violated": false,
+      "fdp_gt_gamma": false,
+      "gt_dis": true,
+      "dis_certified": false,
+      "false_certified": false,
+      "raw_dis_false": false
+     }
+    ],
+    "safe_values": {
+     "openms_patient01": 0,
+     "openms_patient02": 0,
+     "openms_patient03": 0,
+     "openms_patient04": 0,
+     "openms_patient05": 0,
+     "openms_patient06": 0,
+     "openms_patient07": 0,
+     "openms_patient08": 0,
+     "openms_patient09": 0,
+     "openms_patient10": 0,
+     "openms_patient11": 0,
+     "openms_patient12": 0,
+     "openms_patient13": 0,
+     "openms_patient14": 0,
+     "openms_patient15": 0,
+     "openms_patient21": 0,
+     "openms_patient22": 0,
+     "openms_patient23": 0,
+     "openms_patient24": 0,
+     "openms_patient25": 0
+    },
+    "theta_per_test_scan": {
+     "openms_patient01": 0,
+     "openms_patient02": 0,
+     "openms_patient03": 0,
+     "openms_patient04": 0,
+     "openms_patient05": 0,
+     "openms_patient06": 0,
+     "openms_patient07": 0,
+     "openms_patient08": 0,
+     "openms_patient09": 0,
+     "openms_patient10": 0,
+     "openms_patient11": 0,
+     "openms_patient12": 0,
+     "openms_patient13": 0,
+     "openms_patient14": 0,
+     "openms_patient15": 0,
+     "openms_patient21": 0,
+     "openms_patient22": 0,
+     "openms_patient23": 0,
+     "openms_patient24": 0,
+     "openms_patient25": 0
+    }
+   }
+  },
+  "D_a1_permutation_openms_heldout10": {
+   "H": 26.93,
+   "perm_p": 0.0009995002498750624,
+   "scans": 9
+  }
+ },
+ "runtime_s": 1139.9
+}
