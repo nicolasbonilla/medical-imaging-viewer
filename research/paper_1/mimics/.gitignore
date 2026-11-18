@@ -2,3 +2,5 @@
 # The card candidate (C1 only: MSLesSeg CC BY 4.0, Ljubljana CC BY) is force-added.
 results/
 results_run1/
+results_addendum/*
+!results_addendum/SUMMARY.md

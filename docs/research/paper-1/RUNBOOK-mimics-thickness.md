@@ -61,3 +61,29 @@ Projected ≈ 104 h per VM: expected end ≈ **2026-11-14 04:15 UTC** (05:15 Mad
 06:20 UTC (07:20 Madrid); in-VM guards at the latest 2026-11-15 ≈ 12:30 UTC (13:30 Madrid). Worst case if all three ran to
 their guards: 43.6 USD. A pre-empted VM leaves a marker in `mimics/interruptions/`; `complete` lists what is missing and
 `relaunch <vm>` restarts it (same plan, finished outputs skipped) only within the 45 USD cap.
+
+## 4. Addendum 2 (deterministic registration, Dallas 20–49, faithful rule)
+
+Rules: `PREREG-addendum-2026-11-age-faithful-deterministic.md`; hard cap **25 USD** for addendum 2 (VMs `mimics-x*`,
+audit-log spend). Everything runs from the committed HEAD (git archive); every command refuses uncommitted research code.
+
+```bash
+# from the worktree root; launch_x.py sets CLOUDSDK_CONFIG=C:/Users/Nicolas/.gcloud-mstool and --project=mstool-research
+python research/paper_1/mimics/launch_x.py pilot                       # mimics-xp: 2 Dallas 21-49 + SynthSeg pilot + regtest
+python research/paper_1/mimics/launch_x.py timings --out <scratch>/xpilot.json
+python research/paper_1/mimics/launch_x.py full --pilot-json <scratch>/xpilot.json [--dry-run]   # budget rule, 3 VMs
+python research/paper_1/mimics/launch_x.py tick      # THE resume command: relaunch pre-empted VMs (within the cap);
+                                                     # when all work is done, launch the evaluation; when it is done, fetch
+python research/paper_1/mimics/launch_x.py status | spent | complete | relaunch mimics-x2 | evaluate | fetch
+```
+
+`tick` is idempotent and safe to run at any time (every few hours is enough): it never starts a second copy of a running
+VM, never launches beyond the cap, and launches the evaluation (`mimics-xe-<commit7>`, c2d-standard-8 Spot, ≤ 10 h)
+only when every planned output is in the bucket and no work VM runs. `fetch` downloads the results into
+`research/paper_1/mimics/results_addendum/` (gitignored except the aggregate `SUMMARY.md`).
+
+Bucket layout: `mimics/inputs/` (B2 HD-BET inputs, `_done_B2.json`), `mimics/{flames,lstai,toolbench}/cohort/` (B2 tool
+outputs, same names as block B), `mimics/anat/synthseg/{key}_synthseg.nii.gz` + `_qc.csv` + `_vols.csv`,
+`mimics/anat/qc_png/` (pilot overlays), `mimics/registration/detreg-{a,b}/registration/{id}.mat` + manifests,
+`mimics/registration/pilot-regtest/`, `mimics/plans/{mimics-xp,mimics-x1..x3,xvariant}.json`, `mimics/xcode/<commit>/`,
+`mimics/results/mimics-xe-<commit7>/`. Logs: `mimics/logs/<vm>.log`.
