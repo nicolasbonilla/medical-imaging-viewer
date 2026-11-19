@@ -679,7 +679,9 @@ def analyse():
             per = _per_from(sel, by_rid, lambda rec, arm: rec["views"][RN.VIEW_OF[arm]])
             for k, v in sel.items():               # the same classifier and verifier as the registered analysis
                 rec = by_rid.get(v["record_id"])
-                if rec is not None and rec["scan"] in per and k in rows:
+                # FLAMeS-ens records only, as _per_from: the primary run also holds the other arms' records of the
+                # same scans, whose flags are not the comparator's (the check compared them and failed, 2026-11-19)
+                if rec is not None and rec["arm"] == "flames_ens" and rec["scan"] in per and k in rows:
                     assert per[rec["scan"]]["unq"] == rows[k]["unq"] and per[rec["scan"]]["ms"] == rows[k]["ms"], k
                     assert per[rec["scan"]]["clean"] == rows[k]["clean"], k
             comps[(alias, base)] = per
