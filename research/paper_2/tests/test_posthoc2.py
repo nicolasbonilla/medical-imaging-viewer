@@ -153,3 +153,32 @@ def test_paired_difference():
     p = P2.paired(a, b, "unq")
     assert p["first_only"] == 0 and p["second_only"] == 4 and p["difference"] == 0.2
     assert p["ci95_people_bootstrap"][0] <= 0.2 <= p["ci95_people_bootstrap"][1]
+
+
+class FlakyProvider:
+    """Fails every first call of a key, answers the second: the resend must send fresh jobs."""
+    batch = False
+    workers = 2
+
+    def __init__(self):
+        self.seen = set()
+
+    def one(self, model, key, req):
+        k = key.split("#")[0]
+        if k not in self.seen:
+            self.seen.add(k)
+            return {"error": "HTTP 429"}
+        return {"text": "## Findings\nAutomatic marking.\n## Impression\nFor review.\n## Limitations\nNone.",
+                "usage": {"prompt_token_count": 10, "candidates_token_count": 10}}
+
+
+def test_resend_sends_fresh_jobs(tmp_path, monkeypatch):
+    from research.paper_2.tests.test_records import _build
+    monkeypatch.setattr(RN, "RUNS", tmp_path / "runs")
+    _, recs = _build(tmp_path)
+    monkeypatch.setattr(RN, "load_records", lambda path=None: recs)
+    monkeypatch.setattr(P2, "load_ages", lambda: {})
+    info = P2.run("gemini", "D1f", "full", provider=FlakyProvider())
+    assert info["without_report"] == 0 and len(info["passes"]) == 2 and info["passes"][1]["done"] > 0
+    info = P2.run("gemini", "D1f", "full", provider=FlakyProvider(), passes=1)
+    assert info["passes"] == [] and info["without_report"] == 0

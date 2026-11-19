@@ -315,8 +315,10 @@ def failed_or_missing(path, jobs):
     return [j for j in jobs if j.key not in done]
 
 
-def run(alias, design, phase="full", ms_subset=None, sets=SETS, provider=None):
-    """One run, then one resend of the keys without a report (network errors and failed deliveries), then stop."""
+def run(alias, design, phase="full", ms_subset=None, sets=SETS, provider=None, passes=2):
+    """One run, then one resend of the keys without a report (network errors and failed deliveries), then stop.
+    Every pass builds fresh jobs (a finished job object sends nothing again). `passes=1` sends only the keys still
+    without a report: the resend of a run whose first process ended (PREREG §12, 2026-11-19)."""
     if alias not in PLAN[design]:
         raise SystemExit(f"{alias} is not planned for {design}")
     if phase == "full":
@@ -329,7 +331,8 @@ def run(alias, design, phase="full", ms_subset=None, sets=SETS, provider=None):
     rd = RN.RUNS / run_name(alias, design, phase)
     rd.mkdir(parents=True, exist_ok=True)
     out = rd / "results.jsonl"
-    all_jobs = jobs_for(RN.load_records(), design, alias, phase, load_ages(), sets, ms_subset)
+    records, ages = RN.load_records(), load_ages()
+    all_jobs = jobs_for(records, design, alias, phase, ages, sets, ms_subset)
     if provider is None:
         provider = provider_for_alias(alias, rd)
     info = {"model": model, "design": design, "phase": phase, "max_tokens_override": st["max_tokens"],
@@ -337,8 +340,8 @@ def run(alias, design, phase="full", ms_subset=None, sets=SETS, provider=None):
             "planned": len(all_jobs),
             "ms_subset": None if ms_subset is None else len(ms_subset), "sets": list(sets),
             "started": time.time(), "frozen": RN.frozen_check(), "passes": []}
-    for attempt in (1, 2):                      # the first pass and at most one resend (PREREG §12, 2026-11-17)
-        jobs = failed_or_missing(out, all_jobs)
+    for attempt in range(1, passes + 1):        # the first pass and at most one resend (PREREG §12, 2026-11-17)
+        jobs = failed_or_missing(out, jobs_for(records, design, alias, phase, ages, sets, ms_subset))
         if not jobs:
             break
         print(f"[posthoc2] {alias}/{design}/{phase} pass {attempt}: {len(jobs)} jobs", flush=True)
@@ -696,7 +699,7 @@ def main(argv=None):
     g = sub.add_parser("ages")
     for k in DEFAULT_SOURCES:
         g.add_argument(f"--{k}", default=str(DEFAULT_SOURCES[k]))
-    for name in ("pilot", "qa"):
+    for name in ("pilot", "qa", "resend"):
         s = sub.add_parser(name)
         s.add_argument("--model", required=True, choices=sorted(SETTINGS))
         s.add_argument("--design", required=True, choices=sorted(CLASSES))
@@ -715,6 +718,10 @@ def main(argv=None):
     if a.cmd == "pilot":
         run(a.model, a.design, "pilot")
         print(json.dumps(qa_of(a.model, a.design, "pilot"), indent=1))
+        return 0
+    if a.cmd == "resend":                       # the one resend of the keys still without a report
+        info = run(a.model, a.design, "full", passes=1)
+        print(json.dumps({"without_report": info["without_report"], "qa": qa_of(a.model, a.design, "full")}, indent=1))
         return 0
     if a.cmd == "qa":
         q = qa_of(a.model, a.design, a.phase)
