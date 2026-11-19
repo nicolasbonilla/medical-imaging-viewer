@@ -37,17 +37,23 @@ POSTHOC = {"D1c": "posthoc-{a}-D1c", "D2n": "posthoc-{a}-D2n", "D2p": "posthoc-{
 REGISTERED = ("D1", "D2", "D2i")
 ORDER = ("D1", "D2", "D2i", "D1c", "D2n", "D2p", "D1f", "D2f")
 NB = 2000
+_STOPPED = None
 
 
 def runs_of(alias):
-    """(design, run folder) for every model-written design of this model that has a results file."""
+    """(design, run folder) for every model-written design of this model that has a results file, except the
+    amendment's runs that stopped at the full-run quality gate (posthoc2.gate_failed_runs)."""
+    from research.paper_2 import posthoc2 as P2
+    global _STOPPED
+    if _STOPPED is None:
+        _STOPPED = P2.gate_failed_runs()
     out = []
     reg = RN.RUNS / RA.RUN_OF[alias]
     if (reg / "results.jsonl").exists():
         out += [(d, reg) for d in REGISTERED]
     for d, pat in POSTHOC.items():
         rd = RN.RUNS / pat.format(a=alias)
-        if (rd / "results.jsonl").exists():
+        if (rd / "results.jsonl").exists() and (alias, d) not in _STOPPED:
             out.append((d, rd))
     return out
 

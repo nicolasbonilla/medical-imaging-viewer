@@ -378,6 +378,13 @@ def qa_of(alias, design, phase):
     return q
 
 
+def gate_failed_runs():
+    """Full runs of the amendment that failed `runner.qa`: by the amendment's rule they stop and are not analysed
+    (PREREG §12, 2026-11-19; gpt-oss-120b D2f). Computed, not listed, so that every analysis applies the same gate."""
+    return {(a, d) for d, aliases in PLAN.items() for a in aliases
+            if (RN.RUNS / run_name(a, d, "full") / "results.jsonl").exists() and not qa_of(a, d, "full")["passed"]}
+
+
 # ------------------------------------------------------------------------------------------------ projection
 def _ledger_usd(run_dir):
     p = Path(run_dir) / "ledger.jsonl"
@@ -647,11 +654,13 @@ def analyse():
     ages = load_ages()
     res = {"note": "post hoc (PREREG §12, 2026-11-19); exploratory; never pooled with the registered arms",
            "frozen": RN.frozen_check(), "runs": {}, "comparators": {}, "paired": {}}
+    stopped = gate_failed_runs()
+    res["stopped_at_quality_gate"] = {f"{a}/{d}": qa_of(a, d, "full") for a, d in sorted(stopped)}
     new = {}
     for design, aliases in PLAN.items():
         for alias in aliases:
             rd = RN.RUNS / run_name(alias, design, "full")
-            if not (rd / "results.jsonl").exists():
+            if not (rd / "results.jsonl").exists() or (alias, design) in stopped:
                 continue
             lines = last_ok(rd)
             per = _per_from(lines, by_rid, lambda rec, arm: view_for(rec, arm, ages))
