@@ -51,6 +51,10 @@ VM = {"mimics-xp": ("c2d-highmem-4", 130, 16, "hdbet flames lstai mindglide fs c
       "mimics-x2": ("c2d-highmem-4", 90, 16, "hdbet flames mindglide fs", 0.1245),
       "mimics-x3": ("c2d-standard-4", 85, 8, "hdbet flames fs cdata greedy", 0.0950)}
 FULL = ("mimics-x1", "mimics-x2", "mimics-x3")
+# Relaunches that need another machine (PREREG addendum 2, section 10, 2026-11-20): mimics-x3 (16 GB + 8 GB swap) failed
+# every SynthSeg item with std::bad_alloc; its one re-run uses the machine on which x2 and the pilot ran SynthSeg without an
+# error (c2d-highmem-4, 32 GB: same 4 vCPUs, same image and --threads 4). The guard is cut to what its 362 items need.
+RELAUNCH = {"mimics-x3": {"spec": ("c2d-highmem-4", 85, 16, "hdbet flames fs cdata greedy", 0.1245), "max_hours": 30}}
 EVAL_MACHINE, EVAL_DISK, EVAL_H, EVAL_RATE = "c2d-standard-8", 80, 10, 0.19
 
 
@@ -243,7 +247,8 @@ def rate_of(vm, cache={}):
             cache[vm] = float(json.loads(gs(f"cat {BK}/runs/{vm}/plan.json"))["list_price"]["usd_per_hour"])
         except (SystemExit, KeyError, ValueError):
             base = vm.split("-r")[0]
-            cache[vm] = VM.get(base, ("", 0, 0, "", EVAL_RATE))[4]
+            cache[vm] = (RELAUNCH[base]["spec"] if base in RELAUNCH and vm != base else
+                         VM.get(base, ("", 0, 0, "", EVAL_RATE)))[4]
     return cache[vm]
 
 
@@ -462,7 +467,8 @@ def relaunch(vm, spent, run, dry=False):
         print(f"{vm}: still running, not relaunched")
         return 0.0
     plan = plans_in_bucket()[vm]
-    rate = VM[vm][4]
+    spec = RELAUNCH.get(vm, {}).get("spec", VM[vm])
+    rate = spec[4]
     left = CAP_USD - spent - EVAL_RESERVE_USD
     hours = int(min(72, left / rate))
     if hours < 2:
@@ -470,11 +476,11 @@ def relaunch(vm, spent, run, dry=False):
     k = 1 + sum(1 for x in ls("runs/") if x.rstrip("/").rsplit("/", 1)[-1].startswith(vm + "-r"))
     xv = json.loads(gs(f"cat {BK}/mimics/plans/xvariant.json"))
     code = f"mimics/xcode/{xv['commit'][:12]}"
-    hours = min(hours, int(xv["guards"]["max_hours"][vm]))
+    hours = min(hours, int(xv["guards"]["max_hours"][vm]), RELAUNCH.get(vm, {}).get("max_hours", 72))
     if not plan:
         raise SystemExit(f"no plan for {vm} in the bucket")
-    launch(f"{vm}-r{k}", VM[vm], f"mimics/plans/{vm}.json", code, hours,
-           f"Paper 1 addendum 2: relaunch {k} of {vm} after a pre-emption (same plan; finished outputs are skipped)", dry=dry)
+    launch(f"{vm}-r{k}", spec, f"mimics/plans/{vm}.json", code, hours,
+           f"Paper 1 addendum 2: relaunch {k} of {vm} (same plan; finished outputs are skipped; machine {spec[0]})", dry=dry)
     return hours * rate
 
 
