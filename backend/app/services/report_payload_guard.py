@@ -120,7 +120,14 @@ _REFUSE = object()
 
 _MEASUREMENT_BLOCKS = ("lesion_analysis", "dis_assessment", "longitudinal", "zone_stats",
                        "segmentation_labels", "anomalies")
-_KNOWN_FIELDS = frozenset(FREE_TEXT_FIELDS + _MEASUREMENT_BLOCKS + ("patient_age", "patient_sex"))
+# RC-135 (REQ-FUNC-122): the slice thickness of the original acquisition, derived by the report ROUTE from the source
+# image (never the client's); known, but not a measurement block (alone it gives nothing to report)
+ACQUISITION_THICKNESS = "acquisition_thickness"
+_KNOWN_FIELDS = frozenset(FREE_TEXT_FIELDS + _MEASUREMENT_BLOCKS + ("patient_age", "patient_sex", ACQUISITION_THICKNESS))
+# = the quality gate's plausible maximum thickness (its policy; G27: the rule stays in quality_gate.py — a test checks
+# that the two values are equal; review of PR #86)
+_THICKNESS_MM = (0.1, 20.0)
+_THICKNESS_SOURCES = ("header", "record")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -341,6 +348,18 @@ class _Projector:
             o["evaluation_status"] = DIS_EVALUATED     # kept as received; never invented for a block without it
         return o
 
+    def acquisition_thickness(self, th: dict) -> dict:
+        """RC-135: the RC-054 state and the thickness in mm — only a thickness read from the image (native) or a lower
+        bound (at_least) within a physical range; anything else is "not_determinable", never a guessed value."""
+        state, source = th.get("state"), th.get("source")
+        # a native value comes only from the header; the stored record is only a lower bound (review of PR #86, M2)
+        if (state == "native" and source == "header") or (state == "at_least" and source in _THICKNESS_SOURCES):
+            mm = self.number(th.get("effective_mm"), "slice_thickness_mm", *_THICKNESS_MM, required=False,
+                             outside=None)
+            if mm is not None:
+                return {"state": state, "effective_mm": round(mm, 1), "source": source}
+        return {"state": "not_determinable"}
+
     def longitudinal(self, lng: dict) -> dict:
         # I1 (eleventh review): the gate's account comes from the SERVER's record of its decision (report_account), never
         # from the client's copy; G30 / R2 (sixteenth review): the SAME account object as the code-written notice,
@@ -478,7 +497,8 @@ def provider_payload(findings: Optional[Dict[str, Any]], volumetry: Optional[Dic
     if f.get("patient_sex") in ("M", "F"):
         out["patient_sex"] = f["patient_sex"]
     for key, build in (("lesion_analysis", p.lesion_analysis), ("dis_assessment", p.dis_assessment),
-                       ("longitudinal", p.longitudinal), ("zone_stats", p.zone_stats)):
+                       ("longitudinal", p.longitudinal), ("zone_stats", p.zone_stats),
+                       (ACQUISITION_THICKNESS, p.acquisition_thickness)):
         if isinstance(f.get(key), dict) and f[key]:
             out[key] = build(f[key])
     if isinstance(f.get("segmentation_labels"), list) and f["segmentation_labels"]:

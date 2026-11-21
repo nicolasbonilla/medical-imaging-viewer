@@ -1674,6 +1674,19 @@
       "requirement": "REQ-SAFE-061",
       "change": "branch feat/papers-in-app (2026-11-21)",
       "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. N. G. Bonilla Vargas — approved 2026-11-21 (PR #85)."
+    },
+    "RC-135": {
+      "description": "The verified report draft (limitations) and the model's record state the slice thickness of the ORIGINAL acquisition of the report segmentation's source image, read on the server as the quality gate reads it (RC-054 header geometry, else the stored acquisition record as a lower bound; the client's value dropped), with the expected loss of small lesions above 1.5 mm, or that it could not be read; a read failure never fails the report; both data-sent notices name it",
+      "hazard": "HAZ-015, HAZ-003",
+      "status": "unverified",
+      "implementation": "backend/app/api/routes/ai_report.py; backend/app/services/report_payload_guard.py; backend/app/services/verified_report.py; frontend/src/i18n/locales/en.json; frontend/src/i18n/locales/es.json; frontend/src/i18n/locales/de.json",
+      "tests": [
+        "tests/unit/test_rc135_report_slice_thickness.py",
+        "tests/unit/test_verified_report_review11.py"
+      ],
+      "requirement": "REQ-FUNC-122",
+      "change": "branch feat/report-slice-thickness (2026-11-21), stacked on PR #85",
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; the read of the thickness is not checked by negative controls until clinical use. N. G. Bonilla Vargas — approved 2026-11-21 (PR #86)."
     }
   },
   "unverified_controls_note": [
