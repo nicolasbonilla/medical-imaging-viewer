@@ -42,6 +42,66 @@ from app.services.lesion_metrics import (
     label_lesions,
 )
 
+# REQ-FUNC-121, RC-133 (HAZ-008; SRS/RMF Addendum E, DRAFT — PENDING owner approval): the lesion size that counts
+# toward brain DIS. MAGNIMS 2021 (Wattjes et al., Lancet Neurol 2021) counts a lesion of at least 3 mm in its long
+# axis; the 3 mm³ floor above is a noise floor (MSSEG-2016), about a fifth of a 3-mm sphere (14.1 mm³). Paper 1
+# (medRxiv MEDRXIV/2026/368633, "Automated Lesion Location and Dissemination in Space in People With and Without
+# Multiple Sclerosis"): with any component of at least 3 mm³ the device's rule was met in 19 of 100 healthy controls
+# with the FLAMeS ensemble, and in 9 when only lesions of at least 14.1 mm³ counted; its clinically faithful version
+# kept a lesion when its largest extent F >= 3 mm. F here is the paper's definition (research/paper_1/mimics/
+# faithful_rule.py, `long_axis_at_least`): the maximum Euclidean distance in mm between the CENTRES of any two of the
+# lesion's voxels (3-D maximum Feret diameter of the voxel-centre set; a single voxel has F = 0).
+DIS_LESION_MIN_EXTENT_MM = 3.0
+_EXTENT_TOL = 1e-6
+
+
+def largest_extent_at_least(
+    voxel_indices: np.ndarray, voxel_spacing: tuple[float, float, float], threshold_mm: float = DIS_LESION_MIN_EXTENT_MM
+) -> bool:
+    """Is the 3-D maximum Feret diameter of a set of voxel centres at least ``threshold_mm``?
+
+    ``voxel_indices``: (N, 3) array of (z, y, x) indices; ``voxel_spacing``: (dz, dy, dx) in mm, in the same axis
+    order. Exact, with two shortcuts: F is at least the largest axis-aligned extent of the centres and at most the
+    diagonal of their bounding box; otherwise every pair is compared (in chunks). A port of paper 1's
+    ``faithful_rule.long_axis_at_least`` on an axis-aligned grid (the app's masks carry spacing, not an affine)."""
+    pts = np.asarray(voxel_indices, dtype=float) * np.asarray(voxel_spacing, dtype=float)
+    if pts.ndim != 2 or len(pts) < 2:
+        return False
+    thr = float(threshold_mm) - _EXTENT_TOL
+    ext = pts.max(axis=0) - pts.min(axis=0)
+    if float(ext.max()) >= thr:
+        return True
+    if float(np.sqrt((ext * ext).sum())) < thr:
+        return False
+    for start in range(0, len(pts), 512):
+        d = pts[start:start + 512, None, :] - pts[None, :, :]
+        if float((d * d).sum(-1).max()) >= thr * thr:
+            return True
+    return False
+
+
+def _dis_lesion_counts(binary: np.ndarray, voxel_spacing: tuple[float, float, float]) -> tuple[int, int]:
+    """(qualifying, below size) 18-connected lesions of one region (RC-030 connectivity): a lesion qualifies when it
+    has at least MIN_LESION_VOLUME_MM3 AND its largest extent is at least DIS_LESION_MIN_EXTENT_MM (RC-133); every
+    other component is counted as below the size that counts toward DIS."""
+    from scipy.ndimage import find_objects
+
+    labeled_array, num_features = label_lesions(binary)  # RC-030: 18-connectivity
+    if num_features == 0:
+        return 0, 0
+    voxel_vol_mm3 = float(np.prod(voxel_spacing))
+    qualifying = below = 0
+    for comp_id, sl in enumerate(find_objects(labeled_array), start=1):
+        if sl is None:
+            continue
+        sub = labeled_array[sl] == comp_id
+        idx = np.argwhere(sub) + np.array([s.start for s in sl])
+        if idx.shape[0] * voxel_vol_mm3 >= MIN_LESION_VOLUME_MM3 and largest_extent_at_least(idx, voxel_spacing):
+            qualifying += 1
+        else:
+            below += 1
+    return qualifying, below
+
 
 def analyze_lesions(
     mask_3d: np.ndarray,
@@ -256,27 +316,26 @@ def compute_dis_criteria(
 
     voxel_vol_mm3 = float(np.prod(voxel_spacing))
 
-    # Check each DIS brain region (PV, JC, IT) — with volume filter
+    # Check each DIS brain region (PV, JC, IT). RC-133 (REQ-FUNC-121): a lesion counts when it has at least the
+    # volume floor AND a largest extent of at least 3 mm (MAGNIMS 2021; paper 1's clinically faithful rule)
     region_presence = {}
+    below_size_total = 0
     for region_id in sorted(DIS_BRAIN_REGIONS):
         region_name = labels.get(region_id, f"Label {region_id}")
         binary = (mask_3d == region_id).astype(np.uint8)
         total_voxels = int(binary.sum())
 
-        # Count lesions meeting minimum volume threshold
-        qualifying_lesions = 0
-        if total_voxels > 0:
-            labeled_array, num_features = label_lesions(binary)  # RC-030: 18-connectivity
-            for comp_id in range(1, num_features + 1):
-                comp_voxels = int((labeled_array == comp_id).sum())
-                if comp_voxels * voxel_vol_mm3 >= MIN_LESION_VOLUME_MM3:
-                    qualifying_lesions += 1
+        qualifying_lesions, below_size = (_dis_lesion_counts(binary, voxel_spacing) if total_voxels > 0 else (0, 0))
+        below_size_total += below_size
 
         region_presence[region_name] = {
             "label_id": region_id,
             "present": qualifying_lesions > 0,
             "voxel_count": total_voxels,
             "qualifying_lesion_count": qualifying_lesions,
+            # RC-133: components of this region that do not count toward DIS (under 3 mm in largest extent, or under
+            # the volume floor) — shown, never silently dropped
+            "below_size_lesion_count": below_size,
         }
 
     brain_regions_with_lesions = sum(
@@ -357,6 +416,15 @@ def compute_dis_criteria(
             "evidence when available."
         ),
         "region_details": region_presence,
+        # RC-133 (REQ-FUNC-121): the size a lesion needs to count toward brain DIS, and how many components of the
+        # three DIS regions were below it
+        "lesion_size_rule": {
+            "min_largest_extent_mm": DIS_LESION_MIN_EXTENT_MM,
+            "min_volume_mm3": MIN_LESION_VOLUME_MM3,
+            "largest_extent": "maximum distance between the centres of any two voxels of the lesion",
+            "source": "MAGNIMS 2021 (lesion of at least 3 mm in its long axis)",
+        },
+        "below_size_lesion_count": below_size_total,
         "dwm_lesion_count": dwm_lesion_count,
         "dwm_voxels": dwm_voxels,
         "has_active_lesions": has_active,

@@ -59,6 +59,9 @@ export interface DISRegionDetail {
   present: boolean;
   voxel_count: number;
   qualifying_lesion_count?: number;
+  /** RC-133 (REQ-FUNC-121): components of this region under 3 mm in largest extent (or under the volume floor),
+   *  which do not count toward DIS. */
+  below_size_lesion_count?: number;
 }
 
 /**
@@ -226,6 +229,10 @@ export interface DISEvaluated {
   decision_support_note: string;
   note: string;
   region_details: Record<string, DISRegionDetail>;
+  /** RC-133 (REQ-FUNC-121): the size a lesion needs to count toward brain DIS (MAGNIMS 2021: 3 mm in its largest
+   *  extent), and how many components of the three DIS regions were below it. */
+  lesion_size_rule?: { min_largest_extent_mm: number; min_volume_mm3: number; largest_extent: string; source: string };
+  below_size_lesion_count?: number;
   dwm_lesion_count: number;
   dwm_voxels: number;
   has_active_lesions: boolean;

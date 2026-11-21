@@ -1648,6 +1648,32 @@
       "requirement": "REQ-FUNC-120",
       "change": "branch feat/lesion-review-record (2026-11-18)",
       "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. N. G. Bonilla Vargas — approved 2026-11-18 (PR #84)."
+    },
+    "RC-133": {
+      "description": "A lesion counts toward brain DIS only with at least 3 mm3 AND a largest extent of at least 3 mm (maximum distance between voxel centres, from the spacing; paper 1's clinically faithful rule, MAGNIMS 2021); the result states the size rule and the components below it, per region and in total; the dashboard shows that number and describes the per-region count accurately",
+      "hazard": "HAZ-008",
+      "status": "unverified",
+      "implementation": "backend/app/services/lesion_analysis_service.py; frontend/src/components/LesionDashboard.tsx; frontend/src/types/lesion.ts",
+      "tests": [
+        "tests/unit/test_rc133_dis_lesion_size.py",
+        "frontend/src/components/LesionDashboard.papers.test.tsx"
+      ],
+      "requirement": "REQ-FUNC-121",
+      "change": "branch feat/papers-in-app (2026-11-21)",
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. DRAFT — PENDING owner approval."
+    },
+    "RC-134": {
+      "description": "Every met brain-DIS result is shown with what it does not mean (an automatic count of lesion locations only, not the full diagnostic criteria; also met in most older adults and in most people with vascular white matter disease; not evidence of MS without review) on the dashboard and in the verified report (findings and impression, report language); the report model's record carries the rule label and interpretation for every evaluated result (paper 2, E4); the met state in amber, never green; no digit, year or surname in the statement",
+      "hazard": "HAZ-008",
+      "status": "unverified",
+      "implementation": "backend/app/services/verified_report.py; frontend/src/components/LesionDashboard.tsx; frontend/src/i18n/locales/en.json; frontend/src/i18n/locales/es.json; frontend/src/i18n/locales/de.json",
+      "tests": [
+        "tests/unit/test_rc134_dis_interpretation.py",
+        "frontend/src/components/LesionDashboard.papers.test.tsx"
+      ],
+      "requirement": "REQ-SAFE-061",
+      "change": "branch feat/papers-in-app (2026-11-21)",
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. DRAFT — PENDING owner approval."
     }
   },
   "unverified_controls_note": [
