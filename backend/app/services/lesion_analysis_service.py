@@ -47,10 +47,14 @@ from app.services.lesion_metrics import (
 # axis; the 3 mm³ floor above is a noise floor (MSSEG-2016), about a fifth of a 3-mm sphere (14.1 mm³). Paper 1
 # (medRxiv MEDRXIV/2026/368633, "Automated Lesion Location and Dissemination in Space in People With and Without
 # Multiple Sclerosis"): with any component of at least 3 mm³ the device's rule was met in 19 of 100 healthy controls
-# with the FLAMeS ensemble, and in 9 when only lesions of at least 14.1 mm³ counted; its clinically faithful version
-# kept a lesion when its largest extent F >= 3 mm. F here is the paper's definition (research/paper_1/mimics/
+# with the FLAMeS ensemble, and in 9 when only lesions of at least 14.1 mm³ (a 3-mm sphere) counted. The device now
+# applies the SIZE criterion of the paper's clinically faithful rule — largest extent F >= 3 mm — on top of its
+# volume floor; it is not the faithful rule itself, which had no volume floor and used each person's own anatomy
+# (with it the ensemble met the rule in 13 of 100 controls). F is the paper's definition (research/paper_1/mimics/
 # faithful_rule.py, `long_axis_at_least`): the maximum Euclidean distance in mm between the CENTRES of any two of the
-# lesion's voxels (3-D maximum Feret diameter of the voxel-centre set; a single voxel has F = 0).
+# lesion's voxels (3-D maximum Feret diameter of the voxel-centre set; a single voxel has F = 0). Measured between
+# centres it is up to one voxel shorter than the edge-to-edge length a reader sees — the conservative direction for
+# HAZ-008 (fewer regions counted, never more).
 DIS_LESION_MIN_EXTENT_MM = 3.0
 _EXTENT_TOL = 1e-6
 
@@ -80,10 +84,20 @@ def largest_extent_at_least(
     return False
 
 
+def has_current_size_rule(dis_block) -> bool:
+    """RC-133: a stored DIS result may be served again only if it was computed with the current lesion size rule —
+    a result stored before RC-133 (no `lesion_size_rule`) counted components under 3 mm and is recomputed."""
+    rule = dis_block.get("lesion_size_rule") if isinstance(dis_block, dict) else None
+    return (isinstance(rule, dict) and rule.get("min_largest_extent_mm") == DIS_LESION_MIN_EXTENT_MM
+            and rule.get("min_volume_mm3") == MIN_LESION_VOLUME_MM3)
+
+
 def _dis_lesion_counts(binary: np.ndarray, voxel_spacing: tuple[float, float, float]) -> tuple[int, int]:
     """(qualifying, below size) 18-connected lesions of one region (RC-030 connectivity): a lesion qualifies when it
-    has at least MIN_LESION_VOLUME_MM3 AND its largest extent is at least DIS_LESION_MIN_EXTENT_MM (RC-133); every
-    other component is counted as below the size that counts toward DIS."""
+    has at least MIN_LESION_VOLUME_MM3 AND its largest extent is at least DIS_LESION_MIN_EXTENT_MM (RC-133). "Below
+    size" counts the lesions of at least MIN_LESION_VOLUME_MM3 — the ones the lesion table and the per-region counts
+    list — whose largest extent is under 3 mm; a component under the volume floor is noise, counted nowhere (as
+    before this change)."""
     from scipy.ndimage import find_objects
 
     labeled_array, num_features = label_lesions(binary)  # RC-030: 18-connectivity
@@ -96,7 +110,9 @@ def _dis_lesion_counts(binary: np.ndarray, voxel_spacing: tuple[float, float, fl
             continue
         sub = labeled_array[sl] == comp_id
         idx = np.argwhere(sub) + np.array([s.start for s in sl])
-        if idx.shape[0] * voxel_vol_mm3 >= MIN_LESION_VOLUME_MM3 and largest_extent_at_least(idx, voxel_spacing):
+        if idx.shape[0] * voxel_vol_mm3 < MIN_LESION_VOLUME_MM3:
+            continue                                   # noise floor: not a lesion of the table, not counted
+        if largest_extent_at_least(idx, voxel_spacing):
             qualifying += 1
         else:
             below += 1
@@ -333,8 +349,8 @@ def compute_dis_criteria(
             "present": qualifying_lesions > 0,
             "voxel_count": total_voxels,
             "qualifying_lesion_count": qualifying_lesions,
-            # RC-133: components of this region that do not count toward DIS (under 3 mm in largest extent, or under
-            # the volume floor) — shown, never silently dropped
+            # RC-133: lesions of this region (at least the volume floor) under 3 mm in largest extent, which do not
+            # count toward DIS — shown, never silently dropped
             "below_size_lesion_count": below_size,
         }
 
@@ -422,7 +438,8 @@ def compute_dis_criteria(
             "min_largest_extent_mm": DIS_LESION_MIN_EXTENT_MM,
             "min_volume_mm3": MIN_LESION_VOLUME_MM3,
             "largest_extent": "maximum distance between the centres of any two voxels of the lesion",
-            "source": "MAGNIMS 2021 (lesion of at least 3 mm in its long axis)",
+            "source": "MAGNIMS 2021 (lesion of at least 3 mm in its long axis); size criterion of paper 1's "
+                      "clinically faithful rule",
         },
         "below_size_lesion_count": below_size_total,
         "dwm_lesion_count": dwm_lesion_count,

@@ -52,6 +52,10 @@ mcp = FastMCP(
         "space: not evaluated (requires clinician review of the segmentation)'. Never derive dissemination "
         "in space yourself from lesion counts, regions or the region classification. Automatic marking also "
         "marks spots in most healthy brains; a marked spot is not evidence of multiple sclerosis.\n"
+        "- When you report a met brain-DIS result, always give its `dis_interpretation` with it: an automatic "
+        "count of lesion locations only, also met in most older adults and in most people with vascular white "
+        "matter disease, not evidence of multiple sclerosis on its own (RC-134). Only lesions of at least 3 mm in "
+        "their largest extent count toward it.\n"
         "- The central vein sign (CVS) and paramagnetic rim lesions (PRL) need "
         "susceptibility-sensitive MRI and a human reading. They give supportive evidence "
         "only in specific situations defined by the criteria; report the clinician-recorded "
@@ -80,6 +84,15 @@ DIS_CONCLUSION_KEYS = frozenset({
     "dis_met", "dis_met_brain", "dis_met_full", "dit_waiver_supported", "brain_regions_with_lesions",
     "regions_with_lesions", "total_topographies_involved", "region_details",
 })
+# RC-134 (REQ-SAFE-061; papers 1 and 2): what an evaluated brain-DIS result does not mean — the same English text as
+# the verified report's `DIS_INTERPRETATION["en"]` (a test checks they are equal). Mirrored, not imported: the
+# assistant server reaches the backend over HTTP and stays independent of its services.
+DIS_INTERPRETATION = (
+    "This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion shape, "
+    "age and vascular risk are not taken into account, and location rules like this one are also met in most older "
+    "adults and in most people with vascular white matter disease. It is not evidence of multiple sclerosis without "
+    "a physician's review of the lesions and of the case as a whole."
+)
 REGIONS_ARE_NOT_DIS = (
     "Regions not confirmed by a radiologist are candidates to verify; not a DIS assessment. Never derive "
     "dissemination in space from them: DIS is reported only by summarize_dis_items, when a radiologist "
@@ -185,8 +198,11 @@ async def summarize_dis_items(segmentation_id: str) -> dict:
     analysis = await api_get(f"/segmentation/{segmentation_id}/lesion-analysis")
     seg = await api_get(f"/segmentation/{segmentation_id}")
     analysis_data = (seg.get("metadata") or {}).get("analysis_data") or {}
+    evaluated = dis.get("evaluation_status") == "evaluated"
     return {
         "dis_assessment": dis,
+        # RC-134: an evaluated result always travels with what it does not mean
+        **({"dis_interpretation": DIS_INTERPRETATION} if evaluated else {}),
         "lesion_analysis": analysis,
         "clinician_recorded_cvs": analysis_data.get("cvs_summary"),
         "clinician_recorded_prl": analysis_data.get("prl_summary"),

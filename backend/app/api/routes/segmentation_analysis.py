@@ -34,6 +34,7 @@ from app.services.segmentation_comparison_service import (
 from app.services.lesion_analysis_service import (
     analyze_lesions,
     compute_dis_criteria,
+    has_current_size_rule,
     MAGNIMS_REGIONS,
 )
 from app.services.longitudinal_tracking_service import compare_timepoints
@@ -662,6 +663,9 @@ async def assess_dis(segmentation_id, segmentation_service, storage_service,
     if (not any_external
             and cached.get("analysis_mask_modified_at") == mask_mod
             and dis_gate.is_evaluated(cached.get("dis_assessment"))
+            # RC-133 (review of the papers-in-app change, finding 2): a result stored before the 3-mm size rule is
+            # recomputed, never served — it may count components under 3 mm
+            and has_current_size_rule(cached.get("dis_assessment"))
             and (cached["dis_assessment"].get("segmentation_review") or {}).get("current_mask_sha256")
             == state["current_mask_sha256"]):
         logger.info("Returning cached DIS assessment for %s", segmentation_id)

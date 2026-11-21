@@ -92,14 +92,24 @@ def test_thick_slice_lesion_counts_by_its_extent_across_slices():
     assert r["dis_met_brain"] is True
 
 
-def test_volume_floor_still_applies():
+def test_volume_floor_still_applies_and_noise_is_not_counted_as_a_lesion():
     m = _mask()
-    m[5, 5, 5] = 1
-    m[5, 5, 9] = 1            # two separate single voxels: each under 3 mm³ at 0.5 mm, and no extent
+    m[5, 5, 5:12] = 1         # 7 voxels at 0.5 mm: 3 mm long but 0.875 mm³ — noise, under the volume floor
     m[5, 12, 5:12] = 2
     r = compute_dis_criteria(m, voxel_spacing=(0.5, 0.5, 0.5))
     pv = r["region_details"]["Periventricular"]
-    assert pv["present"] is False and pv["below_size_lesion_count"] == 2
+    # noise is counted nowhere (as before this change): not qualifying, and not a lesion "below the size" either
+    assert pv["present"] is False and pv["qualifying_lesion_count"] == 0 and pv["below_size_lesion_count"] == 0
+
+
+def test_below_size_counts_only_lesions_of_the_lesion_table():
+    m = _mask()
+    m[5, 5, 5:8] = 1          # 3 mm³ (a lesion of the table) but 2 mm long: below the size
+    m[5, 8, 5] = 1            # 1 mm³: noise, counted nowhere
+    m[5, 12, 5:10] = 2
+    r = compute_dis_criteria(m, voxel_spacing=(1.0, 1.0, 1.0))
+    assert r["region_details"]["Periventricular"]["below_size_lesion_count"] == 1
+    assert r["below_size_lesion_count"] == 1
 
 
 def test_size_rule_is_stated_in_the_result():
@@ -108,3 +118,24 @@ def test_size_rule_is_stated_in_the_result():
     assert rule["min_largest_extent_mm"] == 3.0 and rule["min_volume_mm3"] == 3.0
     assert "MAGNIMS 2021" in rule["source"]
     assert r["below_size_lesion_count"] == 0
+
+
+# ------------------------------------------------------------------ results stored before the rule (review, finding 2)
+def test_a_result_stored_before_the_size_rule_is_not_current():
+    from app.services.lesion_analysis_service import has_current_size_rule
+    fresh = compute_dis_criteria(_mask(), voxel_spacing=(1.0, 1.0, 1.0))
+    assert has_current_size_rule(fresh) is True
+    old = {k: v for k, v in fresh.items() if k != "lesion_size_rule"}
+    assert has_current_size_rule(old) is False
+    assert has_current_size_rule({**fresh, "lesion_size_rule": {"min_largest_extent_mm": 0.0,
+                                                                "min_volume_mm3": 3.0}}) is False
+    assert has_current_size_rule(None) is False
+
+
+def test_the_dis_route_serves_a_stored_result_only_with_the_current_rule():
+    import inspect
+    from app.api.routes import segmentation_analysis as route
+    src = inspect.getsource(route)
+    start = src.index("Stale check — return the cached result if the mask hasn't changed and it was evaluated")
+    cache = src[start:src.index("Build label map", start)]
+    assert "has_current_size_rule(cached.get(\"dis_assessment\"))" in cache

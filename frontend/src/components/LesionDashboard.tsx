@@ -96,23 +96,25 @@ function regionBarWidth(vol: number, maxVol: number): string {
  * does not mean, shown under every met result. Papers 1 and 2: the location-only rule was met with the experts' own
  * masks as often in vascular white matter disease as in MS, and in 96 of 100 adults aged 50-89 years without CNS
  * disease; telling the report model what the rule ignores cut MS-suggestive reports without a clinical caveat by
- * 70-81 points. The same text, in each language, as the verified report's code-written line
+ * 70 and 78 points with a single model call and by 43 to 81 with an agent (exploratory, post hoc). The same text, in each language, as the verified report's code-written line
  * (backend `verified_report.DIS_INTERPRETATION`; a backend test checks that the locales equal it).
  */
 export const DIS_INTERPRETATION_EN =
   'This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion shape, age ' +
-  'and vascular risk are not taken into account, and location rules of this kind are also met in most older adults ' +
-  'and in most people with vascular white matter disease. It is not evidence of multiple sclerosis without review of ' +
-  'the lesions and of the clinical context.';
+  'and vascular risk are not taken into account, and location rules like this one are also met in most older adults ' +
+  'and in most people with vascular white matter disease. It is not evidence of multiple sclerosis without a ' +
+  'physician\'s review of the lesions and of the case as a whole.';
 
-/** RC-133 (REQ-FUNC-121): what the per-region count means (MAGNIMS 2021 size: 3 mm in the largest extent). */
+/** RC-133 (REQ-FUNC-121): what the per-region count means (MAGNIMS 2021 size: 3 mm in the largest extent, measured
+ *  between voxel centres — up to one voxel shorter than the edge-to-edge length on screen). */
 export const QUALIFYING_TOOLTIP_EN =
-  'Lesions in this region of at least 3 mm in their largest extent (MAGNIMS 2021) and at least 3 mm³; ' +
-  'the region counts toward DIS when this is 1 or more';
+  'Lesions in this region of at least 3 mm in their largest extent, measured between voxel centres ' +
+  '(MAGNIMS 2021 size); the region counts toward DIS when this is 1 or more';
 
-/** RC-133: components of the DIS regions that are too small to count, shown instead of silently dropped. */
+/** RC-133: lesions of the DIS regions (those of the lesion table) too short to count, shown instead of dropped. */
 export const BELOW_SIZE_EN =
-  'Lesions under 3 mm in their largest extent, not counted toward DIS (MAGNIMS 2021): {{count}}';
+  'Lesions in the DIS regions under 3 mm in their largest extent (between voxel centres), which do not count ' +
+  'toward DIS: {{count}}';
 
 /** Interpolates {{name}} placeholders left by `t` (also when no i18n instance is initialised, e.g. in tests). */
 function fill(text: string, values: Record<string, unknown>): string {
@@ -1116,9 +1118,9 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           (disOk.dis_met_brain ?? disOk.dis_met) ? 'bg-amber-900/25 border border-amber-700/50' : 'bg-gray-800/50 border border-gray-700/50'
         }`} data-testid="dis-result">
           {(disOk.dis_met_brain ?? disOk.dis_met) ? (
-            <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+            <Info className="w-4 h-4 text-amber-400 shrink-0" />
           ) : (
-            <XCircle className="w-4 h-4 text-gray-400 shrink-0" />
+            <Info className="w-4 h-4 text-gray-400 shrink-0" />
           )}
           <div className="flex-1 min-w-0">
             <div className={`text-xs font-bold ${(disOk.dis_met_brain ?? disOk.dis_met) ? 'text-amber-200' : 'text-gray-300'}`}>
@@ -1128,15 +1130,16 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
               {Object.entries(disOk.region_details ?? {}).map(([name, detail]) => (
                 <span key={name} className="flex items-center gap-0.5 text-[9px]">
+                  {/* RC-134: a region with lesions is a fact, not a success — neutral, never green */}
                   {detail.present ? (
-                    <CheckCircle2 className="w-2.5 h-2.5 text-green-400" />
+                    <CheckCircle2 className="w-2.5 h-2.5 text-gray-300" />
                   ) : (
                     <XCircle className="w-2.5 h-2.5 text-gray-600" />
                   )}
-                  <span className={detail.present ? 'text-green-300' : 'text-gray-500'}>{name}</span>
+                  <span className={detail.present ? 'text-gray-200' : 'text-gray-500'}>{name}</span>
                   {typeof detail.qualifying_lesion_count === 'number' && (
                     <span
-                      className={detail.present ? 'text-green-400/80' : 'text-gray-600'}
+                      className={detail.present ? 'text-gray-300' : 'text-gray-600'}
                       title={t('lesions.qualifyingLesionsTooltip', QUALIFYING_TOOLTIP_EN)}
                     >
                       ({detail.qualifying_lesion_count})

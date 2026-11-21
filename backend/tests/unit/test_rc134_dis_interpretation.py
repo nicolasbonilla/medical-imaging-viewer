@@ -20,6 +20,20 @@ LESIONS = {"total_count": 7, "total_burden_mm3": 3132.0, "total_burden_ml": 3.13
                                                          "Deep White Matter")}}
 
 
+COMMENTS = {
+    "en": ("The lesions are mostly small, on a segmentation confirmed by a radiologist.",
+           "Lesion burden as measured on the confirmed segmentation."),
+    "es": ("Las lesiones son sobre todo pequeñas, en una segmentación confirmada por un radiólogo.",
+           "Carga lesional medida en la segmentación confirmada."),
+    "de": ("Die Läsionen sind überwiegend klein, auf einer von einem Radiologen bestätigten Segmentierung.",
+           "Läsionslast wie an der bestätigten Segmentierung gemessen."),
+}
+
+
+def _answer(lang):
+    return f"[FINDINGS_COMMENT]\n{COMMENTS[lang][0]}\n[IMPRESSION_COMMENT]\n{COMMENTS[lang][1]}"
+
+
 def _view(dis, lang="en"):
     return VR.build_view({"lesion_analysis": dict(LESIONS), "dis_assessment": dis}, None, lang)
 
@@ -69,15 +83,7 @@ def test_no_interpretation_line_without_a_met_result(lang, dis):
 # ------------------------------------------------------------------ the checks the line must pass
 @pytest.mark.parametrize("lang", LANGS)
 def test_a_met_report_with_plain_comments_passes_the_claim_check(lang):
-    comments = {
-        "en": ("The lesions are mostly small, on a segmentation confirmed by a radiologist.",
-               "Lesion burden as measured on the confirmed segmentation, without any diagnosis."),
-        "es": ("Las lesiones son sobre todo pequeñas, en una segmentación confirmada por un radiólogo.",
-               "Carga lesional medida en la segmentación confirmada, sin ningún diagnóstico."),
-        "de": ("Die Läsionen sind überwiegend klein, auf einer von einem Radiologen bestätigten Segmentierung.",
-               "Läsionslast wie an der bestätigten Segmentierung gemessen, ohne Diagnose."),
-    }[lang]
-    answer = f"[FINDINGS_COMMENT]\n{comments[0]}\n[IMPRESSION_COMMENT]\n{comments[1]}"
+    answer = _answer(lang)
     assembled, fails = VR.check(_view({**EVALUATED, "dis_met": True}, lang), lang, answer)
     assert fails == [], fails
     assert VR.DIS_INTERPRETATION[lang] in assembled
@@ -89,6 +95,47 @@ def test_no_digit_year_or_surname_joins_the_device_words():
     for text in (VR.DIS_RULE_LABEL, *VR.DIS_INTERPRETATION.values()):
         assert not re.search(r"\d", text), text
         assert "McDonald" not in text and "Montalban" not in text and "MAGNIMS" not in text
+
+
+# ------------------------------------------------------------------ lesions under 3 mm (RC-133; review, finding 3)
+@pytest.mark.parametrize("lang", LANGS)
+@pytest.mark.parametrize("met", [True, False])
+def test_lesions_below_the_size_are_stated_so_the_region_counts_do_not_contradict_dis(lang, met):
+    payload = {"lesion_analysis": dict(LESIONS), "dis_assessment": {**EVALUATED, "dis_met": met,
+                                                                    "below_size_lesion_count": 2}}
+    f, v, _ni = VR.rendered_request(payload, None)
+    p = VR.provider_payload(f, v)                    # the RC-064 projection the route applies
+    view = VR.build_view(p.findings, p.volumetry, lang)
+    assert view["dis"]["lesions_below_size"] == 2 and view["dis"]["lesion_min_extent_mm"] == 3.0
+    findings, _comp, _imp, _lim = VR.skeleton(view, lang)
+    line = VR.T[lang]["dis_below_size"].format(k=2, d="3")
+    assert line in findings
+    prefix = VR.T[lang]["dis_ev"].split("{")[0]
+    assert findings[findings.index(line) - 1].startswith(prefix)      # right after the DIS line
+    assembled, fails = VR.check(view, lang, _answer(lang))
+    assert fails == [], fails
+    assert line in assembled
+
+
+@pytest.mark.parametrize("dis", [{**EVALUATED, "dis_met": True}, {**EVALUATED, "dis_met": True,
+                                                                   "below_size_lesion_count": 0}])
+def test_no_below_size_line_when_none_or_not_reported(dis):
+    view = _view(dis)
+    assert "lesions_below_size" not in view["dis"]
+    findings, _c, _i, _l = VR.skeleton(view, "en")
+    assert not any(x.startswith("Lesions in these regions under") for x in findings)
+
+
+def test_the_assistant_carries_the_same_interpretation():
+    # read from the source (the assistant server needs the `mcp` package, which the backend tests do not install)
+    import ast
+    src = (Path(__file__).resolve().parents[2] / "app" / "mcp" / "ms_clinical_server.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    value = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
+                 and any(getattr(t, "id", None) == "DIS_INTERPRETATION" for t in node.targets))
+    assert value == VR.DIS_INTERPRETATION["en"]
+    # and the evaluated summary returns it
+    assert '{"dis_interpretation": DIS_INTERPRETATION} if evaluated' in src
 
 
 # ------------------------------------------------------------------ one text for the dashboard and the report

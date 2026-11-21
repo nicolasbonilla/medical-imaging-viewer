@@ -278,30 +278,37 @@ def user_lang_line(lang: str) -> str:
 #   of 145 MS examinations and in 167 of 170 people with vascular white matter hyperintensities (LR+ 1.0), and with
 #   the FLAMeS ensemble in 96 of 100 adults aged 50-89 years without CNS disease; its clinically faithful version did
 #   not separate MS from vascular disease either (LR+ 1.0).
-#   Paper 2 ("Faithful but false", E4): when the record told the model that the rule is a location-only count that is
-#   not the diagnostic criteria, and what it ignores, MS-suggestive reports without a clinical caveat fell by 70-81
-#   percentage points.
+#   Paper 2 ("Faithful but false", E4; exploratory, post hoc): when the record told the model that the rule is a
+#   location-only count that is not the diagnostic criteria, and what it ignores, MS-suggestive reports without a
+#   clinical caveat fell by 70 and 78 percentage points with a single model call and by 43 to 81 with the agent
+#   design; one model then conveyed the rule in fewer MS examinations.
 # The record carries paper 2's two fields (`rule`, `interpretation`) and the code-written report states the same in
-# the reader's language after an evaluated DIS result. Deviation from paper 2's text, on purpose: no digit, no year
-# and no surname ("2024 McDonald", "over 50 years") — every word and number of the record and the report joins the
-# RC-065 device-word list (brain_report_service._fixed_prompt_word_lists) and a number could equal one of the
-# patient's own (REASON_PRIVACY); the line keeps its meaning without them.
+# the reader's language after an evaluated DIS result. Deviations from paper 2's tested text, on purpose (they change
+# its wording, so paper 2's effect sizes belong to its own text): no digit, year or surname ("the 2024 McDonald
+# criteria" -> "the full diagnostic criteria"; "adults over 50 years of age" -> "older adults") — every word and number
+# of the record and the report joins the RC-065 device-word list (brain_report_service._fixed_prompt_word_lists) and a
+# number could equal one of the patient's own (REASON_PRIVACY); "periventricular caps, lesions atypical of multiple
+# sclerosis" -> "lesion shape"; "a radiologist's review of the lesions and of the clinical context" -> "a physician's
+# review of the lesions and of the case as a whole" (the frozen claim check, verifier v2 E3 `CLINICAL`, reads
+# "clinical context" as a clinical statement the record cannot support, also in device-written text); and the rule
+# label is the device's own. Common words that are also surnames are avoided where a synonym exists (review finding
+# 10: "kind", "Lage", "Form", "Alter" would join the device words the RC-065 tripwire never reports alone).
 DIS_RULE_LABEL = "automatic count of lesion locations only (brain MRI); not the full diagnostic criteria"
 DIS_INTERPRETATION: Dict[str, str] = {
     "en": "This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion "
-          "shape, age and vascular risk are not taken into account, and location rules of this kind are also met in "
+          "shape, age and vascular risk are not taken into account, and location rules like this one are also met in "
           "most older adults and in most people with vascular white matter disease. It is not evidence of multiple "
-          "sclerosis without review of the lesions and of the clinical context.",
+          "sclerosis without a physician's review of the lesions and of the case as a whole.",
     "es": "Este resultado es un recuento automático solo de la localización de las lesiones, no los criterios "
-          "diagnósticos completos: no tiene en cuenta la forma de las lesiones, la edad ni el riesgo vascular, y las "
-          "reglas de localización de este tipo también se cumplen en la mayoría de los adultos mayores y de las "
+          "diagnósticos completos: no tiene en cuenta la morfología de las lesiones, la edad ni el riesgo vascular, y "
+          "las reglas de localización como esta también se cumplen en la mayoría de los adultos mayores y de las "
           "personas con enfermedad vascular de la sustancia blanca. No es una prueba de esclerosis múltiple sin la "
-          "revisión de las lesiones y del contexto clínico.",
-    "de": "Dieses Ergebnis ist eine automatische Zählung allein nach der Lage der Läsionen, nicht die vollständigen "
-          "diagnostischen Kriterien: Form der Läsionen, Alter und vaskuläres Risiko werden nicht berücksichtigt, und "
-          "solche Lageregeln sind auch bei den meisten älteren Erwachsenen und bei den meisten Menschen mit vaskulärer "
-          "Erkrankung der weißen Substanz erfüllt. Ohne Prüfung der Läsionen und des klinischen Kontexts ist es kein "
-          "Nachweis einer Multiplen Sklerose.",
+          "revisión de las lesiones y del caso en su conjunto por un médico.",
+    "de": "Dieses Ergebnis ist eine automatische Zählung allein nach der Lokalisation der Läsionen, nicht die "
+          "vollständigen diagnostischen Kriterien: Morphologie der Läsionen, Lebensalter und vaskuläres Risiko werden "
+          "nicht berücksichtigt, und solche Lokalisationsregeln sind auch bei den meisten älteren Erwachsenen und bei "
+          "den meisten Menschen mit vaskulärer Erkrankung der weißen Substanz erfüllt. Ohne ärztliche Prüfung der "
+          "Läsionen und des Gesamtbilds ist es kein Nachweis einer Multiplen Sklerose.",
 }
 
 
@@ -336,6 +343,9 @@ T: Dict[str, Dict[str, str]] = {
         "met": "met", "notmet": "not met",
         "dis_ext": "Spinal cord and optic nerve: not assessed.",
         "dis_interp": DIS_INTERPRETATION["en"],
+        # (not "which do not count": "do" is a surname the RC-065 tripwire must keep reporting alone)
+        "dis_below_size": "Lesions in these regions under {d} mm in their largest extent, not counted toward "
+                          "dissemination in space: {k}.",
         "not_included": "Supplied but not included in this verified draft: {items}.",
         "ni_zone_statistics": "MAGNIMS zone statistics", "ni_segmentation_labels": "segmentation labels",
         "ni_anomalies": "anomaly detections", "ni_structure_volumes": "structure volumes of the volumetry",
@@ -394,6 +404,8 @@ T: Dict[str, Dict[str, str]] = {
         "met": "se cumple", "notmet": "no se cumple",
         "dis_ext": "Médula espinal y nervio óptico: no evaluados.",
         "dis_interp": DIS_INTERPRETATION["es"],
+        "dis_below_size": "Lesiones de estas regiones de menos de {d} mm en su mayor extensión, que no cuentan para la "
+                          "diseminación en el espacio: {k}.",
         "not_included": "Aportado pero no incluido en este borrador verificado: {items}.",
         "ni_zone_statistics": "estadísticas de zonas MAGNIMS", "ni_segmentation_labels": "etiquetas de segmentación",
         "ni_anomalies": "detecciones de anomalías", "ni_structure_volumes": "volúmenes de estructuras de la volumetría",
@@ -450,6 +462,8 @@ T: Dict[str, Dict[str, str]] = {
         "met": "erfüllt", "notmet": "nicht erfüllt",
         "dis_ext": "Rückenmark und Sehnerv: nicht beurteilt.",
         "dis_interp": DIS_INTERPRETATION["de"],
+        "dis_below_size": "Läsionen dieser Regionen unter {d} mm größter Ausdehnung, die nicht für die räumliche "
+                          "Dissemination zählen: {k}.",
         "not_included": "Übermittelt, aber nicht in diesen geprüften Entwurf aufgenommen: {items}.",
         "ni_zone_statistics": "MAGNIMS-Zonenstatistik", "ni_segmentation_labels": "Segmentierungsbezeichnungen",
         "ni_anomalies": "Anomalieerkennungen", "ni_structure_volumes": "Strukturvolumina der Volumetrie",
@@ -639,6 +653,13 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         if k is not None:
             # absent when not computed (R6): the frozen check then refuses any count of regions (it compares with -1)
             view["dis"]["brain_regions_with_lesions"] = k
+        below = _count(dis_block.get("below_size_lesion_count"))
+        if below:
+            # RC-133 (review of the papers-in-app change, finding 3): the region counts list every lesion; DIS counts
+            # only those of at least 3 mm in largest extent — the difference is stated, never left as a contradiction
+            from app.services.lesion_analysis_service import DIS_LESION_MIN_EXTENT_MM
+            view["dis"]["lesions_below_size"] = below
+            view["dis"]["lesion_min_extent_mm"] = DIS_LESION_MIN_EXTENT_MM
     elif isinstance(dis_block, dict):
         # seventh review of PR #78, finding 1 (I2): a DIS assessment present and not evaluated is stated whatever else
         # is in the report (V9 had tied it to a lesion analysis); a report without a DIS block has no DIS line
@@ -802,7 +823,8 @@ def not_included_of(findings: Any, volumetry: Any) -> List[str]:
 RENDERED_FINDINGS = ("lesion_analysis", "dis_assessment", "longitudinal")
 _RENDERED_LESION_KEYS = ("total_count", "total_burden_mm3", "total_burden_ml", "size_distribution", "region_status",
                          "regions")
-_RENDERED_DIS_KEYS = ("evaluation_status", "dis_met", "regions_with_lesions", "region_details")
+_RENDERED_DIS_KEYS = ("evaluation_status", "dis_met", "regions_with_lesions", "region_details",
+                      "below_size_lesion_count")   # RC-133: the lesions under 3 mm, stated in the findings
 _RENDERED_VOLUMES = ("total_brain_volume_ml", "intracranial_volume_ml")
 
 
@@ -947,7 +969,11 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
         met = t["met"] if dis["dis_met_brain"] else t["notmet"]
         dis_s = (t["dis_ev"].format(k=stated["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"], met=met)
                  if "brain_regions_with_lesions" in stated else t["dis_ev_nc"].format(met=met))
-        f += [dis_s, t["dis_ext"]]
+        f += [dis_s]
+        if dis.get("lesions_below_size"):
+            f.append(t["dis_below_size"].format(k=dis["lesions_below_size"],
+                                                d=_loc(f"{dis['lesion_min_extent_mm']:g}", lang)))
+        f.append(t["dis_ext"])
         if dis["dis_met_brain"]:
             # RC-134: a met result is never written without what it does not mean (papers 1 and 2)
             f.append(t["dis_interp"])
@@ -1637,7 +1663,9 @@ _BRANCHES: Dict[str, Dict[str, Any]] = {
                "computed": {"total_count": 7, "total_burden_mm3": 3132.0, "total_burden_ml": 3.132,
                             "size_distribution": {"small": 4, "medium": 2, "large": 1}}},
     "dis": {"not_evaluated": {"evaluation_status": "not_evaluated"},
-            "evaluated_met": {**_SC_EVALUATED, "dis_met": True}, "evaluated_not_met": {**_SC_EVALUATED, "dis_met": False}},
+            "evaluated_met": {**_SC_EVALUATED, "dis_met": True}, "evaluated_not_met": {**_SC_EVALUATED, "dis_met": False},
+            # RC-133: lesions under 3 mm in the DIS regions (the findings line that states them)
+            "evaluated_below_size": {**_SC_EVALUATED, "dis_met": False, "below_size_lesion_count": 2}},
     "longitudinal": {
         "complete": {**_SC_LNG, "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
                      "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},

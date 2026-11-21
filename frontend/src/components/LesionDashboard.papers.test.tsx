@@ -99,7 +99,7 @@ describe('RC-134 what a met DIS result does not mean (papers 1 and 2)', () => {
     expect(screen.getByText(/Criterion Met/)).toBeInTheDocument();
     expect(screen.getByTestId('dis-interpretation')).toHaveTextContent(DIS_INTERPRETATION_EN);
     expect(box.className).toMatch(/amber/);
-    expect(box.className).not.toMatch(/green/);
+    expect(box.innerHTML).not.toMatch(/green/);       // nothing of the met result is drawn as a success
   });
 
   it('rc134 a not-met result has no interpretation line and a neutral colour', async () => {
@@ -111,7 +111,7 @@ describe('RC-134 what a met DIS result does not mean (papers 1 and 2)', () => {
 
   it('rc134 the interpretation names what the rule ignores and who also meets it', () => {
     for (const part of [/location/, /not the full diagnostic criteria/, /age and vascular risk/, /older adults/,
-                        /vascular white matter disease/, /not evidence of multiple sclerosis/, /clinical context/]) {
+                        /vascular white matter disease/, /not evidence of multiple sclerosis/, /case as a whole/]) {
       expect(DIS_INTERPRETATION_EN).toMatch(part);
     }
     expect(DIS_INTERPRETATION_EN).not.toMatch(/\d|McDonald/);
@@ -134,7 +134,8 @@ describe('RC-133 lesions under 3 mm do not count toward DIS (paper 1)', () => {
     await showResult(evaluated(true));
     const counts = screen.getAllByTitle(QUALIFYING_TOOLTIP_EN);
     expect(counts.length).toBeGreaterThan(0);
-    expect(QUALIFYING_TOOLTIP_EN).toMatch(/3 mm in their largest extent \(MAGNIMS 2021\)/);
+    expect(QUALIFYING_TOOLTIP_EN).toMatch(/3 mm in their largest extent, measured between voxel centres/);
+    expect(QUALIFYING_TOOLTIP_EN).not.toMatch(/size\/location criteria/);
   });
 });
 

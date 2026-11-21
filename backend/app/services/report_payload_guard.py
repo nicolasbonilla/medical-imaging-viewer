@@ -328,6 +328,10 @@ class _Projector:
         details = {label: {"present": info.get("present") is True} for label, info in self.keyed(dis.get("region_details"))}
         if details:
             o["region_details"] = details
+        if "below_size_lesion_count" in dis:
+            # RC-133: lesions of the DIS regions under 3 mm in largest extent (not counted toward DIS); only when the
+            # result carries it (a block without it says nothing, never 0)
+            o["below_size_lesion_count"] = self.count(dis.get("below_size_lesion_count"), "below_size_lesion_count")
         o["has_active_lesions"] = dis.get("has_active_lesions") is True
         o["active_voxels"] = self.count(dis.get("active_voxels"), "active_voxels", _VOXELS_MAX)
         o["has_black_holes"] = dis.get("has_black_holes") is True
