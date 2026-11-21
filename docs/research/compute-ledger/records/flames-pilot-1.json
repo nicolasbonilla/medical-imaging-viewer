@@ -23,10 +23,10 @@
   "items_ok": "",
   "items_failed": "",
   "median_seconds_per_item": "",
-  "usd_per_hour_list": 0.23987,
-  "cost_usd_list": 0.0838,
+  "usd_per_hour_list": 0.22821,
+  "cost_usd_list": 0.0797,
   "cost_usd_recorded": "0.028",
-  "price_basis": "Cloud Billing catalog list price 2026-11-16 (cores+RAM+boot disk)",
+  "price_basis": "Cloud Billing catalog list price 2026-11-21 (cores+RAM+boot disk)",
   "notes": "Reproduced the Aug-2026 maps (Dice 1.0; max difference 0.002 = storage rounding). Old script: CPU platform and stage times not recorded; its recorded rate 0.08 USD/h was an under-estimate.",
   "machines": 1,
   "purpose_es": "Piloto v1 en la nube de investigaci\u00f3n (Spot): FLAMeS modelo 0 en casos de Ljubljana, comparado con agosto",
@@ -35,28 +35,28 @@
  "plan": {},
  "runinfo": {},
  "price": {
-  "date_utc": "2026-11-16T03:40:42Z",
+  "date_utc": "2026-11-21T02:53:39Z",
   "machine_type": "n2-standard-8",
   "region": "us-central1",
   "spot": true,
   "gpu": null,
   "vcpus": 8,
   "memory_gb": 32.0,
-  "usd_per_hour": 0.23987,
+  "usd_per_hour": 0.22821,
   "parts": {
    "cores": {
     "qty": 8,
     "sku_id": "2856-91B1-406A",
     "description": "Spot Preemptible N2 Instance Core running in Americas",
     "unit": "h",
-    "usd": 0.01896
+    "usd": 0.01801
    },
    "ram_gb": {
     "qty": 32.0,
     "sku_id": "6276-ABCE-E764",
     "description": "Spot Preemptible N2 Instance Ram running in Americas",
     "unit": "GiBy.h",
-    "usd": 0.002542
+    "usd": 0.002415
    },
    "boot_disk": {
     "qty": 50,

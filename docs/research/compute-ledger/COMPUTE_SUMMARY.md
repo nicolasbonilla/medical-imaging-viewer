@@ -1,25 +1,25 @@
 # Registro de cómputo de la investigación MSTool-AI
 
-Generado el 2026-11-16 03:37 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.1052 USD (tipo de referencia del BCE del 2026-11-13). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
+Generado el 2026-11-21 02:51 UTC con `research/cloud/build_ledger.py`. Precios: **precio oficial de lista de Google Cloud en USD** (Cloud Billing Catalog API, consultado el mismo día, con el código SKU de cada parte en `records/`). Cambio: 1 EUR = 1.099 USD (tipo de referencia del BCE del 2026-11-20). Google factura en EUR con su propio cambio; la cifra exacta se cruza después con el informe de facturación.
 
 ## Resumen
 
 | Concepto | Valor |
 |---|---|
-| Corridas en la nube con tiempo medido | 55 en mstool-research · 9 en agosto (brain-mri-476110) |
-| Horas de máquina, proyecto de investigación | 380.45 h |
-| Coste a precio de lista, proyecto de investigación | 56.47 USD ≈ 51.09 EUR |
-| Almacenamiento en el cubo (hoy) | 23.12 GB ≈ 0.462 USD/mes |
-| Crédito gratuito usado (estimado) | 51.51 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 188.49 EUR |
-| Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.68 USD (pagado por la cuenta de la app, no por el crédito) |
+| Corridas en la nube con tiempo medido | 62 en mstool-research · 9 en agosto (brain-mri-476110) |
+| Horas de máquina, proyecto de investigación | 485.46 h |
+| Coste a precio de lista, proyecto de investigación | 67.90 USD ≈ 61.79 EUR |
+| Almacenamiento en el cubo (hoy) | 24.14 GB ≈ 0.483 USD/mes |
+| Crédito gratuito usado (estimado) | 62.23 EUR de 264 EUR (tope propio 240 EUR; caduca 2027-01-15) — quedan ≈ 177.77 EUR |
+| Horas de máquina, agosto (proyecto de la app) | 7.50 h · registrado 0.86 USD · a precio de lista de hoy 1.61 USD (pagado por la cuenta de la app, no por el crédito) |
 
 ## Máquinas usadas
 
 | Máquina | Procesador | vCPU | Memoria (GB) | Tarjeta gráfica | Modalidad | USD/hora (lista) |
 |---|---|---|---|---|---|---|
-| e2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.1614 |
-| n1-standard-4 | no registrado | 4 | 15.0 | nvidia-tesla-p4:1 | Spot (interrumpible) | 0.31404 |
-| n2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.23987 |
+| e2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.15338 |
+| n1-standard-4 | no registrado | 4 | 15.0 | nvidia-tesla-p4:1 | Spot (interrumpible) | 0.31953 |
+| n2-standard-8 | no registrado | 8 | 32.0 | — | Spot (interrumpible) | 0.22821 |
 | n2d-standard-4 | AMD Milan — AMD EPYC 7B13 | 4 | 16.0 | — | estándar | 0.17583 |
 | n2-standard-4 | Intel Cascade Lake — Intel(R) Xeon(R) CPU @ 2.80GHz | 4 | 16.0 | — | estándar | 0.20109 |
 | e2-standard-4 | Intel Broadwell — Intel(R) Xeon(R) CPU @ 2.20GHz | 4 | 16.0 | — | estándar | 0.14772 |
@@ -29,28 +29,29 @@ Generado el 2026-11-16 03:37 UTC con `research/cloud/build_ledger.py`. Precios: 
 | c2d-standard-4 | AMD Milan | 4 | 16.0 | — | Spot (interrumpible) | 0.09209 |
 | e2-standard-2 | Intel Broadwell — Intel(R) Xeon(R) CPU @ 2.20GHz | 2 | 8.0 | — | estándar | 0.07112 |
 | c2d-standard-8 | AMD Milan | 8 | 32.0 | — | Spot (interrumpible) | 0.17459 |
+| c2d-standard-2 | AMD Milan — AMD EPYC 7B13 | 2 | 8.0 | — | Spot (interrumpible) | 0.04361 |
 
 ## Todas las corridas
 
 | Fecha | Corrida | Para qué | Máquina | Procesador | Modalidad | Duración (h:mm:ss) | Preparación / cálculo | Casos ok / fallos | s por caso | Coste lista USD | Registrado USD | Estado |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 2026-08-17 | phase1-lstai | Fase 1: mapas de probabilidad de LST-AI en 19 casos ISBI | e2-standard-8 | no registrado | Spot (interrumpible) | 0:38:00 | — / — | — / — | — | 0.0968 | 0.1200 | correcta |
-| 2026-08-17 | flames-pilot | FLAMeS, piloto 1 de agosto: 3 casos de principio a fin | e2-standard-8 | no registrado | Spot (interrumpible) | 0:17:33 | — / — | — / — | — | 0.0471 | 0.0292 | fallida (errores del piloto corregidos) |
-| 2026-08-17 | flames-pilot2 | FLAMeS, piloto 2 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:12:42 | — / — | — / — | — | 0.0342 | 0.0212 | fallida (errores del piloto corregidos) |
-| 2026-08-17 | flames-pilot3 | FLAMeS, piloto 3 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:22:19 | — / — | — / — | — | 0.0600 | 0.0372 | fallida (errores del piloto corregidos) |
-| 2026-08-17 | flames-pilot4-gpu | FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4 | n1-standard-4 | no registrado | Spot (interrumpible) | 0:25:49 | — / — | — / — | — | 0.1352 | 0.0947 | fallida (errores del piloto corregidos) |
-| 2026-08-17 | flames-pilot5-cpu | FLAMeS, piloto 5 de agosto solo con procesador (validado) | e2-standard-8 | no registrado | Spot (interrumpible) | 0:26:06 | — / — | — / — | — | 0.0702 | 0.0435 | correcta |
+| 2026-08-17 | phase1-lstai | Fase 1: mapas de probabilidad de LST-AI en 19 casos ISBI | e2-standard-8 | no registrado | Spot (interrumpible) | 0:38:00 | — / — | — / — | — | 0.0920 | 0.1200 | correcta |
+| 2026-08-17 | flames-pilot | FLAMeS, piloto 1 de agosto: 3 casos de principio a fin | e2-standard-8 | no registrado | Spot (interrumpible) | 0:17:33 | — / — | — / — | — | 0.0448 | 0.0292 | fallida (errores del piloto corregidos) |
+| 2026-08-17 | flames-pilot2 | FLAMeS, piloto 2 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:12:42 | — / — | — / — | — | 0.0325 | 0.0212 | fallida (errores del piloto corregidos) |
+| 2026-08-17 | flames-pilot3 | FLAMeS, piloto 3 de agosto | e2-standard-8 | no registrado | Spot (interrumpible) | 0:22:19 | — / — | — / — | — | 0.0571 | 0.0372 | fallida (errores del piloto corregidos) |
+| 2026-08-17 | flames-pilot4-gpu | FLAMeS, piloto 4 de agosto con tarjeta gráfica NVIDIA P4 | n1-standard-4 | no registrado | Spot (interrumpible) | 0:25:49 | — / — | — / — | — | 0.1376 | 0.0947 | fallida (errores del piloto corregidos) |
+| 2026-08-17 | flames-pilot5-cpu | FLAMeS, piloto 5 de agosto solo con procesador (validado) | e2-standard-8 | no registrado | Spot (interrumpible) | 0:26:06 | — / — | — / — | — | 0.0667 | 0.0435 | correcta |
 | 2026-08-17 | flames-full | FLAMeS completo de agosto: mapas de 145 casos (30 Ljubljana + 115 MSLesSeg) | n1-standard-4 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
 | 2026-08-17 | flames-controls | FLAMeS en 100 controles sanos SibBMS (planificada en agosto) | n1-standard-8 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
 | 2026-08-17 | sibbms-pilot | Piloto SibBMS: 3 controles sanos (sustituida por sibbms-pilots) | n2-standard-8 | no registrado | Spot (interrumpible) | — | — / — | — / — | — | — | — | sin tiempo registrado |
-| 2026-08-17 | flames-backfill | MSLesSeg: los 22 casos de prueba que faltaban | n2-standard-8 | no registrado | Spot (interrumpible) | 0:59:30 | — / — | — / — | — | 0.2375 | 0.0990 | correcta |
-| 2026-08-17 | sibbms-pilots | Validación de la cadena de controles sanos SibBMS (2 pilotos) | n2-standard-8 | no registrado | Spot (interrumpible) | 0:59:11 | — / — | — / — | — | 0.2375 | 0.0990 | correcta |
-| 2026-08-17 | sibbms-full | Controles sanos SibBMS en 4 máquinas en paralelo | 4 × n2-standard-8 | no registrado | Spot (interrumpible) | 1:06:00 | — / — | — / — | — | 0.7628 | 0.3180 | correcta |
+| 2026-08-17 | flames-backfill | MSLesSeg: los 22 casos de prueba que faltaban | n2-standard-8 | no registrado | Spot (interrumpible) | 0:59:30 | — / — | — / — | — | 0.2259 | 0.0990 | correcta |
+| 2026-08-17 | sibbms-pilots | Validación de la cadena de controles sanos SibBMS (2 pilotos) | n2-standard-8 | no registrado | Spot (interrumpible) | 0:59:11 | — / — | — / — | — | 0.2259 | 0.0990 | correcta |
+| 2026-08-17 | sibbms-full | Controles sanos SibBMS en 4 máquinas en paralelo | 4 × n2-standard-8 | no registrado | Spot (interrumpible) | 1:06:00 | — / — | — / — | — | 0.7257 | 0.3180 | correcta |
 | 2026-10-17 | flames-extra-pilot | Piloto de colecciones nuevas: un caso de MS3SEG, Bagdad y PediMS; HD-BET + FLAMeS modelo 0 | n2d-standard-4 | AMD Milan | estándar | 0:24:36 | 0:21:08 / 0:03:27 | 3 / 0 | 66.3 | 0.0721 | 0.0721 | correcta |
 | 2026-10-17 | flames-full-a | FLAMeS, 5 modelos por separado, bloque A (casos 1 a 49 de 145) | n2d-standard-4 | AMD Milan | estándar | 4:46:52 | 0:04:04 / 4:42:47 | 245 / 0 | 69.1 | 0.8407 | 0.8407 | correcta |
 | 2026-10-17 | flames-full-b | FLAMeS, 5 modelos por separado, bloque B (casos 50 a 97 de 145) | n2d-standard-4 | AMD Milan | estándar | 5:00:23 | 0:02:45 / 4:57:37 | 240 / 0 | 68.7 | 0.8803 | 0.8803 | correcta |
 | 2026-10-17 | flames-full-c | FLAMeS, 5 modelos por separado, bloque C (casos 98 a 145) | n2-standard-4 | Intel Cascade Lake | estándar | 4:26:53 | 0:04:11 / 4:22:41 | 234 / 0 | 68.5 | 0.8945 | 0.8945 | correcta |
-| 2026-10-17 | flames-pilot-1 | Piloto v1 en la nube de investigación (Spot): FLAMeS modelo 0 en casos de Ljubljana, comparado con agosto | n2-standard-8 | no registrado | Spot (interrumpible) | 0:20:58 | — / — | — / — | — | 0.0838 | 0.0280 | correcta |
+| 2026-10-17 | flames-pilot-1 | Piloto v1 en la nube de investigación (Spot): FLAMeS modelo 0 en casos de Ljubljana, comparado con agosto | n2-standard-8 | no registrado | Spot (interrumpible) | 0:20:58 | — / — | — / — | — | 0.0797 | 0.0280 | correcta |
 | 2026-10-17 | flames-v2-pilot | Piloto v2 (máquina estándar, datos guardados en el cubo): 2 casos de Ljubljana, modelo 0 | n2-standard-4 | Intel Cascade Lake | estándar | 0:18:22 | — / — | 0 / 0 | — | 0.0616 | 0.0582 | fallida (entorno de software) |
 | 2026-10-17 | flames-v2-pilot2 | Piloto v2 corregido: 2 casos de Ljubljana, modelo 0, comparado con agosto | n2-standard-4 | Intel Cascade Lake | estándar | 0:04:55 | 0:02:30 / 0:02:23 | 2 / 0 | 65.5 | 0.0165 | 0.0165 | correcta |
 | 2026-10-17 | lstai-pilot | Piloto LST-AI v1.2.0: MSLesSeg P10_T1, P49_T2 (T1 vacía, debe saltarse) y Ljubljana 01 | n2d-standard-4 | AMD Milan | estándar | 0:09:44 | 0:04:44 / 0:04:58 | 2 / 0 | 141.6 | 0.0296 | 0.0296 | correcta |
@@ -133,7 +134,18 @@ Generado el 2026-11-16 03:37 UTC con `research/cloud/build_ledger.py`. Precios: 
 | 2026-11-15 | mimics-eval-f7f31ee | Paper 1 addendum: frozen final evaluation (GR, G3, run once, G2) | c2d-standard-8 | AMD Milan | Spot (interrumpible) | 0:35:48 | — / — | — / — | — | 0.1042 | 0.1042 | correcta |
 | 2026-11-15 | mimics-v2-r5 | Paper 1 addendum: relaunch 5 of mimics-v2 after a pre-emption (same plan; finished outputs are skipped) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 0:54:38 | 0:11:23 / 0:43:11 | — / — | — | 0.1140 | 0.1140 | correcta |
 | 2026-11-15 | mimics-v2-r6 | Paper 1 addendum: relaunch 6 of mimics-v2 after a pre-emption (same plan; finished outputs are skipped) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 0:33:51 | 0:10:24 / 0:23:24 | — / — | — | 0.0706 | 0.0706 | correcta |
+| 2026-11-16 | p2-consensus-052ebf8 | Paper 2 design D5: two-tool consensus on paper 1's masks | c2d-standard-8 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-16 | p2-consensus-26a071a | Paper 2 design D5: two-tool consensus on paper 1's masks | c2d-standard-8 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
 | 2026-11-16 | p2-consensus-82bb327 | Paper 2 design D5: two-tool consensus on paper 1's masks | c2d-standard-8 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-18 | mimics-x1 | Paper 1 addendum 2 full run: mimics-x1 | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-18 | mimics-x2 | Paper 1 addendum 2 full run: mimics-x2 | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 38:15:31 | — / — | — / — | — | 4.5489 | 4.5489 | correcta |
+| 2026-11-18 | mimics-x3 | Paper 1 addendum 2 full run: mimics-x3 | c2d-standard-4 | AMD Milan | Spot (interrumpible) | 30:17:00 | — / — | — / — | — | 2.7452 | 2.7452 | correcta |
+| 2026-11-18 | mimics-xp | Paper 1 addendum 2 pilot (Spot): HD-BET + six tools on 2 Dallas 21-49 participants; SynthSeg on 2 scans per data type + atlas; single-thread registration twice on 3 subjects; SynthSeg overlays | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 3:01:00 | — / — | — / — | — | 0.3752 | 0.3752 | correcta |
+| 2026-11-18 | mimics-xt | Paper 1 addendum 2, amendment 1: single-thread seeded registration twice on 3 subjects (pre-check) | c2d-standard-2 | AMD Milan | Spot (interrumpible) | 0:03:02 | — / — | — / — | — | 0.0022 | 0.0022 | correcta |
+| 2026-11-19 | mimics-x1-r1 | Paper 1 addendum 2: relaunch 1 of mimics-x1 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | — | — / — | — / — | — | — | — | en curso |
+| 2026-11-19 | mimics-x1-r2 | Paper 1 addendum 2: relaunch 2 of mimics-x1 after a pre-emption (same plan; finished outputs are skipped) | c2d-standard-4 | AMD Milan | Spot (interrumpible) | 12:46:12 | — / — | — / — | — | 1.1314 | 1.1314 | correcta |
+| 2026-11-20 | mimics-x3-r1 | Paper 1 addendum 2: relaunch 1 of mimics-x3 (same plan; finished outputs are skipped; machine c2d-highmem-4) | c2d-highmem-4 | AMD Milan | Spot (interrumpible) | 16:44:40 | — / — | — / — | — | 1.9795 | 1.9795 | correcta |
+| 2026-11-20 | mimics-xe-a2affb3 | Paper 1 addendum 2: the single evaluation (DG, run 3, Dallas 21-49, GS, faithful rule, summary) | c2d-standard-8 | AMD Milan | Spot (interrumpible) | 3:53:09 | — / — | — / — | — | 0.6566 | 0.6566 | correcta |
 
 ## Rendimiento medido (FLAMeS, un modelo, un caso, sin TTA)
 
