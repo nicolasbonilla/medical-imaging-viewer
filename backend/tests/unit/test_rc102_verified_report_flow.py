@@ -157,7 +157,7 @@ def test_rc102_dissemination_in_space_only_when_evaluated(lang):
         assert view["dis"]["status"] == "not evaluated" and NOT_EVALUATED_LINE[lang] in report
         assert VR.T[lang]["dis_ev"].split("{k}")[0] not in report
     met = VR.assemble(_view({"lesion_analysis": _la(7, REGIONS), "dis_assessment": EVALUATED}, lang=lang), lang, "", "")
-    assert VR.T[lang]["dis_ev"].format(k=2, e=3, met=VR.T[lang]["met"]) in met
+    assert VR.T[lang]["dis_ev_met"].format(k=2, e=3) in met   # RC-136: a met result is qualified in its sentence
     not_met = {**EVALUATED, "dis_met": False, "regions_with_lesions": 1}
     report = VR.assemble(_view({"lesion_analysis": _la(7, REGIONS), "dis_assessment": not_met}, lang=lang), lang, "", "")
     assert VR.T[lang]["dis_ev"].format(k=1, e=3, met=VR.T[lang]["notmet"]) in report

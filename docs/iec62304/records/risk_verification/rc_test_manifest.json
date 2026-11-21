@@ -1687,6 +1687,22 @@
       "requirement": "REQ-FUNC-122",
       "change": "branch feat/report-slice-thickness (2026-11-21), stacked on PR #85",
       "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; the read of the thickness is not checked by negative controls until clinical use. N. G. Bonilla Vargas — approved 2026-11-21 (PR #86)."
+    },
+    "RC-136": {
+      "description": "In the verified report, a met brain-DIS result is qualified in its own sentence (an automatic, location-only count that is nonspecific; en/es/de, with and without a region count), and an interpretation follows every evaluated result in the findings (after a met result RC-134's, repeated in the impression; after a not-met result its own: it does not exclude MS); from paper 2's experiment E5 (rule (a) only; the region line, rule (c), is kept)",
+      "hazard": "HAZ-008, HAZ-003",
+      "status": "unverified",
+      "implementation": "backend/app/services/verified_report.py",
+      "tests": [
+        "tests/unit/test_rc136_dis_qualifier_in_sentence.py",
+        "tests/unit/test_rc134_dis_interpretation.py",
+        "tests/unit/test_rc102_verified_report_flow.py",
+        "tests/unit/test_verified_report_review1.py",
+        "tests/unit/test_prb003_review1_findings.py"
+      ],
+      "requirement": "REQ-SAFE-062",
+      "change": "branch feat/report-dis-qualifier (2026-11-21)",
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; the wording follows E5 and is not re-measured on its records. N. G. Bonilla Vargas — approved 2026-11-21 (PR #87)."
     }
   },
   "unverified_controls_note": [
