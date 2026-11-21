@@ -2,7 +2,7 @@
  "schema": "mstool.agent-card/1",
  "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-002)",
  "agent_id": "ms-clinical-assistant",
- "card_version": "2026-11-11.5",
+ "card_version": "2026-11-21.1",
  "model": {
   "id": null,
   "control": "client",
@@ -182,8 +182,8 @@
    "source": "backend/app/mcp/imaging_server.py"
   },
   "mcp.ms_clinical_server.instructions": {
-   "sha256": "5e9648583a2907afde19400a95e0261d884dcbf90f831631ebcd40f517a0a5c1",
-   "chars": 3000,
+   "sha256": "9b114fc31b5a8479dda2c3fa6a9c5071293c5b1ffa66a20fb2aef7bf4725f4b5",
+   "chars": 3345,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.resource[prompts://ms-longitudinal-workflow]": {
@@ -279,6 +279,12 @@
    "date": "2026-11-11",
    "card_version": "2026-11-11.5",
    "what": "eighth review of PR #79 (F3, F9): the request context (ctx) is hidden from the tool schema exactly as the real server advertises it; the session tools say the session lasts 15 minutes; the server descriptions that were never sent are deleted; template hashes refreshed",
+   "approved_by": null
+  },
+  {
+   "date": "2026-11-21",
+   "card_version": "2026-11-21.1",
+   "what": "PR #85 (RC-134, REQ-SAFE-061; papers 1 and 2): the ms-clinical-mcp instructions add one bullet - a met brain-DIS result is reported with its dis_interpretation (an automatic count of lesion locations only, also met in most older adults and in most people with vascular white matter disease, not evidence of MS on its own; only lesions of at least 3 mm in largest extent count, RC-133); summarize_dis_items returns dis_interpretation with every evaluated result. Information only: no tool, argument, scope or data path changed. Template hashes refreshed; the eval suite runs in CI.",
    "approved_by": null
   }
  ]

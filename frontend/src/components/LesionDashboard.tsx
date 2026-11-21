@@ -1166,14 +1166,14 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
               <div className="text-[8px] text-gray-500 mt-1 italic">{disOk.note}</div>
             )}
             {disOk.segmentation_review && (
-              <div className="text-[8px] text-green-200/80 mt-0.5" data-testid="dis-confirmed-by">
+              <div className="text-[8px] text-gray-300 mt-0.5" data-testid="dis-confirmed-by">
                 {disOk.segmentation_review.reviewed_by
                   ? `${t('disReview.confirmedBy', 'Segmentation confirmed by')} ${disOk.segmentation_review.reviewed_by}`
                   : t('disReview.confirmedByRadiologist', 'Segmentation confirmed by a radiologist')}
               </div>
             )}
             {!!disOk.regions?.correction_count && (
-              <div className="text-[8px] text-green-200/80" data-testid="dis-confirmed-corrections">
+              <div className="text-[8px] text-gray-300" data-testid="dis-confirmed-corrections">
                 {fill(t('disReview.confirmedCorrections', {
                   defaultValue: 'Including {{count}} region correction(s) made by hand and acknowledged in the confirmation.',
                   count: disOk.regions.correction_count,
