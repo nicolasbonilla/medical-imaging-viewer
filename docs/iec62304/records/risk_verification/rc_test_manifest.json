@@ -1702,7 +1702,7 @@
       ],
       "requirement": "REQ-SAFE-062",
       "change": "branch feat/report-dis-qualifier (2026-11-21)",
-      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; the wording follows E5 and is not re-measured on its records. DRAFT — PENDING owner approval."
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; the wording follows E5 and is not re-measured on its records. N. G. Bonilla Vargas — approved 2026-11-21 (PR #87)."
     }
   },
   "unverified_controls_note": [

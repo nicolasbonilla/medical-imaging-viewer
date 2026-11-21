@@ -63,7 +63,7 @@
 | 1.23 (draft) | 2026-11-18 | Development Team | HAZ-001 cause (m) (FLAMeS-in-browser table) (the reader goes along with the AI draft; not measurable until now) and its measurement controls RC-131 (lesion-by-lesion record of the AI review, with the original draft kept) and RC-132 (reader-study set read without the draft first); SRS Addendum D (REQ-FUNC-119, REQ-FUNC-120); branch `feat/lesion-review-record`, not merged, not deployed. N. G. Bonilla Vargas — approved 2026-11-18 (PR #84). |
 | 1.24 (draft) | 2026-11-21 | Development Team | Addendum E — findings of papers 1 and 2 in the application: HAZ-008 causes (j) (components under 3 mm counted toward DIS) and (k) (a met DIS read as evidence of MS); RC-133 (3-mm largest extent) and RC-134 (what a met result does not mean: dashboard, report, model record); SRS Addendum E (REQ-FUNC-121, REQ-SAFE-061); branch `feat/papers-in-app`, not merged, not deployed. N. G. Bonilla Vargas — approved 2026-11-21 (PR #85). |
 | 1.25 (draft) | 2026-11-21 | Development Team | Addendum F — slice thickness of the original acquisition in the verified report: cause (l) (HAZ-003, HAZ-015), RC-135; SRS Addendum F (REQ-FUNC-122); branch `feat/report-slice-thickness`, stacked on PR #85, not merged, not deployed. N. G. Bonilla Vargas — approved 2026-11-21 (PR #86). |
-| 1.26 (draft) | 2026-11-21 | Development Team | Addendum G — a met DIS result qualified in its own sentence, the interpretation after every evaluated result: cause (m) (HAZ-008, HAZ-003), RC-136, from paper 2's experiment E5; SRS Addendum G (REQ-SAFE-062); branch `feat/report-dis-qualifier`, not merged, not deployed. DRAFT — PENDING owner approval. |
+| 1.26 (draft) | 2026-11-21 | Development Team | Addendum G — a met DIS result qualified in its own sentence, the interpretation after every evaluated result: cause (m) (HAZ-008, HAZ-003), RC-136, from paper 2's experiment E5; SRS Addendum G (REQ-SAFE-062); branch `feat/report-dis-qualifier`, not merged, not deployed. N. G. Bonilla Vargas — approved 2026-11-21 (PR #87). |
 
 ---
 
@@ -1437,7 +1437,7 @@ Negative controls (GitHub Actions run https://github.com/nicolasbonilla/medical-
 
 Residual risk and limits (proposed): the thickness is only as good as the image header or the stored record (RC-054); a NIfTI never gives the native thickness (only "at least" its grid, or "could not be read" for a fine grid, which may hide a resampled thick acquisition — paper 1's MSLesSeg case); the line informs, it does not change any count. The read (segmentation metadata, the file version, the header and the stored records — the quality gate's caches per file version) runs alongside the server's lesion table and is cut at 3 s (`THICKNESS_READ_TIMEOUT_S`), after which the draft says the thickness is not known (review of PR #86, M1). How the value is known is stated: the image header (slice thickness, or the distance between slices if larger), or a lower bound from the stored image grid or the stored acquisition record (review M2); values are in tenths of a millimetre and within the quality gate's plausible range (at most 20 mm).
 
-## Addendum G — A met DIS result qualified in its own sentence (DRAFT — PENDING owner approval)
+## Addendum G — A met DIS result qualified in its own sentence (N. G. Bonilla Vargas — approved 2026-11-21 (PR #87))
 
 *Proposed 2026-11-21 on branch `feat/report-dis-qualifier`; not merged, not deployed. SRS Addendum G (REQ-SAFE-062). Evidence: paper 2's experiment E5 (`research/paper_2/e5_results/SUMMARY.md`, branch `research/paper-2-e5`).*
 
