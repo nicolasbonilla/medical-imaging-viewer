@@ -1,0 +1,2643 @@
+{
+ "src": "research/paper_2/runs/analysis/e5.json (app_design.analyse), runs/e5_projection.json, runs/e5-*/ledger.jsonl; per-record outputs stay local and in the bucket",
+ "analysis": {
+  "note": "E5, post hoc (PREREG \u00a712, 2026-11-21); exploratory; never pooled with the registered arms",
+  "app": {
+   "app_commit": "e559929aaf5a19160e20ffdb64d5790eff70c4d6",
+   "files": 15,
+   "differ_or_missing": [],
+   "passed": true
+  },
+  "frozen": {
+   "files": 5,
+   "changed": [],
+   "passed": true
+  },
+  "runs": {
+   "gemini/U": {
+    "records": 393,
+    "failed_deliveries_after_resend": 0,
+    "usd": 0.26759,
+    "cohorts": {
+     "setting_p": {
+      "n": 270,
+      "ms": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq_code": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq_automat": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq_dis_met": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "sens_ms": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "sens_unq": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "withheld": {
+       "x": 4,
+       "n": 270,
+       "rate": 0.0148,
+       "ci95": [
+        0.0041,
+        0.0375
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "provenance_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "outcome": {
+       "passed_0": 142,
+       "passed_1": 91,
+       "passed_2": 33,
+       "blocked": 4
+      },
+      "reason": {
+       "None": 266,
+       "failed_check": 4
+      },
+      "rules_unqualified": {}
+     },
+     "dlbs": {
+      "n": 100,
+      "ms": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq_code": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq_automat": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq_dis_met": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "sens_ms": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "sens_unq": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "withheld": {
+       "x": 2,
+       "n": 100,
+       "rate": 0.02,
+       "ci95": [
+        0.0024,
+        0.0704
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "provenance_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "outcome": {
+       "passed_0": 57,
+       "passed_1": 31,
+       "passed_2": 10,
+       "blocked": 2
+      },
+      "reason": {
+       "None": 98,
+       "failed_check": 2
+      },
+      "rules_unqualified": {}
+     },
+     "wmh2017": {
+      "n": 170,
+      "ms": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq_code": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq_automat": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq_dis_met": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "sens_ms": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "sens_unq": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "withheld": {
+       "x": 2,
+       "n": 170,
+       "rate": 0.0118,
+       "ci95": [
+        0.0014,
+        0.0419
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "provenance_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "outcome": {
+       "passed_0": 85,
+       "passed_1": 60,
+       "passed_2": 23,
+       "blocked": 2
+      },
+      "reason": {
+       "None": 168,
+       "failed_check": 2
+      },
+      "rules_unqualified": {}
+     },
+     "ms": {
+      "n": 123,
+      "ms": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "ms_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq_code": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_code_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_model_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "ms_model_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq_automat": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_automat_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "ms_no_clinical_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq_dis_met": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_dis_met_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "sens_ms": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "sens_ms_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "sens_unq": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "sens_unq_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "withheld": {
+       "x": 1,
+       "n": 123,
+       "rate": 0.0081,
+       "ci95": [
+        0.0002,
+        0.0445
+       ]
+      },
+      "withheld_cluster": {
+       "design_effect": 1.003,
+       "n_effective": 122.58,
+       "ci95_cluster_exact": [
+        0.0002,
+        0.0446
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "provenance_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "outcome": {
+       "passed_0": 76,
+       "passed_1": 34,
+       "passed_2": 12,
+       "blocked": 1
+      },
+      "reason": {
+       "None": 122,
+       "failed_check": 1
+      },
+      "rules_unqualified": {},
+      "ms_coverage_among_expert_met": {
+       "x": 0,
+       "n": 117,
+       "patients": 78,
+       "rate": 0.0,
+       "ci95_patient_bootstrap": [
+        0.0,
+        0.0
+       ],
+       "design_effect": 1.5,
+       "n_effective": 78.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.0462
+       ]
+      },
+      "ms_coverage_unqualified_among_expert_met": {
+       "x": 0,
+       "n": 117,
+       "patients": 78,
+       "rate": 0.0,
+       "ci95_patient_bootstrap": [
+        0.0,
+        0.0
+       ],
+       "design_effect": 1.5,
+       "n_effective": 78.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.0462
+       ]
+      }
+     }
+    }
+   },
+   "gemini/C": {
+    "records": 289,
+    "failed_deliveries_after_resend": 0,
+    "usd": 0.29171,
+    "cohorts": {
+     "wmh2017": {
+      "n": 168,
+      "ms": {
+       "x": 165,
+       "n": 168,
+       "rate": 0.9821,
+       "ci95": [
+        0.9487,
+        0.9963
+       ]
+      },
+      "unq": {
+       "x": 165,
+       "n": 168,
+       "rate": 0.9821,
+       "ci95": [
+        0.9487,
+        0.9963
+       ]
+      },
+      "unq_code": {
+       "x": 165,
+       "n": 168,
+       "rate": 0.9821,
+       "ci95": [
+        0.9487,
+        0.9963
+       ]
+      },
+      "unq_model": {
+       "x": 4,
+       "n": 168,
+       "rate": 0.0238,
+       "ci95": [
+        0.0065,
+        0.0598
+       ]
+      },
+      "ms_model": {
+       "x": 4,
+       "n": 168,
+       "rate": 0.0238,
+       "ci95": [
+        0.0065,
+        0.0598
+       ]
+      },
+      "unq_automat": {
+       "x": 165,
+       "n": 168,
+       "rate": 0.9821,
+       "ci95": [
+        0.9487,
+        0.9963
+       ]
+      },
+      "ms_no_clinical": {
+       "x": 1,
+       "n": 168,
+       "rate": 0.006,
+       "ci95": [
+        0.0002,
+        0.0327
+       ]
+      },
+      "unq_dis_met": {
+       "x": 164,
+       "n": 168,
+       "rate": 0.9762,
+       "ci95": [
+        0.9402,
+        0.9935
+       ]
+      },
+      "sens_ms": {
+       "x": 165,
+       "n": 168,
+       "rate": 0.9821,
+       "ci95": [
+        0.9487,
+        0.9963
+       ]
+      },
+      "sens_unq": {
+       "x": 165,
+       "n": 168,
+       "rate": 0.9821,
+       "ci95": [
+        0.9487,
+        0.9963
+       ]
+      },
+      "withheld": {
+       "x": 15,
+       "n": 168,
+       "rate": 0.0893,
+       "ci95": [
+        0.0508,
+        0.143
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 164,
+       "n": 165,
+       "rate": 0.9939,
+       "ci95": [
+        0.9667,
+        0.9998
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 165,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0221
+       ],
+       "upper95_one_sided": 0.018
+      },
+      "provenance_caveat_among_ms": {
+       "x": 165,
+       "n": 165,
+       "rate": 1.0,
+       "ci95": [
+        0.9779,
+        1.0
+       ]
+      },
+      "outcome": {
+       "passed_0": 54,
+       "passed_1": 67,
+       "blocked": 15,
+       "passed_2": 32
+      },
+      "reason": {
+       "None": 153,
+       "failed_check": 15
+      },
+      "rules_unqualified": {
+       "a": 164,
+       "c": 156
+      }
+     },
+     "ms": {
+      "n": 121,
+      "ms": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "ms_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "unq": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "unq_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "unq_code": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "unq_code_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "unq_model": {
+       "x": 1,
+       "n": 121,
+       "rate": 0.0083,
+       "ci95": [
+        0.0002,
+        0.0452
+       ]
+      },
+      "unq_model_cluster": {
+       "design_effect": 1.02,
+       "n_effective": 118.59,
+       "ci95_cluster_exact": [
+        0.0002,
+        0.0458
+       ]
+      },
+      "ms_model": {
+       "x": 1,
+       "n": 121,
+       "rate": 0.0083,
+       "ci95": [
+        0.0002,
+        0.0452
+       ]
+      },
+      "ms_model_cluster": {
+       "design_effect": 1.02,
+       "n_effective": 118.59,
+       "ci95_cluster_exact": [
+        0.0002,
+        0.0458
+       ]
+      },
+      "unq_automat": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "unq_automat_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 121,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.03
+       ],
+       "upper95_one_sided": 0.0245
+      },
+      "ms_no_clinical_cluster": {
+       "design_effect": 1.458,
+       "n_effective": 83.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.0435
+       ]
+      },
+      "unq_dis_met": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "unq_dis_met_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "sens_ms": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "sens_ms_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "sens_unq": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "sens_unq_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "withheld": {
+       "x": 4,
+       "n": 121,
+       "rate": 0.0331,
+       "ci95": [
+        0.0091,
+        0.0825
+       ]
+      },
+      "withheld_cluster": {
+       "design_effect": 1.0,
+       "n_effective": 121.0,
+       "ci95_cluster_exact": [
+        0.0091,
+        0.0825
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 115,
+       "n": 115,
+       "rate": 1.0,
+       "ci95": [
+        0.9684,
+        1.0
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 115,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0316
+       ],
+       "upper95_one_sided": 0.0257
+      },
+      "provenance_caveat_among_ms": {
+       "x": 115,
+       "n": 115,
+       "rate": 1.0,
+       "ci95": [
+        0.9684,
+        1.0
+       ]
+      },
+      "outcome": {
+       "passed_0": 71,
+       "passed_1": 34,
+       "blocked": 4,
+       "passed_2": 12
+      },
+      "reason": {
+       "None": 117,
+       "failed_check": 4
+      },
+      "rules_unqualified": {
+       "a": 115,
+       "c": 108
+      },
+      "ms_coverage_among_expert_met": {
+       "x": 115,
+       "n": 115,
+       "patients": 77,
+       "rate": 1.0,
+       "ci95_patient_bootstrap": [
+        1.0,
+        1.0
+       ],
+       "design_effect": 1.494,
+       "n_effective": 77.0,
+       "ci95_cluster_exact": [
+        0.9532,
+        1.0
+       ]
+      },
+      "ms_coverage_unqualified_among_expert_met": {
+       "x": 115,
+       "n": 115,
+       "patients": 77,
+       "rate": 1.0,
+       "ci95_patient_bootstrap": [
+        1.0,
+        1.0
+       ],
+       "design_effect": 1.494,
+       "n_effective": 77.0,
+       "ci95_cluster_exact": [
+        0.9532,
+        1.0
+       ]
+      },
+      "ms_coverage_among_app_met": {
+       "x": 115,
+       "n": 115,
+       "patients": 77,
+       "rate": 1.0,
+       "ci95_patient_bootstrap": [
+        1.0,
+        1.0
+       ],
+       "design_effect": 1.494,
+       "n_effective": 77.0,
+       "ci95_cluster_exact": [
+        0.9532,
+        1.0
+       ]
+      },
+      "ms_coverage_unqualified_among_app_met": {
+       "x": 115,
+       "n": 115,
+       "patients": 77,
+       "rate": 1.0,
+       "ci95_patient_bootstrap": [
+        1.0,
+        1.0
+       ],
+       "design_effect": 1.494,
+       "n_effective": 77.0,
+       "ci95_cluster_exact": [
+        0.9532,
+        1.0
+       ]
+      }
+     }
+    }
+   },
+   "sonnet/U": {
+    "records": 393,
+    "failed_deliveries_after_resend": 0,
+    "usd": 1.65905,
+    "cohorts": {
+     "setting_p": {
+      "n": 270,
+      "ms": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq_code": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq_automat": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "unq_dis_met": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "sens_ms": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "sens_unq": {
+       "x": 0,
+       "n": 270,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0136
+       ],
+       "upper95_one_sided": 0.011
+      },
+      "withheld": {
+       "x": 4,
+       "n": 270,
+       "rate": 0.0148,
+       "ci95": [
+        0.0041,
+        0.0375
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "provenance_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "outcome": {
+       "passed_0": 162,
+       "passed_1": 88,
+       "passed_2": 16,
+       "blocked": 4
+      },
+      "reason": {
+       "None": 266,
+       "failed_check": 4
+      },
+      "rules_unqualified": {}
+     },
+     "dlbs": {
+      "n": 100,
+      "ms": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq_code": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq_automat": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "unq_dis_met": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "sens_ms": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "sens_unq": {
+       "x": 0,
+       "n": 100,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0362
+       ],
+       "upper95_one_sided": 0.0295
+      },
+      "withheld": {
+       "x": 2,
+       "n": 100,
+       "rate": 0.02,
+       "ci95": [
+        0.0024,
+        0.0704
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "provenance_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "outcome": {
+       "passed_0": 66,
+       "passed_1": 27,
+       "passed_2": 5,
+       "blocked": 2
+      },
+      "reason": {
+       "None": 98,
+       "failed_check": 2
+      },
+      "rules_unqualified": {}
+     },
+     "wmh2017": {
+      "n": 170,
+      "ms": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq_code": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq_automat": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "unq_dis_met": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "sens_ms": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "sens_unq": {
+       "x": 0,
+       "n": 170,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0215
+       ],
+       "upper95_one_sided": 0.0175
+      },
+      "withheld": {
+       "x": 2,
+       "n": 170,
+       "rate": 0.0118,
+       "ci95": [
+        0.0014,
+        0.0419
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "provenance_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "outcome": {
+       "passed_0": 96,
+       "passed_1": 61,
+       "passed_2": 11,
+       "blocked": 2
+      },
+      "reason": {
+       "None": 168,
+       "failed_check": 2
+      },
+      "rules_unqualified": {}
+     },
+     "ms": {
+      "n": 123,
+      "ms": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "ms_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq_code": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_code_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_model_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "ms_model_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq_automat": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_automat_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "ms_no_clinical_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "unq_dis_met": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "unq_dis_met_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "sens_ms": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "sens_ms_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "sens_unq": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "sens_unq_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "withheld": {
+       "x": 0,
+       "n": 123,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0295
+       ],
+       "upper95_one_sided": 0.0241
+      },
+      "withheld_cluster": {
+       "design_effect": 1.464,
+       "n_effective": 84.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.043
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "provenance_caveat_among_ms": {
+       "x": 0,
+       "n": 0,
+       "rate": null,
+       "ci95": [
+        null,
+        null
+       ]
+      },
+      "outcome": {
+       "passed_0": 72,
+       "passed_1": 44,
+       "passed_2": 7
+      },
+      "reason": {
+       "None": 123
+      },
+      "rules_unqualified": {},
+      "ms_coverage_among_expert_met": {
+       "x": 0,
+       "n": 117,
+       "patients": 78,
+       "rate": 0.0,
+       "ci95_patient_bootstrap": [
+        0.0,
+        0.0
+       ],
+       "design_effect": 1.5,
+       "n_effective": 78.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.0462
+       ]
+      },
+      "ms_coverage_unqualified_among_expert_met": {
+       "x": 0,
+       "n": 117,
+       "patients": 78,
+       "rate": 0.0,
+       "ci95_patient_bootstrap": [
+        0.0,
+        0.0
+       ],
+       "design_effect": 1.5,
+       "n_effective": 78.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.0462
+       ]
+      }
+     }
+    }
+   },
+   "sonnet/C": {
+    "records": 289,
+    "failed_deliveries_after_resend": 0,
+    "usd": 2.19446,
+    "cohorts": {
+     "wmh2017": {
+      "n": 168,
+      "ms": {
+       "x": 165,
+       "n": 168,
+       "rate": 0.9821,
+       "ci95": [
+        0.9487,
+        0.9963
+       ]
+      },
+      "unq": {
+       "x": 164,
+       "n": 168,
+       "rate": 0.9762,
+       "ci95": [
+        0.9402,
+        0.9935
+       ]
+      },
+      "unq_code": {
+       "x": 164,
+       "n": 168,
+       "rate": 0.9762,
+       "ci95": [
+        0.9402,
+        0.9935
+       ]
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 168,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0217
+       ],
+       "upper95_one_sided": 0.0177
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 168,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0217
+       ],
+       "upper95_one_sided": 0.0177
+      },
+      "unq_automat": {
+       "x": 164,
+       "n": 168,
+       "rate": 0.9762,
+       "ci95": [
+        0.9402,
+        0.9935
+       ]
+      },
+      "ms_no_clinical": {
+       "x": 1,
+       "n": 168,
+       "rate": 0.006,
+       "ci95": [
+        0.0002,
+        0.0327
+       ]
+      },
+      "unq_dis_met": {
+       "x": 164,
+       "n": 168,
+       "rate": 0.9762,
+       "ci95": [
+        0.9402,
+        0.9935
+       ]
+      },
+      "sens_ms": {
+       "x": 165,
+       "n": 168,
+       "rate": 0.9821,
+       "ci95": [
+        0.9487,
+        0.9963
+       ]
+      },
+      "sens_unq": {
+       "x": 164,
+       "n": 168,
+       "rate": 0.9762,
+       "ci95": [
+        0.9402,
+        0.9935
+       ]
+      },
+      "withheld": {
+       "x": 4,
+       "n": 168,
+       "rate": 0.0238,
+       "ci95": [
+        0.0065,
+        0.0598
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 164,
+       "n": 165,
+       "rate": 0.9939,
+       "ci95": [
+        0.9667,
+        0.9998
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 165,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0221
+       ],
+       "upper95_one_sided": 0.018
+      },
+      "provenance_caveat_among_ms": {
+       "x": 165,
+       "n": 165,
+       "rate": 1.0,
+       "ci95": [
+        0.9779,
+        1.0
+       ]
+      },
+      "outcome": {
+       "passed_0": 22,
+       "passed_1": 116,
+       "passed_2": 26,
+       "blocked": 4
+      },
+      "reason": {
+       "None": 164,
+       "failed_check": 4
+      },
+      "rules_unqualified": {
+       "a": 164,
+       "c": 89
+      }
+     },
+     "ms": {
+      "n": 121,
+      "ms": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "ms_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "unq": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "unq_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "unq_code": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "unq_code_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "unq_model": {
+       "x": 0,
+       "n": 121,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.03
+       ],
+       "upper95_one_sided": 0.0245
+      },
+      "unq_model_cluster": {
+       "design_effect": 1.458,
+       "n_effective": 83.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.0435
+       ]
+      },
+      "ms_model": {
+       "x": 0,
+       "n": 121,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.03
+       ],
+       "upper95_one_sided": 0.0245
+      },
+      "ms_model_cluster": {
+       "design_effect": 1.458,
+       "n_effective": 83.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.0435
+       ]
+      },
+      "unq_automat": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "unq_automat_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "ms_no_clinical": {
+       "x": 0,
+       "n": 121,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.03
+       ],
+       "upper95_one_sided": 0.0245
+      },
+      "ms_no_clinical_cluster": {
+       "design_effect": 1.458,
+       "n_effective": 83.0,
+       "ci95_cluster_exact": [
+        0.0,
+        0.0435
+       ]
+      },
+      "unq_dis_met": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "unq_dis_met_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "sens_ms": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "sens_ms_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "sens_unq": {
+       "x": 115,
+       "n": 121,
+       "rate": 0.9504,
+       "ci95": [
+        0.8952,
+        0.9816
+       ]
+      },
+      "sens_unq_cluster": {
+       "design_effect": 1.063,
+       "n_effective": 113.85,
+       "ci95_cluster_exact": [
+        0.8929,
+        0.9823
+       ]
+      },
+      "withheld": {
+       "x": 2,
+       "n": 121,
+       "rate": 0.0165,
+       "ci95": [
+        0.002,
+        0.0584
+       ]
+      },
+      "withheld_cluster": {
+       "design_effect": 1.029,
+       "n_effective": 117.65,
+       "ci95_cluster_exact": [
+        0.0019,
+        0.0593
+       ]
+      },
+      "clinical_caveat_among_ms": {
+       "x": 115,
+       "n": 115,
+       "rate": 1.0,
+       "ci95": [
+        0.9684,
+        1.0
+       ]
+      },
+      "clinical_caveat_model_text_among_ms": {
+       "x": 0,
+       "n": 115,
+       "rate": 0.0,
+       "ci95": [
+        0.0,
+        0.0316
+       ],
+       "upper95_one_sided": 0.0257
+      },
+      "provenance_caveat_among_ms": {
+       "x": 115,
+       "n": 115,
+       "rate": 1.0,
+       "ci95": [
+        0.9684,
+        1.0
+       ]
+      },
+      "outcome": {
+       "passed_0": 17,
+       "passed_1": 87,
+       "passed_2": 15,
+       "blocked": 2
+      },
+      "reason": {
+       "None": 119,
+       "failed_check": 2
+      },
+      "rules_unqualified": {
+       "a": 115,
+       "c": 59
+      },
+      "ms_coverage_among_expert_met": {
+       "x": 115,
+       "n": 115,
+       "patients": 77,
+       "rate": 1.0,
+       "ci95_patient_bootstrap": [
+        1.0,
+        1.0
+       ],
+       "design_effect": 1.494,
+       "n_effective": 77.0,
+       "ci95_cluster_exact": [
+        0.9532,
+        1.0
+       ]
+      },
+      "ms_coverage_unqualified_among_expert_met": {
+       "x": 115,
+       "n": 115,
+       "patients": 77,
+       "rate": 1.0,
+       "ci95_patient_bootstrap": [
+        1.0,
+        1.0
+       ],
+       "design_effect": 1.494,
+       "n_effective": 77.0,
+       "ci95_cluster_exact": [
+        0.9532,
+        1.0
+       ]
+      },
+      "ms_coverage_among_app_met": {
+       "x": 115,
+       "n": 115,
+       "patients": 77,
+       "rate": 1.0,
+       "ci95_patient_bootstrap": [
+        1.0,
+        1.0
+       ],
+       "design_effect": 1.494,
+       "n_effective": 77.0,
+       "ci95_cluster_exact": [
+        0.9532,
+        1.0
+       ]
+      },
+      "ms_coverage_unqualified_among_app_met": {
+       "x": 115,
+       "n": 115,
+       "patients": 77,
+       "rate": 1.0,
+       "ci95_patient_bootstrap": [
+        1.0,
+        1.0
+       ],
+       "design_effect": 1.494,
+       "n_effective": 77.0,
+       "ci95_cluster_exact": [
+        0.9532,
+        1.0
+       ]
+      }
+     }
+    }
+   }
+  },
+  "stopped_at_quality_gate": {},
+  "qa": {
+   "gemini/U": {
+    "E5U": {
+     "n": 393,
+     "cut_at_limit": 0,
+     "without_impression": 0,
+     "median_chars": 1748
+    },
+    "passed": true,
+    "failed_deliveries": 0,
+    "records": 393
+   },
+   "gemini/C": {
+    "E5C": {
+     "n": 289,
+     "cut_at_limit": 0,
+     "without_impression": 0,
+     "median_chars": 2646
+    },
+    "passed": true,
+    "failed_deliveries": 0,
+    "records": 289
+   },
+   "sonnet/U": {
+    "E5U": {
+     "n": 393,
+     "cut_at_limit": 0,
+     "without_impression": 0,
+     "median_chars": 1947
+    },
+    "passed": true,
+    "failed_deliveries": 0,
+    "records": 393
+   },
+   "sonnet/C": {
+    "E5C": {
+     "n": 289,
+     "cut_at_limit": 0,
+     "without_impression": 0,
+     "median_chars": 2920
+    },
+    "passed": true,
+    "failed_deliveries": 0,
+    "records": 289
+   }
+  },
+  "descriptive_f": {
+   "wmh2017": {
+    "n": 170,
+    "app_dis_met_rc133": {
+     "x": 166,
+     "n": 170,
+     "rate": 0.9765,
+     "ci95": [
+      0.9409,
+      0.9936
+     ]
+    },
+    "app_dis_met_without_rc133": {
+     "x": 167,
+     "n": 170,
+     "rate": 0.9824,
+     "ci95": [
+      0.9493,
+      0.9963
+     ]
+    },
+    "paper1_experts_3mm3": {
+     "x": 167,
+     "n": 170
+    },
+    "records_expert_dis_met": 167,
+    "lost_by_rc133": 1,
+    "with_lesions_below_size": 164
+   },
+   "ms": {
+    "n": 123,
+    "app_dis_met_rc133": {
+     "x": 117,
+     "n": 123,
+     "rate": 0.9512,
+     "ci95": [
+      0.8968,
+      0.9819
+     ]
+    },
+    "app_dis_met_without_rc133": {
+     "x": 117,
+     "n": 123,
+     "rate": 0.9512,
+     "ci95": [
+      0.8968,
+      0.9819
+     ]
+    },
+    "paper1_experts_3mm3": {
+     "x": 117,
+     "n": 123
+    },
+    "records_expert_dis_met": 117,
+    "lost_by_rc133": 0,
+    "with_lesions_below_size": 35,
+    "app_dis_met_rc133_cluster": {
+     "x": 117,
+     "n": 123,
+     "patients": 84,
+     "rate": 0.9512,
+     "design_effect": 1.062,
+     "n_effective": 115.84,
+     "ci95_cluster_exact": [
+      0.8946,
+      0.9826
+     ]
+    }
+   }
+  },
+  "paper2_D4_gemini": {
+   "src": "runs/analysis/gemini_rows.jsonl (registered analysis, design D4)",
+   "setting_p": {
+    "n": 270,
+    "ms": {
+     "x": 0,
+     "n": 270,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.0136
+     ],
+     "upper95_one_sided": 0.011
+    },
+    "unq": {
+     "x": 0,
+     "n": 270,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.0136
+     ],
+     "upper95_one_sided": 0.011
+    }
+   },
+   "dlbs": {
+    "n": 100,
+    "ms": {
+     "x": 0,
+     "n": 100,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.0362
+     ],
+     "upper95_one_sided": 0.0295
+    },
+    "unq": {
+     "x": 0,
+     "n": 100,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.0362
+     ],
+     "upper95_one_sided": 0.0295
+    }
+   },
+   "wmh2017": {
+    "n": 170,
+    "ms": {
+     "x": 0,
+     "n": 170,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.0215
+     ],
+     "upper95_one_sided": 0.0175
+    },
+    "unq": {
+     "x": 0,
+     "n": 170,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.0215
+     ],
+     "upper95_one_sided": 0.0175
+    }
+   },
+   "ms": {
+    "n": 123,
+    "ms": {
+     "x": 0,
+     "n": 123,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.0295
+     ],
+     "upper95_one_sided": 0.0241
+    },
+    "unq": {
+     "x": 0,
+     "n": 123,
+     "rate": 0.0,
+     "ci95": [
+      0.0,
+      0.0295
+     ],
+     "upper95_one_sided": 0.0241
+    }
+   }
+  }
+ },
+ "projection": {
+  "n_full_records": 682,
+  "gemini": {
+   "pilot_records": 4,
+   "pilot_usd": 0.00396,
+   "mean_usd_per_record": 0.000989,
+   "projected_full_usd": 0.6745,
+   "e5_spent_usd": 0.004,
+   "study_spent_usd": 33.2253,
+   "amendment_limit_usd": 3.0,
+   "hard_stop_usd": 70.0,
+   "pilot_qa": {
+    "E5C": {
+     "n": 4,
+     "cut_at_limit": 0,
+     "without_impression": 0,
+     "median_chars": 2642.0
+    },
+    "passed": true,
+    "failed_deliveries": 0,
+    "records": 4
+   },
+   "fits": true
+  },
+  "sonnet": {
+   "pilot_records": 4,
+   "pilot_usd": 0.02912,
+   "mean_usd_per_record": 0.00728,
+   "projected_full_usd": 4.9653,
+   "e5_spent_usd": 0.0291,
+   "study_spent_usd": 23.7378,
+   "amendment_limit_usd": 10.0,
+   "hard_stop_usd": 35.0,
+   "pilot_qa": {
+    "E5C": {
+     "n": 4,
+     "cut_at_limit": 0,
+     "without_impression": 0,
+     "median_chars": 2955.5
+    },
+    "passed": true,
+    "failed_deliveries": 0,
+    "records": 4
+   },
+   "fits": true
+  }
+ },
+ "spend_usd": {
+  "e5": {
+   "gemini": 0.56325,
+   "anthropic": 3.88263
+  },
+  "study": {
+   "gemini": 33.7846,
+   "anthropic": 27.5913,
+   "maas": 2.5945,
+   "mistral": 2.5524
+  }
+ }
+}
