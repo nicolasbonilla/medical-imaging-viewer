@@ -1686,7 +1686,7 @@
       ],
       "requirement": "REQ-FUNC-122",
       "change": "branch feat/report-slice-thickness (2026-11-21), stacked on PR #85",
-      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; the read of the thickness is not checked by negative controls until clinical use. DRAFT — PENDING owner approval."
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; the read of the thickness is not checked by negative controls until clinical use. N. G. Bonilla Vargas — approved 2026-11-21 (PR #86)."
     }
   },
   "unverified_controls_note": [
