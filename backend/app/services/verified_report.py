@@ -355,6 +355,14 @@ T: Dict[str, Dict[str, str]] = {
         "dis_ev_nc": "Dissemination in space (brain MRI): the brain criterion is {met} (evaluated on the confirmed "
                      "segmentation); the number of regions with lesions was not computed.",
         "met": "met", "notmet": "not met",
+        # RC-136 (paper 2, E5): a met result is qualified in its OWN sentence (the code wrote "the brain criterion is
+        # met" and the qualifier only in the next sentence — 98 % of confirmed vascular reports were unqualified at the
+        # sentence level); "automatic" and "nonspecific" are words of paper 2's frozen qualifier list
+        "dis_ev_met": "Dissemination in space (brain MRI): lesions in {k} of the {e} regions evaluable on brain MRI; the "
+                      "brain criterion is met on an automatic, location-only count, which is nonspecific (see below).",
+        "dis_ev_nc_met": "Dissemination in space (brain MRI): the brain criterion is met on an automatic, location-only "
+                         "count, which is nonspecific (evaluated on the confirmed segmentation); the number of regions "
+                         "with lesions was not computed.",
         "dis_ext": "Spinal cord and optic nerve: not assessed.",
         "dis_interp": DIS_INTERPRETATION["en"],
         # (not "which do not count": "do" is a surname the RC-065 tripwire must keep reporting alone)
@@ -424,6 +432,12 @@ T: Dict[str, Dict[str, str]] = {
         "dis_ev_nc": "Diseminación en el espacio (RM cerebral): el criterio cerebral {met} (evaluada en la segmentación "
                      "confirmada); el número de regiones con lesiones no se calculó.",
         "met": "se cumple", "notmet": "no se cumple",
+        "dis_ev_met": "Diseminación en el espacio (RM cerebral): lesiones en {k} de las {e} regiones evaluables en la RM "
+                      "cerebral; el criterio cerebral se cumple según un recuento automático solo por localización, que "
+                      "es inespecífico (véase abajo).",
+        "dis_ev_nc_met": "Diseminación en el espacio (RM cerebral): el criterio cerebral se cumple según un recuento "
+                         "automático solo por localización, que es inespecífico (evaluada en la segmentación confirmada); "
+                         "el número de regiones con lesiones no se calculó.",
         "dis_ext": "Médula espinal y nervio óptico: no evaluados.",
         "dis_interp": DIS_INTERPRETATION["es"],
         "dis_below_size": "Lesiones de estas regiones de menos de {d} mm en su mayor extensión, que no cuentan para la "
@@ -491,6 +505,12 @@ T: Dict[str, Dict[str, str]] = {
         "dis_ev_nc": "Räumliche Dissemination (Hirn-MRT): das Hirnkriterium ist {met} (an der bestätigten Segmentierung "
                      "beurteilt); die Zahl der Regionen mit Läsionen wurde nicht berechnet.",
         "met": "erfüllt", "notmet": "nicht erfüllt",
+        "dis_ev_met": "Räumliche Dissemination (Hirn-MRT): Läsionen in {k} der {e} im Hirn-MRT beurteilbaren Regionen; "
+                      "das Hirnkriterium ist nach einer automatischen, allein auf der Lokalisation beruhenden Zählung "
+                      "erfüllt, die unspezifisch ist (siehe unten).",
+        "dis_ev_nc_met": "Räumliche Dissemination (Hirn-MRT): das Hirnkriterium ist nach einer automatischen, allein auf "
+                         "der Lokalisation beruhenden Zählung erfüllt, die unspezifisch ist (an der bestätigten "
+                         "Segmentierung beurteilt); die Zahl der Regionen mit Läsionen wurde nicht berechnet.",
         "dis_ext": "Rückenmark und Sehnerv: nicht beurteilt.",
         "dis_interp": DIS_INTERPRETATION["de"],
         "dis_below_size": "Läsionen dieser Regionen unter {d} mm größter Ausdehnung, die nicht für die räumliche "
@@ -1044,17 +1064,23 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
                                        icv=vol_text(bv.get("intracranial_volume_ml"))))
     dis = view["dis"]
     if dis["status"] == "evaluated":
-        met = t["met"] if dis["dis_met_brain"] else t["notmet"]
-        dis_s = (t["dis_ev"].format(k=stated["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"], met=met)
-                 if "brain_regions_with_lesions" in stated else t["dis_ev_nc"].format(met=met))
+        if dis["dis_met_brain"]:
+            # RC-136 (paper 2, E5): the met result carries its qualifier in its own sentence
+            dis_s = (t["dis_ev_met"].format(k=stated["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"])
+                     if "brain_regions_with_lesions" in stated else t["dis_ev_nc_met"])
+        else:
+            met = t["notmet"]
+            dis_s = (t["dis_ev"].format(k=stated["brain_regions_with_lesions"], e=dis["brain_regions_evaluable"], met=met)
+                     if "brain_regions_with_lesions" in stated else t["dis_ev_nc"].format(met=met))
         f += [dis_s]
         if dis.get("lesions_below_size"):
             f.append(t["dis_below_size"].format(k=dis["lesions_below_size"],
                                                 d=_loc(f"{dis['lesion_min_extent_mm']:g}", lang)))
         f.append(t["dis_ext"])
-        if dis["dis_met_brain"]:
-            # RC-134: a met result is never written without what it does not mean (papers 1 and 2)
-            f.append(t["dis_interp"])
+        # RC-134, extended by RC-136 (paper 2, E5): what the result does not mean, after EVERY evaluated result — also
+        # when it is not met: the one confirmed vascular report of E5 without any clinical caveat was a not-met result
+        # (RC-133 left one region with lesions under 3 mm) whose region line still listed lesions in 2 regions
+        f.append(t["dis_interp"])
     elif dis["status"] == "not evaluated":
         dis_s = _dis_not_evaluated_line(lang)
         f.append(dis_s)

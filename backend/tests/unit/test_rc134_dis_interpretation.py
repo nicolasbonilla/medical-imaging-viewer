@@ -66,18 +66,26 @@ def test_met_result_is_followed_by_its_interpretation_in_findings_and_impression
     findings, _comp, impression, _lim = VR.skeleton(_view({**EVALUATED, "dis_met": True}, lang), lang)
     line = VR.DIS_INTERPRETATION[lang]
     assert line in findings and line in impression
-    # right after the DIS line: the reader meets the result and its meaning together
-    prefix = VR.T[lang]["dis_ev"].split("{")[0]
+    # right after the DIS line: the reader meets the result and its meaning together (RC-136: the met line is
+    # `dis_ev_met`, qualified in its own sentence)
+    prefix = VR.T[lang]["dis_ev_met"].split("{")[0]
     assert impression[impression.index(line) - 1].startswith(prefix)
     assert findings[findings.index(line) - 1] == VR.T[lang]["dis_ext"]
     assert findings[findings.index(line) - 2].startswith(prefix)
 
 
 @pytest.mark.parametrize("lang", LANGS)
-@pytest.mark.parametrize("dis", [{**EVALUATED, "dis_met": False}, {"evaluation_status": "not_evaluated"}])
-def test_no_interpretation_line_without_a_met_result(lang, dis):
-    findings, comp, impression, lim = VR.skeleton(_view(dis, lang), lang)
+def test_no_interpretation_line_when_dis_was_not_evaluated(lang):
+    findings, comp, impression, lim = VR.skeleton(_view({"evaluation_status": "not_evaluated"}, lang), lang)
     assert VR.DIS_INTERPRETATION[lang] not in _text([findings, comp, impression, lim])
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_a_not_met_result_carries_the_interpretation_in_the_findings_only(lang):
+    # RC-136 (paper 2, E5): also after a not-met result (the edge case of E5), but the impression repeats it only
+    # after a met result
+    findings, _comp, impression, _lim = VR.skeleton(_view({**EVALUATED, "dis_met": False}, lang), lang)
+    assert VR.DIS_INTERPRETATION[lang] in findings and VR.DIS_INTERPRETATION[lang] not in impression
 
 
 # ------------------------------------------------------------------ the checks the line must pass

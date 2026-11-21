@@ -558,8 +558,8 @@ def test_rc070_r2_e2e_a_confirmed_dis_reaches_the_model_through_the_real_report_
     prompt = call["messages"][0]["content"]
     record = json.loads(prompt.split("```json\n", 1)[1].split("\n```", 1)[0])
     assert record["dis"]["status"] == "evaluated" and record["dis"]["dis_met_brain"] is True
-    assert "the brain criterion is met." in prompt and "not evaluated" not in prompt
-    assert "the brain criterion is met." in r.json()["content"]
+    assert "the brain criterion is met on an automatic, location-only count" in prompt and "not evaluated" not in prompt   # RC-136
+    assert "the brain criterion is met on an automatic, location-only count" in r.json()["content"]
 
 
 DIS_INSTRUCTIONS = ("DIS checklist table", "typical MS regions", "DIS regions involved", "Organize by DIS regions",

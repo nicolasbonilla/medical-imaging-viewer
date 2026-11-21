@@ -186,7 +186,7 @@ def test_rc102_r6_the_report_never_contradicts_the_gate():
     assert view["segmentation"]["confirmed_by_radiologist"] is True and view["dis"]["status"] == "evaluated"
     report = VR.assemble(view, "en", "", "")
     assert "not confirmed by a radiologist" not in report and VR.T["en"]["src_conf"] in report
-    assert VR.T["en"]["dis_ev_nc"].format(met=VR.T["en"]["met"]) in report
+    assert VR.T["en"]["dis_ev_nc_met"] in report   # RC-136
     assert not V.verify(report, None, view)["primary"]
     _assembled, fails = VR.check(view, "en", "[FINDINGS_COMMENT]\nLesions are in two of three regions; dissemination "
                                              "in space is met in {brain_regions_with_lesions} regions.\n"
