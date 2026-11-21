@@ -1660,7 +1660,7 @@
       ],
       "requirement": "REQ-FUNC-121",
       "change": "branch feat/papers-in-app (2026-11-21)",
-      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. DRAFT — PENDING owner approval."
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. N. G. Bonilla Vargas — approved 2026-11-21 (PR #85)."
     },
     "RC-134": {
       "description": "Every met brain-DIS result is shown with what it does not mean (an automatic count of lesion locations only, not the full diagnostic criteria; also met in most older adults and in most people with vascular white matter disease; not evidence of MS without review) on the dashboard, in the verified report (findings and impression, report language) and in the assistant's DIS summary; the report model's record carries the rule label and interpretation for every evaluated result (paper 2, E4); the met state in amber, never green; no digit, year or surname in the statement",
@@ -1673,7 +1673,7 @@
       ],
       "requirement": "REQ-SAFE-061",
       "change": "branch feat/papers-in-app (2026-11-21)",
-      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. DRAFT — PENDING owner approval."
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. N. G. Bonilla Vargas — approved 2026-11-21 (PR #85)."
     },
     "RC-135": {
       "description": "The verified report draft (limitations) and the model's record state the slice thickness of the ORIGINAL acquisition of the report segmentation's source image, read on the server as the quality gate reads it (RC-054 header geometry, else the stored acquisition record as a lower bound; the client's value dropped), with the expected loss of small lesions above 1.5 mm, or that it could not be read; a read failure never fails the report; both data-sent notices name it",
