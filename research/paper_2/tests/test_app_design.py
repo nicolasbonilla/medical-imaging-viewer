@@ -240,6 +240,22 @@ def test_cap_stop_sends_nothing(A, LAS, tmp_path, monkeypatch):
     assert rows == [] and log == [] and "amendment" in broker.stop
 
 
+def test_lines_written_at_once_and_one_record_error_spares_the_others(A, LAS, tmp_path, monkeypatch):
+    u, c = items_for(A, LAS)
+    real = E.delivered_text
+
+    def flaky(text, view, findings, A_):
+        if view is c["view"]:
+            raise RuntimeError("synthetic fault")
+        return real(text, view, findings, A_)
+    monkeypatch.setattr(E, "delivered_text", flaky)
+    out = tmp_path / "results.jsonl"
+    rows, broker = asyncio.run(E.run_items([u, c], "gemini", tmp_path, A, fake({u["key"]: [GOOD], c["key"]: [GOOD]}, []),
+                                           out=out))
+    assert [r["key"] for r in rows] == [u["key"]] and len(broker.errors) == 1 and "synthetic fault" in broker.errors[0]
+    assert E.done_keys(out) == {u["key"]}
+
+
 def test_gemini_stop_mapping():
     assert E.gemini_stop("max_tokens") == "max_tokens"
     assert E.gemini_stop("FinishReason.SAFETY") == "refusal" and E.gemini_stop("finishreason.prohibited_content") == "refusal"

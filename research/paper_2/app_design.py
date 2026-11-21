@@ -458,9 +458,24 @@ def last_ok(path):
     return last
 
 
-async def run_items(items, alias, run_dir, A, dispatch):
+async def run_items(items, alias, run_dir, A, dispatch, out=None):
+    """Every record's flow at once; a finished record's line is appended to `out` at once (a paid answer is never
+    lost when the process ends early). An unexpected error in one record leaves that record without a line (it is
+    then sent again by the one resend) and is counted on the broker."""
     broker = Broker(alias, run_dir, dispatch)
-    tasks = [asyncio.ensure_future(run_item(it, alias, broker, A)) for it in items]
+    broker.errors = []
+
+    async def one(it):
+        try:
+            row = await run_item(it, alias, broker, A)
+        except Exception as e:  # noqa: BLE001 - recorded; the record has no line and is resent once
+            broker.errors.append(f"{it['key']}: {type(e).__name__}: {str(e)[:200]}")
+            return None
+        if row is not None and out is not None:
+            with open(out, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+        return row
+    tasks = [asyncio.ensure_future(one(it)) for it in items]
     server = asyncio.ensure_future(broker.serve(tasks))
     rows = await asyncio.gather(*tasks)
     await server
@@ -502,12 +517,10 @@ def run(alias, state, phase="full", dispatch=subprocess_dispatch, passes=2, A=No
         if not todo:
             break
         print(f"[e5] {alias}/{state}/{phase} pass {p}: {len(todo)} records", flush=True)
-        rows, broker = asyncio.run(run_items(todo, alias, rd, A, dispatch))
-        with open(out, "a", encoding="utf-8") as fh:
-            for row in rows:
-                fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+        rows, broker = asyncio.run(run_items(todo, alias, rd, A, dispatch, out=out))
         info["passes"].append({"records": len(todo), "lines": len(rows), "chunks": broker.chunks, "stopped": broker.stop,
-                               "failed_deliveries": sum(failed_delivery(r) for r in rows)})
+                               "failed_deliveries": sum(failed_delivery(r) for r in rows),
+                               "record_errors": broker.errors[:20], "n_record_errors": len(broker.errors)})
         if broker.stop:
             break
     info["without_report"] = len([it for it in items if it["key"] not in done_keys(out)])
