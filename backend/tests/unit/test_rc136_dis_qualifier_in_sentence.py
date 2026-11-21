@@ -1,8 +1,9 @@
 """RC-136 (REQ-SAFE-062, HAZ-008 / HAZ-003; SRS/RMF Addendum G, DRAFT — PENDING owner approval): paper 2's experiment
 E5 measured the application's verified report (commit e559929) after confirmation, with the experts' masks standing in
 for a radiologist's review: the code-written sentence "the brain criterion is met" carried no qualifier in its own
-sentence (sentence-level unqualified in 98 % of confirmed vascular reports, all from that line), and the one report
-without any clinical caveat was a NOT-met result whose region line still listed lesions in 2 regions. So:
+sentence (164 of 168 confirmed vascular reports with each model; Gemini's 165th was the not-met edge case, counted by
+the region line, rule (c)), and the one report without any clinical caveat was a NOT-met result whose region line
+still listed lesions in 2 regions. So:
   1. a met result is qualified in its own sentence ("automatic", "nonspecific": words of paper 2's frozen qualifier
      list, research/paper_2/classifier.py QUALIFIER on branch research/paper-2-faithful-but-false);
   2. the interpretation (RC-134) follows EVERY evaluated result in the findings (the impression repeats it only after a
@@ -68,7 +69,8 @@ def test_a_not_met_result_keeps_its_plain_line_and_gets_the_interpretation(lang)
     findings, _c, impression, _l = VR.skeleton(_view({**EVALUATED, "dis_met": False}, lang), lang)
     plain = VR.T[lang]["dis_ev"].format(k="2", e=3, met=VR.T[lang]["notmet"])
     assert plain in findings
-    assert VR.DIS_INTERPRETATION[lang] in findings and VR.DIS_INTERPRETATION[lang] not in impression
+    notmet = VR.DIS_INTERPRETATION_NOT_MET[lang]
+    assert notmet in findings and notmet not in impression and VR.DIS_INTERPRETATION[lang] not in findings
 
 
 @pytest.mark.parametrize("lang", LANGS)
@@ -79,11 +81,16 @@ def test_both_results_pass_the_claim_check(lang, met):
     answer = f"[FINDINGS_COMMENT]\n{COMMENTS[lang][0]}\n[IMPRESSION_COMMENT]\n{COMMENTS[lang][1]}"
     assembled, fails = VR.check(view, lang, answer)
     assert fails == [], fails
-    assert VR.DIS_INTERPRETATION[lang] in assembled
+    assert (VR.DIS_INTERPRETATION if met else VR.DIS_INTERPRETATION_NOT_MET)[lang] in assembled
 
 
 def test_the_new_lines_carry_no_digit_year_or_surname():
-    for lang in LANGS:
-        for key in ("dis_ev_met", "dis_ev_nc_met"):
-            text = re.sub(r"\{[a-z]+\}", "", VR.T[lang][key])
-            assert not re.search(r"\d", text) and "McDonald" not in text, (lang, key)
+    # every word of the report joins the RC-065 device-word list, which the identifier tripwire never reports alone:
+    # no digit, year or surname (review of PR #87, finding 3: "Abajo" is a surname; "véase abajo" left the met line)
+    texts = [(lang, key, re.sub(r"\{[a-z]+\}", "", VR.T[lang][key])) for lang in LANGS
+             for key in ("dis_ev_met", "dis_ev_nc_met", "dis_interp_notmet")]
+    texts += [(lang, "NOT_MET", text) for lang, text in VR.DIS_INTERPRETATION_NOT_MET.items()]
+    for lang, key, text in texts:
+        assert not re.search(r"\d", text) and "McDonald" not in text, (lang, key)
+        words = set(re.findall(r"\w+", text.lower()))
+        assert not words & {"abajo", "debajo", "más", "mas", "véase", "siehe", "unten", "see"}, (lang, key, words)

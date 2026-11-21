@@ -47,7 +47,8 @@ def test_record_of_an_evaluated_result_says_what_the_rule_is_and_ignores():
     for met in (True, False):
         dis = _view({**EVALUATED, "dis_met": met})["dis"]
         assert dis["rule"] == VR.DIS_RULE_LABEL
-        assert dis["interpretation"] == VR.DIS_INTERPRETATION["en"]
+        # RC-136 (review of PR #87, finding 4): a not-met result has its own interpretation
+        assert dis["interpretation"] == (VR.DIS_INTERPRETATION["en"] if met else VR.DIS_INTERPRETATION_NOT_MET["en"])
 
 
 def test_record_without_an_evaluated_result_has_no_interpretation():
@@ -85,7 +86,8 @@ def test_a_not_met_result_carries_the_interpretation_in_the_findings_only(lang):
     # RC-136 (paper 2, E5): also after a not-met result (the edge case of E5), but the impression repeats it only
     # after a met result
     findings, _comp, impression, _lim = VR.skeleton(_view({**EVALUATED, "dis_met": False}, lang), lang)
-    assert VR.DIS_INTERPRETATION[lang] in findings and VR.DIS_INTERPRETATION[lang] not in impression
+    notmet = VR.DIS_INTERPRETATION_NOT_MET[lang]
+    assert notmet in findings and notmet not in impression and VR.DIS_INTERPRETATION[lang] not in findings
 
 
 # ------------------------------------------------------------------ the checks the line must pass
@@ -142,8 +144,13 @@ def test_the_assistant_carries_the_same_interpretation():
     value = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
                  and any(getattr(t, "id", None) == "DIS_INTERPRETATION" for t in node.targets))
     assert value == VR.DIS_INTERPRETATION["en"]
-    # and the evaluated summary returns it
-    assert '{"dis_interpretation": DIS_INTERPRETATION} if evaluated' in src
+    # RC-136: and its own text after a not-met result, the same as the report's
+    value = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
+                 and any(getattr(t, "id", None) == "DIS_INTERPRETATION_NOT_MET" for t in node.targets))
+    assert value == VR.DIS_INTERPRETATION_NOT_MET["en"]
+    # and the evaluated summary returns the one that fits the result
+    assert ('{"dis_interpretation": DIS_INTERPRETATION if dis.get("dis_met") is True else '
+            'DIS_INTERPRETATION_NOT_MET}') in src and 'if evaluated else {})' in src
 
 
 # ------------------------------------------------------------------ one text for the dashboard and the report
