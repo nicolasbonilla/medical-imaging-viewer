@@ -124,7 +124,9 @@ _MEASUREMENT_BLOCKS = ("lesion_analysis", "dis_assessment", "longitudinal", "zon
 # image (never the client's); known, but not a measurement block (alone it gives nothing to report)
 ACQUISITION_THICKNESS = "acquisition_thickness"
 _KNOWN_FIELDS = frozenset(FREE_TEXT_FIELDS + _MEASUREMENT_BLOCKS + ("patient_age", "patient_sex", ACQUISITION_THICKNESS))
-_THICKNESS_MM = (0.1, 30.0)
+# = quality_gate_policy.json thickness.plausible_max_mm (review of PR #86: one range; a test checks they are equal)
+_THICKNESS_MM = (0.1, 20.0)
+_THICKNESS_SOURCES = ("header", "record")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -348,12 +350,13 @@ class _Projector:
     def acquisition_thickness(self, th: dict) -> dict:
         """RC-135: the RC-054 state and the thickness in mm — only a thickness read from the image (native) or a lower
         bound (at_least) within a physical range; anything else is "not_determinable", never a guessed value."""
-        state = th.get("state")
-        if state in ("native", "at_least"):
+        state, source = th.get("state"), th.get("source")
+        # a native value comes only from the header; the stored record is only a lower bound (review of PR #86, M2)
+        if (state == "native" and source == "header") or (state == "at_least" and source in _THICKNESS_SOURCES):
             mm = self.number(th.get("effective_mm"), "slice_thickness_mm", *_THICKNESS_MM, required=False,
                              outside=None)
             if mm is not None:
-                return {"state": state, "effective_mm": mm}
+                return {"state": state, "effective_mm": round(mm, 1), "source": source}
         return {"state": "not_determinable"}
 
     def longitudinal(self, lng: dict) -> dict:

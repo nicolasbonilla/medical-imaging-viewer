@@ -324,6 +324,19 @@ def test_rc064_the_clinicians_typed_text_is_never_sent(route):
 
 
 @pytest.mark.unit
+def test_rc135_a_thickness_sent_by_the_client_is_never_used(route):
+    """RC-135 (review of PR #86): the acquisition thickness is the server's only — a client value of 7.0 mm "from the
+    header" is dropped; the server's read (refused here, PRB-002) gives "not determinable"."""
+    from app.services.report_payload_guard import ACQUISITION_THICKNESS
+    forged = {"state": "native", "effective_mm": 7.0, "source": "header"}
+    r = _post(route, {**_measurements(), ACQUISITION_THICKNESS: forged}, VOLUMETRY)
+    assert r.status_code == 200, r.text
+    acquisition = _record_sent(route)["acquisition"]
+    assert acquisition["slice_thickness"]["state"] == "not determinable"
+    assert "7" not in json.dumps(acquisition)
+
+
+@pytest.mark.unit
 def test_rc064_measurements_and_device_labels_are_sent_unchanged(route):
     """Amended for the verified report (REQ-FUNC-116, DRAFT): the measurements reach the model unchanged, as the
     record the code builds from the RC-064 payload (was: the lines of the retired prompt builder). Structure-level

@@ -37,8 +37,9 @@ Deviations from the benchmark's arm A3 (`research/agents_benchmark/arms.py` at f
 frozen verifier in tests/unit/test_rc102_verified_report_flow.py:
   - the system prompt no longer says "for a research prototype that is not a medical device" (the model could repeat
     it to the reader); the rules and the answer format are unchanged;
-  - the record is built from the app's RC-064 payload, not from the benchmark's records: no acquisition block (the
-    report request carries none), no lesion centroids (not needed for two comments; they made dates out of digit
+  - the record is built from the app's RC-064 payload, not from the benchmark's records: the acquisition block holds
+    only the original acquisition's slice thickness, read by the route on the server (RC-135, PR #86; the request
+    carries none), no lesion centroids (not needed for two comments; they made dates out of digit
     triples for the RC-065 identifier check), the segmentation source in the app's terms (no "FLAMeS" claim), brain
     volumes when supplied;
   - "not computed" lines for values the payload marks as not available, and a "not computed" comparison for a pair
@@ -298,8 +299,14 @@ def user_lang_line(lang: str) -> str:
 # note when the thickness of the original acquisition could not be read. No digit: see the RC-065 note above.
 THICK_SLICE_CONTEXT = ("Automatic lesion marking is less sensitive on thick slices: small lesions may be missed and "
                        "lesion volumes are less precise.")
-THICKNESS_UNKNOWN_CONTEXT = ("The slice thickness of the original acquisition could not be read from the image; if "
-                             "the slices were thick, small lesions may have been missed.")
+THICKNESS_UNKNOWN_CONTEXT = ("The slice thickness of the original acquisition is not known; if the slices were thick, "
+                             "small lesions may have been missed.")
+# How the value is known (review of PR #86, M2): the header gives the acquisition's own value (slice thickness or the
+# distance between slices, whichever is larger: RC-054); the stored image grid and the stored acquisition record give
+# only a lower bound. Words chosen to avoid surnames among the device words (review minor 3: "read", "finer").
+THICKNESS_HOW_KNOWN = {"native": "image header (slice thickness, or the distance between slices if larger)",
+                       "grid": "lower bound: the stored image grid; the acquisition may have been thicker",
+                       "record": "lower bound: the stored acquisition record"}
 DIS_RULE_LABEL = "automatic count of lesion locations only (brain MRI); not the full diagnostic criteria"
 DIS_INTERPRETATION: Dict[str, str] = {
     "en": "This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion "
@@ -377,9 +384,11 @@ T: Dict[str, Dict[str, str]] = {
         "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|brain volumetry",
         "lim_cord": "Spinal cord and optic nerve imaging: not available.",
         # RC-135: the thickness of the original acquisition (code-written; the number from the record)
-        "th_native": "Slice thickness of the original acquisition: {x} mm (read from the image header).",
-        "th_at_least": "Slice thickness of the original acquisition: at least {x} mm (the stored image cannot show finer "
-                       "detail).",
+        "th_native": "Slice thickness of the original acquisition, including any gap between slices: {x} mm (image "
+                     "header).",
+        "th_grid": "Slice thickness of the original acquisition: at least {x} mm (the stored image grid; the "
+                   "acquisition may have been thicker).",
+        "th_record": "Slice thickness of the original acquisition: at least {x} mm (stored acquisition record).",
         "th_thick": THICK_SLICE_CONTEXT,
         "th_unknown": THICKNESS_UNKNOWN_CONTEXT,
         "lim_diag": "This draft is not a diagnosis.",
@@ -442,13 +451,15 @@ T: Dict[str, Dict[str, str]] = {
         "lim": "No disponibles para el análisis automático: {items}.",
         "lim_items": "indicación clínica|imágenes con contraste|imágenes ponderadas en T1|volumetría cerebral",
         "lim_cord": "Imágenes de médula espinal y de nervio óptico: no disponibles.",
-        "th_native": "Grosor de corte de la adquisición original: {x} mm (leído de la cabecera de la imagen).",
-        "th_at_least": "Grosor de corte de la adquisición original: al menos {x} mm (la imagen guardada no puede mostrar "
-                       "más detalle).",
+        "th_native": "Grosor de corte de la adquisición original, incluido el espacio entre cortes: {x} mm (cabecera de "
+                     "la imagen).",
+        "th_grid": "Grosor de corte de la adquisición original: al menos {x} mm (rejilla de la imagen guardada; los "
+                   "cortes originales pudieron ser de mayor grosor).",
+        "th_record": "Grosor de corte de la adquisición original: al menos {x} mm (registro de adquisición guardado).",
         "th_thick": "La marcación automática de lesiones es menos sensible con cortes gruesos: pueden escaparse lesiones "
                     "pequeñas y los volúmenes lesionales son menos precisos.",
-        "th_unknown": "No se pudo leer en la imagen el grosor de corte de la adquisición original; si los cortes eran "
-                      "gruesos, pueden haberse escapado lesiones pequeñas.",
+        "th_unknown": "No se conoce el grosor de corte de la adquisición original; si los cortes fueron gruesos, pueden "
+                      "haberse escapado lesiones pequeñas.",
         "lim_diag": "Este borrador no es un diagnóstico.",
         "lim_other_images": "{items}: no se aportaron al análisis automático; las lesiones que el radiólogo marcó "
                             "en estas imágenes se cuentan arriba como otras etiquetas.",
@@ -508,13 +519,14 @@ T: Dict[str, Dict[str, str]] = {
         "lim": "Für die automatische Analyse nicht verfügbar: {items}.",
         "lim_items": "klinische Fragestellung|kontrastmittelgestützte Bildgebung|T1-gewichtete Bildgebung|Hirnvolumetrie",
         "lim_cord": "Bildgebung von Rückenmark und Sehnerv: nicht verfügbar.",
-        "th_native": "Schichtdicke der Originalaufnahme: {x} mm (aus dem Bildkopf gelesen).",
-        "th_at_least": "Schichtdicke der Originalaufnahme: mindestens {x} mm (das gespeicherte Bild kann keine feineren "
-                       "Details zeigen).",
-        "th_thick": "Die automatische Läsionsmarkierung ist bei dicken Schichten weniger empfindlich: kleine Läsionen "
-                    "können übersehen werden und Läsionsvolumina sind weniger genau.",
-        "th_unknown": "Die Schichtdicke der Originalaufnahme ließ sich aus dem Bild nicht lesen; waren die Schichten dick, "
-                      "können kleine Läsionen übersehen worden sein.",
+        "th_native": "Schichtdicke der Originalaufnahme einschließlich Schichtabstand: {x} mm (Bildkopf).",
+        "th_grid": "Schichtdicke der Originalaufnahme: mindestens {x} mm (Raster des gespeicherten Bildes; die Aufnahme "
+                   "kann gröber gewesen sein).",
+        "th_record": "Schichtdicke der Originalaufnahme: mindestens {x} mm (gespeicherter Aufnahmedatensatz).",
+        "th_thick": "Bei hoher Schichtdicke ist die automatische Läsionsmarkierung weniger empfindlich: Läsionen geringer "
+                    "Größe können übersehen werden und Läsionsvolumina sind weniger genau.",
+        "th_unknown": "Die Schichtdicke der Originalaufnahme ist nicht bekannt; bei hoher Schichtdicke können Läsionen "
+                      "geringer Größe übersehen worden sein.",
         "lim_diag": "Dieser Entwurf ist keine Diagnose.",
         "lim_other_images": "{items}: der automatischen Analyse nicht übermittelt; die vom Radiologen auf diesen "
                             "Bildern markierten Läsionen sind oben als andere Bezeichnungen gezählt.",
@@ -770,11 +782,14 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
     if isinstance(th, dict) and view["lesions"].get("computed"):
         from app.services.acquisition_geometry import THIN_LIMIT_MM
         mm = finite_number(th.get("effective_mm"))
-        if th.get("state") in ("native", "at_least") and mm is not None:
-            view["acquisition"] = {"slice_thickness": {
-                "state": th["state"], "mm": mm,
-                "how_known": ("read from the image header" if th["state"] == "native"
-                              else "lower bound: the stored image cannot show finer detail")}}
+        # review of PR #86, M2: how the value is known — the header's own value, or a lower bound from the stored image
+        # grid (a NIfTI header) or from the stored acquisition record
+        how = ("native" if th.get("state") == "native" and th.get("source") == "header"
+               else "grid" if th.get("state") == "at_least" and th.get("source") == "header"
+               else "record" if th.get("state") == "at_least" and th.get("source") == "record" else None)
+        if how is not None and mm is not None:
+            view["acquisition"] = {"slice_thickness": {"state": th["state"], "mm": mm, "known_from": how,
+                                                       "how_known": THICKNESS_HOW_KNOWN[how]}}
             if mm > THIN_LIMIT_MM:
                 view["acquisition"]["thick_slice_context"] = THICK_SLICE_CONTEXT
         else:
@@ -915,7 +930,7 @@ def rendered_request(findings: Any, volumetry: Any) -> Tuple[Dict[str, Any], Opt
     th = f.get(ACQUISITION_THICKNESS)
     if isinstance(th, dict) and th and isinstance(out.get("lesion_analysis"), dict):
         # RC-135: the route's server-read thickness, only next to a lesion analysis (it qualifies lesion detection)
-        out[ACQUISITION_THICKNESS] = {k: th[k] for k in ("state", "effective_mm") if k in th}
+        out[ACQUISITION_THICKNESS] = {k: th[k] for k in ("state", "effective_mm", "source") if k in th}
     vol = None
     if isinstance(volumetry, dict):
         vol = {k: volumetry[k] for k in _RENDERED_VOLUMES if k in volumetry} or None
@@ -966,8 +981,8 @@ def _thickness_lines(view: Dict[str, Any], t: Dict[str, str], lang: str) -> List
     st = (view.get("acquisition") or {}).get("slice_thickness")
     if not isinstance(st, dict):
         return []
-    if st.get("state") in ("native", "at_least") and st.get("mm") is not None:
-        out = [t["th_native" if st["state"] == "native" else "th_at_least"].format(x=_loc(f"{st['mm']:g}", lang))]
+    if st.get("known_from") in ("native", "grid", "record") and st.get("mm") is not None:
+        out = [t["th_" + st["known_from"]].format(x=_loc(f"{st['mm']:g}", lang))]
         if view["acquisition"].get("thick_slice_context"):
             out.append(t["th_thick"])
         return out
@@ -1731,9 +1746,10 @@ _BRANCHES: Dict[str, Dict[str, Any]] = {
             # RC-133: lesions under 3 mm in the DIS regions (the findings line that states them)
             "evaluated_below_size": {**_SC_EVALUATED, "dis_met": False, "below_size_lesion_count": 2}},
     # RC-135: the original acquisition's slice thickness, as the route reads it (absent in the base case)
-    "thickness": {"native_thick": {"state": "native", "effective_mm": 5.0},
-                  "native_thin": {"state": "native", "effective_mm": 1.0},
-                  "at_least": {"state": "at_least", "effective_mm": 2.5},
+    "thickness": {"native_thick": {"state": "native", "effective_mm": 5.0, "source": "header"},
+                  "native_thin": {"state": "native", "effective_mm": 1.0, "source": "header"},
+                  "grid": {"state": "at_least", "effective_mm": 2.5, "source": "header"},
+                  "record": {"state": "at_least", "effective_mm": 3.0, "source": "record"},
                   "unknown": {"state": "not_determinable", "effective_mm": None}},
     "longitudinal": {
         "complete": {**_SC_LNG, "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},

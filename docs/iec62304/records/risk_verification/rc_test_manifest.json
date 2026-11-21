@@ -1677,7 +1677,7 @@
     },
     "RC-135": {
       "description": "The verified report draft (limitations) and the model's record state the slice thickness of the ORIGINAL acquisition of the report segmentation's source image, read on the server as the quality gate reads it (RC-054 header geometry, else the stored acquisition record as a lower bound; the client's value dropped), with the expected loss of small lesions above 1.5 mm, or that it could not be read; a read failure never fails the report; both data-sent notices name it",
-      "hazard": "HAZ-015",
+      "hazard": "HAZ-015, HAZ-003",
       "status": "unverified",
       "implementation": "backend/app/api/routes/ai_report.py; backend/app/services/report_payload_guard.py; backend/app/services/verified_report.py; frontend/src/i18n/locales/en.json; frontend/src/i18n/locales/es.json; frontend/src/i18n/locales/de.json",
       "tests": [
