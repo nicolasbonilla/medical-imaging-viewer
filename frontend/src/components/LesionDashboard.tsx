@@ -91,6 +91,31 @@ function regionBarWidth(vol: number, maxVol: number): string {
 }
 
 
+/**
+ * RC-134 (REQ-SAFE-061, HAZ-008; SRS/RMF Addendum E, DRAFT — PENDING owner approval): what a met brain-DIS result
+ * does not mean, shown under every met result. Papers 1 and 2: the location-only rule was met with the experts' own
+ * masks as often in vascular white matter disease as in MS, and in 96 of 100 adults aged 50-89 years without CNS
+ * disease; telling the report model what the rule ignores cut MS-suggestive reports without a clinical caveat by
+ * 70 and 78 points with a single model call and by 43 to 81 with an agent (exploratory, post hoc). The same text, in each language, as the verified report's code-written line
+ * (backend `verified_report.DIS_INTERPRETATION`; a backend test checks that the locales equal it).
+ */
+export const DIS_INTERPRETATION_EN =
+  'This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion shape, age ' +
+  'and vascular risk are not taken into account, and location rules like this one are also met in most older adults ' +
+  'and in most people with vascular white matter disease. It is not evidence of multiple sclerosis without a ' +
+  'physician\'s review of the lesions and of the case as a whole.';
+
+/** RC-133 (REQ-FUNC-121): what the per-region count means (MAGNIMS 2021 size: 3 mm in the largest extent, measured
+ *  between voxel centres — up to one voxel shorter than the edge-to-edge length on screen). */
+export const QUALIFYING_TOOLTIP_EN =
+  'Lesions in this region of at least 3 mm in their largest extent, measured between voxel centres ' +
+  '(MAGNIMS 2021 size); the region counts toward DIS when this is 1 or more';
+
+/** RC-133: lesions of the DIS regions (those of the lesion table) too short to count, shown instead of dropped. */
+export const BELOW_SIZE_EN =
+  'Lesions in the DIS regions under 3 mm in their largest extent (between voxel centres), which do not count ' +
+  'toward DIS: {{count}}';
+
 /** Interpolates {{name}} placeholders left by `t` (also when no i18n instance is initialised, e.g. in tests). */
 function fill(text: string, values: Record<string, unknown>): string {
   return text.replace(/{{\s*(\w+)\s*}}/g, (m, k) => (k in values ? String(values[k]) : m));
@@ -1087,35 +1112,35 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           {confirmError && <p className="text-[10px] text-red-300">{confirmError}</p>}
         </div>
       ) : disOk ? (
+        // RC-134 (REQ-SAFE-061; papers 1 and 2): a met location rule is not good news and not a diagnosis — it is
+        // shown in an attention colour (amber), never as a success (green), and a not-met result as neutral (gray)
         <div className={`flex items-center gap-2 p-2 rounded-lg ${
-          (disOk.dis_met_brain ?? disOk.dis_met) ? 'bg-green-900/30 border border-green-700/50' : 'bg-red-900/30 border border-red-700/50'
-        }`}>
+          (disOk.dis_met_brain ?? disOk.dis_met) ? 'bg-amber-900/25 border border-amber-700/50' : 'bg-gray-800/50 border border-gray-700/50'
+        }`} data-testid="dis-result">
           {(disOk.dis_met_brain ?? disOk.dis_met) ? (
-            <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+            <Info className="w-4 h-4 text-amber-400 shrink-0" />
           ) : (
-            <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <Info className="w-4 h-4 text-gray-400 shrink-0" />
           )}
           <div className="flex-1 min-w-0">
-            <div className={`text-xs font-bold ${(disOk.dis_met_brain ?? disOk.dis_met) ? 'text-green-300' : 'text-red-300'}`}>
+            <div className={`text-xs font-bold ${(disOk.dis_met_brain ?? disOk.dis_met) ? 'text-amber-200' : 'text-gray-300'}`}>
               DIS (Brain MRI): {disOk.brain_regions_with_lesions ?? disOk.regions_with_lesions}/{disOk.brain_regions_evaluated ?? 3} {t('lesions.regions', 'regions')}
               {(disOk.dis_met_brain ?? disOk.dis_met) ? ` \u2014 ${t('lesions.criterionMet', 'Criterion Met')}` : ` \u2014 ${t('lesions.criterionNotMet', 'Not Met')}`}
             </div>
             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
               {Object.entries(disOk.region_details ?? {}).map(([name, detail]) => (
                 <span key={name} className="flex items-center gap-0.5 text-[9px]">
+                  {/* RC-134: a region with lesions is a fact, not a success — neutral, never green */}
                   {detail.present ? (
-                    <CheckCircle2 className="w-2.5 h-2.5 text-green-400" />
+                    <CheckCircle2 className="w-2.5 h-2.5 text-gray-300" />
                   ) : (
                     <XCircle className="w-2.5 h-2.5 text-gray-600" />
                   )}
-                  <span className={detail.present ? 'text-green-300' : 'text-gray-500'}>{name}</span>
+                  <span className={detail.present ? 'text-gray-200' : 'text-gray-500'}>{name}</span>
                   {typeof detail.qualifying_lesion_count === 'number' && (
                     <span
-                      className={detail.present ? 'text-green-400/80' : 'text-gray-600'}
-                      title={t(
-                        'lesions.qualifyingLesionsTooltip',
-                        'Lesions in this region meeting the MAGNIMS size/location criteria; a region counts toward DIS when this is ≥ 1',
-                      )}
+                      className={detail.present ? 'text-gray-300' : 'text-gray-600'}
+                      title={t('lesions.qualifyingLesionsTooltip', QUALIFYING_TOOLTIP_EN)}
                     >
                       ({detail.qualifying_lesion_count})
                     </span>
@@ -1123,18 +1148,32 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
                 </span>
               ))}
             </div>
+            {/* RC-133 (REQ-FUNC-121): lesions under 3 mm in their largest extent are shown, never silently dropped */}
+            {(disOk.below_size_lesion_count ?? 0) > 0 && (
+              <div className="text-[9px] text-gray-400 mt-1" data-testid="dis-below-size">
+                {fill(t('lesions.belowSizeNotCounted', {
+                  defaultValue: BELOW_SIZE_EN, count: disOk.below_size_lesion_count,
+                }), { defaultValue: BELOW_SIZE_EN, count: disOk.below_size_lesion_count })}
+              </div>
+            )}
+            {/* RC-134 (REQ-SAFE-061): a met result is never shown without what it does not mean */}
+            {(disOk.dis_met_brain ?? disOk.dis_met) && (
+              <p className="text-[10px] text-amber-100/90 mt-1.5 leading-snug" data-testid="dis-interpretation">
+                {t('lesions.disInterpretation', DIS_INTERPRETATION_EN)}
+              </p>
+            )}
             {disOk.note && (
               <div className="text-[8px] text-gray-500 mt-1 italic">{disOk.note}</div>
             )}
             {disOk.segmentation_review && (
-              <div className="text-[8px] text-green-200/80 mt-0.5" data-testid="dis-confirmed-by">
+              <div className="text-[8px] text-gray-300 mt-0.5" data-testid="dis-confirmed-by">
                 {disOk.segmentation_review.reviewed_by
                   ? `${t('disReview.confirmedBy', 'Segmentation confirmed by')} ${disOk.segmentation_review.reviewed_by}`
                   : t('disReview.confirmedByRadiologist', 'Segmentation confirmed by a radiologist')}
               </div>
             )}
             {!!disOk.regions?.correction_count && (
-              <div className="text-[8px] text-green-200/80" data-testid="dis-confirmed-corrections">
+              <div className="text-[8px] text-gray-300" data-testid="dis-confirmed-corrections">
                 {fill(t('disReview.confirmedCorrections', {
                   defaultValue: 'Including {{count}} region correction(s) made by hand and acknowledged in the confirmation.',
                   count: disOk.regions.correction_count,
