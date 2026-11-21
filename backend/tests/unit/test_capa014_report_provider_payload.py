@@ -329,12 +329,14 @@ def test_rc064_measurements_and_device_labels_are_sent_unchanged(route):
     record the code builds from the RC-064 payload (was: the lines of the retired prompt builder). Structure-level
     volumetry (names, percentiles, abnormality flags) is no longer sent; total brain and intracranial volume are."""
     from app.services import verified_report
-    from app.services.report_payload_guard import provider_payload
+    from app.services.report_payload_guard import ACQUISITION_THICKNESS, provider_payload
     findings = _measurements()
     r = _post(route, findings, VOLUMETRY)
     assert r.status_code == 200, r.text
     sent = _record_sent(route)
-    payload = provider_payload(findings, VOLUMETRY)
+    # RC-135 (PR #86): the route adds the server-read thickness of the source image; here the segmentation store is
+    # refused (PRB-002), so it is "not determinable" — stated as such, never a failed report
+    payload = provider_payload({**findings, ACQUISITION_THICKNESS: {"state": "not_determinable"}}, VOLUMETRY)
     assert sent == json.loads(json.dumps(verified_report.build_view(payload.findings, payload.volumetry, "en")))
     les = sent["lesions"]
     assert (les["total_count"], les["total_volume_mm3"], les["total_volume_ml"]) == (3, 1234.5, 1.2345)

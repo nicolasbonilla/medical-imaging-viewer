@@ -73,6 +73,7 @@ from app.services import report_claim_verifier as V
 # third review of PR #78, T6: the one shared reader of a measurement value, imported here (not inside functions)
 from app.services.report_payload_guard import FREE_TEXT_FIELDS, finite_number, without_format_characters, provider_payload
 from app.services.report_payload_guard import NOT_AVAILABLE as PAYLOAD_NOT_AVAILABLE
+from app.services.report_payload_guard import ACQUISITION_THICKNESS
 
 FLOW_ID = "verified-report-1 (fixed flow + frozen claim check v2, benchmark arm A3 at f3c1976)"
 FLOW_CODE = "verified-report-1"  # the audit-safe code of FLOW_ID
@@ -293,6 +294,12 @@ def user_lang_line(lang: str) -> str:
 # "clinical context" as a clinical statement the record cannot support, also in device-written text); and the rule
 # label is the device's own. Common words that are also surnames are avoided where a synonym exists (review finding
 # 10: "kind", "Lage", "Form", "Alter" would join the device words the RC-065 tripwire never reports alone).
+# RC-135 (REQ-FUNC-122): the record's thick-slice context (paper 2's records, without their digit) and the record's
+# note when the thickness of the original acquisition could not be read. No digit: see the RC-065 note above.
+THICK_SLICE_CONTEXT = ("Automatic lesion marking is less sensitive on thick slices: small lesions may be missed and "
+                       "lesion volumes are less precise.")
+THICKNESS_UNKNOWN_CONTEXT = ("The slice thickness of the original acquisition could not be read from the image; if "
+                             "the slices were thick, small lesions may have been missed.")
 DIS_RULE_LABEL = "automatic count of lesion locations only (brain MRI); not the full diagnostic criteria"
 DIS_INTERPRETATION: Dict[str, str] = {
     "en": "This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion "
@@ -369,6 +376,12 @@ T: Dict[str, Dict[str, str]] = {
         "lim": "Not available to the automatic analysis: {items}.",
         "lim_items": "clinical indication|contrast-enhanced imaging|T1-weighted imaging|brain volumetry",
         "lim_cord": "Spinal cord and optic nerve imaging: not available.",
+        # RC-135: the thickness of the original acquisition (code-written; the number from the record)
+        "th_native": "Slice thickness of the original acquisition: {x} mm (read from the image header).",
+        "th_at_least": "Slice thickness of the original acquisition: at least {x} mm (the stored image cannot show finer "
+                       "detail).",
+        "th_thick": THICK_SLICE_CONTEXT,
+        "th_unknown": THICKNESS_UNKNOWN_CONTEXT,
         "lim_diag": "This draft is not a diagnosis.",
         "lim_other_images": "{items}: not provided to the automatic analysis; lesions the radiologist labelled on "
                             "these images are counted above as other labels.",
@@ -429,6 +442,13 @@ T: Dict[str, Dict[str, str]] = {
         "lim": "No disponibles para el análisis automático: {items}.",
         "lim_items": "indicación clínica|imágenes con contraste|imágenes ponderadas en T1|volumetría cerebral",
         "lim_cord": "Imágenes de médula espinal y de nervio óptico: no disponibles.",
+        "th_native": "Grosor de corte de la adquisición original: {x} mm (leído de la cabecera de la imagen).",
+        "th_at_least": "Grosor de corte de la adquisición original: al menos {x} mm (la imagen guardada no puede mostrar "
+                       "más detalle).",
+        "th_thick": "La marcación automática de lesiones es menos sensible con cortes gruesos: pueden escaparse lesiones "
+                    "pequeñas y los volúmenes lesionales son menos precisos.",
+        "th_unknown": "No se pudo leer en la imagen el grosor de corte de la adquisición original; si los cortes eran "
+                      "gruesos, pueden haberse escapado lesiones pequeñas.",
         "lim_diag": "Este borrador no es un diagnóstico.",
         "lim_other_images": "{items}: no se aportaron al análisis automático; las lesiones que el radiólogo marcó "
                             "en estas imágenes se cuentan arriba como otras etiquetas.",
@@ -488,6 +508,13 @@ T: Dict[str, Dict[str, str]] = {
         "lim": "Für die automatische Analyse nicht verfügbar: {items}.",
         "lim_items": "klinische Fragestellung|kontrastmittelgestützte Bildgebung|T1-gewichtete Bildgebung|Hirnvolumetrie",
         "lim_cord": "Bildgebung von Rückenmark und Sehnerv: nicht verfügbar.",
+        "th_native": "Schichtdicke der Originalaufnahme: {x} mm (aus dem Bildkopf gelesen).",
+        "th_at_least": "Schichtdicke der Originalaufnahme: mindestens {x} mm (das gespeicherte Bild kann keine feineren "
+                       "Details zeigen).",
+        "th_thick": "Die automatische Läsionsmarkierung ist bei dicken Schichten weniger empfindlich: kleine Läsionen "
+                    "können übersehen werden und Läsionsvolumina sind weniger genau.",
+        "th_unknown": "Die Schichtdicke der Originalaufnahme ließ sich aus dem Bild nicht lesen; waren die Schichten dick, "
+                      "können kleine Läsionen übersehen worden sein.",
         "lim_diag": "Dieser Entwurf ist keine Diagnose.",
         "lim_other_images": "{items}: der automatischen Analyse nicht übermittelt; die vom Radiologen auf diesen "
                             "Bildern markierten Läsionen sind oben als andere Bezeichnungen gezählt.",
@@ -736,6 +763,24 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         # withheld it or not — the same warnings as the notice, code-written
         view["longitudinal"]["quality_gate_warnings"] = warned
 
+    # RC-135 (REQ-FUNC-122; paper 1: "automated lesion counts on thick sections should be reported with the section
+    # thickness and the expected loss of small lesions"; paper 2's records carried the thick-slice context): the
+    # thickness of the ORIGINAL acquisition, read by the route from the source image (RC-054), next to a lesion analysis
+    th = f.get(ACQUISITION_THICKNESS)
+    if isinstance(th, dict) and view["lesions"].get("computed"):
+        from app.services.acquisition_geometry import THIN_LIMIT_MM
+        mm = finite_number(th.get("effective_mm"))
+        if th.get("state") in ("native", "at_least") and mm is not None:
+            view["acquisition"] = {"slice_thickness": {
+                "state": th["state"], "mm": mm,
+                "how_known": ("read from the image header" if th["state"] == "native"
+                              else "lower bound: the stored image cannot show finer detail")}}
+            if mm > THIN_LIMIT_MM:
+                view["acquisition"]["thick_slice_context"] = THICK_SLICE_CONTEXT
+        else:
+            view["acquisition"] = {"slice_thickness": {"state": "not determinable",
+                                                       "note": THICKNESS_UNKNOWN_CONTEXT}}
+
     vol = volumetry_payload if isinstance(volumetry_payload, dict) else None
     tbv = finite_number((vol or {}).get("total_brain_volume_ml"))
     icv = finite_number((vol or {}).get("intracranial_volume_ml"))
@@ -867,6 +912,10 @@ def rendered_request(findings: Any, volumetry: Any) -> Tuple[Dict[str, Any], Opt
         out["dis_assessment"] = sub or {"evaluation_status": "not_evaluated"}
     if isinstance(f.get("longitudinal"), dict) and f["longitudinal"]:
         out["longitudinal"] = f["longitudinal"]
+    th = f.get(ACQUISITION_THICKNESS)
+    if isinstance(th, dict) and th and isinstance(out.get("lesion_analysis"), dict):
+        # RC-135: the route's server-read thickness, only next to a lesion analysis (it qualifies lesion detection)
+        out[ACQUISITION_THICKNESS] = {k: th[k] for k in ("state", "effective_mm") if k in th}
     vol = None
     if isinstance(volumetry, dict):
         vol = {k: volumetry[k] for k in _RENDERED_VOLUMES if k in volumetry} or None
@@ -909,6 +958,20 @@ def _count_line(view: Dict[str, Any], t: Dict[str, str]) -> str:
     if cat and cat != "exact":       # ninth review, I12: the range only (the exact count is not in the record)
         return t["count_range"].format(cat=cat)
     return t["count_nc"]
+
+
+def _thickness_lines(view: Dict[str, Any], t: Dict[str, str], lang: str) -> List[str]:
+    """RC-135: the limitation lines of the original acquisition's slice thickness — the value and how it is known,
+    the thick-slice context above the thin limit, or that it could not be read. Nothing without the block."""
+    st = (view.get("acquisition") or {}).get("slice_thickness")
+    if not isinstance(st, dict):
+        return []
+    if st.get("state") in ("native", "at_least") and st.get("mm") is not None:
+        out = [t["th_native" if st["state"] == "native" else "th_at_least"].format(x=_loc(f"{st['mm']:g}", lang))]
+        if view["acquisition"].get("thick_slice_context"):
+            out.append(t["th_thick"])
+        return out
+    return [t["th_unknown"]]
 
 
 def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[str]], List[str], List[str]]:
@@ -1019,7 +1082,8 @@ def skeleton(view: Dict[str, Any], lang: str) -> Tuple[List[str], Optional[List[
     # fifth review, V6: an image the confirmed segmentation has labels drawn on is not "not available" either
     dropped = ({0} if entry else set()) | set(drawn) | ({len(all_items) - 1} if bv else set())
     items = [x for i, x in enumerate(all_items) if i not in dropped]
-    lim = [t["lim"].format(items=", ".join(items)), t["lim_cord"]] + ([t["lim_indication_entry"]] if entry else [])
+    lim = [t["lim"].format(items=", ".join(items)), t["lim_cord"]] + _thickness_lines(view, t, lang) \
+        + ([t["lim_indication_entry"]] if entry else [])
     if drawn:
         lim.append(t["lim_other_images"].format(items=", ".join(all_items[i] for i in sorted(drawn))))
     if view.get("not_included"):
@@ -1666,6 +1730,11 @@ _BRANCHES: Dict[str, Dict[str, Any]] = {
             "evaluated_met": {**_SC_EVALUATED, "dis_met": True}, "evaluated_not_met": {**_SC_EVALUATED, "dis_met": False},
             # RC-133: lesions under 3 mm in the DIS regions (the findings line that states them)
             "evaluated_below_size": {**_SC_EVALUATED, "dis_met": False, "below_size_lesion_count": 2}},
+    # RC-135: the original acquisition's slice thickness, as the route reads it (absent in the base case)
+    "thickness": {"native_thick": {"state": "native", "effective_mm": 5.0},
+                  "native_thin": {"state": "native", "effective_mm": 1.0},
+                  "at_least": {"state": "at_least", "effective_mm": 2.5},
+                  "unknown": {"state": "not_determinable", "effective_mm": None}},
     "longitudinal": {
         "complete": {**_SC_LNG, "status_counts": {"new": 2, "enlarged": 1, "resolved": 0, "shrunk": 0, "stable": 3},
                      "change_candidates": {"new": 2, "enlarging": 1, "total": 3}},
@@ -1683,7 +1752,7 @@ _BRANCHES: Dict[str, Dict[str, Any]] = {
               "observations": {"additional_observations": "motion"}},
 }
 _BRANCH_BASE = {"lesion": "computed", "dis": "not_evaluated", "longitudinal": "complete", "volumetry": "present",
-                "source": "automatic", "entry": "none"}
+                "source": "automatic", "entry": "none", "thickness": None}
 
 
 def _branch_requests() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, Any]], Optional[str]]]:
@@ -1703,4 +1772,6 @@ def _branch_requests() -> Iterator[Tuple[Dict[str, Any], Optional[Dict[str, Any]
             findings["dis_assessment"] = {**_BRANCHES["dis"][case["dis"]], "segmentation_review": {"source": source}}
         if case["longitudinal"]:
             findings["longitudinal"] = _BRANCHES["longitudinal"][case["longitudinal"]]
+        if case.get("thickness"):
+            findings[ACQUISITION_THICKNESS] = dict(_BRANCHES["thickness"][case["thickness"]])
         yield findings, (_BRANCHES["volumetry"][case["volumetry"]] if case["volumetry"] else None), source

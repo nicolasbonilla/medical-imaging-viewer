@@ -10,22 +10,23 @@
     "clinician_entry": "entry_flags",
     "report_language": "meta",
     "not_available": "meta",
-    "not_included": "meta"
+    "not_included": "meta",
+    "acquisition": "thickness"
   },
   "notice_keys": ["report.deidentificationNote", "reportViewer.aiDataNote"],
   "phrases": {
     "en": {"lesions": ["lesion count", "lesion volume", "size classes"], "regions": ["MAGNIMS region"],
            "dis": ["dissemination in space"], "changes": ["change candidates"],
            "volumes": ["brain", "intracranial volume"], "confirmation": ["confirmed the segmentation"],
-           "entry_flags": ["fields"]},
+           "entry_flags": ["fields"], "thickness": ["slice thickness of the original acquisition"]},
     "es": {"lesions": ["recuento de lesiones", "volumen lesional", "clases de tamaño"], "regions": ["región MAGNIMS"],
            "dis": ["diseminación en el espacio"], "changes": ["candidatos de cambio"],
            "volumes": ["cerebral", "intracraneal"], "confirmation": ["confirmó la segmentación"],
-           "entry_flags": ["campos"]},
+           "entry_flags": ["campos"], "thickness": ["grosor de corte de la adquisición original"]},
     "de": {"lesions": ["Läsionsanzahl", "Gesamtläsionsvolumen", "Größenklassen"], "regions": ["MAGNIMS-Region"],
            "dis": ["räumliche Dissemination"], "changes": ["Veränderungskandidaten"],
            "volumes": ["Gesamthirn", "intrakranielle"], "confirmation": ["Segmentierung"],
-           "entry_flags": ["Felder"]}
+           "entry_flags": ["Felder"], "thickness": ["Schichtdicke der Originalaufnahme"]}
   },
   "never_sent_fields": ["patient_sex", "patient_age", "clinical_indication", "technique", "additional_observations"],
   "never_sent_words": {

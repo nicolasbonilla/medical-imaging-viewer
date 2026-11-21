@@ -22,6 +22,7 @@ from app.security.resource_access import authorize_segmentation_id
 # PRB-003 (RC-070): the segmentation named in a DIS block is authorized like any other mask reference.
 from app.security.resource_access import authorize_mask_specs
 from app.services.report_payload_guard import (
+    ACQUISITION_THICKNESS,
     FREE_TEXT_FIELDS,
     PatientIdentifiers,
     ImplausibleMeasurement,
@@ -391,6 +392,39 @@ async def server_dis_assessment(segmentation_id: Optional[str], current_user: Us
         return gate.not_evaluated(segmentation_id, None, reason=gate.REASON_FAILED)
 
 
+NOT_DETERMINABLE_THICKNESS = {"state": "not_determinable", "effective_mm": None}
+
+
+async def server_acquisition_thickness(segmentation_id: str) -> Dict[str, Any]:
+    """RC-135 (REQ-FUNC-122): the slice thickness of the ORIGINAL acquisition of the report segmentation's source image,
+    read on the server exactly as the quality gate reads it (RC-054 geometry from the header, cached per file version;
+    else the stored acquisition record, a lower bound) — never from the client, never guessed. Never raises: any
+    failure is "not_determinable", and the draft says the thickness could not be read."""
+    import asyncio
+    from app.core.config import get_settings
+    from app.services import quality_gate as qg
+
+    try:
+        segmentation_service, storage_service = _dis_services()
+        meta = await segmentation_service.get_metadata(segmentation_id)
+        source = getattr(meta, "file_id", None)
+        if not source:
+            return dict(NOT_DETERMINABLE_THICKNESS)
+        bucket = get_settings().GCS_BUCKET_NAME
+        version = await qg.file_version(storage_service, bucket, source)
+        fields, (acq, description) = await asyncio.gather(
+            qg.visit_header_fields(storage_service, bucket, source, version_key=version),
+            asyncio.to_thread(qg.stored_records, source))
+        th = qg.visit_inputs(fields, acq, description).get("thickness")
+        mm = th.get("effective_mm") if isinstance(th, dict) else None
+        if isinstance(th, dict) and th.get("state") in ("native", "at_least") \
+                and isinstance(mm, (int, float)) and not isinstance(mm, bool):
+            return {"state": th["state"], "effective_mm": float(mm)}
+    except Exception as e:  # noqa: BLE001 — unknown thickness is stated as unknown, never a failed report
+        logger.warning(f"[Report] Slice thickness of the source image could not be read: {type(e).__name__}")
+    return dict(NOT_DETERMINABLE_THICKNESS)
+
+
 async def server_lesion_table(segmentation_id: str) -> Dict[str, Any]:
     """The lesion measurements a report may use, derived on the server for the report's own segmentation (N7).
 
@@ -602,10 +636,14 @@ async def generate_report(
             raise ReportError("segmentation_conflict", status.HTTP_409_CONFLICT,
                               f"The {key.replace('_', ' ')} belongs to another segmentation than this report "
                               "(segmentation_id differs); nothing was sent.")
+    # RC-135: the acquisition thickness is the server's only — a value sent by the client is dropped, never used
+    findings.pop(ACQUISITION_THICKNESS, None)
     if report_sid and "lesion_analysis" in findings:
         # Second review of PR #68, N7: the lesion table is derived on the server for the report's own segmentation
         # — a client table (with, without or with another `segmentation_id`) never reaches the model.
         findings["lesion_analysis"] = await server_lesion_table(report_sid)
+        # RC-135 (REQ-FUNC-122; paper 1): the slice thickness of the original acquisition, read from the source image
+        findings[ACQUISITION_THICKNESS] = await server_acquisition_thickness(report_sid)
     if "dis_assessment" in findings or (report_sid and "lesion_analysis" in findings):
         # N5: the model gets the confirmer's role and time, never the person.
         findings["dis_assessment"] = gate.without_reviewer_identity(
