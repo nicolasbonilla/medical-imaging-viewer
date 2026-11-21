@@ -124,7 +124,8 @@ _MEASUREMENT_BLOCKS = ("lesion_analysis", "dis_assessment", "longitudinal", "zon
 # image (never the client's); known, but not a measurement block (alone it gives nothing to report)
 ACQUISITION_THICKNESS = "acquisition_thickness"
 _KNOWN_FIELDS = frozenset(FREE_TEXT_FIELDS + _MEASUREMENT_BLOCKS + ("patient_age", "patient_sex", ACQUISITION_THICKNESS))
-# = quality_gate_policy.json thickness.plausible_max_mm (review of PR #86: one range; a test checks they are equal)
+# = the quality gate's plausible maximum thickness (its policy; G27: the rule stays in quality_gate.py — a test checks
+# that the two values are equal; review of PR #86)
 _THICKNESS_MM = (0.1, 20.0)
 _THICKNESS_SOURCES = ("header", "record")
 
