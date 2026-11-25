@@ -2,8 +2,7 @@
  * PRB-003 — dissemination in space (DIS) only on a segmentation a clinician has confirmed
  * (RC-070, RC-071, RC-072; REQ-SAFE-038..040; HAZ-008, HAZ-005).
  *
- * Paper A (100 public healthy controls): the device's brain-DIS rule, applied to the raw automatic FLAMeS
- * segmentation, returned "DIS met" in 19 of 100 healthy brains; 85 of 100 got at least one marked spot.
+ * The device's brain-DIS rule, applied to the raw automatic segmentation, can be met in people without MS (RMF Addendum H).
  * The dashboard showed "DIS (Brain MRI): Criterion Met" for any loaded segmentation, including a DIS block
  * stored in the segmentation's metadata, and offered no way to confirm a segmentation without AI provenance.
  *
@@ -38,7 +37,7 @@ import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { AIProvenance } from '@/types';
 
 const DIGEST = 'ab'.repeat(32);
-const NOTICE_EN = /also marks spots in most people without neurological disease/;
+const NOTICE_EN = /also marks spots in many people without known neurological disease/;
 const METLIKE = /Criterion Met|Not Met|Cumplido|erfüllt/;
 
 const ANALYSIS = {
@@ -285,8 +284,8 @@ describe('RC-072 information for safety on automatic marking', () => {
       expect(de.disReview[k]).not.toBe(en.disReview[k]);
     }
     expect(en.disReview.automaticMarkingNotice).toMatch(NOTICE_EN);
-    expect(es.disReview.automaticMarkingNotice).toMatch(/personas sin enfermedad neurológica/);
-    expect(de.disReview.automaticMarkingNotice).toMatch(/ohne neurologische Erkrankung/);
+    expect(es.disReview.automaticMarkingNotice).toMatch(/muchas personas sin enfermedad neurológica conocida/);
+    expect(de.disReview.automaticMarkingNotice).toMatch(/ohne bekannte neurologische Erkrankung/);
   });
 
   // The segmentation panel's notice (server-tool LESION output only) is tested through the real panel in

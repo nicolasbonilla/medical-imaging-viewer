@@ -57,7 +57,7 @@ import type { AIProvenance } from '@/types';
 
 const DIGEST = 'ab'.repeat(32);
 const METLIKE = /Criterion Met|Not Met/;
-const NOTICE = /Automatic lesion marking also marks spots in most people without neurological disease/;
+const NOTICE = /Automatic lesion marking also marks spots in many people without known neurological disease/;
 
 const ANALYSIS = {
   segmentation_id: 'seg-1',

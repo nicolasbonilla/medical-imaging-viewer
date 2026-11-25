@@ -2,10 +2,8 @@
 
 RC-070 (REQ-SAFE-038; HAZ-008, HAZ-005, HAZ-003), RC-071 (REQ-SAFE-039), RC-072 (REQ-SAFE-040).
 
-Evidence (PRB-033; internal, unpublished, not expert-read; Dallas Lifespan Brain Study, OpenNeuro ds004856, CC0;
-location-only rule on components of at least 3 mm³, before the 3-mm size of RC-133): the unreviewed FLAMeS 5-fold
-segmentation marked at least one spot in 72 of 75 adults aged 21-49 and in 100 of 100 aged 50-89 without CNS disease,
-and met the rule in 40 of 75 and 96 of 100. Nobody read these images: a marked spot may be a real, nonspecific one.
+Evidence: RMF Addendum H (PRB-033). The unreviewed automatic segmentation marks spots in people without known
+neurological disease and can meet the rule there; no figure of those internal studies is kept in the application.
 
 `compute_dis_criteria` (Class C) reads label ids 1 / 2 / 3 as periventricular / juxtacortical /
 infratentorial. Its result means something only for a mask whose labels ARE those regions. The rule
@@ -108,20 +106,19 @@ REASON_DETAIL = {
 
 REGIONS_NOT_CONFIRMED_NOTE = "Regions not confirmed by a radiologist; not a DIS assessment."
 
-# RC-072: information for safety wherever an automatic LESION segmentation is shown. PRB-033: "most" rests on the CC0
-# data of the module docstring (72 of 75 and 100 of 100); the former "mostly next to the ventricles" came from one
-# cohort with an unclear licence and does NOT hold in the CC0 data (25 % of the spots at 21-49 years, 14 % at 50-89),
-# so it could make spots elsewhere look more credible: removed. Not shown for structure parcellations
+# RC-072: information for safety wherever an automatic LESION segmentation is shown. PRB-033: the former
+# wording (how often, and where the spots are) rested on one cohort with an unclear licence and, by number of spots, did
+# not hold in an open one; it could make spots elsewhere look more credible. Evidence: RMF Addendum H. Not shown for structure parcellations
 # (SynthSeg, mindGlide structures). The frontend holds the same texts (`disReview.automaticMarkingNotice`).
 AUTOMATIC_MARKING_NOTICE: Dict[str, str] = {
-    "en": ("Automatic lesion marking also marks spots in most people without neurological disease, in any region of "
-           "the brain. "
+    "en": ("Automatic lesion marking also marks spots in many people without known neurological disease, in different "
+           "regions and not only next to the ventricles. "
            "A marked spot is not evidence of multiple sclerosis; every spot needs expert review."),
-    "es": ("La marcación automática de lesiones también marca manchas en la mayoría de las personas sin enfermedad "
-           "neurológica, en cualquier región del cerebro. Una mancha marcada no es prueba de esclerosis múltiple; cada "
+    "es": ("La marcación automática de lesiones también marca manchas en muchas personas sin enfermedad "
+           "neurológica conocida, en distintas regiones y no solo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; cada "
            "mancha requiere la revisión de un experto."),
-    "de": ("Die automatische Läsionsmarkierung markiert auch bei den meisten Menschen ohne neurologische Erkrankung "
-           "Stellen, in jeder Hirnregion. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede "
+    "de": ("Die automatische Läsionsmarkierung markiert auch bei vielen Menschen ohne bekannte neurologische "
+           "Erkrankung Stellen, in verschiedenen Hirnregionen und nicht nur neben den Ventrikeln. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede "
            "Stelle muss fachärztlich geprüft werden."),
 }
 

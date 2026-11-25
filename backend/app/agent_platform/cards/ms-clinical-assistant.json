@@ -182,8 +182,8 @@
    "source": "backend/app/mcp/imaging_server.py"
   },
   "mcp.ms_clinical_server.instructions": {
-   "sha256": "abb5d930b396dc7a4d49583f3099b60929f8dd911cc902f1543fe374115ae30b",
-   "chars": 3507,
+   "sha256": "d5941a3c256363089f4d21574332c8b8db6715ead696154be6ea244e01606630",
+   "chars": 3556,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.resource[prompts://ms-longitudinal-workflow]": {
@@ -296,7 +296,7 @@
   {
    "date": "2026-11-25",
    "card_version": "2026-11-25.1",
-   "what": "PRB-033 (REQ-SAFE-063): the ms-clinical-mcp instructions and dis_interpretation no longer say that a met result occurs in most people with vascular white matter disease (now: can be met) nor call the brains healthy (now: people without neurological disease, in any region), because the former wording rested on an unpublished study and on data not cleared for the product. Information only: no tool, argument, scope or data path changed. Template hash refreshed.",
+   "what": "PRB-033 (REQ-SAFE-063): the ms-clinical-mcp instructions and dis_interpretation say that automatic marking marks spots in many people without known neurological disease, in different regions and not only next to the ventricles (before: in most healthy brains), and that a met result also occurs in many older adults and can occur in vascular white matter disease (before: in most of both), because the former wording rested on an unpublished study and on data not cleared for the product. Information only: no tool, argument, scope or data path changed. Template hash refreshed.",
    "approved_by": null
   }
  ]

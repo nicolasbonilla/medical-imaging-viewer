@@ -25,7 +25,7 @@ import { SegmentationPanel } from './SegmentationPanel';
 import { useSegmentationStore } from '@/store/useSegmentationStore';
 import { useViewerStore } from '@/store/useViewerStore';
 
-const NOTICE = /Automatic lesion marking also marks spots in most people without neurological disease/;
+const NOTICE = /Automatic lesion marking also marks spots in many people without known neurological disease/;
 
 function open(segmentationType: string | null, validationSource: string | null) {
   useViewerStore.setState({ currentSeries: { id: 's', file_id: 'f.nii.gz' }, allFileIds: ['f.nii.gz'] } as never);

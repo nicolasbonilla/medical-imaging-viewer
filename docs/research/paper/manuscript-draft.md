@@ -352,7 +352,7 @@ over the calibration draw, not conditional on one calibration set.
 
 | result | script | record |
 |---|---|---|
-| §4.1 (any-voxel), §4.3, §4.4 | `scripts/calm-ms/multisite_conformal_fdr.py` | `backend/app/services/assets/multisite_conformal_record.json` |
+| §4.1 (any-voxel), §4.3, §4.4 | `scripts/calm-ms/multisite_conformal_fdr.py` | `docs/research/records/multisite_conformal_record.json` |
 | §4.1 (one-to-one), §4.2, permutation test | `scripts/calm-ms/multisite_conformal_advanced.py` | `backend/app/services/assets/multisite_conformal_advanced_record.json` |
 | cohort handling / leakage rules | `scripts/calm-ms/cohort_registry.py` | — |
 | regression tests | `scripts/calm-ms/tests/` | — |

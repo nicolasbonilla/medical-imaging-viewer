@@ -5,12 +5,11 @@ HAZ-003 (causes in RMF §3.11), HAZ-016.
 
 Why (the pre-registered benchmark, branch `research/agents-benchmark`, PREREG.md commit 9a0cc58, results at f3c1976,
 RESULTS.md): on 452 public records, the report template the app used until this change (arm A0, a single model call
-asked for TECHNIQUE, CLINICAL INDICATION and recommendation sections) gave a draft with at least one unsupported
-element in 452 of 452 drafts with Gemini 3.1 Flash-Lite and with Gemma 4 E4B (invented technique sections in every
-draft; diagnostic or treatment wording; numbers not in the measurements), and wrote about MS or demyelination for 97 of
-97 healthy controls. The fixed flow with a deterministic verifier (arm A3) gave 0 of 452 with both models, no missing
-mandatory item, and withheld the interpretive text in 4 of 452 (Gemini) and 0 of 452 (Gemma; 15 of 100 in Spanish and
-German). This module is arm A3 brought into the app; the deviations from the benchmark code are listed below.
+asked for TECHNIQUE, CLINICAL INDICATION and recommendation sections) gave drafts with unsupported elements (invented
+technique sections; diagnostic or treatment wording; numbers not in the measurements), also for people without multiple
+sclerosis. The fixed flow with a deterministic verifier (arm A3) gave none, at the price of withholding some interpretive
+texts. The figures are in the research record (PRB-033: none is kept in the application). This module is arm A3 brought
+into the app; the deviations from the benchmark code are listed below.
 
 The flow (RC-102):
   1. Code writes every number and every status of the report from the app's own measurements (the RC-064 payload):
@@ -276,14 +275,8 @@ def user_lang_line(lang: str) -> str:
 # ─────────────────────────────────────────────────────────────── the code-written report (RC-102)
 # RC-134 (REQ-SAFE-061, HAZ-008 / HAZ-003; SRS/RMF Addendum E, DRAFT — PENDING owner approval): what an evaluated
 # brain-DIS result does and does not mean.
-#   PRB-033 (the manuscript cited here before was declined by the preprint server and is not published): the device's
-#   location-only rule was met with the FLAMeS ensemble in 96 of 100 adults aged 50-89 years without CNS disease (Dallas
-#   Lifespan Brain Study, CC0; internal, unpublished). That such rules can be met in vascular and other nonspecific
-#   white matter lesions is from the literature (RMF Addendum H), so the text says "can be met", not "most".
-#   Paper 2 ("Faithful but false", E4; exploratory, post hoc): when the record told the model that the rule is a
-#   location-only count that is not the diagnostic criteria, and what it ignores, MS-suggestive reports without a
-#   clinical caveat fell by 70 and 78 percentage points with a single model call and by 43 to 81 with the agent
-#   design; one model then conveyed the rule in fewer MS examinations.
+#   Evidence and its limits: RMF Addendum E as amended by Addendum H (PRB-033); no figure of the internal studies is kept
+#   in the application, and no unpublished manuscript is cited as published.
 # The record carries paper 2's two fields (`rule`, `interpretation`) and the code-written report states the same in
 # the reader's language after an evaluated DIS result. Deviations from paper 2's tested text, on purpose (they change
 # its wording, so paper 2's effect sizes belong to its own text): no digit, year or surname ("the 2024 McDonald
@@ -327,16 +320,16 @@ DIS_RULE_LABEL = "automatic count of lesion locations only (brain MRI); not the 
 DIS_INTERPRETATION: Dict[str, str] = {
     "en": "This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion "
           "shape, age and vascular risk are not taken into account, and location rules like this one are also met in "
-          "most older adults and can be met in people with vascular white matter disease. It is not evidence of multiple "
+          "many older adults and can be met in people with vascular white matter disease. It is not evidence of multiple "
           "sclerosis without a physician's review of the lesions and of the case as a whole.",
     "es": "Este resultado es un recuento automático solo de la localización de las lesiones, no los criterios "
           "diagnósticos completos: no tiene en cuenta la morfología de las lesiones, la edad ni el riesgo vascular, y "
-          "las reglas de localización como esta también se cumplen en la mayoría de los adultos mayores y pueden "
+          "las reglas de localización como esta también se cumplen en muchos adultos mayores y pueden "
           "cumplirse en personas con enfermedad vascular de la sustancia blanca. No es una prueba de esclerosis múltiple sin la "
           "revisión de las lesiones y del caso en su conjunto por un médico.",
     "de": "Dieses Ergebnis ist eine automatische Zählung allein nach der Lokalisation der Läsionen, nicht die "
           "vollständigen diagnostischen Kriterien: Morphologie der Läsionen, Lebensalter und vaskuläres Risiko werden "
-          "nicht berücksichtigt, und solche Lokalisationsregeln sind auch bei den meisten älteren Erwachsenen erfüllt "
+          "nicht berücksichtigt, und solche Lokalisationsregeln sind auch bei vielen älteren Erwachsenen erfüllt "
           "und können bei Menschen mit vaskulärer Erkrankung der weißen Substanz erfüllt sein. Ohne ärztliche Prüfung der "
           "Läsionen und des Gesamtbilds ist es kein Nachweis einer Multiplen Sklerose.",
 }
@@ -817,8 +810,7 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         # withheld it or not — the same warnings as the notice, code-written
         view["longitudinal"]["quality_gate_warnings"] = warned
 
-    # RC-135 (REQ-FUNC-122: "automated lesion counts on thick sections should be reported with the section
-    # thickness and the expected loss of small lesions"; paper 2's records carried the thick-slice context): the
+    # RC-135 (REQ-FUNC-122; paper 2's records carried the thick-slice context): the
     # thickness of the ORIGINAL acquisition, read by the route from the source image (RC-054), next to a lesion analysis
     th = f.get(ACQUISITION_THICKNESS)
     if isinstance(th, dict) and view["lesions"].get("computed"):

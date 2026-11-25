@@ -4,7 +4,7 @@ The owner's standing requirement (2026-10-17, restated 2026-11-21): every findin
 in MSTool-AI — as a feature, as information for safety, or with a recorded reason why it is not. This file is that
 trace. Update it with every paper version and every app change that implements a finding. Since PRB-033 (2026-11-25) a
 finding enters the application only with (a) data whose licence permits it, (b) the same result in a second cohort or in
-published literature, and (c) its publication status written as it is. SRS Addendum E, RMF
+published literature, (c) its publication status written as it is, and (d) the promises of its own protocol about the product. SRS Addendum E, RMF
 Addendum E.
 
 Status: **in app** = released; **this change** = branch `feat/papers-in-app` (DRAFT, pending the owner's approval);
@@ -13,20 +13,19 @@ Status: **in app** = released; **this change** = branch `feat/papers-in-app` (DR
 ## Paper 1 — "Automated Lesion Location and Dissemination in Space in People With and Without Multiple Sclerosis"
 
 **Status 2026-11-25: NOT PUBLISHED.** Submitted to medRxiv on 2026-11-21 (MEDRXIV/2026/368633) and declined on
-2026-11-22; no journal has reviewed it; it has no DOI and is not being resubmitted. It must not be cited as a preprint or
-a paper. Its internal review found defects that text changes cannot repair: results of some cohorts existed before the
-first protocol and were not declared; one cohort's licence and access are contradictory (SibBMS); the ethics statements
-of the form and of the manuscript disagree; two tools received skull-stripped input against their documentation; seven
-citations do not support their sentence. A new, independent study replaces it.
+2026-11-22; no journal has reviewed it and it has no DOI. Its text must not be cited as a preprint or a paper. No
+resubmission is planned (owner decision pending); a new, independent study is a draft, not registered. The internal review
+found, among others: results of some cohorts existed before the first protocol and were not declared; one cohort's licence
+and access are contradictory (SibBMS); the ethics statements of the form and of the manuscript disagree; two tools received
+skull-stripped input against their documentation; seven citations do not support their sentence.
 
-The numbers below are kept as the record of what was measured. **They are internal, not peer reviewed, and no text of the
-application rests on them** except where PRB-033 says so: 1.1 and the "older adults" part of 1.3, on the CC0 cohort only
-(Dallas Lifespan Brain Study, OpenNeuro ds004856: at least one marked spot in 72 of 75 adults aged 21-49 and 100 of 100
-aged 50-89; location-only rule in 40 of 75 and 96 of 100; FLAMeS ensemble, components of at least 3 mm³, nobody read the
-images). In 1.1, "mostly periventricular" does not hold in that cohort (25% and 14% of the spots) and left the notice. In
-1.3, "most people with vascular white matter disease" left the application's texts (now "can be met", from the
-literature). 1.4: the size criterion is MAGNIMS's. 1.6, 1.7 and 1.9: the thickness texts carry no figure of this study.
-1.10: that tool received skull-stripped, template-space input against its documentation, so the figure may not describe it.
+The numbers below are kept as the record of what was measured: internal, not peer reviewed, not for the product, its
+labelling or marketing (the protocols say so). The table keeps the wording of 2026-11-21. Since PRB-033 (branch
+`fix/papers-record-and-notices`, DRAFT, PENDING owner approval): 1.1 the notice says "in many people without known
+neurological disease, in different regions and not only next to the ventricles"; 1.3 the interpretation says "in many older
+adults and can be met in people with vascular white matter disease" (evidence and limits: RMF Addendum H); 1.4 the size
+criterion is MAGNIMS's; 1.3, 1.4 and 1.7 were released with PR #85 and #86; 1.9 and 1.10: the notice is also shown for LST-AI
+and MindGlide output, so "not run" and "not a lesion path" are not exact. 1.10's input went against the tool's documentation.
 Open: the size criterion measures between voxel centres, so a round lesion of exactly 3 mm does not count (measured on
 artificial spheres, 2026-11-25); to be decided by the owner, with a Class C review.
 
