@@ -65,13 +65,14 @@ MCP_RULE = (
     '        "(PRB-003). When `dis_assessment.evaluation_status` is not \'evaluated\', say only \'dissemination in "\n'
     '        "space: not evaluated (requires clinician review of the segmentation)\'. Never derive dissemination "\n'
     '        "in space yourself from lesion counts, regions or the region classification. Automatic marking also "\n'
-    '        "marks spots in most healthy brains; a marked spot is not evidence of multiple sclerosis.\\n"\n'
+    '        "marks spots in most people without neurological disease, in any region; a marked spot is not evidence of "\n'
+    '        "multiple sclerosis.\\n"\n'
 )
-ES_NOTICE = ('    "automaticMarkingNotice": "La marcación automática de lesiones también marca manchas en la mayoría de los '
-             'cerebros sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; '
+ES_NOTICE = ('    "automaticMarkingNotice": "La marcación automática de lesiones también marca manchas en la mayoría de las '
+             'personas sin enfermedad neurológica, en cualquier región del cerebro. Una mancha marcada no es prueba de esclerosis múltiple; '
              'cada mancha requiere la revisión de un experto."')
-ES_NOTICE_EN = ('    "automaticMarkingNotice": "Automatic lesion marking also marks spots in most healthy brains, mostly next '
-                'to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."')
+ES_NOTICE_EN = ('    "automaticMarkingNotice": "Automatic lesion marking also marks spots in most people without '
+                'neurological disease, in any region of the brain. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."')
 CONFIRMED_LINE = '    confirmed = bool(regions_ok and ai_review_ok and bound)\n'
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)

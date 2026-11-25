@@ -93,16 +93,16 @@ function regionBarWidth(vol: number, maxVol: number): string {
 
 /**
  * RC-134 (REQ-SAFE-061, HAZ-008; SRS/RMF Addendum E, DRAFT — PENDING owner approval): what a met brain-DIS result
- * does not mean, shown under every met result. Papers 1 and 2: the location-only rule was met with the experts' own
- * masks as often in vascular white matter disease as in MS, and in 96 of 100 adults aged 50-89 years without CNS
- * disease; telling the report model what the rule ignores cut MS-suggestive reports without a clinical caveat by
+ * does not mean, shown under every met result. PRB-033: the location-only rule was met by the unreviewed FLAMeS
+ * segmentation in 96 of 100 adults aged 50-89 years without CNS disease (CC0 data, internal, unpublished); that it can
+ * be met in vascular disease is from the literature. Paper 2: telling the report model what the rule ignores cut MS-suggestive reports without a clinical caveat by
  * 70 and 78 points with a single model call and by 43 to 81 with an agent (exploratory, post hoc). The same text, in each language, as the verified report's code-written line
  * (backend `verified_report.DIS_INTERPRETATION`; a backend test checks that the locales equal it).
  */
 export const DIS_INTERPRETATION_EN =
   'This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion shape, age ' +
   'and vascular risk are not taken into account, and location rules like this one are also met in most older adults ' +
-  'and in most people with vascular white matter disease. It is not evidence of multiple sclerosis without a ' +
+  'and can be met in people with vascular white matter disease. It is not evidence of multiple sclerosis without a ' +
   'physician\'s review of the lesions and of the case as a whole.';
 
 /** RC-133 (REQ-FUNC-121): what the per-region count means (MAGNIMS 2021 size: 3 mm in the largest extent, measured
@@ -1112,7 +1112,7 @@ export function LesionDashboard({ segmentationId, onNavigateToSlice, onMaskUpdat
           {confirmError && <p className="text-[10px] text-red-300">{confirmError}</p>}
         </div>
       ) : disOk ? (
-        // RC-134 (REQ-SAFE-061; papers 1 and 2): a met location rule is not good news and not a diagnosis — it is
+        // RC-134 (REQ-SAFE-061): a met location rule is not good news and not a diagnosis — it is
         // shown in an attention colour (amber), never as a success (green), and a not-met result as neutral (gray)
         <div className={`flex items-center gap-2 p-2 rounded-lg ${
           (disOk.dis_met_brain ?? disOk.dis_met) ? 'bg-amber-900/25 border border-amber-700/50' : 'bg-gray-800/50 border border-gray-700/50'

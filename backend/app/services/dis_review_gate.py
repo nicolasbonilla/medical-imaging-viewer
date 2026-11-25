@@ -2,12 +2,10 @@
 
 RC-070 (REQ-SAFE-038; HAZ-008, HAZ-005, HAZ-003), RC-071 (REQ-SAFE-039), RC-072 (REQ-SAFE-040).
 
-Evidence (paper A v0.3 healthy-control addendum, branch `research/paper-a-v0.3`, record
-`docs/research/records/2026-10-24_paper_a_v03c_controls.json`, key `app_dis`): on 100 public healthy
-controls (one site, SibBMS, template-normalised, not expert-read, CC BY-NC-SA 3.0), the device's own
-brain-DIS code applied to the raw automatic FLAMeS 5-fold segmentation returned "DIS met (brain)" in
-19 of 100 (95 % CI 11.8-28.1 %); 85 of 100 got at least one marked spot (2.6 per scan); 165 of the 263
-false spots (63 %) were periventricular.
+Evidence (PRB-033; internal, unpublished, not expert-read; Dallas Lifespan Brain Study, OpenNeuro ds004856, CC0;
+location-only rule on components of at least 3 mm³, before the 3-mm size of RC-133): the unreviewed FLAMeS 5-fold
+segmentation marked at least one spot in 72 of 75 adults aged 21-49 and in 100 of 100 aged 50-89 without CNS disease,
+and met the rule in 40 of 75 and 96 of 100. Nobody read these images: a marked spot may be a real, nonspecific one.
 
 `compute_dis_criteria` (Class C) reads label ids 1 / 2 / 3 as periventricular / juxtacortical /
 infratentorial. Its result means something only for a mask whose labels ARE those regions. The rule
@@ -110,18 +108,20 @@ REASON_DETAIL = {
 
 REGIONS_NOT_CONFIRMED_NOTE = "Regions not confirmed by a radiologist; not a DIS assessment."
 
-# RC-072: information for safety wherever an automatic LESION segmentation is shown (paper A, wording A of
-# `APP-FEATURE-slice-thickness-reliability.md` §5b — without numbers until the SibBMS licence is clarified;
-# "most" itself rests on that CC BY-NC data: owner decision). Not shown for structure parcellations
+# RC-072: information for safety wherever an automatic LESION segmentation is shown. PRB-033: "most" rests on the CC0
+# data of the module docstring (72 of 75 and 100 of 100); the former "mostly next to the ventricles" came from one
+# cohort with an unclear licence and does NOT hold in the CC0 data (25 % of the spots at 21-49 years, 14 % at 50-89),
+# so it could make spots elsewhere look more credible: removed. Not shown for structure parcellations
 # (SynthSeg, mindGlide structures). The frontend holds the same texts (`disReview.automaticMarkingNotice`).
 AUTOMATIC_MARKING_NOTICE: Dict[str, str] = {
-    "en": ("Automatic lesion marking also marks spots in most healthy brains, mostly next to the ventricles. "
+    "en": ("Automatic lesion marking also marks spots in most people without neurological disease, in any region of "
+           "the brain. "
            "A marked spot is not evidence of multiple sclerosis; every spot needs expert review."),
-    "es": ("La marcación automática de lesiones también marca manchas en la mayoría de los cerebros sanos, "
-           "sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; cada "
+    "es": ("La marcación automática de lesiones también marca manchas en la mayoría de las personas sin enfermedad "
+           "neurológica, en cualquier región del cerebro. Una mancha marcada no es prueba de esclerosis múltiple; cada "
            "mancha requiere la revisión de un experto."),
-    "de": ("Die automatische Läsionsmarkierung markiert auch in den meisten gesunden Gehirnen Stellen, vor "
-           "allem neben den Ventrikeln. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede "
+    "de": ("Die automatische Läsionsmarkierung markiert auch bei den meisten Menschen ohne neurologische Erkrankung "
+           "Stellen, in jeder Hirnregion. Eine markierte Stelle ist kein Nachweis einer Multiplen Sklerose; jede "
            "Stelle muss fachärztlich geprüft werden."),
 }
 

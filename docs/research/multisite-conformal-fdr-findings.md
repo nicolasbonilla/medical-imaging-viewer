@@ -2,7 +2,7 @@
 
 **Status:** research finding, reproducible on in-hand public data (CPU-only).
 **Script:** [`scripts/calm-ms/multisite_conformal_fdr.py`](../../scripts/calm-ms/multisite_conformal_fdr.py)
-**Record:** [`backend/app/services/assets/multisite_conformal_record.json`](../../backend/app/services/assets/multisite_conformal_record.json)
+**Record:** [`docs/research/records/multisite_conformal_record.json`](records/multisite_conformal_record.json)
 **Reviewed by:** 3 independent adversarial agents (statistical validity, data/leakage integrity,
 over-claiming/confounds). This document reflects the **post-review** claims — an earlier
 "conformal breaks across every MS site shift" headline was **refuted by our own clean axis**

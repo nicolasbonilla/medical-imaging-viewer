@@ -275,11 +275,11 @@ def user_lang_line(lang: str) -> str:
 
 # ─────────────────────────────────────────────────────────────── the code-written report (RC-102)
 # RC-134 (REQ-SAFE-061, HAZ-008 / HAZ-003; SRS/RMF Addendum E, DRAFT — PENDING owner approval): what an evaluated
-# brain-DIS result does and does not mean, from papers 1 and 2.
-#   Paper 1 (medRxiv MEDRXIV/2026/368633): the device's location-only rule was met with the experts' own masks in 139
-#   of 145 MS examinations and in 167 of 170 people with vascular white matter hyperintensities (LR+ 1.0), and with
-#   the FLAMeS ensemble in 96 of 100 adults aged 50-89 years without CNS disease; its clinically faithful version did
-#   not separate MS from vascular disease either (LR+ 1.0).
+# brain-DIS result does and does not mean.
+#   PRB-033 (the manuscript cited here before was declined by the preprint server and is not published): the device's
+#   location-only rule was met with the FLAMeS ensemble in 96 of 100 adults aged 50-89 years without CNS disease (Dallas
+#   Lifespan Brain Study, CC0; internal, unpublished). That such rules can be met in vascular and other nonspecific
+#   white matter lesions is from the literature (RMF Addendum H), so the text says "can be met", not "most".
 #   Paper 2 ("Faithful but false", E4; exploratory, post hoc): when the record told the model that the rule is a
 #   location-only count that is not the diagnostic criteria, and what it ignores, MS-suggestive reports without a
 #   clinical caveat fell by 70 and 78 percentage points with a single model call and by 43 to 81 with the agent
@@ -327,17 +327,17 @@ DIS_RULE_LABEL = "automatic count of lesion locations only (brain MRI); not the 
 DIS_INTERPRETATION: Dict[str, str] = {
     "en": "This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion "
           "shape, age and vascular risk are not taken into account, and location rules like this one are also met in "
-          "most older adults and in most people with vascular white matter disease. It is not evidence of multiple "
+          "most older adults and can be met in people with vascular white matter disease. It is not evidence of multiple "
           "sclerosis without a physician's review of the lesions and of the case as a whole.",
     "es": "Este resultado es un recuento automático solo de la localización de las lesiones, no los criterios "
           "diagnósticos completos: no tiene en cuenta la morfología de las lesiones, la edad ni el riesgo vascular, y "
-          "las reglas de localización como esta también se cumplen en la mayoría de los adultos mayores y de las "
-          "personas con enfermedad vascular de la sustancia blanca. No es una prueba de esclerosis múltiple sin la "
+          "las reglas de localización como esta también se cumplen en la mayoría de los adultos mayores y pueden "
+          "cumplirse en personas con enfermedad vascular de la sustancia blanca. No es una prueba de esclerosis múltiple sin la "
           "revisión de las lesiones y del caso en su conjunto por un médico.",
     "de": "Dieses Ergebnis ist eine automatische Zählung allein nach der Lokalisation der Läsionen, nicht die "
           "vollständigen diagnostischen Kriterien: Morphologie der Läsionen, Lebensalter und vaskuläres Risiko werden "
-          "nicht berücksichtigt, und solche Lokalisationsregeln sind auch bei den meisten älteren Erwachsenen und bei "
-          "den meisten Menschen mit vaskulärer Erkrankung der weißen Substanz erfüllt. Ohne ärztliche Prüfung der "
+          "nicht berücksichtigt, und solche Lokalisationsregeln sind auch bei den meisten älteren Erwachsenen erfüllt "
+          "und können bei Menschen mit vaskulärer Erkrankung der weißen Substanz erfüllt sein. Ohne ärztliche Prüfung der "
           "Läsionen und des Gesamtbilds ist es kein Nachweis einer Multiplen Sklerose.",
 }
 
@@ -817,7 +817,7 @@ def build_view(findings_payload: Dict[str, Any], volumetry_payload: Optional[Dic
         # withheld it or not — the same warnings as the notice, code-written
         view["longitudinal"]["quality_gate_warnings"] = warned
 
-    # RC-135 (REQ-FUNC-122; paper 1: "automated lesion counts on thick sections should be reported with the section
+    # RC-135 (REQ-FUNC-122: "automated lesion counts on thick sections should be reported with the section
     # thickness and the expected loss of small lesions"; paper 2's records carried the thick-slice context): the
     # thickness of the ORIGINAL acquisition, read by the route from the source image (RC-054), next to a lesion analysis
     th = f.get(ACQUISITION_THICKNESS)

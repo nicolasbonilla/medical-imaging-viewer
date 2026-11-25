@@ -59,7 +59,7 @@ N_REPEAT = 50
 N_BOOT = 2000
 SEED = 20260823
 _CACHE = os.path.join(_HERE, ".multisite_cache_v2.npz")
-_OUT = os.path.join(_BACKEND, "app", "services", "assets", "multisite_conformal_record.json")
+_OUT = os.path.join(_BACKEND, "..", "docs", "research", "records", "multisite_conformal_record.json")
 
 # Sites come from the leak-safe registry: the 4 vetted cohorts (fixed order) + any new
 # data/cohorts/<dir> that carries a cohort.json (e.g. an nnU-Net-segmented held-out cohort).

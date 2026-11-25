@@ -38,7 +38,7 @@ import { useSegmentationStore } from '@/store/useSegmentationStore';
 import type { AIProvenance } from '@/types';
 
 const DIGEST = 'ab'.repeat(32);
-const NOTICE_EN = /also marks spots in most healthy brains/;
+const NOTICE_EN = /also marks spots in most people without neurological disease/;
 const METLIKE = /Criterion Met|Not Met|Cumplido|erfüllt/;
 
 const ANALYSIS = {
@@ -285,8 +285,8 @@ describe('RC-072 information for safety on automatic marking', () => {
       expect(de.disReview[k]).not.toBe(en.disReview[k]);
     }
     expect(en.disReview.automaticMarkingNotice).toMatch(NOTICE_EN);
-    expect(es.disReview.automaticMarkingNotice).toMatch(/cerebros sanos/);
-    expect(de.disReview.automaticMarkingNotice).toMatch(/gesunden Gehirnen/);
+    expect(es.disReview.automaticMarkingNotice).toMatch(/personas sin enfermedad neurológica/);
+    expect(de.disReview.automaticMarkingNotice).toMatch(/ohne neurologische Erkrankung/);
   });
 
   // The segmentation panel's notice (server-tool LESION output only) is tested through the real panel in

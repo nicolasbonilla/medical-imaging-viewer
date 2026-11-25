@@ -2,7 +2,9 @@
 
 The owner's standing requirement (2026-10-17, restated 2026-11-21): every finding of the project's papers is applied
 in MSTool-AI — as a feature, as information for safety, or with a recorded reason why it is not. This file is that
-trace. Update it with every paper version and every app change that implements a finding. SRS Addendum E, RMF
+trace. Update it with every paper version and every app change that implements a finding. Since PRB-033 (2026-11-25) a
+finding enters the application only with (a) data whose licence permits it, (b) the same result in a second cohort or in
+published literature, and (c) its publication status written as it is. SRS Addendum E, RMF
 Addendum E.
 
 Status: **in app** = released; **this change** = branch `feat/papers-in-app` (DRAFT, pending the owner's approval);
@@ -10,7 +12,23 @@ Status: **in app** = released; **this change** = branch `feat/papers-in-app` (DR
 
 ## Paper 1 — "Automated Lesion Location and Dissemination in Space in People With and Without Multiple Sclerosis"
 
-medRxiv MEDRXIV/2026/368633 (submitted 2026-11-21); *Neurology* submission after the DOI.
+**Status 2026-11-25: NOT PUBLISHED.** Submitted to medRxiv on 2026-11-21 (MEDRXIV/2026/368633) and declined on
+2026-11-22; no journal has reviewed it; it has no DOI and is not being resubmitted. It must not be cited as a preprint or
+a paper. Its internal review found defects that text changes cannot repair: results of some cohorts existed before the
+first protocol and were not declared; one cohort's licence and access are contradictory (SibBMS); the ethics statements
+of the form and of the manuscript disagree; two tools received skull-stripped input against their documentation; seven
+citations do not support their sentence. A new, independent study replaces it.
+
+The numbers below are kept as the record of what was measured. **They are internal, not peer reviewed, and no text of the
+application rests on them** except where PRB-033 says so: 1.1 and the "older adults" part of 1.3, on the CC0 cohort only
+(Dallas Lifespan Brain Study, OpenNeuro ds004856: at least one marked spot in 72 of 75 adults aged 21-49 and 100 of 100
+aged 50-89; location-only rule in 40 of 75 and 96 of 100; FLAMeS ensemble, components of at least 3 mm³, nobody read the
+images). In 1.1, "mostly periventricular" does not hold in that cohort (25% and 14% of the spots) and left the notice. In
+1.3, "most people with vascular white matter disease" left the application's texts (now "can be met", from the
+literature). 1.4: the size criterion is MAGNIMS's. 1.6, 1.7 and 1.9: the thickness texts carry no figure of this study.
+1.10: that tool received skull-stripped, template-space input against its documentation, so the figure may not describe it.
+Open: the size criterion measures between voxel centres, so a round lesion of exactly 3 mm does not count (measured on
+artificial spheres, 2026-11-25); to be decided by the owner, with a Class C review.
 
 | # | Finding | In the application | Status | Trace |
 |---|---|---|---|---|

@@ -51,9 +51,10 @@ mcp = FastMCP(
         "(PRB-003). When `dis_assessment.evaluation_status` is not 'evaluated', say only 'dissemination in "
         "space: not evaluated (requires clinician review of the segmentation)'. Never derive dissemination "
         "in space yourself from lesion counts, regions or the region classification. Automatic marking also "
-        "marks spots in most healthy brains; a marked spot is not evidence of multiple sclerosis.\n"
+        "marks spots in most people without neurological disease, in any region; a marked spot is not evidence of "
+        "multiple sclerosis.\n"
         "- When you report a met brain-DIS result, always give its `dis_interpretation` with it: an automatic "
-        "count of lesion locations only, also met in most older adults and in most people with vascular white "
+        "count of lesion locations only, also met in most older adults and possible in people with vascular white "
         "matter disease, not evidence of multiple sclerosis on its own (RC-134). Only lesions of at least 3 mm in "
         "their largest extent count toward it. After a not-met result, give its `dis_interpretation` too: a not-met "
         "result does not exclude multiple sclerosis (RC-136).\n"
@@ -85,13 +86,13 @@ DIS_CONCLUSION_KEYS = frozenset({
     "dis_met", "dis_met_brain", "dis_met_full", "dit_waiver_supported", "brain_regions_with_lesions",
     "regions_with_lesions", "total_topographies_involved", "region_details",
 })
-# RC-134 (REQ-SAFE-061; papers 1 and 2): what an evaluated brain-DIS result does not mean — the same English text as
+# RC-134 (REQ-SAFE-061): what an evaluated brain-DIS result does not mean — the same English text as
 # the verified report's `DIS_INTERPRETATION["en"]` (a test checks they are equal). Mirrored, not imported: the
 # assistant server reaches the backend over HTTP and stays independent of its services.
 DIS_INTERPRETATION = (
     "This result is an automatic count of lesion locations only, not the full diagnostic criteria: lesion shape, "
     "age and vascular risk are not taken into account, and location rules like this one are also met in most older "
-    "adults and in most people with vascular white matter disease. It is not evidence of multiple sclerosis without "
+    "adults and can be met in people with vascular white matter disease. It is not evidence of multiple sclerosis without "
     "a physician's review of the lesions and of the case as a whole."
 )
 # RC-136 (REQ-SAFE-062; paper 2, E5): after a NOT-met result the text above would read as reassurance — the same

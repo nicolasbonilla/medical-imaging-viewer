@@ -1451,6 +1451,21 @@ Residual risk and limits (proposed): the thickness is only as good as the image 
 
 Residual risk and limits (proposed): the change follows E5's findings and is deliberately not re-measured on E5's records (that would tune the wording to paper 2's classifier); it answers rule (a) only — by paper 2's rule (c), the region line (lesions in 2 or more regions) stays report-implied DIS unless the model's Impression qualifies it (unqualified in 156 (Gemini) and 89 (Claude) of 168 confirmed vascular reports, 108 and 59 of 121 MS reports), and is kept: it is a factual list, and instructing the model to write a qualifier would tune the design to the classifier; a reader can still over-read a met result; the measure of whether a reader is misled remains unmeasured (paper 2's limitation). The dashboard keeps its RC-134 statement under a met result only; the not-met edge case is covered there by the RC-133 line of lesions under 3 mm.
 
+## Addendum H — Statements about people without MS (DRAFT, PENDING owner approval)
+
+*Proposed 2026-11-25 on branch `fix/papers-record-and-notices`; not merged, not deployed. SRS Addendum H (REQ-SAFE-063). Problem report PRB-033.*
+
+| Cause | Hazard | Evidence | Control |
+|---|---|---|---|
+| (n) The notice on automatic marking said the spots of healthy brains lie "mostly next to the ventricles": a reader could take spots elsewhere (juxtacortical, deep, infratentorial) as more credible | HAZ-008, HAZ-003 | The figure (63%) came from one cohort with a contradictory licence (SibBMS). In the Dallas Lifespan Brain Study (OpenNeuro ds004856, CC0; 2.5-mm FLAIR; FLAMeS 5-fold ensemble; internal, unpublished; nobody read the images) 25% of the spots at 21-49 years (115 of 453) and 14% at 50-89 (468 of 3,360) were periventricular. At least one spot: 72 of 75 (96%, 95% CI 88.8-99.2) and 100 of 100 (96.4-100) | RC-137 |
+| (o) The statement under a met DIS result said it is also met "in most people with vascular white matter disease", resting on WMH 2017 (CC BY-NC; its protocol promised no figure in the product) and on a manuscript that is not published | HAZ-008 | Literature: focal white matter lesions fulfilling DIS "are not specific to MS and frequently appear in other neurological disorders, such as cerebral small vessel disease" and DIS specificity 78.5% (72.0-84.8) in people with white matter lesions and other diagnoses (preprint, PMC13060985); comorbidities such as small vessel disease "may be associated with nonspecific MRI multifocal white matter changes that increase the risk of MS misdiagnosis" (PMC13528897); in 82 healthy volunteers read by experts, 3 (3.7%) met a criterion of at least 2 regions (PMC7966501). They support "can be met", not "most" | RC-137 |
+
+| RC | Measure | Type | Requirement | Implementation | Verification |
+|---|---|---|---|---|---|
+| RC-137 | The notice says "in most people without neurological disease, in any region of the brain"; the interpretation says "can be met in people with vascular white matter disease" (en/es/de; dashboard, report, assistant); no file of the application cites the unpublished manuscript or carries SibBMS or WMH 2017 results; two research records with SibBMS results left the packaged assets | Information for safety | REQ-SAFE-063 | `dis_review_gate.AUTOMATIC_MARKING_NOTICE`, `verified_report.DIS_INTERPRETATION`, `mcp/ms_clinical_server.py` (card 2026-11-25.1), `AutomaticMarkingNotice.tsx`, `LesionDashboard.tsx`, locales en/es/de | `test_prb033_statements_rest_on_checked_sources.py` |
+
+Residual risk and limits (proposed): "most" rests on one cohort, one tool version and unread images; a spot there may be a real nonspecific lesion, which the notice does not deny. "Can be met" is weaker than the former "most": the reader still learns that a met result is nonspecific. Addendum E's evidence columns and the records of PRB-003 and CAPA-016 are kept as written: they are the history of those decisions; this addendum says what they no longer support.
+
 *End of Risk Management File*
 
 *This document is maintained under configuration management. The latest version is always the one in the Git repository at `docs/iec62304/03_Risk_Management_File.md`.*

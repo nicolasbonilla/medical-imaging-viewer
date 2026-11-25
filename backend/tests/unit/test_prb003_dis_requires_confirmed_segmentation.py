@@ -737,9 +737,9 @@ def test_rc072_automatic_marking_notice_exists_in_every_language():
     from app.services import dis_review_gate as gate
     texts = gate.AUTOMATIC_MARKING_NOTICE
     assert set(texts) == {"en", "es", "de"}
-    assert "healthy brains" in texts["en"] and "not evidence of multiple sclerosis" in texts["en"]
-    assert "cerebros sanos" in texts["es"] and "esclerosis múltiple" in texts["es"]
-    assert "gesunden Gehirnen" in texts["de"] and "Multiplen Sklerose" in texts["de"]
+    assert "people without neurological disease" in texts["en"] and "not evidence of multiple sclerosis" in texts["en"]
+    assert "personas sin enfermedad neurológica" in texts["es"] and "esclerosis múltiple" in texts["es"]
+    assert "ohne neurologische Erkrankung" in texts["de"] and "Multiplen Sklerose" in texts["de"]
 
 
 @pytest.mark.unit

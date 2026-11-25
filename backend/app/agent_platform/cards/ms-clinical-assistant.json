@@ -2,7 +2,7 @@
  "schema": "mstool.agent-card/1",
  "status": "DRAFT, PENDING owner approval (REQ-AGT-005; RC-117; SOUP-AI-002)",
  "agent_id": "ms-clinical-assistant",
- "card_version": "2026-11-21.2",
+ "card_version": "2026-11-25.1",
  "model": {
   "id": null,
   "control": "client",
@@ -182,8 +182,8 @@
    "source": "backend/app/mcp/imaging_server.py"
   },
   "mcp.ms_clinical_server.instructions": {
-   "sha256": "8ab20b934200f16580ce01d3e22ccf5cda072718a516b68879cdef71f4a826b7",
-   "chars": 3467,
+   "sha256": "abb5d930b396dc7a4d49583f3099b60929f8dd911cc902f1543fe374115ae30b",
+   "chars": 3507,
    "source": "backend/app/mcp/ms_clinical_server.py"
   },
   "mcp.ms_clinical_server.resource[prompts://ms-longitudinal-workflow]": {
@@ -291,6 +291,12 @@
    "date": "2026-11-21",
    "card_version": "2026-11-21.2",
    "what": "PR #87 (RC-136, REQ-SAFE-062; paper 2, E5): the RC-134 bullet adds one sentence - after a not-met result the assistant gives its dis_interpretation too, which says that a not-met result does not exclude MS; summarize_dis_items returns that text (the verified report's DIS_INTERPRETATION_NOT_MET) after a not-met result and the RC-134 text after a met one. Information only: no tool, argument, scope or data path changed. Template hash refreshed; the eval suite runs in CI.",
+   "approved_by": null
+  },
+  {
+   "date": "2026-11-25",
+   "card_version": "2026-11-25.1",
+   "what": "PRB-033 (REQ-SAFE-063): the ms-clinical-mcp instructions and dis_interpretation no longer say that a met result occurs in most people with vascular white matter disease (now: can be met) nor call the brains healthy (now: people without neurological disease, in any region), because the former wording rested on an unpublished study and on data not cleared for the product. Information only: no tool, argument, scope or data path changed. Template hash refreshed.",
    "approved_by": null
   }
  ]
