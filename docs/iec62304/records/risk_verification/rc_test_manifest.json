@@ -1714,7 +1714,7 @@
       ],
       "requirement": "REQ-SAFE-063",
       "change": "branch fix/papers-record-and-notices (2026-11-25)",
-      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. DRAFT, PENDING owner approval."
+      "note": "Research stage (owner decision 2026-11-14): CI + one review + owner sign-off; negative controls not run until clinical use. N. G. Bonilla Vargas — approved 2026-11-26 (PR #88)."
     }
   },
   "unverified_controls_note": [

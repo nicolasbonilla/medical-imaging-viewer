@@ -21,7 +21,7 @@ skull-stripped input against their documentation; seven citations do not support
 
 The numbers below are kept as the record of what was measured: internal, not peer reviewed, not for the product, its
 labelling or marketing (the protocols say so). The table keeps the wording of 2026-11-21. Since PRB-033 (branch
-`fix/papers-record-and-notices`, DRAFT, PENDING owner approval): 1.1 the notice says "in many people without known
+`fix/papers-record-and-notices`, N. G. Bonilla Vargas — approved 2026-11-26 (PR #88)): 1.1 the notice says "in many people without known
 neurological disease, in different regions and not only next to the ventricles"; 1.3 the interpretation says "in many older
 adults and can be met in people with vascular white matter disease" (evidence and limits: RMF Addendum H); 1.4 the size
 criterion is MAGNIMS's; 1.3, 1.4 and 1.7 were released with PR #85 and #86; 1.9 and 1.10: the notice is also shown for LST-AI

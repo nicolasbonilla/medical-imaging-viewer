@@ -8,8 +8,8 @@ raised — owner action.*
 for a full review; branch `fix/papers-record-and-notices` (draft)
 **Date**: 2026-11-25
 **Version**: `main` (released; texts of PR #72, #85 and #87)
-**Severity**: proposed **Major** — wrong information for safety in the user's view; no computation affected. PENDING owner approval.
-**Status**: OPEN — fixed on the branch, PENDING owner approval.
+**Severity**: proposed **Major** — wrong information for safety in the user's view; no computation affected. N. G. Bonilla Vargas — approved 2026-11-26 (PR #88).
+**Status**: OPEN — fixed on the branch, N. G. Bonilla Vargas — approved 2026-11-26 (PR #88).
 
 ## 1. What happened
 
@@ -46,7 +46,7 @@ RC-137 (RMF Addendum H), REQ-SAFE-063. The former wording stays in the history (
    known figures and known wordings; a different wording of the same claim is for the reviewer.
 2. New rule in `docs/research/papers-in-app.md`: a paper finding enters the application only with (a) a licence that permits
    it, (b) the same result in a second cohort or in published literature, (c) its publication status written as it is, and (d)
-   the promises of its own protocol about the product. Exception to (b) proposed for this correction, PENDING the owner:
+   the promises of its own protocol about the product. Exception to (b) proposed for this correction, N. G. Bonilla Vargas — approved 2026-11-26 (PR #88):
    "many" rests on one cohort with two age groups and three tools; "can be met" on literature.
 
 ## 5. Known issues left open
