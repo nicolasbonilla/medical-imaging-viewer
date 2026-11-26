@@ -65,13 +65,15 @@ MCP_RULE = (
     '        "(PRB-003). When `dis_assessment.evaluation_status` is not \'evaluated\', say only \'dissemination in "\n'
     '        "space: not evaluated (requires clinician review of the segmentation)\'. Never derive dissemination "\n'
     '        "in space yourself from lesion counts, regions or the region classification. Automatic marking also "\n'
-    '        "marks spots in most healthy brains; a marked spot is not evidence of multiple sclerosis.\\n"\n'
+    '        "marks spots in many people without known neurological disease, in different regions and not only next to the "\n'
+    '        "ventricles; a marked spot is not evidence of "\n'
+    '        "multiple sclerosis.\\n"\n'
 )
-ES_NOTICE = ('    "automaticMarkingNotice": "La marcación automática de lesiones también marca manchas en la mayoría de los '
-             'cerebros sanos, sobre todo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; '
+ES_NOTICE = ('    "automaticMarkingNotice": "La marcación automática de lesiones también marca manchas en muchas '
+             'personas sin enfermedad neurológica conocida, en distintas regiones y no solo junto a los ventrículos. Una mancha marcada no es prueba de esclerosis múltiple; '
              'cada mancha requiere la revisión de un experto."')
-ES_NOTICE_EN = ('    "automaticMarkingNotice": "Automatic lesion marking also marks spots in most healthy brains, mostly next '
-                'to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."')
+ES_NOTICE_EN = ('    "automaticMarkingNotice": "Automatic lesion marking also marks spots in many people without known '
+                'neurological disease, in different regions and not only next to the ventricles. A marked spot is not evidence of multiple sclerosis; every spot needs expert review."')
 CONFIRMED_LINE = '    confirmed = bool(regions_ok and ai_review_ok and bound)\n'
 
 M = {  # name: ([(file, anchor, replacement), ...], what it re-introduces)

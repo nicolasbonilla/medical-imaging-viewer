@@ -663,7 +663,7 @@ async def generate_report(
     if report_sid and "lesion_analysis" in findings:
         # Second review of PR #68, N7: the lesion table is derived on the server for the report's own segmentation
         # — a client table (with, without or with another `segmentation_id`) never reaches the model.
-        # RC-135 (REQ-FUNC-122; paper 1): the slice thickness of the original acquisition, read from the source image —
+        # RC-135 (REQ-FUNC-122): the slice thickness of the original acquisition, read from the source image —
         # alongside the lesion table (review of PR #86, M1: not one more serial step of the 30-s budget)
         import asyncio
         thickness = asyncio.ensure_future(server_acquisition_thickness(report_sid))

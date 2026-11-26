@@ -3,8 +3,8 @@
  * trace: docs/research/papers-in-app.md).
  *
  * RC-134 (REQ-SAFE-061, HAZ-008): a met brain-DIS result is shown with what it does not mean, in an attention colour
- * (amber), never as a success (green). Paper 1: the location-only rule was met with the experts' own masks as often
- * in vascular white matter disease as in MS, and in 96 of 100 adults aged 50-89 years without CNS disease.
+ * (amber), never as a success (green). PRB-033: "most older adults" rests on CC0 data; "can be met" in
+ * vascular white matter disease is from the literature (RMF Addendum H).
  * RC-133 (REQ-FUNC-121): lesions under 3 mm in largest extent do not count toward DIS; their number is shown and the
  * per-region count is described accurately (MAGNIMS 2021 size, not "size/location criteria").
  *
@@ -111,7 +111,7 @@ describe('RC-134 what a met DIS result does not mean (papers 1 and 2)', () => {
 
   it('rc134 the interpretation names what the rule ignores and who also meets it', () => {
     for (const part of [/location/, /not the full diagnostic criteria/, /age and vascular risk/, /older adults/,
-                        /vascular white matter disease/, /not evidence of multiple sclerosis/, /case as a whole/]) {
+                        /can be met in people with vascular white matter disease/, /not evidence of multiple sclerosis/, /case as a whole/]) {
       expect(DIS_INTERPRETATION_EN).toMatch(part);
     }
     expect(DIS_INTERPRETATION_EN).not.toMatch(/\d|McDonald/);

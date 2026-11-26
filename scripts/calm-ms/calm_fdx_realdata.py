@@ -60,7 +60,7 @@ GAMMA, DELTA = 0.2, 0.1
 AREAS = (1, 2, 3)
 SEED = 20260927
 CACHE = os.path.join(_HERE, ".region_cache.npz")
-OUT = os.path.join(_ROOT, "backend", "app", "services", "assets", "calm_fdx_realdata_record.json")
+OUT = os.path.join(_ROOT, "docs", "research", "records", "calm_fdx_realdata_record.json")
 
 
 def _clopper(x, n, a=0.05):

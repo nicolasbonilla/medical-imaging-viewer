@@ -44,14 +44,10 @@ from app.services.lesion_metrics import (
 
 # REQ-FUNC-121, RC-133 (HAZ-008; SRS/RMF Addendum E, DRAFT — PENDING owner approval): the lesion size that counts
 # toward brain DIS. MAGNIMS 2021 (Wattjes et al., Lancet Neurol 2021) counts a lesion of at least 3 mm in its long
-# axis; the 3 mm³ floor above is a noise floor (MSSEG-2016), about a fifth of a 3-mm sphere (14.1 mm³). Paper 1
-# (medRxiv MEDRXIV/2026/368633, "Automated Lesion Location and Dissemination in Space in People With and Without
-# Multiple Sclerosis"): with any component of at least 3 mm³ the device's rule was met in 19 of 100 healthy controls
-# with the FLAMeS ensemble, and in 9 when only lesions of at least 14.1 mm³ (a 3-mm sphere) counted. The device now
-# applies the SIZE criterion of the paper's clinically faithful rule — largest extent F >= 3 mm — on top of its
-# volume floor; it is not the faithful rule itself, which had no volume floor and used each person's own anatomy
-# (with it the ensemble met the rule in 13 of 100 controls). F is the paper's definition (research/paper_1/mimics/
-# faithful_rule.py, `long_axis_at_least`): the maximum Euclidean distance in mm between the CENTRES of any two of the
+# axis; the 3 mm³ floor above is a noise floor (MSSEG-2016), about a fifth of a 3-mm sphere (14.1 mm³). The device
+# applies the SIZE criterion — largest extent F >= 3 mm — on top of its volume floor. (PRB-033: the unpublished
+# manuscript and the figures of a cohort with an unclear licence that were quoted here were removed; the criterion is
+# MAGNIMS's and does not depend on them.) F is the maximum Euclidean distance in mm between the CENTRES of any two of the
 # lesion's voxels (3-D maximum Feret diameter of the voxel-centre set; a single voxel has F = 0). Measured between
 # centres it is up to one voxel shorter than the edge-to-edge length a reader sees — the conservative direction for
 # HAZ-008 (fewer regions counted, never more).
@@ -66,7 +62,7 @@ def largest_extent_at_least(
 
     ``voxel_indices``: (N, 3) array of (z, y, x) indices; ``voxel_spacing``: (dz, dy, dx) in mm, in the same axis
     order. Exact, with two shortcuts: F is at least the largest axis-aligned extent of the centres and at most the
-    diagonal of their bounding box; otherwise every pair is compared (in chunks). A port of paper 1's
+    diagonal of their bounding box; otherwise every pair is compared (in chunks). A port of the research code's
     ``faithful_rule.long_axis_at_least`` on an axis-aligned grid (the app's masks carry spacing, not an affine)."""
     pts = np.asarray(voxel_indices, dtype=float) * np.asarray(voxel_spacing, dtype=float)
     if pts.ndim != 2 or len(pts) < 2:
@@ -333,7 +329,7 @@ def compute_dis_criteria(
     voxel_vol_mm3 = float(np.prod(voxel_spacing))
 
     # Check each DIS brain region (PV, JC, IT). RC-133 (REQ-FUNC-121): a lesion counts when it has at least the
-    # volume floor AND a largest extent of at least 3 mm (MAGNIMS 2021; paper 1's clinically faithful rule)
+    # volume floor AND a largest extent of at least 3 mm (MAGNIMS 2021)
     region_presence = {}
     below_size_total = 0
     for region_id in sorted(DIS_BRAIN_REGIONS):
@@ -438,8 +434,7 @@ def compute_dis_criteria(
             "min_largest_extent_mm": DIS_LESION_MIN_EXTENT_MM,
             "min_volume_mm3": MIN_LESION_VOLUME_MM3,
             "largest_extent": "maximum distance between the centres of any two voxels of the lesion",
-            "source": "MAGNIMS 2021 (lesion of at least 3 mm in its long axis); size criterion of paper 1's "
-                      "clinically faithful rule",
+            "source": "MAGNIMS 2021 (lesion of at least 3 mm in its long axis)",
         },
         "below_size_lesion_count": below_size_total,
         "dwm_lesion_count": dwm_lesion_count,
