@@ -7,8 +7,8 @@ raised — owner action.*
 **Reporter**: AI coding agent, after the owner forwarded the failure e-mail of 2026-11-28; branch `fix/rc117-retirement-job-deps` (draft)
 **Date**: 2026-11-28
 **Version**: `main` 3d1d7c1 (`.github/workflows/agent-model-retirement.yml`)
-**Severity**: proposed **Minor** — a detective control's early warning missing; the protective control at call time is unaffected. PENDING owner approval.
-**Status**: OPEN — fixed on the branch, PENDING owner approval.
+**Severity**: proposed **Minor** — a detective control's early warning missing; the protective control at call time is unaffected. N. G. Bonilla Vargas — approved 2026-11-28 (PR #89).
+**Status**: OPEN — fixed on the branch, N. G. Bonilla Vargas — approved 2026-11-28 (PR #89).
 
 ## 1. What happened
 
