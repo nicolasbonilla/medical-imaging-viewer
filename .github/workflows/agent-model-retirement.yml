@@ -22,5 +22,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      # PRB-034 (2026-11-28): without this step the job had failed on every run (ModuleNotFoundError: pythonjsonlogger,
+      # then pydantic, pydantic_settings, fastapi), so the 30-day warning of RC-117 never ran. The four packages are
+      # taken from requirements.txt with their pinned versions (one list), not the whole file (torch is not needed).
+      - name: Install what the agent cards import
+        run: pip install $(grep -E '^(python-json-logger|pydantic|pydantic-settings|fastapi)==' requirements.txt)
       - name: Retirement of the models in the agent cards
         run: python -m app.agent_platform.cards --retirement
